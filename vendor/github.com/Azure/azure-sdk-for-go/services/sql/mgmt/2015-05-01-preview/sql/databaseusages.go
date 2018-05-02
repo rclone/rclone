@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // DatabaseUsagesClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type DatabaseUsagesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewDatabaseUsagesClient creates an instance of the DatabaseUsagesClient client.
 func NewDatabaseUsagesClient(subscriptionID string) DatabaseUsagesClient {
 	return NewDatabaseUsagesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewDatabaseUsagesClientWithBaseURI creates an instance of the DatabaseUsagesClient client.
 func NewDatabaseUsagesClientWithBaseURI(baseURI string, subscriptionID string) DatabaseUsagesClient {
 	return DatabaseUsagesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabase returns database usages.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -68,6 +72,7 @@ func (client DatabaseUsagesClient) ListByDatabase(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client DatabaseUsagesClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,6 +95,7 @@ func (client DatabaseUsagesClient) ListByDatabasePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseUsagesClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client DatabaseUsagesClient) ListByDatabaseSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client DatabaseUsagesClient) ListByDatabaseResponder(resp *http.Response) (result DatabaseUsageListResult, err error) {

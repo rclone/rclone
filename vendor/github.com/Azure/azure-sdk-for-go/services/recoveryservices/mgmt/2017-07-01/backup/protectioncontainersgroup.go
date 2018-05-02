@@ -40,9 +40,10 @@ func NewProtectionContainersGroupClientWithBaseURI(baseURI string, subscriptionI
 }
 
 // List lists the containers registered to Recovery Services Vault.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. filter is oData filter options.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// filter - oData filter options.
 func (client ProtectionContainersGroupClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string) (result ProtectionContainerResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter)

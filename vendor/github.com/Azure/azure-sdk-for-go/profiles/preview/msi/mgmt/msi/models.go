@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type UserAssignedIdentities = original.UserAssignedIdentities
 
 const (
@@ -53,16 +45,23 @@ type UserAssignedIdentitiesListResult = original.UserAssignedIdentitiesListResul
 type UserAssignedIdentitiesListResultIterator = original.UserAssignedIdentitiesListResultIterator
 type UserAssignedIdentitiesListResultPage = original.UserAssignedIdentitiesListResultPage
 type OperationsClient = original.OperationsClient
+type UserAssignedIdentitiesClient = original.UserAssignedIdentitiesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleUserAssignedIdentitiesValues() []UserAssignedIdentities {
+	return original.PossibleUserAssignedIdentitiesValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UserAssignedIdentitiesClient = original.UserAssignedIdentitiesClient
-
 func NewUserAssignedIdentitiesClient(subscriptionID string) UserAssignedIdentitiesClient {
 	return original.NewUserAssignedIdentitiesClient(subscriptionID)
 }

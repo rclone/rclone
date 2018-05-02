@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ManagedApisClient is the webSite Management Client
 type ManagedApisClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewManagedApisClient creates an instance of the ManagedApisClient client.
 func NewManagedApisClient(subscriptionID string) ManagedApisClient {
 	return NewManagedApisClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewManagedApisClientWithBaseURI creates an instance of the ManagedApisClient client.
 func NewManagedApisClientWithBaseURI(baseURI string, subscriptionID string) ManagedApisClient {
 	return ManagedApisClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // Get gets a managed API.
 //
 // location is the location. APIName is the managed API name. export is flag showing whether to export API
@@ -65,6 +69,7 @@ func (client ManagedApisClient) Get(ctx context.Context, location string, APINam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetPreparer prepares the Get request.
 func (client ManagedApisClient) GetPreparer(ctx context.Context, location string, APIName string, export *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -89,6 +94,7 @@ func (client ManagedApisClient) GetPreparer(ctx context.Context, location string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagedApisClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -96,6 +102,7 @@ func (client ManagedApisClient) GetSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ManagedApisClient) GetResponder(resp *http.Response) (result APIEntity, err error) {
@@ -109,6 +116,7 @@ func (client ManagedApisClient) GetResponder(resp *http.Response) (result APIEnt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // List gets a list of managed APIs.
 //
 // location is the location.
@@ -135,6 +143,7 @@ func (client ManagedApisClient) List(ctx context.Context, location string) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListPreparer prepares the List request.
 func (client ManagedApisClient) ListPreparer(ctx context.Context, location string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -155,6 +164,7 @@ func (client ManagedApisClient) ListPreparer(ctx context.Context, location strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagedApisClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -162,6 +172,7 @@ func (client ManagedApisClient) ListSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ManagedApisClient) ListResponder(resp *http.Response) (result ApisCollection, err error) {
@@ -196,6 +207,7 @@ func (client ManagedApisClient) listNextResults(lastResults ApisCollection) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ManagedApisClient) ListComplete(ctx context.Context, location string) (result ApisCollectionIterator, err error) {
 	result.page, err = client.List(ctx, location)

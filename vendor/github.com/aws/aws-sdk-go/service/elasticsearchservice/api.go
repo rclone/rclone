@@ -17,7 +17,7 @@ const opAddTags = "AddTags"
 
 // AddTagsRequest generates a "aws/request.Request" representing the
 // client's request for the AddTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -110,7 +110,7 @@ const opCreateElasticsearchDomain = "CreateElasticsearchDomain"
 
 // CreateElasticsearchDomainRequest generates a "aws/request.Request" representing the
 // client's request for the CreateElasticsearchDomain operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -213,7 +213,7 @@ const opDeleteElasticsearchDomain = "DeleteElasticsearchDomain"
 
 // DeleteElasticsearchDomainRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteElasticsearchDomain operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -303,7 +303,7 @@ const opDeleteElasticsearchServiceRole = "DeleteElasticsearchServiceRole"
 
 // DeleteElasticsearchServiceRoleRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteElasticsearchServiceRole operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -394,7 +394,7 @@ const opDescribeElasticsearchDomain = "DescribeElasticsearchDomain"
 
 // DescribeElasticsearchDomainRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeElasticsearchDomain operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -484,7 +484,7 @@ const opDescribeElasticsearchDomainConfig = "DescribeElasticsearchDomainConfig"
 
 // DescribeElasticsearchDomainConfigRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeElasticsearchDomainConfig operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -575,7 +575,7 @@ const opDescribeElasticsearchDomains = "DescribeElasticsearchDomains"
 
 // DescribeElasticsearchDomainsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeElasticsearchDomains operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -661,7 +661,7 @@ const opDescribeElasticsearchInstanceTypeLimits = "DescribeElasticsearchInstance
 
 // DescribeElasticsearchInstanceTypeLimitsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeElasticsearchInstanceTypeLimits operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -760,7 +760,7 @@ const opListDomainNames = "ListDomainNames"
 
 // ListDomainNamesRequest generates a "aws/request.Request" representing the
 // client's request for the ListDomainNames operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -841,7 +841,7 @@ const opListElasticsearchInstanceTypes = "ListElasticsearchInstanceTypes"
 
 // ListElasticsearchInstanceTypesRequest generates a "aws/request.Request" representing the
 // client's request for the ListElasticsearchInstanceTypes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -986,7 +986,7 @@ const opListElasticsearchVersions = "ListElasticsearchVersions"
 
 // ListElasticsearchVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListElasticsearchVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1131,7 +1131,7 @@ const opListTags = "ListTags"
 
 // ListTagsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1220,7 +1220,7 @@ const opRemoveTags = "RemoveTags"
 
 // RemoveTagsRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1307,7 +1307,7 @@ const opUpdateElasticsearchDomainConfig = "UpdateElasticsearchDomainConfig"
 
 // UpdateElasticsearchDomainConfigRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateElasticsearchDomainConfig operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1608,6 +1608,116 @@ func (s *AdvancedOptionsStatus) SetStatus(v *OptionStatus) *AdvancedOptionsStatu
 	return s
 }
 
+// Options to specify the Cognito user and identity pools for Kibana authentication.
+// For more information, see Amazon Cognito Authentication for Kibana (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html).
+type CognitoOptions struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the option to enable Cognito for Kibana authentication.
+	Enabled *bool `type:"boolean"`
+
+	// Specifies the Cognito identity pool ID for Kibana authentication.
+	IdentityPoolId *string `min:"1" type:"string"`
+
+	// Specifies the role ARN that provides Elasticsearch permissions for accessing
+	// Cognito resources.
+	RoleArn *string `min:"20" type:"string"`
+
+	// Specifies the Cognito user pool ID for Kibana authentication.
+	UserPoolId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s CognitoOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CognitoOptions) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CognitoOptions) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CognitoOptions"}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 20))
+	}
+	if s.UserPoolId != nil && len(*s.UserPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("UserPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *CognitoOptions) SetEnabled(v bool) *CognitoOptions {
+	s.Enabled = &v
+	return s
+}
+
+// SetIdentityPoolId sets the IdentityPoolId field's value.
+func (s *CognitoOptions) SetIdentityPoolId(v string) *CognitoOptions {
+	s.IdentityPoolId = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *CognitoOptions) SetRoleArn(v string) *CognitoOptions {
+	s.RoleArn = &v
+	return s
+}
+
+// SetUserPoolId sets the UserPoolId field's value.
+func (s *CognitoOptions) SetUserPoolId(v string) *CognitoOptions {
+	s.UserPoolId = &v
+	return s
+}
+
+// Status of the Cognito options for the specified Elasticsearch domain.
+type CognitoOptionsStatus struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the Cognito options for the specified Elasticsearch domain.
+	//
+	// Options is a required field
+	Options *CognitoOptions `type:"structure" required:"true"`
+
+	// Specifies the status of the Cognito options for the specified Elasticsearch
+	// domain.
+	//
+	// Status is a required field
+	Status *OptionStatus `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CognitoOptionsStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CognitoOptionsStatus) GoString() string {
+	return s.String()
+}
+
+// SetOptions sets the Options field's value.
+func (s *CognitoOptionsStatus) SetOptions(v *CognitoOptions) *CognitoOptionsStatus {
+	s.Options = v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *CognitoOptionsStatus) SetStatus(v *OptionStatus) *CognitoOptionsStatus {
+	s.Status = v
+	return s
+}
+
 type CreateElasticsearchDomainInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1619,6 +1729,10 @@ type CreateElasticsearchDomainInput struct {
 	// is true. See Configuration Advanced Options (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html#es-createdomain-configure-advanced-options)
 	// for more information.
 	AdvancedOptions map[string]*string `type:"map"`
+
+	// Options to specify the Cognito user and identity pools for Kibana authentication.
+	// For more information, see Amazon Cognito Authentication for Kibana (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html).
+	CognitoOptions *CognitoOptions `type:"structure"`
 
 	// The name of the Elasticsearch domain that you are creating. Domain names
 	// are unique across the domains owned by an account within an AWS region. Domain
@@ -1677,6 +1791,11 @@ func (s *CreateElasticsearchDomainInput) Validate() error {
 	if s.DomainName != nil && len(*s.DomainName) < 3 {
 		invalidParams.Add(request.NewErrParamMinLen("DomainName", 3))
 	}
+	if s.CognitoOptions != nil {
+		if err := s.CognitoOptions.Validate(); err != nil {
+			invalidParams.AddNested("CognitoOptions", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.EncryptionAtRestOptions != nil {
 		if err := s.EncryptionAtRestOptions.Validate(); err != nil {
 			invalidParams.AddNested("EncryptionAtRestOptions", err.(request.ErrInvalidParams))
@@ -1698,6 +1817,12 @@ func (s *CreateElasticsearchDomainInput) SetAccessPolicies(v string) *CreateElas
 // SetAdvancedOptions sets the AdvancedOptions field's value.
 func (s *CreateElasticsearchDomainInput) SetAdvancedOptions(v map[string]*string) *CreateElasticsearchDomainInput {
 	s.AdvancedOptions = v
+	return s
+}
+
+// SetCognitoOptions sets the CognitoOptions field's value.
+func (s *CreateElasticsearchDomainInput) SetCognitoOptions(v *CognitoOptions) *CreateElasticsearchDomainInput {
+	s.CognitoOptions = v
 	return s
 }
 
@@ -2410,6 +2535,10 @@ type ElasticsearchDomainConfig struct {
 	// for more information.
 	AdvancedOptions *AdvancedOptionsStatus `type:"structure"`
 
+	// The CognitoOptions for the specified domain. For more information, see Amazon
+	// Cognito Authentication for Kibana (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html).
+	CognitoOptions *CognitoOptionsStatus `type:"structure"`
+
 	// Specifies the EBSOptions for the Elasticsearch domain.
 	EBSOptions *EBSOptionsStatus `type:"structure"`
 
@@ -2452,6 +2581,12 @@ func (s *ElasticsearchDomainConfig) SetAccessPolicies(v *AccessPoliciesStatus) *
 // SetAdvancedOptions sets the AdvancedOptions field's value.
 func (s *ElasticsearchDomainConfig) SetAdvancedOptions(v *AdvancedOptionsStatus) *ElasticsearchDomainConfig {
 	s.AdvancedOptions = v
+	return s
+}
+
+// SetCognitoOptions sets the CognitoOptions field's value.
+func (s *ElasticsearchDomainConfig) SetCognitoOptions(v *CognitoOptionsStatus) *ElasticsearchDomainConfig {
+	s.CognitoOptions = v
 	return s
 }
 
@@ -2513,6 +2648,10 @@ type ElasticsearchDomainStatus struct {
 
 	// Specifies the status of the AdvancedOptions
 	AdvancedOptions map[string]*string `type:"map"`
+
+	// The CognitoOptions for the specified domain. For more information, see Amazon
+	// Cognito Authentication for Kibana (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html).
+	CognitoOptions *CognitoOptions `type:"structure"`
 
 	// The domain creation status. True if the creation of an Elasticsearch domain
 	// is complete. False if domain creation is still in progress.
@@ -2601,6 +2740,12 @@ func (s *ElasticsearchDomainStatus) SetAccessPolicies(v string) *ElasticsearchDo
 // SetAdvancedOptions sets the AdvancedOptions field's value.
 func (s *ElasticsearchDomainStatus) SetAdvancedOptions(v map[string]*string) *ElasticsearchDomainStatus {
 	s.AdvancedOptions = v
+	return s
+}
+
+// SetCognitoOptions sets the CognitoOptions field's value.
+func (s *ElasticsearchDomainStatus) SetCognitoOptions(v *CognitoOptions) *ElasticsearchDomainStatus {
+	s.CognitoOptions = v
 	return s
 }
 
@@ -3646,6 +3791,10 @@ type UpdateElasticsearchDomainConfigInput struct {
 	// for more information.
 	AdvancedOptions map[string]*string `type:"map"`
 
+	// Options to specify the Cognito user and identity pools for Kibana authentication.
+	// For more information, see Amazon Cognito Authentication for Kibana (http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html).
+	CognitoOptions *CognitoOptions `type:"structure"`
+
 	// The name of the Elasticsearch domain that you are updating.
 	//
 	// DomainName is a required field
@@ -3690,6 +3839,11 @@ func (s *UpdateElasticsearchDomainConfigInput) Validate() error {
 	if s.DomainName != nil && len(*s.DomainName) < 3 {
 		invalidParams.Add(request.NewErrParamMinLen("DomainName", 3))
 	}
+	if s.CognitoOptions != nil {
+		if err := s.CognitoOptions.Validate(); err != nil {
+			invalidParams.AddNested("CognitoOptions", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -3706,6 +3860,12 @@ func (s *UpdateElasticsearchDomainConfigInput) SetAccessPolicies(v string) *Upda
 // SetAdvancedOptions sets the AdvancedOptions field's value.
 func (s *UpdateElasticsearchDomainConfigInput) SetAdvancedOptions(v map[string]*string) *UpdateElasticsearchDomainConfigInput {
 	s.AdvancedOptions = v
+	return s
+}
+
+// SetCognitoOptions sets the CognitoOptions field's value.
+func (s *UpdateElasticsearchDomainConfigInput) SetCognitoOptions(v *CognitoOptions) *UpdateElasticsearchDomainConfigInput {
+	s.CognitoOptions = v
 	return s
 }
 

@@ -15,7 +15,7 @@ const opAddTagsToResource = "AddTagsToResource"
 
 // AddTagsToResourceRequest generates a "aws/request.Request" representing the
 // client's request for the AddTagsToResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -99,6 +99,10 @@ func (c *SSM) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *requ
 //   The Targets parameter includes too many tags. Remove one or more tags and
 //   try the command again.
 //
+//   * ErrCodeTooManyUpdates "TooManyUpdates"
+//   There are concurrent updates for a resource that supports one update at a
+//   time.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/AddTagsToResource
 func (c *SSM) AddTagsToResource(input *AddTagsToResourceInput) (*AddTagsToResourceOutput, error) {
 	req, out := c.AddTagsToResourceRequest(input)
@@ -125,7 +129,7 @@ const opCancelCommand = "CancelCommand"
 
 // CancelCommandRequest generates a "aws/request.Request" representing the
 // client's request for the CancelCommand operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -225,7 +229,7 @@ const opCreateActivation = "CreateActivation"
 
 // CreateActivationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateActivation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -308,7 +312,7 @@ const opCreateAssociation = "CreateAssociation"
 
 // CreateAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -441,7 +445,7 @@ const opCreateAssociationBatch = "CreateAssociationBatch"
 
 // CreateAssociationBatchRequest generates a "aws/request.Request" representing the
 // client's request for the CreateAssociationBatch operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -574,7 +578,7 @@ const opCreateDocument = "CreateDocument"
 
 // CreateDocumentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDocument operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -671,7 +675,7 @@ const opCreateMaintenanceWindow = "CreateMaintenanceWindow"
 
 // CreateMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the CreateMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -761,7 +765,7 @@ const opCreatePatchBaseline = "CreatePatchBaseline"
 
 // CreatePatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -854,7 +858,7 @@ const opCreateResourceDataSync = "CreateResourceDataSync"
 
 // CreateResourceDataSyncRequest generates a "aws/request.Request" representing the
 // client's request for the CreateResourceDataSync operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -952,7 +956,7 @@ const opDeleteActivation = "DeleteActivation"
 
 // DeleteActivationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteActivation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1046,7 +1050,7 @@ const opDeleteAssociation = "DeleteAssociation"
 
 // DeleteAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1155,7 +1159,7 @@ const opDeleteDocument = "DeleteDocument"
 
 // DeleteDocumentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDocument operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1245,11 +1249,106 @@ func (c *SSM) DeleteDocumentWithContext(ctx aws.Context, input *DeleteDocumentIn
 	return out, req.Send()
 }
 
+const opDeleteInventory = "DeleteInventory"
+
+// DeleteInventoryRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteInventory operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteInventory for more information on using the DeleteInventory
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteInventoryRequest method.
+//    req, resp := client.DeleteInventoryRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/DeleteInventory
+func (c *SSM) DeleteInventoryRequest(input *DeleteInventoryInput) (req *request.Request, output *DeleteInventoryOutput) {
+	op := &request.Operation{
+		Name:       opDeleteInventory,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteInventoryInput{}
+	}
+
+	output = &DeleteInventoryOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteInventory API operation for Amazon Simple Systems Manager (SSM).
+//
+// Delete a custom inventory type, or the data associated with a custom Inventory
+// type. Deleting a custom inventory type is also referred to as deleting a
+// custom inventory schema.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Systems Manager (SSM)'s
+// API operation DeleteInventory for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An error occurred on the server side.
+//
+//   * ErrCodeInvalidTypeNameException "InvalidTypeNameException"
+//   The parameter type name is not valid.
+//
+//   * ErrCodeInvalidOptionException "InvalidOptionException"
+//   The delete inventory option specified is not valid. Verify the option and
+//   try again.
+//
+//   * ErrCodeInvalidDeleteInventoryParametersException "InvalidDeleteInventoryParametersException"
+//   One or more of the parameters specified for the delete operation is not valid.
+//   Verify all parameters and try again.
+//
+//   * ErrCodeInvalidInventoryRequestException "InvalidInventoryRequestException"
+//   The request is not valid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/DeleteInventory
+func (c *SSM) DeleteInventory(input *DeleteInventoryInput) (*DeleteInventoryOutput, error) {
+	req, out := c.DeleteInventoryRequest(input)
+	return out, req.Send()
+}
+
+// DeleteInventoryWithContext is the same as DeleteInventory with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteInventory for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SSM) DeleteInventoryWithContext(ctx aws.Context, input *DeleteInventoryInput, opts ...request.Option) (*DeleteInventoryOutput, error) {
+	req, out := c.DeleteInventoryRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteMaintenanceWindow = "DeleteMaintenanceWindow"
 
 // DeleteMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1328,7 +1427,7 @@ const opDeleteParameter = "DeleteParameter"
 
 // DeleteParameterRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1410,7 +1509,7 @@ const opDeleteParameters = "DeleteParameters"
 
 // DeleteParametersRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteParameters operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1490,7 +1589,7 @@ const opDeletePatchBaseline = "DeletePatchBaseline"
 
 // DeletePatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1573,7 +1672,7 @@ const opDeleteResourceDataSync = "DeleteResourceDataSync"
 
 // DeleteResourceDataSyncRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteResourceDataSync operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1658,7 +1757,7 @@ const opDeregisterManagedInstance = "DeregisterManagedInstance"
 
 // DeregisterManagedInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterManagedInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1754,7 +1853,7 @@ const opDeregisterPatchBaselineForPatchGroup = "DeregisterPatchBaselineForPatchG
 
 // DeregisterPatchBaselineForPatchGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterPatchBaselineForPatchGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1837,7 +1936,7 @@ const opDeregisterTargetFromMaintenanceWindow = "DeregisterTargetFromMaintenance
 
 // DeregisterTargetFromMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterTargetFromMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1927,7 +2026,7 @@ const opDeregisterTaskFromMaintenanceWindow = "DeregisterTaskFromMaintenanceWind
 
 // DeregisterTaskFromMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterTaskFromMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2013,7 +2112,7 @@ const opDescribeActivations = "DescribeActivations"
 
 // DescribeActivationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeActivations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2157,7 +2256,7 @@ const opDescribeAssociation = "DescribeAssociation"
 
 // DescribeAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2266,7 +2365,7 @@ const opDescribeAutomationExecutions = "DescribeAutomationExecutions"
 
 // DescribeAutomationExecutionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAutomationExecutions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2354,7 +2453,7 @@ const opDescribeAutomationStepExecutions = "DescribeAutomationStepExecutions"
 
 // DescribeAutomationStepExecutionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAutomationStepExecutions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2447,7 +2546,7 @@ const opDescribeAvailablePatches = "DescribeAvailablePatches"
 
 // DescribeAvailablePatchesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAvailablePatches operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2526,7 +2625,7 @@ const opDescribeDocument = "DescribeDocument"
 
 // DescribeDocumentRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDocument operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2611,7 +2710,7 @@ const opDescribeDocumentPermission = "DescribeDocumentPermission"
 
 // DescribeDocumentPermissionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDocumentPermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2699,7 +2798,7 @@ const opDescribeEffectiveInstanceAssociations = "DescribeEffectiveInstanceAssoci
 
 // DescribeEffectiveInstanceAssociationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEffectiveInstanceAssociations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2796,7 +2895,7 @@ const opDescribeEffectivePatchesForPatchBaseline = "DescribeEffectivePatchesForP
 
 // DescribeEffectivePatchesForPatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEffectivePatchesForPatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2893,7 +2992,7 @@ const opDescribeInstanceAssociationsStatus = "DescribeInstanceAssociationsStatus
 
 // DescribeInstanceAssociationsStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstanceAssociationsStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2990,7 +3089,7 @@ const opDescribeInstanceInformation = "DescribeInstanceInformation"
 
 // DescribeInstanceInformationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstanceInformation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3154,7 +3253,7 @@ const opDescribeInstancePatchStates = "DescribeInstancePatchStates"
 
 // DescribeInstancePatchStatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstancePatchStates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3236,7 +3335,7 @@ const opDescribeInstancePatchStatesForPatchGroup = "DescribeInstancePatchStatesF
 
 // DescribeInstancePatchStatesForPatchGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstancePatchStatesForPatchGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3323,7 +3422,7 @@ const opDescribeInstancePatches = "DescribeInstancePatches"
 
 // DescribeInstancePatchesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstancePatches operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3421,11 +3520,97 @@ func (c *SSM) DescribeInstancePatchesWithContext(ctx aws.Context, input *Describ
 	return out, req.Send()
 }
 
+const opDescribeInventoryDeletions = "DescribeInventoryDeletions"
+
+// DescribeInventoryDeletionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeInventoryDeletions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeInventoryDeletions for more information on using the DescribeInventoryDeletions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeInventoryDeletionsRequest method.
+//    req, resp := client.DescribeInventoryDeletionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/DescribeInventoryDeletions
+func (c *SSM) DescribeInventoryDeletionsRequest(input *DescribeInventoryDeletionsInput) (req *request.Request, output *DescribeInventoryDeletionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeInventoryDeletions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeInventoryDeletionsInput{}
+	}
+
+	output = &DescribeInventoryDeletionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeInventoryDeletions API operation for Amazon Simple Systems Manager (SSM).
+//
+// Describes a specific delete inventory operation.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Systems Manager (SSM)'s
+// API operation DescribeInventoryDeletions for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An error occurred on the server side.
+//
+//   * ErrCodeInvalidDeletionIdException "InvalidDeletionIdException"
+//   The ID specified for the delete operation does not exist or is not valide.
+//   Verify the ID and try again.
+//
+//   * ErrCodeInvalidNextToken "InvalidNextToken"
+//   The specified token is not valid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/DescribeInventoryDeletions
+func (c *SSM) DescribeInventoryDeletions(input *DescribeInventoryDeletionsInput) (*DescribeInventoryDeletionsOutput, error) {
+	req, out := c.DescribeInventoryDeletionsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeInventoryDeletionsWithContext is the same as DescribeInventoryDeletions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeInventoryDeletions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SSM) DescribeInventoryDeletionsWithContext(ctx aws.Context, input *DescribeInventoryDeletionsInput, opts ...request.Option) (*DescribeInventoryDeletionsOutput, error) {
+	req, out := c.DescribeInventoryDeletionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeMaintenanceWindowExecutionTaskInvocations = "DescribeMaintenanceWindowExecutionTaskInvocations"
 
 // DescribeMaintenanceWindowExecutionTaskInvocationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindowExecutionTaskInvocations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3512,7 +3697,7 @@ const opDescribeMaintenanceWindowExecutionTasks = "DescribeMaintenanceWindowExec
 
 // DescribeMaintenanceWindowExecutionTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindowExecutionTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3598,7 +3783,7 @@ const opDescribeMaintenanceWindowExecutions = "DescribeMaintenanceWindowExecutio
 
 // DescribeMaintenanceWindowExecutionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindowExecutions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3679,7 +3864,7 @@ const opDescribeMaintenanceWindowTargets = "DescribeMaintenanceWindowTargets"
 
 // DescribeMaintenanceWindowTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindowTargets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3765,7 +3950,7 @@ const opDescribeMaintenanceWindowTasks = "DescribeMaintenanceWindowTasks"
 
 // DescribeMaintenanceWindowTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindowTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3851,7 +4036,7 @@ const opDescribeMaintenanceWindows = "DescribeMaintenanceWindows"
 
 // DescribeMaintenanceWindowsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceWindows operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3930,7 +4115,7 @@ const opDescribeParameters = "DescribeParameters"
 
 // DescribeParametersRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeParameters operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4086,7 +4271,7 @@ const opDescribePatchBaselines = "DescribePatchBaselines"
 
 // DescribePatchBaselinesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePatchBaselines operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4165,7 +4350,7 @@ const opDescribePatchGroupState = "DescribePatchGroupState"
 
 // DescribePatchGroupStateRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePatchGroupState operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4247,7 +4432,7 @@ const opDescribePatchGroups = "DescribePatchGroups"
 
 // DescribePatchGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePatchGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4326,7 +4511,7 @@ const opGetAutomationExecution = "GetAutomationExecution"
 
 // GetAutomationExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the GetAutomationExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4409,7 +4594,7 @@ const opGetCommandInvocation = "GetCommandInvocation"
 
 // GetCommandInvocationRequest generates a "aws/request.Request" representing the
 // client's request for the GetCommandInvocation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4513,7 +4698,7 @@ const opGetDefaultPatchBaseline = "GetDefaultPatchBaseline"
 
 // GetDefaultPatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the GetDefaultPatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4557,6 +4742,9 @@ func (c *SSM) GetDefaultPatchBaselineRequest(input *GetDefaultPatchBaselineInput
 // creating multiple default patch baselines. For example, you can create a
 // default patch baseline for each operating system.
 //
+// If you do not specify an operating system value, the default patch baseline
+// for Windows is returned.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -4594,7 +4782,7 @@ const opGetDeployablePatchSnapshotForInstance = "GetDeployablePatchSnapshotForIn
 
 // GetDeployablePatchSnapshotForInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the GetDeployablePatchSnapshotForInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4679,7 +4867,7 @@ const opGetDocument = "GetDocument"
 
 // GetDocumentRequest generates a "aws/request.Request" representing the
 // client's request for the GetDocument operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4764,7 +4952,7 @@ const opGetInventory = "GetInventory"
 
 // GetInventoryRequest generates a "aws/request.Request" representing the
 // client's request for the GetInventory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4856,7 +5044,7 @@ const opGetInventorySchema = "GetInventorySchema"
 
 // GetInventorySchemaRequest generates a "aws/request.Request" representing the
 // client's request for the GetInventorySchema operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4942,7 +5130,7 @@ const opGetMaintenanceWindow = "GetMaintenanceWindow"
 
 // GetMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the GetMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5028,7 +5216,7 @@ const opGetMaintenanceWindowExecution = "GetMaintenanceWindowExecution"
 
 // GetMaintenanceWindowExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the GetMaintenanceWindowExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5115,7 +5303,7 @@ const opGetMaintenanceWindowExecutionTask = "GetMaintenanceWindowExecutionTask"
 
 // GetMaintenanceWindowExecutionTaskRequest generates a "aws/request.Request" representing the
 // client's request for the GetMaintenanceWindowExecutionTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5202,7 +5390,7 @@ const opGetMaintenanceWindowExecutionTaskInvocation = "GetMaintenanceWindowExecu
 
 // GetMaintenanceWindowExecutionTaskInvocationRequest generates a "aws/request.Request" representing the
 // client's request for the GetMaintenanceWindowExecutionTaskInvocation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5289,7 +5477,7 @@ const opGetMaintenanceWindowTask = "GetMaintenanceWindowTask"
 
 // GetMaintenanceWindowTaskRequest generates a "aws/request.Request" representing the
 // client's request for the GetMaintenanceWindowTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5375,7 +5563,7 @@ const opGetParameter = "GetParameter"
 
 // GetParameterRequest generates a "aws/request.Request" representing the
 // client's request for the GetParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5464,7 +5652,7 @@ const opGetParameterHistory = "GetParameterHistory"
 
 // GetParameterHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the GetParameterHistory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5608,7 +5796,7 @@ const opGetParameters = "GetParameters"
 
 // GetParametersRequest generates a "aws/request.Request" representing the
 // client's request for the GetParameters operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5690,7 +5878,7 @@ const opGetParametersByPath = "GetParametersByPath"
 
 // GetParametersByPathRequest generates a "aws/request.Request" representing the
 // client's request for the GetParametersByPath operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5852,7 +6040,7 @@ const opGetPatchBaseline = "GetPatchBaseline"
 
 // GetPatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the GetPatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5942,7 +6130,7 @@ const opGetPatchBaselineForPatchGroup = "GetPatchBaselineForPatchGroup"
 
 // GetPatchBaselineForPatchGroupRequest generates a "aws/request.Request" representing the
 // client's request for the GetPatchBaselineForPatchGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6022,7 +6210,7 @@ const opListAssociationVersions = "ListAssociationVersions"
 
 // ListAssociationVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListAssociationVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6107,7 +6295,7 @@ const opListAssociations = "ListAssociations"
 
 // ListAssociationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListAssociations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6245,7 +6433,7 @@ const opListCommandInvocations = "ListCommandInvocations"
 
 // ListCommandInvocationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListCommandInvocations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6407,7 +6595,7 @@ const opListCommands = "ListCommands"
 
 // ListCommandsRequest generates a "aws/request.Request" representing the
 // client's request for the ListCommands operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6565,7 +6753,7 @@ const opListComplianceItems = "ListComplianceItems"
 
 // ListComplianceItemsRequest generates a "aws/request.Request" representing the
 // client's request for the ListComplianceItems operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6662,7 +6850,7 @@ const opListComplianceSummaries = "ListComplianceSummaries"
 
 // ListComplianceSummariesRequest generates a "aws/request.Request" representing the
 // client's request for the ListComplianceSummaries operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6750,7 +6938,7 @@ const opListDocumentVersions = "ListDocumentVersions"
 
 // ListDocumentVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDocumentVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6835,7 +7023,7 @@ const opListDocuments = "ListDocuments"
 
 // ListDocumentsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDocuments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6976,7 +7164,7 @@ const opListInventoryEntries = "ListInventoryEntries"
 
 // ListInventoryEntriesRequest generates a "aws/request.Request" representing the
 // client's request for the ListInventoryEntries operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7080,7 +7268,7 @@ const opListResourceComplianceSummaries = "ListResourceComplianceSummaries"
 
 // ListResourceComplianceSummariesRequest generates a "aws/request.Request" representing the
 // client's request for the ListResourceComplianceSummaries operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7168,7 +7356,7 @@ const opListResourceDataSync = "ListResourceDataSync"
 
 // ListResourceDataSyncRequest generates a "aws/request.Request" representing the
 // client's request for the ListResourceDataSync operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7259,7 +7447,7 @@ const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7346,7 +7534,7 @@ const opModifyDocumentPermission = "ModifyDocumentPermission"
 
 // ModifyDocumentPermissionRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyDocumentPermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7443,7 +7631,7 @@ const opPutComplianceItems = "PutComplianceItems"
 
 // PutComplianceItemsRequest generates a "aws/request.Request" representing the
 // client's request for the PutComplianceItems operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7584,7 +7772,7 @@ const opPutInventory = "PutInventory"
 
 // PutInventoryRequest generates a "aws/request.Request" representing the
 // client's request for the PutInventory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7716,7 +7904,7 @@ const opPutParameter = "PutParameter"
 
 // PutParameterRequest generates a "aws/request.Request" representing the
 // client's request for the PutParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7756,7 +7944,7 @@ func (c *SSM) PutParameterRequest(input *PutParameterInput) (req *request.Reques
 
 // PutParameter API operation for Amazon Simple Systems Manager (SSM).
 //
-// Add one or more parameters to the system.
+// Add a parameter to the system.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7830,7 +8018,7 @@ const opRegisterDefaultPatchBaseline = "RegisterDefaultPatchBaseline"
 
 // RegisterDefaultPatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterDefaultPatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7920,7 +8108,7 @@ const opRegisterPatchBaselineForPatchGroup = "RegisterPatchBaselineForPatchGroup
 
 // RegisterPatchBaselineForPatchGroupRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterPatchBaselineForPatchGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8021,7 +8209,7 @@ const opRegisterTargetWithMaintenanceWindow = "RegisterTargetWithMaintenanceWind
 
 // RegisterTargetWithMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterTargetWithMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8118,7 +8306,7 @@ const opRegisterTaskWithMaintenanceWindow = "RegisterTaskWithMaintenanceWindow"
 
 // RegisterTaskWithMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterTaskWithMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8219,7 +8407,7 @@ const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
 // RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTagsFromResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8280,6 +8468,10 @@ func (c *SSM) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) 
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
 //
+//   * ErrCodeTooManyUpdates "TooManyUpdates"
+//   There are concurrent updates for a resource that supports one update at a
+//   time.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ssm-2014-11-06/RemoveTagsFromResource
 func (c *SSM) RemoveTagsFromResource(input *RemoveTagsFromResourceInput) (*RemoveTagsFromResourceOutput, error) {
 	req, out := c.RemoveTagsFromResourceRequest(input)
@@ -8306,7 +8498,7 @@ const opSendAutomationSignal = "SendAutomationSignal"
 
 // SendAutomationSignalRequest generates a "aws/request.Request" representing the
 // client's request for the SendAutomationSignal operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8397,7 +8589,7 @@ const opSendCommand = "SendCommand"
 
 // SendCommandRequest generates a "aws/request.Request" representing the
 // client's request for the SendCommand operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8471,6 +8663,9 @@ func (c *SSM) SendCommandRequest(input *SendCommandInput) (req *request.Request,
 //   * ErrCodeInvalidDocument "InvalidDocument"
 //   The specified document does not exist.
 //
+//   * ErrCodeInvalidDocumentVersion "InvalidDocumentVersion"
+//   The document version is not valid or does not exist.
+//
 //   * ErrCodeInvalidOutputFolder "InvalidOutputFolder"
 //   The S3 bucket does not exist.
 //
@@ -8523,7 +8718,7 @@ const opStartAutomationExecution = "StartAutomationExecution"
 
 // StartAutomationExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the StartAutomationExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8625,7 +8820,7 @@ const opStopAutomationExecution = "StopAutomationExecution"
 
 // StopAutomationExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the StopAutomationExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8711,7 +8906,7 @@ const opUpdateAssociation = "UpdateAssociation"
 
 // UpdateAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8831,7 +9026,7 @@ const opUpdateAssociationStatus = "UpdateAssociationStatus"
 
 // UpdateAssociationStatusRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateAssociationStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8939,7 +9134,7 @@ const opUpdateDocument = "UpdateDocument"
 
 // UpdateDocumentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDocument operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9041,7 +9236,7 @@ const opUpdateDocumentDefaultVersion = "UpdateDocumentDefaultVersion"
 
 // UpdateDocumentDefaultVersionRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDocumentDefaultVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9129,7 +9324,7 @@ const opUpdateMaintenanceWindow = "UpdateMaintenanceWindow"
 
 // UpdateMaintenanceWindowRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMaintenanceWindow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9215,7 +9410,7 @@ const opUpdateMaintenanceWindowTarget = "UpdateMaintenanceWindowTarget"
 
 // UpdateMaintenanceWindowTargetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMaintenanceWindowTarget operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9317,7 +9512,7 @@ const opUpdateMaintenanceWindowTask = "UpdateMaintenanceWindowTask"
 
 // UpdateMaintenanceWindowTaskRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMaintenanceWindowTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9360,18 +9555,18 @@ func (c *SSM) UpdateMaintenanceWindowTaskRequest(input *UpdateMaintenanceWindowT
 // Modifies a task assigned to a Maintenance Window. You can't change the task
 // type, but you can change the following values:
 //
-// Task ARN. For example, you can change a RUN_COMMAND task from AWS-RunPowerShellScript
-// to AWS-RunShellScript.
+//    * TaskARN. For example, you can change a RUN_COMMAND task from AWS-RunPowerShellScript
+//    to AWS-RunShellScript.
 //
-// Service role ARN.
+//    * ServiceRoleArn
 //
-// Task parameters.
+//    * TaskInvocationParameters
 //
-// Task priority.
+//    * Priority
 //
-// Task MaxConcurrency and MaxErrors.
+//    * MaxConcurrency
 //
-// Log location.
+//    * MaxErrors
 //
 // If a parameter is null, then the corresponding field is not modified. Also,
 // if you set Replace to true, then all fields required by the RegisterTaskWithMaintenanceWindow
@@ -9422,7 +9617,7 @@ const opUpdateManagedInstanceRole = "UpdateManagedInstanceRole"
 
 // UpdateManagedInstanceRoleRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateManagedInstanceRole operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9517,7 +9712,7 @@ const opUpdatePatchBaseline = "UpdatePatchBaseline"
 
 // UpdatePatchBaselineRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePatchBaseline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9708,15 +9903,28 @@ type AddTagsToResourceInput struct {
 
 	// The resource ID you want to tag.
 	//
-	// For the ManagedInstance, MaintenanceWindow, and PatchBaseline values, use
-	// the ID of the resource, such as mw-01234361858c9b57b for a Maintenance Window.
+	// Use the ID of the resource. Here are some examples:
+	//
+	// ManagedInstance: mi-012345abcde
+	//
+	// MaintenanceWindow: mw-012345abcde
+	//
+	// PatchBaseline: pb-012345abcde
 	//
 	// For the Document and Parameter values, use the name of the resource.
+	//
+	// The ManagedInstance type for this API action is only for on-premises managed
+	// instances. You must specify the the name of the managed instance in the following
+	// format: mi-ID_number. For example, mi-1a2b3c4d5e6f.
 	//
 	// ResourceId is a required field
 	ResourceId *string `type:"string" required:"true"`
 
 	// Specifies the type of resource you are tagging.
+	//
+	// The ManagedInstance type for this API action is for on-premises managed instances.
+	// You must specify the the name of the managed instance in the following format:
+	// mi-ID_number. For example, mi-1a2b3c4d5e6f.
 	//
 	// ResourceType is a required field
 	ResourceType *string `type:"string" required:"true" enum:"ResourceTypeForTagging"`
@@ -9724,6 +9932,8 @@ type AddTagsToResourceInput struct {
 	// One or more tags. The value parameter is required, but if you don't want
 	// the tag to have a value, specify the parameter with no value, and we set
 	// the value to an empty string.
+	//
+	// Do not enter personally identifiable information in this field.
 	//
 	// Tags is a required field
 	Tags []*Tag `type:"list" required:"true"`
@@ -10917,11 +11127,14 @@ type Command struct {
 	// The name of the document requested for execution.
 	DocumentName *string `type:"string"`
 
+	// The SSM document version.
+	DocumentVersion *string `type:"string"`
+
 	// The number of targets for which the status is Failed or Execution Timed Out.
 	ErrorCount *int64 `type:"integer"`
 
 	// If this time is reached and the command has not already started executing,
-	// it will not execute. Calculated based on the ExpiresAfter user input provided
+	// it will not run. Calculated based on the ExpiresAfter user input provided
 	// as part of the SendCommand API.
 	ExpiresAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
 
@@ -11046,6 +11259,12 @@ func (s *Command) SetCompletedCount(v int64) *Command {
 // SetDocumentName sets the DocumentName field's value.
 func (s *Command) SetDocumentName(v string) *Command {
 	s.DocumentName = &v
+	return s
+}
+
+// SetDocumentVersion sets the DocumentVersion field's value.
+func (s *Command) SetDocumentVersion(v string) *Command {
+	s.DocumentVersion = &v
 	return s
 }
 
@@ -11221,6 +11440,9 @@ type CommandInvocation struct {
 	// The document name that was requested for execution.
 	DocumentName *string `type:"string"`
 
+	// The SSM document version.
+	DocumentVersion *string `type:"string"`
+
 	// The instance ID in which this invocation was requested.
 	InstanceId *string `type:"string"`
 
@@ -11334,6 +11556,12 @@ func (s *CommandInvocation) SetComment(v string) *CommandInvocation {
 // SetDocumentName sets the DocumentName field's value.
 func (s *CommandInvocation) SetDocumentName(v string) *CommandInvocation {
 	s.DocumentName = &v
+	return s
+}
+
+// SetDocumentVersion sets the DocumentVersion field's value.
+func (s *CommandInvocation) SetDocumentVersion(v string) *CommandInvocation {
+	s.DocumentVersion = &v
 	return s
 }
 
@@ -11671,7 +11899,7 @@ type ComplianceItem struct {
 	ExecutionSummary *ComplianceExecutionSummary `type:"structure"`
 
 	// An ID for the compliance item. For example, if the compliance item is a Windows
-	// patch, the ID could be the number of the KB article. Here's an example: KB4010320.
+	// patch, the ID could be the number of the KB article; for example: KB4010320.
 	Id *string `min:"1" type:"string"`
 
 	// An ID for the resource. For a managed instance, this is the instance ID.
@@ -11689,8 +11917,8 @@ type ComplianceItem struct {
 	Status *string `type:"string" enum:"ComplianceStatus"`
 
 	// A title for the compliance item. For example, if the compliance item is a
-	// Windows patch, the title could be the title of the KB article for the patch.
-	// Here's an example: Security Update for Active Directory Federation Services.
+	// Windows patch, the title could be the title of the KB article for the patch;
+	// for example: Security Update for Active Directory Federation Services.
 	Title *string `type:"string"`
 }
 
@@ -11781,8 +12009,8 @@ type ComplianceItemEntry struct {
 	Status *string `type:"string" required:"true" enum:"ComplianceStatus"`
 
 	// The title of the compliance item. For example, if the compliance item is
-	// a Windows patch, the title could be the title of the KB article for the patch.
-	// Here's an example: Security Update for Active Directory Federation Services.
+	// a Windows patch, the title could be the title of the KB article for the patch;
+	// for example: Security Update for Active Directory Federation Services.
 	Title *string `type:"string"`
 }
 
@@ -11986,10 +12214,14 @@ type CreateActivationInput struct {
 
 	// The name of the registered, managed instance as it will appear in the Amazon
 	// EC2 console or when you use the AWS command line tools to list EC2 resources.
+	//
+	// Do not enter personally identifiable information in this field.
 	DefaultInstanceName *string `type:"string"`
 
-	// A userdefined description of the resource that you want to register with
+	// A user-defined description of the resource that you want to register with
 	// Amazon EC2.
+	//
+	// Do not enter personally identifiable information in this field.
 	Description *string `type:"string"`
 
 	// The date by which this activation request should expire. The default value
@@ -12730,12 +12962,16 @@ type CreatePatchBaselineInput struct {
 	ApprovalRules *PatchRuleGroup `type:"structure"`
 
 	// A list of explicitly approved patches for the baseline.
+	//
+	// For information about accepted formats for lists of approved patches and
+	// rejected patches, see Package Name Formats for Approved and Rejected Patch
+	// Lists (http://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-approved-rejected-package-name-formats.html)
+	// in the AWS Systems Manager User Guide.
 	ApprovedPatches []*string `type:"list"`
 
 	// Defines the compliance level for approved patches. This means that if an
 	// approved patch is reported as missing, this is the severity of the compliance
-	// violation. Valid compliance severity levels include the following: CRITICAL,
-	// HIGH, MEDIUM, LOW, INFORMATIONAL, UNSPECIFIED. The default value is UNSPECIFIED.
+	// violation. The default value is UNSPECIFIED.
 	ApprovedPatchesComplianceLevel *string `type:"string" enum:"PatchComplianceLevel"`
 
 	// Indicates whether the list of approved patches includes non-security updates
@@ -12762,6 +12998,11 @@ type CreatePatchBaselineInput struct {
 	OperatingSystem *string `type:"string" enum:"OperatingSystem"`
 
 	// A list of explicitly rejected patches for the baseline.
+	//
+	// For information about accepted formats for lists of approved patches and
+	// rejected patches, see Package Name Formats for Approved and Rejected Patch
+	// Lists (http://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-approved-rejected-package-name-formats.html)
+	// in the AWS Systems Manager User Guide.
 	RejectedPatches []*string `type:"list"`
 
 	// Information about the patches to use to update the instances, including target
@@ -13141,6 +13382,138 @@ func (s DeleteDocumentOutput) String() string {
 // GoString returns the string representation
 func (s DeleteDocumentOutput) GoString() string {
 	return s.String()
+}
+
+type DeleteInventoryInput struct {
+	_ struct{} `type:"structure"`
+
+	// User-provided idempotency token.
+	ClientToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// Use this option to view a summary of the deletion request without deleting
+	// any data or the data type. This option is useful when you only want to understand
+	// what will be deleted. Once you validate that the data to be deleted is what
+	// you intend to delete, you can run the same command without specifying the
+	// DryRun option.
+	DryRun *bool `type:"boolean"`
+
+	// Use the SchemaDeleteOption to delete a custom inventory type (schema). If
+	// you don't choose this option, the system only deletes existing inventory
+	// data associated with the custom inventory type. Choose one of the following
+	// options:
+	//
+	// DisableSchema: If you choose this option, the system ignores all inventory
+	// data for the specified version, and any earlier versions. To enable this
+	// schema again, you must call the PutInventory action for a version greater
+	// than the disbled version.
+	//
+	// DeleteSchema: This option deletes the specified custom type from the Inventory
+	// service. You can recreate the schema later, if you want.
+	SchemaDeleteOption *string `type:"string" enum:"InventorySchemaDeleteOption"`
+
+	// The name of the custom inventory type for which you want to delete either
+	// all previously collected data, or the inventory type itself.
+	//
+	// TypeName is a required field
+	TypeName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteInventoryInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInventoryInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteInventoryInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteInventoryInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.TypeName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypeName"))
+	}
+	if s.TypeName != nil && len(*s.TypeName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TypeName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *DeleteInventoryInput) SetClientToken(v string) *DeleteInventoryInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DeleteInventoryInput) SetDryRun(v bool) *DeleteInventoryInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetSchemaDeleteOption sets the SchemaDeleteOption field's value.
+func (s *DeleteInventoryInput) SetSchemaDeleteOption(v string) *DeleteInventoryInput {
+	s.SchemaDeleteOption = &v
+	return s
+}
+
+// SetTypeName sets the TypeName field's value.
+func (s *DeleteInventoryInput) SetTypeName(v string) *DeleteInventoryInput {
+	s.TypeName = &v
+	return s
+}
+
+type DeleteInventoryOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Every DeleteInventory action is assigned a unique ID. This option returns
+	// a unique ID. You can use this ID to query the status of a delete operation.
+	// This option is useful for ensuring that a delete operation has completed
+	// before you begin other actions.
+	DeletionId *string `type:"string"`
+
+	// A summary of the delete operation. For more information about this summary,
+	// see Understanding the Delete Inventory Summary (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-delete.html#sysman-inventory-delete-summary).
+	DeletionSummary *InventoryDeletionSummary `type:"structure"`
+
+	// The name of the inventory data type specified in the request.
+	TypeName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteInventoryOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInventoryOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeletionId sets the DeletionId field's value.
+func (s *DeleteInventoryOutput) SetDeletionId(v string) *DeleteInventoryOutput {
+	s.DeletionId = &v
+	return s
+}
+
+// SetDeletionSummary sets the DeletionSummary field's value.
+func (s *DeleteInventoryOutput) SetDeletionSummary(v *InventoryDeletionSummary) *DeleteInventoryOutput {
+	s.DeletionSummary = v
+	return s
+}
+
+// SetTypeName sets the TypeName field's value.
+func (s *DeleteInventoryOutput) SetTypeName(v string) *DeleteInventoryOutput {
+	s.TypeName = &v
+	return s
 }
 
 type DeleteMaintenanceWindowInput struct {
@@ -15218,6 +15591,96 @@ func (s *DescribeInstancePatchesOutput) SetPatches(v []*PatchComplianceData) *De
 	return s
 }
 
+type DescribeInventoryDeletionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specify the delete inventory ID for which you want information. This ID was
+	// returned by the DeleteInventory action.
+	DeletionId *string `type:"string"`
+
+	// The maximum number of items to return for this call. The call also returns
+	// a token that you can specify in a subsequent call to get the next set of
+	// results.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A token to start the list. Use this token to get the next set of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeInventoryDeletionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeInventoryDeletionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeInventoryDeletionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeInventoryDeletionsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeletionId sets the DeletionId field's value.
+func (s *DescribeInventoryDeletionsInput) SetDeletionId(v string) *DescribeInventoryDeletionsInput {
+	s.DeletionId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeInventoryDeletionsInput) SetMaxResults(v int64) *DescribeInventoryDeletionsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeInventoryDeletionsInput) SetNextToken(v string) *DescribeInventoryDeletionsInput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeInventoryDeletionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of status items for deleted inventory.
+	InventoryDeletions []*InventoryDeletionStatusItem `type:"list"`
+
+	// The token for the next set of items to return. Use this token to get the
+	// next set of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeInventoryDeletionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeInventoryDeletionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetInventoryDeletions sets the InventoryDeletions field's value.
+func (s *DescribeInventoryDeletionsOutput) SetInventoryDeletions(v []*InventoryDeletionStatusItem) *DescribeInventoryDeletionsOutput {
+	s.InventoryDeletions = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeInventoryDeletionsOutput) SetNextToken(v string) *DescribeInventoryDeletionsOutput {
+	s.NextToken = &v
+	return s
+}
+
 type DescribeMaintenanceWindowExecutionTaskInvocationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17202,6 +17665,9 @@ type GetCommandInvocationOutput struct {
 	// The name of the document that was executed. For example, AWS-RunShellScript.
 	DocumentName *string `type:"string"`
 
+	// The SSM document version used in the request.
+	DocumentVersion *string `type:"string"`
+
 	// Duration since ExecutionStartDateTime.
 	ExecutionElapsedTime *string `type:"string"`
 
@@ -17254,8 +17720,7 @@ type GetCommandInvocationOutput struct {
 	// If an Amazon S3 bucket was not specified, then this string is empty.
 	StandardOutputUrl *string `type:"string"`
 
-	// The status of the parent command for this invocation. This status can be
-	// different than StatusDetails.
+	// The status of this invocation plugin. This status can be different than StatusDetails.
 	Status *string `type:"string" enum:"CommandInvocationStatus"`
 
 	// A detailed status of the command execution for an invocation. StatusDetails
@@ -17333,6 +17798,12 @@ func (s *GetCommandInvocationOutput) SetComment(v string) *GetCommandInvocationO
 // SetDocumentName sets the DocumentName field's value.
 func (s *GetCommandInvocationOutput) SetDocumentName(v string) *GetCommandInvocationOutput {
 	s.DocumentName = &v
+	return s
+}
+
+// SetDocumentVersion sets the DocumentVersion field's value.
+func (s *GetCommandInvocationOutput) SetDocumentVersion(v string) *GetCommandInvocationOutput {
+	s.DocumentVersion = &v
 	return s
 }
 
@@ -18350,8 +18821,14 @@ type GetMaintenanceWindowExecutionTaskOutput struct {
 	// was retrieved.
 	TaskExecutionId *string `min:"36" type:"string"`
 
-	// The parameters passed to the task when it was executed. The map has the following
-	// format:
+	// The parameters passed to the task when it was executed.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+	//
+	// The map has the following format:
 	//
 	// Key: string, between 1 and 255 characters
 	//
@@ -18665,6 +19142,11 @@ type GetMaintenanceWindowTaskOutput struct {
 	Description *string `min:"1" type:"string"`
 
 	// The location in Amazon S3 where the task results are logged.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The maximum number of targets allowed to run this task in parallel.
@@ -18696,6 +19178,11 @@ type GetMaintenanceWindowTaskOutput struct {
 	TaskInvocationParameters *MaintenanceWindowTaskInvocationParameters `type:"structure"`
 
 	// The parameters to pass to the task when it executes.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	TaskParameters map[string]*MaintenanceWindowTaskParameterValueExpression `type:"map"`
 
 	// The type of task to execute.
@@ -18996,6 +19483,8 @@ type GetParametersByPathInput struct {
 	NextToken *string `type:"string"`
 
 	// Filters to limit the request results.
+	//
+	// You can't filter using the parameter name.
 	ParameterFilters []*ParameterStringFilter `type:"list"`
 
 	// The hierarchy for the parameter. Hierarchies start with a forward slash (/)
@@ -19006,6 +19495,12 @@ type GetParametersByPathInput struct {
 	Path *string `min:"1" type:"string" required:"true"`
 
 	// Retrieve all parameters within a hierarchy.
+	//
+	// If a user has access to a path, then the user can access all levels of that
+	// path. For example, if a user has permission to access path /a, then the user
+	// can also access /a/b. Even if a user has explicitly been denied access in
+	// IAM for parameter /a, they can still call the GetParametersByPath API action
+	// recursively and view /a/b.
 	Recursive *bool `type:"boolean"`
 
 	// Retrieve all parameters in a hierarchy with their value decrypted.
@@ -20114,7 +20609,7 @@ type InstancePatchState struct {
 	// OperationStartTime is a required field
 	OperationStartTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
 
-	// Placeholder information, this field will always be empty in the current release
+	// Placeholder information. This field will always be empty in the current release
 	// of the service.
 	OwnerInformation *string `min:"1" type:"string"`
 
@@ -20348,6 +20843,171 @@ func (s *InventoryAggregator) SetAggregators(v []*InventoryAggregator) *Inventor
 // SetExpression sets the Expression field's value.
 func (s *InventoryAggregator) SetExpression(v string) *InventoryAggregator {
 	s.Expression = &v
+	return s
+}
+
+// Status information returned by the DeleteInventory action.
+type InventoryDeletionStatusItem struct {
+	_ struct{} `type:"structure"`
+
+	// The deletion ID returned by the DeleteInventory action.
+	DeletionId *string `type:"string"`
+
+	// The UTC timestamp when the delete operation started.
+	DeletionStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Information about the delete operation. For more information about this summary,
+	// see Understanding the Delete Inventory Summary (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-delete.html#sysman-inventory-delete-summary).
+	DeletionSummary *InventoryDeletionSummary `type:"structure"`
+
+	// The status of the operation. Possible values are InProgress and Complete.
+	LastStatus *string `type:"string" enum:"InventoryDeletionStatus"`
+
+	// Information about the status.
+	LastStatusMessage *string `type:"string"`
+
+	// The UTC timestamp of when the last status report.
+	LastStatusUpdateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the inventory data type.
+	TypeName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s InventoryDeletionStatusItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryDeletionStatusItem) GoString() string {
+	return s.String()
+}
+
+// SetDeletionId sets the DeletionId field's value.
+func (s *InventoryDeletionStatusItem) SetDeletionId(v string) *InventoryDeletionStatusItem {
+	s.DeletionId = &v
+	return s
+}
+
+// SetDeletionStartTime sets the DeletionStartTime field's value.
+func (s *InventoryDeletionStatusItem) SetDeletionStartTime(v time.Time) *InventoryDeletionStatusItem {
+	s.DeletionStartTime = &v
+	return s
+}
+
+// SetDeletionSummary sets the DeletionSummary field's value.
+func (s *InventoryDeletionStatusItem) SetDeletionSummary(v *InventoryDeletionSummary) *InventoryDeletionStatusItem {
+	s.DeletionSummary = v
+	return s
+}
+
+// SetLastStatus sets the LastStatus field's value.
+func (s *InventoryDeletionStatusItem) SetLastStatus(v string) *InventoryDeletionStatusItem {
+	s.LastStatus = &v
+	return s
+}
+
+// SetLastStatusMessage sets the LastStatusMessage field's value.
+func (s *InventoryDeletionStatusItem) SetLastStatusMessage(v string) *InventoryDeletionStatusItem {
+	s.LastStatusMessage = &v
+	return s
+}
+
+// SetLastStatusUpdateTime sets the LastStatusUpdateTime field's value.
+func (s *InventoryDeletionStatusItem) SetLastStatusUpdateTime(v time.Time) *InventoryDeletionStatusItem {
+	s.LastStatusUpdateTime = &v
+	return s
+}
+
+// SetTypeName sets the TypeName field's value.
+func (s *InventoryDeletionStatusItem) SetTypeName(v string) *InventoryDeletionStatusItem {
+	s.TypeName = &v
+	return s
+}
+
+// Information about the delete operation.
+type InventoryDeletionSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Remaining number of items to delete.
+	RemainingCount *int64 `type:"integer"`
+
+	// A list of counts and versions for deleted items.
+	SummaryItems []*InventoryDeletionSummaryItem `type:"list"`
+
+	// The total number of items to delete. This count does not change during the
+	// delete operation.
+	TotalCount *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s InventoryDeletionSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryDeletionSummary) GoString() string {
+	return s.String()
+}
+
+// SetRemainingCount sets the RemainingCount field's value.
+func (s *InventoryDeletionSummary) SetRemainingCount(v int64) *InventoryDeletionSummary {
+	s.RemainingCount = &v
+	return s
+}
+
+// SetSummaryItems sets the SummaryItems field's value.
+func (s *InventoryDeletionSummary) SetSummaryItems(v []*InventoryDeletionSummaryItem) *InventoryDeletionSummary {
+	s.SummaryItems = v
+	return s
+}
+
+// SetTotalCount sets the TotalCount field's value.
+func (s *InventoryDeletionSummary) SetTotalCount(v int64) *InventoryDeletionSummary {
+	s.TotalCount = &v
+	return s
+}
+
+// Either a count, remaining count, or a version number in a delete inventory
+// summary.
+type InventoryDeletionSummaryItem struct {
+	_ struct{} `type:"structure"`
+
+	// A count of the number of deleted items.
+	Count *int64 `type:"integer"`
+
+	// The remaining number of items to delete.
+	RemainingCount *int64 `type:"integer"`
+
+	// The inventory type version.
+	Version *string `type:"string"`
+}
+
+// String returns the string representation
+func (s InventoryDeletionSummaryItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryDeletionSummaryItem) GoString() string {
+	return s.String()
+}
+
+// SetCount sets the Count field's value.
+func (s *InventoryDeletionSummaryItem) SetCount(v int64) *InventoryDeletionSummaryItem {
+	s.Count = &v
+	return s
+}
+
+// SetRemainingCount sets the RemainingCount field's value.
+func (s *InventoryDeletionSummaryItem) SetRemainingCount(v int64) *InventoryDeletionSummaryItem {
+	s.RemainingCount = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *InventoryDeletionSummaryItem) SetVersion(v string) *InventoryDeletionSummaryItem {
+	s.Version = &v
 	return s
 }
 
@@ -22061,6 +22721,11 @@ func (s *ListTagsForResourceOutput) SetTagList(v []*Tag) *ListTagsForResourceOut
 }
 
 // Information about an Amazon S3 bucket to write instance-level logs to.
+//
+// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 type LoggingInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -22136,6 +22801,22 @@ type MaintenanceWindowAutomationParameters struct {
 	DocumentVersion *string `type:"string"`
 
 	// The parameters for the AUTOMATION task.
+	//
+	// For information about specifying and updating task parameters, see RegisterTaskWithMaintenanceWindow
+	// and UpdateMaintenanceWindowTask.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+	//
+	// For AUTOMATION task types, Systems Manager ignores any values specified for
+	// these parameters.
 	Parameters map[string][]*string `min:"1" type:"map"`
 }
 
@@ -22578,6 +23259,22 @@ func (s *MaintenanceWindowIdentity) SetWindowId(v string) *MaintenanceWindowIden
 }
 
 // The parameters for a LAMBDA task type.
+//
+// For information about specifying and updating task parameters, see RegisterTaskWithMaintenanceWindow
+// and UpdateMaintenanceWindowTask.
+//
+// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// TaskParameters has been deprecated. To specify parameters to pass to a task
+// when it runs, instead use the Parameters option in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// For Lambda tasks, Systems Manager ignores any values specified for TaskParameters
+// and LoggingInfo.
 type MaintenanceWindowLambdaParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -22643,6 +23340,22 @@ func (s *MaintenanceWindowLambdaParameters) SetQualifier(v string) *MaintenanceW
 }
 
 // The parameters for a RUN_COMMAND task type.
+//
+// For information about specifying and updating task parameters, see RegisterTaskWithMaintenanceWindow
+// and UpdateMaintenanceWindowTask.
+//
+// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// TaskParameters has been deprecated. To specify parameters to pass to a task
+// when it runs, instead use the Parameters option in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// For Run Command tasks, Systems Manager uses specified values for TaskParameters
+// and LoggingInfo only if no values are specified for TaskInvocationParameters.
 type MaintenanceWindowRunCommandParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -22757,7 +23470,23 @@ func (s *MaintenanceWindowRunCommandParameters) SetTimeoutSeconds(v int64) *Main
 	return s
 }
 
-// The parameters for the STEP_FUNCTION execution.
+// The parameters for a STEP_FUNCTION task.
+//
+// For information about specifying and updating task parameters, see RegisterTaskWithMaintenanceWindow
+// and UpdateMaintenanceWindowTask.
+//
+// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// TaskParameters has been deprecated. To specify parameters to pass to a task
+// when it runs, instead use the Parameters option in the TaskInvocationParameters
+// structure. For information about how Systems Manager handles these options
+// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+//
+// For Step Functions tasks, Systems Manager ignores any values specified for
+// TaskParameters and LoggingInfo.
 type MaintenanceWindowStepFunctionsParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -22891,6 +23620,11 @@ type MaintenanceWindowTask struct {
 	Description *string `min:"1" type:"string"`
 
 	// Information about an Amazon S3 bucket to write task-level logs to.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The maximum number of targets this task can be run for in parallel.
@@ -22921,6 +23655,11 @@ type MaintenanceWindowTask struct {
 	TaskArn *string `min:"1" type:"string"`
 
 	// The parameters that should be passed to the task when it is executed.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	TaskParameters map[string]*MaintenanceWindowTaskParameterValueExpression `type:"map"`
 
 	// The type of task. The type can be one of the following: RUN_COMMAND, AUTOMATION,
@@ -23026,7 +23765,7 @@ func (s *MaintenanceWindowTask) SetWindowTaskId(v string) *MaintenanceWindowTask
 type MaintenanceWindowTaskInvocationParameters struct {
 	_ struct{} `type:"structure"`
 
-	// The parameters for a AUTOMATION task type.
+	// The parameters for an AUTOMATION task type.
 	Automation *MaintenanceWindowAutomationParameters `type:"structure"`
 
 	// The parameters for a LAMBDA task type.
@@ -24172,9 +24911,9 @@ func (s *PatchComplianceData) SetTitle(v string) *PatchComplianceData {
 //
 //    * Low
 //
-// SUSE Linux Enterprise Server (SUSE) Operating Systems
+// SUSE Linux Enterprise Server (SLES) Operating Systems
 //
-// The supported keys for SUSE operating systems are PRODUCT, CLASSIFICATION,
+// The supported keys for SLES operating systems are PRODUCT, CLASSIFICATION,
 // and SEVERITY. See the following lists for valid values for each of these
 // keys.
 //
@@ -24227,6 +24966,62 @@ func (s *PatchComplianceData) SetTitle(v string) *PatchComplianceData {
 //    * Important
 //
 //    * Moderate
+//
+//    * Low
+//
+// CentOS Operating Systems
+//
+// The supported keys for CentOS operating systems are PRODUCT, CLASSIFICATION,
+// and SEVERITY. See the following lists for valid values for each of these
+// keys.
+//
+// Supported key:PRODUCT
+//
+// Supported values:
+//
+//    * CentOS6.5
+//
+//    * CentOS6.6
+//
+//    * CentOS6.7
+//
+//    * CentOS6.8
+//
+//    * CentOS6.9
+//
+//    * CentOS7.0
+//
+//    * CentOS7.1
+//
+//    * CentOS7.2
+//
+//    * CentOS7.3
+//
+//    * CentOS7.4
+//
+// Supported key:CLASSIFICATION
+//
+// Supported values:
+//
+//    * Security
+//
+//    * Bugfix
+//
+//    * Enhancement
+//
+//    * Recommended
+//
+//    * Newpackage
+//
+// Supported key:SEVERITY
+//
+// Supported values:
+//
+//    * Critical
+//
+//    * Important
+//
+//    * Medium
 //
 //    * Low
 type PatchFilter struct {
@@ -24892,6 +25687,9 @@ func (s *PutInventoryInput) SetItems(v []*InventoryItem) *PutInventoryInput {
 
 type PutInventoryOutput struct {
 	_ struct{} `type:"structure"`
+
+	// Information about the request.
+	Message *string `type:"string"`
 }
 
 // String returns the string representation
@@ -24904,6 +25702,12 @@ func (s PutInventoryOutput) GoString() string {
 	return s.String()
 }
 
+// SetMessage sets the Message field's value.
+func (s *PutInventoryOutput) SetMessage(v string) *PutInventoryOutput {
+	s.Message = &v
+	return s
+}
+
 type PutParameterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -24913,6 +25717,8 @@ type PutParameterInput struct {
 	AllowedPattern *string `type:"string"`
 
 	// Information about the parameter that you want to add to the system.
+	//
+	// Do not enter personally identifiable information in this field.
 	Description *string `type:"string"`
 
 	// The KMS Key ID that you want to use to encrypt a parameter when you choose
@@ -25232,8 +26038,17 @@ type RegisterTargetWithMaintenanceWindowInput struct {
 	// ResourceType is a required field
 	ResourceType *string `type:"string" required:"true" enum:"MaintenanceWindowResourceType"`
 
-	// The targets (either instances or tags). Instances are specified using Key=instanceids,Values=<instanceid1>,<instanceid2>.
-	// Tags are specified using Key=<tag name>,Values=<tag value>.
+	// The targets (either instances or tags).
+	//
+	// Specify instances using the following format:
+	//
+	// Key=InstanceIds,Values=<instance-id-1>,<instance-id-2>
+	//
+	// Specify tags using either of the following formats:
+	//
+	// Key=tag:<tag-key>,Values=<tag-value-1>,<tag-value-2>
+	//
+	// Key=tag-key,Values=<tag-key-1>,<tag-key-2>
 	//
 	// Targets is a required field
 	Targets []*Target `type:"list" required:"true"`
@@ -25374,6 +26189,11 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 
 	// A structure containing information about an Amazon S3 bucket to write instance-level
 	// logs to.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The maximum number of targets this task can be run for in parallel.
@@ -25399,8 +26219,15 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 	// ServiceRoleArn is a required field
 	ServiceRoleArn *string `type:"string" required:"true"`
 
-	// The targets (either instances or tags). Instances are specified using Key=instanceids,Values=<instanceid1>,<instanceid2>.
-	// Tags are specified using Key=<tag name>,Values=<tag value>.
+	// The targets (either instances or Maintenance Window targets).
+	//
+	// Specify instances using the following format:
+	//
+	// Key=InstanceIds,Values=<instance-id-1>,<instance-id-2>
+	//
+	// Specify Maintenance Window targets using the following format:
+	//
+	// Key=<WindowTargetIds>,Values=<window-target-id-1>,<window-target-id-2>
 	//
 	// Targets is a required field
 	Targets []*Target `type:"list" required:"true"`
@@ -25415,6 +26242,11 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 	TaskInvocationParameters *MaintenanceWindowTaskInvocationParameters `type:"structure"`
 
 	// The parameters that should be passed to the task when it is executed.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	TaskParameters map[string]*MaintenanceWindowTaskParameterValueExpression `type:"map"`
 
 	// The type of task being registered.
@@ -25422,7 +26254,7 @@ type RegisterTaskWithMaintenanceWindowInput struct {
 	// TaskType is a required field
 	TaskType *string `type:"string" required:"true" enum:"MaintenanceWindowTaskType"`
 
-	// The id of the Maintenance Window the task should be added to.
+	// The ID of the Maintenance Window the task should be added to.
 	//
 	// WindowId is a required field
 	WindowId *string `min:"20" type:"string" required:"true"`
@@ -25620,12 +26452,29 @@ func (s *RegisterTaskWithMaintenanceWindowOutput) SetWindowTaskId(v string) *Reg
 type RemoveTagsFromResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The resource ID for which you want to remove tags.
+	// The resource ID for which you want to remove tags. Use the ID of the resource.
+	// Here are some examples:
+	//
+	// ManagedInstance: mi-012345abcde
+	//
+	// MaintenanceWindow: mw-012345abcde
+	//
+	// PatchBaseline: pb-012345abcde
+	//
+	// For the Document and Parameter values, use the name of the resource.
+	//
+	// The ManagedInstance type for this API action is only for on-premises managed
+	// instances. You must specify the the name of the managed instance in the following
+	// format: mi-ID_number. For example, mi-1a2b3c4d5e6f.
 	//
 	// ResourceId is a required field
 	ResourceId *string `type:"string" required:"true"`
 
 	// The type of resource of which you want to remove a tag.
+	//
+	// The ManagedInstance type for this API action is only for on-premises managed
+	// instances. You must specify the the name of the managed instance in the following
+	// format: mi-ID_number. For example, mi-1a2b3c4d5e6f.
 	//
 	// ResourceType is a required field
 	ResourceType *string `type:"string" required:"true" enum:"ResourceTypeForTagging"`
@@ -26232,6 +27081,10 @@ type SendCommandInput struct {
 	// DocumentName is a required field
 	DocumentName *string `type:"string" required:"true"`
 
+	// The SSM document version to use in the request. You can specify Default,
+	// Latest, or a specific version number.
+	DocumentVersion *string `type:"string"`
+
 	// The instance IDs where the command should execute. You can specify a maximum
 	// of 50 IDs. If you prefer not to list individual instance IDs, you can instead
 	// send commands to a fleet of instances using the Targets parameter, which
@@ -26280,7 +27133,7 @@ type SendCommandInput struct {
 	Targets []*Target `type:"list"`
 
 	// If this time is reached and the command has not already started executing,
-	// it will not execute.
+	// it will not run.
 	TimeoutSeconds *int64 `min:"30" type:"integer"`
 }
 
@@ -26353,6 +27206,12 @@ func (s *SendCommandInput) SetDocumentHashType(v string) *SendCommandInput {
 // SetDocumentName sets the DocumentName field's value.
 func (s *SendCommandInput) SetDocumentName(v string) *SendCommandInput {
 	s.DocumentName = &v
+	return s
+}
+
+// SetDocumentVersion sets the DocumentVersion field's value.
+func (s *SendCommandInput) SetDocumentVersion(v string) *SendCommandInput {
+	s.DocumentVersion = &v
 	return s
 }
 
@@ -27957,6 +28816,11 @@ type UpdateMaintenanceWindowTaskInput struct {
 	Description *string `min:"1" type:"string"`
 
 	// The new logging location in Amazon S3 to specify.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The new MaxConcurrency value you want to specify. MaxConcurrency is the number
@@ -27995,7 +28859,14 @@ type UpdateMaintenanceWindowTaskInput struct {
 	// fields that match the task type. All other fields should be empty.
 	TaskInvocationParameters *MaintenanceWindowTaskInvocationParameters `type:"structure"`
 
-	// The parameters to modify. The map has the following format:
+	// The parameters to modify.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
+	//
+	// The map has the following format:
 	//
 	// Key: string, between 1 and 255 characters
 	//
@@ -28171,6 +29042,11 @@ type UpdateMaintenanceWindowTaskOutput struct {
 	Description *string `min:"1" type:"string"`
 
 	// The updated logging information in Amazon S3.
+	//
+	// LoggingInfo has been deprecated. To specify an S3 bucket to contain logs,
+	// instead use the OutputS3BucketName and OutputS3KeyPrefix options in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	LoggingInfo *LoggingInfo `type:"structure"`
 
 	// The updated MaxConcurrency value.
@@ -28198,6 +29074,11 @@ type UpdateMaintenanceWindowTaskOutput struct {
 	TaskInvocationParameters *MaintenanceWindowTaskInvocationParameters `type:"structure"`
 
 	// The updated parameter values.
+	//
+	// TaskParameters has been deprecated. To specify parameters to pass to a task
+	// when it runs, instead use the Parameters option in the TaskInvocationParameters
+	// structure. For information about how Systems Manager handles these options
+	// for the supported Maintenance Window task types, see MaintenanceWindowTaskInvocationParameters.
 	TaskParameters map[string]*MaintenanceWindowTaskParameterValueExpression `type:"map"`
 
 	// The ID of the Maintenance Window that was updated.
@@ -28368,6 +29249,11 @@ type UpdatePatchBaselineInput struct {
 	ApprovalRules *PatchRuleGroup `type:"structure"`
 
 	// A list of explicitly approved patches for the baseline.
+	//
+	// For information about accepted formats for lists of approved patches and
+	// rejected patches, see Package Name Formats for Approved and Rejected Patch
+	// Lists (http://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-approved-rejected-package-name-formats.html)
+	// in the AWS Systems Manager User Guide.
 	ApprovedPatches []*string `type:"list"`
 
 	// Assigns a new compliance severity level to an existing patch baseline.
@@ -28393,6 +29279,11 @@ type UpdatePatchBaselineInput struct {
 	Name *string `min:"3" type:"string"`
 
 	// A list of explicitly rejected patches for the baseline.
+	//
+	// For information about accepted formats for lists of approved patches and
+	// rejected patches, see Package Name Formats for Approved and Rejected Patch
+	// Lists (http://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-approved-rejected-package-name-formats.html)
+	// in the AWS Systems Manager User Guide.
 	RejectedPatches []*string `type:"list"`
 
 	// If True, then all fields that are required by the CreatePatchBaseline action
@@ -29013,6 +29904,14 @@ const (
 )
 
 const (
+	// InventoryDeletionStatusInProgress is a InventoryDeletionStatus enum value
+	InventoryDeletionStatusInProgress = "InProgress"
+
+	// InventoryDeletionStatusComplete is a InventoryDeletionStatus enum value
+	InventoryDeletionStatusComplete = "Complete"
+)
+
+const (
 	// InventoryQueryOperatorTypeEqual is a InventoryQueryOperatorType enum value
 	InventoryQueryOperatorTypeEqual = "Equal"
 
@@ -29027,6 +29926,14 @@ const (
 
 	// InventoryQueryOperatorTypeGreaterThan is a InventoryQueryOperatorType enum value
 	InventoryQueryOperatorTypeGreaterThan = "GreaterThan"
+)
+
+const (
+	// InventorySchemaDeleteOptionDisableSchema is a InventorySchemaDeleteOption enum value
+	InventorySchemaDeleteOptionDisableSchema = "DisableSchema"
+
+	// InventorySchemaDeleteOptionDeleteSchema is a InventorySchemaDeleteOption enum value
+	InventorySchemaDeleteOptionDeleteSchema = "DeleteSchema"
 )
 
 const (
@@ -29128,6 +30035,9 @@ const (
 
 	// OperatingSystemSuse is a OperatingSystem enum value
 	OperatingSystemSuse = "SUSE"
+
+	// OperatingSystemCentos is a OperatingSystem enum value
+	OperatingSystemCentos = "CENTOS"
 )
 
 const (

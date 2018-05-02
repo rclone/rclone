@@ -32,7 +32,7 @@
   "description": "A data platform for customers to create, manage, share and query data.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/bigquery/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/77sYFu0di9EzzwuBGmUFES4JWbE\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/cg_n3NWH4TV_fCgEGVaEaOZcGEA\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/search-16.gif",
     "x32": "https://www.google.com/images/icons/product/search-32.gif"
@@ -77,12 +77,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -998,7 +998,7 @@
       }
     }
   },
-  "revision": "20180311",
+  "revision": "20180422",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "BigtableColumn": {
@@ -1077,6 +1077,19 @@
         "readRowkeyAsString": {
           "description": "[Optional] If field is true, then the rowkey column families will be read and converted to string. Otherwise they are read with BYTES type values and users need to manually cast them with CAST if necessary. The default value is false.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Clustering": {
+      "id": "Clustering",
+      "properties": {
+        "fields": {
+          "description": "[Repeated] One or more fields on which data should be clustered. Only top-level, non-repeated, simple-type fields are supported. The order of the fields will determine how clusters will be generated, so it is important.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1198,7 +1211,7 @@
           "type": "string"
         },
         "location": {
-          "description": "The geographic location where the dataset should reside. Possible values include EU and US. The default value is US.",
+          "description": "The geographic location where the dataset should reside. The default value is US. See details at https://cloud.google.com/bigquery/docs/dataset-locations.",
           "type": "string"
         },
         "selfLink": {
@@ -1363,7 +1376,7 @@
           "type": "number"
         },
         "endMs": {
-          "description": "Stage end time in milliseconds.",
+          "description": "Stage end time represented as milliseconds since epoch.",
           "format": "int64",
           "type": "string"
         },
@@ -1430,7 +1443,7 @@
           "type": "string"
         },
         "startMs": {
-          "description": "Stage start time in milliseconds.",
+          "description": "Stage start time represented as milliseconds since epoch.",
           "format": "int64",
           "type": "string"
         },
@@ -1637,6 +1650,10 @@
     "GoogleSheetsOptions": {
       "id": "GoogleSheetsOptions",
       "properties": {
+        "range": {
+          "description": "[Experimental] [Optional] Range of a sheet to query from. Only used when non-empty. Typical format: !:",
+          "type": "string"
+        },
         "skipLeadingRows": {
           "description": "[Optional] The number of rows at the top of a sheet that BigQuery will skip when reading the data. The default value is 0. This property is useful if you have header rows that should be skipped. When autodetect is on, behavior is the following: * skipLeadingRows unspecified - Autodetect tries to detect headers in the first row. If they are not detected, the row is read as data. Otherwise data is read starting from the second row. * skipLeadingRows is 0 - Instructs autodetect that there are no headers and data should be read starting from the first row. * skipLeadingRows = N \u003e 0 - Autodetect skips N-1 rows and tries to detect headers in row N. If headers are not detected, row N is just skipped. Otherwise row N is used to extract column names for the detected schema.",
           "format": "int64",
@@ -1791,8 +1808,12 @@
           "type": "boolean"
         },
         "autodetect": {
-          "description": "Indicates if we should automatically infer the options and schema for CSV and JSON sources.",
+          "description": "[Optional] Indicates if we should automatically infer the options and schema for CSV and JSON sources.",
           "type": "boolean"
+        },
+        "clustering": {
+          "$ref": "Clustering",
+          "description": "[Experimental] Clustering specification for the destination table. Must be specified with time-based partitioning, data in the table will be first partitioned and subsequently clustered."
         },
         "createDisposition": {
           "description": "[Optional] Specifies whether the job is allowed to create new tables. The following values are supported: CREATE_IF_NEEDED: If the table does not exist, BigQuery creates the table. CREATE_NEVER: The table must already exist. If it does not, a 'notFound' error is returned in the job result. The default value is CREATE_IF_NEEDED. Creation, truncation and append actions occur as one atomic update upon job completion.",
@@ -1881,7 +1902,7 @@
         },
         "timePartitioning": {
           "$ref": "TimePartitioning",
-          "description": "If specified, configures time-based partitioning for the destination table."
+          "description": "Time-based partitioning specification for the destination table."
         },
         "writeDisposition": {
           "description": "[Optional] Specifies the action that occurs if the destination table already exists. The following values are supported: WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data. WRITE_APPEND: If the table already exists, BigQuery appends the data to the table. WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result. The default value is WRITE_APPEND. Each action is atomic and only occurs if BigQuery is able to complete the job successfully. Creation, truncation and append actions occur as one atomic update upon job completion.",
@@ -1897,6 +1918,10 @@
           "default": "false",
           "description": "[Optional] If true and query uses legacy SQL dialect, allows the query to produce arbitrarily large result tables at a slight cost in performance. Requires destinationTable to be set. For standard SQL queries, this flag is ignored and large results are always allowed. However, you must still set destinationTable when result size exceeds the allowed maximum response size.",
           "type": "boolean"
+        },
+        "clustering": {
+          "$ref": "Clustering",
+          "description": "[Experimental] Clustering specification for the destination table. Must be specified with time-based partitioning, data in the table will be first partitioned and subsequently clustered."
         },
         "createDisposition": {
           "description": "[Optional] Specifies whether the job is allowed to create new tables. The following values are supported: CREATE_IF_NEEDED: If the table does not exist, BigQuery creates the table. CREATE_NEVER: The table must already exist. If it does not, a 'notFound' error is returned in the job result. The default value is CREATE_IF_NEEDED. Creation, truncation and append actions occur as one atomic update upon job completion.",
@@ -1969,9 +1994,10 @@
         },
         "timePartitioning": {
           "$ref": "TimePartitioning",
-          "description": "If specified, configures time-based partitioning for the destination table."
+          "description": "Time-based partitioning specification for the destination table."
         },
         "useLegacySql": {
+          "default": "true",
           "description": "Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/ When useLegacySql is set to false, the value of flattenResults is ignored; query will be run as if flattenResults is false.",
           "type": "boolean"
         },
@@ -2602,12 +2628,12 @@
     "QueryTimelineSample": {
       "id": "QueryTimelineSample",
       "properties": {
-        "activeInputs": {
-          "description": "Total number of active workers. This does not correspond directly to slot usage. This is the largest value observed since the last sample.",
+        "activeUnits": {
+          "description": "Total number of units currently being processed by workers. This does not correspond directly to slot usage. This is the largest value observed since the last sample.",
           "format": "int64",
           "type": "string"
         },
-        "completedInputs": {
+        "completedUnits": {
           "description": "Total parallel units of work completed by this query.",
           "format": "int64",
           "type": "string"
@@ -2617,7 +2643,7 @@
           "format": "int64",
           "type": "string"
         },
-        "pendingInputs": {
+        "pendingUnits": {
           "description": "Total parallel units of work remaining for the active stages.",
           "format": "int64",
           "type": "string"
@@ -2654,6 +2680,10 @@
     "Table": {
       "id": "Table",
       "properties": {
+        "clustering": {
+          "$ref": "Clustering",
+          "description": "[Experimental] Clustering specification for the table. Must be specified with time-based partitioning, data in the table will be first partitioned and subsequently clustered."
+        },
         "creationTime": {
           "description": "[Output-only] The time when this table was created, in milliseconds since the epoch.",
           "format": "int64",
@@ -2742,7 +2772,7 @@
         },
         "timePartitioning": {
           "$ref": "TimePartitioning",
-          "description": "If specified, configures time-based partitioning for this table."
+          "description": "Time-based partitioning specification for this table."
         },
         "type": {
           "description": "[Output-only] Describes the table type. The following values are supported: TABLE: A normal BigQuery table. VIEW: A virtual table defined by a SQL query. EXTERNAL: A table that references data stored in an external storage system, such as Google Cloud Storage. The default value is TABLE.",
@@ -2916,6 +2946,10 @@
           "description": "Tables in the requested dataset.",
           "items": {
             "properties": {
+              "clustering": {
+                "$ref": "Clustering",
+                "description": "[Experimental] Clustering specification for this table, if configured."
+              },
               "creationTime": {
                 "description": "The time when this table was created, in milliseconds since the epoch.",
                 "format": "int64",
@@ -2952,7 +2986,7 @@
               },
               "timePartitioning": {
                 "$ref": "TimePartitioning",
-                "description": "The time-based partitioning for this table."
+                "description": "The time-based partitioning specification for this table, if configured."
               },
               "type": {
                 "description": "The type of table. Possible values are: TABLE, VIEW.",

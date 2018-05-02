@@ -291,7 +291,7 @@
       }
     }
   },
-  "revision": "20180312",
+  "revision": "20180410",
   "rootUrl": "https://servicecontrol.googleapis.com/",
   "schemas": {
     "AllocateInfo": {
@@ -1026,7 +1026,7 @@
           "type": "string"
         },
         "resources": {
-          "description": "The resources that are involved in the operation.",
+          "description": "The resources that are involved in the operation.\nThe maximum supported number of entries in this field is 100.",
           "items": {
             "$ref": "ResourceInfo"
           },
@@ -1423,7 +1423,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Service Control API",
+  "title": "Service Control API",
   "version": "v1",
   "version_module": true
 }

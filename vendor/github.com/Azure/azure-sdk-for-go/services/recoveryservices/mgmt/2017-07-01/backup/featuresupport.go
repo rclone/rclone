@@ -40,8 +40,9 @@ func NewFeatureSupportClientWithBaseURI(baseURI string, subscriptionID string) F
 }
 
 // Validate sends the validate request.
-//
-// azureRegion is azure region to hit Api parameters is feature support request object
+// Parameters:
+// azureRegion - azure region to hit Api
+// parameters - feature support request object
 func (client FeatureSupportClient) Validate(ctx context.Context, azureRegion string, parameters BasicFeatureSupportRequest) (result AzureVMResourceFeatureSupportResponse, err error) {
 	req, err := client.ValidatePreparer(ctx, azureRegion, parameters)
 	if err != nil {
@@ -77,7 +78,7 @@ func (client FeatureSupportClient) ValidatePreparer(ctx context.Context, azureRe
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/providers/Microsoft.RecoveryServices/locations/{azureRegion}/backupValidateFeatures", pathParameters),

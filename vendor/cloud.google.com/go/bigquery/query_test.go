@@ -120,9 +120,7 @@ func TestQuery(t *testing.T) {
 						g.MaxBadRecords = 1
 						g.Quote = "'"
 						g.SkipLeadingRows = 2
-						g.Schema = Schema([]*FieldSchema{
-							{Name: "name", Type: StringFieldType},
-						})
+						g.Schema = Schema{{Name: "name", Type: StringFieldType}}
 						return g
 					}(),
 				},

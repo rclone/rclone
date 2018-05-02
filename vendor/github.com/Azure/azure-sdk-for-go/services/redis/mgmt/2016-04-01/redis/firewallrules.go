@@ -40,8 +40,9 @@ func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) Fi
 }
 
 // List gets all firewall rules in the specified redis cache.
-//
-// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// cacheName - the name of the Redis cache.
 func (client FirewallRulesClient) List(ctx context.Context, resourceGroupName string, cacheName string) (result FirewallRuleListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, cacheName)

@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // InvoicesClient is the billing client provides access to billing resources for Azure Web-Direct subscriptions. Other
 // subscription types which were not purchased directly through the Azure web portal are not supported through this
 // preview API.
@@ -32,16 +33,19 @@ type InvoicesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // NewInvoicesClient creates an instance of the InvoicesClient client.
 func NewInvoicesClient(subscriptionID string) InvoicesClient {
 	return NewInvoicesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // NewInvoicesClientWithBaseURI creates an instance of the InvoicesClient client.
 func NewInvoicesClientWithBaseURI(baseURI string, subscriptionID string) InvoicesClient {
 	return InvoicesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // Get gets a named invoice resource. When getting a single invoice, the downloadUrl property is expanded
 // automatically.
 //
@@ -68,6 +72,7 @@ func (client InvoicesClient) Get(ctx context.Context, invoiceName string) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetPreparer prepares the Get request.
 func (client InvoicesClient) GetPreparer(ctx context.Context, invoiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -88,6 +93,7 @@ func (client InvoicesClient) GetPreparer(ctx context.Context, invoiceName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client InvoicesClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client InvoicesClient) GetResponder(resp *http.Response) (result Invoice, err error) {
@@ -108,6 +115,7 @@ func (client InvoicesClient) GetResponder(resp *http.Response) (result Invoice, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetLatest gets the most recent invoice. When getting a single invoice, the downloadUrl property is expanded
 // automatically.
 func (client InvoicesClient) GetLatest(ctx context.Context) (result Invoice, err error) {
@@ -132,6 +140,7 @@ func (client InvoicesClient) GetLatest(ctx context.Context) (result Invoice, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetLatestPreparer prepares the GetLatest request.
 func (client InvoicesClient) GetLatestPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -151,6 +160,7 @@ func (client InvoicesClient) GetLatestPreparer(ctx context.Context) (*http.Reque
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetLatestSender sends the GetLatest request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) GetLatestSender(req *http.Request) (*http.Response, error) {
@@ -158,6 +168,7 @@ func (client InvoicesClient) GetLatestSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // GetLatestResponder handles the response to the GetLatest request. The method always
 // closes the http.Response Body.
 func (client InvoicesClient) GetLatestResponder(resp *http.Response) (result Invoice, err error) {
@@ -171,6 +182,7 @@ func (client InvoicesClient) GetLatestResponder(resp *http.Response) (result Inv
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // List lists the available invoices for a subscription in reverse chronological order beginning with the most recent
 // invoice. In preview, invoices are available via this API only for invoice periods which end December 1, 2016 or
 // later
@@ -214,6 +226,7 @@ func (client InvoicesClient) List(ctx context.Context, expand string, filter str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // ListPreparer prepares the List request.
 func (client InvoicesClient) ListPreparer(ctx context.Context, expand string, filter string, skiptoken string, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -245,6 +258,7 @@ func (client InvoicesClient) ListPreparer(ctx context.Context, expand string, fi
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -252,6 +266,7 @@ func (client InvoicesClient) ListSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client InvoicesClient) ListResponder(resp *http.Response) (result InvoicesListResult, err error) {
@@ -286,6 +301,7 @@ func (client InvoicesClient) listNextResults(lastResults InvoicesListResult) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/billing/mgmt/2017-02-27-preview/billing instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client InvoicesClient) ListComplete(ctx context.Context, expand string, filter string, skiptoken string, top *int32) (result InvoicesListResultIterator, err error) {
 	result.page, err = client.List(ctx, expand, filter, skiptoken, top)

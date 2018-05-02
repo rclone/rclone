@@ -40,8 +40,9 @@ func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) Opera
 }
 
 // Get get operation.
-//
-// locationName is the name of the location. name is the name of the operation.
+// Parameters:
+// locationName - the name of the location.
+// name - the name of the operation.
 func (client OperationsClient) Get(ctx context.Context, locationName string, name string) (result OperationResult, err error) {
 	req, err := client.GetPreparer(ctx, locationName, name)
 	if err != nil {

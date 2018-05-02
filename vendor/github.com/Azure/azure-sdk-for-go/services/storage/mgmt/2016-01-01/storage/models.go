@@ -35,6 +35,11 @@ const (
 	Hot AccessTier = "Hot"
 )
 
+// PossibleAccessTierValues returns an array of possible values for the AccessTier const type.
+func PossibleAccessTierValues() []AccessTier {
+	return []AccessTier{Cool, Hot}
+}
+
 // AccountStatus enumerates the values for account status.
 type AccountStatus string
 
@@ -44,6 +49,11 @@ const (
 	// Unavailable ...
 	Unavailable AccountStatus = "Unavailable"
 )
+
+// PossibleAccountStatusValues returns an array of possible values for the AccountStatus const type.
+func PossibleAccountStatusValues() []AccountStatus {
+	return []AccountStatus{Available, Unavailable}
+}
 
 // KeyPermission enumerates the values for key permission.
 type KeyPermission string
@@ -55,6 +65,11 @@ const (
 	READ KeyPermission = "READ"
 )
 
+// PossibleKeyPermissionValues returns an array of possible values for the KeyPermission const type.
+func PossibleKeyPermissionValues() []KeyPermission {
+	return []KeyPermission{FULL, READ}
+}
+
 // Kind enumerates the values for kind.
 type Kind string
 
@@ -64,6 +79,11 @@ const (
 	// Storage ...
 	Storage Kind = "Storage"
 )
+
+// PossibleKindValues returns an array of possible values for the Kind const type.
+func PossibleKindValues() []Kind {
+	return []Kind{BlobStorage, Storage}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -77,6 +97,11 @@ const (
 	Succeeded ProvisioningState = "Succeeded"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, ResolvingDNS, Succeeded}
+}
+
 // Reason enumerates the values for reason.
 type Reason string
 
@@ -86,6 +111,11 @@ const (
 	// AlreadyExists ...
 	AlreadyExists Reason = "AlreadyExists"
 )
+
+// PossibleReasonValues returns an array of possible values for the Reason const type.
+func PossibleReasonValues() []Reason {
+	return []Reason{AccountNameInvalid, AlreadyExists}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -103,6 +133,11 @@ const (
 	StandardZRS SkuName = "Standard_ZRS"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{PremiumLRS, StandardGRS, StandardLRS, StandardRAGRS, StandardZRS}
+}
+
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -112,6 +147,11 @@ const (
 	// Standard ...
 	Standard SkuTier = "Standard"
 )
+
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Premium, Standard}
+}
 
 // UsageUnit enumerates the values for usage unit.
 type UsageUnit string
@@ -130,6 +170,11 @@ const (
 	// Seconds ...
 	Seconds UsageUnit = "Seconds"
 )
+
+// PossibleUsageUnitValues returns an array of possible values for the UsageUnit const type.
+func PossibleUsageUnitValues() []UsageUnit {
+	return []UsageUnit{Bytes, BytesPerSecond, Count, CountsPerSecond, Percent, Seconds}
+}
 
 // Account the storage account.
 type Account struct {
@@ -157,7 +202,9 @@ func (a Account) MarshalJSON() ([]byte, error) {
 	if a.Sku != nil {
 		objectMap["sku"] = a.Sku
 	}
-	objectMap["kind"] = a.Kind
+	if a.Kind != "" {
+		objectMap["kind"] = a.Kind
+	}
 	if a.AccountProperties != nil {
 		objectMap["properties"] = a.AccountProperties
 	}
@@ -291,7 +338,9 @@ func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	if acp.Sku != nil {
 		objectMap["sku"] = acp.Sku
 	}
-	objectMap["kind"] = acp.Kind
+	if acp.Kind != "" {
+		objectMap["kind"] = acp.Kind
+	}
 	if acp.Location != nil {
 		objectMap["location"] = acp.Location
 	}

@@ -16,7 +16,9 @@
     "ListInputs": "Produces list of inputs that have been created",
     "StartChannel": "Starts an existing channel",
     "StopChannel": "Stops a running channel",
-    "UpdateChannel": "Updates a channel."
+    "UpdateChannel": "Updates a channel.",
+    "UpdateInput": "Updates an input.",
+    "UpdateInputSecurityGroup": "Update an Input Security Group's Whilelists."
   },
   "shapes": {
     "AacCodingMode": {
@@ -238,6 +240,12 @@
       "base": null,
       "refs": {
         "AudioDescription$AudioType": "Applies only if audioTypeControl is useConfigured. The values for audioType are defined in ISO-IEC 13818-1."
+      }
+    },
+    "AuthenticationScheme": {
+      "base": null,
+      "refs": {
+        "RtmpGroupSettings$AuthenticationScheme": "Authentication scheme to use when connecting with CDN"
       }
     },
     "AvailBlanking": {
@@ -974,6 +982,7 @@
       "base": null,
       "refs": {
         "CreateInputResultModel$Input": null,
+        "UpdateInputResultModel$Input": null,
         "__listOfInput$member": null
       }
     },
@@ -1084,7 +1093,14 @@
       "base": "An Input Security Group",
       "refs": {
         "CreateInputSecurityGroupResultModel$SecurityGroup": null,
+        "UpdateInputSecurityGroupResultModel$SecurityGroup": null,
         "__listOfInputSecurityGroup$member": null
+      }
+    },
+    "InputSecurityGroupState": {
+      "base": null,
+      "refs": {
+        "InputSecurityGroup$State": "The current state of the Input Security Group."
       }
     },
     "InputSecurityGroupWhitelistRequest": {
@@ -1407,6 +1423,7 @@
         "ArchiveGroupSettings$Destination": "A directory and base filename where archive files should be written.  If the base filename portion of the URI is left blank, the base filename of the first input will be automatically inserted.",
         "HlsGroupSettings$Destination": "A directory or HTTP destination for the HLS segments, manifest files, and encryption keys (if enabled).",
         "MsSmoothGroupSettings$Destination": "Smooth Streaming publish point on an IIS server. Elemental Live acts as a \"Push\" encoder to IIS.",
+        "RtmpOutputSettings$Destination": "The RTMP endpoint excluding the stream name (eg. rtmp://host/appname). For connection to Akamai, a username and password must be supplied. URI fields accept format identifiers.",
         "UdpOutputSettings$Destination": "Destination address and port number for RTP or UDP packets. Can be unicast or multicast RTP or UDP (eg. rtp://239.10.10.10:5001 or udp://10.100.100.100:5002)."
       }
     },
@@ -1436,6 +1453,42 @@
     "ResourceNotFound": {
       "base": null,
       "refs": {
+      }
+    },
+    "RtmpCacheFullBehavior": {
+      "base": null,
+      "refs": {
+        "RtmpGroupSettings$CacheFullBehavior": "Controls behavior when content cache fills up. If remote origin server stalls the RTMP connection and does not accept content fast enough the 'Media Cache' will fill up. When the cache reaches the duration specified by cacheLength the cache will stop accepting new content. If set to disconnectImmediately, the RTMP output will force a disconnect. Clear the media cache, and reconnect after restartDelay seconds. If set to waitForServer, the RTMP output will wait up to 5 minutes to allow the origin server to begin accepting data again."
+      }
+    },
+    "RtmpCaptionData": {
+      "base": null,
+      "refs": {
+        "RtmpGroupSettings$CaptionData": "Controls the types of data that passes to onCaptionInfo outputs.  If set to 'all' then 608 and 708 carried DTVCC data will be passed.  If set to 'field1AndField2608' then DTVCC data will be stripped out, but 608 data from both fields will be passed. If set to 'field1608' then only the data carried in 608 from field 1 video will be passed."
+      }
+    },
+    "RtmpCaptionInfoDestinationSettings": {
+      "base": null,
+      "refs": {
+        "CaptionDestinationSettings$RtmpCaptionInfoDestinationSettings": null
+      }
+    },
+    "RtmpGroupSettings": {
+      "base": null,
+      "refs": {
+        "OutputGroupSettings$RtmpGroupSettings": null
+      }
+    },
+    "RtmpOutputCertificateMode": {
+      "base": null,
+      "refs": {
+        "RtmpOutputSettings$CertificateMode": "If set to verifyAuthenticity, verify the tls certificate chain to a trusted Certificate Authority (CA).  This will cause rtmps outputs with self-signed certificates to fail."
+      }
+    },
+    "RtmpOutputSettings": {
+      "base": null,
+      "refs": {
+        "OutputSettings$RtmpOutputSettings": null
       }
     },
     "Scte20Convert608To708": {
@@ -1513,7 +1566,7 @@
     "SmoothGroupCertificateMode": {
       "base": null,
       "refs": {
-        "MsSmoothGroupSettings$CertificateMode": "If set to verifyAuthenticity, verify the https certificate chain to a trusted Certificate Authority (CA).  This will cause https outputs to self-signed certificates to fail unless those certificates are manually added to the OS trusted keystore."
+        "MsSmoothGroupSettings$CertificateMode": "If set to verifyAuthenticity, verify the https certificate chain to a trusted Certificate Authority (CA).  This will cause https outputs to self-signed certificates to fail."
       }
     },
     "SmoothGroupEventIdMode": {
@@ -1647,6 +1700,21 @@
     },
     "UpdateChannelResultModel": {
       "base": "The updated channel's description.",
+      "refs": {
+      }
+    },
+    "UpdateInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateInputResultModel": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateInputSecurityGroupResultModel": {
+      "base": null,
       "refs": {
       }
     },
@@ -1804,6 +1872,8 @@
         "MsSmoothGroupSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
         "MsSmoothGroupSettings$NumRetries": "Number of retry attempts.",
         "MsSmoothGroupSettings$RestartDelay": "Number of seconds before initiating a restart due to output failure, due to exhausting the numRetries on one segment, or exceeding filecacheDuration.",
+        "RtmpGroupSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
+        "RtmpOutputSettings$NumRetries": "Number of retry attempts.",
         "UdpGroupSettings$TimedMetadataId3Period": "Timed Metadata interval in seconds."
       }
     },
@@ -1940,6 +2010,7 @@
         "HlsGroupSettings$SegmentLength": "Length of MPEG-2 Transport Stream segments to create (in seconds). Note that segments will end on the next keyframe after this number of seconds, so actual segment length may be longer.",
         "HlsGroupSettings$SegmentsPerSubdirectory": "Number of segments to write to a subdirectory before starting a new one. directoryStructure must be subdirectoryPerStream for this setting to have an effect.",
         "MsSmoothGroupSettings$FragmentLength": "Length of mp4 fragments to generate (in seconds). Fragment length must be compatible with GOP size and framerate.",
+        "RtmpOutputSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying a connection to the Flash Media server if the connection is lost.",
         "Scte27SourceSettings$Pid": "The pid field is used in conjunction with the caption selector languageCode field as follows:\n  - Specify PID and Language: Extracts captions from that PID; the language is \"informational\".\n  - Specify PID and omit Language: Extracts the specified PID.\n  - Omit PID and specify Language: Extracts the specified language, whichever PID that happens to be.\n  - Omit PID and omit Language: Valid only if source is DVB-Sub that is being passed through; all languages will be passed through."
       }
     },
@@ -2030,6 +2101,12 @@
       "base": null,
       "refs": {
         "HlsGroupSettings$IndexNSegments": "If mode is \"live\", the number of segments to retain in the manifest (.m3u8) file. This number must be less than or equal to keepSegments. If mode is \"vod\", this parameter has no effect."
+      }
+    },
+    "__integerMin30": {
+      "base": null,
+      "refs": {
+        "RtmpGroupSettings$CacheLength": "Cache length, in seconds, is used to calculate buffer size."
       }
     },
     "__integerMin4Max20": {
@@ -2130,7 +2207,8 @@
       "refs": {
         "Channel$InputAttachments": "List of input attachments for channel.",
         "ChannelSummary$InputAttachments": "List of input attachments for channel.",
-        "CreateChannel$InputAttachments": "List of input attachments for channel."
+        "CreateChannel$InputAttachments": "List of input attachments for channel.",
+        "UpdateChannel$InputAttachments": null
       }
     },
     "__listOfInputChannelLevel": {
@@ -2148,7 +2226,8 @@
     "__listOfInputDestinationRequest": {
       "base": null,
       "refs": {
-        "CreateInput$Destinations": "Destination settings for PUSH type inputs."
+        "CreateInput$Destinations": "Destination settings for PUSH type inputs.",
+        "UpdateInput$Destinations": "Destination settings for PUSH type inputs."
       }
     },
     "__listOfInputSecurityGroup": {
@@ -2166,7 +2245,8 @@
     "__listOfInputSourceRequest": {
       "base": null,
       "refs": {
-        "CreateInput$Sources": "The source URLs for a PULL-type input. Every PULL type input needs\nexactly two source URLs for redundancy.\nOnly specify sources for PULL type Inputs. Leave Destinations empty.\n"
+        "CreateInput$Sources": "The source URLs for a PULL-type input. Every PULL type input needs\nexactly two source URLs for redundancy.\nOnly specify sources for PULL type Inputs. Leave Destinations empty.\n",
+        "UpdateInput$Sources": "The source URLs for a PULL-type input. Every PULL type input needs\nexactly two source URLs for redundancy.\nOnly specify sources for PULL type Inputs. Leave Destinations empty.\n"
       }
     },
     "__listOfInputWhitelistRule": {
@@ -2226,8 +2306,10 @@
         "CreateInput$InputSecurityGroups": "A list of security groups referenced by IDs to attach to the input.",
         "Input$AttachedChannels": "A list of channel IDs that that input is attached to (currently an input can only be attached to one channel).",
         "Input$SecurityGroups": "A list of IDs for all the security groups attached to the input.",
+        "InputSecurityGroup$Inputs": "The list of inputs currently using this Input Security Group.",
         "Output$AudioDescriptionNames": "The names of the AudioDescriptions used as audio sources for this output.",
-        "Output$CaptionDescriptionNames": "The names of the CaptionDescriptions used as caption sources for this output."
+        "Output$CaptionDescriptionNames": "The names of the CaptionDescriptions used as caption sources for this output.",
+        "UpdateInput$InputSecurityGroups": "A list of security groups referenced by IDs to attach to the input."
       }
     },
     "__string": {
@@ -2284,7 +2366,7 @@
         "InputDestination$Url": "This represents the endpoint that the customer stream will be\npushed to.\n",
         "InputDestinationRequest$StreamName": "A unique name for the location the RTMP stream is being pushed\nto.\n",
         "InputLocation$PasswordParam": "key used to extract the password from EC2 Parameter store",
-        "InputLocation$Uri": "Uniform Resource Identifier - This should be a path to a file accessible to the Live system (eg. a http:// URI) depending on the output type. For example, a rtmpEndpoint should have a uri simliar to: \"rtmp://fmsserver/live\".",
+        "InputLocation$Uri": "Uniform Resource Identifier - This should be a path to a file accessible to the Live system (eg. a http:// URI) depending on the output type. For example, a RTMP destination should have a uri simliar to: \"rtmp://fmsserver/live\".",
         "InputLocation$Username": "Username if credentials are required to access a file or publishing point.  This can be either a plaintext username, or a reference to an AWS parameter store name from which the username can be retrieved.  AWS Parameter store format: \"ssm://<parameter name>\"",
         "InputSecurityGroup$Arn": "Unique ARN of Input Security Group",
         "InputSecurityGroup$Id": "The Id of the Input Security Group",
@@ -2295,7 +2377,7 @@
         "InputSourceRequest$Url": "This represents the customer's source URL where stream is\npulled from.\n",
         "InputSourceRequest$Username": "The username for the input source.",
         "InputWhitelistRule$Cidr": "The IPv4 CIDR that's whitelisted.",
-        "InputWhitelistRuleCidr$Cidr": "The IPv4 CIDR to whitelist",
+        "InputWhitelistRuleCidr$Cidr": "The IPv4 CIDR to whitelist.",
         "InternalServiceError$Message": null,
         "InvalidRequest$Message": null,
         "LimitExceeded$Message": null,
@@ -2321,6 +2403,7 @@
         "M3u8Settings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
         "M3u8Settings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
         "M3u8Settings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M3u8Settings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
         "MsSmoothGroupSettings$AcquisitionPointId": "The value of the \"Acquisition Point Identity\" element used in each message placed in the sparse track.  Only enabled if sparseTrackType is not \"none\".",
         "MsSmoothGroupSettings$EventId": "MS Smooth event ID to be sent to the IIS server.\n\nShould only be specified if eventIdMode is set to useConfigured.",
@@ -2329,6 +2412,7 @@
         "Output$VideoDescriptionName": "The name of the VideoDescription used as the source for this output.",
         "OutputDestination$Id": "User-specified id. This is used in an output group or an output.",
         "OutputDestinationSettings$PasswordParam": "key used to extract the password from EC2 Parameter store",
+        "OutputDestinationSettings$StreamName": "Stream name for RTMP destinations (URLs of type rtmp://)",
         "OutputDestinationSettings$Url": "A URL specifying a destination",
         "OutputDestinationSettings$Username": "username for destination",
         "OutputLocationRef$DestinationRefId": null,
@@ -2338,6 +2422,7 @@
         "TeletextSourceSettings$PageNumber": "Specifies the teletext page number within the data stream from which to extract captions. Range of 0x100 (256) to 0x8FF (2303). Unused for passthrough. Should be specified as a hexadecimal string with no \"0x\" prefix.",
         "UpdateChannel$Name": "The name of the channel.",
         "UpdateChannel$RoleArn": "An optional Amazon Resource Name (ARN) of the role to assume when running the Channel. If you do not specify this on an update call but the role was previously set that role will be removed.",
+        "UpdateInput$Name": "Name of the input.",
         "ValidationError$ElementPath": null,
         "ValidationError$ErrorMessage": null,
         "VideoDescription$Name": "The name of this VideoDescription. Outputs will use this name to uniquely identify this Description.  Description names should be unique within this Live Event.",

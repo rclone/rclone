@@ -164,6 +164,23 @@
       ],
       "idempotent":true
     },
+    "DeleteMailboxPermissions":{
+      "name":"DeleteMailboxPermissions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteMailboxPermissionsRequest"},
+      "output":{"shape":"DeleteMailboxPermissionsResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"EntityStateException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"OrganizationNotFoundException"},
+        {"shape":"OrganizationStateException"}
+      ],
+      "idempotent":true
+    },
     "DeleteResource":{
       "name":"DeleteResource",
       "http":{
@@ -365,6 +382,22 @@
       ],
       "idempotent":true
     },
+    "ListMailboxPermissions":{
+      "name":"ListMailboxPermissions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListMailboxPermissionsRequest"},
+      "output":{"shape":"ListMailboxPermissionsResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"OrganizationNotFoundException"},
+        {"shape":"OrganizationStateException"}
+      ],
+      "idempotent":true
+    },
     "ListOrganizations":{
       "name":"ListOrganizations",
       "http":{
@@ -419,6 +452,23 @@
       "input":{"shape":"ListUsersRequest"},
       "output":{"shape":"ListUsersResponse"},
       "errors":[
+        {"shape":"InvalidParameterException"},
+        {"shape":"OrganizationNotFoundException"},
+        {"shape":"OrganizationStateException"}
+      ],
+      "idempotent":true
+    },
+    "PutMailboxPermissions":{
+      "name":"PutMailboxPermissions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutMailboxPermissionsRequest"},
+      "output":{"shape":"PutMailboxPermissionsResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"EntityStateException"},
         {"shape":"InvalidParameterException"},
         {"shape":"OrganizationNotFoundException"},
         {"shape":"OrganizationStateException"}
@@ -682,6 +732,24 @@
       }
     },
     "DeleteGroupResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteMailboxPermissionsRequest":{
+      "type":"structure",
+      "required":[
+        "OrganizationId",
+        "EntityId",
+        "GranteeId"
+      ],
+      "members":{
+        "OrganizationId":{"shape":"OrganizationId"},
+        "EntityId":{"shape":"WorkMailIdentifier"},
+        "GranteeId":{"shape":"WorkMailIdentifier"}
+      }
+    },
+    "DeleteMailboxPermissionsResponse":{
       "type":"structure",
       "members":{
       }
@@ -1014,6 +1082,26 @@
         "NextToken":{"shape":"NextToken"}
       }
     },
+    "ListMailboxPermissionsRequest":{
+      "type":"structure",
+      "required":[
+        "OrganizationId",
+        "EntityId"
+      ],
+      "members":{
+        "OrganizationId":{"shape":"OrganizationId"},
+        "EntityId":{"shape":"WorkMailIdentifier"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"}
+      }
+    },
+    "ListMailboxPermissionsResponse":{
+      "type":"structure",
+      "members":{
+        "Permissions":{"shape":"Permissions"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
     "ListOrganizationsRequest":{
       "type":"structure",
       "members":{
@@ -1176,6 +1264,55 @@
       "max":256,
       "pattern":"[\\u0020-\\u00FF]+",
       "sensitive":true
+    },
+    "Permission":{
+      "type":"structure",
+      "required":[
+        "GranteeId",
+        "GranteeType",
+        "PermissionValues"
+      ],
+      "members":{
+        "GranteeId":{"shape":"WorkMailIdentifier"},
+        "GranteeType":{"shape":"MemberType"},
+        "PermissionValues":{"shape":"PermissionValues"}
+      }
+    },
+    "PermissionType":{
+      "type":"string",
+      "enum":[
+        "FULL_ACCESS",
+        "SEND_AS",
+        "SEND_ON_BEHALF"
+      ]
+    },
+    "PermissionValues":{
+      "type":"list",
+      "member":{"shape":"PermissionType"}
+    },
+    "Permissions":{
+      "type":"list",
+      "member":{"shape":"Permission"}
+    },
+    "PutMailboxPermissionsRequest":{
+      "type":"structure",
+      "required":[
+        "OrganizationId",
+        "EntityId",
+        "GranteeId",
+        "PermissionValues"
+      ],
+      "members":{
+        "OrganizationId":{"shape":"OrganizationId"},
+        "EntityId":{"shape":"WorkMailIdentifier"},
+        "GranteeId":{"shape":"WorkMailIdentifier"},
+        "PermissionValues":{"shape":"PermissionValues"}
+      }
+    },
+    "PutMailboxPermissionsResponse":{
+      "type":"structure",
+      "members":{
+      }
     },
     "RegisterToWorkMailRequest":{
       "type":"structure",

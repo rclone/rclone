@@ -447,3 +447,13 @@ func BenchmarkAllowN(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkWaitNNoDelay(b *testing.B) {
+	lim := NewLimiter(Limit(b.N), b.N)
+	ctx := context.Background()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lim.WaitN(ctx, 1)
+	}
+}

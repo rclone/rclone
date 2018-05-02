@@ -227,6 +227,20 @@ const (
 	// "InvalidCommandId".
 	ErrCodeInvalidCommandId = "InvalidCommandId"
 
+	// ErrCodeInvalidDeleteInventoryParametersException for service response error code
+	// "InvalidDeleteInventoryParametersException".
+	//
+	// One or more of the parameters specified for the delete operation is not valid.
+	// Verify all parameters and try again.
+	ErrCodeInvalidDeleteInventoryParametersException = "InvalidDeleteInventoryParametersException"
+
+	// ErrCodeInvalidDeletionIdException for service response error code
+	// "InvalidDeletionIdException".
+	//
+	// The ID specified for the delete operation does not exist or is not valide.
+	// Verify the ID and try again.
+	ErrCodeInvalidDeletionIdException = "InvalidDeletionIdException"
+
 	// ErrCodeInvalidDocument for service response error code
 	// "InvalidDocument".
 	//
@@ -315,6 +329,12 @@ const (
 	// Verify the keys and values, and try again.
 	ErrCodeInvalidInventoryItemContextException = "InvalidInventoryItemContextException"
 
+	// ErrCodeInvalidInventoryRequestException for service response error code
+	// "InvalidInventoryRequestException".
+	//
+	// The request is not valid.
+	ErrCodeInvalidInventoryRequestException = "InvalidInventoryRequestException"
+
 	// ErrCodeInvalidItemContentException for service response error code
 	// "InvalidItemContentException".
 	//
@@ -339,6 +359,13 @@ const (
 	// One or more configuration items is not valid. Verify that a valid Amazon
 	// Resource Name (ARN) was provided for an Amazon SNS topic.
 	ErrCodeInvalidNotificationConfig = "InvalidNotificationConfig"
+
+	// ErrCodeInvalidOptionException for service response error code
+	// "InvalidOptionException".
+	//
+	// The delete inventory option specified is not valid. Verify the option and
+	// try again.
+	ErrCodeInvalidOptionException = "InvalidOptionException"
 
 	// ErrCodeInvalidOutputFolder for service response error code
 	// "InvalidOutputFolder".

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type VirtualMachineClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewVirtualMachineClient creates an instance of the VirtualMachineClient client.
 func NewVirtualMachineClient(subscriptionID string) VirtualMachineClient {
 	return NewVirtualMachineClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewVirtualMachineClientWithBaseURI creates an instance of the VirtualMachineClient client.
 func NewVirtualMachineClientWithBaseURI(baseURI string, subscriptionID string) VirtualMachineClient {
 	return VirtualMachineClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ApplyArtifacts apply artifacts to Lab VM. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -59,6 +63,7 @@ func (client VirtualMachineClient) ApplyArtifacts(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ApplyArtifactsPreparer prepares the ApplyArtifacts request.
 func (client VirtualMachineClient) ApplyArtifactsPreparer(ctx context.Context, resourceGroupName string, labName string, name string, applyArtifactsRequest ApplyArtifactsRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client VirtualMachineClient) ApplyArtifactsPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/virtualmachines/{name}/applyArtifacts", pathParameters),
@@ -83,6 +88,7 @@ func (client VirtualMachineClient) ApplyArtifactsPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ApplyArtifactsSender sends the ApplyArtifacts request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) ApplyArtifactsSender(req *http.Request) (future VirtualMachineApplyArtifactsFuture, err error) {
@@ -98,6 +104,7 @@ func (client VirtualMachineClient) ApplyArtifactsSender(req *http.Request) (futu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ApplyArtifactsResponder handles the response to the ApplyArtifacts request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) ApplyArtifactsResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -110,6 +117,7 @@ func (client VirtualMachineClient) ApplyArtifactsResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResource create or replace an existing Virtual Machine. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -130,6 +138,7 @@ func (client VirtualMachineClient) CreateOrUpdateResource(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourcePreparer prepares the CreateOrUpdateResource request.
 func (client VirtualMachineClient) CreateOrUpdateResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, labVirtualMachine LabVirtualMachine) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -145,7 +154,7 @@ func (client VirtualMachineClient) CreateOrUpdateResourcePreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/virtualmachines/{name}", pathParameters),
@@ -154,6 +163,7 @@ func (client VirtualMachineClient) CreateOrUpdateResourcePreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceSender sends the CreateOrUpdateResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) CreateOrUpdateResourceSender(req *http.Request) (future VirtualMachineCreateOrUpdateResourceFuture, err error) {
@@ -169,6 +179,7 @@ func (client VirtualMachineClient) CreateOrUpdateResourceSender(req *http.Reques
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceResponder handles the response to the CreateOrUpdateResource request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) CreateOrUpdateResourceResponder(resp *http.Response) (result LabVirtualMachine, err error) {
@@ -182,6 +193,7 @@ func (client VirtualMachineClient) CreateOrUpdateResourceResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResource delete virtual machine. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -202,6 +214,7 @@ func (client VirtualMachineClient) DeleteResource(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourcePreparer prepares the DeleteResource request.
 func (client VirtualMachineClient) DeleteResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -224,6 +237,7 @@ func (client VirtualMachineClient) DeleteResourcePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceSender sends the DeleteResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) DeleteResourceSender(req *http.Request) (future VirtualMachineDeleteResourceFuture, err error) {
@@ -239,6 +253,7 @@ func (client VirtualMachineClient) DeleteResourceSender(req *http.Request) (futu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceResponder handles the response to the DeleteResource request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) DeleteResourceResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -251,6 +266,7 @@ func (client VirtualMachineClient) DeleteResourceResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResource get virtual machine.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -277,6 +293,7 @@ func (client VirtualMachineClient) GetResource(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourcePreparer prepares the GetResource request.
 func (client VirtualMachineClient) GetResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -299,6 +316,7 @@ func (client VirtualMachineClient) GetResourcePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceSender sends the GetResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) GetResourceSender(req *http.Request) (*http.Response, error) {
@@ -306,6 +324,7 @@ func (client VirtualMachineClient) GetResourceSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceResponder handles the response to the GetResource request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) GetResourceResponder(resp *http.Response) (result LabVirtualMachine, err error) {
@@ -319,6 +338,7 @@ func (client VirtualMachineClient) GetResourceResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list virtual machines.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
@@ -346,6 +366,7 @@ func (client VirtualMachineClient) List(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client VirtualMachineClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -376,6 +397,7 @@ func (client VirtualMachineClient) ListPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -383,6 +405,7 @@ func (client VirtualMachineClient) ListSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) ListResponder(resp *http.Response) (result ResponseWithContinuationLabVirtualMachine, err error) {
@@ -417,12 +440,14 @@ func (client VirtualMachineClient) listNextResults(lastResults ResponseWithConti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VirtualMachineClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationLabVirtualMachineIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, filter, top, orderBy)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResource modify properties of virtual machines.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -449,6 +474,7 @@ func (client VirtualMachineClient) PatchResource(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourcePreparer prepares the PatchResource request.
 func (client VirtualMachineClient) PatchResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, labVirtualMachine LabVirtualMachine) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -464,7 +490,7 @@ func (client VirtualMachineClient) PatchResourcePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/virtualmachines/{name}", pathParameters),
@@ -473,6 +499,7 @@ func (client VirtualMachineClient) PatchResourcePreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceSender sends the PatchResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) PatchResourceSender(req *http.Request) (*http.Response, error) {
@@ -480,6 +507,7 @@ func (client VirtualMachineClient) PatchResourceSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceResponder handles the response to the PatchResource request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) PatchResourceResponder(resp *http.Response) (result LabVirtualMachine, err error) {
@@ -493,6 +521,7 @@ func (client VirtualMachineClient) PatchResourceResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Start start a Lab VM. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -513,6 +542,7 @@ func (client VirtualMachineClient) Start(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StartPreparer prepares the Start request.
 func (client VirtualMachineClient) StartPreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -535,6 +565,7 @@ func (client VirtualMachineClient) StartPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StartSender sends the Start request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) StartSender(req *http.Request) (future VirtualMachineStartFuture, err error) {
@@ -550,6 +581,7 @@ func (client VirtualMachineClient) StartSender(req *http.Request) (future Virtua
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StartResponder handles the response to the Start request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) StartResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -562,6 +594,7 @@ func (client VirtualMachineClient) StartResponder(resp *http.Response) (result a
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Stop stop a Lab VM. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -582,6 +615,7 @@ func (client VirtualMachineClient) Stop(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StopPreparer prepares the Stop request.
 func (client VirtualMachineClient) StopPreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -604,6 +638,7 @@ func (client VirtualMachineClient) StopPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StopSender sends the Stop request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineClient) StopSender(req *http.Request) (future VirtualMachineStopFuture, err error) {
@@ -619,6 +654,7 @@ func (client VirtualMachineClient) StopSender(req *http.Request) (future Virtual
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // StopResponder handles the response to the Stop request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineClient) StopResponder(resp *http.Response) (result autorest.Response, err error) {

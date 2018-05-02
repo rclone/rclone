@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRulesClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -32,16 +33,19 @@ type VirtualNetworkRulesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewVirtualNetworkRulesClient creates an instance of the VirtualNetworkRulesClient client.
 func NewVirtualNetworkRulesClient(subscriptionID string) VirtualNetworkRulesClient {
 	return NewVirtualNetworkRulesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewVirtualNetworkRulesClientWithBaseURI creates an instance of the VirtualNetworkRulesClient client.
 func NewVirtualNetworkRulesClientWithBaseURI(baseURI string, subscriptionID string) VirtualNetworkRulesClient {
 	return VirtualNetworkRulesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdate creates or updates an existing virtual network rule.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -70,6 +74,7 @@ func (client VirtualNetworkRulesClient) CreateOrUpdate(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client VirtualNetworkRulesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string, parameters VirtualNetworkRule) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -85,7 +90,7 @@ func (client VirtualNetworkRulesClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/virtualNetworkRules/{virtualNetworkRuleName}", pathParameters),
@@ -94,6 +99,7 @@ func (client VirtualNetworkRulesClient) CreateOrUpdatePreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualNetworkRulesClient) CreateOrUpdateSender(req *http.Request) (future VirtualNetworkRulesCreateOrUpdateFuture, err error) {
@@ -109,6 +115,7 @@ func (client VirtualNetworkRulesClient) CreateOrUpdateSender(req *http.Request) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client VirtualNetworkRulesClient) CreateOrUpdateResponder(resp *http.Response) (result VirtualNetworkRule, err error) {
@@ -122,6 +129,7 @@ func (client VirtualNetworkRulesClient) CreateOrUpdateResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Delete deletes the virtual network rule with the given name.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -143,6 +151,7 @@ func (client VirtualNetworkRulesClient) Delete(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeletePreparer prepares the Delete request.
 func (client VirtualNetworkRulesClient) DeletePreparer(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -165,6 +174,7 @@ func (client VirtualNetworkRulesClient) DeletePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualNetworkRulesClient) DeleteSender(req *http.Request) (future VirtualNetworkRulesDeleteFuture, err error) {
@@ -180,6 +190,7 @@ func (client VirtualNetworkRulesClient) DeleteSender(req *http.Request) (future 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client VirtualNetworkRulesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -192,6 +203,7 @@ func (client VirtualNetworkRulesClient) DeleteResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a virtual network rule.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -219,6 +231,7 @@ func (client VirtualNetworkRulesClient) Get(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client VirtualNetworkRulesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -241,6 +254,7 @@ func (client VirtualNetworkRulesClient) GetPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualNetworkRulesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -248,6 +262,7 @@ func (client VirtualNetworkRulesClient) GetSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client VirtualNetworkRulesClient) GetResponder(resp *http.Response) (result VirtualNetworkRule, err error) {
@@ -261,6 +276,7 @@ func (client VirtualNetworkRulesClient) GetResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServer gets a list of virtual network rules in a server.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -288,6 +304,7 @@ func (client VirtualNetworkRulesClient) ListByServer(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerPreparer prepares the ListByServer request.
 func (client VirtualNetworkRulesClient) ListByServerPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -309,6 +326,7 @@ func (client VirtualNetworkRulesClient) ListByServerPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualNetworkRulesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
@@ -316,6 +334,7 @@ func (client VirtualNetworkRulesClient) ListByServerSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerResponder handles the response to the ListByServer request. The method always
 // closes the http.Response Body.
 func (client VirtualNetworkRulesClient) ListByServerResponder(resp *http.Response) (result VirtualNetworkRuleListResult, err error) {
@@ -350,6 +369,7 @@ func (client VirtualNetworkRulesClient) listByServerNextResults(lastResults Virt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VirtualNetworkRulesClient) ListByServerComplete(ctx context.Context, resourceGroupName string, serverName string) (result VirtualNetworkRuleListResultIterator, err error) {
 	result.page, err = client.ListByServer(ctx, resourceGroupName, serverName)

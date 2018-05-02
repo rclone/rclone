@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Client is the creates an Azure Data Lake Analytics account management client.
 type Client struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NewClient creates an instance of the Client client.
 func NewClient(subscriptionID string) Client {
 	return NewClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NewClientWithBaseURI creates an instance of the Client client.
 func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return Client{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddDataLakeStoreAccount updates the specified Data Lake Analytics account to include the additional Data Lake Store
 // account.
 //
@@ -75,6 +79,7 @@ func (client Client) AddDataLakeStoreAccount(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddDataLakeStoreAccountPreparer prepares the AddDataLakeStoreAccount request.
 func (client Client) AddDataLakeStoreAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string, parameters AddDataLakeStoreParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,7 +95,7 @@ func (client Client) AddDataLakeStoreAccountPreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/DataLakeStoreAccounts/{dataLakeStoreAccountName}", pathParameters),
@@ -99,6 +104,7 @@ func (client Client) AddDataLakeStoreAccountPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddDataLakeStoreAccountSender sends the AddDataLakeStoreAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) AddDataLakeStoreAccountSender(req *http.Request) (*http.Response, error) {
@@ -106,6 +112,7 @@ func (client Client) AddDataLakeStoreAccountSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddDataLakeStoreAccountResponder handles the response to the AddDataLakeStoreAccount request. The method always
 // closes the http.Response Body.
 func (client Client) AddDataLakeStoreAccountResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -118,6 +125,7 @@ func (client Client) AddDataLakeStoreAccountResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddStorageAccount updates the specified Data Lake Analytics account to add an Azure Storage account.
 //
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
@@ -153,6 +161,7 @@ func (client Client) AddStorageAccount(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddStorageAccountPreparer prepares the AddStorageAccount request.
 func (client Client) AddStorageAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, parameters AddStorageAccountParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -168,7 +177,7 @@ func (client Client) AddStorageAccountPreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/StorageAccounts/{storageAccountName}", pathParameters),
@@ -177,6 +186,7 @@ func (client Client) AddStorageAccountPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddStorageAccountSender sends the AddStorageAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) AddStorageAccountSender(req *http.Request) (*http.Response, error) {
@@ -184,6 +194,7 @@ func (client Client) AddStorageAccountSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddStorageAccountResponder handles the response to the AddStorageAccount request. The method always
 // closes the http.Response Body.
 func (client Client) AddStorageAccountResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -196,6 +207,7 @@ func (client Client) AddStorageAccountResponder(resp *http.Response) (result aut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Create creates the specified Data Lake Analytics account. This supplies the user with computation services for Data
 // Lake Analytics workloads
 //
@@ -218,6 +230,7 @@ func (client Client) Create(ctx context.Context, resourceGroupName string, name 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // CreatePreparer prepares the Create request.
 func (client Client) CreatePreparer(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -232,7 +245,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{name}", pathParameters),
@@ -241,6 +254,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateSender(req *http.Request) (future CreateFuture, err error) {
@@ -256,6 +270,7 @@ func (client Client) CreateSender(req *http.Request) (future CreateFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client Client) CreateResponder(resp *http.Response) (result DataLakeAnalyticsAccount, err error) {
@@ -269,6 +284,7 @@ func (client Client) CreateResponder(resp *http.Response) (result DataLakeAnalyt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Delete begins the delete delete process for the Data Lake Analytics account object specified by the account name.
 //
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
@@ -289,6 +305,7 @@ func (client Client) Delete(ctx context.Context, resourceGroupName string, accou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeletePreparer prepares the Delete request.
 func (client Client) DeletePreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -310,6 +327,7 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
@@ -325,6 +343,7 @@ func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -337,6 +356,7 @@ func (client Client) DeleteResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteDataLakeStoreAccount updates the Data Lake Analytics account specified to remove the specified Data Lake Store
 // account.
 //
@@ -365,6 +385,7 @@ func (client Client) DeleteDataLakeStoreAccount(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteDataLakeStoreAccountPreparer prepares the DeleteDataLakeStoreAccount request.
 func (client Client) DeleteDataLakeStoreAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -387,6 +408,7 @@ func (client Client) DeleteDataLakeStoreAccountPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteDataLakeStoreAccountSender sends the DeleteDataLakeStoreAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteDataLakeStoreAccountSender(req *http.Request) (*http.Response, error) {
@@ -394,6 +416,7 @@ func (client Client) DeleteDataLakeStoreAccountSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteDataLakeStoreAccountResponder handles the response to the DeleteDataLakeStoreAccount request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteDataLakeStoreAccountResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -406,6 +429,7 @@ func (client Client) DeleteDataLakeStoreAccountResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteStorageAccount updates the specified Data Lake Analytics account to remove an Azure Storage account.
 //
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
@@ -433,6 +457,7 @@ func (client Client) DeleteStorageAccount(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteStorageAccountPreparer prepares the DeleteStorageAccount request.
 func (client Client) DeleteStorageAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -455,6 +480,7 @@ func (client Client) DeleteStorageAccountPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteStorageAccountSender sends the DeleteStorageAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteStorageAccountSender(req *http.Request) (*http.Response, error) {
@@ -462,6 +488,7 @@ func (client Client) DeleteStorageAccountSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteStorageAccountResponder handles the response to the DeleteStorageAccount request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteStorageAccountResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -474,6 +501,7 @@ func (client Client) DeleteStorageAccountResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Get gets details of the specified Data Lake Analytics account.
 //
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
@@ -500,6 +528,7 @@ func (client Client) Get(ctx context.Context, resourceGroupName string, accountN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetPreparer prepares the Get request.
 func (client Client) GetPreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -521,6 +550,7 @@ func (client Client) GetPreparer(ctx context.Context, resourceGroupName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetSender(req *http.Request) (*http.Response, error) {
@@ -528,6 +558,7 @@ func (client Client) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client Client) GetResponder(resp *http.Response) (result DataLakeAnalyticsAccount, err error) {
@@ -541,6 +572,7 @@ func (client Client) GetResponder(resp *http.Response) (result DataLakeAnalytics
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetDataLakeStoreAccount gets the specified Data Lake Store account details in the specified Data Lake Analytics
 // account.
 //
@@ -569,6 +601,7 @@ func (client Client) GetDataLakeStoreAccount(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetDataLakeStoreAccountPreparer prepares the GetDataLakeStoreAccount request.
 func (client Client) GetDataLakeStoreAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -591,6 +624,7 @@ func (client Client) GetDataLakeStoreAccountPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetDataLakeStoreAccountSender sends the GetDataLakeStoreAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetDataLakeStoreAccountSender(req *http.Request) (*http.Response, error) {
@@ -598,6 +632,7 @@ func (client Client) GetDataLakeStoreAccountSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetDataLakeStoreAccountResponder handles the response to the GetDataLakeStoreAccount request. The method always
 // closes the http.Response Body.
 func (client Client) GetDataLakeStoreAccountResponder(resp *http.Response) (result DataLakeStoreAccountInfo, err error) {
@@ -611,6 +646,7 @@ func (client Client) GetDataLakeStoreAccountResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageAccount gets the specified Azure Storage account linked to the given Data Lake Analytics account.
 //
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
@@ -638,6 +674,7 @@ func (client Client) GetStorageAccount(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageAccountPreparer prepares the GetStorageAccount request.
 func (client Client) GetStorageAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -660,6 +697,7 @@ func (client Client) GetStorageAccountPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageAccountSender sends the GetStorageAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetStorageAccountSender(req *http.Request) (*http.Response, error) {
@@ -667,6 +705,7 @@ func (client Client) GetStorageAccountSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageAccountResponder handles the response to the GetStorageAccount request. The method always
 // closes the http.Response Body.
 func (client Client) GetStorageAccountResponder(resp *http.Response) (result StorageAccountInfo, err error) {
@@ -680,6 +719,7 @@ func (client Client) GetStorageAccountResponder(resp *http.Response) (result Sto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageContainer gets the specified Azure Storage container associated with the given Data Lake Analytics and
 // Azure Storage accounts.
 //
@@ -709,6 +749,7 @@ func (client Client) GetStorageContainer(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageContainerPreparer prepares the GetStorageContainer request.
 func (client Client) GetStorageContainerPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, containerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -732,6 +773,7 @@ func (client Client) GetStorageContainerPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageContainerSender sends the GetStorageContainer request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetStorageContainerSender(req *http.Request) (*http.Response, error) {
@@ -739,6 +781,7 @@ func (client Client) GetStorageContainerSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // GetStorageContainerResponder handles the response to the GetStorageContainer request. The method always
 // closes the http.Response Body.
 func (client Client) GetStorageContainerResponder(resp *http.Response) (result BlobContainer, err error) {
@@ -752,6 +795,7 @@ func (client Client) GetStorageContainerResponder(resp *http.Response) (result B
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // List gets the first page of Data Lake Analytics accounts, if any, within the current subscription. This includes a
 // link to the next page, if any.
 //
@@ -790,6 +834,7 @@ func (client Client) List(ctx context.Context, filter string, top *int32, skip *
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListPreparer prepares the List request.
 func (client Client) ListPreparer(ctx context.Context, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -836,6 +881,7 @@ func (client Client) ListPreparer(ctx context.Context, filter string, top *int32
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListSender(req *http.Request) (*http.Response, error) {
@@ -843,6 +889,7 @@ func (client Client) ListSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client Client) ListResponder(resp *http.Response) (result DataLakeAnalyticsAccountListResult, err error) {
@@ -877,12 +924,14 @@ func (client Client) listNextResults(lastResults DataLakeAnalyticsAccountListRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListComplete(ctx context.Context, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListResultIterator, err error) {
 	result.page, err = client.List(ctx, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListByResourceGroup gets the first page of Data Lake Analytics accounts, if any, within a specific resource group.
 // This includes a link to the next page, if any.
 //
@@ -922,6 +971,7 @@ func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client Client) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -969,6 +1019,7 @@ func (client Client) ListByResourceGroupPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -976,6 +1027,7 @@ func (client Client) ListByResourceGroupSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client Client) ListByResourceGroupResponder(resp *http.Response) (result DataLakeAnalyticsAccountListResult, err error) {
@@ -1010,12 +1062,14 @@ func (client Client) listByResourceGroupNextResults(lastResults DataLakeAnalytic
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListDataLakeStoreAccounts gets the first page of Data Lake Store accounts linked to the specified Data Lake
 // Analytics account. The response includes a link to the next page, if any.
 //
@@ -1056,6 +1110,7 @@ func (client Client) ListDataLakeStoreAccounts(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListDataLakeStoreAccountsPreparer prepares the ListDataLakeStoreAccounts request.
 func (client Client) ListDataLakeStoreAccountsPreparer(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1104,6 +1159,7 @@ func (client Client) ListDataLakeStoreAccountsPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListDataLakeStoreAccountsSender sends the ListDataLakeStoreAccounts request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListDataLakeStoreAccountsSender(req *http.Request) (*http.Response, error) {
@@ -1111,6 +1167,7 @@ func (client Client) ListDataLakeStoreAccountsSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListDataLakeStoreAccountsResponder handles the response to the ListDataLakeStoreAccounts request. The method always
 // closes the http.Response Body.
 func (client Client) ListDataLakeStoreAccountsResponder(resp *http.Response) (result DataLakeAnalyticsAccountListDataLakeStoreResult, err error) {
@@ -1145,12 +1202,14 @@ func (client Client) listDataLakeStoreAccountsNextResults(lastResults DataLakeAn
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListDataLakeStoreAccountsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListDataLakeStoreAccountsComplete(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListDataLakeStoreResultIterator, err error) {
 	result.page, err = client.ListDataLakeStoreAccounts(ctx, resourceGroupName, accountName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokens gets the SAS token associated with the specified Data Lake Analytics and Azure Storage account and
 // container combination.
 //
@@ -1181,6 +1240,7 @@ func (client Client) ListSasTokens(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensPreparer prepares the ListSasTokens request.
 func (client Client) ListSasTokensPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, containerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1204,6 +1264,7 @@ func (client Client) ListSasTokensPreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensSender sends the ListSasTokens request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListSasTokensSender(req *http.Request) (*http.Response, error) {
@@ -1211,6 +1272,7 @@ func (client Client) ListSasTokensSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensResponder handles the response to the ListSasTokens request. The method always
 // closes the http.Response Body.
 func (client Client) ListSasTokensResponder(resp *http.Response) (result ListSasTokensResult, err error) {
@@ -1245,12 +1307,14 @@ func (client Client) listSasTokensNextResults(lastResults ListSasTokensResult) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListSasTokensComplete(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, containerName string) (result ListSasTokensResultIterator, err error) {
 	result.page, err = client.ListSasTokens(ctx, resourceGroupName, accountName, storageAccountName, containerName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageAccounts gets the first page of Azure Storage accounts, if any, linked to the specified Data Lake
 // Analytics account. The response includes a link to the next page, if any.
 //
@@ -1291,6 +1355,7 @@ func (client Client) ListStorageAccounts(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageAccountsPreparer prepares the ListStorageAccounts request.
 func (client Client) ListStorageAccountsPreparer(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1339,6 +1404,7 @@ func (client Client) ListStorageAccountsPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageAccountsSender sends the ListStorageAccounts request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListStorageAccountsSender(req *http.Request) (*http.Response, error) {
@@ -1346,6 +1412,7 @@ func (client Client) ListStorageAccountsSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageAccountsResponder handles the response to the ListStorageAccounts request. The method always
 // closes the http.Response Body.
 func (client Client) ListStorageAccountsResponder(resp *http.Response) (result DataLakeAnalyticsAccountListStorageAccountsResult, err error) {
@@ -1380,12 +1447,14 @@ func (client Client) listStorageAccountsNextResults(lastResults DataLakeAnalytic
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageAccountsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListStorageAccountsComplete(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListStorageAccountsResultIterator, err error) {
 	result.page, err = client.ListStorageAccounts(ctx, resourceGroupName, accountName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageContainers lists the Azure Storage containers, if any, associated with the specified Data Lake Analytics
 // and Azure Storage account combination. The response includes a link to the next page of results, if any.
 //
@@ -1415,6 +1484,7 @@ func (client Client) ListStorageContainers(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageContainersPreparer prepares the ListStorageContainers request.
 func (client Client) ListStorageContainersPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1437,6 +1507,7 @@ func (client Client) ListStorageContainersPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageContainersSender sends the ListStorageContainers request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListStorageContainersSender(req *http.Request) (*http.Response, error) {
@@ -1444,6 +1515,7 @@ func (client Client) ListStorageContainersSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageContainersResponder handles the response to the ListStorageContainers request. The method always
 // closes the http.Response Body.
 func (client Client) ListStorageContainersResponder(resp *http.Response) (result ListBlobContainersResult, err error) {
@@ -1478,12 +1550,14 @@ func (client Client) listStorageContainersNextResults(lastResults ListBlobContai
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListStorageContainersComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListStorageContainersComplete(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (result ListBlobContainersResultIterator, err error) {
 	result.page, err = client.ListStorageContainers(ctx, resourceGroupName, accountName, storageAccountName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Update updates the Data Lake Analytics account object specified by the accountName with the contents of the account
 // object.
 //
@@ -1506,6 +1580,7 @@ func (client Client) Update(ctx context.Context, resourceGroupName string, name 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdatePreparer prepares the Update request.
 func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1520,7 +1595,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{name}", pathParameters),
@@ -1529,6 +1604,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
@@ -1544,6 +1620,7 @@ func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client Client) UpdateResponder(resp *http.Response) (result DataLakeAnalyticsAccount, err error) {
@@ -1557,6 +1634,7 @@ func (client Client) UpdateResponder(resp *http.Response) (result DataLakeAnalyt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateStorageAccount updates the Data Lake Analytics account to replace Azure Storage blob account details, such as
 // the access key and/or suffix.
 //
@@ -1586,6 +1664,7 @@ func (client Client) UpdateStorageAccount(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateStorageAccountPreparer prepares the UpdateStorageAccount request.
 func (client Client) UpdateStorageAccountPreparer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, parameters AddStorageAccountParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1601,7 +1680,7 @@ func (client Client) UpdateStorageAccountPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/StorageAccounts/{storageAccountName}", pathParameters),
@@ -1610,6 +1689,7 @@ func (client Client) UpdateStorageAccountPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateStorageAccountSender sends the UpdateStorageAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) UpdateStorageAccountSender(req *http.Request) (*http.Response, error) {
@@ -1617,6 +1697,7 @@ func (client Client) UpdateStorageAccountSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateStorageAccountResponder handles the response to the UpdateStorageAccount request. The method always
 // closes the http.Response Body.
 func (client Client) UpdateStorageAccountResponder(resp *http.Response) (result autorest.Response, err error) {

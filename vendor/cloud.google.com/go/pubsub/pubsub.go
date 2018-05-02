@@ -38,7 +38,11 @@ const (
 	ScopeCloudPlatform = "https://www.googleapis.com/auth/cloud-platform"
 )
 
-const prodAddr = "https://pubsub.googleapis.com/"
+const (
+	prodAddr       = "https://pubsub.googleapis.com/"
+	minAckDeadline = 10 * time.Second
+	maxAckDeadline = 10 * time.Minute
+)
 
 // Client is a Google Pub/Sub client scoped to a single project.
 //

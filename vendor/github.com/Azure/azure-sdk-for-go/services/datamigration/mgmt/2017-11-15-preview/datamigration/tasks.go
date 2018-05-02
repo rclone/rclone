@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TasksClient is the data Migration Client
 type TasksClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewTasksClient creates an instance of the TasksClient client.
 func NewTasksClient(subscriptionID string) TasksClient {
 	return NewTasksClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewTasksClientWithBaseURI creates an instance of the TasksClient client.
 func NewTasksClientWithBaseURI(baseURI string, subscriptionID string) TasksClient {
 	return TasksClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Cancel the tasks resource is a nested, proxy-only resource representing work performed by a DMS instance. This
 // method cancels a task if it's currently queued or running.
 //
@@ -66,6 +70,7 @@ func (client TasksClient) Cancel(ctx context.Context, groupName string, serviceN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CancelPreparer prepares the Cancel request.
 func (client TasksClient) CancelPreparer(ctx context.Context, groupName string, serviceName string, projectName string, taskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -89,6 +94,7 @@ func (client TasksClient) CancelPreparer(ctx context.Context, groupName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CancelSender sends the Cancel request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) CancelSender(req *http.Request) (*http.Response, error) {
@@ -96,6 +102,7 @@ func (client TasksClient) CancelSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CancelResponder handles the response to the Cancel request. The method always
 // closes the http.Response Body.
 func (client TasksClient) CancelResponder(resp *http.Response) (result ProjectTask, err error) {
@@ -109,6 +116,7 @@ func (client TasksClient) CancelResponder(resp *http.Response) (result ProjectTa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdate the tasks resource is a nested, proxy-only resource representing work performed by a DMS instance.
 // The PUT method creates a new task or updates an existing one, although since tasks have no mutable custom
 // properties, there is little reason to update an exising one.
@@ -137,6 +145,7 @@ func (client TasksClient) CreateOrUpdate(ctx context.Context, parameters Project
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client TasksClient) CreateOrUpdatePreparer(ctx context.Context, parameters ProjectTask, groupName string, serviceName string, projectName string, taskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -153,7 +162,7 @@ func (client TasksClient) CreateOrUpdatePreparer(ctx context.Context, parameters
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.DataMigration/services/{serviceName}/projects/{projectName}/tasks/{taskName}", pathParameters),
@@ -162,6 +171,7 @@ func (client TasksClient) CreateOrUpdatePreparer(ctx context.Context, parameters
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -169,6 +179,7 @@ func (client TasksClient) CreateOrUpdateSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client TasksClient) CreateOrUpdateResponder(resp *http.Response) (result ProjectTask, err error) {
@@ -182,6 +193,7 @@ func (client TasksClient) CreateOrUpdateResponder(resp *http.Response) (result P
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Delete the tasks resource is a nested, proxy-only resource representing work performed by a DMS instance. The DELETE
 // method deletes a task, canceling it first if it's running.
 //
@@ -209,6 +221,7 @@ func (client TasksClient) Delete(ctx context.Context, groupName string, serviceN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeletePreparer prepares the Delete request.
 func (client TasksClient) DeletePreparer(ctx context.Context, groupName string, serviceName string, projectName string, taskName string, deleteRunningTasks *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -235,6 +248,7 @@ func (client TasksClient) DeletePreparer(ctx context.Context, groupName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -242,6 +256,7 @@ func (client TasksClient) DeleteSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client TasksClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -254,6 +269,7 @@ func (client TasksClient) DeleteResponder(resp *http.Response) (result autorest.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Get the tasks resource is a nested, proxy-only resource representing work performed by a DMS instance. The GET
 // method retrieves information about a task.
 //
@@ -281,6 +297,7 @@ func (client TasksClient) Get(ctx context.Context, groupName string, serviceName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetPreparer prepares the Get request.
 func (client TasksClient) GetPreparer(ctx context.Context, groupName string, serviceName string, projectName string, taskName string, expand string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -307,6 +324,7 @@ func (client TasksClient) GetPreparer(ctx context.Context, groupName string, ser
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -314,6 +332,7 @@ func (client TasksClient) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client TasksClient) GetResponder(resp *http.Response) (result ProjectTask, err error) {
@@ -327,6 +346,7 @@ func (client TasksClient) GetResponder(resp *http.Response) (result ProjectTask,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // List the services resource is the top-level resource that represents the Data Migration Service. This method returns
 // a list of tasks owned by a service resource. Some tasks may have a status of Unknown, which indicates that an error
 // occurred while querying the status of that task.
@@ -356,6 +376,7 @@ func (client TasksClient) List(ctx context.Context, groupName string, serviceNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListPreparer prepares the List request.
 func (client TasksClient) ListPreparer(ctx context.Context, groupName string, serviceName string, projectName string, taskType string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -381,6 +402,7 @@ func (client TasksClient) ListPreparer(ctx context.Context, groupName string, se
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -388,6 +410,7 @@ func (client TasksClient) ListSender(req *http.Request) (*http.Response, error) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client TasksClient) ListResponder(resp *http.Response) (result TaskList, err error) {
@@ -422,12 +445,14 @@ func (client TasksClient) listNextResults(lastResults TaskList) (result TaskList
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client TasksClient) ListComplete(ctx context.Context, groupName string, serviceName string, projectName string, taskType string) (result TaskListIterator, err error) {
 	result.page, err = client.List(ctx, groupName, serviceName, projectName, taskType)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Update the tasks resource is a nested, proxy-only resource representing work performed by a DMS instance. The PATCH
 // method updates an existing task, but since tasks have no mutable custom properties, there is little reason to do so.
 //
@@ -455,6 +480,7 @@ func (client TasksClient) Update(ctx context.Context, parameters ProjectTask, gr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdatePreparer prepares the Update request.
 func (client TasksClient) UpdatePreparer(ctx context.Context, parameters ProjectTask, groupName string, serviceName string, projectName string, taskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -471,7 +497,7 @@ func (client TasksClient) UpdatePreparer(ctx context.Context, parameters Project
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.DataMigration/services/{serviceName}/projects/{projectName}/tasks/{taskName}", pathParameters),
@@ -480,6 +506,7 @@ func (client TasksClient) UpdatePreparer(ctx context.Context, parameters Project
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client TasksClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -487,6 +514,7 @@ func (client TasksClient) UpdateSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client TasksClient) UpdateResponder(resp *http.Response) (result ProjectTask, err error) {

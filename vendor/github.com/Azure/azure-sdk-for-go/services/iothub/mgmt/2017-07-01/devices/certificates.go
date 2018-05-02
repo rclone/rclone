@@ -41,11 +41,13 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 }
 
 // CreateOrUpdate adds new or replaces existing certificate.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. certificateName is the name of the certificate certificateDescription is the certificate body. ifMatch
-// is eTag of the Certificate. Do not specify for creating a brand new certificate. Required to update an existing
-// certificate.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// certificateName - the name of the certificate
+// certificateDescription - the certificate body.
+// ifMatch - eTag of the Certificate. Do not specify for creating a brand new certificate. Required to update
+// an existing certificate.
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, certificateDescription CertificateBodyDescription, ifMatch string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -89,7 +91,7 @@ func (client CertificatesClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}/certificates/{certificateName}", pathParameters),
@@ -123,9 +125,11 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete deletes an existing X509 certificate or does nothing if it does not exist.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// certificateName - the name of the certificate
+// ifMatch - eTag of the Certificate.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -198,9 +202,11 @@ func (client CertificatesClient) DeleteResponder(resp *http.Response) (result au
 
 // GenerateVerificationCode generates verification code for proof of possession flow. The verification code will be
 // used to generate a leaf certificate.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// certificateName - the name of the certificate
+// ifMatch - eTag of the Certificate.
 func (client CertificatesClient) GenerateVerificationCode(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, ifMatch string) (result CertificateWithNonceDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -273,9 +279,10 @@ func (client CertificatesClient) GenerateVerificationCodeResponder(resp *http.Re
 }
 
 // Get returns the certificate.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. certificateName is the name of the certificate
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// certificateName - the name of the certificate
 func (client CertificatesClient) Get(ctx context.Context, resourceGroupName string, resourceName string, certificateName string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -347,9 +354,9 @@ func (client CertificatesClient) GetResponder(resp *http.Response) (result Certi
 }
 
 // ListByIotHub returns the list of certificates.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client CertificatesClient) ListByIotHub(ctx context.Context, resourceGroupName string, resourceName string) (result CertificateListDescription, err error) {
 	req, err := client.ListByIotHubPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -415,10 +422,12 @@ func (client CertificatesClient) ListByIotHubResponder(resp *http.Response) (res
 
 // Verify verifies the certificate's private key possession by providing the leaf cert issued by the verifying pre
 // uploaded certificate.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. certificateName is the name of the certificate certificateVerificationBody is the name of the
-// certificate ifMatch is eTag of the Certificate.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// certificateName - the name of the certificate
+// certificateVerificationBody - the name of the certificate
+// ifMatch - eTag of the Certificate.
 func (client CertificatesClient) Verify(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, certificateVerificationBody CertificateVerificationDescription, ifMatch string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -462,7 +471,7 @@ func (client CertificatesClient) VerifyPreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}/certificates/{certificateName}/verify", pathParameters),

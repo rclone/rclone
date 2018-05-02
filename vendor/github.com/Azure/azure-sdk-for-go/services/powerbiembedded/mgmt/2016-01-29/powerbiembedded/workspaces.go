@@ -40,8 +40,9 @@ func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) Works
 }
 
 // List retrieves all existing Power BI workspaces in the specified workspace collection.
-//
-// resourceGroupName is azure resource group workspaceCollectionName is power BI Embedded Workspace Collection name
+// Parameters:
+// resourceGroupName - azure resource group
+// workspaceCollectionName - power BI Embedded Workspace Collection name
 func (client WorkspacesClient) List(ctx context.Context, resourceGroupName string, workspaceCollectionName string) (result WorkspaceList, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, workspaceCollectionName)
 	if err != nil {

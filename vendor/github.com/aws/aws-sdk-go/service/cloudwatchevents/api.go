@@ -17,7 +17,7 @@ const opDeleteRule = "DeleteRule"
 
 // DeleteRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -107,7 +107,7 @@ const opDescribeEventBus = "DescribeEventBus"
 
 // DescribeEventBusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventBus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -191,7 +191,7 @@ const opDescribeRule = "DescribeRule"
 
 // DescribeRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -273,7 +273,7 @@ const opDisableRule = "DisableRule"
 
 // DisableRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DisableRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -364,7 +364,7 @@ const opEnableRule = "EnableRule"
 
 // EnableRuleRequest generates a "aws/request.Request" representing the
 // client's request for the EnableRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -455,7 +455,7 @@ const opListRuleNamesByTarget = "ListRuleNamesByTarget"
 
 // ListRuleNamesByTargetRequest generates a "aws/request.Request" representing the
 // client's request for the ListRuleNamesByTarget operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -535,7 +535,7 @@ const opListRules = "ListRules"
 
 // ListRulesRequest generates a "aws/request.Request" representing the
 // client's request for the ListRules operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -615,7 +615,7 @@ const opListTargetsByRule = "ListTargetsByRule"
 
 // ListTargetsByRuleRequest generates a "aws/request.Request" representing the
 // client's request for the ListTargetsByRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -697,7 +697,7 @@ const opPutEvents = "PutEvents"
 
 // PutEventsRequest generates a "aws/request.Request" representing the
 // client's request for the PutEvents operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -777,7 +777,7 @@ const opPutPermission = "PutPermission"
 
 // PutPermissionRequest generates a "aws/request.Request" representing the
 // client's request for the PutPermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -878,7 +878,7 @@ const opPutRule = "PutRule"
 
 // PutRuleRequest generates a "aws/request.Request" representing the
 // client's request for the PutRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -987,7 +987,7 @@ const opPutTargets = "PutTargets"
 
 // PutTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the PutTargets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1054,7 +1054,7 @@ func (c *CloudWatchEvents) PutTargetsRequest(input *PutTargetsInput) (req *reque
 //
 //    * Amazon SNS topics
 //
-//    * Amazon SQS queues
+//    * Amazon SQS queues, including FIFO queues
 //
 //    * The default event bus of another AWS account
 //
@@ -1164,7 +1164,7 @@ const opRemovePermission = "RemovePermission"
 
 // RemovePermissionRequest generates a "aws/request.Request" representing the
 // client's request for the RemovePermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1254,7 +1254,7 @@ const opRemoveTargets = "RemoveTargets"
 
 // RemoveTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTargets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1349,7 +1349,7 @@ const opTestEventPattern = "TestEventPattern"
 
 // TestEventPatternRequest generates a "aws/request.Request" representing the
 // client's request for the TestEventPattern operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3275,6 +3275,31 @@ func (s *RunCommandTarget) SetValues(v []*string) *RunCommandTarget {
 	return s
 }
 
+// This structure includes the custom parameter to be used when the target is
+// an SQS FIFO queue.
+type SqsParameters struct {
+	_ struct{} `type:"structure"`
+
+	// The FIFO message group ID to use as the target.
+	MessageGroupId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SqsParameters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SqsParameters) GoString() string {
+	return s.String()
+}
+
+// SetMessageGroupId sets the MessageGroupId field's value.
+func (s *SqsParameters) SetMessageGroupId(v string) *SqsParameters {
+	s.MessageGroupId = &v
+	return s
+}
+
 // Targets are the resources to be invoked when a rule is triggered. Target
 // types include EC2 instances, AWS Lambda functions, Amazon Kinesis streams,
 // Amazon ECS tasks, AWS Step Functions state machines, Run Command, and built-in
@@ -3331,6 +3356,9 @@ type Target struct {
 
 	// Parameters used when you are using the rule to invoke Amazon EC2 Run Command.
 	RunCommandParameters *RunCommandParameters `type:"structure"`
+
+	// Contains the message group ID to use when the target is a FIFO queue.
+	SqsParameters *SqsParameters `type:"structure"`
 }
 
 // String returns the string representation
@@ -3450,6 +3478,12 @@ func (s *Target) SetRoleArn(v string) *Target {
 // SetRunCommandParameters sets the RunCommandParameters field's value.
 func (s *Target) SetRunCommandParameters(v *RunCommandParameters) *Target {
 	s.RunCommandParameters = v
+	return s
+}
+
+// SetSqsParameters sets the SqsParameters field's value.
+func (s *Target) SetSqsParameters(v *SqsParameters) *Target {
+	s.SqsParameters = v
 	return s
 }
 

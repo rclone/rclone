@@ -21,10 +21,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/yunify/qingstor-sdk-go/request/data"
 	"github.com/yunify/qingstor-sdk-go/request/errors"
 )
@@ -119,6 +121,30 @@ func TestQingStorUnpacker_UnpackHTTPRequestWithError(t *testing.T) {
 	switch e := err.(type) {
 	case *errors.QingStorError:
 		assert.Equal(t, "bad_request", e.Code)
+		assert.Equal(t, "aa08cf7a43f611e5886952542e6ce14b", e.RequestID)
+	}
+}
+
+func TestQingStorUnpacker_UnpackHeadHTTPRequestWithError(t *testing.T) {
+	type HeadBucketsOutput struct {
+		StatusCode *int `location:"statusCode"`
+		Error      *errors.QingStorError
+		RequestID  *string `location:"requestID"`
+	}
+
+	httpResponse := &http.Response{Header: http.Header{}}
+	httpResponse.StatusCode = 404
+	httpResponse.Header.Set("Content-Type", "application/json")
+	httpResponse.Header.Set("X-QS-Request-ID", "aa08cf7a43f611e5886952542e6ce14b")
+	httpResponse.Body = ioutil.NopCloser(strings.NewReader(""))
+
+	output := &HeadBucketsOutput{}
+	outputValue := reflect.ValueOf(output)
+	unpacker := QingStorUnpacker{}
+	err := unpacker.UnpackHTTPRequest(&data.Operation{}, httpResponse, &outputValue)
+	assert.NotNil(t, err)
+	switch e := err.(type) {
+	case *errors.QingStorError:
 		assert.Equal(t, "aa08cf7a43f611e5886952542e6ce14b", e.RequestID)
 	}
 }

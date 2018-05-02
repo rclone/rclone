@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ClassicAdministratorsClient is the role based access control provides you a way to apply granular level policy
 // administration down to individual resources or resource groups. These operations enable you to manage role
 // definitions and role assignments. A role definition describes the set of actions that can be performed on resources.
@@ -32,16 +33,19 @@ type ClassicAdministratorsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // NewClassicAdministratorsClient creates an instance of the ClassicAdministratorsClient client.
 func NewClassicAdministratorsClient(subscriptionID string) ClassicAdministratorsClient {
 	return NewClassicAdministratorsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // NewClassicAdministratorsClientWithBaseURI creates an instance of the ClassicAdministratorsClient client.
 func NewClassicAdministratorsClientWithBaseURI(baseURI string, subscriptionID string) ClassicAdministratorsClient {
 	return ClassicAdministratorsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // List gets service administrator, account administrator, and co-administrators for the subscription.
 func (client ClassicAdministratorsClient) List(ctx context.Context) (result ClassicAdministratorListResultPage, err error) {
 	result.fn = client.listNextResults
@@ -66,13 +70,14 @@ func (client ClassicAdministratorsClient) List(ctx context.Context) (result Clas
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListPreparer prepares the List request.
 func (client ClassicAdministratorsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = ""
+	const APIVersion = "2015-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -85,6 +90,7 @@ func (client ClassicAdministratorsClient) ListPreparer(ctx context.Context) (*ht
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClassicAdministratorsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -92,6 +98,7 @@ func (client ClassicAdministratorsClient) ListSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ClassicAdministratorsClient) ListResponder(resp *http.Response) (result ClassicAdministratorListResult, err error) {
@@ -126,6 +133,7 @@ func (client ClassicAdministratorsClient) listNextResults(lastResults ClassicAdm
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ClassicAdministratorsClient) ListComplete(ctx context.Context) (result ClassicAdministratorListResultIterator, err error) {
 	result.page, err = client.List(ctx)

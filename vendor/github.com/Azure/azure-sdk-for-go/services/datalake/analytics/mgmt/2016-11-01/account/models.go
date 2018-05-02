@@ -39,6 +39,11 @@ const (
 	User AADObjectType = "User"
 )
 
+// PossibleAADObjectTypeValues returns an array of possible values for the AADObjectType const type.
+func PossibleAADObjectTypeValues() []AADObjectType {
+	return []AADObjectType{Group, ServicePrincipal, User}
+}
+
 // DataLakeAnalyticsAccountState enumerates the values for data lake analytics account state.
 type DataLakeAnalyticsAccountState string
 
@@ -48,6 +53,11 @@ const (
 	// Suspended ...
 	Suspended DataLakeAnalyticsAccountState = "Suspended"
 )
+
+// PossibleDataLakeAnalyticsAccountStateValues returns an array of possible values for the DataLakeAnalyticsAccountState const type.
+func PossibleDataLakeAnalyticsAccountStateValues() []DataLakeAnalyticsAccountState {
+	return []DataLakeAnalyticsAccountState{Active, Suspended}
+}
 
 // DataLakeAnalyticsAccountStatus enumerates the values for data lake analytics account status.
 type DataLakeAnalyticsAccountStatus string
@@ -77,6 +87,11 @@ const (
 	Undeleting DataLakeAnalyticsAccountStatus = "Undeleting"
 )
 
+// PossibleDataLakeAnalyticsAccountStatusValues returns an array of possible values for the DataLakeAnalyticsAccountStatus const type.
+func PossibleDataLakeAnalyticsAccountStatusValues() []DataLakeAnalyticsAccountStatus {
+	return []DataLakeAnalyticsAccountStatus{Canceled, Creating, Deleted, Deleting, Failed, Patching, Resuming, Running, Succeeded, Suspending, Undeleting}
+}
+
 // FirewallAllowAzureIpsState enumerates the values for firewall allow azure ips state.
 type FirewallAllowAzureIpsState string
 
@@ -87,6 +102,11 @@ const (
 	Enabled FirewallAllowAzureIpsState = "Enabled"
 )
 
+// PossibleFirewallAllowAzureIpsStateValues returns an array of possible values for the FirewallAllowAzureIpsState const type.
+func PossibleFirewallAllowAzureIpsStateValues() []FirewallAllowAzureIpsState {
+	return []FirewallAllowAzureIpsState{Disabled, Enabled}
+}
+
 // FirewallState enumerates the values for firewall state.
 type FirewallState string
 
@@ -96,6 +116,11 @@ const (
 	// FirewallStateEnabled ...
 	FirewallStateEnabled FirewallState = "Enabled"
 )
+
+// PossibleFirewallStateValues returns an array of possible values for the FirewallState const type.
+func PossibleFirewallStateValues() []FirewallState {
+	return []FirewallState{FirewallStateDisabled, FirewallStateEnabled}
+}
 
 // OperationOrigin enumerates the values for operation origin.
 type OperationOrigin string
@@ -108,6 +133,11 @@ const (
 	// OperationOriginUsersystem ...
 	OperationOriginUsersystem OperationOrigin = "user,system"
 )
+
+// PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{OperationOriginSystem, OperationOriginUser, OperationOriginUsersystem}
+}
 
 // SubscriptionState enumerates the values for subscription state.
 type SubscriptionState string
@@ -124,6 +154,11 @@ const (
 	// SubscriptionStateWarned ...
 	SubscriptionStateWarned SubscriptionState = "Warned"
 )
+
+// PossibleSubscriptionStateValues returns an array of possible values for the SubscriptionState const type.
+func PossibleSubscriptionStateValues() []SubscriptionState {
+	return []SubscriptionState{SubscriptionStateDeleted, SubscriptionStateRegistered, SubscriptionStateSuspended, SubscriptionStateUnregistered, SubscriptionStateWarned}
+}
 
 // TierType enumerates the values for tier type.
 type TierType string
@@ -148,6 +183,11 @@ const (
 	// Consumption ...
 	Consumption TierType = "Consumption"
 )
+
+// PossibleTierTypeValues returns an array of possible values for the TierType const type.
+func PossibleTierTypeValues() []TierType {
+	return []TierType{Commitment100000AUHours, Commitment10000AUHours, Commitment1000AUHours, Commitment100AUHours, Commitment500000AUHours, Commitment50000AUHours, Commitment5000AUHours, Commitment500AUHours, Consumption}
+}
 
 // AccountsCreateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFutureType struct {
@@ -299,6 +339,15 @@ type AddDataLakeStoreParameters struct {
 	*AddDataLakeStoreProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for AddDataLakeStoreParameters.
+func (adlsp AddDataLakeStoreParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if adlsp.AddDataLakeStoreProperties != nil {
+		objectMap["properties"] = adlsp.AddDataLakeStoreProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for AddDataLakeStoreParameters struct.
 func (adlsp *AddDataLakeStoreParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -337,6 +386,18 @@ type AddDataLakeStoreWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// AddDataLakeStoreProperties - The Data Lake Store account properties to use when adding a new Data Lake Store account.
 	*AddDataLakeStoreProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AddDataLakeStoreWithAccountParameters.
+func (adlswap AddDataLakeStoreWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if adlswap.Name != nil {
+		objectMap["name"] = adlswap.Name
+	}
+	if adlswap.AddDataLakeStoreProperties != nil {
+		objectMap["properties"] = adlswap.AddDataLakeStoreProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AddDataLakeStoreWithAccountParameters struct.
@@ -378,6 +439,15 @@ type AddStorageAccountParameters struct {
 	*AddStorageAccountProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for AddStorageAccountParameters.
+func (asap AddStorageAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if asap.AddStorageAccountProperties != nil {
+		objectMap["properties"] = asap.AddStorageAccountProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for AddStorageAccountParameters struct.
 func (asap *AddStorageAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -417,6 +487,18 @@ type AddStorageAccountWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// AddStorageAccountProperties - The Azure Storage account properties to use when adding a new Azure Storage account.
 	*AddStorageAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AddStorageAccountWithAccountParameters.
+func (asawap AddStorageAccountWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if asawap.Name != nil {
+		objectMap["name"] = asawap.Name
+	}
+	if asawap.AddStorageAccountProperties != nil {
+		objectMap["properties"] = asawap.AddStorageAccountProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AddStorageAccountWithAccountParameters struct.
@@ -486,6 +568,24 @@ type ComputePolicy struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ComputePolicy.
+func (cp ComputePolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cp.ComputePolicyProperties != nil {
+		objectMap["properties"] = cp.ComputePolicyProperties
+	}
+	if cp.ID != nil {
+		objectMap["id"] = cp.ID
+	}
+	if cp.Name != nil {
+		objectMap["name"] = cp.Name
+	}
+	if cp.Type != nil {
+		objectMap["type"] = cp.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ComputePolicy struct.
@@ -662,6 +762,18 @@ type CreateComputePolicyWithAccountParameters struct {
 	*CreateOrUpdateComputePolicyProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CreateComputePolicyWithAccountParameters.
+func (ccpwap CreateComputePolicyWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ccpwap.Name != nil {
+		objectMap["name"] = ccpwap.Name
+	}
+	if ccpwap.CreateOrUpdateComputePolicyProperties != nil {
+		objectMap["properties"] = ccpwap.CreateOrUpdateComputePolicyProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CreateComputePolicyWithAccountParameters struct.
 func (ccpwap *CreateComputePolicyWithAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -801,6 +913,18 @@ type CreateFirewallRuleWithAccountParameters struct {
 	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CreateFirewallRuleWithAccountParameters.
+func (cfrwap CreateFirewallRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cfrwap.Name != nil {
+		objectMap["name"] = cfrwap.Name
+	}
+	if cfrwap.CreateOrUpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = cfrwap.CreateOrUpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CreateFirewallRuleWithAccountParameters struct.
 func (cfrwap *CreateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -838,6 +962,15 @@ func (cfrwap *CreateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte
 type CreateOrUpdateComputePolicyParameters struct {
 	// CreateOrUpdateComputePolicyProperties - The compute policy properties to use when creating a new compute policy.
 	*CreateOrUpdateComputePolicyProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateOrUpdateComputePolicyParameters.
+func (coucpp CreateOrUpdateComputePolicyParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coucpp.CreateOrUpdateComputePolicyProperties != nil {
+		objectMap["properties"] = coucpp.CreateOrUpdateComputePolicyProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateOrUpdateComputePolicyParameters struct.
@@ -880,6 +1013,15 @@ type CreateOrUpdateComputePolicyProperties struct {
 type CreateOrUpdateFirewallRuleParameters struct {
 	// CreateOrUpdateFirewallRuleProperties - The firewall rule properties to use when creating a new firewall rule.
 	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateOrUpdateFirewallRuleParameters.
+func (coufrp CreateOrUpdateFirewallRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coufrp.CreateOrUpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = coufrp.CreateOrUpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateOrUpdateFirewallRuleParameters struct.
@@ -1317,6 +1459,24 @@ type DataLakeStoreAccountInformation struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DataLakeStoreAccountInformation.
+func (dlsai DataLakeStoreAccountInformation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dlsai.DataLakeStoreAccountInformationProperties != nil {
+		objectMap["properties"] = dlsai.DataLakeStoreAccountInformationProperties
+	}
+	if dlsai.ID != nil {
+		objectMap["id"] = dlsai.ID
+	}
+	if dlsai.Name != nil {
+		objectMap["name"] = dlsai.Name
+	}
+	if dlsai.Type != nil {
+		objectMap["type"] = dlsai.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DataLakeStoreAccountInformation struct.
 func (dlsai *DataLakeStoreAccountInformation) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1488,6 +1648,24 @@ type FirewallRule struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
@@ -1850,6 +2028,24 @@ type StorageAccountInformation struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for StorageAccountInformation.
+func (sai StorageAccountInformation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sai.StorageAccountInformationProperties != nil {
+		objectMap["properties"] = sai.StorageAccountInformationProperties
+	}
+	if sai.ID != nil {
+		objectMap["id"] = sai.ID
+	}
+	if sai.Name != nil {
+		objectMap["name"] = sai.Name
+	}
+	if sai.Type != nil {
+		objectMap["type"] = sai.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for StorageAccountInformation struct.
 func (sai *StorageAccountInformation) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2021,6 +2217,24 @@ type StorageContainer struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for StorageContainer.
+func (sc StorageContainer) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sc.StorageContainerProperties != nil {
+		objectMap["properties"] = sc.StorageContainerProperties
+	}
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Name != nil {
+		objectMap["name"] = sc.Name
+	}
+	if sc.Type != nil {
+		objectMap["type"] = sc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for StorageContainer struct.
@@ -2199,6 +2413,15 @@ type UpdateComputePolicyParameters struct {
 	*UpdateComputePolicyProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for UpdateComputePolicyParameters.
+func (ucpp UpdateComputePolicyParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ucpp.UpdateComputePolicyProperties != nil {
+		objectMap["properties"] = ucpp.UpdateComputePolicyProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for UpdateComputePolicyParameters struct.
 func (ucpp *UpdateComputePolicyParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2242,6 +2465,18 @@ type UpdateComputePolicyWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// UpdateComputePolicyProperties - The compute policy properties to use when updating a compute policy.
 	*UpdateComputePolicyProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateComputePolicyWithAccountParameters.
+func (ucpwap UpdateComputePolicyWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ucpwap.Name != nil {
+		objectMap["name"] = ucpwap.Name
+	}
+	if ucpwap.UpdateComputePolicyProperties != nil {
+		objectMap["properties"] = ucpwap.UpdateComputePolicyProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateComputePolicyWithAccountParameters struct.
@@ -2376,6 +2611,18 @@ type UpdateDataLakeStoreWithAccountParameters struct {
 	*UpdateDataLakeStoreProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for UpdateDataLakeStoreWithAccountParameters.
+func (udlswap UpdateDataLakeStoreWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if udlswap.Name != nil {
+		objectMap["name"] = udlswap.Name
+	}
+	if udlswap.UpdateDataLakeStoreProperties != nil {
+		objectMap["properties"] = udlswap.UpdateDataLakeStoreProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for UpdateDataLakeStoreWithAccountParameters struct.
 func (udlswap *UpdateDataLakeStoreWithAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2413,6 +2660,15 @@ func (udlswap *UpdateDataLakeStoreWithAccountParameters) UnmarshalJSON(body []by
 type UpdateFirewallRuleParameters struct {
 	// UpdateFirewallRuleProperties - The firewall rule properties to use when updating a firewall rule.
 	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateFirewallRuleParameters.
+func (ufrp UpdateFirewallRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ufrp.UpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = ufrp.UpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateFirewallRuleParameters struct.
@@ -2456,6 +2712,18 @@ type UpdateFirewallRuleWithAccountParameters struct {
 	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for UpdateFirewallRuleWithAccountParameters.
+func (ufrwap UpdateFirewallRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ufrwap.Name != nil {
+		objectMap["name"] = ufrwap.Name
+	}
+	if ufrwap.UpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = ufrwap.UpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for UpdateFirewallRuleWithAccountParameters struct.
 func (ufrwap *UpdateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2493,6 +2761,15 @@ func (ufrwap *UpdateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte
 type UpdateStorageAccountParameters struct {
 	// UpdateStorageAccountProperties - The Azure Storage account properties to use when updating an Azure Storage account.
 	*UpdateStorageAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateStorageAccountParameters.
+func (usap UpdateStorageAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if usap.UpdateStorageAccountProperties != nil {
+		objectMap["properties"] = usap.UpdateStorageAccountProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateStorageAccountParameters struct.
@@ -2535,6 +2812,18 @@ type UpdateStorageAccountWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// UpdateStorageAccountProperties - The Azure Storage account properties to use when updating an Azure Storage account.
 	*UpdateStorageAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateStorageAccountWithAccountParameters.
+func (usawap UpdateStorageAccountWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if usawap.Name != nil {
+		objectMap["name"] = usawap.Name
+	}
+	if usawap.UpdateStorageAccountProperties != nil {
+		objectMap["properties"] = usawap.UpdateStorageAccountProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateStorageAccountWithAccountParameters struct.

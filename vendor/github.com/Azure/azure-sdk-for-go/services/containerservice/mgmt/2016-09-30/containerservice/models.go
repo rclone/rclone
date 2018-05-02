@@ -39,6 +39,11 @@ const (
 	Swarm OchestratorTypes = "Swarm"
 )
 
+// PossibleOchestratorTypesValues returns an array of possible values for the OchestratorTypes const type.
+func PossibleOchestratorTypesValues() []OchestratorTypes {
+	return []OchestratorTypes{Custom, DCOS, Kubernetes, Swarm}
+}
+
 // VMSizeTypes enumerates the values for vm size types.
 type VMSizeTypes string
 
@@ -138,6 +143,11 @@ const (
 	// StandardGS5 ...
 	StandardGS5 VMSizeTypes = "Standard_GS5"
 )
+
+// PossibleVMSizeTypesValues returns an array of possible values for the VMSizeTypes const type.
+func PossibleVMSizeTypesValues() []VMSizeTypes {
+	return []VMSizeTypes{StandardA0, StandardA1, StandardA10, StandardA11, StandardA2, StandardA3, StandardA4, StandardA5, StandardA6, StandardA7, StandardA8, StandardA9, StandardD1, StandardD11, StandardD11V2, StandardD12, StandardD12V2, StandardD13, StandardD13V2, StandardD14, StandardD14V2, StandardD1V2, StandardD2, StandardD2V2, StandardD3, StandardD3V2, StandardD4, StandardD4V2, StandardD5V2, StandardDS1, StandardDS11, StandardDS12, StandardDS13, StandardDS14, StandardDS2, StandardDS3, StandardDS4, StandardG1, StandardG2, StandardG3, StandardG4, StandardG5, StandardGS1, StandardGS2, StandardGS3, StandardGS4, StandardGS5}
+}
 
 // AgentPoolProfile profile for the container service agent pool.
 type AgentPoolProfile struct {

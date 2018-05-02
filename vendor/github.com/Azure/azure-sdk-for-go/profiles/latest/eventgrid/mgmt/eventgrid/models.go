@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type EventSubscriptionsClient = original.EventSubscriptionsClient
-
-func NewEventSubscriptionsClient(subscriptionID string) EventSubscriptionsClient {
-	return original.NewEventSubscriptionsClient(subscriptionID)
-}
-func NewEventSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) EventSubscriptionsClient {
-	return original.NewEventSubscriptionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EndpointType = original.EndpointType
 
 const (
@@ -127,25 +111,48 @@ type TrackedResource = original.TrackedResource
 type WebHookEventSubscriptionDestination = original.WebHookEventSubscriptionDestination
 type WebHookEventSubscriptionDestinationProperties = original.WebHookEventSubscriptionDestinationProperties
 type OperationsClient = original.OperationsClient
+type TopicsClient = original.TopicsClient
+type TopicTypesClient = original.TopicTypesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewEventSubscriptionsClient(subscriptionID string) EventSubscriptionsClient {
+	return original.NewEventSubscriptionsClient(subscriptionID)
+}
+func NewEventSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) EventSubscriptionsClient {
+	return original.NewEventSubscriptionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleEndpointTypeValues() []EndpointType {
+	return original.PossibleEndpointTypeValues()
+}
+func PossibleEventSubscriptionProvisioningStateValues() []EventSubscriptionProvisioningState {
+	return original.PossibleEventSubscriptionProvisioningStateValues()
+}
+func PossibleResourceRegionTypeValues() []ResourceRegionType {
+	return original.PossibleResourceRegionTypeValues()
+}
+func PossibleTopicProvisioningStateValues() []TopicProvisioningState {
+	return original.PossibleTopicProvisioningStateValues()
+}
+func PossibleTopicTypeProvisioningStateValues() []TopicTypeProvisioningState {
+	return original.PossibleTopicTypeProvisioningStateValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TopicsClient = original.TopicsClient
-
 func NewTopicsClient(subscriptionID string) TopicsClient {
 	return original.NewTopicsClient(subscriptionID)
 }
 func NewTopicsClientWithBaseURI(baseURI string, subscriptionID string) TopicsClient {
 	return original.NewTopicsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TopicTypesClient = original.TopicTypesClient
-
 func NewTopicTypesClient(subscriptionID string) TopicTypesClient {
 	return original.NewTopicTypesClient(subscriptionID)
 }

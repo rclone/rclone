@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "tpu:v1alpha1"
 const apiName = "tpu"
 const apiVersion = "v1alpha1"
-const basePath = "https://content-tpu.googleapis.com/"
+const basePath = "https://tpu.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -571,6 +571,8 @@ type Node struct {
 	// found in the `help_description` field.
 	//   "STOPPED" - 7 - Reserved. Was SUSPENDED.
 	// TPU node is stopped.
+	//   "STOPPING" - TPU node is currently stopping.
+	//   "STARTING" - TPU node is currently starting.
 	State string `json:"state,omitempty"`
 
 	// TensorflowVersion: The version of Tensorflow running in the
@@ -943,7 +945,7 @@ type ProjectsLocationsGetCall struct {
 	header_      http.Header
 }
 
-// Get: Get information about a location.
+// Get: Gets information about a location.
 func (r *ProjectsLocationsService) Get(name string) *ProjectsLocationsGetCall {
 	c := &ProjectsLocationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -1044,7 +1046,7 @@ func (c *ProjectsLocationsGetCall) Do(opts ...googleapi.CallOption) (*Location, 
 	}
 	return ret, nil
 	// {
-	//   "description": "Get information about a location.",
+	//   "description": "Gets information about a location.",
 	//   "flatPath": "v1alpha1/projects/{projectsId}/locations/{locationsId}",
 	//   "httpMethod": "GET",
 	//   "id": "tpu.projects.locations.get",

@@ -41,7 +41,7 @@
   "description": "Access Gmail mailboxes including sending user email.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/gmail/api/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/vprXt015GXFAleV2tmPH4juqBRw\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/Hw8pIKfMT5Y5rR36CrQTPYMY6ts\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/googlemail-16.png",
     "x32": "https://www.google.com/images/icons/product/googlemail-32.png"
@@ -86,12 +86,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -2382,7 +2382,7 @@
       }
     }
   },
-  "revision": "20180131",
+  "revision": "20180319",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AutoForwarding": {
@@ -3246,7 +3246,7 @@
       "id": "SendAs",
       "properties": {
         "displayName": {
-          "description": "A name that appears in the \"From:\" header for mail sent using this alias. For custom \"from\" addresses, when this is empty, Gmail will populate the \"From:\" header with the name that is used for the primary address associated with the account.",
+          "description": "A name that appears in the \"From:\" header for mail sent using this alias. For custom \"from\" addresses, when this is empty, Gmail will populate the \"From:\" header with the name that is used for the primary address associated with the account. If the admin has disabled the ability for users to update their name format, requests to update this field for the primary login will silently fail.",
           "type": "string"
         },
         "isDefault": {

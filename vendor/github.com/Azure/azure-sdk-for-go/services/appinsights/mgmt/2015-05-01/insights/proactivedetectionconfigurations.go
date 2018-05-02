@@ -41,10 +41,11 @@ func NewProactiveDetectionConfigurationsClientWithBaseURI(baseURI string, subscr
 }
 
 // Get get the ProactiveDetection configuration for this configuration id.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. configurationID is the ProactiveDetection configuration ID. This is unique within a
-// Application Insights component.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// configurationID - the ProactiveDetection configuration ID. This is unique within a Application Insights
+// component.
 func (client ProactiveDetectionConfigurationsClient) Get(ctx context.Context, resourceGroupName string, resourceName string, configurationID string) (result ApplicationInsightsComponentProactiveDetectionConfiguration, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName, configurationID)
 	if err != nil {
@@ -84,7 +85,7 @@ func (client ProactiveDetectionConfigurationsClient) GetPreparer(ctx context.Con
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/ProactiveDetectionConfigs/{ConfigurationId}", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/ProactiveDetectionConfigs/{ConfigurationId}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -110,9 +111,9 @@ func (client ProactiveDetectionConfigurationsClient) GetResponder(resp *http.Res
 }
 
 // List gets a list of ProactiveDetection configurations of an Application Insights component.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
 func (client ProactiveDetectionConfigurationsClient) List(ctx context.Context, resourceGroupName string, resourceName string) (result ListApplicationInsightsComponentProactiveDetectionConfiguration, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -151,7 +152,7 @@ func (client ProactiveDetectionConfigurationsClient) ListPreparer(ctx context.Co
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/ProactiveDetectionConfigs", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/ProactiveDetectionConfigs", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -177,11 +178,13 @@ func (client ProactiveDetectionConfigurationsClient) ListResponder(resp *http.Re
 }
 
 // Update update the ProactiveDetection configuration for this configuration id.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. configurationID is the ProactiveDetection configuration ID. This is unique within a
-// Application Insights component. proactiveDetectionProperties is properties that need to be specified to update
-// the ProactiveDetection configuration.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// configurationID - the ProactiveDetection configuration ID. This is unique within a Application Insights
+// component.
+// proactiveDetectionProperties - properties that need to be specified to update the ProactiveDetection
+// configuration.
 func (client ProactiveDetectionConfigurationsClient) Update(ctx context.Context, resourceGroupName string, resourceName string, configurationID string, proactiveDetectionProperties ApplicationInsightsComponentProactiveDetectionConfiguration) (result ApplicationInsightsComponentProactiveDetectionConfiguration, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, resourceName, configurationID, proactiveDetectionProperties)
 	if err != nil {
@@ -219,10 +222,10 @@ func (client ProactiveDetectionConfigurationsClient) UpdatePreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/ProactiveDetectionConfigs/{ConfigurationId}", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/ProactiveDetectionConfigs/{ConfigurationId}", pathParameters),
 		autorest.WithJSON(proactiveDetectionProperties),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))

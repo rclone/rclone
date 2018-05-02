@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GalleryImageClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type GalleryImageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewGalleryImageClient creates an instance of the GalleryImageClient client.
 func NewGalleryImageClient(subscriptionID string) GalleryImageClient {
 	return NewGalleryImageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewGalleryImageClientWithBaseURI creates an instance of the GalleryImageClient client.
 func NewGalleryImageClientWithBaseURI(baseURI string, subscriptionID string) GalleryImageClient {
 	return GalleryImageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list gallery images.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
@@ -66,6 +70,7 @@ func (client GalleryImageClient) List(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client GalleryImageClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -96,6 +101,7 @@ func (client GalleryImageClient) ListPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GalleryImageClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -103,6 +109,7 @@ func (client GalleryImageClient) ListSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client GalleryImageClient) ListResponder(resp *http.Response) (result ResponseWithContinuationGalleryImage, err error) {
@@ -137,6 +144,7 @@ func (client GalleryImageClient) listNextResults(lastResults ResponseWithContinu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GalleryImageClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationGalleryImageIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, filter, top, orderBy)

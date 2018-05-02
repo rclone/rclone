@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // UsageHistoryClient is the these APIs allow end users to operate on Azure Machine Learning Commitment Plans resources
 // and their child Commitment Association resources. They support CRUD operations for commitment plans, get and list
 // operations for commitment associations, moving commitment associations between commitment plans, and retrieving
@@ -32,16 +33,19 @@ type UsageHistoryClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NewUsageHistoryClient creates an instance of the UsageHistoryClient client.
 func NewUsageHistoryClient(subscriptionID string) UsageHistoryClient {
 	return NewUsageHistoryClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NewUsageHistoryClientWithBaseURI creates an instance of the UsageHistoryClient client.
 func NewUsageHistoryClientWithBaseURI(baseURI string, subscriptionID string) UsageHistoryClient {
 	return UsageHistoryClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // List retrieve the usage history for an Azure ML commitment plan.
 //
 // resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken
@@ -69,6 +73,7 @@ func (client UsageHistoryClient) List(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListPreparer prepares the List request.
 func (client UsageHistoryClient) ListPreparer(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -93,6 +98,7 @@ func (client UsageHistoryClient) ListPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageHistoryClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -100,6 +106,7 @@ func (client UsageHistoryClient) ListSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client UsageHistoryClient) ListResponder(resp *http.Response) (result PlanUsageHistoryListResult, err error) {
@@ -134,6 +141,7 @@ func (client UsageHistoryClient) listNextResults(lastResults PlanUsageHistoryLis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UsageHistoryClient) ListComplete(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (result PlanUsageHistoryListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, commitmentPlanName, skipToken)

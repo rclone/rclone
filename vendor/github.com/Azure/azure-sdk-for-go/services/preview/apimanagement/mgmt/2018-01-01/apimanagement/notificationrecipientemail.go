@@ -41,9 +41,11 @@ func NewNotificationRecipientEmailClientWithBaseURI(baseURI string, subscription
 }
 
 // CheckEntityExists determine if Notification Recipient Email subscribed to the notification.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// notificationName is notification Name Identifier. email is email identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// notificationName - notification Name Identifier.
+// email - email identifier.
 func (client NotificationRecipientEmailClient) CheckEntityExists(ctx context.Context, resourceGroupName string, serviceName string, notificationName NotificationName, email string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -117,9 +119,11 @@ func (client NotificationRecipientEmailClient) CheckEntityExistsResponder(resp *
 }
 
 // CreateOrUpdate adds the Email address to the list of Recipients for the Notification.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// notificationName is notification Name Identifier. email is email identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// notificationName - notification Name Identifier.
+// email - email identifier.
 func (client NotificationRecipientEmailClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, notificationName NotificationName, email string) (result RecipientEmailContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -194,9 +198,11 @@ func (client NotificationRecipientEmailClient) CreateOrUpdateResponder(resp *htt
 }
 
 // Delete removes the email from the list of Notification.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// notificationName is notification Name Identifier. email is email identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// notificationName - notification Name Identifier.
+// email - email identifier.
 func (client NotificationRecipientEmailClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, notificationName NotificationName, email string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -270,9 +276,10 @@ func (client NotificationRecipientEmailClient) DeleteResponder(resp *http.Respon
 }
 
 // ListByNotification gets the list of the Notification Recipient Emails subscribed to a notification.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// notificationName is notification Name Identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// notificationName - notification Name Identifier.
 func (client NotificationRecipientEmailClient) ListByNotification(ctx context.Context, resourceGroupName string, serviceName string, notificationName NotificationName) (result RecipientEmailCollection, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

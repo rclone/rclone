@@ -40,8 +40,9 @@ func NewDeployedServiceTypesClientWithBaseURI(baseURI string, timeout *int32) De
 }
 
 // Get get deployed service types
-//
-// nodeName is the name of the node applicationName is the name of the application
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
 func (client DeployedServiceTypesClient) Get(ctx context.Context, nodeName string, applicationName string) (result ListDeployedServiceType, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName)
 	if err != nil {

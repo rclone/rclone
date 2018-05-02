@@ -42,10 +42,11 @@ func NewProtectionContainerRefreshOperationResultsClientWithBaseURI(baseURI stri
 }
 
 // Get provides the result of the refresh operation triggered by the BeginRefresh operation.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the container.
-// operationID is the operation ID used for this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the container.
+// operationID - the operation ID used for this GET operation.
 func (client ProtectionContainerRefreshOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, operationID string) (result autorest.Response, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, operationID)
 	if err != nil {

@@ -153,7 +153,7 @@ func (dbx *apiImpl) DocsArchive(arg *RefPaperDoc) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -226,7 +226,7 @@ func (dbx *apiImpl) DocsCreate(arg *PaperDocCreateArgs, content io.Reader) (res 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -299,7 +299,7 @@ func (dbx *apiImpl) DocsDownload(arg *PaperDocExport) (res *PaperDocExportResult
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -371,7 +371,7 @@ func (dbx *apiImpl) DocsFolderUsersList(arg *ListUsersOnFolderArgs) (res *ListUs
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -443,7 +443,7 @@ func (dbx *apiImpl) DocsFolderUsersListContinue(arg *ListUsersOnFolderContinueAr
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -515,7 +515,7 @@ func (dbx *apiImpl) DocsGetFolderInfo(arg *RefPaperDoc) (res *FoldersContainingP
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -587,7 +587,7 @@ func (dbx *apiImpl) DocsList(arg *ListPaperDocsArgs) (res *ListPaperDocsResponse
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -659,7 +659,7 @@ func (dbx *apiImpl) DocsListContinue(arg *ListPaperDocsContinueArgs) (res *ListP
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -726,7 +726,7 @@ func (dbx *apiImpl) DocsPermanentlyDelete(arg *RefPaperDoc) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -798,7 +798,7 @@ func (dbx *apiImpl) DocsSharingPolicyGet(arg *RefPaperDoc) (res *SharingPolicy, 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -865,7 +865,7 @@ func (dbx *apiImpl) DocsSharingPolicySet(arg *PaperDocSharingPolicy) (err error)
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -938,7 +938,7 @@ func (dbx *apiImpl) DocsUpdate(arg *PaperDocUpdateArgs, content io.Reader) (res 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1010,7 +1010,7 @@ func (dbx *apiImpl) DocsUsersAdd(arg *AddPaperDocUser) (res []*AddPaperDocUserMe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1082,7 +1082,7 @@ func (dbx *apiImpl) DocsUsersList(arg *ListUsersOnPaperDocArgs) (res *ListUsersO
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1154,7 +1154,7 @@ func (dbx *apiImpl) DocsUsersListContinue(arg *ListUsersOnPaperDocContinueArgs) 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1221,7 +1221,7 @@ func (dbx *apiImpl) DocsUsersRemove(arg *RemovePaperDocUser) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

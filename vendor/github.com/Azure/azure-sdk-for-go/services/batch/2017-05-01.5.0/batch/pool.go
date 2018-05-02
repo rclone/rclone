@@ -44,13 +44,15 @@ func NewPoolClientWithBaseURI(baseURI string) PoolClient {
 
 // Add when naming pools, avoid including sensitive information such as user names or secret project names. This
 // information may appear in telemetry logs accessible to Microsoft Support engineers.
-//
-// pool is the pool to be added. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
-// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
-// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
-// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
-// calling the REST API directly.
+// Parameters:
+// pool - the pool to be added.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) Add(ctx context.Context, pool PoolAddParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: pool,
@@ -107,7 +109,7 @@ func (client PoolClient) AddPreparer(ctx context.Context, pool PoolAddParameter,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/pools"),
@@ -158,21 +160,26 @@ func (client PoolClient) AddResponder(resp *http.Response) (result autorest.Resp
 // If you want to override the requeue behavior, then you should call resize pool explicitly to shrink the pool to zero
 // size before deleting the pool. If you call an Update, Patch or Delete API on a pool in the deleting state, it will
 // fail with HTTP status code 409 with error code PoolBeingDeleted.
-//
-// poolID is the ID of the pool to delete. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
-// time the request was issued. Client libraries typically set this to the current system clock time; set it
-// explicitly if you are calling the REST API directly. ifMatch is an ETag value associated with the version of the
-// resource known to the client. The operation will be performed only if the resource's current ETag on the service
-// exactly matches the value specified by the client. ifNoneMatch is an ETag value associated with the version of
-// the resource known to the client. The operation will be performed only if the resource's current ETag on the
-// service does not match the value specified by the client. ifModifiedSince is a timestamp indicating the last
-// modified time of the resource known to the client. The operation will be performed only if the resource on the
-// service has been modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last
-// modified time of the resource known to the client. The operation will be performed only if the resource on the
-// service has not been modified since the specified time.
+// Parameters:
+// poolID - the ID of the pool to delete.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) Delete(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -270,13 +277,15 @@ func (client PoolClient) DeleteResponder(resp *http.Response) (result autorest.R
 }
 
 // DisableAutoScale sends the disable auto scale request.
-//
-// poolID is the ID of the pool on which to disable automatic scaling. timeout is the maximum time that the server
-// can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
-// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// poolID - the ID of the pool on which to disable automatic scaling.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) DisableAutoScale(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DisableAutoScalePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
@@ -361,22 +370,27 @@ func (client PoolClient) DisableAutoScaleResponder(resp *http.Response) (result 
 // automatic scaling of the pool is currently disabled, you must specify a valid autoscale formula as part of the
 // request. If automatic scaling of the pool is already enabled, you may specify a new autoscale formula and/or a new
 // evaluation interval. You cannot call this API for the same pool more than once every 30 seconds.
-//
-// poolID is the ID of the pool on which to enable automatic scaling. poolEnableAutoScaleParameter is the
-// parameters for the request. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
-// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
-// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
-// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
-// calling the REST API directly. ifMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service exactly matches the
-// value specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to
-// the client. The operation will be performed only if the resource's current ETag on the service does not match
-// the value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the
-// resource known to the client. The operation will be performed only if the resource on the service has been
-// modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the
-// resource known to the client. The operation will be performed only if the resource on the service has not been
-// modified since the specified time.
+// Parameters:
+// poolID - the ID of the pool on which to enable automatic scaling.
+// poolEnableAutoScaleParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) EnableAutoScale(ctx context.Context, poolID string, poolEnableAutoScaleParameter PoolEnableAutoScaleParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.EnableAutoScalePreparer(ctx, poolID, poolEnableAutoScaleParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -416,7 +430,7 @@ func (client PoolClient) EnableAutoScalePreparer(ctx context.Context, poolID str
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/enableautoscale", pathParameters),
@@ -477,14 +491,16 @@ func (client PoolClient) EnableAutoScaleResponder(resp *http.Response) (result a
 
 // EvaluateAutoScale this API is primarily for validating an autoscale formula, as it simply returns the result without
 // applying the formula to the pool.
-//
-// poolID is the ID of the pool on which to evaluate the automatic scaling formula. poolEvaluateAutoScaleParameter
-// is the parameters for the request. timeout is the maximum time that the server can spend processing the request,
-// in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of
-// a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
-// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
-// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
-// calling the REST API directly.
+// Parameters:
+// poolID - the ID of the pool on which to evaluate the automatic scaling formula.
+// poolEvaluateAutoScaleParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) EvaluateAutoScale(ctx context.Context, poolID string, poolEvaluateAutoScaleParameter PoolEvaluateAutoScaleParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result AutoScaleRun, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolEvaluateAutoScaleParameter,
@@ -530,7 +546,7 @@ func (client PoolClient) EvaluateAutoScalePreparer(ctx context.Context, poolID s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/evaluateautoscale", pathParameters),
@@ -575,21 +591,26 @@ func (client PoolClient) EvaluateAutoScaleResponder(resp *http.Response) (result
 }
 
 // Exists gets basic properties of a pool.
-//
-// poolID is the ID of the pool to get. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
-// time the request was issued. Client libraries typically set this to the current system clock time; set it
-// explicitly if you are calling the REST API directly. ifMatch is an ETag value associated with the version of the
-// resource known to the client. The operation will be performed only if the resource's current ETag on the service
-// exactly matches the value specified by the client. ifNoneMatch is an ETag value associated with the version of
-// the resource known to the client. The operation will be performed only if the resource's current ETag on the
-// service does not match the value specified by the client. ifModifiedSince is a timestamp indicating the last
-// modified time of the resource known to the client. The operation will be performed only if the resource on the
-// service has been modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last
-// modified time of the resource known to the client. The operation will be performed only if the resource on the
-// service has not been modified since the specified time.
+// Parameters:
+// poolID - the ID of the pool to get.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) Exists(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ExistsPreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -687,22 +708,28 @@ func (client PoolClient) ExistsResponder(resp *http.Response) (result autorest.R
 }
 
 // Get gets information about the specified pool.
-//
-// poolID is the ID of the pool to get. selectParameter is an OData $select clause. expand is an OData $expand
-// clause. timeout is the maximum time that the server can spend processing the request, in seconds. The default is
-// 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration
-// such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server
-// should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly. ifMatch is an ETag value associated with the version of the resource known to the client. The
-// operation will be performed only if the resource's current ETag on the service exactly matches the value
-// specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service does not match the
-// value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource
-// known to the client. The operation will be performed only if the resource on the service has been modified since
-// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
-// the client. The operation will be performed only if the resource on the service has not been modified since the
-// specified time.
+// Parameters:
+// poolID - the ID of the pool to get.
+// selectParameter - an OData $select clause.
+// expand - an OData $expand clause.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) Get(ctx context.Context, poolID string, selectParameter string, expand string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result CloudPool, err error) {
 	req, err := client.GetPreparer(ctx, poolID, selectParameter, expand, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -808,12 +835,14 @@ func (client PoolClient) GetResponder(resp *http.Response) (result CloudPool, er
 
 // GetAllLifetimeStatistics statistics are aggregated across all pools that have ever existed in the account, from
 // account creation to the last update time of the statistics.
-//
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30
-// seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such
-// as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should
-// return the client-request-id in the response. ocpDate is the time the request was issued. Client libraries
-// typically set this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) GetAllLifetimeStatistics(ctx context.Context, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result PoolStatistics, err error) {
 	req, err := client.GetAllLifetimeStatisticsPreparer(ctx, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
@@ -892,15 +921,18 @@ func (client PoolClient) GetAllLifetimeStatisticsResponder(resp *http.Response) 
 }
 
 // List sends the list request.
-//
-// filter is an OData $filter clause. selectParameter is an OData $select clause. expand is an OData $expand
-// clause. maxResults is the maximum number of items to return in the response. A maximum of 1000 pools can be
-// returned. timeout is the maximum time that the server can spend processing the request, in seconds. The default
-// is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// Parameters:
+// filter - an OData $filter clause.
+// selectParameter - an OData $select clause.
+// expand - an OData $expand clause.
+// maxResults - the maximum number of items to return in the response. A maximum of 1000 pools can be returned.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) List(ctx context.Context, filter string, selectParameter string, expand string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result CloudPoolListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -1031,19 +1063,23 @@ func (client PoolClient) ListComplete(ctx context.Context, filter string, select
 
 // ListUsageMetrics if you do not specify a $filter clause including a poolId, the response includes all pools that
 // existed in the account in the time range of the returned aggregation intervals.
-//
-// startTime is the earliest time from which to include metrics. This must be at least two and a half hours before
-// the current time. If not specified this defaults to the start time of the last aggregation interval currently
-// available. endTime is the latest time from which to include metrics. This must be at least two hours before the
-// current time. If not specified this defaults to the end time of the last aggregation interval currently
-// available. filter is an OData $filter clause. If this is not specified the response includes all pools that
-// existed in the account in the time range of the returned aggregation intervals. maxResults is the maximum number
-// of items to return in the response. A maximum of 1000 results will be returned. timeout is the maximum time that
-// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// startTime - the earliest time from which to include metrics. This must be at least two and a half hours
+// before the current time. If not specified this defaults to the start time of the last aggregation interval
+// currently available.
+// endTime - the latest time from which to include metrics. This must be at least two hours before the current
+// time. If not specified this defaults to the end time of the last aggregation interval currently available.
+// filter - an OData $filter clause. If this is not specified the response includes all pools that existed in
+// the account in the time range of the returned aggregation intervals.
+// maxResults - the maximum number of items to return in the response. A maximum of 1000 results will be
+// returned.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) ListUsageMetrics(ctx context.Context, startTime *date.Time, endTime *date.Time, filter string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result PoolListUsageMetricsResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -1175,21 +1211,27 @@ func (client PoolClient) ListUsageMetricsComplete(ctx context.Context, startTime
 // Patch this only replaces the pool properties specified in the request. For example, if the pool has a start task
 // associated with it, and a request does not specify a start task element, then the pool keeps the existing start
 // task.
-//
-// poolID is the ID of the pool to update. poolPatchParameter is the parameters for the request. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// poolID - the ID of the pool to update.
+// poolPatchParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) Patch(ctx context.Context, poolID string, poolPatchParameter PoolPatchParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.PatchPreparer(ctx, poolID, poolPatchParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -1229,7 +1271,7 @@ func (client PoolClient) PatchPreparer(ctx context.Context, poolID string, poolP
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}", pathParameters),
@@ -1290,22 +1332,27 @@ func (client PoolClient) PatchResponder(resp *http.Response) (result autorest.Re
 
 // RemoveNodes this operation can only run when the allocation state of the pool is steady. When this operation runs,
 // the allocation state changes from steady to resizing.
-//
-// poolID is the ID of the pool from which you want to remove nodes. nodeRemoveParameter is the parameters for the
-// request. timeout is the maximum time that the server can spend processing the request, in seconds. The default
-// is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly. ifMatch is an ETag value associated with the version of the resource known to the client. The
-// operation will be performed only if the resource's current ETag on the service exactly matches the value
-// specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service does not match the
-// value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource
-// known to the client. The operation will be performed only if the resource on the service has been modified since
-// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
-// the client. The operation will be performed only if the resource on the service has not been modified since the
-// specified time.
+// Parameters:
+// poolID - the ID of the pool from which you want to remove nodes.
+// nodeRemoveParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) RemoveNodes(ctx context.Context, poolID string, nodeRemoveParameter NodeRemoveParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: nodeRemoveParameter,
@@ -1352,7 +1399,7 @@ func (client PoolClient) RemoveNodesPreparer(ctx context.Context, poolID string,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/removenodes", pathParameters),
@@ -1416,21 +1463,27 @@ func (client PoolClient) RemoveNodesResponder(resp *http.Response) (result autor
 // cannot resize pools which are configured for automatic scaling. If you try to do this, the Batch service returns an
 // error 409. If you resize a pool downwards, the Batch service chooses which nodes to remove. To remove specific
 // nodes, use the pool remove nodes API instead.
-//
-// poolID is the ID of the pool to resize. poolResizeParameter is the parameters for the request. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// poolID - the ID of the pool to resize.
+// poolResizeParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) Resize(ctx context.Context, poolID string, poolResizeParameter PoolResizeParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ResizePreparer(ctx, poolID, poolResizeParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -1470,7 +1523,7 @@ func (client PoolClient) ResizePreparer(ctx context.Context, poolID string, pool
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/resize", pathParameters),
@@ -1532,21 +1585,26 @@ func (client PoolClient) ResizeResponder(resp *http.Response) (result autorest.R
 // StopResize this does not restore the pool to its previous state before the resize operation: it only stops any
 // further changes being made, and the pool maintains its current state. A resize operation need not be an explicit
 // resize pool request; this API can also be used to halt the initial sizing of the pool when it is created.
-//
-// poolID is the ID of the pool whose resizing you want to stop. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
-// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// poolID - the ID of the pool whose resizing you want to stop.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) StopResize(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.StopResizePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -1646,13 +1704,16 @@ func (client PoolClient) StopResizeResponder(resp *http.Response) (result autore
 // UpdateProperties this fully replaces all the updateable properties of the pool. For example, if the pool has a start
 // task associated with it and if start task is not specified with this request, then the Batch service will remove the
 // existing start task.
-//
-// poolID is the ID of the pool to update. poolUpdatePropertiesParameter is the parameters for the request. timeout
-// is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// poolID - the ID of the pool to update.
+// poolUpdatePropertiesParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) UpdateProperties(ctx context.Context, poolID string, poolUpdatePropertiesParameter PoolUpdatePropertiesParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolUpdatePropertiesParameter,
@@ -1702,7 +1763,7 @@ func (client PoolClient) UpdatePropertiesPreparer(ctx context.Context, poolID st
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/updateproperties", pathParameters),
@@ -1752,21 +1813,27 @@ func (client PoolClient) UpdatePropertiesResponder(resp *http.Response) (result 
 // tries to avoid upgrading all compute nodes at the same time, it does not guarantee to do this (particularly on small
 // pools); therefore, the pool may be temporarily unavailable to run tasks. When this operation runs, the pool state
 // changes to upgrading. When all compute nodes have finished upgrading, the pool state returns to active.
-//
-// poolID is the ID of the pool to upgrade. poolUpgradeOSParameter is the parameters for the request. timeout is
-// the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// poolID - the ID of the pool to upgrade.
+// poolUpgradeOSParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client PoolClient) UpgradeOS(ctx context.Context, poolID string, poolUpgradeOSParameter PoolUpgradeOSParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolUpgradeOSParameter,
@@ -1812,7 +1879,7 @@ func (client PoolClient) UpgradeOSPreparer(ctx context.Context, poolID string, p
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/upgradeos", pathParameters),

@@ -23,49 +23,25 @@ import original "github.com/Azure/azure-sdk-for-go/services/timeseriesinsights/m
 
 type AccessPoliciesClient = original.AccessPoliciesClient
 
-func NewAccessPoliciesClient(subscriptionID string) AccessPoliciesClient {
-	return original.NewAccessPoliciesClient(subscriptionID)
-}
-func NewAccessPoliciesClientWithBaseURI(baseURI string, subscriptionID string) AccessPoliciesClient {
-	return original.NewAccessPoliciesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type EnvironmentsClient = original.EnvironmentsClient
-
-func NewEnvironmentsClient(subscriptionID string) EnvironmentsClient {
-	return original.NewEnvironmentsClient(subscriptionID)
-}
-func NewEnvironmentsClientWithBaseURI(baseURI string, subscriptionID string) EnvironmentsClient {
-	return original.NewEnvironmentsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EventSourcesClient = original.EventSourcesClient
-
-func NewEventSourcesClient(subscriptionID string) EventSourcesClient {
-	return original.NewEventSourcesClient(subscriptionID)
-}
-func NewEventSourcesClientWithBaseURI(baseURI string, subscriptionID string) EventSourcesClient {
-	return original.NewEventSourcesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessPolicyRole = original.AccessPolicyRole
 
 const (
 	Contributor AccessPolicyRole = original.Contributor
 	Reader      AccessPolicyRole = original.Reader
+)
+
+type DataStringComparisonBehavior = original.DataStringComparisonBehavior
+
+const (
+	Ordinal           DataStringComparisonBehavior = original.Ordinal
+	OrdinalIgnoreCase DataStringComparisonBehavior = original.OrdinalIgnoreCase
 )
 
 type IngressState = original.IngressState
@@ -102,6 +78,12 @@ const (
 	TimeSpan LocalTimestampFormat = original.TimeSpan
 )
 
+type PropertyType = original.PropertyType
+
+const (
+	String PropertyType = original.String
+)
+
 type ProvisioningState = original.ProvisioningState
 
 const (
@@ -116,10 +98,10 @@ const (
 type ReferenceDataKeyPropertyType = original.ReferenceDataKeyPropertyType
 
 const (
-	Bool     ReferenceDataKeyPropertyType = original.Bool
-	DateTime ReferenceDataKeyPropertyType = original.DateTime
-	Double   ReferenceDataKeyPropertyType = original.Double
-	String   ReferenceDataKeyPropertyType = original.String
+	ReferenceDataKeyPropertyTypeBool     ReferenceDataKeyPropertyType = original.ReferenceDataKeyPropertyTypeBool
+	ReferenceDataKeyPropertyTypeDateTime ReferenceDataKeyPropertyType = original.ReferenceDataKeyPropertyTypeDateTime
+	ReferenceDataKeyPropertyTypeDouble   ReferenceDataKeyPropertyType = original.ReferenceDataKeyPropertyTypeDouble
+	ReferenceDataKeyPropertyTypeString   ReferenceDataKeyPropertyType = original.ReferenceDataKeyPropertyTypeString
 )
 
 type SkuName = original.SkuName
@@ -188,6 +170,7 @@ type OperationDisplay = original.OperationDisplay
 type OperationListResult = original.OperationListResult
 type OperationListResultIterator = original.OperationListResultIterator
 type OperationListResultPage = original.OperationListResultPage
+type PartitionKeyProperty = original.PartitionKeyProperty
 type ReferenceDataSetCreateOrUpdateParameters = original.ReferenceDataSetCreateOrUpdateParameters
 type ReferenceDataSetCreationProperties = original.ReferenceDataSetCreationProperties
 type ReferenceDataSetKeyProperty = original.ReferenceDataSetKeyProperty
@@ -200,16 +183,71 @@ type ResourceProperties = original.ResourceProperties
 type Sku = original.Sku
 type TrackedResource = original.TrackedResource
 type OperationsClient = original.OperationsClient
+type ReferenceDataSetsClient = original.ReferenceDataSetsClient
 
+func NewAccessPoliciesClient(subscriptionID string) AccessPoliciesClient {
+	return original.NewAccessPoliciesClient(subscriptionID)
+}
+func NewAccessPoliciesClientWithBaseURI(baseURI string, subscriptionID string) AccessPoliciesClient {
+	return original.NewAccessPoliciesClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewEnvironmentsClient(subscriptionID string) EnvironmentsClient {
+	return original.NewEnvironmentsClient(subscriptionID)
+}
+func NewEnvironmentsClientWithBaseURI(baseURI string, subscriptionID string) EnvironmentsClient {
+	return original.NewEnvironmentsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewEventSourcesClient(subscriptionID string) EventSourcesClient {
+	return original.NewEventSourcesClient(subscriptionID)
+}
+func NewEventSourcesClientWithBaseURI(baseURI string, subscriptionID string) EventSourcesClient {
+	return original.NewEventSourcesClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessPolicyRoleValues() []AccessPolicyRole {
+	return original.PossibleAccessPolicyRoleValues()
+}
+func PossibleDataStringComparisonBehaviorValues() []DataStringComparisonBehavior {
+	return original.PossibleDataStringComparisonBehaviorValues()
+}
+func PossibleIngressStateValues() []IngressState {
+	return original.PossibleIngressStateValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossibleKindBasicEventSourceResourceValues() []KindBasicEventSourceResource {
+	return original.PossibleKindBasicEventSourceResourceValues()
+}
+func PossibleLocalTimestampFormatValues() []LocalTimestampFormat {
+	return original.PossibleLocalTimestampFormatValues()
+}
+func PossiblePropertyTypeValues() []PropertyType {
+	return original.PossiblePropertyTypeValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleReferenceDataKeyPropertyTypeValues() []ReferenceDataKeyPropertyType {
+	return original.PossibleReferenceDataKeyPropertyTypeValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleStorageLimitExceededBehaviorValues() []StorageLimitExceededBehavior {
+	return original.PossibleStorageLimitExceededBehaviorValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ReferenceDataSetsClient = original.ReferenceDataSetsClient
-
 func NewReferenceDataSetsClient(subscriptionID string) ReferenceDataSetsClient {
 	return original.NewReferenceDataSetsClient(subscriptionID)
 }

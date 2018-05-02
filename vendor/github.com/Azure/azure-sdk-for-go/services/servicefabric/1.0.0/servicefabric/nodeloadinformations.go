@@ -40,8 +40,8 @@ func NewNodeLoadInformationsClientWithBaseURI(baseURI string, timeout *int32) No
 }
 
 // Get get node load informations
-//
-// nodeName is the name of the node
+// Parameters:
+// nodeName - the name of the node
 func (client NodeLoadInformationsClient) Get(ctx context.Context, nodeName string) (result NodeLoadInformation, err error) {
 	req, err := client.GetPreparer(ctx, nodeName)
 	if err != nil {

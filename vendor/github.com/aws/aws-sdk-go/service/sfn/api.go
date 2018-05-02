@@ -14,7 +14,7 @@ const opCreateActivity = "CreateActivity"
 
 // CreateActivityRequest generates a "aws/request.Request" representing the
 // client's request for the CreateActivity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -102,7 +102,7 @@ const opCreateStateMachine = "CreateStateMachine"
 
 // CreateStateMachineRequest generates a "aws/request.Request" representing the
 // client's request for the CreateStateMachine operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -201,7 +201,7 @@ const opDeleteActivity = "DeleteActivity"
 
 // DeleteActivityRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteActivity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -280,7 +280,7 @@ const opDeleteStateMachine = "DeleteStateMachine"
 
 // DeleteStateMachineRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteStateMachine operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -364,7 +364,7 @@ const opDescribeActivity = "DescribeActivity"
 
 // DescribeActivityRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeActivity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -446,7 +446,7 @@ const opDescribeExecution = "DescribeExecution"
 
 // DescribeExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -528,7 +528,7 @@ const opDescribeStateMachine = "DescribeStateMachine"
 
 // DescribeStateMachineRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeStateMachine operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -610,7 +610,7 @@ const opDescribeStateMachineForExecution = "DescribeStateMachineForExecution"
 
 // DescribeStateMachineForExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeStateMachineForExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -692,7 +692,7 @@ const opGetActivityTask = "GetActivityTask"
 
 // GetActivityTaskRequest generates a "aws/request.Request" representing the
 // client's request for the GetActivityTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -787,7 +787,7 @@ const opGetExecutionHistory = "GetExecutionHistory"
 
 // GetExecutionHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the GetExecutionHistory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -934,7 +934,7 @@ const opListActivities = "ListActivities"
 
 // ListActivitiesRequest generates a "aws/request.Request" representing the
 // client's request for the ListActivities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1073,7 +1073,7 @@ const opListExecutions = "ListExecutions"
 
 // ListExecutionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListExecutions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1218,7 +1218,7 @@ const opListStateMachines = "ListStateMachines"
 
 // ListStateMachinesRequest generates a "aws/request.Request" representing the
 // client's request for the ListStateMachines operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1357,7 +1357,7 @@ const opSendTaskFailure = "SendTaskFailure"
 
 // SendTaskFailureRequest generates a "aws/request.Request" representing the
 // client's request for the SendTaskFailure operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1440,7 +1440,7 @@ const opSendTaskHeartbeat = "SendTaskHeartbeat"
 
 // SendTaskHeartbeatRequest generates a "aws/request.Request" representing the
 // client's request for the SendTaskHeartbeat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1535,7 +1535,7 @@ const opSendTaskSuccess = "SendTaskSuccess"
 
 // SendTaskSuccessRequest generates a "aws/request.Request" representing the
 // client's request for the SendTaskSuccess operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1622,7 +1622,7 @@ const opStartExecution = "StartExecution"
 
 // StartExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the StartExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1722,7 +1722,7 @@ const opStopExecution = "StopExecution"
 
 // StopExecutionRequest generates a "aws/request.Request" representing the
 // client's request for the StopExecution operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1804,7 +1804,7 @@ const opUpdateStateMachine = "UpdateStateMachine"
 
 // UpdateStateMachineRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateStateMachine operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

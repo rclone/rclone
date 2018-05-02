@@ -35,6 +35,11 @@ const (
 	On SpendingLimit = "On"
 )
 
+// PossibleSpendingLimitValues returns an array of possible values for the SpendingLimit const type.
+func PossibleSpendingLimitValues() []SpendingLimit {
+	return []SpendingLimit{CurrentPeriodOff, Off, On}
+}
+
 // State enumerates the values for state.
 type State string
 
@@ -50,6 +55,11 @@ const (
 	// Warned ...
 	Warned State = "Warned"
 )
+
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{Deleted, Disabled, Enabled, PastDue, Warned}
+}
 
 // ListResult subscription list operation response.
 type ListResult struct {

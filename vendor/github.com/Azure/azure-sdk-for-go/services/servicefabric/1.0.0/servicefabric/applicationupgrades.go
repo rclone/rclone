@@ -40,8 +40,8 @@ func NewApplicationUpgradesClientWithBaseURI(baseURI string, timeout *int32) App
 }
 
 // Get get application upgrades
-//
-// applicationName is the name of the application
+// Parameters:
+// applicationName - the name of the application
 func (client ApplicationUpgradesClient) Get(ctx context.Context, applicationName string) (result ApplicationUpgrade, err error) {
 	req, err := client.GetPreparer(ctx, applicationName)
 	if err != nil {
@@ -107,8 +107,9 @@ func (client ApplicationUpgradesClient) GetResponder(resp *http.Response) (resul
 }
 
 // Resume resume application upgrades
-//
-// applicationName is the name of the application resumeApplicationUpgrade is the upgrade of the resume application
+// Parameters:
+// applicationName - the name of the application
+// resumeApplicationUpgrade - the upgrade of the resume application
 func (client ApplicationUpgradesClient) Resume(ctx context.Context, applicationName string, resumeApplicationUpgrade ResumeApplicationUpgrade) (result String, err error) {
 	req, err := client.ResumePreparer(ctx, applicationName, resumeApplicationUpgrade)
 	if err != nil {
@@ -146,7 +147,7 @@ func (client ApplicationUpgradesClient) ResumePreparer(ctx context.Context, appl
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/MoveNextUpgradeDomain", pathParameters),
@@ -176,9 +177,9 @@ func (client ApplicationUpgradesClient) ResumeResponder(resp *http.Response) (re
 }
 
 // Start start application upgrades
-//
-// applicationName is the name of the application startApplicationUpgrade is the description of the start
-// application upgrade
+// Parameters:
+// applicationName - the name of the application
+// startApplicationUpgrade - the description of the start application upgrade
 func (client ApplicationUpgradesClient) Start(ctx context.Context, applicationName string, startApplicationUpgrade StartApplicationUpgrade) (result String, err error) {
 	req, err := client.StartPreparer(ctx, applicationName, startApplicationUpgrade)
 	if err != nil {
@@ -216,7 +217,7 @@ func (client ApplicationUpgradesClient) StartPreparer(ctx context.Context, appli
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/Upgrade", pathParameters),
@@ -246,9 +247,9 @@ func (client ApplicationUpgradesClient) StartResponder(resp *http.Response) (res
 }
 
 // Update update application upgrades
-//
-// applicationName is the name of the application updateApplicationUpgrade is the description of the update
-// application upgrade
+// Parameters:
+// applicationName - the name of the application
+// updateApplicationUpgrade - the description of the update application upgrade
 func (client ApplicationUpgradesClient) Update(ctx context.Context, applicationName string, updateApplicationUpgrade UpdateApplicationUpgrade) (result String, err error) {
 	req, err := client.UpdatePreparer(ctx, applicationName, updateApplicationUpgrade)
 	if err != nil {
@@ -286,7 +287,7 @@ func (client ApplicationUpgradesClient) UpdatePreparer(ctx context.Context, appl
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/UpdateUpgrade", pathParameters),

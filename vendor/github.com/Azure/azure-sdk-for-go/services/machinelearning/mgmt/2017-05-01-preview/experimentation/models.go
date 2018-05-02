@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -41,6 +42,13 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, Deleting, Failed, Succeeded, Updating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Account an object that represents a machine learning team account.
 type Account struct {
 	autorest.Response `json:"-"`
@@ -58,6 +66,7 @@ type Account struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for Account.
 func (a Account) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -82,6 +91,7 @@ func (a Account) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for Account struct.
 func (a *Account) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -151,6 +161,7 @@ func (a *Account) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountListResult the result of a request to list machine learning team accounts.
 type AccountListResult struct {
 	autorest.Response `json:"-"`
@@ -160,12 +171,14 @@ type AccountListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountListResultIterator provides access to a complete listing of Account values.
 type AccountListResultIterator struct {
 	i    int
 	page AccountListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *AccountListResultIterator) Next() error {
@@ -182,16 +195,19 @@ func (iter *AccountListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter AccountListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (iter AccountListResultIterator) Response() AccountListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter AccountListResultIterator) Value() Account {
@@ -201,6 +217,7 @@ func (iter AccountListResultIterator) Value() Account {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (alr AccountListResult) IsEmpty() bool {
 	return alr.Value == nil || len(*alr.Value) == 0
@@ -218,12 +235,14 @@ func (alr AccountListResult) accountListResultPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(alr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountListResultPage contains a page of Account values.
 type AccountListResultPage struct {
 	fn  func(AccountListResult) (AccountListResult, error)
 	alr AccountListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *AccountListResultPage) Next() error {
@@ -235,16 +254,19 @@ func (page *AccountListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page AccountListResultPage) NotDone() bool {
 	return !page.alr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (page AccountListResultPage) Response() AccountListResult {
 	return page.alr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page AccountListResultPage) Values() []Account {
 	if page.alr.IsEmpty() {
@@ -253,6 +275,7 @@ func (page AccountListResultPage) Values() []Account {
 	return *page.alr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountProperties the properties of a machine learning team account.
 type AccountProperties struct {
 	// VsoAccountID - The fully qualified arm id of the vso account to be used for this team account.
@@ -277,6 +300,7 @@ type AccountProperties struct {
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountPropertiesUpdateParameters the parameters for updating the properties of a machine learning team account.
 type AccountPropertiesUpdateParameters struct {
 	// Description - The description of this workspace.
@@ -289,6 +313,7 @@ type AccountPropertiesUpdateParameters struct {
 	StorageAccountKey *string `json:"storageAccountKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // AccountUpdateParameters the parameters for updating a machine learning team account.
 type AccountUpdateParameters struct {
 	// Tags - The resource tags for the machine learning team account.
@@ -297,6 +322,7 @@ type AccountUpdateParameters struct {
 	*AccountPropertiesUpdateParameters `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for AccountUpdateParameters.
 func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -309,6 +335,7 @@ func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for AccountUpdateParameters struct.
 func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -342,6 +369,7 @@ func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ErrorResponse the error response send when an operation fails.
 type ErrorResponse struct {
 	// Code - error code
@@ -350,6 +378,7 @@ type ErrorResponse struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Operation azure Machine Learning team account REST API operation
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}
@@ -358,6 +387,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // OperationDisplay display name of operation
 type OperationDisplay struct {
 	// Provider - The resource provider name: Microsoft.MachineLearningExperimentation
@@ -370,6 +400,7 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // OperationListResult an array of operations supported by the resource provider.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
@@ -377,6 +408,7 @@ type OperationListResult struct {
 	Value *[]Operation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Project an object that represents a machine learning project.
 type Project struct {
 	autorest.Response `json:"-"`
@@ -394,6 +426,7 @@ type Project struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for Project.
 func (p Project) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -418,6 +451,7 @@ func (p Project) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for Project struct.
 func (p *Project) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -487,6 +521,7 @@ func (p *Project) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectListResult the result of a request to list projects.
 type ProjectListResult struct {
 	autorest.Response `json:"-"`
@@ -496,12 +531,14 @@ type ProjectListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectListResultIterator provides access to a complete listing of Project values.
 type ProjectListResultIterator struct {
 	i    int
 	page ProjectListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ProjectListResultIterator) Next() error {
@@ -518,16 +555,19 @@ func (iter *ProjectListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ProjectListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (iter ProjectListResultIterator) Response() ProjectListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ProjectListResultIterator) Value() Project {
@@ -537,6 +577,7 @@ func (iter ProjectListResultIterator) Value() Project {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (plr ProjectListResult) IsEmpty() bool {
 	return plr.Value == nil || len(*plr.Value) == 0
@@ -554,12 +595,14 @@ func (plr ProjectListResult) projectListResultPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(plr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectListResultPage contains a page of Project values.
 type ProjectListResultPage struct {
 	fn  func(ProjectListResult) (ProjectListResult, error)
 	plr ProjectListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ProjectListResultPage) Next() error {
@@ -571,16 +614,19 @@ func (page *ProjectListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ProjectListResultPage) NotDone() bool {
 	return !page.plr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (page ProjectListResultPage) Response() ProjectListResult {
 	return page.plr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ProjectListResultPage) Values() []Project {
 	if page.plr.IsEmpty() {
@@ -589,6 +635,7 @@ func (page ProjectListResultPage) Values() []Project {
 	return *page.plr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectProperties the properties of a machine learning project.
 type ProjectProperties struct {
 	// Description - The description of this project.
@@ -609,6 +656,7 @@ type ProjectProperties struct {
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectPropertiesUpdateParameters the parameters for updating the properties of a project.
 type ProjectPropertiesUpdateParameters struct {
 	// FriendlyName - The friendly name for this project.
@@ -619,6 +667,7 @@ type ProjectPropertiesUpdateParameters struct {
 	Gitrepo *string `json:"gitrepo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ProjectUpdateParameters the parameters for updating a machine learning project.
 type ProjectUpdateParameters struct {
 	// Tags - The resource tags for the machine learning project.
@@ -627,6 +676,7 @@ type ProjectUpdateParameters struct {
 	*ProjectPropertiesUpdateParameters `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for ProjectUpdateParameters.
 func (pup ProjectUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -639,6 +689,7 @@ func (pup ProjectUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for ProjectUpdateParameters struct.
 func (pup *ProjectUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -672,6 +723,7 @@ func (pup *ProjectUpdateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Resource an Azure resource.
 type Resource struct {
 	// ID - The resource ID.
@@ -686,6 +738,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -707,6 +760,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // StorageAccountProperties the properties of a storage account for a machine learning team account.
 type StorageAccountProperties struct {
 	// StorageAccountID - The fully qualified arm Id of the storage account.
@@ -715,6 +769,7 @@ type StorageAccountProperties struct {
 	AccessKey *string `json:"accessKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Workspace an object that represents a machine learning team account workspace.
 type Workspace struct {
 	autorest.Response `json:"-"`
@@ -732,6 +787,7 @@ type Workspace struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for Workspace.
 func (w Workspace) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -756,6 +812,7 @@ func (w Workspace) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for Workspace struct.
 func (w *Workspace) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -825,6 +882,7 @@ func (w *Workspace) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspaceListResult the result of a request to list machine learning team account workspaces.
 type WorkspaceListResult struct {
 	autorest.Response `json:"-"`
@@ -834,12 +892,14 @@ type WorkspaceListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspaceListResultIterator provides access to a complete listing of Workspace values.
 type WorkspaceListResultIterator struct {
 	i    int
 	page WorkspaceListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *WorkspaceListResultIterator) Next() error {
@@ -856,16 +916,19 @@ func (iter *WorkspaceListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter WorkspaceListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (iter WorkspaceListResultIterator) Response() WorkspaceListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter WorkspaceListResultIterator) Value() Workspace {
@@ -875,6 +938,7 @@ func (iter WorkspaceListResultIterator) Value() Workspace {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (wlr WorkspaceListResult) IsEmpty() bool {
 	return wlr.Value == nil || len(*wlr.Value) == 0
@@ -892,12 +956,14 @@ func (wlr WorkspaceListResult) workspaceListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(wlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspaceListResultPage contains a page of Workspace values.
 type WorkspaceListResultPage struct {
 	fn  func(WorkspaceListResult) (WorkspaceListResult, error)
 	wlr WorkspaceListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *WorkspaceListResultPage) Next() error {
@@ -909,16 +975,19 @@ func (page *WorkspaceListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page WorkspaceListResultPage) NotDone() bool {
 	return !page.wlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Response returns the raw server response from the last page request.
 func (page WorkspaceListResultPage) Response() WorkspaceListResult {
 	return page.wlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page WorkspaceListResultPage) Values() []Workspace {
 	if page.wlr.IsEmpty() {
@@ -927,6 +996,7 @@ func (page WorkspaceListResultPage) Values() []Workspace {
 	return *page.wlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspaceProperties the properties of a machine learning team account workspace.
 type WorkspaceProperties struct {
 	// Description - The description of this workspace.
@@ -943,6 +1013,7 @@ type WorkspaceProperties struct {
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspacePropertiesUpdateParameters the parameters for updating the properties of a machine learning team
 // account workspace.
 type WorkspacePropertiesUpdateParameters struct {
@@ -952,6 +1023,7 @@ type WorkspacePropertiesUpdateParameters struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspaceUpdateParameters the parameters for updating a machine learning team account workspace.
 type WorkspaceUpdateParameters struct {
 	// Tags - The resource tags for the machine learning team account workspace.
@@ -960,6 +1032,7 @@ type WorkspaceUpdateParameters struct {
 	*WorkspacePropertiesUpdateParameters `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // MarshalJSON is the custom marshaler for WorkspaceUpdateParameters.
 func (wup WorkspaceUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -972,6 +1045,7 @@ func (wup WorkspaceUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UnmarshalJSON is the custom unmarshaler for WorkspaceUpdateParameters struct.
 func (wup *WorkspaceUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage

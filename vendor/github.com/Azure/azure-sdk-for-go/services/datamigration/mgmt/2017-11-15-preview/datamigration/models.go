@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AuthenticationType enumerates the values for authentication type.
 type AuthenticationType string
 
@@ -42,6 +43,13 @@ const (
 	WindowsAuthentication AuthenticationType = "WindowsAuthentication"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleAuthenticationTypeValues returns an array of possible values for the AuthenticationType const type.
+func PossibleAuthenticationTypeValues() []AuthenticationType {
+	return []AuthenticationType{ActiveDirectoryIntegrated, ActiveDirectoryPassword, None, SQLAuthentication, WindowsAuthentication}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseCompatLevel enumerates the values for database compat level.
 type DatabaseCompatLevel string
 
@@ -62,6 +70,13 @@ const (
 	CompatLevel90 DatabaseCompatLevel = "CompatLevel90"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleDatabaseCompatLevelValues returns an array of possible values for the DatabaseCompatLevel const type.
+func PossibleDatabaseCompatLevelValues() []DatabaseCompatLevel {
+	return []DatabaseCompatLevel{CompatLevel100, CompatLevel110, CompatLevel120, CompatLevel130, CompatLevel140, CompatLevel80, CompatLevel90}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseFileType enumerates the values for database file type.
 type DatabaseFileType string
 
@@ -78,6 +93,13 @@ const (
 	Rows DatabaseFileType = "Rows"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleDatabaseFileTypeValues returns an array of possible values for the DatabaseFileType const type.
+func PossibleDatabaseFileTypeValues() []DatabaseFileType {
+	return []DatabaseFileType{Filestream, Fulltext, Log, NotSupported, Rows}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseMigrationStage enumerates the values for database migration stage.
 type DatabaseMigrationStage string
 
@@ -96,6 +118,13 @@ const (
 	DatabaseMigrationStageRestore DatabaseMigrationStage = "Restore"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleDatabaseMigrationStageValues returns an array of possible values for the DatabaseMigrationStage const type.
+func PossibleDatabaseMigrationStageValues() []DatabaseMigrationStage {
+	return []DatabaseMigrationStage{DatabaseMigrationStageBackup, DatabaseMigrationStageCompleted, DatabaseMigrationStageFileCopy, DatabaseMigrationStageInitialize, DatabaseMigrationStageNone, DatabaseMigrationStageRestore}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseState enumerates the values for database state.
 type DatabaseState string
 
@@ -120,6 +149,13 @@ const (
 	Suspect DatabaseState = "Suspect"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleDatabaseStateValues returns an array of possible values for the DatabaseState const type.
+func PossibleDatabaseStateValues() []DatabaseState {
+	return []DatabaseState{Copying, Emergency, Offline, OfflineSecondary, Online, Recovering, RecoveryPending, Restoring, Suspect}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ErrorType enumerates the values for error type.
 type ErrorType string
 
@@ -132,6 +168,13 @@ const (
 	ErrorTypeWarning ErrorType = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleErrorTypeValues returns an array of possible values for the ErrorType const type.
+func PossibleErrorTypeValues() []ErrorType {
+	return []ErrorType{ErrorTypeDefault, ErrorTypeError, ErrorTypeWarning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationState enumerates the values for migration state.
 type MigrationState string
 
@@ -152,6 +195,13 @@ const (
 	MigrationStateWarning MigrationState = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleMigrationStateValues returns an array of possible values for the MigrationState const type.
+func PossibleMigrationStateValues() []MigrationState {
+	return []MigrationState{MigrationStateCompleted, MigrationStateFailed, MigrationStateInProgress, MigrationStateNone, MigrationStateSkipped, MigrationStateStopped, MigrationStateWarning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationStatus enumerates the values for migration status.
 type MigrationStatus string
 
@@ -178,6 +228,13 @@ const (
 	MigrationStatusStopped MigrationStatus = "Stopped"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleMigrationStatusValues returns an array of possible values for the MigrationStatus const type.
+func PossibleMigrationStatusValues() []MigrationStatus {
+	return []MigrationStatus{MigrationStatusCompleted, MigrationStatusCompletedWithWarnings, MigrationStatusConfigured, MigrationStatusConnecting, MigrationStatusDefault, MigrationStatusError, MigrationStatusRunning, MigrationStatusSelectLogins, MigrationStatusSourceAndTargetSelected, MigrationStatusStopped}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NameCheckFailureReason enumerates the values for name check failure reason.
 type NameCheckFailureReason string
 
@@ -188,6 +245,13 @@ const (
 	Invalid NameCheckFailureReason = "Invalid"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleNameCheckFailureReasonValues returns an array of possible values for the NameCheckFailureReason const type.
+func PossibleNameCheckFailureReasonValues() []NameCheckFailureReason {
+	return []NameCheckFailureReason{AlreadyExists, Invalid}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ObjectType enumerates the values for object type.
 type ObjectType string
 
@@ -204,6 +268,13 @@ const (
 	View ObjectType = "View"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleObjectTypeValues returns an array of possible values for the ObjectType const type.
+func PossibleObjectTypeValues() []ObjectType {
+	return []ObjectType{Function, StoredProcedures, Table, User, View}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectProvisioningState enumerates the values for project provisioning state.
 type ProjectProvisioningState string
 
@@ -214,6 +285,13 @@ const (
 	Succeeded ProjectProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleProjectProvisioningStateValues returns an array of possible values for the ProjectProvisioningState const type.
+func PossibleProjectProvisioningStateValues() []ProjectProvisioningState {
+	return []ProjectProvisioningState{Deleting, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectSourcePlatform enumerates the values for project source platform.
 type ProjectSourcePlatform string
 
@@ -224,6 +302,13 @@ const (
 	Unknown ProjectSourcePlatform = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleProjectSourcePlatformValues returns an array of possible values for the ProjectSourcePlatform const type.
+func PossibleProjectSourcePlatformValues() []ProjectSourcePlatform {
+	return []ProjectSourcePlatform{SQL, Unknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectTargetPlatform enumerates the values for project target platform.
 type ProjectTargetPlatform string
 
@@ -234,6 +319,13 @@ const (
 	ProjectTargetPlatformUnknown ProjectTargetPlatform = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleProjectTargetPlatformValues returns an array of possible values for the ProjectTargetPlatform const type.
+func PossibleProjectTargetPlatformValues() []ProjectTargetPlatform {
+	return []ProjectTargetPlatform{ProjectTargetPlatformSQLDB, ProjectTargetPlatformUnknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuCapacityScaleType enumerates the values for resource sku capacity scale type.
 type ResourceSkuCapacityScaleType string
 
@@ -246,6 +338,13 @@ const (
 	ResourceSkuCapacityScaleTypeNone ResourceSkuCapacityScaleType = "None"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleResourceSkuCapacityScaleTypeValues returns an array of possible values for the ResourceSkuCapacityScaleType const type.
+func PossibleResourceSkuCapacityScaleTypeValues() []ResourceSkuCapacityScaleType {
+	return []ResourceSkuCapacityScaleType{ResourceSkuCapacityScaleTypeAutomatic, ResourceSkuCapacityScaleTypeManual, ResourceSkuCapacityScaleTypeNone}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuRestrictionsReasonCode enumerates the values for resource sku restrictions reason code.
 type ResourceSkuRestrictionsReasonCode string
 
@@ -256,6 +355,13 @@ const (
 	QuotaID ResourceSkuRestrictionsReasonCode = "QuotaId"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleResourceSkuRestrictionsReasonCodeValues returns an array of possible values for the ResourceSkuRestrictionsReasonCode const type.
+func PossibleResourceSkuRestrictionsReasonCodeValues() []ResourceSkuRestrictionsReasonCode {
+	return []ResourceSkuRestrictionsReasonCode{NotAvailableForSubscription, QuotaID}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuRestrictionsType enumerates the values for resource sku restrictions type.
 type ResourceSkuRestrictionsType string
 
@@ -264,6 +370,13 @@ const (
 	Location ResourceSkuRestrictionsType = "location"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleResourceSkuRestrictionsTypeValues returns an array of possible values for the ResourceSkuRestrictionsType const type.
+func PossibleResourceSkuRestrictionsTypeValues() []ResourceSkuRestrictionsType {
+	return []ResourceSkuRestrictionsType{Location}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResultType enumerates the values for result type.
 type ResultType string
 
@@ -280,6 +393,13 @@ const (
 	ResultTypeTableLevelOutput ResultType = "TableLevelOutput"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleResultTypeValues returns an array of possible values for the ResultType const type.
+func PossibleResultTypeValues() []ResultType {
+	return []ResultType{ResultTypeDatabaseLevelOutput, ResultTypeErrorOutput, ResultTypeMigrateSQLServerSQLDbTaskOutput, ResultTypeMigrationLevelOutput, ResultTypeTableLevelOutput}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResultTypeBasicConnectToSourceSQLServerTaskOutput enumerates the values for result type basic connect to
 // source sql server task output.
 type ResultTypeBasicConnectToSourceSQLServerTaskOutput string
@@ -293,6 +413,13 @@ const (
 	ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput ResultTypeBasicConnectToSourceSQLServerTaskOutput = "TaskLevelOutput"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleResultTypeBasicConnectToSourceSQLServerTaskOutputValues returns an array of possible values for the ResultTypeBasicConnectToSourceSQLServerTaskOutput const type.
+func PossibleResultTypeBasicConnectToSourceSQLServerTaskOutputValues() []ResultTypeBasicConnectToSourceSQLServerTaskOutput {
+	return []ResultTypeBasicConnectToSourceSQLServerTaskOutput{ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput, ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput, ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServerLevelPermissionsGroup enumerates the values for server level permissions group.
 type ServerLevelPermissionsGroup string
 
@@ -303,6 +430,13 @@ const (
 	MigrationFromSQLServerToAzureDB ServerLevelPermissionsGroup = "MigrationFromSqlServerToAzureDB"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleServerLevelPermissionsGroupValues returns an array of possible values for the ServerLevelPermissionsGroup const type.
+func PossibleServerLevelPermissionsGroupValues() []ServerLevelPermissionsGroup {
+	return []ServerLevelPermissionsGroup{Default, MigrationFromSQLServerToAzureDB}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceProvisioningState enumerates the values for service provisioning state.
 type ServiceProvisioningState string
 
@@ -329,6 +463,13 @@ const (
 	ServiceProvisioningStateSucceeded ServiceProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleServiceProvisioningStateValues returns an array of possible values for the ServiceProvisioningState const type.
+func PossibleServiceProvisioningStateValues() []ServiceProvisioningState {
+	return []ServiceProvisioningState{ServiceProvisioningStateAccepted, ServiceProvisioningStateDeleting, ServiceProvisioningStateDeploying, ServiceProvisioningStateFailed, ServiceProvisioningStateFailedToStart, ServiceProvisioningStateFailedToStop, ServiceProvisioningStateStarting, ServiceProvisioningStateStopped, ServiceProvisioningStateStopping, ServiceProvisioningStateSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceScalability enumerates the values for service scalability.
 type ServiceScalability string
 
@@ -341,6 +482,13 @@ const (
 	ServiceScalabilityNone ServiceScalability = "none"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleServiceScalabilityValues returns an array of possible values for the ServiceScalability const type.
+func PossibleServiceScalabilityValues() []ServiceScalability {
+	return []ServiceScalability{ServiceScalabilityAutomatic, ServiceScalabilityManual, ServiceScalabilityNone}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Severity enumerates the values for severity.
 type Severity string
 
@@ -353,6 +501,13 @@ const (
 	SeverityWarning Severity = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleSeverityValues returns an array of possible values for the Severity const type.
+func PossibleSeverityValues() []Severity {
+	return []Severity{SeverityError, SeverityMessage, SeverityWarning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TaskState enumerates the values for task state.
 type TaskState string
 
@@ -375,6 +530,13 @@ const (
 	TaskStateUnknown TaskState = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleTaskStateValues returns an array of possible values for the TaskState const type.
+func PossibleTaskStateValues() []TaskState {
+	return []TaskState{TaskStateCanceled, TaskStateFailed, TaskStateFailedInputValidation, TaskStateFaulted, TaskStateQueued, TaskStateRunning, TaskStateSucceeded, TaskStateUnknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TaskType enumerates the values for task type.
 type TaskType string
 
@@ -391,6 +553,13 @@ const (
 	TaskTypeUnknown TaskType = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleTaskTypeValues returns an array of possible values for the TaskType const type.
+func PossibleTaskTypeValues() []TaskType {
+	return []TaskType{TaskTypeConnectToSourceSQLServer, TaskTypeConnectToTargetSQLDb, TaskTypeGetUserTablesSQL, TaskTypeMigrateSQLServerSQLDb, TaskTypeUnknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Type enumerates the values for type.
 type Type string
 
@@ -401,6 +570,13 @@ const (
 	TypeUnknown Type = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeSQLConnectionInfo, TypeUnknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdateActionType enumerates the values for update action type.
 type UpdateActionType string
 
@@ -413,6 +589,13 @@ const (
 	DeletedOnTarget UpdateActionType = "DeletedOnTarget"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleUpdateActionTypeValues returns an array of possible values for the UpdateActionType const type.
+func PossibleUpdateActionTypeValues() []UpdateActionType {
+	return []UpdateActionType{AddedOnTarget, ChangedOnTarget, DeletedOnTarget}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ValidationStatus enumerates the values for validation status.
 type ValidationStatus string
 
@@ -435,12 +618,20 @@ const (
 	ValidationStatusStopped ValidationStatus = "Stopped"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// PossibleValidationStatusValues returns an array of possible values for the ValidationStatus const type.
+func PossibleValidationStatusValues() []ValidationStatus {
+	return []ValidationStatus{ValidationStatusCompleted, ValidationStatusCompletedWithIssues, ValidationStatusDefault, ValidationStatusFailed, ValidationStatusInitialized, ValidationStatusInProgress, ValidationStatusNotStarted, ValidationStatusStopped}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // APIError error information.
 type APIError struct {
 	// Error - Error information in OData format
 	Error *ODataError `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AvailableServiceSku describes the available service SKU.
 type AvailableServiceSku struct {
 	// ResourceType - The resource type, including the provider namespace
@@ -451,6 +642,7 @@ type AvailableServiceSku struct {
 	Capacity *AvailableServiceSkuCapacity `json:"capacity,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AvailableServiceSkuCapacity a description of the scaling capacities of the SKU
 type AvailableServiceSkuCapacity struct {
 	// Minimum - The minimum capacity, usually 0 or 1.
@@ -463,6 +655,7 @@ type AvailableServiceSkuCapacity struct {
 	ScaleType ServiceScalability `json:"scaleType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AvailableServiceSkuSku SKU name, tier, etc.
 type AvailableServiceSkuSku struct {
 	// Name - The name of the SKU
@@ -475,12 +668,14 @@ type AvailableServiceSkuSku struct {
 	Tier *string `json:"tier,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // BasicConnectionInfo defines the connection properties of a server
 type BasicConnectionInfo interface {
 	AsSQLConnectionInfo() (*SQLConnectionInfo, bool)
 	AsConnectionInfo() (*ConnectionInfo, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectionInfo defines the connection properties of a server
 type ConnectionInfo struct {
 	// UserName - User name
@@ -528,6 +723,7 @@ func unmarshalBasicConnectionInfoArray(body []byte) ([]BasicConnectionInfo, erro
 	return ciArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectionInfo.
 func (ci ConnectionInfo) MarshalJSON() ([]byte, error) {
 	ci.Type = TypeUnknown
@@ -538,25 +734,31 @@ func (ci ConnectionInfo) MarshalJSON() ([]byte, error) {
 	if ci.Password != nil {
 		objectMap["password"] = ci.Password
 	}
-	objectMap["type"] = ci.Type
+	if ci.Type != "" {
+		objectMap["type"] = ci.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsSQLConnectionInfo is the BasicConnectionInfo implementation for ConnectionInfo.
 func (ci ConnectionInfo) AsSQLConnectionInfo() (*SQLConnectionInfo, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectionInfo is the BasicConnectionInfo implementation for ConnectionInfo.
 func (ci ConnectionInfo) AsConnectionInfo() (*ConnectionInfo, bool) {
 	return &ci, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicConnectionInfo is the BasicConnectionInfo implementation for ConnectionInfo.
 func (ci ConnectionInfo) AsBasicConnectionInfo() (BasicConnectionInfo, bool) {
 	return &ci, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToSourceSQLServerTaskInput input for the task that validates connection to SQL Server and also validates
 // source server requirements
 type ConnectToSourceSQLServerTaskInput struct {
@@ -566,6 +768,7 @@ type ConnectToSourceSQLServerTaskInput struct {
 	CheckPermissionsGroup ServerLevelPermissionsGroup `json:"checkPermissionsGroup,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // BasicConnectToSourceSQLServerTaskOutput output for the task that validates connection to SQL Server and also
 // validates source server requirements
 type BasicConnectToSourceSQLServerTaskOutput interface {
@@ -574,13 +777,14 @@ type BasicConnectToSourceSQLServerTaskOutput interface {
 	AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToSourceSQLServerTaskOutput output for the task that validates connection to SQL Server and also
 // validates source server requirements
 type ConnectToSourceSQLServerTaskOutput struct {
-	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
-	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
+	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 }
 
 func unmarshalBasicConnectToSourceSQLServerTaskOutput(body []byte) (BasicConnectToSourceSQLServerTaskOutput, error) {
@@ -590,7 +794,7 @@ func unmarshalBasicConnectToSourceSQLServerTaskOutput(body []byte) (BasicConnect
 		return nil, err
 	}
 
-	switch m[""] {
+	switch m["resultType"] {
 	case string(ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput):
 		var ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel
 		err := json.Unmarshal(body, &ctssstodl)
@@ -624,77 +828,45 @@ func unmarshalBasicConnectToSourceSQLServerTaskOutputArray(body []byte) ([]Basic
 	return ctssstoArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToSourceSQLServerTaskOutput.
 func (ctsssto ConnectToSourceSQLServerTaskOutput) MarshalJSON() ([]byte, error) {
 	ctsssto.ResultType = ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput
 	objectMap := make(map[string]interface{})
-	objectMap["resultType"] = ctsssto.ResultType
 	if ctsssto.ID != nil {
 		objectMap["id"] = ctsssto.ID
+	}
+	if ctsssto.ResultType != "" {
+		objectMap["resultType"] = ctsssto.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
-func (ctsssto ConnectToSourceSQLServerTaskOutput) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
 func (ctsssto ConnectToSourceSQLServerTaskOutput) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
 func (ctsssto ConnectToSourceSQLServerTaskOutput) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
 	return nil, false
 }
 
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
 func (ctsssto ConnectToSourceSQLServerTaskOutput) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
 	return &ctsssto, true
 }
 
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutput.
 func (ctsssto ConnectToSourceSQLServerTaskOutput) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
 	return &ctsssto, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToSourceSQLServerTaskOutputDatabaseLevel database level output for the task that validates connection to
 // SQL Server and also validates source server requirements
 type ConnectToSourceSQLServerTaskOutputDatabaseLevel struct {
@@ -708,12 +880,13 @@ type ConnectToSourceSQLServerTaskOutputDatabaseLevel struct {
 	CompatibilityLevel DatabaseCompatLevel `json:"compatibilityLevel,omitempty"`
 	// DatabaseState - State of the database. Possible values include: 'Online', 'Restoring', 'Recovering', 'RecoveryPending', 'Suspect', 'Emergency', 'Offline', 'Copying', 'OfflineSecondary'
 	DatabaseState DatabaseState `json:"databaseState,omitempty"`
-	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
-	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
+	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
 func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) MarshalJSON() ([]byte, error) {
 	ctssstodl.ResultType = ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput
@@ -727,75 +900,46 @@ func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) MarshalJSON() (
 	if ctssstodl.DatabaseFiles != nil {
 		objectMap["databaseFiles"] = ctssstodl.DatabaseFiles
 	}
-	objectMap["compatibilityLevel"] = ctssstodl.CompatibilityLevel
-	objectMap["databaseState"] = ctssstodl.DatabaseState
-	objectMap["resultType"] = ctssstodl.ResultType
+	if ctssstodl.CompatibilityLevel != "" {
+		objectMap["compatibilityLevel"] = ctssstodl.CompatibilityLevel
+	}
+	if ctssstodl.DatabaseState != "" {
+		objectMap["databaseState"] = ctssstodl.DatabaseState
+	}
 	if ctssstodl.ID != nil {
 		objectMap["id"] = ctssstodl.ID
+	}
+	if ctssstodl.ResultType != "" {
+		objectMap["resultType"] = ctssstodl.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
-func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
 func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
 	return &ctssstodl, true
 }
 
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
 func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
 	return nil, false
 }
 
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
 func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputDatabaseLevel.
 func (ctssstodl ConnectToSourceSQLServerTaskOutputDatabaseLevel) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
 	return &ctssstodl, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToSourceSQLServerTaskOutputTaskLevel task level output for the task that validates connection to SQL
 // Server and also validates source server requirements
 type ConnectToSourceSQLServerTaskOutputTaskLevel struct {
@@ -807,12 +951,13 @@ type ConnectToSourceSQLServerTaskOutputTaskLevel struct {
 	SourceServerBrandVersion *string `json:"sourceServerBrandVersion,omitempty"`
 	// ValidationErrors - Validation errors
 	ValidationErrors *[]ReportableException `json:"validationErrors,omitempty"`
-	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
-	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeConnectToSourceSQLServerTaskOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeDatabaseLevelOutput', 'ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput'
+	ResultType ResultTypeBasicConnectToSourceSQLServerTaskOutput `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToSourceSQLServerTaskOutputTaskLevel.
 func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) MarshalJSON() ([]byte, error) {
 	ctssstotl.ResultType = ResultTypeBasicConnectToSourceSQLServerTaskOutputResultTypeTaskLevelOutput
@@ -829,73 +974,40 @@ func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) MarshalJSON() ([]by
 	if ctssstotl.ValidationErrors != nil {
 		objectMap["validationErrors"] = ctssstotl.ValidationErrors
 	}
-	objectMap["resultType"] = ctssstotl.ResultType
 	if ctssstotl.ID != nil {
 		objectMap["id"] = ctssstotl.ID
+	}
+	if ctssstotl.ResultType != "" {
+		objectMap["resultType"] = ctssstotl.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
-	return nil, false
-}
-
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
-func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
 func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
 func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
 	return &ctssstotl, true
 }
 
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
 func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicConnectToSourceSQLServerTaskOutput is the BasicConnectToSourceSQLServerTaskOutput implementation for ConnectToSourceSQLServerTaskOutputTaskLevel.
 func (ctssstotl ConnectToSourceSQLServerTaskOutputTaskLevel) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
 	return &ctssstotl, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToSourceSQLServerTaskProperties properties for the task that validates connection to SQL Server and also
 // validates source server requirements
 type ConnectToSourceSQLServerTaskProperties struct {
@@ -911,6 +1023,7 @@ type ConnectToSourceSQLServerTaskProperties struct {
 	TaskType TaskType `json:"taskType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) MarshalJSON() ([]byte, error) {
 	ctssstp.TaskType = TaskTypeConnectToSourceSQLServer
@@ -924,41 +1037,52 @@ func (ctssstp ConnectToSourceSQLServerTaskProperties) MarshalJSON() ([]byte, err
 	if ctssstp.Errors != nil {
 		objectMap["errors"] = ctssstp.Errors
 	}
-	objectMap["state"] = ctssstp.State
-	objectMap["taskType"] = ctssstp.TaskType
+	if ctssstp.State != "" {
+		objectMap["state"] = ctssstp.State
+	}
+	if ctssstp.TaskType != "" {
+		objectMap["taskType"] = ctssstp.TaskType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsMigrateSQLServerSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsMigrateSQLServerSQLDbTaskProperties() (*MigrateSQLServerSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsGetUserTablesSQLTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsGetUserTablesSQLTaskProperties() (*GetUserTablesSQLTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToTargetSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsConnectToTargetSQLDbTaskProperties() (*ConnectToTargetSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToSourceSQLServerTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsConnectToSourceSQLServerTaskProperties() (*ConnectToSourceSQLServerTaskProperties, bool) {
 	return &ctssstp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsProjectTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsProjectTaskProperties() (*ProjectTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicProjectTaskProperties is the BasicProjectTaskProperties implementation for ConnectToSourceSQLServerTaskProperties.
 func (ctssstp ConnectToSourceSQLServerTaskProperties) AsBasicProjectTaskProperties() (BasicProjectTaskProperties, bool) {
 	return &ctssstp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for ConnectToSourceSQLServerTaskProperties struct.
 func (ctssstp *ConnectToSourceSQLServerTaskProperties) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1018,6 +1142,7 @@ func (ctssstp *ConnectToSourceSQLServerTaskProperties) UnmarshalJSON(body []byte
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToTargetSQLDbTaskInput input for the task that validates connection to SQL DB and target server
 // requirements
 type ConnectToTargetSQLDbTaskInput struct {
@@ -1025,22 +1150,27 @@ type ConnectToTargetSQLDbTaskInput struct {
 	TargetConnectionInfo *SQLConnectionInfo `json:"targetConnectionInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToTargetSQLDbTaskOutput output for the task that validates connection to SQL DB and target server
 // requirements
 type ConnectToTargetSQLDbTaskOutput struct {
+	// ID - Result identifier
+	ID *string `json:"id,omitempty"`
 	// Databases - Source databases as a map from database name to database id
 	Databases map[string]*string `json:"databases"`
 	// TargetServerVersion - Version of the target server
 	TargetServerVersion *string `json:"targetServerVersion,omitempty"`
 	// TargetServerBrandVersion - Target server brand version
 	TargetServerBrandVersion *string `json:"targetServerBrandVersion,omitempty"`
-	// ID - Result identifier
-	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToTargetSQLDbTaskOutput.
 func (cttsdto ConnectToTargetSQLDbTaskOutput) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
+	if cttsdto.ID != nil {
+		objectMap["id"] = cttsdto.ID
+	}
 	if cttsdto.Databases != nil {
 		objectMap["databases"] = cttsdto.Databases
 	}
@@ -1050,12 +1180,10 @@ func (cttsdto ConnectToTargetSQLDbTaskOutput) MarshalJSON() ([]byte, error) {
 	if cttsdto.TargetServerBrandVersion != nil {
 		objectMap["targetServerBrandVersion"] = cttsdto.TargetServerBrandVersion
 	}
-	if cttsdto.ID != nil {
-		objectMap["id"] = cttsdto.ID
-	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ConnectToTargetSQLDbTaskProperties properties for the task that validates connection to SQL DB and target server
 // requirements
 type ConnectToTargetSQLDbTaskProperties struct {
@@ -1071,6 +1199,7 @@ type ConnectToTargetSQLDbTaskProperties struct {
 	TaskType TaskType `json:"taskType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) MarshalJSON() ([]byte, error) {
 	cttsdtp.TaskType = TaskTypeConnectToTargetSQLDb
@@ -1084,41 +1213,52 @@ func (cttsdtp ConnectToTargetSQLDbTaskProperties) MarshalJSON() ([]byte, error) 
 	if cttsdtp.Errors != nil {
 		objectMap["errors"] = cttsdtp.Errors
 	}
-	objectMap["state"] = cttsdtp.State
-	objectMap["taskType"] = cttsdtp.TaskType
+	if cttsdtp.State != "" {
+		objectMap["state"] = cttsdtp.State
+	}
+	if cttsdtp.TaskType != "" {
+		objectMap["taskType"] = cttsdtp.TaskType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsMigrateSQLServerSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsMigrateSQLServerSQLDbTaskProperties() (*MigrateSQLServerSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsGetUserTablesSQLTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsGetUserTablesSQLTaskProperties() (*GetUserTablesSQLTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToTargetSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsConnectToTargetSQLDbTaskProperties() (*ConnectToTargetSQLDbTaskProperties, bool) {
 	return &cttsdtp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToSourceSQLServerTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsConnectToSourceSQLServerTaskProperties() (*ConnectToSourceSQLServerTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsProjectTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsProjectTaskProperties() (*ProjectTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicProjectTaskProperties is the BasicProjectTaskProperties implementation for ConnectToTargetSQLDbTaskProperties.
 func (cttsdtp ConnectToTargetSQLDbTaskProperties) AsBasicProjectTaskProperties() (BasicProjectTaskProperties, bool) {
 	return &cttsdtp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Database information about a single database
 type Database struct {
 	// ID - Unique identifier for the database
@@ -1157,6 +1297,7 @@ type Database struct {
 	ServerID *string `json:"serverId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseFileInfo database file specific information
 type DatabaseFileInfo struct {
 	// DatabaseName - Name of the database
@@ -1175,6 +1316,7 @@ type DatabaseFileInfo struct {
 	SizeMB *float64 `json:"sizeMB,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseFileInput database file specific information for input
 type DatabaseFileInput struct {
 	// ID - Unique identifier for database file
@@ -1189,12 +1331,14 @@ type DatabaseFileInput struct {
 	FileType DatabaseFileType `json:"fileType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseInfo project Database Details
 type DatabaseInfo struct {
 	// SourceDatabaseName - Name of the database
 	SourceDatabaseName *string `json:"sourceDatabaseName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseObjectName a representation of the name of an object in a database
 type DatabaseObjectName struct {
 	// DatabaseName - The unescaped name of the database containing the object
@@ -1207,6 +1351,7 @@ type DatabaseObjectName struct {
 	ObjectType ObjectType `json:"objectType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseSummaryResult summary of database results in the migration
 type DatabaseSummaryResult struct {
 	// SizeMB - Size of the database in megabytes
@@ -1231,6 +1376,7 @@ type DatabaseSummaryResult struct {
 	ResultPrefix *string `json:"resultPrefix,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DatabaseTable table properties
 type DatabaseTable struct {
 	// HasRows - Indicates whether table is empty or not
@@ -1239,6 +1385,7 @@ type DatabaseTable struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DataIntegrityValidationResult results for checksum based Data Integrity validation results
 type DataIntegrityValidationResult struct {
 	// FailedObjects - List of failed table names of source and target pair
@@ -1247,6 +1394,7 @@ type DataIntegrityValidationResult struct {
 	ValidationErrors *ValidationError `json:"validationErrors,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for DataIntegrityValidationResult.
 func (divr DataIntegrityValidationResult) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1259,6 +1407,7 @@ func (divr DataIntegrityValidationResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DataItemMigrationSummaryResult basic summary of a data item migration
 type DataItemMigrationSummaryResult struct {
 	// Name - Name of the item
@@ -1281,6 +1430,7 @@ type DataItemMigrationSummaryResult struct {
 	ResultPrefix *string `json:"resultPrefix,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Error migration Task errors
 type Error struct {
 	// Message - Error description
@@ -1289,6 +1439,7 @@ type Error struct {
 	Type ErrorType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ExecutionStatistics description about the errors happen while performing migration validation
 type ExecutionStatistics struct {
 	// ExecutionCount - No. of query executions
@@ -1305,6 +1456,7 @@ type ExecutionStatistics struct {
 	SQLErrors *[]string `json:"sqlErrors,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ExecutionStatistics.
 func (es ExecutionStatistics) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1329,6 +1481,7 @@ func (es ExecutionStatistics) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetUserTablesSQLTaskInput input for the task that collects user tables for the given list of databases
 type GetUserTablesSQLTaskInput struct {
 	// ConnectionInfo - Connection information for SQL Server
@@ -1337,31 +1490,34 @@ type GetUserTablesSQLTaskInput struct {
 	SelectedDatabases *[]string `json:"selectedDatabases,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetUserTablesSQLTaskOutput output of the task that collects user tables for the given list of databases
 type GetUserTablesSQLTaskOutput struct {
+	// ID - Result identifier
+	ID *string `json:"id,omitempty"`
 	// DatabasesToTables - Mapping from database name to list of tables
 	DatabasesToTables map[string][]DatabaseTable `json:"databasesToTables"`
 	// ValidationErrors - Validation errors
 	ValidationErrors *[]ReportableException `json:"validationErrors,omitempty"`
-	// ID - Result identifier
-	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for GetUserTablesSQLTaskOutput.
 func (gutsto GetUserTablesSQLTaskOutput) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
+	if gutsto.ID != nil {
+		objectMap["id"] = gutsto.ID
+	}
 	if gutsto.DatabasesToTables != nil {
 		objectMap["databasesToTables"] = gutsto.DatabasesToTables
 	}
 	if gutsto.ValidationErrors != nil {
 		objectMap["validationErrors"] = gutsto.ValidationErrors
 	}
-	if gutsto.ID != nil {
-		objectMap["id"] = gutsto.ID
-	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetUserTablesSQLTaskProperties properties for the task that collects user tables for the given list of databases
 type GetUserTablesSQLTaskProperties struct {
 	// Input - Task input
@@ -1376,6 +1532,7 @@ type GetUserTablesSQLTaskProperties struct {
 	TaskType TaskType `json:"taskType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) MarshalJSON() ([]byte, error) {
 	gutstp.TaskType = TaskTypeGetUserTablesSQL
@@ -1389,41 +1546,52 @@ func (gutstp GetUserTablesSQLTaskProperties) MarshalJSON() ([]byte, error) {
 	if gutstp.Errors != nil {
 		objectMap["errors"] = gutstp.Errors
 	}
-	objectMap["state"] = gutstp.State
-	objectMap["taskType"] = gutstp.TaskType
+	if gutstp.State != "" {
+		objectMap["state"] = gutstp.State
+	}
+	if gutstp.TaskType != "" {
+		objectMap["taskType"] = gutstp.TaskType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsMigrateSQLServerSQLDbTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsMigrateSQLServerSQLDbTaskProperties() (*MigrateSQLServerSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsGetUserTablesSQLTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsGetUserTablesSQLTaskProperties() (*GetUserTablesSQLTaskProperties, bool) {
 	return &gutstp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToTargetSQLDbTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsConnectToTargetSQLDbTaskProperties() (*ConnectToTargetSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToSourceSQLServerTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsConnectToSourceSQLServerTaskProperties() (*ConnectToSourceSQLServerTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsProjectTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsProjectTaskProperties() (*ProjectTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicProjectTaskProperties is the BasicProjectTaskProperties implementation for GetUserTablesSQLTaskProperties.
 func (gutstp GetUserTablesSQLTaskProperties) AsBasicProjectTaskProperties() (BasicProjectTaskProperties, bool) {
 	return &gutstp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbDatabaseInput database specific information for SQL to Azure SQL DB migration task inputs
 type MigrateSQLServerSQLDbDatabaseInput struct {
 	// Name - Name of the database
@@ -1436,6 +1604,7 @@ type MigrateSQLServerSQLDbDatabaseInput struct {
 	TableMap map[string]*string `json:"tableMap"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbDatabaseInput.
 func (msssddi MigrateSQLServerSQLDbDatabaseInput) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1454,6 +1623,7 @@ func (msssddi MigrateSQLServerSQLDbDatabaseInput) MarshalJSON() ([]byte, error) 
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskInput input for the task that migrates on-prem SQL Server databases to Azure SQL
 // Database
 type MigrateSQLServerSQLDbTaskInput struct {
@@ -1469,6 +1639,7 @@ type MigrateSQLServerSQLDbTaskInput struct {
 	TargetConnectionInfo *SQLConnectionInfo `json:"targetConnectionInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // BasicMigrateSQLServerSQLDbTaskOutput output for the task that migrates on-prem SQL Server databases to Azure SQL
 // Database
 type BasicMigrateSQLServerSQLDbTaskOutput interface {
@@ -1479,13 +1650,14 @@ type BasicMigrateSQLServerSQLDbTaskOutput interface {
 	AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskOutput output for the task that migrates on-prem SQL Server databases to Azure SQL
 // Database
 type MigrateSQLServerSQLDbTaskOutput struct {
-	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
-	ResultType ResultType `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
+	ResultType ResultType `json:"resultType,omitempty"`
 }
 
 func unmarshalBasicMigrateSQLServerSQLDbTaskOutput(body []byte) (BasicMigrateSQLServerSQLDbTaskOutput, error) {
@@ -1495,7 +1667,7 @@ func unmarshalBasicMigrateSQLServerSQLDbTaskOutput(body []byte) (BasicMigrateSQL
 		return nil, err
 	}
 
-	switch m[""] {
+	switch m["resultType"] {
 	case string(ResultTypeErrorOutput):
 		var msssdtoe MigrateSQLServerSQLDbTaskOutputError
 		err := json.Unmarshal(body, &msssdtoe)
@@ -1537,77 +1709,57 @@ func unmarshalBasicMigrateSQLServerSQLDbTaskOutputArray(body []byte) ([]BasicMig
 	return msssdtoArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) MarshalJSON() ([]byte, error) {
 	msssdto.ResultType = ResultTypeMigrateSQLServerSQLDbTaskOutput
 	objectMap := make(map[string]interface{})
-	objectMap["resultType"] = msssdto.ResultType
 	if msssdto.ID != nil {
 		objectMap["id"] = msssdto.ID
+	}
+	if msssdto.ResultType != "" {
+		objectMap["resultType"] = msssdto.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputError is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdto, true
 }
 
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
 func (msssdto MigrateSQLServerSQLDbTaskOutput) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdto, true
 }
 
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutput.
-func (msssdto MigrateSQLServerSQLDbTaskOutput) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskOutputDatabaseLevel ...
 type MigrateSQLServerSQLDbTaskOutputDatabaseLevel struct {
 	// DatabaseName - Name of the item
@@ -1638,12 +1790,13 @@ type MigrateSQLServerSQLDbTaskOutputDatabaseLevel struct {
 	ExceptionsAndWarnings *[]ReportableException `json:"exceptionsAndWarnings,omitempty"`
 	// ObjectSummary - Summary of object results in the migration
 	ObjectSummary map[string]*DataItemMigrationSummaryResult `json:"objectSummary"`
-	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
-	ResultType ResultType `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
+	ResultType ResultType `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) MarshalJSON() ([]byte, error) {
 	msssdtodl.ResultType = ResultTypeDatabaseLevelOutput
@@ -1657,8 +1810,12 @@ func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) MarshalJSON() ([]b
 	if msssdtodl.EndedOn != nil {
 		objectMap["endedOn"] = msssdtodl.EndedOn
 	}
-	objectMap["state"] = msssdtodl.State
-	objectMap["stage"] = msssdtodl.Stage
+	if msssdtodl.State != "" {
+		objectMap["state"] = msssdtodl.State
+	}
+	if msssdtodl.Stage != "" {
+		objectMap["stage"] = msssdtodl.Stage
+	}
 	if msssdtodl.StatusMessage != nil {
 		objectMap["statusMessage"] = msssdtodl.StatusMessage
 	}
@@ -1686,83 +1843,63 @@ func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) MarshalJSON() ([]b
 	if msssdtodl.ObjectSummary != nil {
 		objectMap["objectSummary"] = msssdtodl.ObjectSummary
 	}
-	objectMap["resultType"] = msssdtodl.ResultType
 	if msssdtodl.ID != nil {
 		objectMap["id"] = msssdtodl.ID
+	}
+	if msssdtodl.ResultType != "" {
+		objectMap["resultType"] = msssdtodl.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputError is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
 	return &msssdtodl, true
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
 func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdtodl, true
 }
 
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputDatabaseLevel.
-func (msssdtodl MigrateSQLServerSQLDbTaskOutputDatabaseLevel) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskOutputError ...
 type MigrateSQLServerSQLDbTaskOutputError struct {
 	// Error - Migration error
 	Error *ReportableException `json:"error,omitempty"`
-	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
-	ResultType ResultType `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
+	ResultType ResultType `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) MarshalJSON() ([]byte, error) {
 	msssdtoe.ResultType = ResultTypeErrorOutput
@@ -1770,73 +1907,52 @@ func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) MarshalJSON() ([]byte, erro
 	if msssdtoe.Error != nil {
 		objectMap["error"] = msssdtoe.Error
 	}
-	objectMap["resultType"] = msssdtoe.ResultType
 	if msssdtoe.ID != nil {
 		objectMap["id"] = msssdtoe.ID
+	}
+	if msssdtoe.ResultType != "" {
+		objectMap["resultType"] = msssdtoe.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputError is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
 	return &msssdtoe, true
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
 func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdtoe, true
 }
 
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputError.
-func (msssdtoe MigrateSQLServerSQLDbTaskOutputError) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskOutputMigrationLevel ...
 type MigrateSQLServerSQLDbTaskOutputMigrationLevel struct {
 	// StartedOn - Migration start time
@@ -1867,12 +1983,13 @@ type MigrateSQLServerSQLDbTaskOutputMigrationLevel struct {
 	TargetServerBrandVersion *string `json:"targetServerBrandVersion,omitempty"`
 	// ExceptionsAndWarnings - Migration exceptions and warnings.
 	ExceptionsAndWarnings *[]ReportableException `json:"exceptionsAndWarnings,omitempty"`
-	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
-	ResultType ResultType `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
+	ResultType ResultType `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) MarshalJSON() ([]byte, error) {
 	msssdtoml.ResultType = ResultTypeMigrationLevelOutput
@@ -1886,7 +2003,9 @@ func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) MarshalJSON() ([]
 	if msssdtoml.DurationInSeconds != nil {
 		objectMap["durationInSeconds"] = msssdtoml.DurationInSeconds
 	}
-	objectMap["status"] = msssdtoml.Status
+	if msssdtoml.Status != "" {
+		objectMap["status"] = msssdtoml.Status
+	}
 	if msssdtoml.StatusMessage != nil {
 		objectMap["statusMessage"] = msssdtoml.StatusMessage
 	}
@@ -1917,73 +2036,52 @@ func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) MarshalJSON() ([]
 	if msssdtoml.ExceptionsAndWarnings != nil {
 		objectMap["exceptionsAndWarnings"] = msssdtoml.ExceptionsAndWarnings
 	}
-	objectMap["resultType"] = msssdtoml.ResultType
 	if msssdtoml.ID != nil {
 		objectMap["id"] = msssdtoml.ID
+	}
+	if msssdtoml.ResultType != "" {
+		objectMap["resultType"] = msssdtoml.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputError is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
 	return &msssdtoml, true
 }
 
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
 func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdtoml, true
 }
 
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputMigrationLevel.
-func (msssdtoml MigrateSQLServerSQLDbTaskOutputMigrationLevel) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskOutputTableLevel ...
 type MigrateSQLServerSQLDbTaskOutputTableLevel struct {
 	// ObjectName - Name of the item
@@ -2004,12 +2102,13 @@ type MigrateSQLServerSQLDbTaskOutputTableLevel struct {
 	ErrorPrefix *string `json:"errorPrefix,omitempty"`
 	// ResultPrefix - Wildcard string prefix to use for querying all sub-tem results of the item
 	ResultPrefix *string `json:"resultPrefix,omitempty"`
-	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
-	ResultType ResultType `json:"resultType,omitempty"`
 	// ID - Result identifier
 	ID *string `json:"id,omitempty"`
+	// ResultType - Possible values include: 'ResultTypeMigrateSQLServerSQLDbTaskOutput', 'ResultTypeErrorOutput', 'ResultTypeTableLevelOutput', 'ResultTypeDatabaseLevelOutput', 'ResultTypeMigrationLevelOutput'
+	ResultType ResultType `json:"resultType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) MarshalJSON() ([]byte, error) {
 	msssdtotl.ResultType = ResultTypeTableLevelOutput
@@ -2023,7 +2122,9 @@ func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) MarshalJSON() ([]byte
 	if msssdtotl.EndedOn != nil {
 		objectMap["endedOn"] = msssdtotl.EndedOn
 	}
-	objectMap["state"] = msssdtotl.State
+	if msssdtotl.State != "" {
+		objectMap["state"] = msssdtotl.State
+	}
 	if msssdtotl.StatusMessage != nil {
 		objectMap["statusMessage"] = msssdtotl.StatusMessage
 	}
@@ -2039,73 +2140,52 @@ func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) MarshalJSON() ([]byte
 	if msssdtotl.ResultPrefix != nil {
 		objectMap["resultPrefix"] = msssdtotl.ResultPrefix
 	}
-	objectMap["resultType"] = msssdtotl.ResultType
 	if msssdtotl.ID != nil {
 		objectMap["id"] = msssdtotl.ID
+	}
+	if msssdtotl.ResultType != "" {
+		objectMap["resultType"] = msssdtotl.ResultType
 	}
 	return json.Marshal(objectMap)
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputError is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputError is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsMigrateSQLServerSQLDbTaskOutputError() (*MigrateSQLServerSQLDbTaskOutputError, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputTableLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsMigrateSQLServerSQLDbTaskOutputTableLevel() (*MigrateSQLServerSQLDbTaskOutputTableLevel, bool) {
 	return &msssdtotl, true
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsMigrateSQLServerSQLDbTaskOutputDatabaseLevel() (*MigrateSQLServerSQLDbTaskOutputDatabaseLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutputMigrationLevel is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsMigrateSQLServerSQLDbTaskOutputMigrationLevel() (*MigrateSQLServerSQLDbTaskOutputMigrationLevel, bool) {
 	return nil, false
 }
 
-// AsMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsMigrateSQLServerSQLDbTaskOutput() (*MigrateSQLServerSQLDbTaskOutput, bool) {
 	return nil, false
 }
 
-// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
+// AsBasicMigrateSQLServerSQLDbTaskOutput is the BasicMigrateSQLServerSQLDbTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
 func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsBasicMigrateSQLServerSQLDbTaskOutput() (BasicMigrateSQLServerSQLDbTaskOutput, bool) {
 	return &msssdtotl, true
 }
 
-// AsGetUserTablesSQLTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsGetUserTablesSQLTaskOutput() (*GetUserTablesSQLTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToTargetSQLDbTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsConnectToTargetSQLDbTaskOutput() (*ConnectToTargetSQLDbTaskOutput, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputDatabaseLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsConnectToSourceSQLServerTaskOutputDatabaseLevel() (*ConnectToSourceSQLServerTaskOutputDatabaseLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutputTaskLevel is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsConnectToSourceSQLServerTaskOutputTaskLevel() (*ConnectToSourceSQLServerTaskOutputTaskLevel, bool) {
-	return nil, false
-}
-
-// AsConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsConnectToSourceSQLServerTaskOutput() (*ConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
-// AsBasicConnectToSourceSQLServerTaskOutput is the BasicTaskOutput implementation for MigrateSQLServerSQLDbTaskOutputTableLevel.
-func (msssdtotl MigrateSQLServerSQLDbTaskOutputTableLevel) AsBasicConnectToSourceSQLServerTaskOutput() (BasicConnectToSourceSQLServerTaskOutput, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrateSQLServerSQLDbTaskProperties properties for the task that migrates on-prem SQL Server databases to Azure
 // SQL Database
 type MigrateSQLServerSQLDbTaskProperties struct {
@@ -2121,6 +2201,7 @@ type MigrateSQLServerSQLDbTaskProperties struct {
 	TaskType TaskType `json:"taskType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) MarshalJSON() ([]byte, error) {
 	msssdtp.TaskType = TaskTypeMigrateSQLServerSQLDb
@@ -2134,41 +2215,52 @@ func (msssdtp MigrateSQLServerSQLDbTaskProperties) MarshalJSON() ([]byte, error)
 	if msssdtp.Errors != nil {
 		objectMap["errors"] = msssdtp.Errors
 	}
-	objectMap["state"] = msssdtp.State
-	objectMap["taskType"] = msssdtp.TaskType
+	if msssdtp.State != "" {
+		objectMap["state"] = msssdtp.State
+	}
+	if msssdtp.TaskType != "" {
+		objectMap["taskType"] = msssdtp.TaskType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsMigrateSQLServerSQLDbTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsMigrateSQLServerSQLDbTaskProperties() (*MigrateSQLServerSQLDbTaskProperties, bool) {
 	return &msssdtp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsGetUserTablesSQLTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsGetUserTablesSQLTaskProperties() (*GetUserTablesSQLTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToTargetSQLDbTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsConnectToTargetSQLDbTaskProperties() (*ConnectToTargetSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToSourceSQLServerTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsConnectToSourceSQLServerTaskProperties() (*ConnectToSourceSQLServerTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsProjectTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsProjectTaskProperties() (*ProjectTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicProjectTaskProperties is the BasicProjectTaskProperties implementation for MigrateSQLServerSQLDbTaskProperties.
 func (msssdtp MigrateSQLServerSQLDbTaskProperties) AsBasicProjectTaskProperties() (BasicProjectTaskProperties, bool) {
 	return &msssdtp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for MigrateSQLServerSQLDbTaskProperties struct.
 func (msssdtp *MigrateSQLServerSQLDbTaskProperties) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2228,6 +2320,7 @@ func (msssdtp *MigrateSQLServerSQLDbTaskProperties) UnmarshalJSON(body []byte) e
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationReportResult migration validation report result, contains the url for downloading the generated report.
 type MigrationReportResult struct {
 	// ID - Migration validation result identifier
@@ -2236,6 +2329,7 @@ type MigrationReportResult struct {
 	ReportURL *string `json:"reportUrl,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationTableMetadata metadata for tables selected in migration project
 type MigrationTableMetadata struct {
 	// SourceTableName - Source table name
@@ -2244,6 +2338,7 @@ type MigrationTableMetadata struct {
 	TargetTableName *string `json:"targetTableName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationValidationDatabaseLevelResult database level validation results
 type MigrationValidationDatabaseLevelResult struct {
 	// ID - Result identifier
@@ -2268,6 +2363,7 @@ type MigrationValidationDatabaseLevelResult struct {
 	Status ValidationStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationValidationDatabaseSummaryResult migration Validation Database level summary result
 type MigrationValidationDatabaseSummaryResult struct {
 	// ID - Result identifier
@@ -2286,6 +2382,7 @@ type MigrationValidationDatabaseSummaryResult struct {
 	Status ValidationStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationValidationOptions types of validations to run after the migration
 type MigrationValidationOptions struct {
 	// EnableSchemaValidation - Allows to compare the schema information between source and target.
@@ -2296,6 +2393,7 @@ type MigrationValidationOptions struct {
 	EnableQueryAnalysisValidation *bool `json:"enableQueryAnalysisValidation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MigrationValidationResult migration Validation Result
 type MigrationValidationResult struct {
 	// ID - Migration validation result identifier
@@ -2308,6 +2406,7 @@ type MigrationValidationResult struct {
 	Status ValidationStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for MigrationValidationResult.
 func (mvr MigrationValidationResult) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2320,10 +2419,13 @@ func (mvr MigrationValidationResult) MarshalJSON() ([]byte, error) {
 	if mvr.SummaryResults != nil {
 		objectMap["summaryResults"] = mvr.SummaryResults
 	}
-	objectMap["status"] = mvr.Status
+	if mvr.Status != "" {
+		objectMap["status"] = mvr.Status
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NameAvailabilityRequest a resource type and proposed name
 type NameAvailabilityRequest struct {
 	// Name - The proposed resource name
@@ -2332,6 +2434,7 @@ type NameAvailabilityRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NameAvailabilityResponse indicates whether a proposed resource name is available
 type NameAvailabilityResponse struct {
 	autorest.Response `json:"-"`
@@ -2343,6 +2446,7 @@ type NameAvailabilityResponse struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ODataError error information in OData format.
 type ODataError struct {
 	// Code - The machine-readable description of the error, such as 'InvalidRequest' or 'InternalServerError'
@@ -2353,6 +2457,7 @@ type ODataError struct {
 	Details *[]ODataError `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Project a project resource
 type Project struct {
 	autorest.Response `json:"-"`
@@ -2370,6 +2475,7 @@ type Project struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for Project.
 func (p Project) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2394,6 +2500,7 @@ func (p Project) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for Project struct.
 func (p *Project) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2463,6 +2570,7 @@ func (p *Project) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectList oData page of project resources
 type ProjectList struct {
 	autorest.Response `json:"-"`
@@ -2472,12 +2580,14 @@ type ProjectList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectListIterator provides access to a complete listing of Project values.
 type ProjectListIterator struct {
 	i    int
 	page ProjectListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ProjectListIterator) Next() error {
@@ -2494,16 +2604,19 @@ func (iter *ProjectListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ProjectListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter ProjectListIterator) Response() ProjectList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ProjectListIterator) Value() Project {
@@ -2513,6 +2626,7 @@ func (iter ProjectListIterator) Value() Project {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (pl ProjectList) IsEmpty() bool {
 	return pl.Value == nil || len(*pl.Value) == 0
@@ -2530,12 +2644,14 @@ func (pl ProjectList) projectListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(pl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectListPage contains a page of Project values.
 type ProjectListPage struct {
 	fn func(ProjectList) (ProjectList, error)
 	pl ProjectList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ProjectListPage) Next() error {
@@ -2547,16 +2663,19 @@ func (page *ProjectListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ProjectListPage) NotDone() bool {
 	return !page.pl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page ProjectListPage) Response() ProjectList {
 	return page.pl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ProjectListPage) Values() []Project {
 	if page.pl.IsEmpty() {
@@ -2565,6 +2684,7 @@ func (page ProjectListPage) Values() []Project {
 	return *page.pl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectMetadata common metadata for migration projects
 type ProjectMetadata struct {
 	// SourceServerName - Source server name
@@ -2585,6 +2705,7 @@ type ProjectMetadata struct {
 	SelectedMigrationTables *[]MigrationTableMetadata `json:"selectedMigrationTables,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectProperties project-specific properties
 type ProjectProperties struct {
 	// SourcePlatform - Source platform for the project. Possible values include: 'SQL', 'Unknown'
@@ -2603,6 +2724,7 @@ type ProjectProperties struct {
 	ProvisioningState ProjectProvisioningState `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for ProjectProperties struct.
 func (pp *ProjectProperties) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2679,6 +2801,7 @@ func (pp *ProjectProperties) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectTask a task resource
 type ProjectTask struct {
 	autorest.Response `json:"-"`
@@ -2694,6 +2817,7 @@ type ProjectTask struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for ProjectTask struct.
 func (pt *ProjectTask) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2753,6 +2877,7 @@ func (pt *ProjectTask) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // BasicProjectTaskProperties base class for all types of DMS task properties. If task is not supported by current
 // client, this object is returned.
 type BasicProjectTaskProperties interface {
@@ -2763,6 +2888,7 @@ type BasicProjectTaskProperties interface {
 	AsProjectTaskProperties() (*ProjectTaskProperties, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectTaskProperties base class for all types of DMS task properties. If task is not supported by current
 // client, this object is returned.
 type ProjectTaskProperties struct {
@@ -2823,6 +2949,7 @@ func unmarshalBasicProjectTaskPropertiesArray(body []byte) ([]BasicProjectTaskPr
 	return ptpArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) MarshalJSON() ([]byte, error) {
 	ptp.TaskType = TaskTypeUnknown
@@ -2830,41 +2957,52 @@ func (ptp ProjectTaskProperties) MarshalJSON() ([]byte, error) {
 	if ptp.Errors != nil {
 		objectMap["errors"] = ptp.Errors
 	}
-	objectMap["state"] = ptp.State
-	objectMap["taskType"] = ptp.TaskType
+	if ptp.State != "" {
+		objectMap["state"] = ptp.State
+	}
+	if ptp.TaskType != "" {
+		objectMap["taskType"] = ptp.TaskType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsMigrateSQLServerSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsMigrateSQLServerSQLDbTaskProperties() (*MigrateSQLServerSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsGetUserTablesSQLTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsGetUserTablesSQLTaskProperties() (*GetUserTablesSQLTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToTargetSQLDbTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsConnectToTargetSQLDbTaskProperties() (*ConnectToTargetSQLDbTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectToSourceSQLServerTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsConnectToSourceSQLServerTaskProperties() (*ConnectToSourceSQLServerTaskProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsProjectTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsProjectTaskProperties() (*ProjectTaskProperties, bool) {
 	return &ptp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicProjectTaskProperties is the BasicProjectTaskProperties implementation for ProjectTaskProperties.
 func (ptp ProjectTaskProperties) AsBasicProjectTaskProperties() (BasicProjectTaskProperties, bool) {
 	return &ptp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QueryAnalysisValidationResult results for query analysis comparison between the source and target
 type QueryAnalysisValidationResult struct {
 	// QueryResults - List of queries executed and it's execution results in source and target
@@ -2873,6 +3011,7 @@ type QueryAnalysisValidationResult struct {
 	ValidationErrors *ValidationError `json:"validationErrors,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QueryExecutionResult describes query analysis results for execution in source and target
 type QueryExecutionResult struct {
 	// QueryText - Query text retrieved from the source server
@@ -2885,6 +3024,7 @@ type QueryExecutionResult struct {
 	TargetResult *ExecutionStatistics `json:"targetResult,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Quota describes a quota for or usage details about a resource
 type Quota struct {
 	// CurrentValue - The current value of the quota. If null or missing, the current value cannot be determined in the context of the request.
@@ -2899,6 +3039,7 @@ type Quota struct {
 	Unit *string `json:"unit,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QuotaList oData page of quota objects
 type QuotaList struct {
 	autorest.Response `json:"-"`
@@ -2908,12 +3049,14 @@ type QuotaList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QuotaListIterator provides access to a complete listing of Quota values.
 type QuotaListIterator struct {
 	i    int
 	page QuotaListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *QuotaListIterator) Next() error {
@@ -2930,16 +3073,19 @@ func (iter *QuotaListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter QuotaListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter QuotaListIterator) Response() QuotaList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter QuotaListIterator) Value() Quota {
@@ -2949,6 +3095,7 @@ func (iter QuotaListIterator) Value() Quota {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ql QuotaList) IsEmpty() bool {
 	return ql.Value == nil || len(*ql.Value) == 0
@@ -2966,12 +3113,14 @@ func (ql QuotaList) quotaListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ql.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QuotaListPage contains a page of Quota values.
 type QuotaListPage struct {
 	fn func(QuotaList) (QuotaList, error)
 	ql QuotaList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *QuotaListPage) Next() error {
@@ -2983,16 +3132,19 @@ func (page *QuotaListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page QuotaListPage) NotDone() bool {
 	return !page.ql.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page QuotaListPage) Response() QuotaList {
 	return page.ql
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page QuotaListPage) Values() []Quota {
 	if page.ql.IsEmpty() {
@@ -3001,6 +3153,7 @@ func (page QuotaListPage) Values() []Quota {
 	return *page.ql.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // QuotaName the name of the quota
 type QuotaName struct {
 	// LocalizedValue - The localized name of the quota
@@ -3009,6 +3162,7 @@ type QuotaName struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ReportableException exception object for all custom exceptions
 type ReportableException struct {
 	// Message - Error message
@@ -3023,6 +3177,7 @@ type ReportableException struct {
 	StackTrace *string `json:"stackTrace,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Resource ARM resource.
 type Resource struct {
 	// ID - Resource ID.
@@ -3033,6 +3188,7 @@ type Resource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSku describes an available DMS SKU.
 type ResourceSku struct {
 	// ResourceType - The type of resource the SKU applies to.
@@ -3061,6 +3217,7 @@ type ResourceSku struct {
 	Restrictions *[]ResourceSkuRestrictions `json:"restrictions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuCapabilities describes The SKU capabilites object.
 type ResourceSkuCapabilities struct {
 	// Name - An invariant to describe the feature.
@@ -3069,6 +3226,7 @@ type ResourceSkuCapabilities struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuCapacity describes scaling information of a SKU.
 type ResourceSkuCapacity struct {
 	// Minimum - The minimum capacity.
@@ -3081,6 +3239,7 @@ type ResourceSkuCapacity struct {
 	ScaleType ResourceSkuCapacityScaleType `json:"scaleType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuCosts describes metadata for retrieving price info.
 type ResourceSkuCosts struct {
 	// MeterID - Used for querying price from commerce.
@@ -3091,6 +3250,7 @@ type ResourceSkuCosts struct {
 	ExtendedUnit *string `json:"extendedUnit,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkuRestrictions describes scaling information of a SKU.
 type ResourceSkuRestrictions struct {
 	// Type - The type of restrictions. Possible values include: 'Location'
@@ -3101,6 +3261,7 @@ type ResourceSkuRestrictions struct {
 	ReasonCode ResourceSkuRestrictionsReasonCode `json:"reasonCode,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkusResult the DMS List SKUs operation response.
 type ResourceSkusResult struct {
 	autorest.Response `json:"-"`
@@ -3110,12 +3271,14 @@ type ResourceSkusResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkusResultIterator provides access to a complete listing of ResourceSku values.
 type ResourceSkusResultIterator struct {
 	i    int
 	page ResourceSkusResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResourceSkusResultIterator) Next() error {
@@ -3132,16 +3295,19 @@ func (iter *ResourceSkusResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResourceSkusResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter ResourceSkusResultIterator) Response() ResourceSkusResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResourceSkusResultIterator) Value() ResourceSku {
@@ -3151,6 +3317,7 @@ func (iter ResourceSkusResultIterator) Value() ResourceSku {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rsr ResourceSkusResult) IsEmpty() bool {
 	return rsr.Value == nil || len(*rsr.Value) == 0
@@ -3168,12 +3335,14 @@ func (rsr ResourceSkusResult) resourceSkusResultPreparer() (*http.Request, error
 		autorest.WithBaseURL(to.String(rsr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkusResultPage contains a page of ResourceSku values.
 type ResourceSkusResultPage struct {
 	fn  func(ResourceSkusResult) (ResourceSkusResult, error)
 	rsr ResourceSkusResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResourceSkusResultPage) Next() error {
@@ -3185,16 +3354,19 @@ func (page *ResourceSkusResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResourceSkusResultPage) NotDone() bool {
 	return !page.rsr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page ResourceSkusResultPage) Response() ResourceSkusResult {
 	return page.rsr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResourceSkusResultPage) Values() []ResourceSku {
 	if page.rsr.IsEmpty() {
@@ -3203,6 +3375,7 @@ func (page ResourceSkusResultPage) Values() []ResourceSku {
 	return *page.rsr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // SchemaComparisonValidationResult results for schema comparison between the source and target
 type SchemaComparisonValidationResult struct {
 	// SchemaDifferences - List of schema differences between the source and target databases
@@ -3215,6 +3388,7 @@ type SchemaComparisonValidationResult struct {
 	TargetDatabaseObjectCount map[string]*int64 `json:"targetDatabaseObjectCount"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for SchemaComparisonValidationResult.
 func (scvr SchemaComparisonValidationResult) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3233,6 +3407,7 @@ func (scvr SchemaComparisonValidationResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // SchemaComparisonValidationResultType description about the errors happen while performing migration validation
 type SchemaComparisonValidationResultType struct {
 	// ObjectName - Name of the object that has the difference
@@ -3243,6 +3418,7 @@ type SchemaComparisonValidationResultType struct {
 	UpdateAction UpdateActionType `json:"updateAction,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Service a Data Migration Service resource
 type Service struct {
 	autorest.Response `json:"-"`
@@ -3266,6 +3442,7 @@ type Service struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for Service.
 func (s Service) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3299,6 +3476,7 @@ func (s Service) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UnmarshalJSON is the custom unmarshaler for Service struct.
 func (s *Service) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3395,6 +3573,7 @@ func (s *Service) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceList oData page of service objects
 type ServiceList struct {
 	autorest.Response `json:"-"`
@@ -3404,12 +3583,14 @@ type ServiceList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceListIterator provides access to a complete listing of Service values.
 type ServiceListIterator struct {
 	i    int
 	page ServiceListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServiceListIterator) Next() error {
@@ -3426,16 +3607,19 @@ func (iter *ServiceListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServiceListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter ServiceListIterator) Response() ServiceList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServiceListIterator) Value() Service {
@@ -3445,6 +3629,7 @@ func (iter ServiceListIterator) Value() Service {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sl ServiceList) IsEmpty() bool {
 	return sl.Value == nil || len(*sl.Value) == 0
@@ -3462,12 +3647,14 @@ func (sl ServiceList) serviceListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(sl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceListPage contains a page of Service values.
 type ServiceListPage struct {
 	fn func(ServiceList) (ServiceList, error)
 	sl ServiceList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServiceListPage) Next() error {
@@ -3479,16 +3666,19 @@ func (page *ServiceListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServiceListPage) NotDone() bool {
 	return !page.sl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page ServiceListPage) Response() ServiceList {
 	return page.sl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServiceListPage) Values() []Service {
 	if page.sl.IsEmpty() {
@@ -3497,6 +3687,7 @@ func (page ServiceListPage) Values() []Service {
 	return *page.sl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceOperation description of an action supported by the Data Migration Service
 type ServiceOperation struct {
 	// Name - The fully qualified action name, e.g. Microsoft.DataMigration/services/read
@@ -3505,6 +3696,7 @@ type ServiceOperation struct {
 	Display *ServiceOperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceOperationDisplay localized display text
 type ServiceOperationDisplay struct {
 	// Provider - The localized resource provider name
@@ -3517,6 +3709,7 @@ type ServiceOperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceOperationList oData page of action (operation) objects
 type ServiceOperationList struct {
 	autorest.Response `json:"-"`
@@ -3526,12 +3719,14 @@ type ServiceOperationList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceOperationListIterator provides access to a complete listing of ServiceOperation values.
 type ServiceOperationListIterator struct {
 	i    int
 	page ServiceOperationListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServiceOperationListIterator) Next() error {
@@ -3548,16 +3743,19 @@ func (iter *ServiceOperationListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServiceOperationListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter ServiceOperationListIterator) Response() ServiceOperationList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServiceOperationListIterator) Value() ServiceOperation {
@@ -3567,6 +3765,7 @@ func (iter ServiceOperationListIterator) Value() ServiceOperation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sol ServiceOperationList) IsEmpty() bool {
 	return sol.Value == nil || len(*sol.Value) == 0
@@ -3584,12 +3783,14 @@ func (sol ServiceOperationList) serviceOperationListPreparer() (*http.Request, e
 		autorest.WithBaseURL(to.String(sol.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceOperationListPage contains a page of ServiceOperation values.
 type ServiceOperationListPage struct {
 	fn  func(ServiceOperationList) (ServiceOperationList, error)
 	sol ServiceOperationList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServiceOperationListPage) Next() error {
@@ -3601,16 +3802,19 @@ func (page *ServiceOperationListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServiceOperationListPage) NotDone() bool {
 	return !page.sol.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page ServiceOperationListPage) Response() ServiceOperationList {
 	return page.sol
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServiceOperationListPage) Values() []ServiceOperation {
 	if page.sol.IsEmpty() {
@@ -3619,6 +3823,7 @@ func (page ServiceOperationListPage) Values() []ServiceOperation {
 	return *page.sol.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceProperties properties of the Data Migration service instance
 type ServiceProperties struct {
 	// ProvisioningState - The resource's provisioning state. Possible values include: 'ServiceProvisioningStateAccepted', 'ServiceProvisioningStateDeleting', 'ServiceProvisioningStateDeploying', 'ServiceProvisioningStateStopped', 'ServiceProvisioningStateStopping', 'ServiceProvisioningStateStarting', 'ServiceProvisioningStateFailedToStart', 'ServiceProvisioningStateFailedToStop', 'ServiceProvisioningStateSucceeded', 'ServiceProvisioningStateFailed'
@@ -3629,6 +3834,7 @@ type ServiceProperties struct {
 	VirtualSubnetID *string `json:"virtualSubnetId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServicesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServicesCreateOrUpdateFuture struct {
@@ -3636,6 +3842,7 @@ type ServicesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Service, err error) {
@@ -3678,12 +3885,14 @@ func (future ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Serv
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServicesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServicesDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServicesDeleteFuture) Result(client ServicesClient) (ar autorest.Response, err error) {
@@ -3726,6 +3935,7 @@ func (future ServicesDeleteFuture) Result(client ServicesClient) (ar autorest.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceSku an Azure SKU instance
 type ServiceSku struct {
 	// Name - The unique name of the SKU, such as 'P3'
@@ -3740,6 +3950,7 @@ type ServiceSku struct {
 	Capacity *int32 `json:"capacity,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceSkuList oData page of available SKUs
 type ServiceSkuList struct {
 	autorest.Response `json:"-"`
@@ -3749,12 +3960,14 @@ type ServiceSkuList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceSkuListIterator provides access to a complete listing of AvailableServiceSku values.
 type ServiceSkuListIterator struct {
 	i    int
 	page ServiceSkuListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServiceSkuListIterator) Next() error {
@@ -3771,16 +3984,19 @@ func (iter *ServiceSkuListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServiceSkuListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter ServiceSkuListIterator) Response() ServiceSkuList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServiceSkuListIterator) Value() AvailableServiceSku {
@@ -3790,6 +4006,7 @@ func (iter ServiceSkuListIterator) Value() AvailableServiceSku {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ssl ServiceSkuList) IsEmpty() bool {
 	return ssl.Value == nil || len(*ssl.Value) == 0
@@ -3807,12 +4024,14 @@ func (ssl ServiceSkuList) serviceSkuListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ssl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceSkuListPage contains a page of AvailableServiceSku values.
 type ServiceSkuListPage struct {
 	fn  func(ServiceSkuList) (ServiceSkuList, error)
 	ssl ServiceSkuList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServiceSkuListPage) Next() error {
@@ -3824,16 +4043,19 @@ func (page *ServiceSkuListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServiceSkuListPage) NotDone() bool {
 	return !page.ssl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page ServiceSkuListPage) Response() ServiceSkuList {
 	return page.ssl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServiceSkuListPage) Values() []AvailableServiceSku {
 	if page.ssl.IsEmpty() {
@@ -3842,12 +4064,14 @@ func (page ServiceSkuListPage) Values() []AvailableServiceSku {
 	return *page.ssl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServicesStartFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServicesStartFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServicesStartFuture) Result(client ServicesClient) (ar autorest.Response, err error) {
@@ -3890,12 +4114,14 @@ func (future ServicesStartFuture) Result(client ServicesClient) (ar autorest.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServicesStopFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServicesStopFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServicesStopFuture) Result(client ServicesClient) (ar autorest.Response, err error) {
@@ -3938,6 +4164,7 @@ func (future ServicesStopFuture) Result(client ServicesClient) (ar autorest.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServiceStatusResponse service health status
 type ServiceStatusResponse struct {
 	autorest.Response `json:"-"`
@@ -3951,12 +4178,14 @@ type ServiceStatusResponse struct {
 	SupportedTaskTypes *[]string `json:"supportedTaskTypes,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ServicesUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServicesUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServicesUpdateFuture) Result(client ServicesClient) (s Service, err error) {
@@ -3999,6 +4228,7 @@ func (future ServicesUpdateFuture) Result(client ServicesClient) (s Service, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // SQLConnectionInfo information for connecting to SQL database server
 type SQLConnectionInfo struct {
 	// DataSource - Data source in the format Protocol:MachineName\SQLServerInstanceName,PortNumber
@@ -4019,6 +4249,7 @@ type SQLConnectionInfo struct {
 	Type Type `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for SQLConnectionInfo.
 func (sci SQLConnectionInfo) MarshalJSON() ([]byte, error) {
 	sci.Type = TypeSQLConnectionInfo
@@ -4026,7 +4257,9 @@ func (sci SQLConnectionInfo) MarshalJSON() ([]byte, error) {
 	if sci.DataSource != nil {
 		objectMap["dataSource"] = sci.DataSource
 	}
-	objectMap["authentication"] = sci.Authentication
+	if sci.Authentication != "" {
+		objectMap["authentication"] = sci.Authentication
+	}
 	if sci.EncryptConnection != nil {
 		objectMap["encryptConnection"] = sci.EncryptConnection
 	}
@@ -4042,25 +4275,31 @@ func (sci SQLConnectionInfo) MarshalJSON() ([]byte, error) {
 	if sci.Password != nil {
 		objectMap["password"] = sci.Password
 	}
-	objectMap["type"] = sci.Type
+	if sci.Type != "" {
+		objectMap["type"] = sci.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsSQLConnectionInfo is the BasicConnectionInfo implementation for SQLConnectionInfo.
 func (sci SQLConnectionInfo) AsSQLConnectionInfo() (*SQLConnectionInfo, bool) {
 	return &sci, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsConnectionInfo is the BasicConnectionInfo implementation for SQLConnectionInfo.
 func (sci SQLConnectionInfo) AsConnectionInfo() (*ConnectionInfo, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // AsBasicConnectionInfo is the BasicConnectionInfo implementation for SQLConnectionInfo.
 func (sci SQLConnectionInfo) AsBasicConnectionInfo() (BasicConnectionInfo, bool) {
 	return &sci, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // SQLMigrationTaskInput base class for migration task input
 type SQLMigrationTaskInput struct {
 	// SourceConnectionInfo - Information for connecting to source
@@ -4069,6 +4308,7 @@ type SQLMigrationTaskInput struct {
 	TargetConnectionInfo *SQLConnectionInfo `json:"targetConnectionInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TaskList oData page of tasks
 type TaskList struct {
 	autorest.Response `json:"-"`
@@ -4078,12 +4318,14 @@ type TaskList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TaskListIterator provides access to a complete listing of ProjectTask values.
 type TaskListIterator struct {
 	i    int
 	page TaskListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *TaskListIterator) Next() error {
@@ -4100,16 +4342,19 @@ func (iter *TaskListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter TaskListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (iter TaskListIterator) Response() TaskList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter TaskListIterator) Value() ProjectTask {
@@ -4119,6 +4364,7 @@ func (iter TaskListIterator) Value() ProjectTask {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (tl TaskList) IsEmpty() bool {
 	return tl.Value == nil || len(*tl.Value) == 0
@@ -4136,12 +4382,14 @@ func (tl TaskList) taskListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(tl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TaskListPage contains a page of ProjectTask values.
 type TaskListPage struct {
 	fn func(TaskList) (TaskList, error)
 	tl TaskList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *TaskListPage) Next() error {
@@ -4153,16 +4401,19 @@ func (page *TaskListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page TaskListPage) NotDone() bool {
 	return !page.tl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Response returns the raw server response from the last page request.
 func (page TaskListPage) Response() TaskList {
 	return page.tl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page TaskListPage) Values() []ProjectTask {
 	if page.tl.IsEmpty() {
@@ -4171,12 +4422,7 @@ func (page TaskListPage) Values() []ProjectTask {
 	return *page.tl.Value
 }
 
-// TaskOutput base class for all DMS task outputs
-type TaskOutput struct {
-	// ID - Result identifier
-	ID *string `json:"id,omitempty"`
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // TrackedResource ARM tracked top level resource.
 type TrackedResource struct {
 	// Tags - Resource tags.
@@ -4191,6 +4437,7 @@ type TrackedResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // MarshalJSON is the custom marshaler for TrackedResource.
 func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -4212,6 +4459,7 @@ func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ValidationError description about the errors happen while performing migration validation
 type ValidationError struct {
 	// Text - Error Text
@@ -4220,6 +4468,7 @@ type ValidationError struct {
 	Severity Severity `json:"severity,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // WaitStatistics wait statistics gathered during query batch execution
 type WaitStatistics struct {
 	// WaitType - Type of the Wait

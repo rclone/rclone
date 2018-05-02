@@ -41,10 +41,12 @@ func NewEmailTemplateClientWithBaseURI(baseURI string, subscriptionID string) Em
 }
 
 // CreateOrUpdate updates an Email Template.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// templateName is email Template Name Identifier. parameters is email Template update parameters. ifMatch is eTag
-// of the Entity. Not required when creating an entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// templateName - email Template Name Identifier.
+// parameters - email Template update parameters.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client EmailTemplateClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, templateName TemplateName, parameters EmailTemplateUpdateParameters, ifMatch string) (result EmailTemplateContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -133,10 +135,12 @@ func (client EmailTemplateClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete reset the Email Template to default template provided by the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// templateName is email Template Name Identifier. ifMatch is eTag of the Entity. ETag should match the current
-// entity state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// templateName - email Template Name Identifier.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client EmailTemplateClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, templateName TemplateName, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -210,9 +214,10 @@ func (client EmailTemplateClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets the details of the email template specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// templateName is email Template Name Identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// templateName - email Template Name Identifier.
 func (client EmailTemplateClient) Get(ctx context.Context, resourceGroupName string, serviceName string, templateName TemplateName) (result EmailTemplateContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -286,9 +291,10 @@ func (client EmailTemplateClient) GetResponder(resp *http.Response) (result Emai
 }
 
 // GetEntityTag gets the entity state (Etag) version of the email template specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// templateName is email Template Name Identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// templateName - email Template Name Identifier.
 func (client EmailTemplateClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, templateName TemplateName) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -361,9 +367,11 @@ func (client EmailTemplateClient) GetEntityTagResponder(resp *http.Response) (re
 }
 
 // ListByService lists a collection of properties defined within a service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. top
-// is number of records to return. skip is number of records to skip.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// top - number of records to return.
+// skip - number of records to skip.
 func (client EmailTemplateClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, top *int32, skip *int32) (result EmailTemplateCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -476,9 +484,11 @@ func (client EmailTemplateClient) ListByServiceComplete(ctx context.Context, res
 }
 
 // Update updates the specific Email Template.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// templateName is email Template Name Identifier. parameters is update parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// templateName - email Template Name Identifier.
+// parameters - update parameters.
 func (client EmailTemplateClient) Update(ctx context.Context, resourceGroupName string, serviceName string, templateName TemplateName, parameters EmailTemplateUpdateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

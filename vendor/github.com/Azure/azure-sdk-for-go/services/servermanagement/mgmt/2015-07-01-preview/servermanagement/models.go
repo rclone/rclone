@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // AutoUpgrade enumerates the values for auto upgrade.
 type AutoUpgrade string
 
@@ -36,6 +37,13 @@ const (
 	On AutoUpgrade = "On"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// PossibleAutoUpgradeValues returns an array of possible values for the AutoUpgrade const type.
+func PossibleAutoUpgradeValues() []AutoUpgrade {
+	return []AutoUpgrade{Off, On}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayExpandOption enumerates the values for gateway expand option.
 type GatewayExpandOption string
 
@@ -44,6 +52,13 @@ const (
 	Status GatewayExpandOption = "status"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// PossibleGatewayExpandOptionValues returns an array of possible values for the GatewayExpandOption const type.
+func PossibleGatewayExpandOptionValues() []GatewayExpandOption {
+	return []GatewayExpandOption{Status}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellExpandOption enumerates the values for power shell expand option.
 type PowerShellExpandOption string
 
@@ -52,6 +67,13 @@ const (
 	Output PowerShellExpandOption = "output"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// PossiblePowerShellExpandOptionValues returns an array of possible values for the PowerShellExpandOption const type.
+func PossiblePowerShellExpandOptionValues() []PowerShellExpandOption {
+	return []PowerShellExpandOption{Output}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PromptFieldType enumerates the values for prompt field type.
 type PromptFieldType string
 
@@ -64,6 +86,13 @@ const (
 	String PromptFieldType = "String"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// PossiblePromptFieldTypeValues returns an array of possible values for the PromptFieldType const type.
+func PossiblePromptFieldTypeValues() []PromptFieldType {
+	return []PromptFieldType{Credential, SecureString, String}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Error error message.
 type Error struct {
 	Code    *int32  `json:"code,omitempty"`
@@ -71,12 +100,14 @@ type Error struct {
 	Fields  *string `json:"fields,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type GatewayCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future GatewayCreateFuture) Result(client GatewayClient) (gr GatewayResource, err error) {
@@ -119,12 +150,14 @@ func (future GatewayCreateFuture) Result(client GatewayClient) (gr GatewayResour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayGetProfileFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type GatewayGetProfileFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future GatewayGetProfileFuture) Result(client GatewayClient) (gp GatewayProfile, err error) {
@@ -167,6 +200,7 @@ func (future GatewayGetProfileFuture) Result(client GatewayClient) (gp GatewayPr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayParameters ...
 type GatewayParameters struct {
 	// Location - Location of the resource.
@@ -176,6 +210,21 @@ type GatewayParameters struct {
 	*GatewayParametersProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// MarshalJSON is the custom marshaler for GatewayParameters.
+func (gp GatewayParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gp.Location != nil {
+		objectMap["location"] = gp.Location
+	}
+	objectMap["tags"] = gp.Tags
+	if gp.GatewayParametersProperties != nil {
+		objectMap["properties"] = gp.GatewayParametersProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for GatewayParameters struct.
 func (gp *GatewayParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -218,12 +267,14 @@ func (gp *GatewayParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayParametersProperties ...
 type GatewayParametersProperties struct {
 	// AutoUpgrade - The autoUpgrade property gives the flexibility to gateway to auto upgrade itself. If properties value not specified, then we assume autoUpgrade = Off. Possible values include: 'On', 'Off'
 	AutoUpgrade AutoUpgrade `json:"autoUpgrade,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayProfile JSON properties that the gateway service uses know how to communicate with the resource.
 type GatewayProfile struct {
 	autorest.Response `json:"-"`
@@ -249,6 +300,7 @@ type GatewayProfile struct {
 	StatusBlobSignature *string `json:"statusBlobSignature,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayRegenerateProfileFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type GatewayRegenerateProfileFuture struct {
@@ -256,6 +308,7 @@ type GatewayRegenerateProfileFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future GatewayRegenerateProfileFuture) Result(client GatewayClient) (ar autorest.Response, err error) {
@@ -298,6 +351,7 @@ func (future GatewayRegenerateProfileFuture) Result(client GatewayClient) (ar au
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayResource ...
 type GatewayResource struct {
 	autorest.Response          `json:"-"`
@@ -315,6 +369,7 @@ type GatewayResource struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for GatewayResource.
 func (gr GatewayResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -342,6 +397,7 @@ func (gr GatewayResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for GatewayResource struct.
 func (gr *GatewayResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -420,6 +476,7 @@ func (gr *GatewayResource) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayResourceProperties ...
 type GatewayResourceProperties struct {
 	// Created - UTC date and time when gateway was first added to management service.
@@ -440,6 +497,7 @@ type GatewayResourceProperties struct {
 	PublishedTimeUtc *date.Time `json:"publishedTimeUtc,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayResources collection of Gateway Resources.
 type GatewayResources struct {
 	autorest.Response `json:"-"`
@@ -449,12 +507,14 @@ type GatewayResources struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayResourcesIterator provides access to a complete listing of GatewayResource values.
 type GatewayResourcesIterator struct {
 	i    int
 	page GatewayResourcesPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *GatewayResourcesIterator) Next() error {
@@ -471,16 +531,19 @@ func (iter *GatewayResourcesIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter GatewayResourcesIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Response returns the raw server response from the last page request.
 func (iter GatewayResourcesIterator) Response() GatewayResources {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter GatewayResourcesIterator) Value() GatewayResource {
@@ -490,6 +553,7 @@ func (iter GatewayResourcesIterator) Value() GatewayResource {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (gr GatewayResources) IsEmpty() bool {
 	return gr.Value == nil || len(*gr.Value) == 0
@@ -507,12 +571,14 @@ func (gr GatewayResources) gatewayResourcesPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(gr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayResourcesPage contains a page of GatewayResource values.
 type GatewayResourcesPage struct {
 	fn func(GatewayResources) (GatewayResources, error)
 	gr GatewayResources
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *GatewayResourcesPage) Next() error {
@@ -524,16 +590,19 @@ func (page *GatewayResourcesPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page GatewayResourcesPage) NotDone() bool {
 	return !page.gr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Response returns the raw server response from the last page request.
 func (page GatewayResourcesPage) Response() GatewayResources {
 	return page.gr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page GatewayResourcesPage) Values() []GatewayResource {
 	if page.gr.IsEmpty() {
@@ -542,6 +611,7 @@ func (page GatewayResourcesPage) Values() []GatewayResource {
 	return *page.gr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayStatus expanded gateway status information.
 type GatewayStatus struct {
 	// AvailableMemoryMByte - The available memory on the gateway host machine in megabytes.
@@ -568,12 +638,14 @@ type GatewayStatus struct {
 	StatusUpdated *date.Time `json:"statusUpdated,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type GatewayUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future GatewayUpdateFuture) Result(client GatewayClient) (gr GatewayResource, err error) {
@@ -616,12 +688,14 @@ func (future GatewayUpdateFuture) Result(client GatewayClient) (gr GatewayResour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GatewayUpgradeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type GatewayUpgradeFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future GatewayUpgradeFuture) Result(client GatewayClient) (ar autorest.Response, err error) {
@@ -664,12 +738,14 @@ func (future GatewayUpgradeFuture) Result(client GatewayClient) (ar autorest.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type NodeCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future NodeCreateFuture) Result(client NodeClient) (nr NodeResource, err error) {
@@ -712,6 +788,7 @@ func (future NodeCreateFuture) Result(client NodeClient) (nr NodeResource, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeParameters ...
 type NodeParameters struct {
 	// Location - Location of the resource.
@@ -721,6 +798,21 @@ type NodeParameters struct {
 	*NodeParametersProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// MarshalJSON is the custom marshaler for NodeParameters.
+func (np NodeParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if np.Location != nil {
+		objectMap["location"] = np.Location
+	}
+	objectMap["tags"] = np.Tags
+	if np.NodeParametersProperties != nil {
+		objectMap["properties"] = np.NodeParametersProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for NodeParameters struct.
 func (np *NodeParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -763,6 +855,7 @@ func (np *NodeParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeParametersProperties ...
 type NodeParametersProperties struct {
 	// GatewayID - Gateway ID which will manage this node.
@@ -775,6 +868,7 @@ type NodeParametersProperties struct {
 	Password *string `json:"password,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeResource a Node Resource.
 type NodeResource struct {
 	autorest.Response       `json:"-"`
@@ -792,6 +886,7 @@ type NodeResource struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for NodeResource.
 func (nr NodeResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -819,6 +914,7 @@ func (nr NodeResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for NodeResource struct.
 func (nr *NodeResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -897,6 +993,7 @@ func (nr *NodeResource) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeResourceProperties ...
 type NodeResourceProperties struct {
 	// GatewayID - ID of the gateway.
@@ -909,6 +1006,7 @@ type NodeResourceProperties struct {
 	Updated *date.Time `json:"updated,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeResources a collection of node resource objects.
 type NodeResources struct {
 	autorest.Response `json:"-"`
@@ -918,12 +1016,14 @@ type NodeResources struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeResourcesIterator provides access to a complete listing of NodeResource values.
 type NodeResourcesIterator struct {
 	i    int
 	page NodeResourcesPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *NodeResourcesIterator) Next() error {
@@ -940,16 +1040,19 @@ func (iter *NodeResourcesIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter NodeResourcesIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Response returns the raw server response from the last page request.
 func (iter NodeResourcesIterator) Response() NodeResources {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter NodeResourcesIterator) Value() NodeResource {
@@ -959,6 +1062,7 @@ func (iter NodeResourcesIterator) Value() NodeResource {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (nr NodeResources) IsEmpty() bool {
 	return nr.Value == nil || len(*nr.Value) == 0
@@ -976,12 +1080,14 @@ func (nr NodeResources) nodeResourcesPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(nr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeResourcesPage contains a page of NodeResource values.
 type NodeResourcesPage struct {
 	fn func(NodeResources) (NodeResources, error)
 	nr NodeResources
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *NodeResourcesPage) Next() error {
@@ -993,16 +1099,19 @@ func (page *NodeResourcesPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page NodeResourcesPage) NotDone() bool {
 	return !page.nr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Response returns the raw server response from the last page request.
 func (page NodeResourcesPage) Response() NodeResources {
 	return page.nr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page NodeResourcesPage) Values() []NodeResource {
 	if page.nr.IsEmpty() {
@@ -1011,12 +1120,14 @@ func (page NodeResourcesPage) Values() []NodeResource {
 	return *page.nr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NodeUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type NodeUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future NodeUpdateFuture) Result(client NodeClient) (nr NodeResource, err error) {
@@ -1059,6 +1170,7 @@ func (future NodeUpdateFuture) Result(client NodeClient) (nr NodeResource, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCancelCommandFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type PowerShellCancelCommandFuture struct {
@@ -1066,6 +1178,7 @@ type PowerShellCancelCommandFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future PowerShellCancelCommandFuture) Result(client PowerShellClient) (pscr PowerShellCommandResults, err error) {
@@ -1108,11 +1221,23 @@ func (future PowerShellCancelCommandFuture) Result(client PowerShellClient) (psc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCommandParameters the parameters to a PowerShell script execution command.
 type PowerShellCommandParameters struct {
 	*PowerShellCommandParametersProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// MarshalJSON is the custom marshaler for PowerShellCommandParameters.
+func (pscp PowerShellCommandParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pscp.PowerShellCommandParametersProperties != nil {
+		objectMap["properties"] = pscp.PowerShellCommandParametersProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for PowerShellCommandParameters struct.
 func (pscp *PowerShellCommandParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1137,12 +1262,14 @@ func (pscp *PowerShellCommandParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCommandParametersProperties ...
 type PowerShellCommandParametersProperties struct {
 	// Command - Script to execute.
 	Command *string `json:"command,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCommandResult ...
 type PowerShellCommandResult struct {
 	// MessageType - The type of message.
@@ -1167,6 +1294,7 @@ type PowerShellCommandResult struct {
 	Descriptions *[]PromptFieldDescription `json:"descriptions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCommandResults a collection of results from a PowerShell command.
 type PowerShellCommandResults struct {
 	autorest.Response `json:"-"`
@@ -1176,6 +1304,7 @@ type PowerShellCommandResults struct {
 	Completed         *bool                      `json:"completed,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCommandStatus ...
 type PowerShellCommandStatus struct {
 	autorest.Response         `json:"-"`
@@ -1193,6 +1322,7 @@ type PowerShellCommandStatus struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for PowerShellCommandStatus.
 func (pscs PowerShellCommandStatus) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1220,6 +1350,7 @@ func (pscs PowerShellCommandStatus) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for PowerShellCommandStatus struct.
 func (pscs *PowerShellCommandStatus) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1298,6 +1429,7 @@ func (pscs *PowerShellCommandStatus) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellCreateSessionFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type PowerShellCreateSessionFuture struct {
@@ -1305,6 +1437,7 @@ type PowerShellCreateSessionFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future PowerShellCreateSessionFuture) Result(client PowerShellClient) (pssr PowerShellSessionResource, err error) {
@@ -1347,6 +1480,7 @@ func (future PowerShellCreateSessionFuture) Result(client PowerShellClient) (pss
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellInvokeCommandFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type PowerShellInvokeCommandFuture struct {
@@ -1354,6 +1488,7 @@ type PowerShellInvokeCommandFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future PowerShellInvokeCommandFuture) Result(client PowerShellClient) (pscr PowerShellCommandResults, err error) {
@@ -1396,6 +1531,7 @@ func (future PowerShellInvokeCommandFuture) Result(client PowerShellClient) (psc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellSessionResource a PowerShell session resource (practically equivalent to a runspace instance).
 type PowerShellSessionResource struct {
 	autorest.Response                    `json:"-"`
@@ -1413,6 +1549,7 @@ type PowerShellSessionResource struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for PowerShellSessionResource.
 func (pssr PowerShellSessionResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1440,6 +1577,7 @@ func (pssr PowerShellSessionResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for PowerShellSessionResource struct.
 func (pssr *PowerShellSessionResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1518,6 +1656,7 @@ func (pssr *PowerShellSessionResource) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellSessionResourceProperties ...
 type PowerShellSessionResourceProperties struct {
 	// SessionID - The PowerShell Session ID.
@@ -1535,6 +1674,7 @@ type PowerShellSessionResourceProperties struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellSessionResources a collection of PowerShell session resources.
 type PowerShellSessionResources struct {
 	autorest.Response `json:"-"`
@@ -1544,12 +1684,14 @@ type PowerShellSessionResources struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellTabCompletionParameters ...
 type PowerShellTabCompletionParameters struct {
 	// Command - Command to get tab completion for.
 	Command *string `json:"command,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellTabCompletionResults an array of strings representing the different values that can be selected
 // through.
 type PowerShellTabCompletionResults struct {
@@ -1557,6 +1699,7 @@ type PowerShellTabCompletionResults struct {
 	Results           *[]string `json:"results,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PowerShellUpdateCommandFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type PowerShellUpdateCommandFuture struct {
@@ -1564,6 +1707,7 @@ type PowerShellUpdateCommandFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future PowerShellUpdateCommandFuture) Result(client PowerShellClient) (pscr PowerShellCommandResults, err error) {
@@ -1606,6 +1750,7 @@ func (future PowerShellUpdateCommandFuture) Result(client PowerShellClient) (psc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PromptFieldDescription field description for the implementation of PSHostUserInterface.Prompt.
 type PromptFieldDescription struct {
 	// Name - The name of the prompt.
@@ -1620,12 +1765,14 @@ type PromptFieldDescription struct {
 	PromptFieldType PromptFieldType `json:"promptFieldType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // PromptMessageResponse the response to a prompt message.
 type PromptMessageResponse struct {
 	// Response - The list of responses a cmdlet expects.
 	Response *[]string `json:"response,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Resource resource Manager Resource Information.
 type Resource struct {
 	// ID - Resource Manager Resource ID.
@@ -1641,6 +1788,7 @@ type Resource struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1665,12 +1813,14 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SessionCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SessionCreateFuture) Result(client SessionClient) (sr SessionResource, err error) {
@@ -1713,11 +1863,23 @@ func (future SessionCreateFuture) Result(client SessionClient) (sr SessionResour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionParameters ...
 type SessionParameters struct {
 	*SessionParametersProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
+// MarshalJSON is the custom marshaler for SessionParameters.
+func (sp SessionParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sp.SessionParametersProperties != nil {
+		objectMap["properties"] = sp.SessionParametersProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for SessionParameters struct.
 func (sp *SessionParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1742,6 +1904,7 @@ func (sp *SessionParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionParametersProperties ...
 type SessionParametersProperties struct {
 	// UserName - User name to be used to connect to node.
@@ -1750,6 +1913,7 @@ type SessionParametersProperties struct {
 	Password *string `json:"password,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionResource the session object.
 type SessionResource struct {
 	autorest.Response          `json:"-"`
@@ -1767,6 +1931,7 @@ type SessionResource struct {
 	Etag *string            `json:"etag,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // MarshalJSON is the custom marshaler for SessionResource.
 func (sr SessionResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1794,6 +1959,7 @@ func (sr SessionResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // UnmarshalJSON is the custom unmarshaler for SessionResource struct.
 func (sr *SessionResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1872,6 +2038,7 @@ func (sr *SessionResource) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionResourceProperties ...
 type SessionResourceProperties struct {
 	// UserName - The username connecting to the session.
@@ -1882,6 +2049,7 @@ type SessionResourceProperties struct {
 	Updated *date.Time `json:"updated,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // VersionServermanagement a multipart-numeric version number.
 type VersionServermanagement struct {
 	// Major - The leftmost number of the version.

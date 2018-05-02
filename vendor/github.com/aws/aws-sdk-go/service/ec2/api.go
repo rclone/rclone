@@ -17,7 +17,7 @@ const opAcceptReservedInstancesExchangeQuote = "AcceptReservedInstancesExchangeQ
 
 // AcceptReservedInstancesExchangeQuoteRequest generates a "aws/request.Request" representing the
 // client's request for the AcceptReservedInstancesExchangeQuote operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -92,7 +92,7 @@ const opAcceptVpcEndpointConnections = "AcceptVpcEndpointConnections"
 
 // AcceptVpcEndpointConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the AcceptVpcEndpointConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -167,7 +167,7 @@ const opAcceptVpcPeeringConnection = "AcceptVpcPeeringConnection"
 
 // AcceptVpcPeeringConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the AcceptVpcPeeringConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -247,7 +247,7 @@ const opAllocateAddress = "AllocateAddress"
 
 // AllocateAddressRequest generates a "aws/request.Request" representing the
 // client's request for the AllocateAddress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -333,7 +333,7 @@ const opAllocateHosts = "AllocateHosts"
 
 // AllocateHostsRequest generates a "aws/request.Request" representing the
 // client's request for the AllocateHosts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -409,7 +409,7 @@ const opAssignIpv6Addresses = "AssignIpv6Addresses"
 
 // AssignIpv6AddressesRequest generates a "aws/request.Request" representing the
 // client's request for the AssignIpv6Addresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -490,7 +490,7 @@ const opAssignPrivateIpAddresses = "AssignPrivateIpAddresses"
 
 // AssignPrivateIpAddressesRequest generates a "aws/request.Request" representing the
 // client's request for the AssignPrivateIpAddresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -576,7 +576,7 @@ const opAssociateAddress = "AssociateAddress"
 
 // AssociateAddressRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateAddress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -673,7 +673,7 @@ const opAssociateDhcpOptions = "AssociateDhcpOptions"
 
 // AssociateDhcpOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateDhcpOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -760,7 +760,7 @@ const opAssociateIamInstanceProfile = "AssociateIamInstanceProfile"
 
 // AssociateIamInstanceProfileRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateIamInstanceProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -835,7 +835,7 @@ const opAssociateRouteTable = "AssociateRouteTable"
 
 // AssociateRouteTableRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateRouteTable operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -916,7 +916,7 @@ const opAssociateSubnetCidrBlock = "AssociateSubnetCidrBlock"
 
 // AssociateSubnetCidrBlockRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateSubnetCidrBlock operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -992,7 +992,7 @@ const opAssociateVpcCidrBlock = "AssociateVpcCidrBlock"
 
 // AssociateVpcCidrBlockRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateVpcCidrBlock operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1072,7 +1072,7 @@ const opAttachClassicLinkVpc = "AttachClassicLinkVpc"
 
 // AttachClassicLinkVpcRequest generates a "aws/request.Request" representing the
 // client's request for the AttachClassicLinkVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1157,7 +1157,7 @@ const opAttachInternetGateway = "AttachInternetGateway"
 
 // AttachInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the AttachInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1235,7 +1235,7 @@ const opAttachNetworkInterface = "AttachNetworkInterface"
 
 // AttachNetworkInterfaceRequest generates a "aws/request.Request" representing the
 // client's request for the AttachNetworkInterface operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1309,7 +1309,7 @@ const opAttachVolume = "AttachVolume"
 
 // AttachVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the AttachVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1412,7 +1412,7 @@ const opAttachVpnGateway = "AttachVpnGateway"
 
 // AttachVpnGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the AttachVpnGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1490,7 +1490,7 @@ const opAuthorizeSecurityGroupEgress = "AuthorizeSecurityGroupEgress"
 
 // AuthorizeSecurityGroupEgressRequest generates a "aws/request.Request" representing the
 // client's request for the AuthorizeSecurityGroupEgress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1583,7 +1583,7 @@ const opAuthorizeSecurityGroupIngress = "AuthorizeSecurityGroupIngress"
 
 // AuthorizeSecurityGroupIngressRequest generates a "aws/request.Request" representing the
 // client's request for the AuthorizeSecurityGroupIngress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1677,7 +1677,7 @@ const opBundleInstance = "BundleInstance"
 
 // BundleInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the BundleInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1759,7 +1759,7 @@ const opCancelBundleTask = "CancelBundleTask"
 
 // CancelBundleTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CancelBundleTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1833,7 +1833,7 @@ const opCancelConversionTask = "CancelConversionTask"
 
 // CancelConversionTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CancelConversionTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1916,7 +1916,7 @@ const opCancelExportTask = "CancelExportTask"
 
 // CancelExportTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CancelExportTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1995,7 +1995,7 @@ const opCancelImportTask = "CancelImportTask"
 
 // CancelImportTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CancelImportTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2069,7 +2069,7 @@ const opCancelReservedInstancesListing = "CancelReservedInstancesListing"
 
 // CancelReservedInstancesListingRequest generates a "aws/request.Request" representing the
 // client's request for the CancelReservedInstancesListing operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2147,7 +2147,7 @@ const opCancelSpotFleetRequests = "CancelSpotFleetRequests"
 
 // CancelSpotFleetRequestsRequest generates a "aws/request.Request" representing the
 // client's request for the CancelSpotFleetRequests operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2228,7 +2228,7 @@ const opCancelSpotInstanceRequests = "CancelSpotInstanceRequests"
 
 // CancelSpotInstanceRequestsRequest generates a "aws/request.Request" representing the
 // client's request for the CancelSpotInstanceRequests operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2272,7 +2272,7 @@ func (c *EC2) CancelSpotInstanceRequestsRequest(input *CancelSpotInstanceRequest
 // that Amazon EC2 starts on your behalf when the maximum price that you specify
 // exceeds the current Spot price. For more information, see Spot Instance Requests
 // (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html) in
-// the Amazon Elastic Compute Cloud User Guide.
+// the Amazon EC2 User Guide for Linux Instances.
 //
 // Canceling a Spot Instance request does not terminate running Spot Instances
 // associated with the request.
@@ -2309,7 +2309,7 @@ const opConfirmProductInstance = "ConfirmProductInstance"
 
 // ConfirmProductInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the ConfirmProductInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2385,7 +2385,7 @@ const opCopyFpgaImage = "CopyFpgaImage"
 
 // CopyFpgaImageRequest generates a "aws/request.Request" representing the
 // client's request for the CopyFpgaImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2459,7 +2459,7 @@ const opCopyImage = "CopyImage"
 
 // CopyImageRequest generates a "aws/request.Request" representing the
 // client's request for the CopyImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2539,7 +2539,7 @@ const opCopySnapshot = "CopySnapshot"
 
 // CopySnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the CopySnapshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2632,7 +2632,7 @@ const opCreateCustomerGateway = "CreateCustomerGateway"
 
 // CreateCustomerGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the CreateCustomerGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2730,7 +2730,7 @@ const opCreateDefaultSubnet = "CreateDefaultSubnet"
 
 // CreateDefaultSubnetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDefaultSubnet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2808,7 +2808,7 @@ const opCreateDefaultVpc = "CreateDefaultVpc"
 
 // CreateDefaultVpcRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDefaultVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2894,7 +2894,7 @@ const opCreateDhcpOptions = "CreateDhcpOptions"
 
 // CreateDhcpOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDhcpOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3007,7 +3007,7 @@ const opCreateEgressOnlyInternetGateway = "CreateEgressOnlyInternetGateway"
 
 // CreateEgressOnlyInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEgressOnlyInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3080,11 +3080,91 @@ func (c *EC2) CreateEgressOnlyInternetGatewayWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opCreateFleet = "CreateFleet"
+
+// CreateFleetRequest generates a "aws/request.Request" representing the
+// client's request for the CreateFleet operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateFleet for more information on using the CreateFleet
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateFleetRequest method.
+//    req, resp := client.CreateFleetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateFleet
+func (c *EC2) CreateFleetRequest(input *CreateFleetInput) (req *request.Request, output *CreateFleetOutput) {
+	op := &request.Operation{
+		Name:       opCreateFleet,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateFleetInput{}
+	}
+
+	output = &CreateFleetOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateFleet API operation for Amazon Elastic Compute Cloud.
+//
+// Launches an EC2 Fleet.
+//
+// You can create a single EC2 Fleet that includes multiple launch specifications
+// that vary by instance type, AMI, Availability Zone, or subnet.
+//
+// For more information, see Launching an EC2 Fleet (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-launch-ec2-fleet.html)
+// in the Amazon Elastic Compute Cloud User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation CreateFleet for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateFleet
+func (c *EC2) CreateFleet(input *CreateFleetInput) (*CreateFleetOutput, error) {
+	req, out := c.CreateFleetRequest(input)
+	return out, req.Send()
+}
+
+// CreateFleetWithContext is the same as CreateFleet with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateFleet for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) CreateFleetWithContext(ctx aws.Context, input *CreateFleetInput, opts ...request.Option) (*CreateFleetOutput, error) {
+	req, out := c.CreateFleetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateFlowLogs = "CreateFlowLogs"
 
 // CreateFlowLogsRequest generates a "aws/request.Request" representing the
 // client's request for the CreateFlowLogs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3170,7 +3250,7 @@ const opCreateFpgaImage = "CreateFpgaImage"
 
 // CreateFpgaImageRequest generates a "aws/request.Request" representing the
 // client's request for the CreateFpgaImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3251,7 +3331,7 @@ const opCreateImage = "CreateImage"
 
 // CreateImageRequest generates a "aws/request.Request" representing the
 // client's request for the CreateImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3334,7 +3414,7 @@ const opCreateInstanceExportTask = "CreateInstanceExportTask"
 
 // CreateInstanceExportTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CreateInstanceExportTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3413,7 +3493,7 @@ const opCreateInternetGateway = "CreateInternetGateway"
 
 // CreateInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the CreateInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3491,7 +3571,7 @@ const opCreateKeyPair = "CreateKeyPair"
 
 // CreateKeyPairRequest generates a "aws/request.Request" representing the
 // client's request for the CreateKeyPair operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3577,7 +3657,7 @@ const opCreateLaunchTemplate = "CreateLaunchTemplate"
 
 // CreateLaunchTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the CreateLaunchTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3653,7 +3733,7 @@ const opCreateLaunchTemplateVersion = "CreateLaunchTemplateVersion"
 
 // CreateLaunchTemplateVersionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateLaunchTemplateVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3731,7 +3811,7 @@ const opCreateNatGateway = "CreateNatGateway"
 
 // CreateNatGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNatGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3810,7 +3890,7 @@ const opCreateNetworkAcl = "CreateNetworkAcl"
 
 // CreateNetworkAclRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNetworkAcl operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3888,7 +3968,7 @@ const opCreateNetworkAclEntry = "CreateNetworkAclEntry"
 
 // CreateNetworkAclEntryRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNetworkAclEntry operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3980,7 +4060,7 @@ const opCreateNetworkInterface = "CreateNetworkInterface"
 
 // CreateNetworkInterfaceRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNetworkInterface operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4058,7 +4138,7 @@ const opCreateNetworkInterfacePermission = "CreateNetworkInterfacePermission"
 
 // CreateNetworkInterfacePermissionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNetworkInterfacePermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4136,7 +4216,7 @@ const opCreatePlacementGroup = "CreatePlacementGroup"
 
 // CreatePlacementGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePlacementGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4220,7 +4300,7 @@ const opCreateReservedInstancesListing = "CreateReservedInstancesListing"
 
 // CreateReservedInstancesListingRequest generates a "aws/request.Request" representing the
 // client's request for the CreateReservedInstancesListing operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4317,7 +4397,7 @@ const opCreateRoute = "CreateRoute"
 
 // CreateRouteRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRoute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4410,7 +4490,7 @@ const opCreateRouteTable = "CreateRouteTable"
 
 // CreateRouteTableRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRouteTable operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4488,7 +4568,7 @@ const opCreateSecurityGroup = "CreateSecurityGroup"
 
 // CreateSecurityGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSecurityGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4588,7 +4668,7 @@ const opCreateSnapshot = "CreateSnapshot"
 
 // CreateSnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSnapshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4692,7 +4772,7 @@ const opCreateSpotDatafeedSubscription = "CreateSpotDatafeedSubscription"
 
 // CreateSpotDatafeedSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSpotDatafeedSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4735,7 +4815,7 @@ func (c *EC2) CreateSpotDatafeedSubscriptionRequest(input *CreateSpotDatafeedSub
 // Creates a data feed for Spot Instances, enabling you to view Spot Instance
 // usage logs. You can create one data feed per AWS account. For more information,
 // see Spot Instance Data Feed (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-data-feeds.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// in the Amazon EC2 User Guide for Linux Instances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4769,7 +4849,7 @@ const opCreateSubnet = "CreateSubnet"
 
 // CreateSubnetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSubnet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4869,7 +4949,7 @@ const opCreateTags = "CreateTags"
 
 // CreateTagsRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4953,7 +5033,7 @@ const opCreateVolume = "CreateVolume"
 
 // CreateVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5045,7 +5125,7 @@ const opCreateVpc = "CreateVpc"
 
 // CreateVpcRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5137,7 +5217,7 @@ const opCreateVpcEndpoint = "CreateVpcEndpoint"
 
 // CreateVpcEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpcEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5227,7 +5307,7 @@ const opCreateVpcEndpointConnectionNotification = "CreateVpcEndpointConnectionNo
 
 // CreateVpcEndpointConnectionNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpcEndpointConnectionNotification operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5307,7 +5387,7 @@ const opCreateVpcEndpointServiceConfiguration = "CreateVpcEndpointServiceConfigu
 
 // CreateVpcEndpointServiceConfigurationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpcEndpointServiceConfiguration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5388,7 +5468,7 @@ const opCreateVpcPeeringConnection = "CreateVpcPeeringConnection"
 
 // CreateVpcPeeringConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpcPeeringConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5477,7 +5557,7 @@ const opCreateVpnConnection = "CreateVpnConnection"
 
 // CreateVpnConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpnConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5569,7 +5649,7 @@ const opCreateVpnConnectionRoute = "CreateVpnConnectionRoute"
 
 // CreateVpnConnectionRouteRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpnConnectionRoute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5652,7 +5732,7 @@ const opCreateVpnGateway = "CreateVpnGateway"
 
 // CreateVpnGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpnGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5732,7 +5812,7 @@ const opDeleteCustomerGateway = "DeleteCustomerGateway"
 
 // DeleteCustomerGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteCustomerGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5809,7 +5889,7 @@ const opDeleteDhcpOptions = "DeleteDhcpOptions"
 
 // DeleteDhcpOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDhcpOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5888,7 +5968,7 @@ const opDeleteEgressOnlyInternetGateway = "DeleteEgressOnlyInternetGateway"
 
 // DeleteEgressOnlyInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEgressOnlyInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5958,11 +6038,92 @@ func (c *EC2) DeleteEgressOnlyInternetGatewayWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opDeleteFleets = "DeleteFleets"
+
+// DeleteFleetsRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteFleets operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteFleets for more information on using the DeleteFleets
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteFleetsRequest method.
+//    req, resp := client.DeleteFleetsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteFleets
+func (c *EC2) DeleteFleetsRequest(input *DeleteFleetsInput) (req *request.Request, output *DeleteFleetsOutput) {
+	op := &request.Operation{
+		Name:       opDeleteFleets,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteFleetsInput{}
+	}
+
+	output = &DeleteFleetsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteFleets API operation for Amazon Elastic Compute Cloud.
+//
+// Deletes the specified EC2 Fleet.
+//
+// After you delete an EC2 Fleet, the EC2 Fleet launches no new instances. You
+// must specify whether the EC2 Fleet should also terminate its instances. If
+// you terminate the instances, the EC2 Fleet enters the deleted_terminating
+// state. Otherwise, the EC2 Fleet enters the deleted_running state, and the
+// instances continue to run until they are interrupted or you terminate them
+// manually.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DeleteFleets for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteFleets
+func (c *EC2) DeleteFleets(input *DeleteFleetsInput) (*DeleteFleetsOutput, error) {
+	req, out := c.DeleteFleetsRequest(input)
+	return out, req.Send()
+}
+
+// DeleteFleetsWithContext is the same as DeleteFleets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteFleets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DeleteFleetsWithContext(ctx aws.Context, input *DeleteFleetsInput, opts ...request.Option) (*DeleteFleetsOutput, error) {
+	req, out := c.DeleteFleetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteFlowLogs = "DeleteFlowLogs"
 
 // DeleteFlowLogsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFlowLogs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6036,7 +6197,7 @@ const opDeleteFpgaImage = "DeleteFpgaImage"
 
 // DeleteFpgaImageRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFpgaImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6110,7 +6271,7 @@ const opDeleteInternetGateway = "DeleteInternetGateway"
 
 // DeleteInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6187,7 +6348,7 @@ const opDeleteKeyPair = "DeleteKeyPair"
 
 // DeleteKeyPairRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteKeyPair operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6263,7 +6424,7 @@ const opDeleteLaunchTemplate = "DeleteLaunchTemplate"
 
 // DeleteLaunchTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteLaunchTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6338,7 +6499,7 @@ const opDeleteLaunchTemplateVersions = "DeleteLaunchTemplateVersions"
 
 // DeleteLaunchTemplateVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteLaunchTemplateVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6415,7 +6576,7 @@ const opDeleteNatGateway = "DeleteNatGateway"
 
 // DeleteNatGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNatGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6491,7 +6652,7 @@ const opDeleteNetworkAcl = "DeleteNetworkAcl"
 
 // DeleteNetworkAclRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNetworkAcl operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6568,7 +6729,7 @@ const opDeleteNetworkAclEntry = "DeleteNetworkAclEntry"
 
 // DeleteNetworkAclEntryRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNetworkAclEntry operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6645,7 +6806,7 @@ const opDeleteNetworkInterface = "DeleteNetworkInterface"
 
 // DeleteNetworkInterfaceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNetworkInterface operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6722,7 +6883,7 @@ const opDeleteNetworkInterfacePermission = "DeleteNetworkInterfacePermission"
 
 // DeleteNetworkInterfacePermissionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNetworkInterfacePermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6799,7 +6960,7 @@ const opDeletePlacementGroup = "DeletePlacementGroup"
 
 // DeletePlacementGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePlacementGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6878,7 +7039,7 @@ const opDeleteRoute = "DeleteRoute"
 
 // DeleteRouteRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRoute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6954,7 +7115,7 @@ const opDeleteRouteTable = "DeleteRouteTable"
 
 // DeleteRouteTableRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRouteTable operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7032,7 +7193,7 @@ const opDeleteSecurityGroup = "DeleteSecurityGroup"
 
 // DeleteSecurityGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSecurityGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7112,7 +7273,7 @@ const opDeleteSnapshot = "DeleteSnapshot"
 
 // DeleteSnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSnapshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7202,7 +7363,7 @@ const opDeleteSpotDatafeedSubscription = "DeleteSpotDatafeedSubscription"
 
 // DeleteSpotDatafeedSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSpotDatafeedSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7278,7 +7439,7 @@ const opDeleteSubnet = "DeleteSubnet"
 
 // DeleteSubnetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSubnet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7355,7 +7516,7 @@ const opDeleteTags = "DeleteTags"
 
 // DeleteTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7435,7 +7596,7 @@ const opDeleteVolume = "DeleteVolume"
 
 // DeleteVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7517,7 +7678,7 @@ const opDeleteVpc = "DeleteVpc"
 
 // DeleteVpcRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7597,7 +7758,7 @@ const opDeleteVpcEndpointConnectionNotifications = "DeleteVpcEndpointConnectionN
 
 // DeleteVpcEndpointConnectionNotificationsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpcEndpointConnectionNotifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7671,7 +7832,7 @@ const opDeleteVpcEndpointServiceConfigurations = "DeleteVpcEndpointServiceConfig
 
 // DeleteVpcEndpointServiceConfigurationsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpcEndpointServiceConfigurations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7748,7 +7909,7 @@ const opDeleteVpcEndpoints = "DeleteVpcEndpoints"
 
 // DeleteVpcEndpointsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpcEndpoints operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7825,7 +7986,7 @@ const opDeleteVpcPeeringConnection = "DeleteVpcPeeringConnection"
 
 // DeleteVpcPeeringConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpcPeeringConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7903,7 +8064,7 @@ const opDeleteVpnConnection = "DeleteVpnConnection"
 
 // DeleteVpnConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpnConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7988,7 +8149,7 @@ const opDeleteVpnConnectionRoute = "DeleteVpnConnectionRoute"
 
 // DeleteVpnConnectionRouteRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpnConnectionRoute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8067,7 +8228,7 @@ const opDeleteVpnGateway = "DeleteVpnGateway"
 
 // DeleteVpnGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpnGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8147,7 +8308,7 @@ const opDeregisterImage = "DeregisterImage"
 
 // DeregisterImageRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8231,7 +8392,7 @@ const opDescribeAccountAttributes = "DescribeAccountAttributes"
 
 // DescribeAccountAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAccountAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8323,7 +8484,7 @@ const opDescribeAddresses = "DescribeAddresses"
 
 // DescribeAddressesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAddresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8401,7 +8562,7 @@ const opDescribeAggregateIdFormat = "DescribeAggregateIdFormat"
 
 // DescribeAggregateIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAggregateIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8489,7 +8650,7 @@ const opDescribeAvailabilityZones = "DescribeAvailabilityZones"
 
 // DescribeAvailabilityZonesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAvailabilityZones operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8569,7 +8730,7 @@ const opDescribeBundleTasks = "DescribeBundleTasks"
 
 // DescribeBundleTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBundleTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8648,7 +8809,7 @@ const opDescribeClassicLinkInstances = "DescribeClassicLinkInstances"
 
 // DescribeClassicLinkInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeClassicLinkInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8725,7 +8886,7 @@ const opDescribeConversionTasks = "DescribeConversionTasks"
 
 // DescribeConversionTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConversionTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8803,7 +8964,7 @@ const opDescribeCustomerGateways = "DescribeCustomerGateways"
 
 // DescribeCustomerGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeCustomerGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8881,7 +9042,7 @@ const opDescribeDhcpOptions = "DescribeDhcpOptions"
 
 // DescribeDhcpOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDhcpOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8958,7 +9119,7 @@ const opDescribeEgressOnlyInternetGateways = "DescribeEgressOnlyInternetGateways
 
 // DescribeEgressOnlyInternetGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEgressOnlyInternetGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9032,7 +9193,7 @@ const opDescribeElasticGpus = "DescribeElasticGpus"
 
 // DescribeElasticGpusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeElasticGpus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9107,7 +9268,7 @@ const opDescribeExportTasks = "DescribeExportTasks"
 
 // DescribeExportTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeExportTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9177,11 +9338,233 @@ func (c *EC2) DescribeExportTasksWithContext(ctx aws.Context, input *DescribeExp
 	return out, req.Send()
 }
 
+const opDescribeFleetHistory = "DescribeFleetHistory"
+
+// DescribeFleetHistoryRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFleetHistory operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeFleetHistory for more information on using the DescribeFleetHistory
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeFleetHistoryRequest method.
+//    req, resp := client.DescribeFleetHistoryRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleetHistory
+func (c *EC2) DescribeFleetHistoryRequest(input *DescribeFleetHistoryInput) (req *request.Request, output *DescribeFleetHistoryOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFleetHistory,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeFleetHistoryInput{}
+	}
+
+	output = &DescribeFleetHistoryOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFleetHistory API operation for Amazon Elastic Compute Cloud.
+//
+// Describes the events for the specified EC2 Fleet during the specified time.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeFleetHistory for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleetHistory
+func (c *EC2) DescribeFleetHistory(input *DescribeFleetHistoryInput) (*DescribeFleetHistoryOutput, error) {
+	req, out := c.DescribeFleetHistoryRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFleetHistoryWithContext is the same as DescribeFleetHistory with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFleetHistory for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeFleetHistoryWithContext(ctx aws.Context, input *DescribeFleetHistoryInput, opts ...request.Option) (*DescribeFleetHistoryOutput, error) {
+	req, out := c.DescribeFleetHistoryRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeFleetInstances = "DescribeFleetInstances"
+
+// DescribeFleetInstancesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFleetInstances operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeFleetInstances for more information on using the DescribeFleetInstances
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeFleetInstancesRequest method.
+//    req, resp := client.DescribeFleetInstancesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleetInstances
+func (c *EC2) DescribeFleetInstancesRequest(input *DescribeFleetInstancesInput) (req *request.Request, output *DescribeFleetInstancesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFleetInstances,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeFleetInstancesInput{}
+	}
+
+	output = &DescribeFleetInstancesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFleetInstances API operation for Amazon Elastic Compute Cloud.
+//
+// Describes the running instances for the specified EC2 Fleet.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeFleetInstances for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleetInstances
+func (c *EC2) DescribeFleetInstances(input *DescribeFleetInstancesInput) (*DescribeFleetInstancesOutput, error) {
+	req, out := c.DescribeFleetInstancesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFleetInstancesWithContext is the same as DescribeFleetInstances with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFleetInstances for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeFleetInstancesWithContext(ctx aws.Context, input *DescribeFleetInstancesInput, opts ...request.Option) (*DescribeFleetInstancesOutput, error) {
+	req, out := c.DescribeFleetInstancesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeFleets = "DescribeFleets"
+
+// DescribeFleetsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFleets operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeFleets for more information on using the DescribeFleets
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeFleetsRequest method.
+//    req, resp := client.DescribeFleetsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleets
+func (c *EC2) DescribeFleetsRequest(input *DescribeFleetsInput) (req *request.Request, output *DescribeFleetsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFleets,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeFleetsInput{}
+	}
+
+	output = &DescribeFleetsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFleets API operation for Amazon Elastic Compute Cloud.
+//
+// Describes the specified EC2 Fleet.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeFleets for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFleets
+func (c *EC2) DescribeFleets(input *DescribeFleetsInput) (*DescribeFleetsOutput, error) {
+	req, out := c.DescribeFleetsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFleetsWithContext is the same as DescribeFleets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFleets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeFleetsWithContext(ctx aws.Context, input *DescribeFleetsInput, opts ...request.Option) (*DescribeFleetsOutput, error) {
+	req, out := c.DescribeFleetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeFlowLogs = "DescribeFlowLogs"
 
 // DescribeFlowLogsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeFlowLogs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9257,7 +9640,7 @@ const opDescribeFpgaImageAttribute = "DescribeFpgaImageAttribute"
 
 // DescribeFpgaImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeFpgaImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9331,7 +9714,7 @@ const opDescribeFpgaImages = "DescribeFpgaImages"
 
 // DescribeFpgaImagesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeFpgaImages operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9407,7 +9790,7 @@ const opDescribeHostReservationOfferings = "DescribeHostReservationOfferings"
 
 // DescribeHostReservationOfferingsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeHostReservationOfferings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9489,7 +9872,7 @@ const opDescribeHostReservations = "DescribeHostReservations"
 
 // DescribeHostReservationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeHostReservations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9564,7 +9947,7 @@ const opDescribeHosts = "DescribeHosts"
 
 // DescribeHostsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeHosts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9642,7 +10025,7 @@ const opDescribeIamInstanceProfileAssociations = "DescribeIamInstanceProfileAsso
 
 // DescribeIamInstanceProfileAssociationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeIamInstanceProfileAssociations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9716,7 +10099,7 @@ const opDescribeIdFormat = "DescribeIdFormat"
 
 // DescribeIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9808,7 +10191,7 @@ const opDescribeIdentityIdFormat = "DescribeIdentityIdFormat"
 
 // DescribeIdentityIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeIdentityIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9898,7 +10281,7 @@ const opDescribeImageAttribute = "DescribeImageAttribute"
 
 // DescribeImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9973,7 +10356,7 @@ const opDescribeImages = "DescribeImages"
 
 // DescribeImagesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeImages operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10053,7 +10436,7 @@ const opDescribeImportImageTasks = "DescribeImportImageTasks"
 
 // DescribeImportImageTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeImportImageTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10128,7 +10511,7 @@ const opDescribeImportSnapshotTasks = "DescribeImportSnapshotTasks"
 
 // DescribeImportSnapshotTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeImportSnapshotTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10202,7 +10585,7 @@ const opDescribeInstanceAttribute = "DescribeInstanceAttribute"
 
 // DescribeInstanceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstanceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10280,7 +10663,7 @@ const opDescribeInstanceCreditSpecifications = "DescribeInstanceCreditSpecificat
 
 // DescribeInstanceCreditSpecificationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstanceCreditSpecifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10372,7 +10755,7 @@ const opDescribeInstanceStatus = "DescribeInstanceStatus"
 
 // DescribeInstanceStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstanceStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10523,7 +10906,7 @@ const opDescribeInstances = "DescribeInstances"
 
 // DescribeInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10668,7 +11051,7 @@ const opDescribeInternetGateways = "DescribeInternetGateways"
 
 // DescribeInternetGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInternetGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10742,7 +11125,7 @@ const opDescribeKeyPairs = "DescribeKeyPairs"
 
 // DescribeKeyPairsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeKeyPairs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10819,7 +11202,7 @@ const opDescribeLaunchTemplateVersions = "DescribeLaunchTemplateVersions"
 
 // DescribeLaunchTemplateVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLaunchTemplateVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10894,7 +11277,7 @@ const opDescribeLaunchTemplates = "DescribeLaunchTemplates"
 
 // DescribeLaunchTemplatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLaunchTemplates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10968,7 +11351,7 @@ const opDescribeMovingAddresses = "DescribeMovingAddresses"
 
 // DescribeMovingAddressesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMovingAddresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11044,7 +11427,7 @@ const opDescribeNatGateways = "DescribeNatGateways"
 
 // DescribeNatGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNatGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11174,7 +11557,7 @@ const opDescribeNetworkAcls = "DescribeNetworkAcls"
 
 // DescribeNetworkAclsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNetworkAcls operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11251,7 +11634,7 @@ const opDescribeNetworkInterfaceAttribute = "DescribeNetworkInterfaceAttribute"
 
 // DescribeNetworkInterfaceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNetworkInterfaceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11326,7 +11709,7 @@ const opDescribeNetworkInterfacePermissions = "DescribeNetworkInterfacePermissio
 
 // DescribeNetworkInterfacePermissionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNetworkInterfacePermissions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11400,7 +11783,7 @@ const opDescribeNetworkInterfaces = "DescribeNetworkInterfaces"
 
 // DescribeNetworkInterfacesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNetworkInterfaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11474,7 +11857,7 @@ const opDescribePlacementGroups = "DescribePlacementGroups"
 
 // DescribePlacementGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePlacementGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11550,7 +11933,7 @@ const opDescribePrefixLists = "DescribePrefixLists"
 
 // DescribePrefixListsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePrefixLists operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11628,7 +12011,7 @@ const opDescribePrincipalIdFormat = "DescribePrincipalIdFormat"
 
 // DescribePrincipalIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePrincipalIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11716,7 +12099,7 @@ const opDescribeRegions = "DescribeRegions"
 
 // DescribeRegionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRegions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11793,7 +12176,7 @@ const opDescribeReservedInstances = "DescribeReservedInstances"
 
 // DescribeReservedInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReservedInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11870,7 +12253,7 @@ const opDescribeReservedInstancesListings = "DescribeReservedInstancesListings"
 
 // DescribeReservedInstancesListingsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReservedInstancesListings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11965,7 +12348,7 @@ const opDescribeReservedInstancesModifications = "DescribeReservedInstancesModif
 
 // DescribeReservedInstancesModificationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReservedInstancesModifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12101,7 +12484,7 @@ const opDescribeReservedInstancesOfferings = "DescribeReservedInstancesOfferings
 
 // DescribeReservedInstancesOfferingsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReservedInstancesOfferings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12242,7 +12625,7 @@ const opDescribeRouteTables = "DescribeRouteTables"
 
 // DescribeRouteTablesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRouteTables operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12324,7 +12707,7 @@ const opDescribeScheduledInstanceAvailability = "DescribeScheduledInstanceAvaila
 
 // DescribeScheduledInstanceAvailabilityRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeScheduledInstanceAvailability operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12406,7 +12789,7 @@ const opDescribeScheduledInstances = "DescribeScheduledInstances"
 
 // DescribeScheduledInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeScheduledInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12480,7 +12863,7 @@ const opDescribeSecurityGroupReferences = "DescribeSecurityGroupReferences"
 
 // DescribeSecurityGroupReferencesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSecurityGroupReferences operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12555,7 +12938,7 @@ const opDescribeSecurityGroups = "DescribeSecurityGroups"
 
 // DescribeSecurityGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSecurityGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12636,7 +13019,7 @@ const opDescribeSnapshotAttribute = "DescribeSnapshotAttribute"
 
 // DescribeSnapshotAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSnapshotAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12714,7 +13097,7 @@ const opDescribeSnapshots = "DescribeSnapshots"
 
 // DescribeSnapshotsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSnapshots operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12889,7 +13272,7 @@ const opDescribeSpotDatafeedSubscription = "DescribeSpotDatafeedSubscription"
 
 // DescribeSpotDatafeedSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotDatafeedSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -12931,7 +13314,7 @@ func (c *EC2) DescribeSpotDatafeedSubscriptionRequest(input *DescribeSpotDatafee
 //
 // Describes the data feed for Spot Instances. For more information, see Spot
 // Instance Data Feed (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-data-feeds.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// in the Amazon EC2 User Guide for Linux Instances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -12965,7 +13348,7 @@ const opDescribeSpotFleetInstances = "DescribeSpotFleetInstances"
 
 // DescribeSpotFleetInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotFleetInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13039,7 +13422,7 @@ const opDescribeSpotFleetRequestHistory = "DescribeSpotFleetRequestHistory"
 
 // DescribeSpotFleetRequestHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotFleetRequestHistory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13118,7 +13501,7 @@ const opDescribeSpotFleetRequests = "DescribeSpotFleetRequests"
 
 // DescribeSpotFleetRequestsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotFleetRequests operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13251,7 +13634,7 @@ const opDescribeSpotInstanceRequests = "DescribeSpotInstanceRequests"
 
 // DescribeSpotInstanceRequestsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotInstanceRequests operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13295,7 +13678,7 @@ func (c *EC2) DescribeSpotInstanceRequestsRequest(input *DescribeSpotInstanceReq
 // are instances that Amazon EC2 launches when the Spot price that you specify
 // exceeds the current Spot price. For more information, see Spot Instance Requests
 // (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html) in
-// the Amazon Elastic Compute Cloud User Guide.
+// the Amazon EC2 User Guide for Linux Instances.
 //
 // You can use DescribeSpotInstanceRequests to find a running Spot Instance
 // by examining the response. If the status of the Spot Instance is fulfilled,
@@ -13303,8 +13686,8 @@ func (c *EC2) DescribeSpotInstanceRequestsRequest(input *DescribeSpotInstanceReq
 // instance. Alternatively, you can use DescribeInstances with a filter to look
 // for instances where the instance lifecycle is spot.
 //
-// Spot Instance requests are deleted 4 hours after they are canceled and their
-// instances are terminated.
+// Spot Instance requests are deleted four hours after they are canceled and
+// their instances are terminated.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -13338,7 +13721,7 @@ const opDescribeSpotPriceHistory = "DescribeSpotPriceHistory"
 
 // DescribeSpotPriceHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSpotPriceHistory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13386,7 +13769,7 @@ func (c *EC2) DescribeSpotPriceHistoryRequest(input *DescribeSpotPriceHistoryInp
 //
 // Describes the Spot price history. For more information, see Spot Instance
 // Pricing History (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances-history.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// in the Amazon EC2 User Guide for Linux Instances.
 //
 // When you specify a start and end time, this operation returns the prices
 // of the instance types within the time range that you specified and the time
@@ -13475,7 +13858,7 @@ const opDescribeStaleSecurityGroups = "DescribeStaleSecurityGroups"
 
 // DescribeStaleSecurityGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeStaleSecurityGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13552,7 +13935,7 @@ const opDescribeSubnets = "DescribeSubnets"
 
 // DescribeSubnetsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSubnets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13629,7 +14012,7 @@ const opDescribeTags = "DescribeTags"
 
 // DescribeTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13762,7 +14145,7 @@ const opDescribeVolumeAttribute = "DescribeVolumeAttribute"
 
 // DescribeVolumeAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVolumeAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -13840,7 +14223,7 @@ const opDescribeVolumeStatus = "DescribeVolumeStatus"
 
 // DescribeVolumeStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVolumeStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14004,7 +14387,7 @@ const opDescribeVolumes = "DescribeVolumes"
 
 // DescribeVolumesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVolumes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14144,7 +14527,7 @@ const opDescribeVolumesModifications = "DescribeVolumesModifications"
 
 // DescribeVolumesModificationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVolumesModifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14230,7 +14613,7 @@ const opDescribeVpcAttribute = "DescribeVpcAttribute"
 
 // DescribeVpcAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14305,7 +14688,7 @@ const opDescribeVpcClassicLink = "DescribeVpcClassicLink"
 
 // DescribeVpcClassicLinkRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcClassicLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14379,7 +14762,7 @@ const opDescribeVpcClassicLinkDnsSupport = "DescribeVpcClassicLinkDnsSupport"
 
 // DescribeVpcClassicLinkDnsSupportRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcClassicLinkDnsSupport operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14459,7 +14842,7 @@ const opDescribeVpcEndpointConnectionNotifications = "DescribeVpcEndpointConnect
 
 // DescribeVpcEndpointConnectionNotificationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpointConnectionNotifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14534,7 +14917,7 @@ const opDescribeVpcEndpointConnections = "DescribeVpcEndpointConnections"
 
 // DescribeVpcEndpointConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpointConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14609,7 +14992,7 @@ const opDescribeVpcEndpointServiceConfigurations = "DescribeVpcEndpointServiceCo
 
 // DescribeVpcEndpointServiceConfigurationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpointServiceConfigurations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14683,7 +15066,7 @@ const opDescribeVpcEndpointServicePermissions = "DescribeVpcEndpointServicePermi
 
 // DescribeVpcEndpointServicePermissionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpointServicePermissions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14758,7 +15141,7 @@ const opDescribeVpcEndpointServices = "DescribeVpcEndpointServices"
 
 // DescribeVpcEndpointServicesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpointServices operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14832,7 +15215,7 @@ const opDescribeVpcEndpoints = "DescribeVpcEndpoints"
 
 // DescribeVpcEndpointsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcEndpoints operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14906,7 +15289,7 @@ const opDescribeVpcPeeringConnections = "DescribeVpcPeeringConnections"
 
 // DescribeVpcPeeringConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcPeeringConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -14980,7 +15363,7 @@ const opDescribeVpcs = "DescribeVpcs"
 
 // DescribeVpcsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpcs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15054,7 +15437,7 @@ const opDescribeVpnConnections = "DescribeVpnConnections"
 
 // DescribeVpnConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpnConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15132,7 +15515,7 @@ const opDescribeVpnGateways = "DescribeVpnGateways"
 
 // DescribeVpnGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVpnGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15210,7 +15593,7 @@ const opDetachClassicLinkVpc = "DetachClassicLinkVpc"
 
 // DetachClassicLinkVpcRequest generates a "aws/request.Request" representing the
 // client's request for the DetachClassicLinkVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15286,7 +15669,7 @@ const opDetachInternetGateway = "DetachInternetGateway"
 
 // DetachInternetGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DetachInternetGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15364,7 +15747,7 @@ const opDetachNetworkInterface = "DetachNetworkInterface"
 
 // DetachNetworkInterfaceRequest generates a "aws/request.Request" representing the
 // client's request for the DetachNetworkInterface operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15440,7 +15823,7 @@ const opDetachVolume = "DetachVolume"
 
 // DetachVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the DetachVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15527,7 +15910,7 @@ const opDetachVpnGateway = "DetachVpnGateway"
 
 // DetachVpnGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DetachVpnGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15610,7 +15993,7 @@ const opDisableVgwRoutePropagation = "DisableVgwRoutePropagation"
 
 // DisableVgwRoutePropagationRequest generates a "aws/request.Request" representing the
 // client's request for the DisableVgwRoutePropagation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15687,7 +16070,7 @@ const opDisableVpcClassicLink = "DisableVpcClassicLink"
 
 // DisableVpcClassicLinkRequest generates a "aws/request.Request" representing the
 // client's request for the DisableVpcClassicLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15762,7 +16145,7 @@ const opDisableVpcClassicLinkDnsSupport = "DisableVpcClassicLinkDnsSupport"
 
 // DisableVpcClassicLinkDnsSupportRequest generates a "aws/request.Request" representing the
 // client's request for the DisableVpcClassicLinkDnsSupport operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15840,7 +16223,7 @@ const opDisassociateAddress = "DisassociateAddress"
 
 // DisassociateAddressRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateAddress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -15924,7 +16307,7 @@ const opDisassociateIamInstanceProfile = "DisassociateIamInstanceProfile"
 
 // DisassociateIamInstanceProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateIamInstanceProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16000,7 +16383,7 @@ const opDisassociateRouteTable = "DisassociateRouteTable"
 
 // DisassociateRouteTableRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateRouteTable operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16081,7 +16464,7 @@ const opDisassociateSubnetCidrBlock = "DisassociateSubnetCidrBlock"
 
 // DisassociateSubnetCidrBlockRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateSubnetCidrBlock operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16157,7 +16540,7 @@ const opDisassociateVpcCidrBlock = "DisassociateVpcCidrBlock"
 
 // DisassociateVpcCidrBlockRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateVpcCidrBlock operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16237,7 +16620,7 @@ const opEnableVgwRoutePropagation = "EnableVgwRoutePropagation"
 
 // EnableVgwRoutePropagationRequest generates a "aws/request.Request" representing the
 // client's request for the EnableVgwRoutePropagation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16314,7 +16697,7 @@ const opEnableVolumeIO = "EnableVolumeIO"
 
 // EnableVolumeIORequest generates a "aws/request.Request" representing the
 // client's request for the EnableVolumeIO operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16391,7 +16774,7 @@ const opEnableVpcClassicLink = "EnableVpcClassicLink"
 
 // EnableVpcClassicLinkRequest generates a "aws/request.Request" representing the
 // client's request for the EnableVpcClassicLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16471,7 +16854,7 @@ const opEnableVpcClassicLinkDnsSupport = "EnableVpcClassicLinkDnsSupport"
 
 // EnableVpcClassicLinkDnsSupportRequest generates a "aws/request.Request" representing the
 // client's request for the EnableVpcClassicLinkDnsSupport operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16551,7 +16934,7 @@ const opGetConsoleOutput = "GetConsoleOutput"
 
 // GetConsoleOutputRequest generates a "aws/request.Request" representing the
 // client's request for the GetConsoleOutput operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16642,7 +17025,7 @@ const opGetConsoleScreenshot = "GetConsoleScreenshot"
 
 // GetConsoleScreenshotRequest generates a "aws/request.Request" representing the
 // client's request for the GetConsoleScreenshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16718,7 +17101,7 @@ const opGetHostReservationPurchasePreview = "GetHostReservationPurchasePreview"
 
 // GetHostReservationPurchasePreviewRequest generates a "aws/request.Request" representing the
 // client's request for the GetHostReservationPurchasePreview operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16797,7 +17180,7 @@ const opGetLaunchTemplateData = "GetLaunchTemplateData"
 
 // GetLaunchTemplateDataRequest generates a "aws/request.Request" representing the
 // client's request for the GetLaunchTemplateData operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16872,7 +17255,7 @@ const opGetPasswordData = "GetPasswordData"
 
 // GetPasswordDataRequest generates a "aws/request.Request" representing the
 // client's request for the GetPasswordData operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -16963,7 +17346,7 @@ const opGetReservedInstancesExchangeQuote = "GetReservedInstancesExchangeQuote"
 
 // GetReservedInstancesExchangeQuoteRequest generates a "aws/request.Request" representing the
 // client's request for the GetReservedInstancesExchangeQuote operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17040,7 +17423,7 @@ const opImportImage = "ImportImage"
 
 // ImportImageRequest generates a "aws/request.Request" representing the
 // client's request for the ImportImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17117,7 +17500,7 @@ const opImportInstance = "ImportInstance"
 
 // ImportInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the ImportInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17197,7 +17580,7 @@ const opImportKeyPair = "ImportKeyPair"
 
 // ImportKeyPairRequest generates a "aws/request.Request" representing the
 // client's request for the ImportKeyPair operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17278,7 +17661,7 @@ const opImportSnapshot = "ImportSnapshot"
 
 // ImportSnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the ImportSnapshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17352,7 +17735,7 @@ const opImportVolume = "ImportVolume"
 
 // ImportVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the ImportVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17426,11 +17809,87 @@ func (c *EC2) ImportVolumeWithContext(ctx aws.Context, input *ImportVolumeInput,
 	return out, req.Send()
 }
 
+const opModifyFleet = "ModifyFleet"
+
+// ModifyFleetRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyFleet operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ModifyFleet for more information on using the ModifyFleet
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ModifyFleetRequest method.
+//    req, resp := client.ModifyFleetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/ModifyFleet
+func (c *EC2) ModifyFleetRequest(input *ModifyFleetInput) (req *request.Request, output *ModifyFleetOutput) {
+	op := &request.Operation{
+		Name:       opModifyFleet,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ModifyFleetInput{}
+	}
+
+	output = &ModifyFleetOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ModifyFleet API operation for Amazon Elastic Compute Cloud.
+//
+// Modifies the specified EC2 Fleet.
+//
+// While the EC2 Fleet is being modified, it is in the modifying state.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation ModifyFleet for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/ModifyFleet
+func (c *EC2) ModifyFleet(input *ModifyFleetInput) (*ModifyFleetOutput, error) {
+	req, out := c.ModifyFleetRequest(input)
+	return out, req.Send()
+}
+
+// ModifyFleetWithContext is the same as ModifyFleet with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ModifyFleet for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) ModifyFleetWithContext(ctx aws.Context, input *ModifyFleetInput, opts ...request.Option) (*ModifyFleetOutput, error) {
+	req, out := c.ModifyFleetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opModifyFpgaImageAttribute = "ModifyFpgaImageAttribute"
 
 // ModifyFpgaImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyFpgaImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17504,7 +17963,7 @@ const opModifyHosts = "ModifyHosts"
 
 // ModifyHostsRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyHosts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17584,7 +18043,7 @@ const opModifyIdFormat = "ModifyIdFormat"
 
 // ModifyIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17682,7 +18141,7 @@ const opModifyIdentityIdFormat = "ModifyIdentityIdFormat"
 
 // ModifyIdentityIdFormatRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyIdentityIdFormat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17780,7 +18239,7 @@ const opModifyImageAttribute = "ModifyImageAttribute"
 
 // ModifyImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17865,7 +18324,7 @@ const opModifyInstanceAttribute = "ModifyInstanceAttribute"
 
 // ModifyInstanceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyInstanceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -17910,6 +18369,12 @@ func (c *EC2) ModifyInstanceAttributeRequest(input *ModifyInstanceAttributeInput
 // Modifies the specified attribute of the specified instance. You can specify
 // only one attribute at a time.
 //
+// Note: Using this action to change the security groups associated with an
+// elastic network interface (ENI) attached to an instance in a VPC can result
+// in an error if the instance has more than one ENI. To change the security
+// groups associated with an ENI attached to an instance that has multiple ENIs,
+// we recommend that you use the ModifyNetworkInterfaceAttribute action.
+//
 // To modify some attributes, the instance must be stopped. For more information,
 // see Modifying Attributes of a Stopped Instance (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingAttributesWhileInstanceStopped.html)
 // in the Amazon Elastic Compute Cloud User Guide.
@@ -17946,7 +18411,7 @@ const opModifyInstanceCreditSpecification = "ModifyInstanceCreditSpecification"
 
 // ModifyInstanceCreditSpecificationRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyInstanceCreditSpecification operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18024,7 +18489,7 @@ const opModifyInstancePlacement = "ModifyInstancePlacement"
 
 // ModifyInstancePlacementRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyInstancePlacement operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18119,7 +18584,7 @@ const opModifyLaunchTemplate = "ModifyLaunchTemplate"
 
 // ModifyLaunchTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyLaunchTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18195,7 +18660,7 @@ const opModifyNetworkInterfaceAttribute = "ModifyNetworkInterfaceAttribute"
 
 // ModifyNetworkInterfaceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyNetworkInterfaceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18272,7 +18737,7 @@ const opModifyReservedInstances = "ModifyReservedInstances"
 
 // ModifyReservedInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyReservedInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18352,7 +18817,7 @@ const opModifySnapshotAttribute = "ModifySnapshotAttribute"
 
 // ModifySnapshotAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifySnapshotAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18440,7 +18905,7 @@ const opModifySpotFleetRequest = "ModifySpotFleetRequest"
 
 // ModifySpotFleetRequestRequest generates a "aws/request.Request" representing the
 // client's request for the ModifySpotFleetRequest operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18536,7 +19001,7 @@ const opModifySubnetAttribute = "ModifySubnetAttribute"
 
 // ModifySubnetAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifySubnetAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18612,7 +19077,7 @@ const opModifyVolume = "ModifyVolume"
 
 // ModifyVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18718,7 +19183,7 @@ const opModifyVolumeAttribute = "ModifyVolumeAttribute"
 
 // ModifyVolumeAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVolumeAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18803,7 +19268,7 @@ const opModifyVpcAttribute = "ModifyVpcAttribute"
 
 // ModifyVpcAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18879,7 +19344,7 @@ const opModifyVpcEndpoint = "ModifyVpcEndpoint"
 
 // ModifyVpcEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -18956,7 +19421,7 @@ const opModifyVpcEndpointConnectionNotification = "ModifyVpcEndpointConnectionNo
 
 // ModifyVpcEndpointConnectionNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcEndpointConnectionNotification operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19032,7 +19497,7 @@ const opModifyVpcEndpointServiceConfiguration = "ModifyVpcEndpointServiceConfigu
 
 // ModifyVpcEndpointServiceConfigurationRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcEndpointServiceConfiguration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19109,7 +19574,7 @@ const opModifyVpcEndpointServicePermissions = "ModifyVpcEndpointServicePermissio
 
 // ModifyVpcEndpointServicePermissionsRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcEndpointServicePermissions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19185,7 +19650,7 @@ const opModifyVpcPeeringConnectionOptions = "ModifyVpcPeeringConnectionOptions"
 
 // ModifyVpcPeeringConnectionOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcPeeringConnectionOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19278,7 +19743,7 @@ const opModifyVpcTenancy = "ModifyVpcTenancy"
 
 // ModifyVpcTenancyRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyVpcTenancy operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19361,7 +19826,7 @@ const opMonitorInstances = "MonitorInstances"
 
 // MonitorInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the MonitorInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19440,7 +19905,7 @@ const opMoveAddressToVpc = "MoveAddressToVpc"
 
 // MoveAddressToVpcRequest generates a "aws/request.Request" representing the
 // client's request for the MoveAddressToVpc operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19520,7 +19985,7 @@ const opPurchaseHostReservation = "PurchaseHostReservation"
 
 // PurchaseHostReservationRequest generates a "aws/request.Request" representing the
 // client's request for the PurchaseHostReservation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19597,7 +20062,7 @@ const opPurchaseReservedInstancesOffering = "PurchaseReservedInstancesOffering"
 
 // PurchaseReservedInstancesOfferingRequest generates a "aws/request.Request" representing the
 // client's request for the PurchaseReservedInstancesOffering operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19680,7 +20145,7 @@ const opPurchaseScheduledInstances = "PurchaseScheduledInstances"
 
 // PurchaseScheduledInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the PurchaseScheduledInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19763,7 +20228,7 @@ const opRebootInstances = "RebootInstances"
 
 // RebootInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the RebootInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19849,7 +20314,7 @@ const opRegisterImage = "RegisterImage"
 
 // RegisterImageRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -19951,7 +20416,7 @@ const opRejectVpcEndpointConnections = "RejectVpcEndpointConnections"
 
 // RejectVpcEndpointConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the RejectVpcEndpointConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20026,7 +20491,7 @@ const opRejectVpcPeeringConnection = "RejectVpcPeeringConnection"
 
 // RejectVpcPeeringConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the RejectVpcPeeringConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20104,7 +20569,7 @@ const opReleaseAddress = "ReleaseAddress"
 
 // ReleaseAddressRequest generates a "aws/request.Request" representing the
 // client's request for the ReleaseAddress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20197,7 +20662,7 @@ const opReleaseHosts = "ReleaseHosts"
 
 // ReleaseHostsRequest generates a "aws/request.Request" representing the
 // client's request for the ReleaseHosts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20282,7 +20747,7 @@ const opReplaceIamInstanceProfileAssociation = "ReplaceIamInstanceProfileAssocia
 
 // ReplaceIamInstanceProfileAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the ReplaceIamInstanceProfileAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20361,7 +20826,7 @@ const opReplaceNetworkAclAssociation = "ReplaceNetworkAclAssociation"
 
 // ReplaceNetworkAclAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the ReplaceNetworkAclAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20440,7 +20905,7 @@ const opReplaceNetworkAclEntry = "ReplaceNetworkAclEntry"
 
 // ReplaceNetworkAclEntryRequest generates a "aws/request.Request" representing the
 // client's request for the ReplaceNetworkAclEntry operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20518,7 +20983,7 @@ const opReplaceRoute = "ReplaceRoute"
 
 // ReplaceRouteRequest generates a "aws/request.Request" representing the
 // client's request for the ReplaceRoute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20600,7 +21065,7 @@ const opReplaceRouteTableAssociation = "ReplaceRouteTableAssociation"
 
 // ReplaceRouteTableAssociationRequest generates a "aws/request.Request" representing the
 // client's request for the ReplaceRouteTableAssociation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20682,7 +21147,7 @@ const opReportInstanceStatus = "ReportInstanceStatus"
 
 // ReportInstanceStatusRequest generates a "aws/request.Request" representing the
 // client's request for the ReportInstanceStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20764,7 +21229,7 @@ const opRequestSpotFleet = "RequestSpotFleet"
 
 // RequestSpotFleetRequest generates a "aws/request.Request" representing the
 // client's request for the RequestSpotFleet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20806,6 +21271,10 @@ func (c *EC2) RequestSpotFleetRequest(input *RequestSpotFleetInput) (req *reques
 //
 // Creates a Spot Fleet request.
 //
+// The Spot Fleet request specifies the total target capacity and the On-Demand
+// target capacity. Amazon EC2 calculates the difference between the total capacity
+// and On-Demand capacity, and launches the difference as Spot capacity.
+//
 // You can submit a single request that includes multiple launch specifications
 // that vary by instance type, AMI, Availability Zone, or subnet.
 //
@@ -20820,10 +21289,11 @@ func (c *EC2) RequestSpotFleetRequest(input *RequestSpotFleetInput) (req *reques
 // pools, you can improve the availability of your fleet.
 //
 // You can specify tags for the Spot Instances. You cannot tag other resource
-// types in a Spot Fleet request; only the instance resource type is supported.
+// types in a Spot Fleet request because only the instance resource type is
+// supported.
 //
 // For more information, see Spot Fleet Requests (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-requests.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// in the Amazon EC2 User Guide for Linux Instances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -20857,7 +21327,7 @@ const opRequestSpotInstances = "RequestSpotInstances"
 
 // RequestSpotInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the RequestSpotInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -20900,7 +21370,7 @@ func (c *EC2) RequestSpotInstancesRequest(input *RequestSpotInstancesInput) (req
 // Creates a Spot Instance request. Spot Instances are instances that Amazon
 // EC2 launches when the maximum price that you specify exceeds the current
 // Spot price. For more information, see Spot Instance Requests (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// in the Amazon EC2 User Guide for Linux Instances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -20934,7 +21404,7 @@ const opResetFpgaImageAttribute = "ResetFpgaImageAttribute"
 
 // ResetFpgaImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ResetFpgaImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21009,7 +21479,7 @@ const opResetImageAttribute = "ResetImageAttribute"
 
 // ResetImageAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ResetImageAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21087,7 +21557,7 @@ const opResetInstanceAttribute = "ResetInstanceAttribute"
 
 // ResetInstanceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ResetInstanceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21171,7 +21641,7 @@ const opResetNetworkInterfaceAttribute = "ResetNetworkInterfaceAttribute"
 
 // ResetNetworkInterfaceAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ResetNetworkInterfaceAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21248,7 +21718,7 @@ const opResetSnapshotAttribute = "ResetSnapshotAttribute"
 
 // ResetSnapshotAttributeRequest generates a "aws/request.Request" representing the
 // client's request for the ResetSnapshotAttribute operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21328,7 +21798,7 @@ const opRestoreAddressToClassic = "RestoreAddressToClassic"
 
 // RestoreAddressToClassicRequest generates a "aws/request.Request" representing the
 // client's request for the RestoreAddressToClassic operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21405,7 +21875,7 @@ const opRevokeSecurityGroupEgress = "RevokeSecurityGroupEgress"
 
 // RevokeSecurityGroupEgressRequest generates a "aws/request.Request" representing the
 // client's request for the RevokeSecurityGroupEgress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21493,7 +21963,7 @@ const opRevokeSecurityGroupIngress = "RevokeSecurityGroupIngress"
 
 // RevokeSecurityGroupIngressRequest generates a "aws/request.Request" representing the
 // client's request for the RevokeSecurityGroupIngress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21584,7 +22054,7 @@ const opRunInstances = "RunInstances"
 
 // RunInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the RunInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21711,7 +22181,7 @@ const opRunScheduledInstances = "RunScheduledInstances"
 
 // RunScheduledInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the RunScheduledInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21795,7 +22265,7 @@ const opStartInstances = "StartInstances"
 
 // StartInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the StartInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21891,7 +22361,7 @@ const opStopInstances = "StopInstances"
 
 // StopInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the StopInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -21997,7 +22467,7 @@ const opTerminateInstances = "TerminateInstances"
 
 // TerminateInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the TerminateInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -22095,7 +22565,7 @@ const opUnassignIpv6Addresses = "UnassignIpv6Addresses"
 
 // UnassignIpv6AddressesRequest generates a "aws/request.Request" representing the
 // client's request for the UnassignIpv6Addresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -22169,7 +22639,7 @@ const opUnassignPrivateIpAddresses = "UnassignPrivateIpAddresses"
 
 // UnassignPrivateIpAddressesRequest generates a "aws/request.Request" representing the
 // client's request for the UnassignPrivateIpAddresses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -22245,7 +22715,7 @@ const opUnmonitorInstances = "UnmonitorInstances"
 
 // UnmonitorInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the UnmonitorInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -22321,7 +22791,7 @@ const opUpdateSecurityGroupRuleDescriptionsEgress = "UpdateSecurityGroupRuleDesc
 
 // UpdateSecurityGroupRuleDescriptionsEgressRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSecurityGroupRuleDescriptionsEgress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -22401,7 +22871,7 @@ const opUpdateSecurityGroupRuleDescriptionsIngress = "UpdateSecurityGroupRuleDes
 
 // UpdateSecurityGroupRuleDescriptionsIngressRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSecurityGroupRuleDescriptionsIngress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -26628,9 +27098,9 @@ type CopySnapshotInput struct {
 	// will eventually fail.
 	KmsKeyId *string `locationName:"kmsKeyId" type:"string"`
 
-	// The pre-signed URL parameter is required when copying an encrypted snapshot
-	// with the Amazon EC2 Query API; it is available as an optional parameter in
-	// all other cases. For more information, see Query Requests (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html).
+	// When you copy an encrypted source snapshot using the Amazon EC2 Query API,
+	// you must supply a pre-signed URL. This parameter is optional for unencrypted
+	// snapshots. For more information, see Query Requests (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html).
 	//
 	// The PresignedUrl should use the snapshot source endpoint, the CopySnapshot
 	// action, and include the SourceRegion, SourceSnapshotId, and DestinationRegion
@@ -27147,6 +27617,205 @@ func (s *CreateEgressOnlyInternetGatewayOutput) SetClientToken(v string) *Create
 // SetEgressOnlyInternetGateway sets the EgressOnlyInternetGateway field's value.
 func (s *CreateEgressOnlyInternetGatewayOutput) SetEgressOnlyInternetGateway(v *EgressOnlyInternetGateway) *CreateEgressOnlyInternetGatewayOutput {
 	s.EgressOnlyInternetGateway = v
+	return s
+}
+
+type CreateFleetInput struct {
+	_ struct{} `type:"structure"`
+
+	// Unique, case-sensitive identifier you provide to ensure the idempotency of
+	// the request. For more information, see Ensuring Idempotency (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
+	ClientToken *string `type:"string"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// Indicates whether running instances should be terminated if the total target
+	// capacity of the EC2 Fleet is decreased below the current size of the EC2
+	// Fleet.
+	ExcessCapacityTerminationPolicy *string `type:"string" enum:"FleetExcessCapacityTerminationPolicy"`
+
+	// The configuration for the EC2 Fleet.
+	//
+	// LaunchTemplateConfigs is a required field
+	LaunchTemplateConfigs []*FleetLaunchTemplateConfigRequest `locationNameList:"item" type:"list" required:"true"`
+
+	// Indicates whether EC2 Fleet should replace unhealthy instances.
+	ReplaceUnhealthyInstances *bool `type:"boolean"`
+
+	// Includes SpotAllocationStrategy and SpotInstanceInterruptionBehavior inside
+	// this structure.
+	SpotOptions *SpotOptionsRequest `type:"structure"`
+
+	// The tags for an EC2 Fleet resource.
+	TagSpecifications []*TagSpecification `locationName:"TagSpecification" locationNameList:"item" type:"list"`
+
+	// The TotalTargetCapacity, OnDemandTargetCapacity, SpotTargetCapacity, and
+	// DefaultCapacityType structure.
+	//
+	// TargetCapacitySpecification is a required field
+	TargetCapacitySpecification *TargetCapacitySpecificationRequest `type:"structure" required:"true"`
+
+	// Indicates whether running instances should be terminated when the EC2 Fleet
+	// expires.
+	TerminateInstancesWithExpiration *bool `type:"boolean"`
+
+	// The type of request. Indicates whether the EC2 Fleet only requests the target
+	// capacity, or also attempts to maintain it. If you request a certain target
+	// capacity, EC2 Fleet only places the required requests. It does not attempt
+	// to replenish instances if capacity is diminished, and does not submit requests
+	// in alternative capacity pools if capacity is unavailable. To maintain a certain
+	// target capacity, EC2 Fleet places the required requests to meet this target
+	// capacity. It also automatically replenishes any interrupted Spot Instances.
+	// Default: maintain.
+	Type *string `type:"string" enum:"FleetType"`
+
+	// The start date and time of the request, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	// The default is to start fulfilling the request immediately.
+	ValidFrom *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// The end date and time of the request, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	// At this point, no new EC2 Fleet requests are placed or able to fulfill the
+	// request. The default end date is 7 days from the current date.
+	ValidUntil *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+}
+
+// String returns the string representation
+func (s CreateFleetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateFleetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateFleetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateFleetInput"}
+	if s.LaunchTemplateConfigs == nil {
+		invalidParams.Add(request.NewErrParamRequired("LaunchTemplateConfigs"))
+	}
+	if s.TargetCapacitySpecification == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetCapacitySpecification"))
+	}
+	if s.LaunchTemplateConfigs != nil {
+		for i, v := range s.LaunchTemplateConfigs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "LaunchTemplateConfigs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TargetCapacitySpecification != nil {
+		if err := s.TargetCapacitySpecification.Validate(); err != nil {
+			invalidParams.AddNested("TargetCapacitySpecification", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateFleetInput) SetClientToken(v string) *CreateFleetInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *CreateFleetInput) SetDryRun(v bool) *CreateFleetInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetExcessCapacityTerminationPolicy sets the ExcessCapacityTerminationPolicy field's value.
+func (s *CreateFleetInput) SetExcessCapacityTerminationPolicy(v string) *CreateFleetInput {
+	s.ExcessCapacityTerminationPolicy = &v
+	return s
+}
+
+// SetLaunchTemplateConfigs sets the LaunchTemplateConfigs field's value.
+func (s *CreateFleetInput) SetLaunchTemplateConfigs(v []*FleetLaunchTemplateConfigRequest) *CreateFleetInput {
+	s.LaunchTemplateConfigs = v
+	return s
+}
+
+// SetReplaceUnhealthyInstances sets the ReplaceUnhealthyInstances field's value.
+func (s *CreateFleetInput) SetReplaceUnhealthyInstances(v bool) *CreateFleetInput {
+	s.ReplaceUnhealthyInstances = &v
+	return s
+}
+
+// SetSpotOptions sets the SpotOptions field's value.
+func (s *CreateFleetInput) SetSpotOptions(v *SpotOptionsRequest) *CreateFleetInput {
+	s.SpotOptions = v
+	return s
+}
+
+// SetTagSpecifications sets the TagSpecifications field's value.
+func (s *CreateFleetInput) SetTagSpecifications(v []*TagSpecification) *CreateFleetInput {
+	s.TagSpecifications = v
+	return s
+}
+
+// SetTargetCapacitySpecification sets the TargetCapacitySpecification field's value.
+func (s *CreateFleetInput) SetTargetCapacitySpecification(v *TargetCapacitySpecificationRequest) *CreateFleetInput {
+	s.TargetCapacitySpecification = v
+	return s
+}
+
+// SetTerminateInstancesWithExpiration sets the TerminateInstancesWithExpiration field's value.
+func (s *CreateFleetInput) SetTerminateInstancesWithExpiration(v bool) *CreateFleetInput {
+	s.TerminateInstancesWithExpiration = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *CreateFleetInput) SetType(v string) *CreateFleetInput {
+	s.Type = &v
+	return s
+}
+
+// SetValidFrom sets the ValidFrom field's value.
+func (s *CreateFleetInput) SetValidFrom(v time.Time) *CreateFleetInput {
+	s.ValidFrom = &v
+	return s
+}
+
+// SetValidUntil sets the ValidUntil field's value.
+func (s *CreateFleetInput) SetValidUntil(v time.Time) *CreateFleetInput {
+	s.ValidUntil = &v
+	return s
+}
+
+type CreateFleetOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the EC2 Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+}
+
+// String returns the string representation
+func (s CreateFleetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateFleetOutput) GoString() string {
+	return s.String()
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *CreateFleetOutput) SetFleetId(v string) *CreateFleetOutput {
+	s.FleetId = &v
 	return s
 }
 
@@ -29542,11 +30211,11 @@ type CreateVolumeInput struct {
 	// in the Amazon Elastic Compute Cloud User Guide.
 	Encrypted *bool `locationName:"encrypted" type:"boolean"`
 
-	// Only valid for Provisioned IOPS SSD volumes. The number of I/O operations
-	// per second (IOPS) to provision for the volume, with a maximum ratio of 50
-	// IOPS/GiB.
+	// The number of I/O operations per second (IOPS) to provision for the volume,
+	// with a maximum ratio of 50 IOPS/GiB. Range is 100 to 32000 IOPS for volumes
+	// in most regions. For exceptions, see Amazon EBS Volume Types (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html).
 	//
-	// Constraint: Range is 100 to 20000 for Provisioned IOPS SSD volumes
+	// This parameter is valid only for Provisioned IOPS SSD (io1) volumes.
 	Iops *int64 `type:"integer"`
 
 	// An identifier for the AWS Key Management Service (AWS KMS) customer master
@@ -29596,7 +30265,10 @@ type CreateVolumeInput struct {
 	// IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard
 	// for Magnetic volumes.
 	//
-	// Default: standard
+	// Defaults: If no volume type is specified, the default is standard in us-east-1,
+	// eu-west-1, eu-central-1, us-west-2, us-west-1, sa-east-1, ap-northeast-1,
+	// ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-south-1, us-gov-west-1,
+	// and cn-north-1. In all other regions, EBS defaults to gp2.
 	VolumeType *string `type:"string" enum:"VolumeType"`
 }
 
@@ -30969,6 +31641,211 @@ func (s DeleteEgressOnlyInternetGatewayOutput) GoString() string {
 // SetReturnCode sets the ReturnCode field's value.
 func (s *DeleteEgressOnlyInternetGatewayOutput) SetReturnCode(v bool) *DeleteEgressOnlyInternetGatewayOutput {
 	s.ReturnCode = &v
+	return s
+}
+
+// Describes an EC2 Fleet error.
+type DeleteFleetError struct {
+	_ struct{} `type:"structure"`
+
+	// The error code.
+	Code *string `locationName:"code" type:"string" enum:"DeleteFleetErrorCode"`
+
+	// The description for the error code.
+	Message *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteFleetError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFleetError) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *DeleteFleetError) SetCode(v string) *DeleteFleetError {
+	s.Code = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *DeleteFleetError) SetMessage(v string) *DeleteFleetError {
+	s.Message = &v
+	return s
+}
+
+// Describes an EC2 Fleet that was not successfully deleted.
+type DeleteFleetErrorItem struct {
+	_ struct{} `type:"structure"`
+
+	// The error.
+	Error *DeleteFleetError `locationName:"error" type:"structure"`
+
+	// The ID of the EC2 Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteFleetErrorItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFleetErrorItem) GoString() string {
+	return s.String()
+}
+
+// SetError sets the Error field's value.
+func (s *DeleteFleetErrorItem) SetError(v *DeleteFleetError) *DeleteFleetErrorItem {
+	s.Error = v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DeleteFleetErrorItem) SetFleetId(v string) *DeleteFleetErrorItem {
+	s.FleetId = &v
+	return s
+}
+
+// Describes an EC2 Fleet that was successfully deleted.
+type DeleteFleetSuccessItem struct {
+	_ struct{} `type:"structure"`
+
+	// The current state of the EC2 Fleet.
+	CurrentFleetState *string `locationName:"currentFleetState" type:"string" enum:"FleetStateCode"`
+
+	// The ID of the EC2 Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+
+	// The previous state of the EC2 Fleet.
+	PreviousFleetState *string `locationName:"previousFleetState" type:"string" enum:"FleetStateCode"`
+}
+
+// String returns the string representation
+func (s DeleteFleetSuccessItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFleetSuccessItem) GoString() string {
+	return s.String()
+}
+
+// SetCurrentFleetState sets the CurrentFleetState field's value.
+func (s *DeleteFleetSuccessItem) SetCurrentFleetState(v string) *DeleteFleetSuccessItem {
+	s.CurrentFleetState = &v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DeleteFleetSuccessItem) SetFleetId(v string) *DeleteFleetSuccessItem {
+	s.FleetId = &v
+	return s
+}
+
+// SetPreviousFleetState sets the PreviousFleetState field's value.
+func (s *DeleteFleetSuccessItem) SetPreviousFleetState(v string) *DeleteFleetSuccessItem {
+	s.PreviousFleetState = &v
+	return s
+}
+
+type DeleteFleetsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// The IDs of the EC2 Fleets.
+	//
+	// FleetIds is a required field
+	FleetIds []*string `locationName:"FleetId" type:"list" required:"true"`
+
+	// Indicates whether to terminate instances for an EC2 Fleet if it is deleted
+	// successfully.
+	//
+	// TerminateInstances is a required field
+	TerminateInstances *bool `type:"boolean" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteFleetsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFleetsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteFleetsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteFleetsInput"}
+	if s.FleetIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("FleetIds"))
+	}
+	if s.TerminateInstances == nil {
+		invalidParams.Add(request.NewErrParamRequired("TerminateInstances"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DeleteFleetsInput) SetDryRun(v bool) *DeleteFleetsInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetFleetIds sets the FleetIds field's value.
+func (s *DeleteFleetsInput) SetFleetIds(v []*string) *DeleteFleetsInput {
+	s.FleetIds = v
+	return s
+}
+
+// SetTerminateInstances sets the TerminateInstances field's value.
+func (s *DeleteFleetsInput) SetTerminateInstances(v bool) *DeleteFleetsInput {
+	s.TerminateInstances = &v
+	return s
+}
+
+type DeleteFleetsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the EC2 Fleets that are successfully deleted.
+	SuccessfulFleetDeletions []*DeleteFleetSuccessItem `locationName:"successfulFleetDeletionSet" locationNameList:"item" type:"list"`
+
+	// Information about the EC2 Fleets that are not successfully deleted.
+	UnsuccessfulFleetDeletions []*DeleteFleetErrorItem `locationName:"unsuccessfulFleetDeletionSet" locationNameList:"item" type:"list"`
+}
+
+// String returns the string representation
+func (s DeleteFleetsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFleetsOutput) GoString() string {
+	return s.String()
+}
+
+// SetSuccessfulFleetDeletions sets the SuccessfulFleetDeletions field's value.
+func (s *DeleteFleetsOutput) SetSuccessfulFleetDeletions(v []*DeleteFleetSuccessItem) *DeleteFleetsOutput {
+	s.SuccessfulFleetDeletions = v
+	return s
+}
+
+// SetUnsuccessfulFleetDeletions sets the UnsuccessfulFleetDeletions field's value.
+func (s *DeleteFleetsOutput) SetUnsuccessfulFleetDeletions(v []*DeleteFleetErrorItem) *DeleteFleetsOutput {
+	s.UnsuccessfulFleetDeletions = v
 	return s
 }
 
@@ -34142,6 +35019,378 @@ func (s *DescribeExportTasksOutput) SetExportTasks(v []*ExportTask) *DescribeExp
 	return s
 }
 
+type DescribeFleetHistoryInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// The type of events to describe. By default, all events are described.
+	EventType *string `type:"string" enum:"FleetEventType"`
+
+	// The ID of the EC2 Fleet.
+	//
+	// FleetId is a required field
+	FleetId *string `type:"string" required:"true"`
+
+	// The maximum number of results to return in a single call. Specify a value
+	// between 1 and 1000. The default value is 1000. To retrieve the remaining
+	// results, make another call with the returned NextToken value.
+	MaxResults *int64 `type:"integer"`
+
+	// The token for the next set of results.
+	NextToken *string `type:"string"`
+
+	// The start date and time for the events, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	//
+	// StartTime is a required field
+	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeFleetHistoryInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetHistoryInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeFleetHistoryInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeFleetHistoryInput"}
+	if s.FleetId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FleetId"))
+	}
+	if s.StartTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("StartTime"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DescribeFleetHistoryInput) SetDryRun(v bool) *DescribeFleetHistoryInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetEventType sets the EventType field's value.
+func (s *DescribeFleetHistoryInput) SetEventType(v string) *DescribeFleetHistoryInput {
+	s.EventType = &v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DescribeFleetHistoryInput) SetFleetId(v string) *DescribeFleetHistoryInput {
+	s.FleetId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeFleetHistoryInput) SetMaxResults(v int64) *DescribeFleetHistoryInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetHistoryInput) SetNextToken(v string) *DescribeFleetHistoryInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *DescribeFleetHistoryInput) SetStartTime(v time.Time) *DescribeFleetHistoryInput {
+	s.StartTime = &v
+	return s
+}
+
+type DescribeFleetHistoryOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the EC Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+
+	// Information about the events in the history of the EC2 Fleet.
+	HistoryRecords []*HistoryRecordEntry `locationName:"historyRecordSet" locationNameList:"item" type:"list"`
+
+	// The last date and time for the events, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	// All records up to this time were retrieved.
+	//
+	// If nextToken indicates that there are more results, this value is not present.
+	LastEvaluatedTime *time.Time `locationName:"lastEvaluatedTime" type:"timestamp" timestampFormat:"iso8601"`
+
+	// The token for the next set of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// The start date and time for the events, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	StartTime *time.Time `locationName:"startTime" type:"timestamp" timestampFormat:"iso8601"`
+}
+
+// String returns the string representation
+func (s DescribeFleetHistoryOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetHistoryOutput) GoString() string {
+	return s.String()
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DescribeFleetHistoryOutput) SetFleetId(v string) *DescribeFleetHistoryOutput {
+	s.FleetId = &v
+	return s
+}
+
+// SetHistoryRecords sets the HistoryRecords field's value.
+func (s *DescribeFleetHistoryOutput) SetHistoryRecords(v []*HistoryRecordEntry) *DescribeFleetHistoryOutput {
+	s.HistoryRecords = v
+	return s
+}
+
+// SetLastEvaluatedTime sets the LastEvaluatedTime field's value.
+func (s *DescribeFleetHistoryOutput) SetLastEvaluatedTime(v time.Time) *DescribeFleetHistoryOutput {
+	s.LastEvaluatedTime = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetHistoryOutput) SetNextToken(v string) *DescribeFleetHistoryOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *DescribeFleetHistoryOutput) SetStartTime(v time.Time) *DescribeFleetHistoryOutput {
+	s.StartTime = &v
+	return s
+}
+
+type DescribeFleetInstancesInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// One or more filters.
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
+	// The ID of the EC2 Fleet.
+	//
+	// FleetId is a required field
+	FleetId *string `type:"string" required:"true"`
+
+	// The maximum number of results to return in a single call. Specify a value
+	// between 1 and 1000. The default value is 1000. To retrieve the remaining
+	// results, make another call with the returned NextToken value.
+	MaxResults *int64 `type:"integer"`
+
+	// The token for the next set of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFleetInstancesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetInstancesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeFleetInstancesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeFleetInstancesInput"}
+	if s.FleetId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FleetId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DescribeFleetInstancesInput) SetDryRun(v bool) *DescribeFleetInstancesInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeFleetInstancesInput) SetFilters(v []*Filter) *DescribeFleetInstancesInput {
+	s.Filters = v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DescribeFleetInstancesInput) SetFleetId(v string) *DescribeFleetInstancesInput {
+	s.FleetId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeFleetInstancesInput) SetMaxResults(v int64) *DescribeFleetInstancesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetInstancesInput) SetNextToken(v string) *DescribeFleetInstancesInput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeFleetInstancesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The running instances. This list is refreshed periodically and might be out
+	// of date.
+	ActiveInstances []*ActiveInstance `locationName:"activeInstanceSet" locationNameList:"item" type:"list"`
+
+	// The ID of the EC2 Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+
+	// The token for the next set of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFleetInstancesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetInstancesOutput) GoString() string {
+	return s.String()
+}
+
+// SetActiveInstances sets the ActiveInstances field's value.
+func (s *DescribeFleetInstancesOutput) SetActiveInstances(v []*ActiveInstance) *DescribeFleetInstancesOutput {
+	s.ActiveInstances = v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *DescribeFleetInstancesOutput) SetFleetId(v string) *DescribeFleetInstancesOutput {
+	s.FleetId = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetInstancesOutput) SetNextToken(v string) *DescribeFleetInstancesOutput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeFleetsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// One or more filters.
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
+	// The ID of the EC2 Fleets.
+	FleetIds []*string `locationName:"FleetId" type:"list"`
+
+	// The maximum number of results to return in a single call. Specify a value
+	// between 1 and 1000. The default value is 1000. To retrieve the remaining
+	// results, make another call with the returned NextToken value.
+	MaxResults *int64 `type:"integer"`
+
+	// The token for the next set of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFleetsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetsInput) GoString() string {
+	return s.String()
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DescribeFleetsInput) SetDryRun(v bool) *DescribeFleetsInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeFleetsInput) SetFilters(v []*Filter) *DescribeFleetsInput {
+	s.Filters = v
+	return s
+}
+
+// SetFleetIds sets the FleetIds field's value.
+func (s *DescribeFleetsInput) SetFleetIds(v []*string) *DescribeFleetsInput {
+	s.FleetIds = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeFleetsInput) SetMaxResults(v int64) *DescribeFleetsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetsInput) SetNextToken(v string) *DescribeFleetsInput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeFleetsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The EC2 Fleets.
+	Fleets []*FleetData `locationName:"fleetSet" locationNameList:"item" type:"list"`
+
+	// The token for the next set of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFleetsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFleetsOutput) GoString() string {
+	return s.String()
+}
+
+// SetFleets sets the Fleets field's value.
+func (s *DescribeFleetsOutput) SetFleets(v []*FleetData) *DescribeFleetsOutput {
+	s.Fleets = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFleetsOutput) SetNextToken(v string) *DescribeFleetsOutput {
+	s.NextToken = &v
+	return s
+}
+
 // Contains the parameters for DescribeFlowLogs.
 type DescribeFlowLogsInput struct {
 	_ struct{} `type:"structure"`
@@ -34699,21 +35948,21 @@ type DescribeHostsInput struct {
 
 	// One or more filters.
 	//
-	//    * instance-type - The instance type size that the Dedicated Host is configured
-	//    to support.
-	//
 	//    * auto-placement - Whether auto-placement is enabled or disabled (on |
 	//    off).
 	//
+	//    * availability-zone - The Availability Zone of the host.
+	//
+	//    * client-token - The idempotency token you provided when you allocated
+	//    the host.
+	//
 	//    * host-reservation-id - The ID of the reservation assigned to this host.
 	//
-	//    * client-token - The idempotency token you provided when you launched
-	//    the instance
+	//    * instance-type - The instance type size that the Dedicated Host is configured
+	//    to support.
 	//
-	//    * state- The allocation state of the Dedicated Host (available | under-assessment
+	//    * state - The allocation state of the Dedicated Host (available | under-assessment
 	//    | permanent-failure | released | released-permanent-failure).
-	//
-	//    * availability-zone - The Availability Zone of the host.
 	Filter []*Filter `locationName:"filter" locationNameList:"Filter" type:"list"`
 
 	// The IDs of the Dedicated Hosts. The IDs are used for targeted instance launches.
@@ -39582,8 +40831,8 @@ func (s *DescribeSpotFleetInstancesInput) SetSpotFleetRequestId(v string) *Descr
 type DescribeSpotFleetInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The running instances. Note that this list is refreshed periodically and
-	// might be out of date.
+	// The running instances. This list is refreshed periodically and might be out
+	// of date.
 	//
 	// ActiveInstances is a required field
 	ActiveInstances []*ActiveInstance `locationName:"activeInstanceSet" locationNameList:"item" type:"list" required:"true"`
@@ -39924,7 +41173,9 @@ type DescribeSpotInstanceRequestsInput struct {
 	//    for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput
 	//    Optimized HDD, sc1for Cold HDD, or standard for Magnetic.
 	//
-	//    * launch.group-id - The security group for the instance.
+	//    * launch.group-id - The ID of the security group for the instance.
+	//
+	//    * launch.group-name - The name of the security group for the instance.
 	//
 	//    * launch.image-id - The ID of the AMI.
 	//
@@ -39975,7 +41226,7 @@ type DescribeSpotInstanceRequestsInput struct {
 	//    | cancelled | failed). Spot request status information can help you track
 	//    your Amazon EC2 Spot Instance requests. For more information, see Spot
 	//    Request Status (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html)
-	//    in the Amazon Elastic Compute Cloud User Guide.
+	//    in the Amazon EC2 User Guide for Linux Instances.
 	//
 	//    * status-code - The short code describing the most recent evaluation of
 	//    your Spot Instance request.
@@ -40093,9 +41344,9 @@ type DescribeSpotPriceHistoryInput struct {
 	//    * spot-price - The Spot price. The value must match exactly (or use wildcards;
 	//    greater than or less than comparison is not supported).
 	//
-	//    * timestamp - The timestamp of the Spot price history, in UTC format (for
-	//    example, YYYY-MM-DDTHH:MM:SSZ). You can use wildcards (* and ?). Greater
-	//    than or less than comparison is not supported.
+	//    * timestamp - The time stamp of the Spot price history, in UTC format
+	//    (for example, YYYY-MM-DDTHH:MM:SSZ). You can use wildcards (* and ?).
+	//    Greater than or less than comparison is not supported.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// Filters the results by the specified instance types.
@@ -40806,8 +42057,7 @@ type DescribeVolumesInput struct {
 	//    * attachment.instance-id - The ID of the instance the volume is attached
 	//    to.
 	//
-	//    * attachment.status - The attachment state (attaching | attached | detaching
-	//    | detached).
+	//    * attachment.status - The attachment state (attaching | attached | detaching).
 	//
 	//    * availability-zone - The Availability Zone in which the volume was created.
 	//
@@ -44434,9 +45684,9 @@ type EventInformation struct {
 	//    * cancelled - The Spot Fleet is canceled and has no running Spot Instances.
 	//    The Spot Fleet will be deleted two days after its instances were terminated.
 	//
-	//    * cancelled_running - The Spot Fleet is canceled and will not launch additional
-	//    Spot Instances, but its existing Spot Instances continue to run until
-	//    they are interrupted or terminated.
+	//    * cancelled_running - The Spot Fleet is canceled and does not launch additional
+	//    Spot Instances. Existing Spot Instances continue to run until they are
+	//    interrupted or terminated.
 	//
 	//    * cancelled_terminating - The Spot Fleet is canceled and its Spot Instances
 	//    are terminating.
@@ -44682,8 +45932,30 @@ func (s *ExportToS3TaskSpecification) SetS3Prefix(v string) *ExportToS3TaskSpeci
 }
 
 // A filter name and value pair that is used to return a more specific list
-// of results. Filters can be used to match a set of resources by various criteria,
-// such as tags, attributes, or IDs.
+// of results from a describe operation. Filters can be used to match a set
+// of resources by specific criteria, such as tags, attributes, or IDs. The
+// filters supported by a describe operation are documented with the describe
+// operation. For example:
+//
+//    * DescribeAvailabilityZones
+//
+//    * DescribeImages
+//
+//    * DescribeInstances
+//
+//    * DescribeKeyPairs
+//
+//    * DescribeSecurityGroups
+//
+//    * DescribeSnapshots
+//
+//    * DescribeSubnets
+//
+//    * DescribeTags
+//
+//    * DescribeVolumes
+//
+//    * DescribeVpcs
 type Filter struct {
 	_ struct{} `type:"structure"`
 
@@ -44713,6 +45985,403 @@ func (s *Filter) SetName(v string) *Filter {
 // SetValues sets the Values field's value.
 func (s *Filter) SetValues(v []*string) *Filter {
 	s.Values = v
+	return s
+}
+
+// Describes an EC2 Fleet.
+type FleetData struct {
+	_ struct{} `type:"structure"`
+
+	// The progress of the EC2 Fleet. If there is an error, the status is error.
+	// After all requests are placed, the status is pending_fulfillment. If the
+	// size of the EC2 Fleet is equal to or greater than its target capacity, the
+	// status is fulfilled. If the size of the EC2 Fleet is decreased, the status
+	// is pending_termination while instances are terminating.
+	ActivityStatus *string `locationName:"activityStatus" type:"string" enum:"FleetActivityStatus"`
+
+	// Unique, case-sensitive identifier you provide to ensure the idempotency of
+	// the request. For more information, see Ensuring Idempotency (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
+	//
+	// Constraints: Maximum 64 ASCII characters
+	ClientToken *string `locationName:"clientToken" type:"string"`
+
+	// The creation date and time of the EC2 Fleet.
+	CreateTime *time.Time `locationName:"createTime" type:"timestamp" timestampFormat:"iso8601"`
+
+	// Indicates whether running instances should be terminated if the target capacity
+	// of the EC2 Fleet is decreased below the current size of the EC2 Fleet.
+	ExcessCapacityTerminationPolicy *string `locationName:"excessCapacityTerminationPolicy" type:"string" enum:"FleetExcessCapacityTerminationPolicy"`
+
+	// The ID of the EC2 Fleet.
+	FleetId *string `locationName:"fleetId" type:"string"`
+
+	// The state of the EC2 Fleet.
+	FleetState *string `locationName:"fleetState" type:"string" enum:"FleetStateCode"`
+
+	// The number of units fulfilled by this request compared to the set target
+	// capacity.
+	FulfilledCapacity *float64 `locationName:"fulfilledCapacity" type:"double"`
+
+	// The number of units fulfilled by this request compared to the set target
+	// On-Demand capacity.
+	FulfilledOnDemandCapacity *float64 `locationName:"fulfilledOnDemandCapacity" type:"double"`
+
+	// The launch template and overrides.
+	LaunchTemplateConfigs []*FleetLaunchTemplateConfig `locationName:"launchTemplateConfigs" locationNameList:"item" type:"list"`
+
+	// Indicates whether EC2 Fleet should replace unhealthy instances.
+	ReplaceUnhealthyInstances *bool `locationName:"replaceUnhealthyInstances" type:"boolean"`
+
+	// The configuration of Spot Instances in an EC2 Fleet.
+	SpotOptions *SpotOptions `locationName:"spotOptions" type:"structure"`
+
+	// The tags for an EC2 Fleet resource.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
+
+	// The number of units to request. You can choose to set the target capacity
+	// in terms of instances or a performance characteristic that is important to
+	// your application workload, such as vCPUs, memory, or I/O. If the request
+	// type is maintain, you can specify a target capacity of 0 and add capacity
+	// later.
+	TargetCapacitySpecification *TargetCapacitySpecification `locationName:"targetCapacitySpecification" type:"structure"`
+
+	// Indicates whether running instances should be terminated when the EC2 Fleet
+	// expires.
+	TerminateInstancesWithExpiration *bool `locationName:"terminateInstancesWithExpiration" type:"boolean"`
+
+	// The type of request. Indicates whether the EC2 Fleet only requests the target
+	// capacity, or also attempts to maintain it. If you request a certain target
+	// capacity, EC2 Fleet only places the required requests; it does not attempt
+	// to replenish instances if capacity is diminished, and does not submit requests
+	// in alternative capacity pools if capacity is unavailable. To maintain a certain
+	// target capacity, EC2 Fleet places the required requests to meet this target
+	// capacity. It also automatically replenishes any interrupted Spot Instances.
+	// Default: maintain.
+	Type *string `locationName:"type" type:"string" enum:"FleetType"`
+
+	// The start date and time of the request, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	// The default is to start fulfilling the request immediately.
+	ValidFrom *time.Time `locationName:"validFrom" type:"timestamp" timestampFormat:"iso8601"`
+
+	// The end date and time of the request, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	// At this point, no new instance requests are placed or able to fulfill the
+	// request. The default end date is 7 days from the current date.
+	ValidUntil *time.Time `locationName:"validUntil" type:"timestamp" timestampFormat:"iso8601"`
+}
+
+// String returns the string representation
+func (s FleetData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetData) GoString() string {
+	return s.String()
+}
+
+// SetActivityStatus sets the ActivityStatus field's value.
+func (s *FleetData) SetActivityStatus(v string) *FleetData {
+	s.ActivityStatus = &v
+	return s
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *FleetData) SetClientToken(v string) *FleetData {
+	s.ClientToken = &v
+	return s
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *FleetData) SetCreateTime(v time.Time) *FleetData {
+	s.CreateTime = &v
+	return s
+}
+
+// SetExcessCapacityTerminationPolicy sets the ExcessCapacityTerminationPolicy field's value.
+func (s *FleetData) SetExcessCapacityTerminationPolicy(v string) *FleetData {
+	s.ExcessCapacityTerminationPolicy = &v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *FleetData) SetFleetId(v string) *FleetData {
+	s.FleetId = &v
+	return s
+}
+
+// SetFleetState sets the FleetState field's value.
+func (s *FleetData) SetFleetState(v string) *FleetData {
+	s.FleetState = &v
+	return s
+}
+
+// SetFulfilledCapacity sets the FulfilledCapacity field's value.
+func (s *FleetData) SetFulfilledCapacity(v float64) *FleetData {
+	s.FulfilledCapacity = &v
+	return s
+}
+
+// SetFulfilledOnDemandCapacity sets the FulfilledOnDemandCapacity field's value.
+func (s *FleetData) SetFulfilledOnDemandCapacity(v float64) *FleetData {
+	s.FulfilledOnDemandCapacity = &v
+	return s
+}
+
+// SetLaunchTemplateConfigs sets the LaunchTemplateConfigs field's value.
+func (s *FleetData) SetLaunchTemplateConfigs(v []*FleetLaunchTemplateConfig) *FleetData {
+	s.LaunchTemplateConfigs = v
+	return s
+}
+
+// SetReplaceUnhealthyInstances sets the ReplaceUnhealthyInstances field's value.
+func (s *FleetData) SetReplaceUnhealthyInstances(v bool) *FleetData {
+	s.ReplaceUnhealthyInstances = &v
+	return s
+}
+
+// SetSpotOptions sets the SpotOptions field's value.
+func (s *FleetData) SetSpotOptions(v *SpotOptions) *FleetData {
+	s.SpotOptions = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *FleetData) SetTags(v []*Tag) *FleetData {
+	s.Tags = v
+	return s
+}
+
+// SetTargetCapacitySpecification sets the TargetCapacitySpecification field's value.
+func (s *FleetData) SetTargetCapacitySpecification(v *TargetCapacitySpecification) *FleetData {
+	s.TargetCapacitySpecification = v
+	return s
+}
+
+// SetTerminateInstancesWithExpiration sets the TerminateInstancesWithExpiration field's value.
+func (s *FleetData) SetTerminateInstancesWithExpiration(v bool) *FleetData {
+	s.TerminateInstancesWithExpiration = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *FleetData) SetType(v string) *FleetData {
+	s.Type = &v
+	return s
+}
+
+// SetValidFrom sets the ValidFrom field's value.
+func (s *FleetData) SetValidFrom(v time.Time) *FleetData {
+	s.ValidFrom = &v
+	return s
+}
+
+// SetValidUntil sets the ValidUntil field's value.
+func (s *FleetData) SetValidUntil(v time.Time) *FleetData {
+	s.ValidUntil = &v
+	return s
+}
+
+// Describes a launch template and overrides.
+type FleetLaunchTemplateConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The launch template.
+	LaunchTemplateSpecification *FleetLaunchTemplateSpecification `locationName:"launchTemplateSpecification" type:"structure"`
+
+	// Any parameters that you specify override the same parameters in the launch
+	// template.
+	Overrides []*FleetLaunchTemplateOverrides `locationName:"overrides" locationNameList:"item" type:"list"`
+}
+
+// String returns the string representation
+func (s FleetLaunchTemplateConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetLaunchTemplateConfig) GoString() string {
+	return s.String()
+}
+
+// SetLaunchTemplateSpecification sets the LaunchTemplateSpecification field's value.
+func (s *FleetLaunchTemplateConfig) SetLaunchTemplateSpecification(v *FleetLaunchTemplateSpecification) *FleetLaunchTemplateConfig {
+	s.LaunchTemplateSpecification = v
+	return s
+}
+
+// SetOverrides sets the Overrides field's value.
+func (s *FleetLaunchTemplateConfig) SetOverrides(v []*FleetLaunchTemplateOverrides) *FleetLaunchTemplateConfig {
+	s.Overrides = v
+	return s
+}
+
+// Describes a launch template and overrides.
+type FleetLaunchTemplateConfigRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The launch template to use. You must specify either the launch template ID
+	// or launch template name in the request.
+	LaunchTemplateSpecification *FleetLaunchTemplateSpecificationRequest `type:"structure"`
+
+	// Any parameters that you specify override the same parameters in the launch
+	// template.
+	Overrides []*FleetLaunchTemplateOverridesRequest `locationNameList:"item" type:"list"`
+}
+
+// String returns the string representation
+func (s FleetLaunchTemplateConfigRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetLaunchTemplateConfigRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FleetLaunchTemplateConfigRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FleetLaunchTemplateConfigRequest"}
+	if s.LaunchTemplateSpecification != nil {
+		if err := s.LaunchTemplateSpecification.Validate(); err != nil {
+			invalidParams.AddNested("LaunchTemplateSpecification", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLaunchTemplateSpecification sets the LaunchTemplateSpecification field's value.
+func (s *FleetLaunchTemplateConfigRequest) SetLaunchTemplateSpecification(v *FleetLaunchTemplateSpecificationRequest) *FleetLaunchTemplateConfigRequest {
+	s.LaunchTemplateSpecification = v
+	return s
+}
+
+// SetOverrides sets the Overrides field's value.
+func (s *FleetLaunchTemplateConfigRequest) SetOverrides(v []*FleetLaunchTemplateOverridesRequest) *FleetLaunchTemplateConfigRequest {
+	s.Overrides = v
+	return s
+}
+
+// Describes overrides for a launch template.
+type FleetLaunchTemplateOverrides struct {
+	_ struct{} `type:"structure"`
+
+	// The Availability Zone in which to launch the instances.
+	AvailabilityZone *string `locationName:"availabilityZone" type:"string"`
+
+	// The instance type.
+	InstanceType *string `locationName:"instanceType" type:"string" enum:"InstanceType"`
+
+	// The maximum price per unit hour that you are willing to pay for a Spot Instance.
+	MaxPrice *string `locationName:"maxPrice" type:"string"`
+
+	// The ID of the subnet in which to launch the instances.
+	SubnetId *string `locationName:"subnetId" type:"string"`
+
+	// The number of units provided by the specified instance type.
+	WeightedCapacity *float64 `locationName:"weightedCapacity" type:"double"`
+}
+
+// String returns the string representation
+func (s FleetLaunchTemplateOverrides) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetLaunchTemplateOverrides) GoString() string {
+	return s.String()
+}
+
+// SetAvailabilityZone sets the AvailabilityZone field's value.
+func (s *FleetLaunchTemplateOverrides) SetAvailabilityZone(v string) *FleetLaunchTemplateOverrides {
+	s.AvailabilityZone = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *FleetLaunchTemplateOverrides) SetInstanceType(v string) *FleetLaunchTemplateOverrides {
+	s.InstanceType = &v
+	return s
+}
+
+// SetMaxPrice sets the MaxPrice field's value.
+func (s *FleetLaunchTemplateOverrides) SetMaxPrice(v string) *FleetLaunchTemplateOverrides {
+	s.MaxPrice = &v
+	return s
+}
+
+// SetSubnetId sets the SubnetId field's value.
+func (s *FleetLaunchTemplateOverrides) SetSubnetId(v string) *FleetLaunchTemplateOverrides {
+	s.SubnetId = &v
+	return s
+}
+
+// SetWeightedCapacity sets the WeightedCapacity field's value.
+func (s *FleetLaunchTemplateOverrides) SetWeightedCapacity(v float64) *FleetLaunchTemplateOverrides {
+	s.WeightedCapacity = &v
+	return s
+}
+
+// Describes overrides for a launch template.
+type FleetLaunchTemplateOverridesRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The Availability Zone in which to launch the instances.
+	AvailabilityZone *string `type:"string"`
+
+	// The instance type.
+	InstanceType *string `type:"string" enum:"InstanceType"`
+
+	// The maximum price per unit hour that you are willing to pay for a Spot Instance.
+	MaxPrice *string `type:"string"`
+
+	// The ID of the subnet in which to launch the instances.
+	SubnetId *string `type:"string"`
+
+	// The number of units provided by the specified instance type.
+	WeightedCapacity *float64 `type:"double"`
+}
+
+// String returns the string representation
+func (s FleetLaunchTemplateOverridesRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetLaunchTemplateOverridesRequest) GoString() string {
+	return s.String()
+}
+
+// SetAvailabilityZone sets the AvailabilityZone field's value.
+func (s *FleetLaunchTemplateOverridesRequest) SetAvailabilityZone(v string) *FleetLaunchTemplateOverridesRequest {
+	s.AvailabilityZone = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *FleetLaunchTemplateOverridesRequest) SetInstanceType(v string) *FleetLaunchTemplateOverridesRequest {
+	s.InstanceType = &v
+	return s
+}
+
+// SetMaxPrice sets the MaxPrice field's value.
+func (s *FleetLaunchTemplateOverridesRequest) SetMaxPrice(v string) *FleetLaunchTemplateOverridesRequest {
+	s.MaxPrice = &v
+	return s
+}
+
+// SetSubnetId sets the SubnetId field's value.
+func (s *FleetLaunchTemplateOverridesRequest) SetSubnetId(v string) *FleetLaunchTemplateOverridesRequest {
+	s.SubnetId = &v
+	return s
+}
+
+// SetWeightedCapacity sets the WeightedCapacity field's value.
+func (s *FleetLaunchTemplateOverridesRequest) SetWeightedCapacity(v float64) *FleetLaunchTemplateOverridesRequest {
+	s.WeightedCapacity = &v
 	return s
 }
 
@@ -44770,6 +46439,62 @@ func (s *FleetLaunchTemplateSpecification) SetLaunchTemplateName(v string) *Flee
 
 // SetVersion sets the Version field's value.
 func (s *FleetLaunchTemplateSpecification) SetVersion(v string) *FleetLaunchTemplateSpecification {
+	s.Version = &v
+	return s
+}
+
+// The launch template to use. You must specify either the launch template ID
+// or launch template name in the request.
+type FleetLaunchTemplateSpecificationRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the launch template.
+	LaunchTemplateId *string `type:"string"`
+
+	// The name of the launch template.
+	LaunchTemplateName *string `min:"3" type:"string"`
+
+	// The version number of the launch template.
+	Version *string `type:"string"`
+}
+
+// String returns the string representation
+func (s FleetLaunchTemplateSpecificationRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FleetLaunchTemplateSpecificationRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FleetLaunchTemplateSpecificationRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FleetLaunchTemplateSpecificationRequest"}
+	if s.LaunchTemplateName != nil && len(*s.LaunchTemplateName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("LaunchTemplateName", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLaunchTemplateId sets the LaunchTemplateId field's value.
+func (s *FleetLaunchTemplateSpecificationRequest) SetLaunchTemplateId(v string) *FleetLaunchTemplateSpecificationRequest {
+	s.LaunchTemplateId = &v
+	return s
+}
+
+// SetLaunchTemplateName sets the LaunchTemplateName field's value.
+func (s *FleetLaunchTemplateSpecificationRequest) SetLaunchTemplateName(v string) *FleetLaunchTemplateSpecificationRequest {
+	s.LaunchTemplateName = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *FleetLaunchTemplateSpecificationRequest) SetVersion(v string) *FleetLaunchTemplateSpecificationRequest {
 	s.Version = &v
 	return s
 }
@@ -45835,9 +47560,54 @@ func (s *HistoryRecord) SetTimestamp(v time.Time) *HistoryRecord {
 	return s
 }
 
+// Describes an event in the history of the EC2 Fleet.
+type HistoryRecordEntry struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the event.
+	EventInformation *EventInformation `locationName:"eventInformation" type:"structure"`
+
+	// The event type.
+	EventType *string `locationName:"eventType" type:"string" enum:"FleetEventType"`
+
+	// The date and time of the event, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
+	Timestamp *time.Time `locationName:"timestamp" type:"timestamp" timestampFormat:"iso8601"`
+}
+
+// String returns the string representation
+func (s HistoryRecordEntry) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HistoryRecordEntry) GoString() string {
+	return s.String()
+}
+
+// SetEventInformation sets the EventInformation field's value.
+func (s *HistoryRecordEntry) SetEventInformation(v *EventInformation) *HistoryRecordEntry {
+	s.EventInformation = v
+	return s
+}
+
+// SetEventType sets the EventType field's value.
+func (s *HistoryRecordEntry) SetEventType(v string) *HistoryRecordEntry {
+	s.EventType = &v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *HistoryRecordEntry) SetTimestamp(v time.Time) *HistoryRecordEntry {
+	s.Timestamp = &v
+	return s
+}
+
 // Describes the properties of the Dedicated Host.
 type Host struct {
 	_ struct{} `type:"structure"`
+
+	// The time that the Dedicated Host was allocated.
+	AllocationTime *time.Time `locationName:"allocationTime" type:"timestamp" timestampFormat:"iso8601"`
 
 	// Whether auto-placement is on or off.
 	AutoPlacement *string `locationName:"autoPlacement" type:"string" enum:"AutoPlacement"`
@@ -45866,6 +47636,9 @@ type Host struct {
 	// The IDs and instance type that are currently running on the Dedicated Host.
 	Instances []*HostInstance `locationName:"instances" locationNameList:"item" type:"list"`
 
+	// The time that the Dedicated Host was released.
+	ReleaseTime *time.Time `locationName:"releaseTime" type:"timestamp" timestampFormat:"iso8601"`
+
 	// The Dedicated Host's state.
 	State *string `locationName:"state" type:"string" enum:"AllocationState"`
 }
@@ -45878,6 +47651,12 @@ func (s Host) String() string {
 // GoString returns the string representation
 func (s Host) GoString() string {
 	return s.String()
+}
+
+// SetAllocationTime sets the AllocationTime field's value.
+func (s *Host) SetAllocationTime(v time.Time) *Host {
+	s.AllocationTime = &v
+	return s
 }
 
 // SetAutoPlacement sets the AutoPlacement field's value.
@@ -45925,6 +47704,12 @@ func (s *Host) SetHostReservationId(v string) *Host {
 // SetInstances sets the Instances field's value.
 func (s *Host) SetInstances(v []*HostInstance) *Host {
 	s.Instances = v
+	return s
+}
+
+// SetReleaseTime sets the ReleaseTime field's value.
+func (s *Host) SetReleaseTime(v time.Time) *Host {
+	s.ReleaseTime = &v
 	return s
 }
 
@@ -50988,7 +52773,7 @@ func (s *LaunchTemplatePlacementRequest) SetTenancy(v string) *LaunchTemplatePla
 }
 
 // The launch template to use. You must specify either the launch template ID
-// or launch template name in the request.
+// or launch template name in the request, but not both.
 type LaunchTemplateSpecification struct {
 	_ struct{} `type:"structure"`
 
@@ -51517,6 +53302,109 @@ func (s *LoadPermissionRequest) SetGroup(v string) *LoadPermissionRequest {
 // SetUserId sets the UserId field's value.
 func (s *LoadPermissionRequest) SetUserId(v string) *LoadPermissionRequest {
 	s.UserId = &v
+	return s
+}
+
+type ModifyFleetInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// Indicates whether running instances should be terminated if the total target
+	// capacity of the EC2 Fleet is decreased below the current size of the EC2
+	// Fleet.
+	ExcessCapacityTerminationPolicy *string `type:"string" enum:"FleetExcessCapacityTerminationPolicy"`
+
+	// The ID of the EC2 Fleet.
+	//
+	// FleetId is a required field
+	FleetId *string `type:"string" required:"true"`
+
+	// The size of the EC2 Fleet.
+	//
+	// TargetCapacitySpecification is a required field
+	TargetCapacitySpecification *TargetCapacitySpecificationRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s ModifyFleetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyFleetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyFleetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyFleetInput"}
+	if s.FleetId == nil {
+		invalidParams.Add(request.NewErrParamRequired("FleetId"))
+	}
+	if s.TargetCapacitySpecification == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetCapacitySpecification"))
+	}
+	if s.TargetCapacitySpecification != nil {
+		if err := s.TargetCapacitySpecification.Validate(); err != nil {
+			invalidParams.AddNested("TargetCapacitySpecification", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *ModifyFleetInput) SetDryRun(v bool) *ModifyFleetInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetExcessCapacityTerminationPolicy sets the ExcessCapacityTerminationPolicy field's value.
+func (s *ModifyFleetInput) SetExcessCapacityTerminationPolicy(v string) *ModifyFleetInput {
+	s.ExcessCapacityTerminationPolicy = &v
+	return s
+}
+
+// SetFleetId sets the FleetId field's value.
+func (s *ModifyFleetInput) SetFleetId(v string) *ModifyFleetInput {
+	s.FleetId = &v
+	return s
+}
+
+// SetTargetCapacitySpecification sets the TargetCapacitySpecification field's value.
+func (s *ModifyFleetInput) SetTargetCapacitySpecification(v *TargetCapacitySpecificationRequest) *ModifyFleetInput {
+	s.TargetCapacitySpecification = v
+	return s
+}
+
+type ModifyFleetOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Is true if the request succeeds, and an error otherwise.
+	Return *bool `locationName:"return" type:"boolean"`
+}
+
+// String returns the string representation
+func (s ModifyFleetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyFleetOutput) GoString() string {
+	return s.String()
+}
+
+// SetReturn sets the Return field's value.
+func (s *ModifyFleetOutput) SetReturn(v bool) *ModifyFleetOutput {
+	s.Return = &v
 	return s
 }
 
@@ -58093,13 +59981,13 @@ type RequestSpotInstancesInput struct {
 	// for termination and provides a Spot Instance termination notice, which gives
 	// the instance a two-minute warning before it terminates.
 	//
-	// Note that you can't specify an Availability Zone group or a launch group
-	// if you specify a duration.
+	// You can't specify an Availability Zone group or a launch group if you specify
+	// a duration.
 	BlockDurationMinutes *int64 `locationName:"blockDurationMinutes" type:"integer"`
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency
 	// of the request. For more information, see How to Ensure Idempotency (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// in the Amazon EC2 User Guide for Linux Instances.
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
 	// Checks whether you have the required permissions for the action, without
@@ -60646,6 +62534,7 @@ type RunInstancesInput struct {
 
 	// The launch template to use to launch the instances. Any parameters that you
 	// specify in RunInstances override the same parameters in the launch template.
+	// You can specify either the name or ID of a launch template, but not both.
 	LaunchTemplate *LaunchTemplateSpecification `type:"structure"`
 
 	// The maximum number of instances to launch. If you specify more instances
@@ -63452,8 +65341,8 @@ type SpotFleetRequestConfigData struct {
 	// by the Spot Fleet request. The default is lowestPrice.
 	AllocationStrategy *string `locationName:"allocationStrategy" type:"string" enum:"AllocationStrategy"`
 
-	// A unique, case-sensitive identifier you provide to ensure idempotency of
-	// your listings. This helps avoid duplicate listings. For more information,
+	// A unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of your listings. This helps to avoid duplicate listings. For more information,
 	// see Ensuring Idempotency (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
@@ -63491,6 +65380,17 @@ type SpotFleetRequestConfigData struct {
 	// HS1, M1, M2, M3, and T1.
 	LoadBalancersConfig *LoadBalancersConfig `locationName:"loadBalancersConfig" type:"structure"`
 
+	// The number of On-Demand units fulfilled by this request compared to the set
+	// target On-Demand capacity.
+	OnDemandFulfilledCapacity *float64 `locationName:"onDemandFulfilledCapacity" type:"double"`
+
+	// The number of On-Demand units to request. You can choose to set the target
+	// capacity in terms of instances or a performance characteristic that is important
+	// to your application workload, such as vCPUs, memory, or I/O. If the request
+	// type is maintain, you can specify a target capacity of 0 and add capacity
+	// later.
+	OnDemandTargetCapacity *int64 `locationName:"onDemandTargetCapacity" type:"integer"`
+
 	// Indicates whether Spot Fleet should replace unhealthy instances.
 	ReplaceUnhealthyInstances *bool `locationName:"replaceUnhealthyInstances" type:"boolean"`
 
@@ -63511,14 +65411,13 @@ type SpotFleetRequestConfigData struct {
 	// Fleet request expires.
 	TerminateInstancesWithExpiration *bool `locationName:"terminateInstancesWithExpiration" type:"boolean"`
 
-	// The type of request. Indicates whether the fleet will only request the target
-	// capacity or also attempt to maintain it. When you request a certain target
-	// capacity, the fleet will only place the required requests. It will not attempt
-	// to replenish Spot Instances if capacity is diminished, nor will it submit
-	// requests in alternative Spot pools if capacity is not available. When you
-	// want to maintain a certain target capacity, fleet will place the required
-	// requests to meet this target capacity. It will also automatically replenish
-	// any interrupted instances. Default: maintain.
+	// The type of request. Indicates whether the Spot Fleet only requests the target
+	// capacity or also attempts to maintain it. When this value is request, the
+	// Spot Fleet only places the required requests. It does not attempt to replenish
+	// Spot Instances if capacity is diminished, nor does it submit requests in
+	// alternative Spot pools if capacity is not available. To maintain a certain
+	// target capacity, the Spot Fleet places the required requests to meet capacity
+	// and automatically replenishes any interrupted instances. Default: maintain.
 	Type *string `locationName:"type" type:"string" enum:"FleetType"`
 
 	// The start date and time of the request, in UTC format (for example, YYYY-MM-DDTHH:MM:SSZ).
@@ -63633,6 +65532,18 @@ func (s *SpotFleetRequestConfigData) SetLaunchTemplateConfigs(v []*LaunchTemplat
 // SetLoadBalancersConfig sets the LoadBalancersConfig field's value.
 func (s *SpotFleetRequestConfigData) SetLoadBalancersConfig(v *LoadBalancersConfig) *SpotFleetRequestConfigData {
 	s.LoadBalancersConfig = v
+	return s
+}
+
+// SetOnDemandFulfilledCapacity sets the OnDemandFulfilledCapacity field's value.
+func (s *SpotFleetRequestConfigData) SetOnDemandFulfilledCapacity(v float64) *SpotFleetRequestConfigData {
+	s.OnDemandFulfilledCapacity = &v
+	return s
+}
+
+// SetOnDemandTargetCapacity sets the OnDemandTargetCapacity field's value.
+func (s *SpotFleetRequestConfigData) SetOnDemandTargetCapacity(v int64) *SpotFleetRequestConfigData {
+	s.OnDemandTargetCapacity = &v
 	return s
 }
 
@@ -63761,10 +65672,9 @@ type SpotInstanceRequest struct {
 	// The maximum price per hour that you are willing to pay for a Spot Instance.
 	SpotPrice *string `locationName:"spotPrice" type:"string"`
 
-	// The state of the Spot Instance request. Spot status information can help
-	// you track your Spot Instance requests. For more information, see Spot Status
-	// (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// The state of the Spot Instance request. Spot status information helps track
+	// your Spot Instance requests. For more information, see Spot Status (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html)
+	// in the Amazon EC2 User Guide for Linux Instances.
 	State *string `locationName:"state" type:"string" enum:"SpotInstanceState"`
 
 	// The status code and status message describing the Spot Instance request.
@@ -63950,7 +65860,7 @@ type SpotInstanceStatus struct {
 	_ struct{} `type:"structure"`
 
 	// The status code. For a list of status codes, see Spot Status Codes (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html#spot-instance-bid-status-understand)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// in the Amazon EC2 User Guide for Linux Instances.
 	Code *string `locationName:"code" type:"string"`
 
 	// The description for the status code.
@@ -64053,6 +65963,74 @@ func (s *SpotMarketOptions) SetSpotInstanceType(v string) *SpotMarketOptions {
 // SetValidUntil sets the ValidUntil field's value.
 func (s *SpotMarketOptions) SetValidUntil(v time.Time) *SpotMarketOptions {
 	s.ValidUntil = &v
+	return s
+}
+
+// Describes the configuration of Spot Instances in an EC2 Fleet.
+type SpotOptions struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates how to allocate the target capacity across the Spot pools specified
+	// by the Spot Fleet request. The default is lowestPrice.
+	AllocationStrategy *string `locationName:"allocationStrategy" type:"string" enum:"SpotAllocationStrategy"`
+
+	// The behavior when a Spot Instance is interrupted. The default is terminate.
+	InstanceInterruptionBehavior *string `locationName:"instanceInterruptionBehavior" type:"string" enum:"SpotInstanceInterruptionBehavior"`
+}
+
+// String returns the string representation
+func (s SpotOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SpotOptions) GoString() string {
+	return s.String()
+}
+
+// SetAllocationStrategy sets the AllocationStrategy field's value.
+func (s *SpotOptions) SetAllocationStrategy(v string) *SpotOptions {
+	s.AllocationStrategy = &v
+	return s
+}
+
+// SetInstanceInterruptionBehavior sets the InstanceInterruptionBehavior field's value.
+func (s *SpotOptions) SetInstanceInterruptionBehavior(v string) *SpotOptions {
+	s.InstanceInterruptionBehavior = &v
+	return s
+}
+
+// Describes the configuration of Spot Instances in an EC2 Fleet request.
+type SpotOptionsRequest struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates how to allocate the target capacity across the Spot pools specified
+	// by the Spot Fleet request. The default is lowestPrice.
+	AllocationStrategy *string `type:"string" enum:"SpotAllocationStrategy"`
+
+	// The behavior when a Spot Instance is interrupted. The default is terminate.
+	InstanceInterruptionBehavior *string `type:"string" enum:"SpotInstanceInterruptionBehavior"`
+}
+
+// String returns the string representation
+func (s SpotOptionsRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SpotOptionsRequest) GoString() string {
+	return s.String()
+}
+
+// SetAllocationStrategy sets the AllocationStrategy field's value.
+func (s *SpotOptionsRequest) SetAllocationStrategy(v string) *SpotOptionsRequest {
+	s.AllocationStrategy = &v
+	return s
+}
+
+// SetInstanceInterruptionBehavior sets the InstanceInterruptionBehavior field's value.
+func (s *SpotOptionsRequest) SetInstanceInterruptionBehavior(v string) *SpotOptionsRequest {
+	s.InstanceInterruptionBehavior = &v
 	return s
 }
 
@@ -64939,6 +66917,131 @@ func (s *TagSpecification) SetResourceType(v string) *TagSpecification {
 // SetTags sets the Tags field's value.
 func (s *TagSpecification) SetTags(v []*Tag) *TagSpecification {
 	s.Tags = v
+	return s
+}
+
+// The number of units to request. You can choose to set the target capacity
+// in terms of instances or a performance characteristic that is important to
+// your application workload, such as vCPUs, memory, or I/O. If the request
+// type is maintain, you can specify a target capacity of 0 and add capacity
+// later.
+type TargetCapacitySpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The default TotalTargetCapacity, which is either Spot or On-Demand.
+	DefaultTargetCapacityType *string `locationName:"defaultTargetCapacityType" type:"string" enum:"DefaultTargetCapacityType"`
+
+	// The number of On-Demand units to request.
+	OnDemandTargetCapacity *int64 `locationName:"onDemandTargetCapacity" type:"integer"`
+
+	// The maximum number of Spot units to launch.
+	SpotTargetCapacity *int64 `locationName:"spotTargetCapacity" type:"integer"`
+
+	// The number of units to request, filled using DefaultTargetCapacityType.
+	TotalTargetCapacity *int64 `locationName:"totalTargetCapacity" type:"integer"`
+}
+
+// String returns the string representation
+func (s TargetCapacitySpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TargetCapacitySpecification) GoString() string {
+	return s.String()
+}
+
+// SetDefaultTargetCapacityType sets the DefaultTargetCapacityType field's value.
+func (s *TargetCapacitySpecification) SetDefaultTargetCapacityType(v string) *TargetCapacitySpecification {
+	s.DefaultTargetCapacityType = &v
+	return s
+}
+
+// SetOnDemandTargetCapacity sets the OnDemandTargetCapacity field's value.
+func (s *TargetCapacitySpecification) SetOnDemandTargetCapacity(v int64) *TargetCapacitySpecification {
+	s.OnDemandTargetCapacity = &v
+	return s
+}
+
+// SetSpotTargetCapacity sets the SpotTargetCapacity field's value.
+func (s *TargetCapacitySpecification) SetSpotTargetCapacity(v int64) *TargetCapacitySpecification {
+	s.SpotTargetCapacity = &v
+	return s
+}
+
+// SetTotalTargetCapacity sets the TotalTargetCapacity field's value.
+func (s *TargetCapacitySpecification) SetTotalTargetCapacity(v int64) *TargetCapacitySpecification {
+	s.TotalTargetCapacity = &v
+	return s
+}
+
+// The number of units to request. You can choose to set the target capacity
+// in terms of instances or a performance characteristic that is important to
+// your application workload, such as vCPUs, memory, or I/O. If the request
+// type is maintain, you can specify a target capacity of 0 and add capacity
+// later.
+type TargetCapacitySpecificationRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The default TotalTargetCapacity, which is either Spot or On-Demand.
+	DefaultTargetCapacityType *string `type:"string" enum:"DefaultTargetCapacityType"`
+
+	// The number of On-Demand units to request.
+	OnDemandTargetCapacity *int64 `type:"integer"`
+
+	// The number of Spot units to request.
+	SpotTargetCapacity *int64 `type:"integer"`
+
+	// The number of units to request, filled using DefaultTargetCapacityType.
+	//
+	// TotalTargetCapacity is a required field
+	TotalTargetCapacity *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation
+func (s TargetCapacitySpecificationRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TargetCapacitySpecificationRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TargetCapacitySpecificationRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TargetCapacitySpecificationRequest"}
+	if s.TotalTargetCapacity == nil {
+		invalidParams.Add(request.NewErrParamRequired("TotalTargetCapacity"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDefaultTargetCapacityType sets the DefaultTargetCapacityType field's value.
+func (s *TargetCapacitySpecificationRequest) SetDefaultTargetCapacityType(v string) *TargetCapacitySpecificationRequest {
+	s.DefaultTargetCapacityType = &v
+	return s
+}
+
+// SetOnDemandTargetCapacity sets the OnDemandTargetCapacity field's value.
+func (s *TargetCapacitySpecificationRequest) SetOnDemandTargetCapacity(v int64) *TargetCapacitySpecificationRequest {
+	s.OnDemandTargetCapacity = &v
+	return s
+}
+
+// SetSpotTargetCapacity sets the SpotTargetCapacity field's value.
+func (s *TargetCapacitySpecificationRequest) SetSpotTargetCapacity(v int64) *TargetCapacitySpecificationRequest {
+	s.SpotTargetCapacity = &v
+	return s
+}
+
+// SetTotalTargetCapacity sets the TotalTargetCapacity field's value.
+func (s *TargetCapacitySpecificationRequest) SetTotalTargetCapacity(v int64) *TargetCapacitySpecificationRequest {
+	s.TotalTargetCapacity = &v
 	return s
 }
 
@@ -66062,7 +68165,7 @@ type Volume struct {
 	// performance, I/O credits, and bursting, see Amazon EBS Volume Types (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html)
 	// in the Amazon Elastic Compute Cloud User Guide.
 	//
-	// Constraint: Range is 100-20000 IOPS for io1 volumes and 100-10000 IOPS for
+	// Constraint: Range is 100-32000 IOPS for io1 volumes and 100-10000 IOPS for
 	// gp2 volumes.
 	//
 	// Condition: This parameter is required for requests to create io1 volumes;
@@ -67939,6 +70042,28 @@ const (
 )
 
 const (
+	// DefaultTargetCapacityTypeSpot is a DefaultTargetCapacityType enum value
+	DefaultTargetCapacityTypeSpot = "spot"
+
+	// DefaultTargetCapacityTypeOnDemand is a DefaultTargetCapacityType enum value
+	DefaultTargetCapacityTypeOnDemand = "on-demand"
+)
+
+const (
+	// DeleteFleetErrorCodeFleetIdDoesNotExist is a DeleteFleetErrorCode enum value
+	DeleteFleetErrorCodeFleetIdDoesNotExist = "fleetIdDoesNotExist"
+
+	// DeleteFleetErrorCodeFleetIdMalformed is a DeleteFleetErrorCode enum value
+	DeleteFleetErrorCodeFleetIdMalformed = "fleetIdMalformed"
+
+	// DeleteFleetErrorCodeFleetNotInDeletableState is a DeleteFleetErrorCode enum value
+	DeleteFleetErrorCodeFleetNotInDeletableState = "fleetNotInDeletableState"
+
+	// DeleteFleetErrorCodeUnexpectedError is a DeleteFleetErrorCode enum value
+	DeleteFleetErrorCodeUnexpectedError = "unexpectedError"
+)
+
+const (
 	// DeviceTypeEbs is a DeviceType enum value
 	DeviceTypeEbs = "ebs"
 
@@ -68037,6 +70162,62 @@ const (
 
 	// ExportTaskStateCompleted is a ExportTaskState enum value
 	ExportTaskStateCompleted = "completed"
+)
+
+const (
+	// FleetActivityStatusError is a FleetActivityStatus enum value
+	FleetActivityStatusError = "error"
+
+	// FleetActivityStatusPendingFulfillment is a FleetActivityStatus enum value
+	FleetActivityStatusPendingFulfillment = "pending-fulfillment"
+
+	// FleetActivityStatusPendingTermination is a FleetActivityStatus enum value
+	FleetActivityStatusPendingTermination = "pending-termination"
+
+	// FleetActivityStatusFulfilled is a FleetActivityStatus enum value
+	FleetActivityStatusFulfilled = "fulfilled"
+)
+
+const (
+	// FleetEventTypeInstanceChange is a FleetEventType enum value
+	FleetEventTypeInstanceChange = "instance-change"
+
+	// FleetEventTypeFleetChange is a FleetEventType enum value
+	FleetEventTypeFleetChange = "fleet-change"
+
+	// FleetEventTypeServiceError is a FleetEventType enum value
+	FleetEventTypeServiceError = "service-error"
+)
+
+const (
+	// FleetExcessCapacityTerminationPolicyNoTermination is a FleetExcessCapacityTerminationPolicy enum value
+	FleetExcessCapacityTerminationPolicyNoTermination = "no-termination"
+
+	// FleetExcessCapacityTerminationPolicyTermination is a FleetExcessCapacityTerminationPolicy enum value
+	FleetExcessCapacityTerminationPolicyTermination = "termination"
+)
+
+const (
+	// FleetStateCodeSubmitted is a FleetStateCode enum value
+	FleetStateCodeSubmitted = "submitted"
+
+	// FleetStateCodeActive is a FleetStateCode enum value
+	FleetStateCodeActive = "active"
+
+	// FleetStateCodeDeleted is a FleetStateCode enum value
+	FleetStateCodeDeleted = "deleted"
+
+	// FleetStateCodeFailed is a FleetStateCode enum value
+	FleetStateCodeFailed = "failed"
+
+	// FleetStateCodeDeletedRunning is a FleetStateCode enum value
+	FleetStateCodeDeletedRunning = "deleted-running"
+
+	// FleetStateCodeDeletedTerminating is a FleetStateCode enum value
+	FleetStateCodeDeletedTerminating = "deleted-terminating"
+
+	// FleetStateCodeModifying is a FleetStateCode enum value
+	FleetStateCodeModifying = "modifying"
 )
 
 const (
@@ -69070,6 +71251,25 @@ const (
 
 	// SnapshotStateError is a SnapshotState enum value
 	SnapshotStateError = "error"
+)
+
+const (
+	// SpotAllocationStrategyLowestPrice is a SpotAllocationStrategy enum value
+	SpotAllocationStrategyLowestPrice = "lowest-price"
+
+	// SpotAllocationStrategyDiversified is a SpotAllocationStrategy enum value
+	SpotAllocationStrategyDiversified = "diversified"
+)
+
+const (
+	// SpotInstanceInterruptionBehaviorHibernate is a SpotInstanceInterruptionBehavior enum value
+	SpotInstanceInterruptionBehaviorHibernate = "hibernate"
+
+	// SpotInstanceInterruptionBehaviorStop is a SpotInstanceInterruptionBehavior enum value
+	SpotInstanceInterruptionBehaviorStop = "stop"
+
+	// SpotInstanceInterruptionBehaviorTerminate is a SpotInstanceInterruptionBehavior enum value
+	SpotInstanceInterruptionBehaviorTerminate = "terminate"
 )
 
 const (

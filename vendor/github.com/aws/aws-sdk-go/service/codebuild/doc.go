@@ -33,6 +33,8 @@
 //    begin automatically rebuilding the source code every time a code change
 //    is pushed to the repository.
 //
+//    * UpdateWebhook: Changes the settings of an existing webhook.
+//
 //    * DeleteProject: Deletes a build project.
 //
 //    * DeleteWebhook: For an existing AWS CodeBuild build project that has

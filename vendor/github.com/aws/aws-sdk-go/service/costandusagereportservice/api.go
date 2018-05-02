@@ -12,7 +12,7 @@ const opDeleteReportDefinition = "DeleteReportDefinition"
 
 // DeleteReportDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteReportDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -96,7 +96,7 @@ const opDescribeReportDefinitions = "DescribeReportDefinitions"
 
 // DescribeReportDefinitionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReportDefinitions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -231,7 +231,7 @@ const opPutReportDefinition = "PutReportDefinition"
 
 // PutReportDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the PutReportDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

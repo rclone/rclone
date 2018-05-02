@@ -19,6 +19,7 @@ import (
 	"time"
 
 	vkit "cloud.google.com/go/pubsub/apiv1"
+	"cloud.google.com/go/pubsub/internal/distribution"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
@@ -45,6 +46,7 @@ type streamingMessageIterator struct {
 	wg         sync.WaitGroup
 
 	mu                 sync.Mutex
+	ackTimeDist        *distribution.D
 	keepAliveDeadlines map[string]time.Time
 	pendingReq         *pb.StreamingPullRequest
 	pendingModAcks     map[string]int32 // ack IDs whose ack deadline is to be modified
@@ -71,6 +73,7 @@ func newStreamingMessageIterator(ctx context.Context, ps *pullStream, po *pullOp
 		failed:             make(chan struct{}),
 		stopped:            make(chan struct{}),
 		drained:            make(chan struct{}),
+		ackTimeDist:        distribution.New(int(maxAckDeadline/time.Second) + 1),
 		keepAliveDeadlines: map[string]time.Time{},
 		pendingReq:         &pb.StreamingPullRequest{},
 		pendingModAcks:     map[string]int32{},
@@ -116,7 +119,8 @@ func (it *streamingMessageIterator) checkDrained() {
 }
 
 // Called when a message is acked/nacked.
-func (it *streamingMessageIterator) done(ackID string, ack bool) {
+func (it *streamingMessageIterator) done(ackID string, ack bool, receiveTime time.Time) {
+	it.ackTimeDist.Record(int(time.Since(receiveTime) / time.Second))
 	it.mu.Lock()
 	defer it.mu.Unlock()
 	delete(it.keepAliveDeadlines, ackID)
@@ -173,7 +177,9 @@ func (it *streamingMessageIterator) receive() ([]*Message, error) {
 	maxExt := time.Now().Add(it.po.maxExtension)
 	deadline := trunc32(int64(it.po.ackDeadline.Seconds()))
 	it.mu.Lock()
+	now := time.Now()
 	for _, m := range msgs {
+		m.receiveTime = now
 		m.doneFunc = it.done
 		it.keepAliveDeadlines[m.ackID] = maxExt
 		// The receipt mod-ack uses the subscription's configured ack deadline. Don't

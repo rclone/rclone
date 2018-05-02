@@ -189,6 +189,7 @@ struct ltchars {
 #include <linux/genetlink.h>
 #include <linux/stat.h>
 #include <linux/watchdog.h>
+#include <linux/hdreg.h>
 #include <net/route.h>
 #include <asm/termbits.h>
 
@@ -436,6 +437,7 @@ ccflags="$@"
 		$2 ~ /^ATTR_(BIT_MAP_COUNT|(CMN|VOL|FILE)_)/ ||
 		$2 ~ /^FSOPT_/ ||
 		$2 ~ /^WDIOC_/ ||
+		$2 ~ /^(HDIO|WIN|SMART)_/ ||
 		$2 !~ "WMESGLEN" &&
 		$2 ~ /^W[A-Z0-9]+$/ ||
 		$2 ~ /^BLK[A-Z]*(GET$|SET$|BUF$|PART$|SIZE)/ {printf("\t%s = C.%s\n", $2, $2)}
@@ -505,21 +507,26 @@ echo ')'
 
 enum { A = 'A', Z = 'Z', a = 'a', z = 'z' }; // avoid need for single quotes below
 
-int errors[] = {
+struct tuple {
+	int num;
+	const char *name;
+};
+
+struct tuple errors[] = {
 "
 	for i in $errors
 	do
-		echo -E '	'$i,
+		echo -E '	{'$i', "'$i'" },'
 	done
 
 	echo -E "
 };
 
-int signals[] = {
+struct tuple signals[] = {
 "
 	for i in $signals
 	do
-		echo -E '	'$i,
+		echo -E '	{'$i', "'$i'" },'
 	done
 
 	# Use -E because on some systems bash builtin interprets \n itself.
@@ -527,9 +534,9 @@ int signals[] = {
 };
 
 static int
-intcmp(const void *a, const void *b)
+tuplecmp(const void *a, const void *b)
 {
-	return *(int*)a - *(int*)b;
+	return ((struct tuple *)a)->num - ((struct tuple *)b)->num;
 }
 
 int
@@ -539,26 +546,34 @@ main(void)
 	char buf[1024], *p;
 
 	printf("\n\n// Error table\n");
-	printf("var errors = [...]string {\n");
-	qsort(errors, nelem(errors), sizeof errors[0], intcmp);
+	printf("var errorList = [...]struct {\n");
+	printf("\tnum  syscall.Errno\n");
+	printf("\tname string\n");
+	printf("\tdesc string\n");
+	printf("} {\n");
+	qsort(errors, nelem(errors), sizeof errors[0], tuplecmp);
 	for(i=0; i<nelem(errors); i++) {
-		e = errors[i];
-		if(i > 0 && errors[i-1] == e)
+		e = errors[i].num;
+		if(i > 0 && errors[i-1].num == e)
 			continue;
 		strcpy(buf, strerror(e));
 		// lowercase first letter: Bad -> bad, but STREAM -> STREAM.
 		if(A <= buf[0] && buf[0] <= Z && a <= buf[1] && buf[1] <= z)
 			buf[0] += a - A;
-		printf("\t%d: \"%s\",\n", e, buf);
+		printf("\t{ %d, \"%s\", \"%s\" },\n", e, errors[i].name, buf);
 	}
 	printf("}\n\n");
 
 	printf("\n\n// Signal table\n");
-	printf("var signals = [...]string {\n");
-	qsort(signals, nelem(signals), sizeof signals[0], intcmp);
+	printf("var signalList = [...]struct {\n");
+	printf("\tnum  syscall.Signal\n");
+	printf("\tname string\n");
+	printf("\tdesc string\n");
+	printf("} {\n");
+	qsort(signals, nelem(signals), sizeof signals[0], tuplecmp);
 	for(i=0; i<nelem(signals); i++) {
-		e = signals[i];
-		if(i > 0 && signals[i-1] == e)
+		e = signals[i].num;
+		if(i > 0 && signals[i-1].num == e)
 			continue;
 		strcpy(buf, strsignal(e));
 		// lowercase first letter: Bad -> bad, but STREAM -> STREAM.
@@ -568,7 +583,7 @@ main(void)
 		p = strrchr(buf, ":"[0]);
 		if(p)
 			*p = '\0';
-		printf("\t%d: \"%s\",\n", e, buf);
+		printf("\t{ %d, \"%s\", \"%s\" },\n", e, signals[i].name, buf);
 	}
 	printf("}\n\n");
 

@@ -43,9 +43,10 @@ func NewHubsClientWithBaseURI(baseURI string, subscriptionID string) HubsClient 
 }
 
 // CreateOrUpdate creates a hub, or updates an existing hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the Hub. parameters is parameters
-// supplied to the CreateOrUpdate Hub operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the Hub.
+// parameters - parameters supplied to the CreateOrUpdate Hub operation.
 func (client HubsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, parameters Hub) (result Hub, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: hubName,
@@ -103,7 +104,7 @@ func (client HubsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}", pathParameters),
@@ -133,8 +134,9 @@ func (client HubsClient) CreateOrUpdateResponder(resp *http.Response) (result Hu
 }
 
 // Delete deletes the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client HubsClient) Delete(ctx context.Context, resourceGroupName string, hubName string) (result HubsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName)
 	if err != nil {
@@ -200,8 +202,9 @@ func (client HubsClient) DeleteResponder(resp *http.Response) (result autorest.R
 }
 
 // Get gets information about the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client HubsClient) Get(ctx context.Context, resourceGroupName string, hubName string) (result Hub, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName)
 	if err != nil {
@@ -356,8 +359,8 @@ func (client HubsClient) ListComplete(ctx context.Context) (result HubListResult
 }
 
 // ListByResourceGroup gets all the hubs in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client HubsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result HubListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -449,9 +452,10 @@ func (client HubsClient) ListByResourceGroupComplete(ctx context.Context, resour
 }
 
 // Update updates a Hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the Hub. parameters is parameters
-// supplied to the Update Hub operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the Hub.
+// parameters - parameters supplied to the Update Hub operation.
 func (client HubsClient) Update(ctx context.Context, resourceGroupName string, hubName string, parameters Hub) (result Hub, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, hubName, parameters)
 	if err != nil {
@@ -488,7 +492,7 @@ func (client HubsClient) UpdatePreparer(ctx context.Context, resourceGroupName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}", pathParameters),

@@ -43,13 +43,15 @@ func NewItemLevelRecoveryConnectionsClientWithBaseURI(baseURI string, subscripti
 // Provision provisions a script which invokes an iSCSI connection to the backup data. Executing this script opens File
 // Explorer which displays the recoverable files and folders. This is an asynchronous operation. To get the
 // provisioning status, call GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup items.
-// containerName is the container name associated with the backup items. protectedItemName is the name of the
-// backup item whose files or folders are to be restored. recoveryPointID is the recovery point ID for backup data.
-// The iSCSI connection will be provisioned for this backup data. resourceILRRequest is the resource Item Level
-// Recovery (ILR) request.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup items.
+// containerName - the container name associated with the backup items.
+// protectedItemName - the name of the backup item whose files or folders are to be restored.
+// recoveryPointID - the recovery point ID for backup data. The iSCSI connection will be provisioned for this
+// backup data.
+// resourceILRRequest - the resource Item Level Recovery (ILR) request.
 func (client ItemLevelRecoveryConnectionsClient) Provision(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string, resourceILRRequest ILRRequestResource) (result autorest.Response, err error) {
 	req, err := client.ProvisionPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID, resourceILRRequest)
 	if err != nil {
@@ -90,7 +92,7 @@ func (client ItemLevelRecoveryConnectionsClient) ProvisionPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/provisionInstantItemRecovery", pathParameters),
@@ -120,12 +122,14 @@ func (client ItemLevelRecoveryConnectionsClient) ProvisionResponder(resp *http.R
 
 // Revoke revokes an iSCSI connection which can be used to download a script. Executing this script opens a file
 // explorer displaying all recoverable files and folders. This is an asynchronous operation.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup items. The
-// value allowed is Azure. containerName is the container name associated with the backup items. protectedItemName
-// is the name of the backup items whose files or folders will be restored. recoveryPointID is the string that
-// identifies the recovery point. The iSCSI connection will be revoked for this protected data.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup items. The value allowed is Azure.
+// containerName - the container name associated with the backup items.
+// protectedItemName - the name of the backup items whose files or folders will be restored.
+// recoveryPointID - the string that identifies the recovery point. The iSCSI connection will be revoked for
+// this protected data.
 func (client ItemLevelRecoveryConnectionsClient) Revoke(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string) (result autorest.Response, err error) {
 	req, err := client.RevokePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID)
 	if err != nil {

@@ -40,9 +40,10 @@ func NewRegisteredIdentitiesClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Delete unregisters the given container from your Recovery Services vault.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. identityName is name of the protection container to unregister.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// identityName - name of the protection container to unregister.
 func (client RegisteredIdentitiesClient) Delete(ctx context.Context, resourceGroupName string, vaultName string, identityName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, vaultName, identityName)
 	if err != nil {

@@ -41,10 +41,13 @@ func NewBackupSchedulesClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // CreateOrUpdate creates or updates the backup schedule.
-//
-// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the backup
-// schedule name. parameters is the backup schedule. resourceGroupName is the resource group name managerName is
-// the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the backup policy name.
+// backupScheduleName - the backup schedule name.
+// parameters - the backup schedule.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupSchedulesClient) CreateOrUpdate(ctx context.Context, deviceName string, backupPolicyName string, backupScheduleName string, parameters BackupSchedule, resourceGroupName string, managerName string) (result BackupSchedulesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -92,7 +95,7 @@ func (client BackupSchedulesClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{deviceName}/backupPolicies/{backupPolicyName}/schedules/{backupScheduleName}", pathParameters),
@@ -130,9 +133,12 @@ func (client BackupSchedulesClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // Delete deletes the backup schedule.
-//
-// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the name the
-// backup schedule. resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the backup policy name.
+// backupScheduleName - the name the backup schedule.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupSchedulesClient) Delete(ctx context.Context, deviceName string, backupPolicyName string, backupScheduleName string, resourceGroupName string, managerName string) (result BackupSchedulesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -208,9 +214,12 @@ func (client BackupSchedulesClient) DeleteResponder(resp *http.Response) (result
 }
 
 // Get gets the properties of the specified backup schedule name.
-//
-// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the name of the
-// backup schedule to be fetched resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the backup policy name.
+// backupScheduleName - the name of the backup schedule to be fetched
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupSchedulesClient) Get(ctx context.Context, deviceName string, backupPolicyName string, backupScheduleName string, resourceGroupName string, managerName string) (result BackupSchedule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -285,9 +294,11 @@ func (client BackupSchedulesClient) GetResponder(resp *http.Response) (result Ba
 }
 
 // ListByBackupPolicy gets all the backup schedules in a backup policy.
-//
-// deviceName is the device name backupPolicyName is the backup policy name. resourceGroupName is the resource
-// group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the backup policy name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupSchedulesClient) ListByBackupPolicy(ctx context.Context, deviceName string, backupPolicyName string, resourceGroupName string, managerName string) (result BackupScheduleList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

@@ -40,8 +40,8 @@ func NewPartitionLoadsClientWithBaseURI(baseURI string, timeout *int32) Partitio
 }
 
 // Reset reset partition loads
-//
-// partitionID is the id of the partition
+// Parameters:
+// partitionID - the id of the partition
 func (client PartitionLoadsClient) Reset(ctx context.Context, partitionID string) (result String, err error) {
 	req, err := client.ResetPreparer(ctx, partitionID)
 	if err != nil {

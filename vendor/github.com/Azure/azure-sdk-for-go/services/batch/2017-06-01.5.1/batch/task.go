@@ -100,7 +100,7 @@ func (client TaskClient) AddPreparer(ctx context.Context, jobID string, task Tas
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/tasks", pathParameters),
@@ -204,7 +204,7 @@ func (client TaskClient) AddCollectionPreparer(ctx context.Context, jobID string
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/addtaskcollection", pathParameters),
@@ -1010,7 +1010,7 @@ func (client TaskClient) UpdatePreparer(ctx context.Context, jobID string, taskI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/tasks/{taskId}", pathParameters),

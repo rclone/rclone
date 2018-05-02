@@ -369,6 +369,11 @@ func PossibleNotificationNameValues() []NotificationName {
 type PolicyContentFormat string
 
 const (
+	// Rawxml The contents are inline and Content type is a non XML encoded policy document.
+	Rawxml PolicyContentFormat = "rawxml"
+	// RawxmlLink The policy document is not Xml encoded and is hosted on a http endpoint accessible from the
+	// API Management service.
+	RawxmlLink PolicyContentFormat = "rawxml-link"
 	// XML The contents are inline and Content type is an XML document.
 	XML PolicyContentFormat = "xml"
 	// XMLLink The policy XML document is hosted on a http endpoint accessible from the API Management service.
@@ -377,7 +382,7 @@ const (
 
 // PossiblePolicyContentFormatValues returns an array of possible values for the PolicyContentFormat const type.
 func PossiblePolicyContentFormatValues() []PolicyContentFormat {
-	return []PolicyContentFormat{XML, XMLLink}
+	return []PolicyContentFormat{Rawxml, RawxmlLink, XML, XMLLink}
 }
 
 // PolicyScopeContract enumerates the values for policy scope contract.
@@ -463,6 +468,27 @@ const (
 // PossibleSoapAPITypeValues returns an array of possible values for the SoapAPIType const type.
 func PossibleSoapAPITypeValues() []SoapAPIType {
 	return []SoapAPIType{SoapPassThrough, SoapToRest}
+}
+
+// State enumerates the values for state.
+type State string
+
+const (
+	// Closed The issue was closed.
+	Closed State = "closed"
+	// Open The issue is opened.
+	Open State = "open"
+	// Proposed The issue is proposed.
+	Proposed State = "proposed"
+	// Removed The issue was removed.
+	Removed State = "removed"
+	// Resolved The issue is now resolved.
+	Resolved State = "resolved"
+)
+
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{Closed, Open, Proposed, Removed, Resolved}
 }
 
 // StoreName enumerates the values for store name.
@@ -638,8 +664,10 @@ type AdditionalLocation struct {
 	Location *string `json:"location,omitempty"`
 	// Sku - SKU properties of the API Management service.
 	Sku *ServiceSkuProperties `json:"sku,omitempty"`
-	// PublicIPAddresses - Static IP addresses of the location's virtual machines.
+	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service in the additional location. Available only for Basic, Standard and Premium SKU.
 	PublicIPAddresses *[]string `json:"publicIPAddresses,omitempty"`
+	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service which is deployed in an Internal Virtual Network in a particular additional location. Available only for Basic, Standard and Premium SKU.
+	PrivateIPAddresses *[]string `json:"privateIPAddresses,omitempty"`
 	// VirtualNetworkConfiguration - Virtual network configuration for the location.
 	VirtualNetworkConfiguration *VirtualNetworkConfiguration `json:"virtualNetworkConfiguration,omitempty"`
 	// GatewayRegionalURL - Gateway URL of the API Management service in the Region.
@@ -3913,6 +3941,594 @@ type IdentityProviderUpdateProperties struct {
 	PasswordResetPolicyName *string `json:"passwordResetPolicyName,omitempty"`
 }
 
+// IssueAttachmentCollection paged Issue Attachment list representation.
+type IssueAttachmentCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Issue Attachment values.
+	Value *[]IssueAttachmentContract `json:"value,omitempty"`
+	// NextLink - Next page link if any.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// IssueAttachmentCollectionIterator provides access to a complete listing of IssueAttachmentContract values.
+type IssueAttachmentCollectionIterator struct {
+	i    int
+	page IssueAttachmentCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *IssueAttachmentCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter IssueAttachmentCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter IssueAttachmentCollectionIterator) Response() IssueAttachmentCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter IssueAttachmentCollectionIterator) Value() IssueAttachmentContract {
+	if !iter.page.NotDone() {
+		return IssueAttachmentContract{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (iac IssueAttachmentCollection) IsEmpty() bool {
+	return iac.Value == nil || len(*iac.Value) == 0
+}
+
+// issueAttachmentCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (iac IssueAttachmentCollection) issueAttachmentCollectionPreparer() (*http.Request, error) {
+	if iac.NextLink == nil || len(to.String(iac.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(iac.NextLink)))
+}
+
+// IssueAttachmentCollectionPage contains a page of IssueAttachmentContract values.
+type IssueAttachmentCollectionPage struct {
+	fn  func(IssueAttachmentCollection) (IssueAttachmentCollection, error)
+	iac IssueAttachmentCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *IssueAttachmentCollectionPage) Next() error {
+	next, err := page.fn(page.iac)
+	if err != nil {
+		return err
+	}
+	page.iac = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page IssueAttachmentCollectionPage) NotDone() bool {
+	return !page.iac.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page IssueAttachmentCollectionPage) Response() IssueAttachmentCollection {
+	return page.iac
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page IssueAttachmentCollectionPage) Values() []IssueAttachmentContract {
+	if page.iac.IsEmpty() {
+		return nil
+	}
+	return *page.iac.Value
+}
+
+// IssueAttachmentContract issue Attachment Contract details.
+type IssueAttachmentContract struct {
+	autorest.Response `json:"-"`
+	// IssueAttachmentContractProperties - Properties of the Issue Attachment.
+	*IssueAttachmentContractProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type for API Management resource.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for IssueAttachmentContract.
+func (iac IssueAttachmentContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iac.IssueAttachmentContractProperties != nil {
+		objectMap["properties"] = iac.IssueAttachmentContractProperties
+	}
+	if iac.ID != nil {
+		objectMap["id"] = iac.ID
+	}
+	if iac.Name != nil {
+		objectMap["name"] = iac.Name
+	}
+	if iac.Type != nil {
+		objectMap["type"] = iac.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for IssueAttachmentContract struct.
+func (iac *IssueAttachmentContract) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var issueAttachmentContractProperties IssueAttachmentContractProperties
+				err = json.Unmarshal(*v, &issueAttachmentContractProperties)
+				if err != nil {
+					return err
+				}
+				iac.IssueAttachmentContractProperties = &issueAttachmentContractProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iac.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iac.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iac.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// IssueAttachmentContractProperties issue Attachment contract Properties.
+type IssueAttachmentContractProperties struct {
+	// Title - Filename by which the binary data will be saved.
+	Title *string `json:"title,omitempty"`
+	// ContentFormat - Either 'link' if content is provided via an HTTP link or the MIME type of the Base64-encoded binary data provided in the 'content' property.
+	ContentFormat *string `json:"contentFormat,omitempty"`
+	// Content - An HTTP link or Base64-encoded binary data.
+	Content *string `json:"content,omitempty"`
+}
+
+// IssueCollection paged Issue list representation.
+type IssueCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Issue values.
+	Value *[]IssueContract `json:"value,omitempty"`
+	// NextLink - Next page link if any.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// IssueCollectionIterator provides access to a complete listing of IssueContract values.
+type IssueCollectionIterator struct {
+	i    int
+	page IssueCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *IssueCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter IssueCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter IssueCollectionIterator) Response() IssueCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter IssueCollectionIterator) Value() IssueContract {
+	if !iter.page.NotDone() {
+		return IssueContract{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (ic IssueCollection) IsEmpty() bool {
+	return ic.Value == nil || len(*ic.Value) == 0
+}
+
+// issueCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (ic IssueCollection) issueCollectionPreparer() (*http.Request, error) {
+	if ic.NextLink == nil || len(to.String(ic.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(ic.NextLink)))
+}
+
+// IssueCollectionPage contains a page of IssueContract values.
+type IssueCollectionPage struct {
+	fn func(IssueCollection) (IssueCollection, error)
+	ic IssueCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *IssueCollectionPage) Next() error {
+	next, err := page.fn(page.ic)
+	if err != nil {
+		return err
+	}
+	page.ic = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page IssueCollectionPage) NotDone() bool {
+	return !page.ic.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page IssueCollectionPage) Response() IssueCollection {
+	return page.ic
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page IssueCollectionPage) Values() []IssueContract {
+	if page.ic.IsEmpty() {
+		return nil
+	}
+	return *page.ic.Value
+}
+
+// IssueCommentCollection paged Issue Comment list representation.
+type IssueCommentCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Issue Comment values.
+	Value *[]IssueCommentContract `json:"value,omitempty"`
+	// NextLink - Next page link if any.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// IssueCommentCollectionIterator provides access to a complete listing of IssueCommentContract values.
+type IssueCommentCollectionIterator struct {
+	i    int
+	page IssueCommentCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *IssueCommentCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter IssueCommentCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter IssueCommentCollectionIterator) Response() IssueCommentCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter IssueCommentCollectionIterator) Value() IssueCommentContract {
+	if !iter.page.NotDone() {
+		return IssueCommentContract{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (icc IssueCommentCollection) IsEmpty() bool {
+	return icc.Value == nil || len(*icc.Value) == 0
+}
+
+// issueCommentCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (icc IssueCommentCollection) issueCommentCollectionPreparer() (*http.Request, error) {
+	if icc.NextLink == nil || len(to.String(icc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(icc.NextLink)))
+}
+
+// IssueCommentCollectionPage contains a page of IssueCommentContract values.
+type IssueCommentCollectionPage struct {
+	fn  func(IssueCommentCollection) (IssueCommentCollection, error)
+	icc IssueCommentCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *IssueCommentCollectionPage) Next() error {
+	next, err := page.fn(page.icc)
+	if err != nil {
+		return err
+	}
+	page.icc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page IssueCommentCollectionPage) NotDone() bool {
+	return !page.icc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page IssueCommentCollectionPage) Response() IssueCommentCollection {
+	return page.icc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page IssueCommentCollectionPage) Values() []IssueCommentContract {
+	if page.icc.IsEmpty() {
+		return nil
+	}
+	return *page.icc.Value
+}
+
+// IssueCommentContract issue Comment Contract details.
+type IssueCommentContract struct {
+	autorest.Response `json:"-"`
+	// IssueCommentContractProperties - Properties of the Issue Comment.
+	*IssueCommentContractProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type for API Management resource.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for IssueCommentContract.
+func (icc IssueCommentContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if icc.IssueCommentContractProperties != nil {
+		objectMap["properties"] = icc.IssueCommentContractProperties
+	}
+	if icc.ID != nil {
+		objectMap["id"] = icc.ID
+	}
+	if icc.Name != nil {
+		objectMap["name"] = icc.Name
+	}
+	if icc.Type != nil {
+		objectMap["type"] = icc.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for IssueCommentContract struct.
+func (icc *IssueCommentContract) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var issueCommentContractProperties IssueCommentContractProperties
+				err = json.Unmarshal(*v, &issueCommentContractProperties)
+				if err != nil {
+					return err
+				}
+				icc.IssueCommentContractProperties = &issueCommentContractProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				icc.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				icc.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				icc.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// IssueCommentContractProperties issue Comment contract Properties.
+type IssueCommentContractProperties struct {
+	// Text - Comment text.
+	Text *string `json:"text,omitempty"`
+	// CreatedDate - Date and time when the comment was created.
+	CreatedDate *date.Time `json:"createdDate,omitempty"`
+	// UserID - A resource identifier for the user who left the comment.
+	UserID *string `json:"userId,omitempty"`
+}
+
+// IssueContract issue Contract details.
+type IssueContract struct {
+	autorest.Response `json:"-"`
+	// IssueContractProperties - Properties of the Issue.
+	*IssueContractProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type for API Management resource.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for IssueContract.
+func (ic IssueContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ic.IssueContractProperties != nil {
+		objectMap["properties"] = ic.IssueContractProperties
+	}
+	if ic.ID != nil {
+		objectMap["id"] = ic.ID
+	}
+	if ic.Name != nil {
+		objectMap["name"] = ic.Name
+	}
+	if ic.Type != nil {
+		objectMap["type"] = ic.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for IssueContract struct.
+func (ic *IssueContract) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var issueContractProperties IssueContractProperties
+				err = json.Unmarshal(*v, &issueContractProperties)
+				if err != nil {
+					return err
+				}
+				ic.IssueContractProperties = &issueContractProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ic.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ic.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ic.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// IssueContractProperties issue contract Properties.
+type IssueContractProperties struct {
+	// Title - The issue title.
+	Title *string `json:"title,omitempty"`
+	// Description - Text describing the issue.
+	Description *string `json:"description,omitempty"`
+	// CreatedDate - Date and time when the issue was created.
+	CreatedDate *date.Time `json:"createdDate,omitempty"`
+	// State - Status of the issue. Possible values include: 'Proposed', 'Open', 'Removed', 'Resolved', 'Closed'
+	State State `json:"state,omitempty"`
+	// UserID - A resource identifier for the user created the issue.
+	UserID *string `json:"userId,omitempty"`
+	// APIID - A resource identifier for the API the issue was created for.
+	APIID *string `json:"apiId,omitempty"`
+}
+
 // ListNetworkStatusContractByLocation ...
 type ListNetworkStatusContractByLocation struct {
 	autorest.Response `json:"-"`
@@ -5242,7 +5858,7 @@ func (pc *PolicyContract) UnmarshalJSON(body []byte) error {
 type PolicyContractProperties struct {
 	// PolicyContent - Json escaped Xml Encoded contents of the Policy.
 	PolicyContent *string `json:"policyContent,omitempty"`
-	// ContentFormat - Format of the policyContent. Possible values include: 'XML', 'XMLLink'
+	// ContentFormat - Format of the policyContent. Possible values include: 'XML', 'XMLLink', 'Rawxml', 'RawxmlLink'
 	ContentFormat PolicyContentFormat `json:"contentFormat,omitempty"`
 }
 
@@ -7127,9 +7743,9 @@ type ServiceBaseProperties struct {
 	ScmURL *string `json:"scmUrl,omitempty"`
 	// HostnameConfigurations - Custom hostname configuration of the API Management service.
 	HostnameConfigurations *[]HostnameConfiguration `json:"hostnameConfigurations,omitempty"`
-	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service. Available only for Basic, Standard and Premium SKU.
+	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service in Primary region. Available only for Basic, Standard and Premium SKU.
 	PublicIPAddresses *[]string `json:"publicIPAddresses,omitempty"`
-	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
+	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service in Primary region which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
 	PrivateIPAddresses *[]string `json:"privateIPAddresses,omitempty"`
 	// VirtualNetworkConfiguration - Virtual network configuration of the API Management service.
 	VirtualNetworkConfiguration *VirtualNetworkConfiguration `json:"virtualNetworkConfiguration,omitempty"`
@@ -7411,9 +8027,9 @@ type ServiceProperties struct {
 	ScmURL *string `json:"scmUrl,omitempty"`
 	// HostnameConfigurations - Custom hostname configuration of the API Management service.
 	HostnameConfigurations *[]HostnameConfiguration `json:"hostnameConfigurations,omitempty"`
-	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service. Available only for Basic, Standard and Premium SKU.
+	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service in Primary region. Available only for Basic, Standard and Premium SKU.
 	PublicIPAddresses *[]string `json:"publicIPAddresses,omitempty"`
-	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
+	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service in Primary region which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
 	PrivateIPAddresses *[]string `json:"privateIPAddresses,omitempty"`
 	// VirtualNetworkConfiguration - Virtual network configuration of the API Management service.
 	VirtualNetworkConfiguration *VirtualNetworkConfiguration `json:"virtualNetworkConfiguration,omitempty"`
@@ -7966,9 +8582,9 @@ type ServiceUpdateProperties struct {
 	ScmURL *string `json:"scmUrl,omitempty"`
 	// HostnameConfigurations - Custom hostname configuration of the API Management service.
 	HostnameConfigurations *[]HostnameConfiguration `json:"hostnameConfigurations,omitempty"`
-	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service. Available only for Basic, Standard and Premium SKU.
+	// PublicIPAddresses - Public Static Load Balanced IP addresses of the API Management service in Primary region. Available only for Basic, Standard and Premium SKU.
 	PublicIPAddresses *[]string `json:"publicIPAddresses,omitempty"`
-	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
+	// PrivateIPAddresses - Private Static Load Balanced IP addresses of the API Management service in Primary region which is deployed in an Internal Virtual Network. Available only for Basic, Standard and Premium SKU.
 	PrivateIPAddresses *[]string `json:"privateIPAddresses,omitempty"`
 	// VirtualNetworkConfiguration - Virtual network configuration of the API Management service.
 	VirtualNetworkConfiguration *VirtualNetworkConfiguration `json:"virtualNetworkConfiguration,omitempty"`

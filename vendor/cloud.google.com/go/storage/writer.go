@@ -48,8 +48,11 @@ type Writer struct {
 	// to the nearest multiple of 256K. If zero, chunking will be disabled and
 	// the object will be uploaded in a single request.
 	//
-	// ChunkSize will default to a reasonable value. Any custom configuration
-	// must be done before the first Write call.
+	// ChunkSize will default to a reasonable value. If you perform many concurrent
+	// writes of small objects, you may wish set ChunkSize to a value that matches
+	// your objects' sizes to avoid consuming large amounts of memory.
+	//
+	// ChunkSize must be set before the first Write call.
 	ChunkSize int
 
 	// ProgressFunc can be used to monitor the progress of a large write.

@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type AppliedScopeType = original.AppliedScopeType
 
 const (
@@ -239,25 +231,54 @@ type SplitProperties = original.SplitProperties
 type SplitPropertiesType = original.SplitPropertiesType
 type SplitRequest = original.SplitRequest
 type OperationClient = original.OperationClient
+type OrderClient = original.OrderClient
+type Client = original.Client
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func PossibleAppliedScopeTypeValues() []AppliedScopeType {
+	return original.PossibleAppliedScopeTypeValues()
+}
+func PossibleAppliedScopeType1Values() []AppliedScopeType1 {
+	return original.PossibleAppliedScopeType1Values()
+}
+func PossibleCodeValues() []Code {
+	return original.PossibleCodeValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossibleLocationValues() []Location {
+	return original.PossibleLocationValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleProvisioningState1Values() []ProvisioningState1 {
+	return original.PossibleProvisioningState1Values()
+}
+func PossibleStatusCodeValues() []StatusCode {
+	return original.PossibleStatusCodeValues()
+}
+func PossibleTermValues() []Term {
+	return original.PossibleTermValues()
+}
 func NewOperationClient() OperationClient {
 	return original.NewOperationClient()
 }
 func NewOperationClientWithBaseURI(baseURI string) OperationClient {
 	return original.NewOperationClientWithBaseURI(baseURI)
 }
-
-type OrderClient = original.OrderClient
-
 func NewOrderClient() OrderClient {
 	return original.NewOrderClient()
 }
 func NewOrderClientWithBaseURI(baseURI string) OrderClient {
 	return original.NewOrderClientWithBaseURI(baseURI)
 }
-
-type Client = original.Client
-
 func NewClient() Client {
 	return original.NewClient()
 }

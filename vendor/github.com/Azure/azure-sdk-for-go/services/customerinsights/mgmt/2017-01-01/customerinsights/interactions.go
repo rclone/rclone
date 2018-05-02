@@ -43,9 +43,11 @@ func NewInteractionsClientWithBaseURI(baseURI string, subscriptionID string) Int
 }
 
 // CreateOrUpdate creates an interaction or updates an existing interaction within a hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
-// of the interaction. parameters is parameters supplied to the CreateOrUpdate Interaction operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// interactionName - the name of the interaction.
+// parameters - parameters supplied to the CreateOrUpdate Interaction operation.
 func (client InteractionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, interactionName string, parameters InteractionResourceFormat) (result InteractionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: interactionName,
@@ -85,7 +87,7 @@ func (client InteractionsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/interactions/{interactionName}", pathParameters),
@@ -123,9 +125,11 @@ func (client InteractionsClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Get gets information about the specified interaction.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
-// of the interaction. localeCode is locale of interaction to retrieve, default is en-us.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// interactionName - the name of the interaction.
+// localeCode - locale of interaction to retrieve, default is en-us.
 func (client InteractionsClient) Get(ctx context.Context, resourceGroupName string, hubName string, interactionName string, localeCode string) (result InteractionResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, interactionName, localeCode)
 	if err != nil {
@@ -196,9 +200,10 @@ func (client InteractionsClient) GetResponder(resp *http.Response) (result Inter
 }
 
 // ListByHub gets all interactions in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. localeCode is locale of
-// interaction to retrieve, default is en-us.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// localeCode - locale of interaction to retrieve, default is en-us.
 func (client InteractionsClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string, localeCode string) (result InteractionListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName, localeCode)
@@ -296,9 +301,10 @@ func (client InteractionsClient) ListByHubComplete(ctx context.Context, resource
 }
 
 // SuggestRelationshipLinks suggests relationships to create relationship links.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
-// of the interaction.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// interactionName - the name of the interaction.
 func (client InteractionsClient) SuggestRelationshipLinks(ctx context.Context, resourceGroupName string, hubName string, interactionName string) (result SuggestRelationshipLinksResponse, err error) {
 	req, err := client.SuggestRelationshipLinksPreparer(ctx, resourceGroupName, hubName, interactionName)
 	if err != nil {

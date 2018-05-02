@@ -42,9 +42,10 @@ func NewVirtualMachineScaleSetVMsClientWithBaseURI(baseURI string, subscriptionI
 // Deallocate deallocates a specific virtual machine in a VM scale set. Shuts down the virtual machine and releases the
 // compute resources it uses. You are not billed for the compute resources of this virtual machine once it is
 // deallocated.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Deallocate(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsDeallocateFuture, err error) {
 	req, err := client.DeallocatePreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -112,9 +113,10 @@ func (client VirtualMachineScaleSetVMsClient) DeallocateResponder(resp *http.Res
 }
 
 // Delete deletes a virtual machine from a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Delete(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -182,9 +184,10 @@ func (client VirtualMachineScaleSetVMsClient) DeleteResponder(resp *http.Respons
 }
 
 // Get gets a virtual machine from a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Get(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVM, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -250,9 +253,10 @@ func (client VirtualMachineScaleSetVMsClient) GetResponder(resp *http.Response) 
 }
 
 // GetInstanceView gets the status of a virtual machine from a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) GetInstanceView(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMInstanceView, err error) {
 	req, err := client.GetInstanceViewPreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -318,10 +322,12 @@ func (client VirtualMachineScaleSetVMsClient) GetInstanceViewResponder(resp *htt
 }
 
 // List gets a list of all virtual machines in a VM scale sets.
-//
-// resourceGroupName is the name of the resource group. virtualMachineScaleSetName is the name of the VM scale set.
-// filter is the filter to apply to the operation. selectParameter is the list parameters. expand is the expand
-// expression to apply to the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualMachineScaleSetName - the name of the VM scale set.
+// filter - the filter to apply to the operation.
+// selectParameter - the list parameters.
+// expand - the expand expression to apply to the operation.
 func (client VirtualMachineScaleSetVMsClient) List(ctx context.Context, resourceGroupName string, virtualMachineScaleSetName string, filter string, selectParameter string, expand string) (result VirtualMachineScaleSetVMListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, virtualMachineScaleSetName, filter, selectParameter, expand)
@@ -424,9 +430,10 @@ func (client VirtualMachineScaleSetVMsClient) ListComplete(ctx context.Context, 
 
 // PowerOff power off (stop) a virtual machine in a VM scale set. Note that resources are still attached and you are
 // getting charged for the resources. Instead, use deallocate to release resources and avoid charges.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) PowerOff(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsPowerOffFuture, err error) {
 	req, err := client.PowerOffPreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -494,9 +501,10 @@ func (client VirtualMachineScaleSetVMsClient) PowerOffResponder(resp *http.Respo
 }
 
 // Reimage reimages (upgrade the operating system) a specific virtual machine in a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Reimage(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsReimageFuture, err error) {
 	req, err := client.ReimagePreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -564,9 +572,10 @@ func (client VirtualMachineScaleSetVMsClient) ReimageResponder(resp *http.Respon
 }
 
 // Restart restarts a virtual machine in a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Restart(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsRestartFuture, err error) {
 	req, err := client.RestartPreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {
@@ -634,9 +643,10 @@ func (client VirtualMachineScaleSetVMsClient) RestartResponder(resp *http.Respon
 }
 
 // Start starts a virtual machine in a VM scale set.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set. instanceID
-// is the instance ID of the virtual machine.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
+// instanceID - the instance ID of the virtual machine.
 func (client VirtualMachineScaleSetVMsClient) Start(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string) (result VirtualMachineScaleSetVMsStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, VMScaleSetName, instanceID)
 	if err != nil {

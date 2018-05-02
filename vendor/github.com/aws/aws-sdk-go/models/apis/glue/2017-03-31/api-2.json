@@ -1190,7 +1190,8 @@
       "type":"structure",
       "members":{
         "JobName":{"shape":"NameString"},
-        "Arguments":{"shape":"GenericMap"}
+        "Arguments":{"shape":"GenericMap"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "ActionList":{
@@ -1779,8 +1780,7 @@
       "type":"structure",
       "required":[
         "EndpointName",
-        "RoleArn",
-        "PublicKey"
+        "RoleArn"
       ],
       "members":{
         "EndpointName":{"shape":"GenericString"},
@@ -1843,7 +1843,8 @@
         "DefaultArguments":{"shape":"GenericMap"},
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
-        "AllocatedCapacity":{"shape":"IntegerValue"}
+        "AllocatedCapacity":{"shape":"IntegerValue"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "CreateJobResponse":{
@@ -1927,7 +1928,8 @@
         "Schedule":{"shape":"GenericString"},
         "Predicate":{"shape":"Predicate"},
         "Actions":{"shape":"ActionList"},
-        "Description":{"shape":"DescriptionString"}
+        "Description":{"shape":"DescriptionString"},
+        "StartOnCreation":{"shape":"BooleanValue"}
       }
     },
     "CreateTriggerResponse":{
@@ -2200,6 +2202,7 @@
         "SecurityGroupIds":{"shape":"StringList"},
         "SubnetId":{"shape":"GenericString"},
         "YarnEndpointAddress":{"shape":"GenericString"},
+        "PrivateAddress":{"shape":"GenericString"},
         "ZeppelinRemoteSparkInterpreterPort":{"shape":"IntegerValue"},
         "PublicAddress":{"shape":"GenericString"},
         "Status":{"shape":"GenericString"},
@@ -2841,7 +2844,8 @@
         "DefaultArguments":{"shape":"GenericMap"},
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
-        "AllocatedCapacity":{"shape":"IntegerValue"}
+        "AllocatedCapacity":{"shape":"IntegerValue"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "JobBookmarkEntry":{
@@ -2881,7 +2885,9 @@
         "Arguments":{"shape":"GenericMap"},
         "ErrorMessage":{"shape":"ErrorString"},
         "PredecessorRuns":{"shape":"PredecessorList"},
-        "AllocatedCapacity":{"shape":"IntegerValue"}
+        "AllocatedCapacity":{"shape":"IntegerValue"},
+        "ExecutionTime":{"shape":"IntegerValue"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "JobRunList":{
@@ -2896,7 +2902,8 @@
         "STOPPING",
         "STOPPED",
         "SUCCEEDED",
-        "FAILED"
+        "FAILED",
+        "TIMEOUT"
       ]
     },
     "JobUpdate":{
@@ -2910,7 +2917,8 @@
         "DefaultArguments":{"shape":"GenericMap"},
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
-        "AllocatedCapacity":{"shape":"IntegerValue"}
+        "AllocatedCapacity":{"shape":"IntegerValue"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "JsonClassifier":{
@@ -3360,7 +3368,8 @@
         "JobName":{"shape":"NameString"},
         "JobRunId":{"shape":"IdString"},
         "Arguments":{"shape":"GenericMap"},
-        "AllocatedCapacity":{"shape":"IntegerValue"}
+        "AllocatedCapacity":{"shape":"IntegerValue"},
+        "Timeout":{"shape":"Timeout"}
       }
     },
     "StartJobRunResponse":{
@@ -3523,6 +3532,11 @@
     "TableVersionErrors":{
       "type":"list",
       "member":{"shape":"TableVersionError"}
+    },
+    "Timeout":{
+      "type":"integer",
+      "box":true,
+      "min":1
     },
     "Timestamp":{"type":"timestamp"},
     "TimestampValue":{"type":"timestamp"},

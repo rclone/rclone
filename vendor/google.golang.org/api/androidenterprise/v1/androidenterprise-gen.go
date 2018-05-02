@@ -362,17 +362,13 @@ func (s *AdministratorWebTokenSpec) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// AndroidDevicePolicyConfig: The Android Device Policy configuration of
-// an enterprise.
+// AndroidDevicePolicyConfig: Deprecated and unused.
 type AndroidDevicePolicyConfig struct {
 	// Kind: Identifies what kind of resource this is. Value: the fixed
 	// string "androidenterprise#androidDevicePolicyConfig".
 	Kind string `json:"kind,omitempty"`
 
-	// State: The state of Android Device Policy. "enabled" indicates that
-	// Android Device Policy is enabled for the enterprise and the EMM is
-	// allowed to manage devices with Android Device Policy, while
-	// "disabled" means that it cannot.
+	// State: Deprecated and unused.
 	State string `json:"state,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1524,6 +1520,41 @@ func (s *LocalizedText) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// MaintenanceWindow: Maintenance window for managed Google Play
+// Accounts. This allows Play store to update the apps on the foreground
+// in the designated window.
+type MaintenanceWindow struct {
+	// DurationMs: Duration of the maintenance window, in milliseconds. The
+	// duration must be between 30 minutes and 24 hours (inclusive).
+	DurationMs int64 `json:"durationMs,omitempty,string"`
+
+	// StartTimeAfterMidnightMs: Start time of the maintenance window, in
+	// milliseconds after midnight on the device. Windows can span midnight.
+	StartTimeAfterMidnightMs int64 `json:"startTimeAfterMidnightMs,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "DurationMs") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DurationMs") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MaintenanceWindow) MarshalJSON() ([]byte, error) {
+	type NoMethod MaintenanceWindow
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ManagedConfiguration: A managed configuration resource contains the
 // set of managed properties defined by the app developer in the app's
 // managed configurations schema, as well as any configuration variables
@@ -2104,6 +2135,10 @@ type Policy struct {
 	// auto updates. "wifiOnly" enables auto updates only when the device is
 	// connected to wifi.
 	AutoUpdatePolicy string `json:"autoUpdatePolicy,omitempty"`
+
+	// MaintenanceWindow: The maintenance window defining when apps running
+	// in the foreground should be updated.
+	MaintenanceWindow *MaintenanceWindow `json:"maintenanceWindow,omitempty"`
 
 	// ProductAvailabilityPolicy: The availability granted to the device for
 	// the specified products. "all" gives the device access to all
@@ -5192,8 +5227,7 @@ type EnterprisesGetAndroidDevicePolicyConfigCall struct {
 	header_      http.Header
 }
 
-// GetAndroidDevicePolicyConfig: Returns the Android Device Policy
-// config resource.
+// GetAndroidDevicePolicyConfig: Deprecated and unused.
 func (r *EnterprisesService) GetAndroidDevicePolicyConfig(enterpriseId string) *EnterprisesGetAndroidDevicePolicyConfigCall {
 	c := &EnterprisesGetAndroidDevicePolicyConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.enterpriseId = enterpriseId
@@ -5294,7 +5328,7 @@ func (c *EnterprisesGetAndroidDevicePolicyConfigCall) Do(opts ...googleapi.CallO
 	}
 	return ret, nil
 	// {
-	//   "description": "Returns the Android Device Policy config resource.",
+	//   "description": "Deprecated and unused.",
 	//   "httpMethod": "GET",
 	//   "id": "androidenterprise.enterprises.getAndroidDevicePolicyConfig",
 	//   "parameterOrder": [
@@ -6331,11 +6365,7 @@ type EnterprisesSetAndroidDevicePolicyConfigCall struct {
 	header_                   http.Header
 }
 
-// SetAndroidDevicePolicyConfig: Sets the Android Device Policy config
-// resource. EMM may use this method to enable or disable Android Device
-// Policy support for the specified enterprise. To learn more about
-// managing devices and apps with Android Device Policy, see the Android
-// Management API.
+// SetAndroidDevicePolicyConfig: Deprecated and unused.
 func (r *EnterprisesService) SetAndroidDevicePolicyConfig(enterpriseId string, androiddevicepolicyconfig *AndroidDevicePolicyConfig) *EnterprisesSetAndroidDevicePolicyConfigCall {
 	c := &EnterprisesSetAndroidDevicePolicyConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.enterpriseId = enterpriseId
@@ -6429,7 +6459,7 @@ func (c *EnterprisesSetAndroidDevicePolicyConfigCall) Do(opts ...googleapi.CallO
 	}
 	return ret, nil
 	// {
-	//   "description": "Sets the Android Device Policy config resource. EMM may use this method to enable or disable Android Device Policy support for the specified enterprise. To learn more about managing devices and apps with Android Device Policy, see the Android Management API.",
+	//   "description": "Deprecated and unused.",
 	//   "httpMethod": "PUT",
 	//   "id": "androidenterprise.enterprises.setAndroidDevicePolicyConfig",
 	//   "parameterOrder": [

@@ -16,7 +16,7 @@ const opAddPermission = "AddPermission"
 
 // AddPermissionRequest generates a "aws/request.Request" representing the
 // client's request for the AddPermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -107,7 +107,7 @@ const opCheckIfPhoneNumberIsOptedOut = "CheckIfPhoneNumberIsOptedOut"
 
 // CheckIfPhoneNumberIsOptedOutRequest generates a "aws/request.Request" representing the
 // client's request for the CheckIfPhoneNumberIsOptedOut operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -201,7 +201,7 @@ const opConfirmSubscription = "ConfirmSubscription"
 
 // ConfirmSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the ConfirmSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -296,7 +296,7 @@ const opCreatePlatformApplication = "CreatePlatformApplication"
 
 // CreatePlatformApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePlatformApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -406,7 +406,7 @@ const opCreatePlatformEndpoint = "CreatePlatformEndpoint"
 
 // CreatePlatformEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePlatformEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -507,7 +507,7 @@ const opCreateTopic = "CreateTopic"
 
 // CreateTopicRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTopic operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -599,7 +599,7 @@ const opDeleteEndpoint = "DeleteEndpoint"
 
 // DeleteEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -691,7 +691,7 @@ const opDeletePlatformApplication = "DeletePlatformApplication"
 
 // DeletePlatformApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePlatformApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -780,7 +780,7 @@ const opDeleteTopic = "DeleteTopic"
 
 // DeleteTopicRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTopic operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -873,7 +873,7 @@ const opGetEndpointAttributes = "GetEndpointAttributes"
 
 // GetEndpointAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the GetEndpointAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -963,7 +963,7 @@ const opGetPlatformApplicationAttributes = "GetPlatformApplicationAttributes"
 
 // GetPlatformApplicationAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the GetPlatformApplicationAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1053,7 +1053,7 @@ const opGetSMSAttributes = "GetSMSAttributes"
 
 // GetSMSAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the GetSMSAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1144,7 +1144,7 @@ const opGetSubscriptionAttributes = "GetSubscriptionAttributes"
 
 // GetSubscriptionAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the GetSubscriptionAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1232,7 +1232,7 @@ const opGetTopicAttributes = "GetTopicAttributes"
 
 // GetTopicAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the GetTopicAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1321,7 +1321,7 @@ const opListEndpointsByPlatformApplication = "ListEndpointsByPlatformApplication
 
 // ListEndpointsByPlatformApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the ListEndpointsByPlatformApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1472,7 +1472,7 @@ const opListPhoneNumbersOptedOut = "ListPhoneNumbersOptedOut"
 
 // ListPhoneNumbersOptedOutRequest generates a "aws/request.Request" representing the
 // client's request for the ListPhoneNumbersOptedOut operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1569,7 +1569,7 @@ const opListPlatformApplications = "ListPlatformApplications"
 
 // ListPlatformApplicationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListPlatformApplications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1717,7 +1717,7 @@ const opListSubscriptions = "ListSubscriptions"
 
 // ListSubscriptionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListSubscriptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1861,7 +1861,7 @@ const opListSubscriptionsByTopic = "ListSubscriptionsByTopic"
 
 // ListSubscriptionsByTopicRequest generates a "aws/request.Request" representing the
 // client's request for the ListSubscriptionsByTopic operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2008,7 +2008,7 @@ const opListTopics = "ListTopics"
 
 // ListTopicsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTopics operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2151,7 +2151,7 @@ const opOptInPhoneNumber = "OptInPhoneNumber"
 
 // OptInPhoneNumberRequest generates a "aws/request.Request" representing the
 // client's request for the OptInPhoneNumber operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2243,7 +2243,7 @@ const opPublish = "Publish"
 
 // PublishRequest generates a "aws/request.Request" representing the
 // client's request for the Publish operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2351,7 +2351,7 @@ const opRemovePermission = "RemovePermission"
 
 // RemovePermissionRequest generates a "aws/request.Request" representing the
 // client's request for the RemovePermission operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2441,7 +2441,7 @@ const opSetEndpointAttributes = "SetEndpointAttributes"
 
 // SetEndpointAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the SetEndpointAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2533,7 +2533,7 @@ const opSetPlatformApplicationAttributes = "SetPlatformApplicationAttributes"
 
 // SetPlatformApplicationAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the SetPlatformApplicationAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2627,7 +2627,7 @@ const opSetSMSAttributes = "SetSMSAttributes"
 
 // SetSMSAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the SetSMSAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2722,7 +2722,7 @@ const opSetSubscriptionAttributes = "SetSubscriptionAttributes"
 
 // SetSubscriptionAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the SetSubscriptionAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2812,7 +2812,7 @@ const opSetTopicAttributes = "SetTopicAttributes"
 
 // SetTopicAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the SetTopicAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2902,7 +2902,7 @@ const opSubscribe = "Subscribe"
 
 // SubscribeRequest generates a "aws/request.Request" representing the
 // client's request for the Subscribe operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2996,7 +2996,7 @@ const opUnsubscribe = "Unsubscribe"
 
 // UnsubscribeRequest generates a "aws/request.Request" representing the
 // client's request for the Unsubscribe operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

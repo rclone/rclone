@@ -79,7 +79,6 @@ func New(client *http.Client) (*Service, error) {
 	s.Channels = NewChannelsService(s)
 	s.CommentThreads = NewCommentThreadsService(s)
 	s.Comments = NewCommentsService(s)
-	s.FanFundingEvents = NewFanFundingEventsService(s)
 	s.GuideCategories = NewGuideCategoriesService(s)
 	s.I18nLanguages = NewI18nLanguagesService(s)
 	s.I18nRegions = NewI18nRegionsService(s)
@@ -120,8 +119,6 @@ type Service struct {
 	CommentThreads *CommentThreadsService
 
 	Comments *CommentsService
-
-	FanFundingEvents *FanFundingEventsService
 
 	GuideCategories *GuideCategoriesService
 
@@ -229,15 +226,6 @@ func NewCommentsService(s *Service) *CommentsService {
 }
 
 type CommentsService struct {
-	s *Service
-}
-
-func NewFanFundingEventsService(s *Service) *FanFundingEventsService {
-	rs := &FanFundingEventsService{s: s}
-	return rs
-}
-
-type FanFundingEventsService struct {
 	s *Service
 }
 
@@ -2365,6 +2353,7 @@ type ChannelStatus struct {
 	//   "private"
 	//   "public"
 	//   "unlisted"
+	//   "unlisted_new"
 	PrivacyStatus string `json:"privacyStatus,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "IsLinked") to
@@ -3262,6 +3251,7 @@ type ContentRating struct {
 	//
 	// Possible values:
 	//   "ilfilm12"
+	//   "ilfilm14"
 	//   "ilfilm16"
 	//   "ilfilm18"
 	//   "ilfilmAa"
@@ -3714,151 +3704,6 @@ type ContentRating struct {
 
 func (s *ContentRating) MarshalJSON() ([]byte, error) {
 	type NoMethod ContentRating
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// FanFundingEvent: A fanFundingEvent resource represents a fan funding
-// event on a YouTube channel. Fan funding events occur when a user
-// gives one-time monetary support to the channel owner.
-type FanFundingEvent struct {
-	// Etag: Etag of this resource.
-	Etag string `json:"etag,omitempty"`
-
-	// Id: The ID that YouTube assigns to uniquely identify the fan funding
-	// event.
-	Id string `json:"id,omitempty"`
-
-	// Kind: Identifies what kind of resource this is. Value: the fixed
-	// string "youtube#fanFundingEvent".
-	Kind string `json:"kind,omitempty"`
-
-	// Snippet: The snippet object contains basic details about the fan
-	// funding event.
-	Snippet *FanFundingEventSnippet `json:"snippet,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Etag") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Etag") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *FanFundingEvent) MarshalJSON() ([]byte, error) {
-	type NoMethod FanFundingEvent
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type FanFundingEventListResponse struct {
-	// Etag: Etag of this resource.
-	Etag string `json:"etag,omitempty"`
-
-	// EventId: Serialized EventId of the request which produced this
-	// response.
-	EventId string `json:"eventId,omitempty"`
-
-	// Items: A list of fan funding events that match the request criteria.
-	Items []*FanFundingEvent `json:"items,omitempty"`
-
-	// Kind: Identifies what kind of resource this is. Value: the fixed
-	// string "youtube#fanFundingEventListResponse".
-	Kind string `json:"kind,omitempty"`
-
-	// NextPageToken: The token that can be used as the value of the
-	// pageToken parameter to retrieve the next page in the result set.
-	NextPageToken string `json:"nextPageToken,omitempty"`
-
-	PageInfo *PageInfo `json:"pageInfo,omitempty"`
-
-	TokenPagination *TokenPagination `json:"tokenPagination,omitempty"`
-
-	// VisitorId: The visitorId identifies the visitor.
-	VisitorId string `json:"visitorId,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "Etag") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Etag") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *FanFundingEventListResponse) MarshalJSON() ([]byte, error) {
-	type NoMethod FanFundingEventListResponse
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type FanFundingEventSnippet struct {
-	// AmountMicros: The amount of funding in micros of fund_currency. e.g.,
-	// 1 is represented
-	AmountMicros uint64 `json:"amountMicros,omitempty,string"`
-
-	// ChannelId: Channel id where the funding event occurred.
-	ChannelId string `json:"channelId,omitempty"`
-
-	// CommentText: The text contents of the comment left by the user.
-	CommentText string `json:"commentText,omitempty"`
-
-	// CreatedAt: The date and time when the funding occurred. The value is
-	// specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
-	CreatedAt string `json:"createdAt,omitempty"`
-
-	// Currency: The currency in which the fund was made. ISO 4217.
-	Currency string `json:"currency,omitempty"`
-
-	// DisplayString: A rendered string that displays the fund amount and
-	// currency (e.g., "$1.00"). The string is rendered for the given
-	// language.
-	DisplayString string `json:"displayString,omitempty"`
-
-	// SupporterDetails: Details about the supporter. Only filled if the
-	// event was made public by the user.
-	SupporterDetails *ChannelProfileDetails `json:"supporterDetails,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "AmountMicros") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "AmountMicros") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *FanFundingEventSnippet) MarshalJSON() ([]byte, error) {
-	type NoMethod FanFundingEventSnippet
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -5057,6 +4902,7 @@ type LiveBroadcastStatus struct {
 	//   "private"
 	//   "public"
 	//   "unlisted"
+	//   "unlisted_new"
 	PrivacyStatus string `json:"privacyStatus,omitempty"`
 
 	// RecordingStatus: The broadcast's recording status.
@@ -6832,6 +6678,7 @@ type PlaylistItemStatus struct {
 	//   "private"
 	//   "public"
 	//   "unlisted"
+	//   "unlisted_new"
 	PrivacyStatus string `json:"privacyStatus,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PrivacyStatus") to
@@ -7040,6 +6887,7 @@ type PlaylistStatus struct {
 	//   "private"
 	//   "public"
 	//   "unlisted"
+	//   "unlisted_new"
 	PrivacyStatus string `json:"privacyStatus,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PrivacyStatus") to
@@ -7406,9 +7254,6 @@ func (s *SearchResultSnippet) MarshalJSON() ([]byte, error) {
 type Sponsor struct {
 	// Etag: Etag of this resource.
 	Etag string `json:"etag,omitempty"`
-
-	// Id: The ID that YouTube assigns to uniquely identify the sponsor.
-	Id string `json:"id,omitempty"`
 
 	// Kind: Identifies what kind of resource this is. Value: the fixed
 	// string "youtube#sponsor".
@@ -9519,6 +9364,7 @@ type VideoStatus struct {
 	//   "private"
 	//   "public"
 	//   "unlisted"
+	//   "unlisted_new"
 	PrivacyStatus string `json:"privacyStatus,omitempty"`
 
 	// PublicStatsViewable: This value indicates if the extended video
@@ -14134,214 +13980,6 @@ func (c *CommentsUpdateCall) Do(opts ...googleapi.CallOption) (*Comment, error) 
 	//   ]
 	// }
 
-}
-
-// method id "youtube.fanFundingEvents.list":
-
-type FanFundingEventsListCall struct {
-	s            *Service
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// List: Lists fan funding events for a channel.
-func (r *FanFundingEventsService) List(part string) *FanFundingEventsListCall {
-	c := &FanFundingEventsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.urlParams_.Set("part", part)
-	return c
-}
-
-// Hl sets the optional parameter "hl": The hl parameter instructs the
-// API to retrieve localized resource metadata for a specific
-// application language that the YouTube website supports. The parameter
-// value must be a language code included in the list returned by the
-// i18nLanguages.list method.
-//
-// If localized resource details are available in that language, the
-// resource's snippet.localized object will contain the localized
-// values. However, if localized details are not available, the
-// snippet.localized object will contain resource details in the
-// resource's default language.
-func (c *FanFundingEventsListCall) Hl(hl string) *FanFundingEventsListCall {
-	c.urlParams_.Set("hl", hl)
-	return c
-}
-
-// MaxResults sets the optional parameter "maxResults": The maxResults
-// parameter specifies the maximum number of items that should be
-// returned in the result set.
-func (c *FanFundingEventsListCall) MaxResults(maxResults int64) *FanFundingEventsListCall {
-	c.urlParams_.Set("maxResults", fmt.Sprint(maxResults))
-	return c
-}
-
-// PageToken sets the optional parameter "pageToken": The pageToken
-// parameter identifies a specific page in the result set that should be
-// returned. In an API response, the nextPageToken and prevPageToken
-// properties identify other pages that could be retrieved.
-func (c *FanFundingEventsListCall) PageToken(pageToken string) *FanFundingEventsListCall {
-	c.urlParams_.Set("pageToken", pageToken)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *FanFundingEventsListCall) Fields(s ...googleapi.Field) *FanFundingEventsListCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *FanFundingEventsListCall) IfNoneMatch(entityTag string) *FanFundingEventsListCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *FanFundingEventsListCall) Context(ctx context.Context) *FanFundingEventsListCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *FanFundingEventsListCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *FanFundingEventsListCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "fanFundingEvents")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("GET", urls, body)
-	req.Header = reqHeaders
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "youtube.fanFundingEvents.list" call.
-// Exactly one of *FanFundingEventListResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *FanFundingEventListResponse.ServerResponse.Header or (if a response
-// was returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *FanFundingEventsListCall) Do(opts ...googleapi.CallOption) (*FanFundingEventListResponse, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &FanFundingEventListResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Lists fan funding events for a channel.",
-	//   "httpMethod": "GET",
-	//   "id": "youtube.fanFundingEvents.list",
-	//   "parameterOrder": [
-	//     "part"
-	//   ],
-	//   "parameters": {
-	//     "hl": {
-	//       "description": "The hl parameter instructs the API to retrieve localized resource metadata for a specific application language that the YouTube website supports. The parameter value must be a language code included in the list returned by the i18nLanguages.list method.\n\nIf localized resource details are available in that language, the resource's snippet.localized object will contain the localized values. However, if localized details are not available, the snippet.localized object will contain resource details in the resource's default language.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "maxResults": {
-	//       "default": "5",
-	//       "description": "The maxResults parameter specifies the maximum number of items that should be returned in the result set.",
-	//       "format": "uint32",
-	//       "location": "query",
-	//       "maximum": "50",
-	//       "minimum": "0",
-	//       "type": "integer"
-	//     },
-	//     "pageToken": {
-	//       "description": "The pageToken parameter identifies a specific page in the result set that should be returned. In an API response, the nextPageToken and prevPageToken properties identify other pages that could be retrieved.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "part": {
-	//       "description": "The part parameter specifies the fanFundingEvent resource parts that the API response will include. Supported values are id and snippet.",
-	//       "location": "query",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "fanFundingEvents",
-	//   "response": {
-	//     "$ref": "FanFundingEventListResponse"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/youtube",
-	//     "https://www.googleapis.com/auth/youtube.force-ssl",
-	//     "https://www.googleapis.com/auth/youtube.readonly"
-	//   ]
-	// }
-
-}
-
-// Pages invokes f for each page of results.
-// A non-nil error returned from f will halt the iteration.
-// The provided context supersedes any context provided to the Context method.
-func (c *FanFundingEventsListCall) Pages(ctx context.Context, f func(*FanFundingEventListResponse) error) error {
-	c.ctx_ = ctx
-	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
-	for {
-		x, err := c.Do()
-		if err != nil {
-			return err
-		}
-		if err := f(x); err != nil {
-			return err
-		}
-		if x.NextPageToken == "" {
-			return nil
-		}
-		c.PageToken(x.NextPageToken)
-	}
 }
 
 // method id "youtube.guideCategories.list":

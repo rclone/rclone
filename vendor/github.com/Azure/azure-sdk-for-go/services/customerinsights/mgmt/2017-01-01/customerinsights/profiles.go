@@ -43,9 +43,11 @@ func NewProfilesClientWithBaseURI(baseURI string, subscriptionID string) Profile
 }
 
 // CreateOrUpdate creates a profile within a Hub, or updates an existing profile.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. profileName is the name of
-// the profile. parameters is parameters supplied to the create/delete Profile type operation
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// profileName - the name of the profile.
+// parameters - parameters supplied to the create/delete Profile type operation
 func (client ProfilesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, profileName string, parameters ProfileResourceFormat) (result ProfilesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: profileName,
@@ -85,7 +87,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/profiles/{profileName}", pathParameters),
@@ -123,9 +125,11 @@ func (client ProfilesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes a profile within a hub
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. profileName is the name of
-// the profile. localeCode is locale of profile to retrieve, default is en-us.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// profileName - the name of the profile.
+// localeCode - locale of profile to retrieve, default is en-us.
 func (client ProfilesClient) Delete(ctx context.Context, resourceGroupName string, hubName string, profileName string, localeCode string) (result ProfilesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, profileName, localeCode)
 	if err != nil {
@@ -197,9 +201,11 @@ func (client ProfilesClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get gets information about the specified profile.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. profileName is the name of
-// the profile. localeCode is locale of profile to retrieve, default is en-us.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// profileName - the name of the profile.
+// localeCode - locale of profile to retrieve, default is en-us.
 func (client ProfilesClient) Get(ctx context.Context, resourceGroupName string, hubName string, profileName string, localeCode string) (result ProfileResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, profileName, localeCode)
 	if err != nil {
@@ -271,9 +277,10 @@ func (client ProfilesClient) GetResponder(resp *http.Response) (result ProfileRe
 
 // GetEnrichingKpis gets the KPIs that enrich the profile Type identified by the supplied name. Enrichment happens
 // through participants of the Interaction on an Interaction KPI and through Relationships for Profile KPIs.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. profileName is the name of
-// the profile.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// profileName - the name of the profile.
 func (client ProfilesClient) GetEnrichingKpis(ctx context.Context, resourceGroupName string, hubName string, profileName string) (result ListKpiDefinition, err error) {
 	req, err := client.GetEnrichingKpisPreparer(ctx, resourceGroupName, hubName, profileName)
 	if err != nil {
@@ -339,9 +346,10 @@ func (client ProfilesClient) GetEnrichingKpisResponder(resp *http.Response) (res
 }
 
 // ListByHub gets all profile in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. localeCode is locale of
-// profile to retrieve, default is en-us.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// localeCode - locale of profile to retrieve, default is en-us.
 func (client ProfilesClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string, localeCode string) (result ProfileListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName, localeCode)

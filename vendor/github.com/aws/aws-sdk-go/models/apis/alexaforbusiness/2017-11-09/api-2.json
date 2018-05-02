@@ -11,6 +11,18 @@
     "uid":"alexaforbusiness-2017-11-09"
   },
   "operations":{
+    "AssociateContactWithAddressBook":{
+      "name":"AssociateContactWithAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AssociateContactWithAddressBookRequest"},
+      "output":{"shape":"AssociateContactWithAddressBookResponse"},
+      "errors":[
+        {"shape":"LimitExceededException"}
+      ]
+    },
     "AssociateDeviceWithRoom":{
       "name":"AssociateDeviceWithRoom",
       "http":{
@@ -31,6 +43,32 @@
       },
       "input":{"shape":"AssociateSkillGroupWithRoomRequest"},
       "output":{"shape":"AssociateSkillGroupWithRoomResponse"}
+    },
+    "CreateAddressBook":{
+      "name":"CreateAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateAddressBookRequest"},
+      "output":{"shape":"CreateAddressBookResponse"},
+      "errors":[
+        {"shape":"AlreadyExistsException"},
+        {"shape":"LimitExceededException"}
+      ]
+    },
+    "CreateContact":{
+      "name":"CreateContact",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateContactRequest"},
+      "output":{"shape":"CreateContactResponse"},
+      "errors":[
+        {"shape":"AlreadyExistsException"},
+        {"shape":"LimitExceededException"}
+      ]
     },
     "CreateProfile":{
       "name":"CreateProfile",
@@ -82,6 +120,30 @@
       "errors":[
         {"shape":"ResourceInUseException"},
         {"shape":"LimitExceededException"}
+      ]
+    },
+    "DeleteAddressBook":{
+      "name":"DeleteAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteAddressBookRequest"},
+      "output":{"shape":"DeleteAddressBookResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
+      ]
+    },
+    "DeleteContact":{
+      "name":"DeleteContact",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteContactRequest"},
+      "output":{"shape":"DeleteContactResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
       ]
     },
     "DeleteProfile":{
@@ -141,6 +203,15 @@
         {"shape":"NotFoundException"}
       ]
     },
+    "DisassociateContactFromAddressBook":{
+      "name":"DisassociateContactFromAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DisassociateContactFromAddressBookRequest"},
+      "output":{"shape":"DisassociateContactFromAddressBookResponse"}
+    },
     "DisassociateDeviceFromRoom":{
       "name":"DisassociateDeviceFromRoom",
       "http":{
@@ -158,6 +229,30 @@
       },
       "input":{"shape":"DisassociateSkillGroupFromRoomRequest"},
       "output":{"shape":"DisassociateSkillGroupFromRoomResponse"}
+    },
+    "GetAddressBook":{
+      "name":"GetAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetAddressBookRequest"},
+      "output":{"shape":"GetAddressBookResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
+      ]
+    },
+    "GetContact":{
+      "name":"GetContact",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetContactRequest"},
+      "output":{"shape":"GetContactResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
+      ]
     },
     "GetDevice":{
       "name":"GetDevice",
@@ -219,6 +314,18 @@
         {"shape":"NotFoundException"}
       ]
     },
+    "ListDeviceEvents":{
+      "name":"ListDeviceEvents",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListDeviceEventsRequest"},
+      "output":{"shape":"ListDeviceEventsResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
+      ]
+    },
     "ListSkills":{
       "name":"ListSkills",
       "http":{
@@ -272,6 +379,24 @@
       "errors":[
         {"shape":"NotFoundException"}
       ]
+    },
+    "SearchAddressBooks":{
+      "name":"SearchAddressBooks",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"SearchAddressBooksRequest"},
+      "output":{"shape":"SearchAddressBooksResponse"}
+    },
+    "SearchContacts":{
+      "name":"SearchContacts",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"SearchContactsRequest"},
+      "output":{"shape":"SearchContactsResponse"}
     },
     "SearchDevices":{
       "name":"SearchDevices",
@@ -364,6 +489,31 @@
         {"shape":"NotFoundException"}
       ]
     },
+    "UpdateAddressBook":{
+      "name":"UpdateAddressBook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateAddressBookRequest"},
+      "output":{"shape":"UpdateAddressBookResponse"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"NameInUseException"}
+      ]
+    },
+    "UpdateContact":{
+      "name":"UpdateContact",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateContactRequest"},
+      "output":{"shape":"UpdateContactResponse"},
+      "errors":[
+        {"shape":"NotFoundException"}
+      ]
+    },
     "UpdateDevice":{
       "name":"UpdateDevice",
       "http":{
@@ -422,6 +572,38 @@
       "max":500,
       "min":1
     },
+    "AddressBook":{
+      "type":"structure",
+      "members":{
+        "AddressBookArn":{"shape":"Arn"},
+        "Name":{"shape":"AddressBookName"},
+        "Description":{"shape":"AddressBookDescription"}
+      }
+    },
+    "AddressBookData":{
+      "type":"structure",
+      "members":{
+        "AddressBookArn":{"shape":"Arn"},
+        "Name":{"shape":"AddressBookName"},
+        "Description":{"shape":"AddressBookDescription"}
+      }
+    },
+    "AddressBookDataList":{
+      "type":"list",
+      "member":{"shape":"AddressBookData"}
+    },
+    "AddressBookDescription":{
+      "type":"string",
+      "max":200,
+      "min":1,
+      "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u007E\\u0085\\u00A0-\\uD7FF\\uE000-\\uFFFD\\u10000-\\u10FFFF]*"
+    },
+    "AddressBookName":{
+      "type":"string",
+      "max":100,
+      "min":1,
+      "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u007E\\u0085\\u00A0-\\uD7FF\\uE000-\\uFFFD\\u10000-\\u10FFFF]*"
+    },
     "AlreadyExistsException":{
       "type":"structure",
       "members":{
@@ -432,6 +614,22 @@
     "Arn":{
       "type":"string",
       "pattern":"arn:[a-z0-9-\\.]{1,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[^/].{0,1023}"
+    },
+    "AssociateContactWithAddressBookRequest":{
+      "type":"structure",
+      "required":[
+        "ContactArn",
+        "AddressBookArn"
+      ],
+      "members":{
+        "ContactArn":{"shape":"Arn"},
+        "AddressBookArn":{"shape":"Arn"}
+      }
+    },
+    "AssociateContactWithAddressBookResponse":{
+      "type":"structure",
+      "members":{
+      }
     },
     "AssociateDeviceWithRoomRequest":{
       "type":"structure",
@@ -463,6 +661,84 @@
       "max":150,
       "min":10,
       "pattern":"[a-zA-Z0-9][a-zA-Z0-9_-]*"
+    },
+    "ConnectionStatus":{
+      "type":"string",
+      "enum":[
+        "ONLINE",
+        "OFFLINE"
+      ]
+    },
+    "Contact":{
+      "type":"structure",
+      "members":{
+        "ContactArn":{"shape":"Arn"},
+        "DisplayName":{"shape":"ContactName"},
+        "FirstName":{"shape":"ContactName"},
+        "LastName":{"shape":"ContactName"},
+        "PhoneNumber":{"shape":"E164PhoneNumber"}
+      }
+    },
+    "ContactData":{
+      "type":"structure",
+      "members":{
+        "ContactArn":{"shape":"Arn"},
+        "DisplayName":{"shape":"ContactName"},
+        "FirstName":{"shape":"ContactName"},
+        "LastName":{"shape":"ContactName"},
+        "PhoneNumber":{"shape":"E164PhoneNumber"}
+      }
+    },
+    "ContactDataList":{
+      "type":"list",
+      "member":{"shape":"ContactData"}
+    },
+    "ContactName":{
+      "type":"string",
+      "max":100,
+      "min":1,
+      "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u007E\\u0085\\u00A0-\\uD7FF\\uE000-\\uFFFD\\u10000-\\u10FFFF]*"
+    },
+    "CreateAddressBookRequest":{
+      "type":"structure",
+      "required":["Name"],
+      "members":{
+        "Name":{"shape":"AddressBookName"},
+        "Description":{"shape":"AddressBookDescription"},
+        "ClientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "CreateAddressBookResponse":{
+      "type":"structure",
+      "members":{
+        "AddressBookArn":{"shape":"Arn"}
+      }
+    },
+    "CreateContactRequest":{
+      "type":"structure",
+      "required":[
+        "FirstName",
+        "PhoneNumber"
+      ],
+      "members":{
+        "DisplayName":{"shape":"ContactName"},
+        "FirstName":{"shape":"ContactName"},
+        "LastName":{"shape":"ContactName"},
+        "PhoneNumber":{"shape":"E164PhoneNumber"},
+        "ClientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "CreateContactResponse":{
+      "type":"structure",
+      "members":{
+        "ContactArn":{"shape":"Arn"}
+      }
     },
     "CreateProfileRequest":{
       "type":"structure",
@@ -554,6 +830,30 @@
       "type":"structure",
       "members":{
         "UserArn":{"shape":"Arn"}
+      }
+    },
+    "DeleteAddressBookRequest":{
+      "type":"structure",
+      "required":["AddressBookArn"],
+      "members":{
+        "AddressBookArn":{"shape":"Arn"}
+      }
+    },
+    "DeleteAddressBookResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteContactRequest":{
+      "type":"structure",
+      "required":["ContactArn"],
+      "members":{
+        "ContactArn":{"shape":"Arn"}
+      }
+    },
+    "DeleteContactResponse":{
+      "type":"structure",
+      "members":{
       }
     },
     "DeleteProfileRequest":{
@@ -652,6 +952,23 @@
       "type":"list",
       "member":{"shape":"DeviceData"}
     },
+    "DeviceEvent":{
+      "type":"structure",
+      "members":{
+        "Type":{"shape":"DeviceEventType"},
+        "Value":{"shape":"DeviceEventValue"},
+        "Timestamp":{"shape":"Timestamp"}
+      }
+    },
+    "DeviceEventList":{
+      "type":"list",
+      "member":{"shape":"DeviceEvent"}
+    },
+    "DeviceEventType":{
+      "type":"string",
+      "enum":["CONNECTION_STATUS"]
+    },
+    "DeviceEventValue":{"type":"string"},
     "DeviceName":{
       "type":"string",
       "max":100,
@@ -690,12 +1007,29 @@
     "DeviceStatusInfo":{
       "type":"structure",
       "members":{
-        "DeviceStatusDetails":{"shape":"DeviceStatusDetails"}
+        "DeviceStatusDetails":{"shape":"DeviceStatusDetails"},
+        "ConnectionStatus":{"shape":"ConnectionStatus"}
       }
     },
     "DeviceType":{
       "type":"string",
       "pattern":"[a-zA-Z0-9]{1,200}"
+    },
+    "DisassociateContactFromAddressBookRequest":{
+      "type":"structure",
+      "required":[
+        "ContactArn",
+        "AddressBookArn"
+      ],
+      "members":{
+        "ContactArn":{"shape":"Arn"},
+        "AddressBookArn":{"shape":"Arn"}
+      }
+    },
+    "DisassociateContactFromAddressBookResponse":{
+      "type":"structure",
+      "members":{
+      }
     },
     "DisassociateDeviceFromRoomRequest":{
       "type":"structure",
@@ -727,6 +1061,10 @@
         "IMPERIAL"
       ]
     },
+    "E164PhoneNumber":{
+      "type":"string",
+      "pattern":"^\\+\\d{8,}$"
+    },
     "Email":{
       "type":"string",
       "max":128,
@@ -744,6 +1082,7 @@
         "INITIALIZED",
         "PENDING",
         "REGISTERED",
+        "DISASSOCIATING",
         "DEREGISTERING"
       ]
     },
@@ -793,6 +1132,32 @@
       "type":"list",
       "member":{"shape":"FilterValue"},
       "max":5
+    },
+    "GetAddressBookRequest":{
+      "type":"structure",
+      "required":["AddressBookArn"],
+      "members":{
+        "AddressBookArn":{"shape":"Arn"}
+      }
+    },
+    "GetAddressBookResponse":{
+      "type":"structure",
+      "members":{
+        "AddressBook":{"shape":"AddressBook"}
+      }
+    },
+    "GetContactRequest":{
+      "type":"structure",
+      "required":["ContactArn"],
+      "members":{
+        "ContactArn":{"shape":"Arn"}
+      }
+    },
+    "GetContactResponse":{
+      "type":"structure",
+      "members":{
+        "Contact":{"shape":"Contact"}
+      }
     },
     "GetDeviceRequest":{
       "type":"structure",
@@ -873,6 +1238,23 @@
         "Message":{"shape":"ErrorMessage"}
       },
       "exception":true
+    },
+    "ListDeviceEventsRequest":{
+      "type":"structure",
+      "required":["DeviceArn"],
+      "members":{
+        "DeviceArn":{"shape":"Arn"},
+        "EventType":{"shape":"DeviceEventType"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"}
+      }
+    },
+    "ListDeviceEventsResponse":{
+      "type":"structure",
+      "members":{
+        "DeviceEvents":{"shape":"DeviceEventList"},
+        "NextToken":{"shape":"NextToken"}
+      }
     },
     "ListSkillsRequest":{
       "type":"structure",
@@ -1090,6 +1472,40 @@
     "RoomSkillParameters":{
       "type":"list",
       "member":{"shape":"RoomSkillParameter"}
+    },
+    "SearchAddressBooksRequest":{
+      "type":"structure",
+      "members":{
+        "Filters":{"shape":"FilterList"},
+        "SortCriteria":{"shape":"SortList"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"}
+      }
+    },
+    "SearchAddressBooksResponse":{
+      "type":"structure",
+      "members":{
+        "AddressBooks":{"shape":"AddressBookDataList"},
+        "NextToken":{"shape":"NextToken"},
+        "TotalCount":{"shape":"TotalCount"}
+      }
+    },
+    "SearchContactsRequest":{
+      "type":"structure",
+      "members":{
+        "Filters":{"shape":"FilterList"},
+        "SortCriteria":{"shape":"SortList"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"}
+      }
+    },
+    "SearchContactsResponse":{
+      "type":"structure",
+      "members":{
+        "Contacts":{"shape":"ContactDataList"},
+        "NextToken":{"shape":"NextToken"},
+        "TotalCount":{"shape":"TotalCount"}
+      }
     },
     "SearchDevicesRequest":{
       "type":"structure",
@@ -1339,6 +1755,7 @@
         "CELSIUS"
       ]
     },
+    "Timestamp":{"type":"timestamp"},
     "Timezone":{
       "type":"string",
       "max":100,
@@ -1357,6 +1774,36 @@
       }
     },
     "UntagResourceResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "UpdateAddressBookRequest":{
+      "type":"structure",
+      "required":["AddressBookArn"],
+      "members":{
+        "AddressBookArn":{"shape":"Arn"},
+        "Name":{"shape":"AddressBookName"},
+        "Description":{"shape":"AddressBookDescription"}
+      }
+    },
+    "UpdateAddressBookResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "UpdateContactRequest":{
+      "type":"structure",
+      "required":["ContactArn"],
+      "members":{
+        "ContactArn":{"shape":"Arn"},
+        "DisplayName":{"shape":"ContactName"},
+        "FirstName":{"shape":"ContactName"},
+        "LastName":{"shape":"ContactName"},
+        "PhoneNumber":{"shape":"E164PhoneNumber"}
+      }
+    },
+    "UpdateContactResponse":{
       "type":"structure",
       "members":{
       }

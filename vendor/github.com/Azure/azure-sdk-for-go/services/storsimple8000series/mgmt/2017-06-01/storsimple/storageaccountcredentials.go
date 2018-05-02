@@ -41,9 +41,11 @@ func NewStorageAccountCredentialsClientWithBaseURI(baseURI string, subscriptionI
 }
 
 // CreateOrUpdate creates or updates the storage account credential.
-//
-// storageAccountCredentialName is the storage account credential name. parameters is the storage account
-// credential to be added or updated. resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// storageAccountCredentialName - the storage account credential name.
+// parameters - the storage account credential to be added or updated.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client StorageAccountCredentialsClient) CreateOrUpdate(ctx context.Context, storageAccountCredentialName string, parameters StorageAccountCredential, resourceGroupName string, managerName string) (result StorageAccountCredentialsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -88,7 +90,7 @@ func (client StorageAccountCredentialsClient) CreateOrUpdatePreparer(ctx context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/storageAccountCredentials/{storageAccountCredentialName}", pathParameters),
@@ -126,9 +128,10 @@ func (client StorageAccountCredentialsClient) CreateOrUpdateResponder(resp *http
 }
 
 // Delete deletes the storage account credential.
-//
-// storageAccountCredentialName is the name of the storage account credential. resourceGroupName is the resource
-// group name managerName is the manager name
+// Parameters:
+// storageAccountCredentialName - the name of the storage account credential.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client StorageAccountCredentialsClient) Delete(ctx context.Context, storageAccountCredentialName string, resourceGroupName string, managerName string) (result StorageAccountCredentialsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -202,9 +205,10 @@ func (client StorageAccountCredentialsClient) DeleteResponder(resp *http.Respons
 }
 
 // Get gets the properties of the specified storage account credential name.
-//
-// storageAccountCredentialName is the name of storage account credential to be fetched. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// storageAccountCredentialName - the name of storage account credential to be fetched.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client StorageAccountCredentialsClient) Get(ctx context.Context, storageAccountCredentialName string, resourceGroupName string, managerName string) (result StorageAccountCredential, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -277,8 +281,9 @@ func (client StorageAccountCredentialsClient) GetResponder(resp *http.Response) 
 }
 
 // ListByManager gets all the storage account credentials in a manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client StorageAccountCredentialsClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string) (result StorageAccountCredentialList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsagesClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type SubscriptionUsagesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewSubscriptionUsagesClient creates an instance of the SubscriptionUsagesClient client.
 func NewSubscriptionUsagesClient(subscriptionID string) SubscriptionUsagesClient {
 	return NewSubscriptionUsagesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewSubscriptionUsagesClientWithBaseURI creates an instance of the SubscriptionUsagesClient client.
 func NewSubscriptionUsagesClientWithBaseURI(baseURI string, subscriptionID string) SubscriptionUsagesClient {
 	return SubscriptionUsagesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a subscription usage metric.
 //
 // locationName is the name of the region where the resource is located. usageName is name of usage metric to
@@ -67,6 +71,7 @@ func (client SubscriptionUsagesClient) Get(ctx context.Context, locationName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client SubscriptionUsagesClient) GetPreparer(ctx context.Context, locationName string, usageName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -88,6 +93,7 @@ func (client SubscriptionUsagesClient) GetPreparer(ctx context.Context, location
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubscriptionUsagesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client SubscriptionUsagesClient) GetSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SubscriptionUsagesClient) GetResponder(resp *http.Response) (result SubscriptionUsage, err error) {
@@ -108,6 +115,7 @@ func (client SubscriptionUsagesClient) GetResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocation gets all subscription usage metrics in a given location.
 //
 // locationName is the name of the region where the resource is located.
@@ -134,6 +142,7 @@ func (client SubscriptionUsagesClient) ListByLocation(ctx context.Context, locat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationPreparer prepares the ListByLocation request.
 func (client SubscriptionUsagesClient) ListByLocationPreparer(ctx context.Context, locationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -154,6 +163,7 @@ func (client SubscriptionUsagesClient) ListByLocationPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationSender sends the ListByLocation request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubscriptionUsagesClient) ListByLocationSender(req *http.Request) (*http.Response, error) {
@@ -161,6 +171,7 @@ func (client SubscriptionUsagesClient) ListByLocationSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationResponder handles the response to the ListByLocation request. The method always
 // closes the http.Response Body.
 func (client SubscriptionUsagesClient) ListByLocationResponder(resp *http.Response) (result SubscriptionUsageListResult, err error) {
@@ -195,6 +206,7 @@ func (client SubscriptionUsagesClient) listByLocationNextResults(lastResults Sub
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SubscriptionUsagesClient) ListByLocationComplete(ctx context.Context, locationName string) (result SubscriptionUsageListResultIterator, err error) {
 	result.page, err = client.ListByLocation(ctx, locationName)

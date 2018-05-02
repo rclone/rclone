@@ -92,6 +92,10 @@ type WorkMailAPI interface {
 	DeleteGroupWithContext(aws.Context, *workmail.DeleteGroupInput, ...request.Option) (*workmail.DeleteGroupOutput, error)
 	DeleteGroupRequest(*workmail.DeleteGroupInput) (*request.Request, *workmail.DeleteGroupOutput)
 
+	DeleteMailboxPermissions(*workmail.DeleteMailboxPermissionsInput) (*workmail.DeleteMailboxPermissionsOutput, error)
+	DeleteMailboxPermissionsWithContext(aws.Context, *workmail.DeleteMailboxPermissionsInput, ...request.Option) (*workmail.DeleteMailboxPermissionsOutput, error)
+	DeleteMailboxPermissionsRequest(*workmail.DeleteMailboxPermissionsInput) (*request.Request, *workmail.DeleteMailboxPermissionsOutput)
+
 	DeleteResource(*workmail.DeleteResourceInput) (*workmail.DeleteResourceOutput, error)
 	DeleteResourceWithContext(aws.Context, *workmail.DeleteResourceInput, ...request.Option) (*workmail.DeleteResourceOutput, error)
 	DeleteResourceRequest(*workmail.DeleteResourceInput) (*request.Request, *workmail.DeleteResourceOutput)
@@ -149,6 +153,13 @@ type WorkMailAPI interface {
 	ListGroupsPages(*workmail.ListGroupsInput, func(*workmail.ListGroupsOutput, bool) bool) error
 	ListGroupsPagesWithContext(aws.Context, *workmail.ListGroupsInput, func(*workmail.ListGroupsOutput, bool) bool, ...request.Option) error
 
+	ListMailboxPermissions(*workmail.ListMailboxPermissionsInput) (*workmail.ListMailboxPermissionsOutput, error)
+	ListMailboxPermissionsWithContext(aws.Context, *workmail.ListMailboxPermissionsInput, ...request.Option) (*workmail.ListMailboxPermissionsOutput, error)
+	ListMailboxPermissionsRequest(*workmail.ListMailboxPermissionsInput) (*request.Request, *workmail.ListMailboxPermissionsOutput)
+
+	ListMailboxPermissionsPages(*workmail.ListMailboxPermissionsInput, func(*workmail.ListMailboxPermissionsOutput, bool) bool) error
+	ListMailboxPermissionsPagesWithContext(aws.Context, *workmail.ListMailboxPermissionsInput, func(*workmail.ListMailboxPermissionsOutput, bool) bool, ...request.Option) error
+
 	ListOrganizations(*workmail.ListOrganizationsInput) (*workmail.ListOrganizationsOutput, error)
 	ListOrganizationsWithContext(aws.Context, *workmail.ListOrganizationsInput, ...request.Option) (*workmail.ListOrganizationsOutput, error)
 	ListOrganizationsRequest(*workmail.ListOrganizationsInput) (*request.Request, *workmail.ListOrganizationsOutput)
@@ -173,6 +184,10 @@ type WorkMailAPI interface {
 
 	ListUsersPages(*workmail.ListUsersInput, func(*workmail.ListUsersOutput, bool) bool) error
 	ListUsersPagesWithContext(aws.Context, *workmail.ListUsersInput, func(*workmail.ListUsersOutput, bool) bool, ...request.Option) error
+
+	PutMailboxPermissions(*workmail.PutMailboxPermissionsInput) (*workmail.PutMailboxPermissionsOutput, error)
+	PutMailboxPermissionsWithContext(aws.Context, *workmail.PutMailboxPermissionsInput, ...request.Option) (*workmail.PutMailboxPermissionsOutput, error)
+	PutMailboxPermissionsRequest(*workmail.PutMailboxPermissionsInput) (*request.Request, *workmail.PutMailboxPermissionsOutput)
 
 	RegisterToWorkMail(*workmail.RegisterToWorkMailInput) (*workmail.RegisterToWorkMailOutput, error)
 	RegisterToWorkMailWithContext(aws.Context, *workmail.RegisterToWorkMailInput, ...request.Option) (*workmail.RegisterToWorkMailOutput, error)

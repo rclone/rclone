@@ -19,39 +19,16 @@
 
 package devices
 
-import original "github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2017-07-01/devices"
+import original "github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2018-04-01/devices"
 
 type CertificatesClient = original.CertificatesClient
-
-func NewCertificatesClient(subscriptionID string) CertificatesClient {
-	return original.NewCertificatesClient(subscriptionID)
-}
-func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) CertificatesClient {
-	return original.NewCertificatesClientWithBaseURI(baseURI, subscriptionID)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type IotHubResourceClient = original.IotHubResourceClient
-
-func NewIotHubResourceClient(subscriptionID string) IotHubResourceClient {
-	return original.NewIotHubResourceClient(subscriptionID)
-}
-func NewIotHubResourceClientWithBaseURI(baseURI string, subscriptionID string) IotHubResourceClient {
-	return original.NewIotHubResourceClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessRights = original.AccessRights
 
 const (
@@ -97,6 +74,9 @@ const (
 type IotHubSku = original.IotHubSku
 
 const (
+	B1 IotHubSku = original.B1
+	B2 IotHubSku = original.B2
+	B3 IotHubSku = original.B3
 	F1 IotHubSku = original.F1
 	S1 IotHubSku = original.S1
 	S2 IotHubSku = original.S2
@@ -106,6 +86,7 @@ const (
 type IotHubSkuTier = original.IotHubSkuTier
 
 const (
+	Basic    IotHubSkuTier = original.Basic
 	Free     IotHubSkuTier = original.Free
 	Standard IotHubSkuTier = original.Standard
 )
@@ -192,6 +173,7 @@ type IotHubQuotaMetricInfoListResultIterator = original.IotHubQuotaMetricInfoLis
 type IotHubQuotaMetricInfoListResultPage = original.IotHubQuotaMetricInfoListResultPage
 type IotHubResourceCreateOrUpdateFuture = original.IotHubResourceCreateOrUpdateFuture
 type IotHubResourceDeleteFuture = original.IotHubResourceDeleteFuture
+type IotHubResourceUpdateFuture = original.IotHubResourceUpdateFuture
 type IotHubSkuDescription = original.IotHubSkuDescription
 type IotHubSkuDescriptionListResult = original.IotHubSkuDescriptionListResult
 type IotHubSkuDescriptionListResultIterator = original.IotHubSkuDescriptionListResultIterator
@@ -225,8 +207,60 @@ type SharedAccessSignatureAuthorizationRuleListResult = original.SharedAccessSig
 type SharedAccessSignatureAuthorizationRuleListResultIterator = original.SharedAccessSignatureAuthorizationRuleListResultIterator
 type SharedAccessSignatureAuthorizationRuleListResultPage = original.SharedAccessSignatureAuthorizationRuleListResultPage
 type StorageEndpointProperties = original.StorageEndpointProperties
+type TagsResource = original.TagsResource
 type OperationsClient = original.OperationsClient
 
+func NewCertificatesClient(subscriptionID string) CertificatesClient {
+	return original.NewCertificatesClient(subscriptionID)
+}
+func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) CertificatesClient {
+	return original.NewCertificatesClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewIotHubResourceClient(subscriptionID string) IotHubResourceClient {
+	return original.NewIotHubResourceClient(subscriptionID)
+}
+func NewIotHubResourceClientWithBaseURI(baseURI string, subscriptionID string) IotHubResourceClient {
+	return original.NewIotHubResourceClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessRightsValues() []AccessRights {
+	return original.PossibleAccessRightsValues()
+}
+func PossibleCapabilitiesValues() []Capabilities {
+	return original.PossibleCapabilitiesValues()
+}
+func PossibleIotHubNameUnavailabilityReasonValues() []IotHubNameUnavailabilityReason {
+	return original.PossibleIotHubNameUnavailabilityReasonValues()
+}
+func PossibleIotHubScaleTypeValues() []IotHubScaleType {
+	return original.PossibleIotHubScaleTypeValues()
+}
+func PossibleIotHubSkuValues() []IotHubSku {
+	return original.PossibleIotHubSkuValues()
+}
+func PossibleIotHubSkuTierValues() []IotHubSkuTier {
+	return original.PossibleIotHubSkuTierValues()
+}
+func PossibleIPFilterActionTypeValues() []IPFilterActionType {
+	return original.PossibleIPFilterActionTypeValues()
+}
+func PossibleJobStatusValues() []JobStatus {
+	return original.PossibleJobStatusValues()
+}
+func PossibleJobTypeValues() []JobType {
+	return original.PossibleJobTypeValues()
+}
+func PossibleOperationMonitoringLevelValues() []OperationMonitoringLevel {
+	return original.PossibleOperationMonitoringLevelValues()
+}
+func PossibleRoutingSourceValues() []RoutingSource {
+	return original.PossibleRoutingSourceValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }

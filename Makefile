@@ -62,7 +62,6 @@ ifdef FULL_TESTS
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/inconshreveable/mousetrap
 	go get -u github.com/tools/godep
 endif
 

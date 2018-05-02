@@ -37,6 +37,11 @@ const (
 	Suspended DataLakeStoreAccountState = "Suspended"
 )
 
+// PossibleDataLakeStoreAccountStateValues returns an array of possible values for the DataLakeStoreAccountState const type.
+func PossibleDataLakeStoreAccountStateValues() []DataLakeStoreAccountState {
+	return []DataLakeStoreAccountState{Active, Suspended}
+}
+
 // DataLakeStoreAccountStatus enumerates the values for data lake store account status.
 type DataLakeStoreAccountStatus string
 
@@ -65,6 +70,11 @@ const (
 	Undeleting DataLakeStoreAccountStatus = "Undeleting"
 )
 
+// PossibleDataLakeStoreAccountStatusValues returns an array of possible values for the DataLakeStoreAccountStatus const type.
+func PossibleDataLakeStoreAccountStatusValues() []DataLakeStoreAccountStatus {
+	return []DataLakeStoreAccountStatus{Canceled, Creating, Deleted, Deleting, Failed, Patching, Resuming, Running, Succeeded, Suspending, Undeleting}
+}
+
 // EncryptionConfigType enumerates the values for encryption config type.
 type EncryptionConfigType string
 
@@ -74,6 +84,11 @@ const (
 	// UserManaged ...
 	UserManaged EncryptionConfigType = "UserManaged"
 )
+
+// PossibleEncryptionConfigTypeValues returns an array of possible values for the EncryptionConfigType const type.
+func PossibleEncryptionConfigTypeValues() []EncryptionConfigType {
+	return []EncryptionConfigType{ServiceManaged, UserManaged}
+}
 
 // EncryptionProvisioningState enumerates the values for encryption provisioning state.
 type EncryptionProvisioningState string
@@ -85,6 +100,11 @@ const (
 	EncryptionProvisioningStateSucceeded EncryptionProvisioningState = "Succeeded"
 )
 
+// PossibleEncryptionProvisioningStateValues returns an array of possible values for the EncryptionProvisioningState const type.
+func PossibleEncryptionProvisioningStateValues() []EncryptionProvisioningState {
+	return []EncryptionProvisioningState{EncryptionProvisioningStateCreating, EncryptionProvisioningStateSucceeded}
+}
+
 // EncryptionState enumerates the values for encryption state.
 type EncryptionState string
 
@@ -94,6 +114,11 @@ const (
 	// Enabled ...
 	Enabled EncryptionState = "Enabled"
 )
+
+// PossibleEncryptionStateValues returns an array of possible values for the EncryptionState const type.
+func PossibleEncryptionStateValues() []EncryptionState {
+	return []EncryptionState{Disabled, Enabled}
+}
 
 // FirewallAllowAzureIpsState enumerates the values for firewall allow azure ips state.
 type FirewallAllowAzureIpsState string
@@ -105,6 +130,11 @@ const (
 	FirewallAllowAzureIpsStateEnabled FirewallAllowAzureIpsState = "Enabled"
 )
 
+// PossibleFirewallAllowAzureIpsStateValues returns an array of possible values for the FirewallAllowAzureIpsState const type.
+func PossibleFirewallAllowAzureIpsStateValues() []FirewallAllowAzureIpsState {
+	return []FirewallAllowAzureIpsState{FirewallAllowAzureIpsStateDisabled, FirewallAllowAzureIpsStateEnabled}
+}
+
 // FirewallState enumerates the values for firewall state.
 type FirewallState string
 
@@ -114,6 +144,11 @@ const (
 	// FirewallStateEnabled ...
 	FirewallStateEnabled FirewallState = "Enabled"
 )
+
+// PossibleFirewallStateValues returns an array of possible values for the FirewallState const type.
+func PossibleFirewallStateValues() []FirewallState {
+	return []FirewallState{FirewallStateDisabled, FirewallStateEnabled}
+}
 
 // OperationOrigin enumerates the values for operation origin.
 type OperationOrigin string
@@ -126,6 +161,11 @@ const (
 	// Usersystem ...
 	Usersystem OperationOrigin = "user,system"
 )
+
+// PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{System, User, Usersystem}
+}
 
 // SubscriptionState enumerates the values for subscription state.
 type SubscriptionState string
@@ -142,6 +182,11 @@ const (
 	// SubscriptionStateWarned ...
 	SubscriptionStateWarned SubscriptionState = "Warned"
 )
+
+// PossibleSubscriptionStateValues returns an array of possible values for the SubscriptionState const type.
+func PossibleSubscriptionStateValues() []SubscriptionState {
+	return []SubscriptionState{SubscriptionStateDeleted, SubscriptionStateRegistered, SubscriptionStateSuspended, SubscriptionStateUnregistered, SubscriptionStateWarned}
+}
 
 // TierType enumerates the values for tier type.
 type TierType string
@@ -163,6 +208,11 @@ const (
 	Consumption TierType = "Consumption"
 )
 
+// PossibleTierTypeValues returns an array of possible values for the TierType const type.
+func PossibleTierTypeValues() []TierType {
+	return []TierType{Commitment100TB, Commitment10TB, Commitment1PB, Commitment1TB, Commitment500TB, Commitment5PB, Consumption}
+}
+
 // TrustedIDProviderState enumerates the values for trusted id provider state.
 type TrustedIDProviderState string
 
@@ -172,6 +222,11 @@ const (
 	// TrustedIDProviderStateEnabled ...
 	TrustedIDProviderStateEnabled TrustedIDProviderState = "Enabled"
 )
+
+// PossibleTrustedIDProviderStateValues returns an array of possible values for the TrustedIDProviderState const type.
+func PossibleTrustedIDProviderStateValues() []TrustedIDProviderState {
+	return []TrustedIDProviderState{TrustedIDProviderStateDisabled, TrustedIDProviderStateEnabled}
+}
 
 // AccountsCreateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFutureType struct {
@@ -452,6 +507,18 @@ type CreateFirewallRuleWithAccountParameters struct {
 	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CreateFirewallRuleWithAccountParameters.
+func (cfrwap CreateFirewallRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cfrwap.Name != nil {
+		objectMap["name"] = cfrwap.Name
+	}
+	if cfrwap.CreateOrUpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = cfrwap.CreateOrUpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CreateFirewallRuleWithAccountParameters struct.
 func (cfrwap *CreateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -489,6 +556,15 @@ func (cfrwap *CreateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte
 type CreateOrUpdateFirewallRuleParameters struct {
 	// CreateOrUpdateFirewallRuleProperties - The firewall rule properties to use when creating a new firewall rule.
 	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateOrUpdateFirewallRuleParameters.
+func (coufrp CreateOrUpdateFirewallRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coufrp.CreateOrUpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = coufrp.CreateOrUpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateOrUpdateFirewallRuleParameters struct.
@@ -529,6 +605,15 @@ type CreateOrUpdateTrustedIDProviderParameters struct {
 	*CreateOrUpdateTrustedIDProviderProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CreateOrUpdateTrustedIDProviderParameters.
+func (coutipp CreateOrUpdateTrustedIDProviderParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coutipp.CreateOrUpdateTrustedIDProviderProperties != nil {
+		objectMap["properties"] = coutipp.CreateOrUpdateTrustedIDProviderProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CreateOrUpdateTrustedIDProviderParameters struct.
 func (coutipp *CreateOrUpdateTrustedIDProviderParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -567,6 +652,18 @@ type CreateTrustedIDProviderWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// CreateOrUpdateTrustedIDProviderProperties - The trusted identity provider properties to use when creating a new trusted identity provider.
 	*CreateOrUpdateTrustedIDProviderProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateTrustedIDProviderWithAccountParameters.
+func (ctipwap CreateTrustedIDProviderWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ctipwap.Name != nil {
+		objectMap["name"] = ctipwap.Name
+	}
+	if ctipwap.CreateOrUpdateTrustedIDProviderProperties != nil {
+		objectMap["properties"] = ctipwap.CreateOrUpdateTrustedIDProviderProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateTrustedIDProviderWithAccountParameters struct.
@@ -1024,6 +1121,24 @@ type FirewallRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
 func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1295,6 +1410,24 @@ type TrustedIDProvider struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for TrustedIDProvider.
+func (tip TrustedIDProvider) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tip.TrustedIDProviderProperties != nil {
+		objectMap["properties"] = tip.TrustedIDProviderProperties
+	}
+	if tip.ID != nil {
+		objectMap["id"] = tip.ID
+	}
+	if tip.Name != nil {
+		objectMap["name"] = tip.Name
+	}
+	if tip.Type != nil {
+		objectMap["type"] = tip.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for TrustedIDProvider struct.
 func (tip *TrustedIDProvider) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1539,6 +1672,15 @@ type UpdateFirewallRuleParameters struct {
 	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for UpdateFirewallRuleParameters.
+func (ufrp UpdateFirewallRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ufrp.UpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = ufrp.UpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for UpdateFirewallRuleParameters struct.
 func (ufrp *UpdateFirewallRuleParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1578,6 +1720,18 @@ type UpdateFirewallRuleWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// UpdateFirewallRuleProperties - The firewall rule properties to use when updating a firewall rule.
 	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateFirewallRuleWithAccountParameters.
+func (ufrwap UpdateFirewallRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ufrwap.Name != nil {
+		objectMap["name"] = ufrwap.Name
+	}
+	if ufrwap.UpdateFirewallRuleProperties != nil {
+		objectMap["properties"] = ufrwap.UpdateFirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateFirewallRuleWithAccountParameters struct.
@@ -1625,6 +1779,15 @@ type UpdateTrustedIDProviderParameters struct {
 	*UpdateTrustedIDProviderProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for UpdateTrustedIDProviderParameters.
+func (utipp UpdateTrustedIDProviderParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if utipp.UpdateTrustedIDProviderProperties != nil {
+		objectMap["properties"] = utipp.UpdateTrustedIDProviderProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for UpdateTrustedIDProviderParameters struct.
 func (utipp *UpdateTrustedIDProviderParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1663,6 +1826,18 @@ type UpdateTrustedIDProviderWithAccountParameters struct {
 	Name *string `json:"name,omitempty"`
 	// UpdateTrustedIDProviderProperties - The trusted identity provider properties to use when updating a trusted identity provider.
 	*UpdateTrustedIDProviderProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateTrustedIDProviderWithAccountParameters.
+func (utipwap UpdateTrustedIDProviderWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if utipwap.Name != nil {
+		objectMap["name"] = utipwap.Name
+	}
+	if utipwap.UpdateTrustedIDProviderProperties != nil {
+		objectMap["properties"] = utipwap.UpdateTrustedIDProviderProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateTrustedIDProviderWithAccountParameters struct.

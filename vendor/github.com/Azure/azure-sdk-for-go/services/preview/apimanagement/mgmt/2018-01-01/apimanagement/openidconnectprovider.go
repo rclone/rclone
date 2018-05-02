@@ -41,10 +41,12 @@ func NewOpenIDConnectProviderClientWithBaseURI(baseURI string, subscriptionID st
 }
 
 // CreateOrUpdate creates or updates the OpenID Connect Provider.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
-// is identifier of the OpenID Connect Provider. parameters is create parameters. ifMatch is eTag of the Entity.
-// Not required when creating an entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// opid - identifier of the OpenID Connect Provider.
+// parameters - create parameters.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client OpenIDConnectProviderClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, opid string, parameters OpenidConnectProviderContract, ifMatch string) (result OpenidConnectProviderContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -134,10 +136,12 @@ func (client OpenIDConnectProviderClient) CreateOrUpdateResponder(resp *http.Res
 }
 
 // Delete deletes specific OpenID Connect Provider of the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
-// is identifier of the OpenID Connect Provider. ifMatch is eTag of the Entity. ETag should match the current
-// entity state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// opid - identifier of the OpenID Connect Provider.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client OpenIDConnectProviderClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, opid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -214,9 +218,10 @@ func (client OpenIDConnectProviderClient) DeleteResponder(resp *http.Response) (
 }
 
 // Get gets specific OpenID Connect Provider.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
-// is identifier of the OpenID Connect Provider.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// opid - identifier of the OpenID Connect Provider.
 func (client OpenIDConnectProviderClient) Get(ctx context.Context, resourceGroupName string, serviceName string, opid string) (result OpenidConnectProviderContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -293,9 +298,10 @@ func (client OpenIDConnectProviderClient) GetResponder(resp *http.Response) (res
 }
 
 // GetEntityTag gets the entity state (Etag) version of the openIdConnectProvider specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
-// is identifier of the OpenID Connect Provider.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// opid - identifier of the OpenID Connect Provider.
 func (client OpenIDConnectProviderClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, opid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -371,13 +377,15 @@ func (client OpenIDConnectProviderClient) GetEntityTagResponder(resp *http.Respo
 }
 
 // ListByService lists all OpenID Connect Providers.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field | Supported operators    | Supported functions                         |
 // |-------|------------------------|---------------------------------------------|
 // | id    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records to
-// return. skip is number of records to skip.
+// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client OpenIDConnectProviderClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result OpenIDConnectProviderCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -493,11 +501,13 @@ func (client OpenIDConnectProviderClient) ListByServiceComplete(ctx context.Cont
 }
 
 // Update updates the specific OpenID Connect Provider.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
-// is identifier of the OpenID Connect Provider. parameters is update parameters. ifMatch is eTag of the Entity.
-// ETag should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// opid - identifier of the OpenID Connect Provider.
+// parameters - update parameters.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client OpenIDConnectProviderClient) Update(ctx context.Context, resourceGroupName string, serviceName string, opid string, parameters OpenidConnectProviderUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

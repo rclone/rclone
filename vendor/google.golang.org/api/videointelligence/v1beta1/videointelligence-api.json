@@ -138,7 +138,7 @@
       }
     }
   },
-  "revision": "20180306",
+  "revision": "20180502",
   "rootUrl": "https://videointelligence.googleapis.com/",
   "schemas": {
     "GoogleCloudVideointelligenceV1_AnnotateVideoProgress": {
@@ -304,21 +304,21 @@
       "id": "GoogleCloudVideointelligenceV1_VideoAnnotationProgress",
       "properties": {
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "progressPercent": {
-          "description": "Approximate percentage processed thus far.\nGuaranteed to be 100 when fully processed.",
+          "description": "Output only. Approximate percentage processed thus far. Guaranteed to be\n100 when fully processed.",
           "format": "int32",
           "type": "integer"
         },
         "startTime": {
-          "description": "Time when the request was received.",
+          "description": "Output only. Time when the request was received.",
           "format": "google-datetime",
           "type": "string"
         },
         "updateTime": {
-          "description": "Time of the most recent update.",
+          "description": "Output only. Time of the most recent update.",
           "format": "google-datetime",
           "type": "string"
         }
@@ -331,7 +331,7 @@
       "properties": {
         "error": {
           "$ref": "GoogleRpc_Status",
-          "description": "If set, indicates an error. Note that for a single `AnnotateVideoRequest`\nsome videos may succeed and some may fail."
+          "description": "Output only. Non-streaming error only. If set, indicates an error. Note\nthat for a single `AnnotateVideoRequest` some videos may succeed and some\nmay fail."
         },
         "explicitAnnotation": {
           "$ref": "GoogleCloudVideointelligenceV1_ExplicitContentAnnotation",
@@ -345,7 +345,7 @@
           "type": "array"
         },
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "segmentLabelAnnotations": {
@@ -919,21 +919,21 @@
       "id": "GoogleCloudVideointelligenceV1beta2_VideoAnnotationProgress",
       "properties": {
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "progressPercent": {
-          "description": "Approximate percentage processed thus far.\nGuaranteed to be 100 when fully processed.",
+          "description": "Output only. Approximate percentage processed thus far. Guaranteed to be\n100 when fully processed.",
           "format": "int32",
           "type": "integer"
         },
         "startTime": {
-          "description": "Time when the request was received.",
+          "description": "Output only. Time when the request was received.",
           "format": "google-datetime",
           "type": "string"
         },
         "updateTime": {
-          "description": "Time of the most recent update.",
+          "description": "Output only. Time of the most recent update.",
           "format": "google-datetime",
           "type": "string"
         }
@@ -946,7 +946,7 @@
       "properties": {
         "error": {
           "$ref": "GoogleRpc_Status",
-          "description": "If set, indicates an error. Note that for a single `AnnotateVideoRequest`\nsome videos may succeed and some may fail."
+          "description": "Output only. Non-streaming error only. If set, indicates an error. Note\nthat for a single `AnnotateVideoRequest` some videos may succeed and some\nmay fail."
         },
         "explicitAnnotation": {
           "$ref": "GoogleCloudVideointelligenceV1beta2_ExplicitContentAnnotation",
@@ -960,7 +960,7 @@
           "type": "array"
         },
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "segmentLabelAnnotations": {
@@ -1348,21 +1348,21 @@
       "id": "GoogleCloudVideointelligenceV1p1beta1_VideoAnnotationProgress",
       "properties": {
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "progressPercent": {
-          "description": "Approximate percentage processed thus far.\nGuaranteed to be 100 when fully processed.",
+          "description": "Output only. Approximate percentage processed thus far. Guaranteed to be\n100 when fully processed.",
           "format": "int32",
           "type": "integer"
         },
         "startTime": {
-          "description": "Time when the request was received.",
+          "description": "Output only. Time when the request was received.",
           "format": "google-datetime",
           "type": "string"
         },
         "updateTime": {
-          "description": "Time of the most recent update.",
+          "description": "Output only. Time of the most recent update.",
           "format": "google-datetime",
           "type": "string"
         }
@@ -1375,7 +1375,7 @@
       "properties": {
         "error": {
           "$ref": "GoogleRpc_Status",
-          "description": "If set, indicates an error. Note that for a single `AnnotateVideoRequest`\nsome videos may succeed and some may fail."
+          "description": "Output only. Non-streaming error only. If set, indicates an error. Note\nthat for a single `AnnotateVideoRequest` some videos may succeed and some\nmay fail."
         },
         "explicitAnnotation": {
           "$ref": "GoogleCloudVideointelligenceV1p1beta1_ExplicitContentAnnotation",
@@ -1396,7 +1396,7 @@
           "type": "array"
         },
         "inputUri": {
-          "description": "Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
+          "description": "Output only. Video file location in\n[Google Cloud Storage](https://cloud.google.com/storage/).",
           "type": "string"
         },
         "segmentLabelAnnotations": {

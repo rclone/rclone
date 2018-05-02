@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // SubnetsClient is the network Client
 type SubnetsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewSubnetsClient creates an instance of the SubnetsClient client.
 func NewSubnetsClient(subscriptionID string) SubnetsClient {
 	return NewSubnetsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewSubnetsClientWithBaseURI creates an instance of the SubnetsClient client.
 func NewSubnetsClientWithBaseURI(baseURI string, subscriptionID string) SubnetsClient {
 	return SubnetsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdate the Put Subnet operation creates/updates a subnet in thespecified virtual network
 //
 // resourceGroupName is the name of the resource group. virtualNetworkName is the name of the virtual network.
@@ -68,6 +72,7 @@ func (client SubnetsClient) CreateOrUpdate(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client SubnetsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string, subnetParameters Subnet) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -83,7 +88,7 @@ func (client SubnetsClient) CreateOrUpdatePreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualnetworks/{virtualNetworkName}/subnets/{subnetName}", pathParameters),
@@ -92,6 +97,7 @@ func (client SubnetsClient) CreateOrUpdatePreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubnetsClient) CreateOrUpdateSender(req *http.Request) (future SubnetsCreateOrUpdateFuture, err error) {
@@ -107,6 +113,7 @@ func (client SubnetsClient) CreateOrUpdateSender(req *http.Request) (future Subn
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client SubnetsClient) CreateOrUpdateResponder(resp *http.Response) (result Subnet, err error) {
@@ -120,6 +127,7 @@ func (client SubnetsClient) CreateOrUpdateResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Delete the delete subnet operation deletes the specified subnet.
 //
 // resourceGroupName is the name of the resource group. virtualNetworkName is the name of the virtual network.
@@ -140,6 +148,7 @@ func (client SubnetsClient) Delete(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeletePreparer prepares the Delete request.
 func (client SubnetsClient) DeletePreparer(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -162,6 +171,7 @@ func (client SubnetsClient) DeletePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubnetsClient) DeleteSender(req *http.Request) (future SubnetsDeleteFuture, err error) {
@@ -177,6 +187,7 @@ func (client SubnetsClient) DeleteSender(req *http.Request) (future SubnetsDelet
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client SubnetsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -189,6 +200,7 @@ func (client SubnetsClient) DeleteResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Get the Get subnet operation retreives information about the specified subnet.
 //
 // resourceGroupName is the name of the resource group. virtualNetworkName is the name of the virtual network.
@@ -215,6 +227,7 @@ func (client SubnetsClient) Get(ctx context.Context, resourceGroupName string, v
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetPreparer prepares the Get request.
 func (client SubnetsClient) GetPreparer(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -237,6 +250,7 @@ func (client SubnetsClient) GetPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubnetsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -244,6 +258,7 @@ func (client SubnetsClient) GetSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SubnetsClient) GetResponder(resp *http.Response) (result Subnet, err error) {
@@ -257,6 +272,7 @@ func (client SubnetsClient) GetResponder(resp *http.Response) (result Subnet, er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // List the List subnets opertion retrieves all the subnets in a virtual network.
 //
 // resourceGroupName is the name of the resource group. virtualNetworkName is the name of the virtual network.
@@ -283,6 +299,7 @@ func (client SubnetsClient) List(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListPreparer prepares the List request.
 func (client SubnetsClient) ListPreparer(ctx context.Context, resourceGroupName string, virtualNetworkName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -304,6 +321,7 @@ func (client SubnetsClient) ListPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SubnetsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -311,6 +329,7 @@ func (client SubnetsClient) ListSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client SubnetsClient) ListResponder(resp *http.Response) (result SubnetListResult, err error) {
@@ -345,6 +364,7 @@ func (client SubnetsClient) listNextResults(lastResults SubnetListResult) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SubnetsClient) ListComplete(ctx context.Context, resourceGroupName string, virtualNetworkName string) (result SubnetListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, virtualNetworkName)

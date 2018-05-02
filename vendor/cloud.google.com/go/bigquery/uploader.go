@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"cloud.google.com/go/internal/trace"
 	"golang.org/x/net/context"
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -80,7 +81,10 @@ func (t *Table) Uploader() *Uploader {
 // in duplicate rows if you do not use insert IDs. Also, if the error persists,
 // the call will run indefinitely. Pass a context with a timeout to prevent
 // hanging calls.
-func (u *Uploader) Put(ctx context.Context, src interface{}) error {
+func (u *Uploader) Put(ctx context.Context, src interface{}) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Uploader.Put")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	savers, err := valueSavers(src)
 	if err != nil {
 		return err

@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentsClient is the role based access control provides you a way to apply granular level policy
 // administration down to individual resources or resource groups. These operations enable you to manage role
 // definitions and role assignments. A role definition describes the set of actions that can be performed on resources.
@@ -32,16 +33,19 @@ type RoleAssignmentsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NewRoleAssignmentsClient creates an instance of the RoleAssignmentsClient client.
 func NewRoleAssignmentsClient(subscriptionID string) RoleAssignmentsClient {
 	return NewRoleAssignmentsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NewRoleAssignmentsClientWithBaseURI creates an instance of the RoleAssignmentsClient client.
 func NewRoleAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) RoleAssignmentsClient {
 	return RoleAssignmentsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Create creates a role assignment.
 //
 // scope is the scope of the role assignment to create. The scope can be any REST resource instance. For example,
@@ -72,6 +76,7 @@ func (client RoleAssignmentsClient) Create(ctx context.Context, scope string, ro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreatePreparer prepares the Create request.
 func (client RoleAssignmentsClient) CreatePreparer(ctx context.Context, scope string, roleAssignmentName string, parameters RoleAssignmentCreateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -85,7 +90,7 @@ func (client RoleAssignmentsClient) CreatePreparer(ctx context.Context, scope st
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}", pathParameters),
@@ -94,6 +99,7 @@ func (client RoleAssignmentsClient) CreatePreparer(ctx context.Context, scope st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) CreateSender(req *http.Request) (*http.Response, error) {
@@ -101,6 +107,7 @@ func (client RoleAssignmentsClient) CreateSender(req *http.Request) (*http.Respo
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) CreateResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -114,6 +121,7 @@ func (client RoleAssignmentsClient) CreateResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateByID creates a role assignment by ID.
 //
 // roleID is the ID of the role assignment to create. parameters is parameters for the role assignment.
@@ -139,6 +147,7 @@ func (client RoleAssignmentsClient) CreateByID(ctx context.Context, roleID strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateByIDPreparer prepares the CreateByID request.
 func (client RoleAssignmentsClient) CreateByIDPreparer(ctx context.Context, roleID string, parameters RoleAssignmentCreateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -151,7 +160,7 @@ func (client RoleAssignmentsClient) CreateByIDPreparer(ctx context.Context, role
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{roleId}", pathParameters),
@@ -160,6 +169,7 @@ func (client RoleAssignmentsClient) CreateByIDPreparer(ctx context.Context, role
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateByIDSender sends the CreateByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) CreateByIDSender(req *http.Request) (*http.Response, error) {
@@ -167,6 +177,7 @@ func (client RoleAssignmentsClient) CreateByIDSender(req *http.Request) (*http.R
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // CreateByIDResponder handles the response to the CreateByID request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) CreateByIDResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -180,6 +191,7 @@ func (client RoleAssignmentsClient) CreateByIDResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Delete deletes a role assignment.
 //
 // scope is the scope of the role assignment to delete. roleAssignmentName is the name of the role assignment to
@@ -206,6 +218,7 @@ func (client RoleAssignmentsClient) Delete(ctx context.Context, scope string, ro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeletePreparer prepares the Delete request.
 func (client RoleAssignmentsClient) DeletePreparer(ctx context.Context, scope string, roleAssignmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -226,6 +239,7 @@ func (client RoleAssignmentsClient) DeletePreparer(ctx context.Context, scope st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -233,6 +247,7 @@ func (client RoleAssignmentsClient) DeleteSender(req *http.Request) (*http.Respo
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) DeleteResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -246,6 +261,7 @@ func (client RoleAssignmentsClient) DeleteResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteByID deletes a role assignment.
 //
 // roleID is the ID of the role assignment to delete.
@@ -271,6 +287,7 @@ func (client RoleAssignmentsClient) DeleteByID(ctx context.Context, roleID strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteByIDPreparer prepares the DeleteByID request.
 func (client RoleAssignmentsClient) DeleteByIDPreparer(ctx context.Context, roleID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -290,6 +307,7 @@ func (client RoleAssignmentsClient) DeleteByIDPreparer(ctx context.Context, role
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteByIDSender sends the DeleteByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) DeleteByIDSender(req *http.Request) (*http.Response, error) {
@@ -297,6 +315,7 @@ func (client RoleAssignmentsClient) DeleteByIDSender(req *http.Request) (*http.R
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // DeleteByIDResponder handles the response to the DeleteByID request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) DeleteByIDResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -310,6 +329,7 @@ func (client RoleAssignmentsClient) DeleteByIDResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Get get the specified role assignment.
 //
 // scope is the scope of the role assignment. roleAssignmentName is the name of the role assignment to get.
@@ -335,6 +355,7 @@ func (client RoleAssignmentsClient) Get(ctx context.Context, scope string, roleA
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetPreparer prepares the Get request.
 func (client RoleAssignmentsClient) GetPreparer(ctx context.Context, scope string, roleAssignmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -355,6 +376,7 @@ func (client RoleAssignmentsClient) GetPreparer(ctx context.Context, scope strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -362,6 +384,7 @@ func (client RoleAssignmentsClient) GetSender(req *http.Request) (*http.Response
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) GetResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -375,6 +398,7 @@ func (client RoleAssignmentsClient) GetResponder(resp *http.Response) (result Ro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetByID gets a role assignment by ID.
 //
 // roleID is the ID of the role assignment to get.
@@ -400,6 +424,7 @@ func (client RoleAssignmentsClient) GetByID(ctx context.Context, roleID string) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetByIDPreparer prepares the GetByID request.
 func (client RoleAssignmentsClient) GetByIDPreparer(ctx context.Context, roleID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -419,6 +444,7 @@ func (client RoleAssignmentsClient) GetByIDPreparer(ctx context.Context, roleID 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetByIDSender sends the GetByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) GetByIDSender(req *http.Request) (*http.Response, error) {
@@ -426,6 +452,7 @@ func (client RoleAssignmentsClient) GetByIDSender(req *http.Request) (*http.Resp
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // GetByIDResponder handles the response to the GetByID request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) GetByIDResponder(resp *http.Response) (result RoleAssignment, err error) {
@@ -439,6 +466,7 @@ func (client RoleAssignmentsClient) GetByIDResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // List gets all role assignments for the subscription.
 //
 // filter is the filter to apply on the operation. Use $filter=atScope() to return all role assignments at or above
@@ -467,6 +495,7 @@ func (client RoleAssignmentsClient) List(ctx context.Context, filter string) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListPreparer prepares the List request.
 func (client RoleAssignmentsClient) ListPreparer(ctx context.Context, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -489,6 +518,7 @@ func (client RoleAssignmentsClient) ListPreparer(ctx context.Context, filter str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -496,6 +526,7 @@ func (client RoleAssignmentsClient) ListSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) ListResponder(resp *http.Response) (result RoleAssignmentListResult, err error) {
@@ -530,12 +561,14 @@ func (client RoleAssignmentsClient) listNextResults(lastResults RoleAssignmentLi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RoleAssignmentsClient) ListComplete(ctx context.Context, filter string) (result RoleAssignmentListResultIterator, err error) {
 	result.page, err = client.List(ctx, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResource gets role assignments for a resource.
 //
 // resourceGroupName is the name of the resource group. resourceProviderNamespace is the namespace of the resource
@@ -566,6 +599,7 @@ func (client RoleAssignmentsClient) ListForResource(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourcePreparer prepares the ListForResource request.
 func (client RoleAssignmentsClient) ListForResourcePreparer(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -593,6 +627,7 @@ func (client RoleAssignmentsClient) ListForResourcePreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceSender sends the ListForResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) ListForResourceSender(req *http.Request) (*http.Response, error) {
@@ -600,6 +635,7 @@ func (client RoleAssignmentsClient) ListForResourceSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceResponder handles the response to the ListForResource request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) ListForResourceResponder(resp *http.Response) (result RoleAssignmentListResult, err error) {
@@ -634,12 +670,14 @@ func (client RoleAssignmentsClient) listForResourceNextResults(lastResults RoleA
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RoleAssignmentsClient) ListForResourceComplete(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result RoleAssignmentListResultIterator, err error) {
 	result.page, err = client.ListForResource(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceGroup gets role assignments for a resource group.
 //
 // resourceGroupName is the name of the resource group. filter is the filter to apply on the operation. Use
@@ -668,6 +706,7 @@ func (client RoleAssignmentsClient) ListForResourceGroup(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceGroupPreparer prepares the ListForResourceGroup request.
 func (client RoleAssignmentsClient) ListForResourceGroupPreparer(ctx context.Context, resourceGroupName string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -691,6 +730,7 @@ func (client RoleAssignmentsClient) ListForResourceGroupPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -698,6 +738,7 @@ func (client RoleAssignmentsClient) ListForResourceGroupSender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) ListForResourceGroupResponder(resp *http.Response) (result RoleAssignmentListResult, err error) {
@@ -732,12 +773,14 @@ func (client RoleAssignmentsClient) listForResourceGroupNextResults(lastResults 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RoleAssignmentsClient) ListForResourceGroupComplete(ctx context.Context, resourceGroupName string, filter string) (result RoleAssignmentListResultIterator, err error) {
 	result.page, err = client.ListForResourceGroup(ctx, resourceGroupName, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForScope gets role assignments for a scope.
 //
 // scope is the scope of the role assignments. filter is the filter to apply on the operation. Use
@@ -766,6 +809,7 @@ func (client RoleAssignmentsClient) ListForScope(ctx context.Context, scope stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForScopePreparer prepares the ListForScope request.
 func (client RoleAssignmentsClient) ListForScopePreparer(ctx context.Context, scope string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -788,6 +832,7 @@ func (client RoleAssignmentsClient) ListForScopePreparer(ctx context.Context, sc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForScopeSender sends the ListForScope request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) ListForScopeSender(req *http.Request) (*http.Response, error) {
@@ -795,6 +840,7 @@ func (client RoleAssignmentsClient) ListForScopeSender(req *http.Request) (*http
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForScopeResponder handles the response to the ListForScope request. The method always
 // closes the http.Response Body.
 func (client RoleAssignmentsClient) ListForScopeResponder(resp *http.Response) (result RoleAssignmentListResult, err error) {
@@ -829,6 +875,7 @@ func (client RoleAssignmentsClient) listForScopeNextResults(lastResults RoleAssi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ListForScopeComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RoleAssignmentsClient) ListForScopeComplete(ctx context.Context, scope string, filter string) (result RoleAssignmentListResultIterator, err error) {
 	result.page, err = client.ListForScope(ctx, scope, filter)

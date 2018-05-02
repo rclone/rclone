@@ -3,8 +3,8 @@ package eme
 // Test other data lengths using self-generated test vectors
 
 import (
-	"encoding/hex"
 	"strings"
+	"encoding/hex"
 	"testing"
 )
 
@@ -33,8 +33,8 @@ func TestEnc2048(t *testing.T) {
 	v.key = make([]byte, 32)   // all-zero
 	v.tweak = make([]byte, 16) // all-zero
 	v.in = make([]byte, 2048)  // all-zero
-	v.out = unhex(`
-630500884158a8d41216aaa6351e92ea7ca540a949e73f1d6069afef372eae226d426d8f4dbbce5
+	v.out = unhex(
+`630500884158a8d41216aaa6351e92ea7ca540a949e73f1d6069afef372eae226d426d8f4dbbce5
 05051fcd596e7b32cdd1e44a40bcce0887ebbc160f779dafbb68bc25a40040987cdb5aba19b956e1
 1dd69d7ce74d1d8788903254217300f3afd9a92cea395a89fd842256d3919ac303c1d1a21ec44cb2
 898acabb3d0e04e05845e9183a64b4148f9614f62f79fa971799c896c58cd2b285cb00e40720b5c1

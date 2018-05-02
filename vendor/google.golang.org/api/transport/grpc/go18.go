@@ -22,5 +22,5 @@ import (
 )
 
 func addOCStatsHandler(opts []grpc.DialOption) []grpc.DialOption {
-	return append(opts, grpc.WithStatsHandler(&ocgrpc.ClientHandler{NoStats: true}))
+	return append(opts, grpc.WithStatsHandler(&ocgrpc.ClientHandler{}))
 }

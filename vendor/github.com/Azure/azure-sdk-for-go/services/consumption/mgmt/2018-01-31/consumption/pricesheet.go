@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/validation"
 	"net/http"
 )
 
@@ -42,13 +43,24 @@ func NewPriceSheetClientWithBaseURI(baseURI string, subscriptionID string) Price
 
 // Get gets the price sheet for a scope by subscriptionId. Price sheet is available via this API only for May 1, 2014
 // or later.
-//
-// expand is may be used to expand the properties/meterDetails within a price sheet. By default, these fields are
-// not included when returning price sheet. skiptoken is skiptoken is only used if a previous operation returned a
-// partial result. If a previous response contains a nextLink element, the value of the nextLink element will
-// include a skiptoken parameter that specifies a starting point to use for subsequent calls.
-func (client PriceSheetClient) Get(ctx context.Context, expand string, skiptoken string) (result PriceSheetResult, err error) {
-	req, err := client.GetPreparer(ctx, expand, skiptoken)
+// Parameters:
+// expand - may be used to expand the properties/meterDetails within a price sheet. By default, these fields
+// are not included when returning price sheet.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
+// top - may be used to limit the number of results to the top N results.
+func (client PriceSheetClient) Get(ctx context.Context, expand string, skiptoken string, top *int32) (result PriceSheetResult, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: top,
+			Constraints: []validation.Constraint{{Target: "top", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
+				}}}}}); err != nil {
+		return result, validation.NewError("consumption.PriceSheetClient", "Get", err.Error())
+	}
+
+	req, err := client.GetPreparer(ctx, expand, skiptoken, top)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "consumption.PriceSheetClient", "Get", nil, "Failure preparing request")
 		return
@@ -70,7 +82,7 @@ func (client PriceSheetClient) Get(ctx context.Context, expand string, skiptoken
 }
 
 // GetPreparer prepares the Get request.
-func (client PriceSheetClient) GetPreparer(ctx context.Context, expand string, skiptoken string) (*http.Request, error) {
+func (client PriceSheetClient) GetPreparer(ctx context.Context, expand string, skiptoken string, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
@@ -84,6 +96,9 @@ func (client PriceSheetClient) GetPreparer(ctx context.Context, expand string, s
 	}
 	if len(skiptoken) > 0 {
 		queryParameters["$skiptoken"] = autorest.Encode("query", skiptoken)
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -116,14 +131,25 @@ func (client PriceSheetClient) GetResponder(resp *http.Response) (result PriceSh
 
 // GetByBillingPeriod get the price sheet for a scope by subscriptionId and billing period. Price sheet is available
 // via this API only for May 1, 2014 or later.
-//
-// billingPeriodName is billing Period Name. expand is may be used to expand the properties/meterDetails within a
-// price sheet. By default, these fields are not included when returning price sheet. skiptoken is skiptoken is
-// only used if a previous operation returned a partial result. If a previous response contains a nextLink element,
-// the value of the nextLink element will include a skiptoken parameter that specifies a starting point to use for
-// subsequent calls.
-func (client PriceSheetClient) GetByBillingPeriod(ctx context.Context, billingPeriodName string, expand string, skiptoken string) (result PriceSheetResult, err error) {
-	req, err := client.GetByBillingPeriodPreparer(ctx, billingPeriodName, expand, skiptoken)
+// Parameters:
+// billingPeriodName - billing Period Name.
+// expand - may be used to expand the properties/meterDetails within a price sheet. By default, these fields
+// are not included when returning price sheet.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
+// top - may be used to limit the number of results to the top N results.
+func (client PriceSheetClient) GetByBillingPeriod(ctx context.Context, billingPeriodName string, expand string, skiptoken string, top *int32) (result PriceSheetResult, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: top,
+			Constraints: []validation.Constraint{{Target: "top", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
+				}}}}}); err != nil {
+		return result, validation.NewError("consumption.PriceSheetClient", "GetByBillingPeriod", err.Error())
+	}
+
+	req, err := client.GetByBillingPeriodPreparer(ctx, billingPeriodName, expand, skiptoken, top)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "consumption.PriceSheetClient", "GetByBillingPeriod", nil, "Failure preparing request")
 		return
@@ -145,7 +171,7 @@ func (client PriceSheetClient) GetByBillingPeriod(ctx context.Context, billingPe
 }
 
 // GetByBillingPeriodPreparer prepares the GetByBillingPeriod request.
-func (client PriceSheetClient) GetByBillingPeriodPreparer(ctx context.Context, billingPeriodName string, expand string, skiptoken string) (*http.Request, error) {
+func (client PriceSheetClient) GetByBillingPeriodPreparer(ctx context.Context, billingPeriodName string, expand string, skiptoken string, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"billingPeriodName": autorest.Encode("path", billingPeriodName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -160,6 +186,9 @@ func (client PriceSheetClient) GetByBillingPeriodPreparer(ctx context.Context, b
 	}
 	if len(skiptoken) > 0 {
 		queryParameters["$skiptoken"] = autorest.Encode("query", skiptoken)
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
 	}
 
 	preparer := autorest.CreatePreparer(

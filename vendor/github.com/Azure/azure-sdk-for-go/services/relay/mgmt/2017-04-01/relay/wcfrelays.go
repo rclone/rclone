@@ -41,9 +41,11 @@ func NewWCFRelaysClientWithBaseURI(baseURI string, subscriptionID string) WCFRel
 }
 
 // CreateOrUpdate creates or updates a WCF relay. This operation is idempotent.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. parameters is parameters supplied to create a WCF relay.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// parameters - parameters supplied to create a WCF relay.
 func (client WCFRelaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, parameters WcfRelay) (result WcfRelay, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -100,7 +102,7 @@ func (client WCFRelaysClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}/wcfRelays/{relayName}", pathParameters),
@@ -130,10 +132,12 @@ func (client WCFRelaysClient) CreateOrUpdateResponder(resp *http.Response) (resu
 }
 
 // CreateOrUpdateAuthorizationRule creates or updates an authorization rule for a WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. authorizationRuleName is the authorization rule name. parameters is the
-// authorization rule parameters.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// authorizationRuleName - the authorization rule name.
+// parameters - the authorization rule parameters.
 func (client WCFRelaysClient) CreateOrUpdateAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, authorizationRuleName string, parameters AuthorizationRule) (result AuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -191,7 +195,7 @@ func (client WCFRelaysClient) CreateOrUpdateAuthorizationRulePreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}/wcfRelays/{relayName}/authorizationRules/{authorizationRuleName}", pathParameters),
@@ -221,9 +225,10 @@ func (client WCFRelaysClient) CreateOrUpdateAuthorizationRuleResponder(resp *htt
 }
 
 // Delete deletes a WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
 func (client WCFRelaysClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string, relayName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -300,9 +305,11 @@ func (client WCFRelaysClient) DeleteResponder(resp *http.Response) (result autor
 }
 
 // DeleteAuthorizationRule deletes a WCF relay authorization rule.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// authorizationRuleName - the authorization rule name.
 func (client WCFRelaysClient) DeleteAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, authorizationRuleName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -382,9 +389,10 @@ func (client WCFRelaysClient) DeleteAuthorizationRuleResponder(resp *http.Respon
 }
 
 // Get returns the description for the specified WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
 func (client WCFRelaysClient) Get(ctx context.Context, resourceGroupName string, namespaceName string, relayName string) (result WcfRelay, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -462,9 +470,11 @@ func (client WCFRelaysClient) GetResponder(resp *http.Response) (result WcfRelay
 }
 
 // GetAuthorizationRule get authorizationRule for a WCF relay by name.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// authorizationRuleName - the authorization rule name.
 func (client WCFRelaysClient) GetAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, authorizationRuleName string) (result AuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -545,9 +555,10 @@ func (client WCFRelaysClient) GetAuthorizationRuleResponder(resp *http.Response)
 }
 
 // ListAuthorizationRules authorization rules for a WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
 func (client WCFRelaysClient) ListAuthorizationRules(ctx context.Context, resourceGroupName string, namespaceName string, relayName string) (result AuthorizationRuleListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -653,9 +664,9 @@ func (client WCFRelaysClient) ListAuthorizationRulesComplete(ctx context.Context
 }
 
 // ListByNamespace lists the WCF relays within the namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
 func (client WCFRelaysClient) ListByNamespace(ctx context.Context, resourceGroupName string, namespaceName string) (result WcfRelaysListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -758,9 +769,11 @@ func (client WCFRelaysClient) ListByNamespaceComplete(ctx context.Context, resou
 }
 
 // ListKeys primary and secondary connection strings to the WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// authorizationRuleName - the authorization rule name.
 func (client WCFRelaysClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, authorizationRuleName string) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -841,10 +854,12 @@ func (client WCFRelaysClient) ListKeysResponder(resp *http.Response) (result Acc
 }
 
 // RegenerateKeys regenerates the primary or secondary connection strings to the WCF relay.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name relayName is the relay name. authorizationRuleName is the authorization rule name. parameters is parameters
-// supplied to regenerate authorization rule.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// relayName - the relay name.
+// authorizationRuleName - the authorization rule name.
+// parameters - parameters supplied to regenerate authorization rule.
 func (client WCFRelaysClient) RegenerateKeys(ctx context.Context, resourceGroupName string, namespaceName string, relayName string, authorizationRuleName string, parameters RegenerateAccessKeyParameters) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -897,7 +912,7 @@ func (client WCFRelaysClient) RegenerateKeysPreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}/wcfRelays/{relayName}/authorizationRules/{authorizationRuleName}/regenerateKeys", pathParameters),

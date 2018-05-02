@@ -47,6 +47,11 @@ func setClientHeader(headers http.Header) {
 
 // Client may be used to perform BigQuery operations.
 type Client struct {
+	// Location, if set, will be used as the default location for all subsequent
+	// dataset creation and job operations. A location specified directly in one of
+	// those operations will override this value.
+	Location string
+
 	projectID string
 	bqs       *bq.Service
 }

@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GatewayClient is the REST API for Azure Server Management Service.
 type GatewayClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // NewGatewayClient creates an instance of the GatewayClient client.
 func NewGatewayClient(subscriptionID string) GatewayClient {
 	return NewGatewayClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // NewGatewayClientWithBaseURI creates an instance of the GatewayClient client.
 func NewGatewayClientWithBaseURI(baseURI string, subscriptionID string) GatewayClient {
 	return GatewayClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Create creates or updates a ManagementService gateway.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -72,6 +76,7 @@ func (client GatewayClient) Create(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreatePreparer prepares the Create request.
 func (client GatewayClient) CreatePreparer(ctx context.Context, resourceGroupName string, gatewayName string, gatewayParameters GatewayParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -86,7 +91,7 @@ func (client GatewayClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServerManagement/gateways/{gatewayName}", pathParameters),
@@ -95,6 +100,7 @@ func (client GatewayClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) CreateSender(req *http.Request) (future GatewayCreateFuture, err error) {
@@ -110,6 +116,7 @@ func (client GatewayClient) CreateSender(req *http.Request) (future GatewayCreat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) CreateResponder(resp *http.Response) (result GatewayResource, err error) {
@@ -123,6 +130,7 @@ func (client GatewayClient) CreateResponder(resp *http.Response) (result Gateway
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Delete deletes a gateway from a resource group.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -160,6 +168,7 @@ func (client GatewayClient) Delete(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeletePreparer prepares the Delete request.
 func (client GatewayClient) DeletePreparer(ctx context.Context, resourceGroupName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -181,6 +190,7 @@ func (client GatewayClient) DeletePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -188,6 +198,7 @@ func (client GatewayClient) DeleteSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -200,6 +211,7 @@ func (client GatewayClient) DeleteResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Get gets a gateway.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -239,6 +251,7 @@ func (client GatewayClient) Get(ctx context.Context, resourceGroupName string, g
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetPreparer prepares the Get request.
 func (client GatewayClient) GetPreparer(ctx context.Context, resourceGroupName string, gatewayName string, expand GatewayExpandOption) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -263,6 +276,7 @@ func (client GatewayClient) GetPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -270,6 +284,7 @@ func (client GatewayClient) GetSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) GetResponder(resp *http.Response) (result GatewayResource, err error) {
@@ -283,6 +298,7 @@ func (client GatewayClient) GetResponder(resp *http.Response) (result GatewayRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetProfile gets a gateway profile.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -314,6 +330,7 @@ func (client GatewayClient) GetProfile(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetProfilePreparer prepares the GetProfile request.
 func (client GatewayClient) GetProfilePreparer(ctx context.Context, resourceGroupName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -335,6 +352,7 @@ func (client GatewayClient) GetProfilePreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetProfileSender sends the GetProfile request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) GetProfileSender(req *http.Request) (future GatewayGetProfileFuture, err error) {
@@ -350,6 +368,7 @@ func (client GatewayClient) GetProfileSender(req *http.Request) (future GatewayG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetProfileResponder handles the response to the GetProfile request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) GetProfileResponder(resp *http.Response) (result GatewayProfile, err error) {
@@ -363,6 +382,7 @@ func (client GatewayClient) GetProfileResponder(resp *http.Response) (result Gat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // List returns gateways in a subscription.
 func (client GatewayClient) List(ctx context.Context) (result GatewayResourcesPage, err error) {
 	result.fn = client.listNextResults
@@ -387,6 +407,7 @@ func (client GatewayClient) List(ctx context.Context) (result GatewayResourcesPa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListPreparer prepares the List request.
 func (client GatewayClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -406,6 +427,7 @@ func (client GatewayClient) ListPreparer(ctx context.Context) (*http.Request, er
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -413,6 +435,7 @@ func (client GatewayClient) ListSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) ListResponder(resp *http.Response) (result GatewayResources, err error) {
@@ -447,12 +470,14 @@ func (client GatewayClient) listNextResults(lastResults GatewayResources) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GatewayClient) ListComplete(ctx context.Context) (result GatewayResourcesIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroup returns gateways in a resource group.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -487,6 +512,7 @@ func (client GatewayClient) ListForResourceGroup(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupPreparer prepares the ListForResourceGroup request.
 func (client GatewayClient) ListForResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -507,6 +533,7 @@ func (client GatewayClient) ListForResourceGroupPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -514,6 +541,7 @@ func (client GatewayClient) ListForResourceGroupSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) ListForResourceGroupResponder(resp *http.Response) (result GatewayResources, err error) {
@@ -548,12 +576,14 @@ func (client GatewayClient) listForResourceGroupNextResults(lastResults GatewayR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GatewayClient) ListForResourceGroupComplete(ctx context.Context, resourceGroupName string) (result GatewayResourcesIterator, err error) {
 	result.page, err = client.ListForResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // RegenerateProfile regenerate a gateway's profile
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -585,6 +615,7 @@ func (client GatewayClient) RegenerateProfile(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // RegenerateProfilePreparer prepares the RegenerateProfile request.
 func (client GatewayClient) RegenerateProfilePreparer(ctx context.Context, resourceGroupName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -606,6 +637,7 @@ func (client GatewayClient) RegenerateProfilePreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // RegenerateProfileSender sends the RegenerateProfile request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) RegenerateProfileSender(req *http.Request) (future GatewayRegenerateProfileFuture, err error) {
@@ -621,6 +653,7 @@ func (client GatewayClient) RegenerateProfileSender(req *http.Request) (future G
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // RegenerateProfileResponder handles the response to the RegenerateProfile request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) RegenerateProfileResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -633,6 +666,7 @@ func (client GatewayClient) RegenerateProfileResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Update updates a gateway belonging to a resource group.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -665,6 +699,7 @@ func (client GatewayClient) Update(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdatePreparer prepares the Update request.
 func (client GatewayClient) UpdatePreparer(ctx context.Context, resourceGroupName string, gatewayName string, gatewayParameters GatewayParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -679,7 +714,7 @@ func (client GatewayClient) UpdatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServerManagement/gateways/{gatewayName}", pathParameters),
@@ -688,6 +723,7 @@ func (client GatewayClient) UpdatePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) UpdateSender(req *http.Request) (future GatewayUpdateFuture, err error) {
@@ -703,6 +739,7 @@ func (client GatewayClient) UpdateSender(req *http.Request) (future GatewayUpdat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) UpdateResponder(resp *http.Response) (result GatewayResource, err error) {
@@ -716,6 +753,7 @@ func (client GatewayClient) UpdateResponder(resp *http.Response) (result Gateway
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Upgrade upgrades a gateway.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -747,6 +785,7 @@ func (client GatewayClient) Upgrade(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpgradePreparer prepares the Upgrade request.
 func (client GatewayClient) UpgradePreparer(ctx context.Context, resourceGroupName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -768,6 +807,7 @@ func (client GatewayClient) UpgradePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpgradeSender sends the Upgrade request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) UpgradeSender(req *http.Request) (future GatewayUpgradeFuture, err error) {
@@ -783,6 +823,7 @@ func (client GatewayClient) UpgradeSender(req *http.Request) (future GatewayUpgr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpgradeResponder handles the response to the Upgrade request. The method always
 // closes the http.Response Body.
 func (client GatewayClient) UpgradeResponder(resp *http.Response) (result autorest.Response, err error) {

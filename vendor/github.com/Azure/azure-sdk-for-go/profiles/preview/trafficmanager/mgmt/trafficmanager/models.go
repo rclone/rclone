@@ -19,48 +19,16 @@
 
 package trafficmanager
 
-import original "github.com/Azure/azure-sdk-for-go/services/trafficmanager/mgmt/2017-09-01-preview/trafficmanager"
+import original "github.com/Azure/azure-sdk-for-go/services/trafficmanager/mgmt/2018-03-01/trafficmanager"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type EndpointsClient = original.EndpointsClient
-
-func NewEndpointsClient(subscriptionID string) EndpointsClient {
-	return original.NewEndpointsClient(subscriptionID)
-}
-func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) EndpointsClient {
-	return original.NewEndpointsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type GeographicHierarchiesClient = original.GeographicHierarchiesClient
-
-func NewGeographicHierarchiesClient(subscriptionID string) GeographicHierarchiesClient {
-	return original.NewGeographicHierarchiesClient(subscriptionID)
-}
-func NewGeographicHierarchiesClientWithBaseURI(baseURI string, subscriptionID string) GeographicHierarchiesClient {
-	return original.NewGeographicHierarchiesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type HeatMapClient = original.HeatMapClient
-
-func NewHeatMapClient(subscriptionID string) HeatMapClient {
-	return original.NewHeatMapClient(subscriptionID)
-}
-func NewHeatMapClientWithBaseURI(baseURI string, subscriptionID string) HeatMapClient {
-	return original.NewHeatMapClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EndpointMonitorStatus = original.EndpointMonitorStatus
 
 const (
@@ -120,12 +88,15 @@ type DeleteOperationResult = original.DeleteOperationResult
 type DNSConfig = original.DNSConfig
 type Endpoint = original.Endpoint
 type EndpointProperties = original.EndpointProperties
+type EndpointPropertiesCustomHeadersItem = original.EndpointPropertiesCustomHeadersItem
 type GeographicHierarchy = original.GeographicHierarchy
 type GeographicHierarchyProperties = original.GeographicHierarchyProperties
 type HeatMapEndpoint = original.HeatMapEndpoint
 type HeatMapModel = original.HeatMapModel
 type HeatMapProperties = original.HeatMapProperties
 type MonitorConfig = original.MonitorConfig
+type MonitorConfigCustomHeadersItem = original.MonitorConfigCustomHeadersItem
+type MonitorConfigExpectedStatusCodeRangesItem = original.MonitorConfigExpectedStatusCodeRangesItem
 type NameAvailability = original.NameAvailability
 type Profile = original.Profile
 type ProfileListResult = original.ProfileListResult
@@ -136,23 +107,55 @@ type Region = original.Region
 type Resource = original.Resource
 type TrackedResource = original.TrackedResource
 type TrafficFlow = original.TrafficFlow
-type UserMetricsKeyModel = original.UserMetricsKeyModel
 type ProfilesClient = original.ProfilesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewEndpointsClient(subscriptionID string) EndpointsClient {
+	return original.NewEndpointsClient(subscriptionID)
+}
+func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) EndpointsClient {
+	return original.NewEndpointsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewGeographicHierarchiesClient(subscriptionID string) GeographicHierarchiesClient {
+	return original.NewGeographicHierarchiesClient(subscriptionID)
+}
+func NewGeographicHierarchiesClientWithBaseURI(baseURI string, subscriptionID string) GeographicHierarchiesClient {
+	return original.NewGeographicHierarchiesClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewHeatMapClient(subscriptionID string) HeatMapClient {
+	return original.NewHeatMapClient(subscriptionID)
+}
+func NewHeatMapClientWithBaseURI(baseURI string, subscriptionID string) HeatMapClient {
+	return original.NewHeatMapClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleEndpointMonitorStatusValues() []EndpointMonitorStatus {
+	return original.PossibleEndpointMonitorStatusValues()
+}
+func PossibleEndpointStatusValues() []EndpointStatus {
+	return original.PossibleEndpointStatusValues()
+}
+func PossibleMonitorProtocolValues() []MonitorProtocol {
+	return original.PossibleMonitorProtocolValues()
+}
+func PossibleProfileMonitorStatusValues() []ProfileMonitorStatus {
+	return original.PossibleProfileMonitorStatusValues()
+}
+func PossibleProfileStatusValues() []ProfileStatus {
+	return original.PossibleProfileStatusValues()
+}
+func PossibleTrafficRoutingMethodValues() []TrafficRoutingMethod {
+	return original.PossibleTrafficRoutingMethodValues()
+}
 func NewProfilesClient(subscriptionID string) ProfilesClient {
 	return original.NewProfilesClient(subscriptionID)
 }
 func NewProfilesClientWithBaseURI(baseURI string, subscriptionID string) ProfilesClient {
 	return original.NewProfilesClientWithBaseURI(baseURI, subscriptionID)
-}
-
-type UserMetricsKeysClient = original.UserMetricsKeysClient
-
-func NewUserMetricsKeysClient(subscriptionID string) UserMetricsKeysClient {
-	return original.NewUserMetricsKeysClient(subscriptionID)
-}
-func NewUserMetricsKeysClientWithBaseURI(baseURI string, subscriptionID string) UserMetricsKeysClient {
-	return original.NewUserMetricsKeysClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

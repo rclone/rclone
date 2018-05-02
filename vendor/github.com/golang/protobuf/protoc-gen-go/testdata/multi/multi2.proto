@@ -33,6 +33,8 @@ syntax = "proto2";
 
 package multitest;
 
+option go_package = "github.com/golang/protobuf/protoc-gen-go/testdata/multi;multitest";
+
 message Multi2 {
   required int32 required_value = 1;
 

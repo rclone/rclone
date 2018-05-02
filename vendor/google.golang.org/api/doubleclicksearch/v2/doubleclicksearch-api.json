@@ -14,7 +14,7 @@
   "description": "Reports and modifies your advertising data in DoubleClick Search (for example, campaigns, ad groups, keywords, and conversions).",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/doubleclick-search/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/p2JVe-2S-1mleFUZt-dHXWjiMsc\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/H5HDmm-9CkUQ1DFZsT2Y7JFDHV8\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -59,12 +59,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -431,7 +431,7 @@
       }
     }
   },
-  "revision": "20180130",
+  "revision": "20180424",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Availability": {
@@ -830,7 +830,7 @@
       "id": "ReportRequest",
       "properties": {
         "columns": {
-          "description": "The columns to include in the report. This includes both DoubleClick Search columns and saved columns. For DoubleClick Search columns, only the columnName parameter is required. For saved columns only the savedColumnName parameter is required. Both columnName and savedColumnName cannot be set in the same stanza.",
+          "description": "The columns to include in the report. This includes both DoubleClick Search columns and saved columns. For DoubleClick Search columns, only the columnName parameter is required. For saved columns only the savedColumnName parameter is required. Both columnName and savedColumnName cannot be set in the same stanza.\nThe maximum number of columns per request is 300.",
           "items": {
             "$ref": "ReportApiColumnSpec"
           },
@@ -846,7 +846,7 @@
           "type": "string"
         },
         "filters": {
-          "description": "A list of filters to be applied to the report.",
+          "description": "A list of filters to be applied to the report.\nThe maximum number of filters per request is 300.",
           "items": {
             "properties": {
               "column": {
@@ -858,7 +858,7 @@
                 "type": "string"
               },
               "values": {
-                "description": "A list of values to filter the column value against.",
+                "description": "A list of values to filter the column value against.\nThe maximum number of filter values per request is 300.",
                 "items": {
                   "type": "any"
                 },
@@ -892,7 +892,7 @@
           "type": "integer"
         },
         "orderBy": {
-          "description": "Synchronous report only. A list of columns and directions defining sorting to be performed on the report rows.",
+          "description": "Synchronous report only. A list of columns and directions defining sorting to be performed on the report rows.\nThe maximum number of orderings per request is 300.",
           "items": {
             "properties": {
               "column": {

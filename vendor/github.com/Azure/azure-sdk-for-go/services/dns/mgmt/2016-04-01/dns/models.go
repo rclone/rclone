@@ -125,6 +125,11 @@ const (
 	UseProxy HTTPStatusCode = "UseProxy"
 )
 
+// PossibleHTTPStatusCodeValues returns an array of possible values for the HTTPStatusCode const type.
+func PossibleHTTPStatusCodeValues() []HTTPStatusCode {
+	return []HTTPStatusCode{Accepted, Ambiguous, BadGateway, BadRequest, Conflict, Continue, Created, ExpectationFailed, Forbidden, Found, GatewayTimeout, Gone, HTTPVersionNotSupported, InternalServerError, LengthRequired, MethodNotAllowed, Moved, MovedPermanently, MultipleChoices, NoContent, NonAuthoritativeInformation, NotAcceptable, NotFound, NotImplemented, NotModified, OK, PartialContent, PaymentRequired, PreconditionFailed, ProxyAuthenticationRequired, Redirect, RedirectKeepVerb, RedirectMethod, RequestedRangeNotSatisfiable, RequestEntityTooLarge, RequestTimeout, RequestURITooLong, ResetContent, SeeOther, ServiceUnavailable, SwitchingProtocols, TemporaryRedirect, Unauthorized, UnsupportedMediaType, Unused, UpgradeRequired, UseProxy}
+}
+
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
 
@@ -136,6 +141,11 @@ const (
 	// Succeeded ...
 	Succeeded OperationStatus = "Succeeded"
 )
+
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{Failed, InProgress, Succeeded}
+}
 
 // RecordType enumerates the values for record type.
 type RecordType string
@@ -160,6 +170,11 @@ const (
 	// TXT ...
 	TXT RecordType = "TXT"
 )
+
+// PossibleRecordTypeValues returns an array of possible values for the RecordType const type.
+func PossibleRecordTypeValues() []RecordType {
+	return []RecordType{A, AAAA, CNAME, MX, NS, PTR, SOA, SRV, TXT}
+}
 
 // AaaaRecord an AAAA record.
 type AaaaRecord struct {
@@ -225,6 +240,27 @@ type RecordSet struct {
 	Etag *string `json:"etag,omitempty"`
 	// RecordSetProperties - The properties of the record set.
 	*RecordSetProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RecordSet.
+func (rs RecordSet) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rs.ID != nil {
+		objectMap["id"] = rs.ID
+	}
+	if rs.Name != nil {
+		objectMap["name"] = rs.Name
+	}
+	if rs.Type != nil {
+		objectMap["type"] = rs.Type
+	}
+	if rs.Etag != nil {
+		objectMap["etag"] = rs.Etag
+	}
+	if rs.RecordSetProperties != nil {
+		objectMap["properties"] = rs.RecordSetProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RecordSet struct.

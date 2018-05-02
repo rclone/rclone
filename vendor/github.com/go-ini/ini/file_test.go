@@ -264,6 +264,22 @@ func TestFile_WriteTo(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(buf.String(), ShouldEqual, string(expected))
 	})
+
+	Convey("Support multiline comments", t, func() {
+		f := ini.Empty()
+		f.Section("").Key("test").Comment = "Multiline\nComment"
+
+		var buf bytes.Buffer
+		_, err := f.WriteTo(&buf)
+		So(err, ShouldBeNil)
+
+		So(buf.String(), ShouldEqual, `; Multiline
+; Comment
+test = 
+
+`)
+
+	})
 }
 
 func TestFile_SaveTo(t *testing.T) {

@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -37,6 +36,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"cloud.google.com/go/internal/trace"
 	"google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 
@@ -368,7 +368,10 @@ func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
 
 // Attrs returns meta information about the object.
 // ErrObjectNotExist will be returned if the object is not found.
-func (o *ObjectHandle) Attrs(ctx context.Context) (*ObjectAttrs, error) {
+func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Attrs")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if err := o.validate(); err != nil {
 		return nil, err
 	}
@@ -383,7 +386,6 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (*ObjectAttrs, error) {
 		return nil, err
 	}
 	var obj *raw.Object
-	var err error
 	setClientHeader(call.Header())
 	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusNotFound {
@@ -398,7 +400,10 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (*ObjectAttrs, error) {
 // Update updates an object with the provided attributes.
 // All zero-value attributes are ignored.
 // ErrObjectNotExist will be returned if the object is not found.
-func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (*ObjectAttrs, error) {
+func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (oa *ObjectAttrs, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Update")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if err := o.validate(); err != nil {
 		return nil, err
 	}
@@ -466,7 +471,6 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 		return nil, err
 	}
 	var obj *raw.Object
-	var err error
 	setClientHeader(call.Header())
 	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusNotFound {
@@ -531,144 +535,6 @@ func (o *ObjectHandle) ReadCompressed(compressed bool) *ObjectHandle {
 	o2.readCompressed = compressed
 	return &o2
 }
-
-// NewReader creates a new Reader to read the contents of the
-// object.
-// ErrObjectNotExist will be returned if the object is not found.
-//
-// The caller must call Close on the returned Reader when done reading.
-func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
-	return o.NewRangeReader(ctx, 0, -1)
-}
-
-// NewRangeReader reads part of an object, reading at most length bytes
-// starting at the given offset. If length is negative, the object is read
-// until the end.
-func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (*Reader, error) {
-	if err := o.validate(); err != nil {
-		return nil, err
-	}
-	if offset < 0 {
-		return nil, fmt.Errorf("storage: invalid offset %d < 0", offset)
-	}
-	if o.conds != nil {
-		if err := o.conds.validate("NewRangeReader"); err != nil {
-			return nil, err
-		}
-	}
-	u := &url.URL{
-		Scheme:   "https",
-		Host:     "storage.googleapis.com",
-		Path:     fmt.Sprintf("/%s/%s", o.bucket, o.object),
-		RawQuery: conditionsQuery(o.gen, o.conds),
-	}
-	verb := "GET"
-	if length == 0 {
-		verb = "HEAD"
-	}
-	req, err := http.NewRequest(verb, u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req = withContext(req, ctx)
-	if length < 0 && offset > 0 {
-		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
-	} else if length > 0 {
-		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
-	}
-	if o.userProject != "" {
-		req.Header.Set("X-Goog-User-Project", o.userProject)
-	}
-	if o.readCompressed {
-		req.Header.Set("Accept-Encoding", "gzip")
-	}
-	if err := setEncryptionHeaders(req.Header, o.encryptionKey, false); err != nil {
-		return nil, err
-	}
-	var res *http.Response
-	err = runWithRetry(ctx, func() error {
-		res, err = o.c.hc.Do(req)
-		if err != nil {
-			return err
-		}
-		if res.StatusCode == http.StatusNotFound {
-			res.Body.Close()
-			return ErrObjectNotExist
-		}
-		if res.StatusCode < 200 || res.StatusCode > 299 {
-			body, _ := ioutil.ReadAll(res.Body)
-			res.Body.Close()
-			return &googleapi.Error{
-				Code:   res.StatusCode,
-				Header: res.Header,
-				Body:   string(body),
-			}
-		}
-		if offset > 0 && length != 0 && res.StatusCode != http.StatusPartialContent {
-			res.Body.Close()
-			return errors.New("storage: partial request not satisfied")
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var size int64 // total size of object, even if a range was requested.
-	if res.StatusCode == http.StatusPartialContent {
-		cr := strings.TrimSpace(res.Header.Get("Content-Range"))
-		if !strings.HasPrefix(cr, "bytes ") || !strings.Contains(cr, "/") {
-			return nil, fmt.Errorf("storage: invalid Content-Range %q", cr)
-		}
-		size, err = strconv.ParseInt(cr[strings.LastIndex(cr, "/")+1:], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("storage: invalid Content-Range %q", cr)
-		}
-	} else {
-		size = res.ContentLength
-	}
-
-	remain := res.ContentLength
-	body := res.Body
-	if length == 0 {
-		remain = 0
-		body.Close()
-		body = emptyBody
-	}
-	var (
-		checkCRC bool
-		crc      uint32
-	)
-	// Even if there is a CRC header, we can't compute the hash on partial data.
-	if remain == size {
-		crc, checkCRC = parseCRC32c(res)
-	}
-	return &Reader{
-		body:            body,
-		size:            size,
-		remain:          remain,
-		contentType:     res.Header.Get("Content-Type"),
-		contentEncoding: res.Header.Get("Content-Encoding"),
-		cacheControl:    res.Header.Get("Cache-Control"),
-		wantCRC:         crc,
-		checkCRC:        checkCRC,
-	}, nil
-}
-
-func parseCRC32c(res *http.Response) (uint32, bool) {
-	const prefix = "crc32c="
-	for _, spec := range res.Header["X-Goog-Hash"] {
-		if strings.HasPrefix(spec, prefix) {
-			c, err := decodeUint32(spec[len(prefix):])
-			if err == nil {
-				return c, true
-			}
-		}
-	}
-	return 0, false
-}
-
-var emptyBody = ioutil.NopCloser(strings.NewReader(""))
 
 // NewWriter returns a storage Writer that writes to the GCS object
 // associated with this ObjectHandle.

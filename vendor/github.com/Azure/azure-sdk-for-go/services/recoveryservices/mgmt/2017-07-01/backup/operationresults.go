@@ -43,9 +43,10 @@ func NewOperationResultsClientWithBaseURI(baseURI string, subscriptionID string)
 // the status code in the response would be Accepted. It will continue to be in this state till it reaches completion.
 // On successful completion, the status code will be OK. This method expects OperationID as an argument. OperationID is
 // part of the Location header of the operation response.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. operationID is operationID which represents the operation.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// operationID - operationID which represents the operation.
 func (client OperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, operationID string) (result autorest.Response, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, operationID)
 	if err != nil {

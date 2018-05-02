@@ -42,12 +42,14 @@ func NewQuotaByPeriodKeysClientWithBaseURI(baseURI string, subscriptionID string
 
 // Get gets the value of the quota counter associated with the counter-key in the policy for the specific period in
 // service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// quotaCounterKey is quota counter key identifier.This is the result of expression defined in counter-key
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// quotaCounterKey - quota counter key identifier.This is the result of expression defined in counter-key
 // attribute of the quota-by-key policy.For Example, if you specify counter-key="boo" in the policy, then it’s
-// accessible by "boo" counter key. But if it’s defined as counter-key="@("b"+"a")" then it will be accessible by
-// "ba" key quotaPeriodKey is quota period key identifier.
+// accessible by "boo" counter key. But if it’s defined as counter-key="@("b"+"a")" then it will be accessible
+// by "ba" key
+// quotaPeriodKey - quota period key identifier.
 func (client QuotaByPeriodKeysClient) Get(ctx context.Context, resourceGroupName string, serviceName string, quotaCounterKey string, quotaPeriodKey string) (result QuotaCounterContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -122,13 +124,15 @@ func (client QuotaByPeriodKeysClient) GetResponder(resp *http.Response) (result 
 }
 
 // Update updates an existing quota counter value in the specified service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// quotaCounterKey is quota counter key identifier.This is the result of expression defined in counter-key
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// quotaCounterKey - quota counter key identifier.This is the result of expression defined in counter-key
 // attribute of the quota-by-key policy.For Example, if you specify counter-key="boo" in the policy, then it’s
-// accessible by "boo" counter key. But if it’s defined as counter-key="@("b"+"a")" then it will be accessible by
-// "ba" key quotaPeriodKey is quota period key identifier. parameters is the value of the Quota counter to be
-// applied on the specified period.
+// accessible by "boo" counter key. But if it’s defined as counter-key="@("b"+"a")" then it will be accessible
+// by "ba" key
+// quotaPeriodKey - quota period key identifier.
+// parameters - the value of the Quota counter to be applied on the specified period.
 func (client QuotaByPeriodKeysClient) Update(ctx context.Context, resourceGroupName string, serviceName string, quotaCounterKey string, quotaPeriodKey string, parameters QuotaCounterValueContractProperties) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

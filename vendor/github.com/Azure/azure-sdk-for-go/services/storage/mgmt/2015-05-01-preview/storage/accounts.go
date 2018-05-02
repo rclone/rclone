@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountsClient is the the Storage Management Client.
 type AccountsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NewAccountsClient creates an instance of the AccountsClient client.
 func NewAccountsClient(subscriptionID string) AccountsClient {
 	return NewAccountsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NewAccountsClientWithBaseURI creates an instance of the AccountsClient client.
 func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
 	return AccountsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CheckNameAvailability checks that account name is valid and is not in use.
 //
 // accountName is the name of the storage account within the specified resource group. Storage account names must
@@ -65,6 +69,7 @@ func (client AccountsClient) CheckNameAvailability(ctx context.Context, accountN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
 func (client AccountsClient) CheckNameAvailabilityPreparer(ctx context.Context, accountName AccountCheckNameAvailabilityParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -77,7 +82,7 @@ func (client AccountsClient) CheckNameAvailabilityPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Storage/checkNameAvailability", pathParameters),
@@ -86,6 +91,7 @@ func (client AccountsClient) CheckNameAvailabilityPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
@@ -93,6 +99,7 @@ func (client AccountsClient) CheckNameAvailabilitySender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) CheckNameAvailabilityResponder(resp *http.Response) (result CheckNameAvailabilityResult, err error) {
@@ -106,6 +113,7 @@ func (client AccountsClient) CheckNameAvailabilityResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Create asynchronously creates a new storage account with the specified parameters. Existing accounts cannot be
 // updated with this API and should instead use the Update Storage Account API. If an account is already created and
 // subsequent PUT request is issued with exact same set of properties, then HTTP 200 would be returned.
@@ -130,6 +138,7 @@ func (client AccountsClient) Create(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CreatePreparer prepares the Create request.
 func (client AccountsClient) CreatePreparer(ctx context.Context, resourceGroupName string, accountName string, parameters AccountCreateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -144,7 +153,7 @@ func (client AccountsClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}", pathParameters),
@@ -153,6 +162,7 @@ func (client AccountsClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) CreateSender(req *http.Request) (future AccountsCreateFuture, err error) {
@@ -168,6 +178,7 @@ func (client AccountsClient) CreateSender(req *http.Request) (future AccountsCre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) CreateResponder(resp *http.Response) (result Account, err error) {
@@ -181,6 +192,7 @@ func (client AccountsClient) CreateResponder(resp *http.Response) (result Accoun
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Delete deletes a storage account in Microsoft Azure.
 //
 // resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
@@ -208,6 +220,7 @@ func (client AccountsClient) Delete(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // DeletePreparer prepares the Delete request.
 func (client AccountsClient) DeletePreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -229,6 +242,7 @@ func (client AccountsClient) DeletePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -236,6 +250,7 @@ func (client AccountsClient) DeleteSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -248,6 +263,7 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // GetProperties returns the properties for the specified storage account including but not limited to name, account
 // type, location, and account status. The ListKeys operation should be used to retrieve storage keys.
 //
@@ -276,6 +292,7 @@ func (client AccountsClient) GetProperties(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // GetPropertiesPreparer prepares the GetProperties request.
 func (client AccountsClient) GetPropertiesPreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -297,6 +314,7 @@ func (client AccountsClient) GetPropertiesPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // GetPropertiesSender sends the GetProperties request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) GetPropertiesSender(req *http.Request) (*http.Response, error) {
@@ -304,6 +322,7 @@ func (client AccountsClient) GetPropertiesSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // GetPropertiesResponder handles the response to the GetProperties request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) GetPropertiesResponder(resp *http.Response) (result Account, err error) {
@@ -317,6 +336,7 @@ func (client AccountsClient) GetPropertiesResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // List lists all the storage accounts available under the subscription. Note that storage keys are not returned; use
 // the ListKeys operation for this.
 func (client AccountsClient) List(ctx context.Context) (result AccountListResultPage, err error) {
@@ -342,6 +362,7 @@ func (client AccountsClient) List(ctx context.Context) (result AccountListResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListPreparer prepares the List request.
 func (client AccountsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -361,6 +382,7 @@ func (client AccountsClient) ListPreparer(ctx context.Context) (*http.Request, e
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -368,6 +390,7 @@ func (client AccountsClient) ListSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) ListResponder(resp *http.Response) (result AccountListResult, err error) {
@@ -402,12 +425,14 @@ func (client AccountsClient) listNextResults(lastResults AccountListResult) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AccountsClient) ListComplete(ctx context.Context) (result AccountListResultIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListByResourceGroup lists all the storage accounts available under the given resource group. Note that storage keys
 // are not returned; use the ListKeys operation for this.
 //
@@ -435,6 +460,7 @@ func (client AccountsClient) ListByResourceGroup(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client AccountsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -455,6 +481,7 @@ func (client AccountsClient) ListByResourceGroupPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -462,6 +489,7 @@ func (client AccountsClient) ListByResourceGroupSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) ListByResourceGroupResponder(resp *http.Response) (result AccountListResult, err error) {
@@ -496,12 +524,14 @@ func (client AccountsClient) listByResourceGroupNextResults(lastResults AccountL
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AccountsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result AccountListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListKeys lists the access keys for the specified storage account.
 //
 // resourceGroupName is the name of the resource group. accountName is the name of the storage account.
@@ -527,6 +557,7 @@ func (client AccountsClient) ListKeys(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListKeysPreparer prepares the ListKeys request.
 func (client AccountsClient) ListKeysPreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -548,6 +579,7 @@ func (client AccountsClient) ListKeysPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) ListKeysSender(req *http.Request) (*http.Response, error) {
@@ -555,6 +587,7 @@ func (client AccountsClient) ListKeysSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) ListKeysResponder(resp *http.Response) (result AccountKeys, err error) {
@@ -568,6 +601,7 @@ func (client AccountsClient) ListKeysResponder(resp *http.Response) (result Acco
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // RegenerateKey regenerates the access keys for the specified storage account.
 //
 // resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
@@ -596,6 +630,7 @@ func (client AccountsClient) RegenerateKey(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // RegenerateKeyPreparer prepares the RegenerateKey request.
 func (client AccountsClient) RegenerateKeyPreparer(ctx context.Context, resourceGroupName string, accountName string, regenerateKey AccountRegenerateKeyParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -610,7 +645,7 @@ func (client AccountsClient) RegenerateKeyPreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/regenerateKey", pathParameters),
@@ -619,6 +654,7 @@ func (client AccountsClient) RegenerateKeyPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // RegenerateKeySender sends the RegenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) RegenerateKeySender(req *http.Request) (*http.Response, error) {
@@ -626,6 +662,7 @@ func (client AccountsClient) RegenerateKeySender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // RegenerateKeyResponder handles the response to the RegenerateKey request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) RegenerateKeyResponder(resp *http.Response) (result AccountKeys, err error) {
@@ -639,6 +676,7 @@ func (client AccountsClient) RegenerateKeyResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Update updates the account type or tags for a storage account. It can also be used to add a custom domain (note that
 // custom domains cannot be added via the Create operation). Only one custom domain is supported per storage account.
 // This API can only be used to update one of tags, accountType, or customDomain per call. To update multiple of these
@@ -672,6 +710,7 @@ func (client AccountsClient) Update(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UpdatePreparer prepares the Update request.
 func (client AccountsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, parameters AccountUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -686,7 +725,7 @@ func (client AccountsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}", pathParameters),
@@ -695,6 +734,7 @@ func (client AccountsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -702,6 +742,7 @@ func (client AccountsClient) UpdateSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client AccountsClient) UpdateResponder(resp *http.Response) (result Account, err error) {

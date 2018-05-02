@@ -203,6 +203,30 @@ func (s *mockSpannerServer) Rollback(ctx context.Context, req *spannerpb.Rollbac
 	return s.resps[0].(*emptypb.Empty), nil
 }
 
+func (s *mockSpannerServer) PartitionQuery(ctx context.Context, req *spannerpb.PartitionQueryRequest) (*spannerpb.PartitionResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*spannerpb.PartitionResponse), nil
+}
+
+func (s *mockSpannerServer) PartitionRead(ctx context.Context, req *spannerpb.PartitionReadRequest) (*spannerpb.PartitionResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*spannerpb.PartitionResponse), nil
+}
+
 // clientOpt is the option tests should use to connect to the test server.
 // It is initialized by TestMain.
 var clientOpt option.ClientOption
@@ -934,4 +958,128 @@ func TestSpannerRollbackError(t *testing.T) {
 	} else if c := st.Code(); c != errCode {
 		t.Errorf("got error code %q, want %q", c, errCode)
 	}
+}
+func TestSpannerPartitionQuery(t *testing.T) {
+	var expectedResponse *spannerpb.PartitionResponse = &spannerpb.PartitionResponse{}
+
+	mockSpanner.err = nil
+	mockSpanner.reqs = nil
+
+	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
+
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var sql string = "sql114126"
+	var request = &spannerpb.PartitionQueryRequest{
+		Session: formattedSession,
+		Sql:     sql,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.PartitionQuery(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockSpanner.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestSpannerPartitionQueryError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockSpanner.err = gstatus.Error(errCode, "test error")
+
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var sql string = "sql114126"
+	var request = &spannerpb.PartitionQueryRequest{
+		Session: formattedSession,
+		Sql:     sql,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.PartitionQuery(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestSpannerPartitionRead(t *testing.T) {
+	var expectedResponse *spannerpb.PartitionResponse = &spannerpb.PartitionResponse{}
+
+	mockSpanner.err = nil
+	mockSpanner.reqs = nil
+
+	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
+
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var table string = "table110115790"
+	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
+	var request = &spannerpb.PartitionReadRequest{
+		Session: formattedSession,
+		Table:   table,
+		KeySet:  keySet,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.PartitionRead(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockSpanner.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestSpannerPartitionReadError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockSpanner.err = gstatus.Error(errCode, "test error")
+
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var table string = "table110115790"
+	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
+	var request = &spannerpb.PartitionReadRequest{
+		Session: formattedSession,
+		Table:   table,
+		KeySet:  keySet,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.PartitionRead(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
 }

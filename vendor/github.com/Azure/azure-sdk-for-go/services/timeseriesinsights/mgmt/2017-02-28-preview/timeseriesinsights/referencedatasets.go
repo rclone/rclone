@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ReferenceDataSetsClient is the time Series Insights client
 type ReferenceDataSetsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewReferenceDataSetsClient creates an instance of the ReferenceDataSetsClient client.
 func NewReferenceDataSetsClient(subscriptionID string) ReferenceDataSetsClient {
 	return NewReferenceDataSetsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewReferenceDataSetsClientWithBaseURI creates an instance of the ReferenceDataSetsClient client.
 func NewReferenceDataSetsClientWithBaseURI(baseURI string, subscriptionID string) ReferenceDataSetsClient {
 	return ReferenceDataSetsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdate create or update a reference data set in the specified environment.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -78,6 +82,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdate(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ReferenceDataSetsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string, parameters ReferenceDataSetCreateOrUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -93,7 +98,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/referenceDataSets/{referenceDataSetName}", pathParameters),
@@ -102,6 +107,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdatePreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReferenceDataSetsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -109,6 +115,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdateSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ReferenceDataSetsClient) CreateOrUpdateResponder(resp *http.Response) (result ReferenceDataSetResource, err error) {
@@ -122,6 +129,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdateResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Delete deletes the reference data set with the specified name in the specified subscription, resource group, and
 // environment
 //
@@ -150,6 +158,7 @@ func (client ReferenceDataSetsClient) Delete(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeletePreparer prepares the Delete request.
 func (client ReferenceDataSetsClient) DeletePreparer(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -172,6 +181,7 @@ func (client ReferenceDataSetsClient) DeletePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReferenceDataSetsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -179,6 +189,7 @@ func (client ReferenceDataSetsClient) DeleteSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ReferenceDataSetsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -191,6 +202,7 @@ func (client ReferenceDataSetsClient) DeleteResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Get gets the reference data set with the specified name in the specified environment.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -218,6 +230,7 @@ func (client ReferenceDataSetsClient) Get(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetPreparer prepares the Get request.
 func (client ReferenceDataSetsClient) GetPreparer(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -240,6 +253,7 @@ func (client ReferenceDataSetsClient) GetPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReferenceDataSetsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -247,6 +261,7 @@ func (client ReferenceDataSetsClient) GetSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ReferenceDataSetsClient) GetResponder(resp *http.Response) (result ReferenceDataSetResource, err error) {
@@ -260,6 +275,7 @@ func (client ReferenceDataSetsClient) GetResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironment lists all the available reference data sets associated with the subscription and within the
 // specified resource group and environment.
 //
@@ -287,6 +303,7 @@ func (client ReferenceDataSetsClient) ListByEnvironment(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentPreparer prepares the ListByEnvironment request.
 func (client ReferenceDataSetsClient) ListByEnvironmentPreparer(ctx context.Context, resourceGroupName string, environmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -308,6 +325,7 @@ func (client ReferenceDataSetsClient) ListByEnvironmentPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentSender sends the ListByEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReferenceDataSetsClient) ListByEnvironmentSender(req *http.Request) (*http.Response, error) {
@@ -315,6 +333,7 @@ func (client ReferenceDataSetsClient) ListByEnvironmentSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentResponder handles the response to the ListByEnvironment request. The method always
 // closes the http.Response Body.
 func (client ReferenceDataSetsClient) ListByEnvironmentResponder(resp *http.Response) (result ReferenceDataSetListResponse, err error) {
@@ -328,6 +347,7 @@ func (client ReferenceDataSetsClient) ListByEnvironmentResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Update updates the reference data set with the specified name in the specified subscription, resource group, and
 // environment.
 //
@@ -357,6 +377,7 @@ func (client ReferenceDataSetsClient) Update(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdatePreparer prepares the Update request.
 func (client ReferenceDataSetsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string, referenceDataSetUpdateParameters ReferenceDataSetUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -372,7 +393,7 @@ func (client ReferenceDataSetsClient) UpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/referenceDataSets/{referenceDataSetName}", pathParameters),
@@ -381,6 +402,7 @@ func (client ReferenceDataSetsClient) UpdatePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReferenceDataSetsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -388,6 +410,7 @@ func (client ReferenceDataSetsClient) UpdateSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ReferenceDataSetsClient) UpdateResponder(resp *http.Response) (result ReferenceDataSetResource, err error) {

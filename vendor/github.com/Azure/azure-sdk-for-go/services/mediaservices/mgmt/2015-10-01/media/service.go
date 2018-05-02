@@ -41,8 +41,8 @@ func NewServiceClientWithBaseURI(baseURI string, subscriptionID string) ServiceC
 }
 
 // CheckNameAvailability checks whether the Media Service resource name is available. The name must be globally unique.
-//
-// parameters is properties needed to check the availability of a name.
+// Parameters:
+// parameters - properties needed to check the availability of a name.
 func (client ServiceClient) CheckNameAvailability(ctx context.Context, parameters CheckNameAvailabilityInput) (result CheckNameAvailabilityOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -88,7 +88,7 @@ func (client ServiceClient) CheckNameAvailabilityPreparer(ctx context.Context, p
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Media/CheckNameAvailability", pathParameters),
@@ -118,9 +118,10 @@ func (client ServiceClient) CheckNameAvailabilityResponder(resp *http.Response) 
 }
 
 // Create creates a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service. parameters is media Service properties needed for creation.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
+// parameters - media Service properties needed for creation.
 func (client ServiceClient) Create(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters Service) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -165,7 +166,7 @@ func (client ServiceClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Media/mediaservices/{mediaServiceName}", pathParameters),
@@ -195,9 +196,9 @@ func (client ServiceClient) CreateResponder(resp *http.Response) (result Service
 }
 
 // Delete deletes a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
 func (client ServiceClient) Delete(ctx context.Context, resourceGroupName string, mediaServiceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -269,9 +270,9 @@ func (client ServiceClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Get gets a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
 func (client ServiceClient) Get(ctx context.Context, resourceGroupName string, mediaServiceName string) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -344,8 +345,8 @@ func (client ServiceClient) GetResponder(resp *http.Response) (result Service, e
 }
 
 // ListByResourceGroup lists all of the Media Services in a resource group.
-//
-// resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ServiceClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ServiceCollection, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -409,9 +410,9 @@ func (client ServiceClient) ListByResourceGroupResponder(resp *http.Response) (r
 }
 
 // ListKeys lists the keys for a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
 func (client ServiceClient) ListKeys(ctx context.Context, resourceGroupName string, mediaServiceName string) (result ServiceKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -484,9 +485,10 @@ func (client ServiceClient) ListKeysResponder(resp *http.Response) (result Servi
 }
 
 // RegenerateKey regenerates a primary or secondary key for a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service. parameters is properties needed to regenerate the Media Service key.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
+// parameters - properties needed to regenerate the Media Service key.
 func (client ServiceClient) RegenerateKey(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters RegenerateKeyInput) (result RegenerateKeyOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -531,7 +533,7 @@ func (client ServiceClient) RegenerateKeyPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Media/mediaservices/{mediaServiceName}/regenerateKey", pathParameters),
@@ -561,10 +563,10 @@ func (client ServiceClient) RegenerateKeyResponder(resp *http.Response) (result 
 }
 
 // SyncStorageKeys synchronizes storage account keys for a storage account associated with the Media Service account.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service. parameters is properties needed to synchronize the keys for a storage account to the Media
-// Service.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
+// parameters - properties needed to synchronize the keys for a storage account to the Media Service.
 func (client ServiceClient) SyncStorageKeys(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters SyncStorageKeysInput) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -611,7 +613,7 @@ func (client ServiceClient) SyncStorageKeysPreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Media/mediaservices/{mediaServiceName}/syncStorageKeys", pathParameters),
@@ -640,9 +642,10 @@ func (client ServiceClient) SyncStorageKeysResponder(resp *http.Response) (resul
 }
 
 // Update updates a Media Service.
-//
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
-// Media Service. parameters is media Service properties needed for update.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
+// mediaServiceName - name of the Media Service.
+// parameters - media Service properties needed for update.
 func (client ServiceClient) Update(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters Service) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -687,7 +690,7 @@ func (client ServiceClient) UpdatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Media/mediaservices/{mediaServiceName}", pathParameters),

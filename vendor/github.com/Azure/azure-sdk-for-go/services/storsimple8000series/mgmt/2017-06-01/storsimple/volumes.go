@@ -41,10 +41,13 @@ func NewVolumesClientWithBaseURI(baseURI string, subscriptionID string) VolumesC
 }
 
 // CreateOrUpdate creates or updates the volume.
-//
-// deviceName is the device name volumeContainerName is the volume container name. volumeName is the volume name.
-// parameters is volume to be created or updated. resourceGroupName is the resource group name managerName is the
-// manager name
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// volumeName - the volume name.
+// parameters - volume to be created or updated.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) CreateOrUpdate(ctx context.Context, deviceName string, volumeContainerName string, volumeName string, parameters Volume, resourceGroupName string, managerName string) (result VolumesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -90,7 +93,7 @@ func (client VolumesClient) CreateOrUpdatePreparer(ctx context.Context, deviceNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{deviceName}/volumeContainers/{volumeContainerName}/volumes/{volumeName}", pathParameters),
@@ -128,9 +131,12 @@ func (client VolumesClient) CreateOrUpdateResponder(resp *http.Response) (result
 }
 
 // Delete deletes the volume.
-//
-// deviceName is the device name volumeContainerName is the volume container name. volumeName is the volume name.
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// volumeName - the volume name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) Delete(ctx context.Context, deviceName string, volumeContainerName string, volumeName string, resourceGroupName string, managerName string) (result VolumesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -206,9 +212,12 @@ func (client VolumesClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Get returns the properties of the specified volume name.
-//
-// deviceName is the device name volumeContainerName is the volume container name. volumeName is the volume name.
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// volumeName - the volume name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) Get(ctx context.Context, deviceName string, volumeContainerName string, volumeName string, resourceGroupName string, managerName string) (result Volume, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -283,8 +292,10 @@ func (client VolumesClient) GetResponder(resp *http.Response) (result Volume, er
 }
 
 // ListByDevice retrieves all the volumes in a device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) ListByDevice(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result VolumeList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -357,9 +368,11 @@ func (client VolumesClient) ListByDeviceResponder(resp *http.Response) (result V
 }
 
 // ListByVolumeContainer retrieves all the volumes in a volume container.
-//
-// deviceName is the device name volumeContainerName is the volume container name. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) ListByVolumeContainer(ctx context.Context, deviceName string, volumeContainerName string, resourceGroupName string, managerName string) (result VolumeList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -433,9 +446,12 @@ func (client VolumesClient) ListByVolumeContainerResponder(resp *http.Response) 
 }
 
 // ListMetricDefinition gets the metric definitions for the specified volume.
-//
-// deviceName is the device name volumeContainerName is the volume container name. volumeName is the volume name.
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// volumeName - the volume name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client VolumesClient) ListMetricDefinition(ctx context.Context, deviceName string, volumeContainerName string, volumeName string, resourceGroupName string, managerName string) (result MetricDefinitionList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -510,9 +526,13 @@ func (client VolumesClient) ListMetricDefinitionResponder(resp *http.Response) (
 }
 
 // ListMetrics gets the metrics for the specified volume.
-//
-// deviceName is the device name volumeContainerName is the volume container name. volumeName is the volume name.
-// resourceGroupName is the resource group name managerName is the manager name filter is oData Filter options
+// Parameters:
+// deviceName - the device name
+// volumeContainerName - the volume container name.
+// volumeName - the volume name.
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// filter - oData Filter options
 func (client VolumesClient) ListMetrics(ctx context.Context, deviceName string, volumeContainerName string, volumeName string, resourceGroupName string, managerName string, filter string) (result MetricList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

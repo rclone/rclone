@@ -40,9 +40,10 @@ func NewJobDetailsClientWithBaseURI(baseURI string, subscriptionID string) JobDe
 }
 
 // Get gets exteded information associated with the job.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. jobName is name of the job whose details are to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// jobName - name of the job whose details are to be fetched.
 func (client JobDetailsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, jobName string) (result JobResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, jobName)
 	if err != nil {

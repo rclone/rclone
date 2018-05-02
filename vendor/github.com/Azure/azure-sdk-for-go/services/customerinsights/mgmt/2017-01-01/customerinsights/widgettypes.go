@@ -42,9 +42,10 @@ func NewWidgetTypesClientWithBaseURI(baseURI string, subscriptionID string) Widg
 }
 
 // Get gets a widget type in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. widgetTypeName is the name
-// of the widget type.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// widgetTypeName - the name of the widget type.
 func (client WidgetTypesClient) Get(ctx context.Context, resourceGroupName string, hubName string, widgetTypeName string) (result WidgetTypeResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, widgetTypeName)
 	if err != nil {
@@ -110,8 +111,9 @@ func (client WidgetTypesClient) GetResponder(resp *http.Response) (result Widget
 }
 
 // ListByHub gets all available widget types in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client WidgetTypesClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result WidgetTypeListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)

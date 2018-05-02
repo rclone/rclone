@@ -40,8 +40,10 @@ func NewWorkflowsClientWithBaseURI(baseURI string, subscriptionID string) Workfl
 }
 
 // CreateOrUpdate creates or updates a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. workflow is the workflow.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// workflow - the workflow.
 func (client WorkflowsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, workflowName string, workflow Workflow) (result Workflow, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, workflowName, workflow)
 	if err != nil {
@@ -78,7 +80,7 @@ func (client WorkflowsClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}", pathParameters),
@@ -108,8 +110,9 @@ func (client WorkflowsClient) CreateOrUpdateResponder(resp *http.Response) (resu
 }
 
 // Delete deletes a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
 func (client WorkflowsClient) Delete(ctx context.Context, resourceGroupName string, workflowName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
@@ -173,8 +176,9 @@ func (client WorkflowsClient) DeleteResponder(resp *http.Response) (result autor
 }
 
 // Disable disables a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
 func (client WorkflowsClient) Disable(ctx context.Context, resourceGroupName string, workflowName string) (result autorest.Response, err error) {
 	req, err := client.DisablePreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
@@ -238,8 +242,9 @@ func (client WorkflowsClient) DisableResponder(resp *http.Response) (result auto
 }
 
 // Enable enables a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
 func (client WorkflowsClient) Enable(ctx context.Context, resourceGroupName string, workflowName string) (result autorest.Response, err error) {
 	req, err := client.EnablePreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
@@ -303,9 +308,10 @@ func (client WorkflowsClient) EnableResponder(resp *http.Response) (result autor
 }
 
 // GenerateUpgradedDefinition generates the upgraded definition for a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. parameters is parameters for
-// generating an upgraded definition.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// parameters - parameters for generating an upgraded definition.
 func (client WorkflowsClient) GenerateUpgradedDefinition(ctx context.Context, resourceGroupName string, workflowName string, parameters GenerateUpgradedDefinitionParameters) (result SetObject, err error) {
 	req, err := client.GenerateUpgradedDefinitionPreparer(ctx, resourceGroupName, workflowName, parameters)
 	if err != nil {
@@ -342,7 +348,7 @@ func (client WorkflowsClient) GenerateUpgradedDefinitionPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/generateUpgradedDefinition", pathParameters),
@@ -372,8 +378,9 @@ func (client WorkflowsClient) GenerateUpgradedDefinitionResponder(resp *http.Res
 }
 
 // Get gets a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
 func (client WorkflowsClient) Get(ctx context.Context, resourceGroupName string, workflowName string) (result Workflow, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
@@ -438,9 +445,10 @@ func (client WorkflowsClient) GetResponder(resp *http.Response) (result Workflow
 }
 
 // ListByResourceGroup gets a list of workflows by resource group.
-//
-// resourceGroupName is the resource group name. top is the number of items to be included in the result. filter is
-// the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client WorkflowsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -538,8 +546,9 @@ func (client WorkflowsClient) ListByResourceGroupComplete(ctx context.Context, r
 }
 
 // ListBySubscription gets a list of workflows by subscription.
-//
-// top is the number of items to be included in the result. filter is the filter to apply on the operation.
+// Parameters:
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client WorkflowsClient) ListBySubscription(ctx context.Context, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, top, filter)
@@ -636,8 +645,9 @@ func (client WorkflowsClient) ListBySubscriptionComplete(ctx context.Context, to
 }
 
 // ListSwagger gets an OpenAPI definition for the workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
 func (client WorkflowsClient) ListSwagger(ctx context.Context, resourceGroupName string, workflowName string) (result SetObject, err error) {
 	req, err := client.ListSwaggerPreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
@@ -702,8 +712,10 @@ func (client WorkflowsClient) ListSwaggerResponder(resp *http.Response) (result 
 }
 
 // RegenerateAccessKey regenerates the callback URL access key for request triggers.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. keyType is the access key type.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// keyType - the access key type.
 func (client WorkflowsClient) RegenerateAccessKey(ctx context.Context, resourceGroupName string, workflowName string, keyType RegenerateActionParameter) (result autorest.Response, err error) {
 	req, err := client.RegenerateAccessKeyPreparer(ctx, resourceGroupName, workflowName, keyType)
 	if err != nil {
@@ -740,7 +752,7 @@ func (client WorkflowsClient) RegenerateAccessKeyPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/regenerateAccessKey", pathParameters),
@@ -769,8 +781,10 @@ func (client WorkflowsClient) RegenerateAccessKeyResponder(resp *http.Response) 
 }
 
 // Update updates a workflow.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. workflow is the workflow.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// workflow - the workflow.
 func (client WorkflowsClient) Update(ctx context.Context, resourceGroupName string, workflowName string, workflow Workflow) (result Workflow, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, workflowName, workflow)
 	if err != nil {
@@ -807,7 +821,7 @@ func (client WorkflowsClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}", pathParameters),
@@ -837,9 +851,11 @@ func (client WorkflowsClient) UpdateResponder(resp *http.Response) (result Workf
 }
 
 // Validate validates the workflow definition.
-//
-// resourceGroupName is the resource group name. location is the workflow location. workflowName is the workflow
-// name. workflow is the workflow definition.
+// Parameters:
+// resourceGroupName - the resource group name.
+// location - the workflow location.
+// workflowName - the workflow name.
+// workflow - the workflow definition.
 func (client WorkflowsClient) Validate(ctx context.Context, resourceGroupName string, location string, workflowName string, workflow Workflow) (result autorest.Response, err error) {
 	req, err := client.ValidatePreparer(ctx, resourceGroupName, location, workflowName, workflow)
 	if err != nil {
@@ -877,7 +893,7 @@ func (client WorkflowsClient) ValidatePreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/locations/{location}/workflows/{workflowName}/validate", pathParameters),

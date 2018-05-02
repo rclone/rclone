@@ -40,10 +40,11 @@ func NewVaultCertificatesClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // Create uploads a certificate for a resource.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. certificateName is certificate friendly name. certificateRequest is
-// input parameters for uploading the vault certificate.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// certificateName - certificate friendly name.
+// certificateRequest - input parameters for uploading the vault certificate.
 func (client VaultCertificatesClient) Create(ctx context.Context, resourceGroupName string, vaultName string, certificateName string, certificateRequest CertificateRequest) (result VaultCertificateResponse, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, vaultName, certificateName, certificateRequest)
 	if err != nil {
@@ -81,7 +82,7 @@ func (client VaultCertificatesClient) CreatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/certificates/{certificateName}", pathParameters),

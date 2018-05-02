@@ -36,6 +36,11 @@ const (
 	Incremental DeploymentMode = "Incremental"
 )
 
+// PossibleDeploymentModeValues returns an array of possible values for the DeploymentMode const type.
+func PossibleDeploymentModeValues() []DeploymentMode {
+	return []DeploymentMode{Complete, Incremental}
+}
+
 // BasicDependency deployment dependency information.
 type BasicDependency struct {
 	// ID - Gets or sets the ID of the dependency.

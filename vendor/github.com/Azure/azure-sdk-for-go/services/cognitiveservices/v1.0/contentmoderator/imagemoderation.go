@@ -51,10 +51,9 @@ func NewImageModerationClient(baseURL AzureRegionBaseURL) ImageModerationClient 
 }
 
 // EvaluateFileInput returns probabilities of the image containing racy or adult content.
-//
-// imageStream is the image file. imageStream will be closed upon successful return. Callers should ensure closure
-// when receiving an error.cacheImage is whether to retain the submitted image for future use; defaults to false if
-// omitted.
+// Parameters:
+// imageStream - the image file.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) EvaluateFileInput(ctx context.Context, imageStream io.ReadCloser, cacheImage *bool) (result Evaluate, err error) {
 	req, err := client.EvaluateFileInputPreparer(ctx, imageStream, cacheImage)
 	if err != nil {
@@ -89,7 +88,7 @@ func (client ImageModerationClient) EvaluateFileInputPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("image/gif"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/Evaluate"),
@@ -119,8 +118,8 @@ func (client ImageModerationClient) EvaluateFileInputResponder(resp *http.Respon
 }
 
 // EvaluateMethod returns probabilities of the image containing racy or adult content.
-//
-// cacheImage is whether to retain the submitted image for future use; defaults to false if omitted.
+// Parameters:
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) EvaluateMethod(ctx context.Context, cacheImage *bool) (result Evaluate, err error) {
 	req, err := client.EvaluateMethodPreparer(ctx, cacheImage)
 	if err != nil {
@@ -183,9 +182,10 @@ func (client ImageModerationClient) EvaluateMethodResponder(resp *http.Response)
 }
 
 // EvaluateURLInput returns probabilities of the image containing racy or adult content.
-//
-// contentType is the content type. imageURL is the image url. cacheImage is whether to retain the submitted image
-// for future use; defaults to false if omitted.
+// Parameters:
+// contentType - the content type.
+// imageURL - the image url.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) EvaluateURLInput(ctx context.Context, contentType string, imageURL BodyModel, cacheImage *bool) (result Evaluate, err error) {
 	req, err := client.EvaluateURLInputPreparer(ctx, contentType, imageURL, cacheImage)
 	if err != nil {
@@ -220,7 +220,7 @@ func (client ImageModerationClient) EvaluateURLInputPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/Evaluate"),
@@ -251,8 +251,8 @@ func (client ImageModerationClient) EvaluateURLInputResponder(resp *http.Respons
 }
 
 // FindFaces returns the list of faces found.
-//
-// cacheImage is whether to retain the submitted image for future use; defaults to false if omitted.
+// Parameters:
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) FindFaces(ctx context.Context, cacheImage *bool) (result FoundFaces, err error) {
 	req, err := client.FindFacesPreparer(ctx, cacheImage)
 	if err != nil {
@@ -315,10 +315,9 @@ func (client ImageModerationClient) FindFacesResponder(resp *http.Response) (res
 }
 
 // FindFacesFileInput returns the list of faces found.
-//
-// imageStream is the image file. imageStream will be closed upon successful return. Callers should ensure closure
-// when receiving an error.cacheImage is whether to retain the submitted image for future use; defaults to false if
-// omitted.
+// Parameters:
+// imageStream - the image file.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) FindFacesFileInput(ctx context.Context, imageStream io.ReadCloser, cacheImage *bool) (result FoundFaces, err error) {
 	req, err := client.FindFacesFileInputPreparer(ctx, imageStream, cacheImage)
 	if err != nil {
@@ -353,7 +352,7 @@ func (client ImageModerationClient) FindFacesFileInputPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("image/gif"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/FindFaces"),
@@ -383,9 +382,10 @@ func (client ImageModerationClient) FindFacesFileInputResponder(resp *http.Respo
 }
 
 // FindFacesURLInput returns the list of faces found.
-//
-// contentType is the content type. imageURL is the image url. cacheImage is whether to retain the submitted image
-// for future use; defaults to false if omitted.
+// Parameters:
+// contentType - the content type.
+// imageURL - the image url.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) FindFacesURLInput(ctx context.Context, contentType string, imageURL BodyModel, cacheImage *bool) (result FoundFaces, err error) {
 	req, err := client.FindFacesURLInputPreparer(ctx, contentType, imageURL, cacheImage)
 	if err != nil {
@@ -420,7 +420,7 @@ func (client ImageModerationClient) FindFacesURLInputPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/FindFaces"),
@@ -458,10 +458,10 @@ func (client ImageModerationClient) FindFacesURLInputResponder(resp *http.Respon
 // <br/>
 // Note: Refresh Index must be run on the corresponding Image List before additions and removals are reflected in the
 // response.
-//
-// imageStream is the image file. imageStream will be closed upon successful return. Callers should ensure closure
-// when receiving an error.listID is the list Id. cacheImage is whether to retain the submitted image for future
-// use; defaults to false if omitted.
+// Parameters:
+// imageStream - the image file.
+// listID - the list Id.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) MatchFileInput(ctx context.Context, imageStream io.ReadCloser, listID string, cacheImage *bool) (result MatchResponse, err error) {
 	req, err := client.MatchFileInputPreparer(ctx, imageStream, listID, cacheImage)
 	if err != nil {
@@ -499,7 +499,7 @@ func (client ImageModerationClient) MatchFileInputPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("image/gif"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/Match"),
@@ -536,9 +536,9 @@ func (client ImageModerationClient) MatchFileInputResponder(resp *http.Response)
 // <br/>
 // Note: Refresh Index must be run on the corresponding Image List before additions and removals are reflected in the
 // response.
-//
-// listID is the list Id. cacheImage is whether to retain the submitted image for future use; defaults to false if
-// omitted.
+// Parameters:
+// listID - the list Id.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) MatchMethod(ctx context.Context, listID string, cacheImage *bool) (result MatchResponse, err error) {
 	req, err := client.MatchMethodPreparer(ctx, listID, cacheImage)
 	if err != nil {
@@ -611,9 +611,11 @@ func (client ImageModerationClient) MatchMethodResponder(resp *http.Response) (r
 // <br/>
 // Note: Refresh Index must be run on the corresponding Image List before additions and removals are reflected in the
 // response.
-//
-// contentType is the content type. imageURL is the image url. listID is the list Id. cacheImage is whether to
-// retain the submitted image for future use; defaults to false if omitted.
+// Parameters:
+// contentType - the content type.
+// imageURL - the image url.
+// listID - the list Id.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
 func (client ImageModerationClient) MatchURLInput(ctx context.Context, contentType string, imageURL BodyModel, listID string, cacheImage *bool) (result MatchResponse, err error) {
 	req, err := client.MatchURLInputPreparer(ctx, contentType, imageURL, listID, cacheImage)
 	if err != nil {
@@ -651,7 +653,7 @@ func (client ImageModerationClient) MatchURLInputPreparer(ctx context.Context, c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/Match"),
@@ -683,11 +685,12 @@ func (client ImageModerationClient) MatchURLInputResponder(resp *http.Response) 
 
 // OCRFileInput returns any text found in the image for the language specified. If no language is specified in input
 // then the detection defaults to English.
-//
-// language is language of the terms. imageStream is the image file. imageStream will be closed upon successful
-// return. Callers should ensure closure when receiving an error.cacheImage is whether to retain the submitted
-// image for future use; defaults to false if omitted. enhanced is when set to True, the image goes through
-// additional processing to come with additional candidates.
+// Parameters:
+// language - language of the terms.
+// imageStream - the image file.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
+// enhanced - when set to True, the image goes through additional processing to come with additional
+// candidates.
 //
 // image/tiff is not supported when enhanced is set to true
 //
@@ -733,7 +736,7 @@ func (client ImageModerationClient) OCRFileInputPreparer(ctx context.Context, la
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("image/gif"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/OCR"),
@@ -764,10 +767,11 @@ func (client ImageModerationClient) OCRFileInputResponder(resp *http.Response) (
 
 // OCRMethod returns any text found in the image for the language specified. If no language is specified in input then
 // the detection defaults to English.
-//
-// language is language of the terms. cacheImage is whether to retain the submitted image for future use; defaults
-// to false if omitted. enhanced is when set to True, the image goes through additional processing to come with
-// additional candidates.
+// Parameters:
+// language - language of the terms.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
+// enhanced - when set to True, the image goes through additional processing to come with additional
+// candidates.
 //
 // image/tiff is not supported when enhanced is set to true
 //
@@ -842,10 +846,13 @@ func (client ImageModerationClient) OCRMethodResponder(resp *http.Response) (res
 
 // OCRURLInput returns any text found in the image for the language specified. If no language is specified in input
 // then the detection defaults to English.
-//
-// language is language of the terms. contentType is the content type. imageURL is the image url. cacheImage is
-// whether to retain the submitted image for future use; defaults to false if omitted. enhanced is when set to
-// True, the image goes through additional processing to come with additional candidates.
+// Parameters:
+// language - language of the terms.
+// contentType - the content type.
+// imageURL - the image url.
+// cacheImage - whether to retain the submitted image for future use; defaults to false if omitted.
+// enhanced - when set to True, the image goes through additional processing to come with additional
+// candidates.
 //
 // image/tiff is not supported when enhanced is set to true
 //
@@ -891,7 +898,7 @@ func (client ImageModerationClient) OCRURLInputPreparer(ctx context.Context, lan
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/moderate/v1.0/ProcessImage/OCR"),

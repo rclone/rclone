@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaHardwareTypeNamesEnum enumerates the values for hana hardware type names enum.
 type HanaHardwareTypeNamesEnum string
 
@@ -32,6 +33,13 @@ const (
 	CiscoUCS HanaHardwareTypeNamesEnum = "Cisco_UCS"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
+// PossibleHanaHardwareTypeNamesEnumValues returns an array of possible values for the HanaHardwareTypeNamesEnum const type.
+func PossibleHanaHardwareTypeNamesEnumValues() []HanaHardwareTypeNamesEnum {
+	return []HanaHardwareTypeNamesEnum{CiscoUCS}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstanceSizeNamesEnum enumerates the values for hana instance size names enum.
 type HanaInstanceSizeNamesEnum string
 
@@ -50,6 +58,24 @@ const (
 	S72m HanaInstanceSizeNamesEnum = "S72m"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
+// PossibleHanaInstanceSizeNamesEnumValues returns an array of possible values for the HanaInstanceSizeNamesEnum const type.
+func PossibleHanaInstanceSizeNamesEnumValues() []HanaInstanceSizeNamesEnum {
+	return []HanaInstanceSizeNamesEnum{S144, S144m, S192, S192m, S72, S72m}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
+// Disk specifies the disk information fo the HANA instance
+type Disk struct {
+	// Name - The disk name.
+	Name *string `json:"name,omitempty"`
+	// DiskSizeGB - Specifies the size of an empty data disk in gigabytes.
+	DiskSizeGB *int32 `json:"diskSizeGB,omitempty"`
+	// Lun - Specifies the logical unit number of the data disk. This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+	Lun *int32 `json:"lun,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Display detailed HANA operation information
 type Display struct {
 	// Provider - The localized friendly form of the resource provider name. This form is also expected to include the publisher/company responsible. Use Title Casing. Begin with “Microsoft” for 1st party services.
@@ -64,6 +90,7 @@ type Display struct {
 	Origin *string `json:"origin,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ErrorResponse describes the format of Error response.
 type ErrorResponse struct {
 	// Code - Error code
@@ -72,6 +99,7 @@ type ErrorResponse struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstance HANA instance info on Azure (ARM properties and HANA properties)
 type HanaInstance struct {
 	autorest.Response `json:"-"`
@@ -89,6 +117,7 @@ type HanaInstance struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // MarshalJSON is the custom marshaler for HanaInstance.
 func (hi HanaInstance) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -113,6 +142,7 @@ func (hi HanaInstance) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // UnmarshalJSON is the custom unmarshaler for HanaInstance struct.
 func (hi *HanaInstance) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -182,6 +212,7 @@ func (hi *HanaInstance) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstanceProperties describes the properties of a HANA instance.
 type HanaInstanceProperties struct {
 	// HardwareProfile - Specifies the hardware settings for the HANA instance.
@@ -196,6 +227,7 @@ type HanaInstanceProperties struct {
 	HanaInstanceID *string `json:"hanaInstanceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstancesListResult the response from the List HANA Instances operation.
 type HanaInstancesListResult struct {
 	autorest.Response `json:"-"`
@@ -205,12 +237,14 @@ type HanaInstancesListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstancesListResultIterator provides access to a complete listing of HanaInstance values.
 type HanaInstancesListResultIterator struct {
 	i    int
 	page HanaInstancesListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *HanaInstancesListResultIterator) Next() error {
@@ -227,16 +261,19 @@ func (iter *HanaInstancesListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter HanaInstancesListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Response returns the raw server response from the last page request.
 func (iter HanaInstancesListResultIterator) Response() HanaInstancesListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter HanaInstancesListResultIterator) Value() HanaInstance {
@@ -246,6 +283,7 @@ func (iter HanaInstancesListResultIterator) Value() HanaInstance {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (hilr HanaInstancesListResult) IsEmpty() bool {
 	return hilr.Value == nil || len(*hilr.Value) == 0
@@ -263,12 +301,14 @@ func (hilr HanaInstancesListResult) hanaInstancesListResultPreparer() (*http.Req
 		autorest.WithBaseURL(to.String(hilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstancesListResultPage contains a page of HanaInstance values.
 type HanaInstancesListResultPage struct {
 	fn   func(HanaInstancesListResult) (HanaInstancesListResult, error)
 	hilr HanaInstancesListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *HanaInstancesListResultPage) Next() error {
@@ -280,16 +320,19 @@ func (page *HanaInstancesListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page HanaInstancesListResultPage) NotDone() bool {
 	return !page.hilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Response returns the raw server response from the last page request.
 func (page HanaInstancesListResultPage) Response() HanaInstancesListResult {
 	return page.hilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page HanaInstancesListResultPage) Values() []HanaInstance {
 	if page.hilr.IsEmpty() {
@@ -298,6 +341,7 @@ func (page HanaInstancesListResultPage) Values() []HanaInstance {
 	return *page.hilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HardwareProfile specifies the hardware settings for the HANA instance.
 type HardwareProfile struct {
 	// HardwareType - Name of the hardware type (vendor and/or thrie product name). Possible values include: 'CiscoUCS'
@@ -306,12 +350,14 @@ type HardwareProfile struct {
 	HanaInstanceSize HanaInstanceSizeNamesEnum `json:"hanaInstanceSize,omitempty"`
 }
 
-// IPAddress ...
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
+// IPAddress specifies the IP address of the network interaface.
 type IPAddress struct {
 	// IPAddress - Specifies the IP address of the network interface.
 	IPAddress *string `json:"ipAddress,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // NetworkProfile specifies the network settings for the HANA instance disks.
 type NetworkProfile struct {
 	// NetworkInterfaces - Specifies the network interfaces for the HANA instance.
@@ -320,6 +366,7 @@ type NetworkProfile struct {
 	CircuitID *string `json:"circuitId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Operation HANA operation information
 type Operation struct {
 	// Name - The name of the operation being performed on this particular object. This name should match the action name that appears in RBAC / the event service.
@@ -328,6 +375,7 @@ type Operation struct {
 	Display *Display `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // OperationList list of HANA operations
 type OperationList struct {
 	autorest.Response `json:"-"`
@@ -335,6 +383,7 @@ type OperationList struct {
 	Value *[]Operation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // OSProfile specifies the operating system settings for the HANA instance.
 type OSProfile struct {
 	// ComputerName - Specifies the host OS name of the HANA instance.
@@ -345,6 +394,7 @@ type OSProfile struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Resource the resource model definition.
 type Resource struct {
 	// ID - Resource ID
@@ -359,6 +409,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -380,8 +431,11 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // StorageProfile specifies the storage settings for the HANA instance disks.
 type StorageProfile struct {
 	// NfsIPAddress - IP Address to connect to storage.
 	NfsIPAddress *string `json:"nfsIpAddress,omitempty"`
+	// OsDisks - Specifies information about the operating system disk used by the hana instance.
+	OsDisks *[]Disk `json:"osDisks,omitempty"`
 }

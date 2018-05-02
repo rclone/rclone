@@ -9,7 +9,7 @@
     }
   },
   "basePath": "",
-  "baseUrl": "https://firebasedynamiclinks-ipv6.googleapis.com/",
+  "baseUrl": "https://firebasedynamiclinks.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "Firebase Dynamic Links",
   "description": "Programmatically creates and manages Firebase Dynamic Links.",
@@ -114,6 +114,28 @@
   },
   "protocol": "rest",
   "resources": {
+    "managedShortLinks": {
+      "methods": {
+        "create": {
+          "description": "Creates a managed short Dynamic Link given either a valid long Dynamic Link\nor details such as Dynamic Link domain, Android and iOS app information.\nThe created short Dynamic Link will not expire.\n\nThis differs from CreateShortDynamicLink in the following ways:\n  - The request will also contain a name for the link (non unique name\n    for the front end).\n  - The response must be authenticated with an auth token (generated with\n    the admin service account).\n  - The link will appear in the FDL list of links in the console front end.\n\nThe Dynamic Link domain in the request must be owned by requester's\nFirebase project.",
+          "flatPath": "v1/managedShortLinks:create",
+          "httpMethod": "POST",
+          "id": "firebasedynamiclinks.managedShortLinks.create",
+          "parameterOrder": [],
+          "parameters": {},
+          "path": "v1/managedShortLinks:create",
+          "request": {
+            "$ref": "CreateManagedShortLinkRequest"
+          },
+          "response": {
+            "$ref": "CreateManagedShortLinkResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/firebase"
+          ]
+        }
+      }
+    },
     "shortLinks": {
       "methods": {
         "create": {
@@ -189,8 +211,8 @@
       }
     }
   },
-  "revision": "20180303",
-  "rootUrl": "https://firebasedynamiclinks-ipv6.googleapis.com/",
+  "revision": "20180502",
+  "rootUrl": "https://firebasedynamiclinks.googleapis.com/",
   "schemas": {
     "AnalyticsInfo": {
       "description": "Tracking parameters supported by Dynamic Link.",
@@ -230,6 +252,51 @@
       },
       "type": "object"
     },
+    "CreateManagedShortLinkRequest": {
+      "description": "Request to create a managed Short Dynamic Link.",
+      "id": "CreateManagedShortLinkRequest",
+      "properties": {
+        "dynamicLinkInfo": {
+          "$ref": "DynamicLinkInfo",
+          "description": "Information about the Dynamic Link to be shortened.\n[Learn more](https://firebase.google.com/docs/reference/dynamic-links/link-shortener)."
+        },
+        "longDynamicLink": {
+          "description": "Full long Dynamic Link URL with desired query parameters specified.\nFor example,\n\"https://sample.app.goo.gl/?link=http://www.google.com\u0026apn=com.sample\",\n[Learn more](https://firebase.google.com/docs/reference/dynamic-links/link-shortener).",
+          "type": "string"
+        },
+        "name": {
+          "description": "Link name to associate with the link. It's used for marketer to identify\nmanually-created links in the Firebase console\n(https://console.firebase.google.com/).\nLinks must be named to be tracked.",
+          "type": "string"
+        },
+        "suffix": {
+          "$ref": "Suffix",
+          "description": "Short Dynamic Link suffix. Optional."
+        }
+      },
+      "type": "object"
+    },
+    "CreateManagedShortLinkResponse": {
+      "description": "Response to create a short Dynamic Link.",
+      "id": "CreateManagedShortLinkResponse",
+      "properties": {
+        "managedShortLink": {
+          "$ref": "ManagedShortLink",
+          "description": "Short Dynamic Link value. e.g. https://abcd.app.goo.gl/wxyz"
+        },
+        "previewLink": {
+          "description": "Preview link to show the link flow chart. (debug info.)",
+          "type": "string"
+        },
+        "warning": {
+          "description": "Information about potential warnings on link creation.",
+          "items": {
+            "$ref": "DynamicLinkWarning"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "CreateShortDynamicLinkRequest": {
       "description": "Request to create a short Dynamic Link.",
       "id": "CreateShortDynamicLinkRequest",
@@ -254,7 +321,7 @@
       "id": "CreateShortDynamicLinkResponse",
       "properties": {
         "previewLink": {
-          "description": "Preivew link to show the link flow chart.",
+          "description": "Preview link to show the link flow chart. (debug info.)",
           "type": "string"
         },
         "shortLink": {
@@ -354,13 +421,15 @@
             "DYNAMIC_LINK_PLATFORM_UNSPECIFIED",
             "ANDROID",
             "IOS",
-            "DESKTOP"
+            "DESKTOP",
+            "OTHER"
           ],
           "enumDescriptions": [
             "Unspecified platform.",
             "Represents Android platform.\nAll apps and browsers on Android are classfied in this category.",
             "Represents iOS platform.\nAll apps and browsers on iOS are classfied in this category.",
-            "Represents desktop.\nNote: other platforms like Windows, Blackberry, Amazon fall into this\ncategory."
+            "Represents desktop.",
+            "Platforms are not categorized as Android/iOS/Destop fall into here."
           ],
           "type": "string"
         }
@@ -382,6 +451,10 @@
         "desktopInfo": {
           "$ref": "DesktopInfo",
           "description": "Desktop related information. See desktop related parameters in the\n[documentation](https://firebase.google.com/docs/dynamic-links/create-manually)."
+        },
+        "domainUriPrefix": {
+          "description": "E.g. https://maps.app.goo.gl, https://maps.page.link, https://g.co/maps\nMore examples can be found in description of getNormalizedUriPrefix in\nj/c/g/firebase/dynamiclinks/uri/DdlDomain.java",
+          "type": "string"
         },
         "dynamicLinkDomain": {
           "description": "Dynamic Links domain that the project owns, e.g. abcd.app.goo.gl\n[Learn more](https://firebase.google.com/docs/dynamic-links/android/receive)\non how to set up Dynamic Link domain associated with your Firebase project.\n\nRequired.",
@@ -719,6 +792,61 @@
       },
       "type": "object"
     },
+    "ManagedShortLink": {
+      "description": "Managed Short Link.",
+      "id": "ManagedShortLink",
+      "properties": {
+        "creationTime": {
+          "description": "Creation timestamp of the short link.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "flaggedAttribute": {
+          "description": "Attributes that have been flagged about this short url.",
+          "enumDescriptions": [
+            "Indicates that no attributes were found for this short url.",
+            "Indicates that short url has been flagged by AbuseIAm team as spam."
+          ],
+          "items": {
+            "enum": [
+              "UNSPECIFIED_ATTRIBUTE",
+              "SPAM"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "info": {
+          "$ref": "DynamicLinkInfo",
+          "description": "Full Dyamic Link info"
+        },
+        "link": {
+          "description": "Short durable link url, for example, \"https://sample.app.goo.gl/xyz123\".\n\nRequired.",
+          "type": "string"
+        },
+        "linkName": {
+          "description": "Link name defined by the creator.\n\nRequired.",
+          "type": "string"
+        },
+        "visibility": {
+          "description": "Visibility status of link.",
+          "enum": [
+            "UNSPECIFIED_VISIBILITY",
+            "UNARCHIVED",
+            "ARCHIVED",
+            "NEVER_SHOWN"
+          ],
+          "enumDescriptions": [
+            "Visibility of the link is not specified.",
+            "Link created in console and should be shown in console.",
+            "Link created in console and should not be shown in console (but can\nbe shown in the console again if it is unarchived).",
+            "Link created outside of console and should never be shown in console."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "NavigationInfo": {
       "description": "Information of navigation behavior.",
       "id": "NavigationInfo",
@@ -753,17 +881,23 @@
       "description": "Short Dynamic Link suffix.",
       "id": "Suffix",
       "properties": {
+        "customSuffix": {
+          "description": "Only applies to Option.CUSTOM.",
+          "type": "string"
+        },
         "option": {
           "description": "Suffix option.",
           "enum": [
             "OPTION_UNSPECIFIED",
             "UNGUESSABLE",
-            "SHORT"
+            "SHORT",
+            "CUSTOM"
           ],
           "enumDescriptions": [
-            "The suffix option is not specified, performs as NOT_GUESSABLE .",
+            "The suffix option is not specified, performs as UNGUESSABLE .",
             "Short Dynamic Link suffix is a base62 [0-9A-Za-z] encoded string of\na random generated 96 bit random number, which has a length of 17 chars.\nFor example, \"nlAR8U4SlKRZw1cb2\".\nIt prevents other people from guessing and crawling short Dynamic Links\nthat contain personal identifiable information.",
-            "Short Dynamic Link suffix is a base62 [0-9A-Za-z] string starting with a\nlength of 4 chars. the length will increase when all the space is\noccupied."
+            "Short Dynamic Link suffix is a base62 [0-9A-Za-z] string starting with a\nlength of 4 chars. the length will increase when all the space is\noccupied.",
+            "Custom DDL suffix is a client specified string, for example,\n\"buy2get1free\".\nNOTE: custom suffix should only be available to managed short link\ncreation"
           ],
           "type": "string"
         }

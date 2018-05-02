@@ -43,9 +43,11 @@ func NewReplicationStorageClassificationMappingsClientWithBaseURI(baseURI string
 }
 
 // Create the operation to create a storage classification mapping.
-//
-// fabricName is fabric name. storageClassificationName is storage classification name.
-// storageClassificationMappingName is storage classification mapping name. pairingInput is pairing input.
+// Parameters:
+// fabricName - fabric name.
+// storageClassificationName - storage classification name.
+// storageClassificationMappingName - storage classification mapping name.
+// pairingInput - pairing input.
 func (client ReplicationStorageClassificationMappingsClient) Create(ctx context.Context, fabricName string, storageClassificationName string, storageClassificationMappingName string, pairingInput StorageClassificationMappingInput) (result ReplicationStorageClassificationMappingsCreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, fabricName, storageClassificationName, storageClassificationMappingName, pairingInput)
 	if err != nil {
@@ -79,7 +81,7 @@ func (client ReplicationStorageClassificationMappingsClient) CreatePreparer(ctx 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}/replicationStorageClassifications/{storageClassificationName}/replicationStorageClassificationMappings/{storageClassificationMappingName}", pathParameters),
@@ -117,9 +119,10 @@ func (client ReplicationStorageClassificationMappingsClient) CreateResponder(res
 }
 
 // Delete the operation to delete a storage classification mapping.
-//
-// fabricName is fabric name. storageClassificationName is storage classification name.
-// storageClassificationMappingName is storage classification mapping name.
+// Parameters:
+// fabricName - fabric name.
+// storageClassificationName - storage classification name.
+// storageClassificationMappingName - storage classification mapping name.
 func (client ReplicationStorageClassificationMappingsClient) Delete(ctx context.Context, fabricName string, storageClassificationName string, storageClassificationMappingName string) (result ReplicationStorageClassificationMappingsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, fabricName, storageClassificationName, storageClassificationMappingName)
 	if err != nil {
@@ -188,9 +191,10 @@ func (client ReplicationStorageClassificationMappingsClient) DeleteResponder(res
 }
 
 // Get gets the details of the specified storage classification mapping.
-//
-// fabricName is fabric name. storageClassificationName is storage classification name.
-// storageClassificationMappingName is storage classification mapping name.
+// Parameters:
+// fabricName - fabric name.
+// storageClassificationName - storage classification name.
+// storageClassificationMappingName - storage classification mapping name.
 func (client ReplicationStorageClassificationMappingsClient) Get(ctx context.Context, fabricName string, storageClassificationName string, storageClassificationMappingName string) (result StorageClassificationMapping, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, storageClassificationName, storageClassificationMappingName)
 	if err != nil {
@@ -350,8 +354,9 @@ func (client ReplicationStorageClassificationMappingsClient) ListComplete(ctx co
 }
 
 // ListByReplicationStorageClassifications lists the storage classification mappings for the fabric.
-//
-// fabricName is fabric name. storageClassificationName is storage classfication name.
+// Parameters:
+// fabricName - fabric name.
+// storageClassificationName - storage classfication name.
 func (client ReplicationStorageClassificationMappingsClient) ListByReplicationStorageClassifications(ctx context.Context, fabricName string, storageClassificationName string) (result StorageClassificationMappingCollectionPage, err error) {
 	result.fn = client.listByReplicationStorageClassificationsNextResults
 	req, err := client.ListByReplicationStorageClassificationsPreparer(ctx, fabricName, storageClassificationName)

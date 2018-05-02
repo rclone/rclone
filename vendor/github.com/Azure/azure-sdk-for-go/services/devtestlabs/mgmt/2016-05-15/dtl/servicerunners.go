@@ -40,9 +40,11 @@ func NewServiceRunnersClientWithBaseURI(baseURI string, subscriptionID string) S
 }
 
 // CreateOrUpdate create or replace an existing Service runner.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// service runner. serviceRunner is a container for a managed identity to execute DevTest lab services.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the service runner.
+// serviceRunner - a container for a managed identity to execute DevTest lab services.
 func (client ServiceRunnersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, serviceRunner ServiceRunner) (result ServiceRunner, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, serviceRunner)
 	if err != nil {
@@ -80,7 +82,7 @@ func (client ServiceRunnersClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/servicerunners/{name}", pathParameters),
@@ -110,9 +112,10 @@ func (client ServiceRunnersClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete delete service runner.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// service runner.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the service runner.
 func (client ServiceRunnersClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -177,9 +180,10 @@ func (client ServiceRunnersClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // Get get service runner.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// service runner.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the service runner.
 func (client ServiceRunnersClient) Get(ctx context.Context, resourceGroupName string, labName string, name string) (result ServiceRunner, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -245,10 +249,12 @@ func (client ServiceRunnersClient) GetResponder(resp *http.Response) (result Ser
 }
 
 // List list service runners in a given lab.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
-// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
-// ordering expression for the results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client ServiceRunnersClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderby string) (result ResponseWithContinuationServiceRunnerPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderby)

@@ -15,5 +15,6 @@
     "serviceBusEndpointSuffix":     "--service-bus-endpoint-suffix--",
     "serviceManagementVMDNSSuffix": "--asm-vm-dns-suffix--",
     "resourceManagerVMDNSSuffix":   "--arm-vm-dns-suffix--",
-    "containerRegistryDNSSuffix":   "--container-registry-dns-suffix--"
+    "containerRegistryDNSSuffix":   "--container-registry-dns-suffix--",
+    "tokenAudience":                "--token-audience"
 }

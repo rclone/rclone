@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServersClient is the the Azure BatchAI Management API.
 type FileServersClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NewFileServersClient creates an instance of the FileServersClient client.
 func NewFileServersClient(subscriptionID string) FileServersClient {
 	return NewFileServersClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NewFileServersClientWithBaseURI creates an instance of the FileServersClient client.
 func NewFileServersClientWithBaseURI(baseURI string, subscriptionID string) FileServersClient {
 	return FileServersClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Create creates a file server.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. fileServerName is the name of the
@@ -87,6 +91,7 @@ func (client FileServersClient) Create(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CreatePreparer prepares the Create request.
 func (client FileServersClient) CreatePreparer(ctx context.Context, resourceGroupName string, fileServerName string, parameters FileServerCreateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -101,7 +106,7 @@ func (client FileServersClient) CreatePreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.BatchAI/fileServers/{fileServerName}", pathParameters),
@@ -110,6 +115,7 @@ func (client FileServersClient) CreatePreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client FileServersClient) CreateSender(req *http.Request) (future FileServersCreateFuture, err error) {
@@ -125,6 +131,7 @@ func (client FileServersClient) CreateSender(req *http.Request) (future FileServ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client FileServersClient) CreateResponder(resp *http.Response) (result FileServer, err error) {
@@ -138,6 +145,7 @@ func (client FileServersClient) CreateResponder(resp *http.Response) (result Fil
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Delete delete a file Server.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. fileServerName is the name of the
@@ -170,6 +178,7 @@ func (client FileServersClient) Delete(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // DeletePreparer prepares the Delete request.
 func (client FileServersClient) DeletePreparer(ctx context.Context, resourceGroupName string, fileServerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -191,6 +200,7 @@ func (client FileServersClient) DeletePreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client FileServersClient) DeleteSender(req *http.Request) (future FileServersDeleteFuture, err error) {
@@ -206,6 +216,7 @@ func (client FileServersClient) DeleteSender(req *http.Request) (future FileServ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client FileServersClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -218,6 +229,7 @@ func (client FileServersClient) DeleteResponder(resp *http.Response) (result aut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Get gets information about the specified Cluster.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. fileServerName is the name of the
@@ -256,6 +268,7 @@ func (client FileServersClient) Get(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // GetPreparer prepares the Get request.
 func (client FileServersClient) GetPreparer(ctx context.Context, resourceGroupName string, fileServerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -277,6 +290,7 @@ func (client FileServersClient) GetPreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client FileServersClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -284,6 +298,7 @@ func (client FileServersClient) GetSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client FileServersClient) GetResponder(resp *http.Response) (result FileServer, err error) {
@@ -297,6 +312,7 @@ func (client FileServersClient) GetResponder(resp *http.Response) (result FileSe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // List to list all the file servers available under the given subscription (and across all resource groups within that
 // subscription)
 //
@@ -335,6 +351,7 @@ func (client FileServersClient) List(ctx context.Context, filter string, selectP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListPreparer prepares the List request.
 func (client FileServersClient) ListPreparer(ctx context.Context, filter string, selectParameter string, maxResults *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -365,6 +382,7 @@ func (client FileServersClient) ListPreparer(ctx context.Context, filter string,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client FileServersClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -372,6 +390,7 @@ func (client FileServersClient) ListSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client FileServersClient) ListResponder(resp *http.Response) (result FileServerListResult, err error) {
@@ -406,12 +425,14 @@ func (client FileServersClient) listNextResults(lastResults FileServerListResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client FileServersClient) ListComplete(ctx context.Context, filter string, selectParameter string, maxResults *int32) (result FileServerListResultIterator, err error) {
 	result.page, err = client.List(ctx, filter, selectParameter, maxResults)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListByResourceGroup gets a formatted list of file servers and their properties associated within the specified
 // resource group.
 //
@@ -453,6 +474,7 @@ func (client FileServersClient) ListByResourceGroup(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client FileServersClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, filter string, selectParameter string, maxResults *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -484,6 +506,7 @@ func (client FileServersClient) ListByResourceGroupPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client FileServersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -491,6 +514,7 @@ func (client FileServersClient) ListByResourceGroupSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client FileServersClient) ListByResourceGroupResponder(resp *http.Response) (result FileServerListResult, err error) {
@@ -525,6 +549,7 @@ func (client FileServersClient) listByResourceGroupNextResults(lastResults FileS
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client FileServersClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, filter string, selectParameter string, maxResults *int32) (result FileServerListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, filter, selectParameter, maxResults)

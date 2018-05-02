@@ -41,11 +41,12 @@ func NewAPIVersionSetClientWithBaseURI(baseURI string, subscriptionID string) AP
 }
 
 // CreateOrUpdate creates or Updates a Api Version Set.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// versionSetID is api Version Set identifier. Must be unique in the current API Management service instance.
-// parameters is create or update parameters. ifMatch is eTag of the Entity. Not required when creating an entity,
-// but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// versionSetID - api Version Set identifier. Must be unique in the current API Management service instance.
+// parameters - create or update parameters.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client APIVersionSetClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, versionSetID string, parameters APIVersionSetContract, ifMatch string) (result APIVersionSetContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -136,10 +137,11 @@ func (client APIVersionSetClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete deletes specific Api Version Set.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// versionSetID is api Version Set identifier. Must be unique in the current API Management service instance.
-// ifMatch is eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// versionSetID - api Version Set identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
 // request or it should be * for unconditional update.
 func (client APIVersionSetClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, versionSetID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -218,9 +220,10 @@ func (client APIVersionSetClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets the details of the Api Version Set specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// versionSetID is api Version Set identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// versionSetID - api Version Set identifier. Must be unique in the current API Management service instance.
 func (client APIVersionSetClient) Get(ctx context.Context, resourceGroupName string, serviceName string, versionSetID string) (result APIVersionSetContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -298,9 +301,10 @@ func (client APIVersionSetClient) GetResponder(resp *http.Response) (result APIV
 }
 
 // GetEntityTag gets the entity state (Etag) version of the Api Version Set specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// versionSetID is api Version Set identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// versionSetID - api Version Set identifier. Must be unique in the current API Management service instance.
 func (client APIVersionSetClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, versionSetID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -377,9 +381,10 @@ func (client APIVersionSetClient) GetEntityTagResponder(resp *http.Response) (re
 }
 
 // ListByService lists a collection of API Version Sets in the specified service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field            | Supported operators    | Supported functions               |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field            | Supported operators    | Supported functions               |
 // |------------------|------------------------|-----------------------------------|
 // | id               | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | firstName        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
@@ -387,8 +392,9 @@ func (client APIVersionSetClient) GetEntityTagResponder(resp *http.Response) (re
 // | email            | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | state            | eq                     | N/A                               |
 // | registrationDate | ge, le, eq, ne, gt, lt | N/A                               |
-// | note             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of
-// records to return. skip is number of records to skip.
+// | note             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client APIVersionSetClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result APIVersionSetCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -504,11 +510,13 @@ func (client APIVersionSetClient) ListByServiceComplete(ctx context.Context, res
 }
 
 // Update updates the details of the Api VersionSet specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// versionSetID is api Version Set identifier. Must be unique in the current API Management service instance.
-// parameters is update parameters. ifMatch is eTag of the Entity. ETag should match the current entity state from
-// the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// versionSetID - api Version Set identifier. Must be unique in the current API Management service instance.
+// parameters - update parameters.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client APIVersionSetClient) Update(ctx context.Context, resourceGroupName string, serviceName string, versionSetID string, parameters APIVersionSetUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

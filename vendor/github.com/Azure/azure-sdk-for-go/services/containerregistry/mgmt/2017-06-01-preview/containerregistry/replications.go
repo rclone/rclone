@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ReplicationsClient is the client for the Replications methods of the Containerregistry service.
 type ReplicationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // NewReplicationsClient creates an instance of the ReplicationsClient client.
 func NewReplicationsClient(subscriptionID string) ReplicationsClient {
 	return NewReplicationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // NewReplicationsClientWithBaseURI creates an instance of the ReplicationsClient client.
 func NewReplicationsClientWithBaseURI(baseURI string, subscriptionID string) ReplicationsClient {
 	return ReplicationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Create creates a replication for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -73,6 +77,7 @@ func (client ReplicationsClient) Create(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreatePreparer prepares the Create request.
 func (client ReplicationsClient) CreatePreparer(ctx context.Context, resourceGroupName string, registryName string, replicationName string, replication Replication) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -88,7 +93,7 @@ func (client ReplicationsClient) CreatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/replications/{replicationName}", pathParameters),
@@ -97,6 +102,7 @@ func (client ReplicationsClient) CreatePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationsClient) CreateSender(req *http.Request) (future ReplicationsCreateFuture, err error) {
@@ -112,6 +118,7 @@ func (client ReplicationsClient) CreateSender(req *http.Request) (future Replica
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client ReplicationsClient) CreateResponder(resp *http.Response) (result Replication, err error) {
@@ -125,6 +132,7 @@ func (client ReplicationsClient) CreateResponder(resp *http.Response) (result Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Delete deletes a replication from a container registry.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -157,6 +165,7 @@ func (client ReplicationsClient) Delete(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeletePreparer prepares the Delete request.
 func (client ReplicationsClient) DeletePreparer(ctx context.Context, resourceGroupName string, registryName string, replicationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -179,6 +188,7 @@ func (client ReplicationsClient) DeletePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationsClient) DeleteSender(req *http.Request) (future ReplicationsDeleteFuture, err error) {
@@ -194,6 +204,7 @@ func (client ReplicationsClient) DeleteSender(req *http.Request) (future Replica
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ReplicationsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -206,6 +217,7 @@ func (client ReplicationsClient) DeleteResponder(resp *http.Response) (result au
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Get gets the properties of the specified replication.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -244,6 +256,7 @@ func (client ReplicationsClient) Get(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetPreparer prepares the Get request.
 func (client ReplicationsClient) GetPreparer(ctx context.Context, resourceGroupName string, registryName string, replicationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -266,6 +279,7 @@ func (client ReplicationsClient) GetPreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -273,6 +287,7 @@ func (client ReplicationsClient) GetSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ReplicationsClient) GetResponder(resp *http.Response) (result Replication, err error) {
@@ -286,6 +301,7 @@ func (client ReplicationsClient) GetResponder(resp *http.Response) (result Repli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // List lists all the replications for the specified container registry.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -321,6 +337,7 @@ func (client ReplicationsClient) List(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListPreparer prepares the List request.
 func (client ReplicationsClient) ListPreparer(ctx context.Context, resourceGroupName string, registryName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -342,6 +359,7 @@ func (client ReplicationsClient) ListPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -349,6 +367,7 @@ func (client ReplicationsClient) ListSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ReplicationsClient) ListResponder(resp *http.Response) (result ReplicationListResult, err error) {
@@ -383,12 +402,14 @@ func (client ReplicationsClient) listNextResults(lastResults ReplicationListResu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ReplicationsClient) ListComplete(ctx context.Context, resourceGroupName string, registryName string) (result ReplicationListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, registryName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Update updates a replication for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -422,6 +443,7 @@ func (client ReplicationsClient) Update(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdatePreparer prepares the Update request.
 func (client ReplicationsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, registryName string, replicationName string, replicationUpdateParameters ReplicationUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -437,7 +459,7 @@ func (client ReplicationsClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/replications/{replicationName}", pathParameters),
@@ -446,6 +468,7 @@ func (client ReplicationsClient) UpdatePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationsClient) UpdateSender(req *http.Request) (future ReplicationsUpdateFuture, err error) {
@@ -461,6 +484,7 @@ func (client ReplicationsClient) UpdateSender(req *http.Request) (future Replica
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ReplicationsClient) UpdateResponder(resp *http.Response) (result Replication, err error) {

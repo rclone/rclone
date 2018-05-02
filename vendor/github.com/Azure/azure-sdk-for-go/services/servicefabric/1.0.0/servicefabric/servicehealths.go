@@ -40,8 +40,8 @@ func NewServiceHealthsClientWithBaseURI(baseURI string, timeout *int32) ServiceH
 }
 
 // Get get service healths
-//
-// serviceName is the name of the service
+// Parameters:
+// serviceName - the name of the service
 func (client ServiceHealthsClient) Get(ctx context.Context, serviceName string) (result ServiceHealth, err error) {
 	req, err := client.GetPreparer(ctx, serviceName)
 	if err != nil {
@@ -107,8 +107,9 @@ func (client ServiceHealthsClient) GetResponder(resp *http.Response) (result Ser
 }
 
 // Send send service healths
-//
-// serviceName is the name of the service serviceHealthReport is the report of the service health
+// Parameters:
+// serviceName - the name of the service
+// serviceHealthReport - the report of the service health
 func (client ServiceHealthsClient) Send(ctx context.Context, serviceName string, serviceHealthReport ServiceHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, serviceName, serviceHealthReport)
 	if err != nil {
@@ -146,7 +147,7 @@ func (client ServiceHealthsClient) SendPreparer(ctx context.Context, serviceName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Services/{serviceName}/$/ReportHealth", pathParameters),

@@ -40,9 +40,10 @@ func NewVaultsClientWithBaseURI(baseURI string, subscriptionID string) VaultsCli
 }
 
 // CreateOrUpdate creates or updates a Recovery Services vault.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. vault is recovery Services Vault to be created.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// vault - recovery Services Vault to be created.
 func (client VaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, vaultName string, vault Vault) (result Vault, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, vaultName, vault)
 	if err != nil {
@@ -79,7 +80,7 @@ func (client VaultsClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}", pathParameters),
@@ -109,9 +110,9 @@ func (client VaultsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete deletes a vault.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
 func (client VaultsClient) Delete(ctx context.Context, resourceGroupName string, vaultName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -175,9 +176,9 @@ func (client VaultsClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // Get get the Vault details.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
 func (client VaultsClient) Get(ctx context.Context, resourceGroupName string, vaultName string) (result Vault, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -242,8 +243,8 @@ func (client VaultsClient) GetResponder(resp *http.Response) (result Vault, err 
 }
 
 // ListByResourceGroup retrieve a list of Vaults.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
 func (client VaultsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result VaultListPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -425,9 +426,10 @@ func (client VaultsClient) ListBySubscriptionIDComplete(ctx context.Context) (re
 }
 
 // Update updates the vault.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. vault is recovery Services Vault to be created.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// vault - recovery Services Vault to be created.
 func (client VaultsClient) Update(ctx context.Context, resourceGroupName string, vaultName string, vault PatchVault) (result Vault, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, vaultName, vault)
 	if err != nil {
@@ -464,7 +466,7 @@ func (client VaultsClient) UpdatePreparer(ctx context.Context, resourceGroupName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}", pathParameters),

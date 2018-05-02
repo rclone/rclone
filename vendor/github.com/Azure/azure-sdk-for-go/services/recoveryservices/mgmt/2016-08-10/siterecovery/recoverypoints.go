@@ -40,10 +40,11 @@ func NewRecoveryPointsClientWithBaseURI(baseURI string, subscriptionID string, r
 }
 
 // Get get the details of specified recovery point.
-//
-// fabricName is the fabric name. protectionContainerName is the protection container name.
-// replicatedProtectedItemName is the replication protected item's name. recoveryPointName is the recovery point
-// name.
+// Parameters:
+// fabricName - the fabric name.
+// protectionContainerName - the protection container name.
+// replicatedProtectedItemName - the replication protected item's name.
+// recoveryPointName - the recovery point name.
 func (client RecoveryPointsClient) Get(ctx context.Context, fabricName string, protectionContainerName string, replicatedProtectedItemName string, recoveryPointName string) (result RecoveryPoint, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, protectionContainerName, replicatedProtectedItemName, recoveryPointName)
 	if err != nil {
@@ -112,9 +113,10 @@ func (client RecoveryPointsClient) GetResponder(resp *http.Response) (result Rec
 }
 
 // ListByReplicationProtectedItems lists the available recovery points for a replication protected item.
-//
-// fabricName is the fabric name. protectionContainerName is the protection container name.
-// replicatedProtectedItemName is the replication protected item's name.
+// Parameters:
+// fabricName - the fabric name.
+// protectionContainerName - the protection container name.
+// replicatedProtectedItemName - the replication protected item's name.
 func (client RecoveryPointsClient) ListByReplicationProtectedItems(ctx context.Context, fabricName string, protectionContainerName string, replicatedProtectedItemName string) (result RecoveryPointCollectionPage, err error) {
 	result.fn = client.listByReplicationProtectedItemsNextResults
 	req, err := client.ListByReplicationProtectedItemsPreparer(ctx, fabricName, protectionContainerName, replicatedProtectedItemName)

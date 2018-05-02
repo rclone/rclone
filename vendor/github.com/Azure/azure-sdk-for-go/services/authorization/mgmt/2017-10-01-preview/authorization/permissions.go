@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // PermissionsClient is the role based access control provides you a way to apply granular level policy administration
 // down to individual resources or resource groups. These operations enable you to manage role definitions and role
 // assignments. A role definition describes the set of actions that can be performed on resources. A role assignment
@@ -32,16 +33,19 @@ type PermissionsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // NewPermissionsClient creates an instance of the PermissionsClient client.
 func NewPermissionsClient(subscriptionID string) PermissionsClient {
 	return NewPermissionsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // NewPermissionsClientWithBaseURI creates an instance of the PermissionsClient client.
 func NewPermissionsClientWithBaseURI(baseURI string, subscriptionID string) PermissionsClient {
 	return PermissionsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResource gets all permissions the caller has for a resource.
 //
 // resourceGroupName is the name of the resource group containing the resource. The name is case insensitive.
@@ -71,6 +75,7 @@ func (client PermissionsClient) ListForResource(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourcePreparer prepares the ListForResource request.
 func (client PermissionsClient) ListForResourcePreparer(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -95,6 +100,7 @@ func (client PermissionsClient) ListForResourcePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceSender sends the ListForResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client PermissionsClient) ListForResourceSender(req *http.Request) (*http.Response, error) {
@@ -102,6 +108,7 @@ func (client PermissionsClient) ListForResourceSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceResponder handles the response to the ListForResource request. The method always
 // closes the http.Response Body.
 func (client PermissionsClient) ListForResourceResponder(resp *http.Response) (result PermissionGetResult, err error) {
@@ -136,12 +143,14 @@ func (client PermissionsClient) listForResourceNextResults(lastResults Permissio
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PermissionsClient) ListForResourceComplete(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string) (result PermissionGetResultIterator, err error) {
 	result.page, err = client.ListForResource(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceGroup gets all permissions the caller has for a resource group.
 //
 // resourceGroupName is the name of the resource group to get the permissions for. The name is case insensitive.
@@ -168,6 +177,7 @@ func (client PermissionsClient) ListForResourceGroup(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceGroupPreparer prepares the ListForResourceGroup request.
 func (client PermissionsClient) ListForResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -188,6 +198,7 @@ func (client PermissionsClient) ListForResourceGroupPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client PermissionsClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -195,6 +206,7 @@ func (client PermissionsClient) ListForResourceGroupSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
 // closes the http.Response Body.
 func (client PermissionsClient) ListForResourceGroupResponder(resp *http.Response) (result PermissionGetResult, err error) {
@@ -229,6 +241,7 @@ func (client PermissionsClient) listForResourceGroupNextResults(lastResults Perm
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2017-10-01-preview/authorization instead.
 // ListForResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PermissionsClient) ListForResourceGroupComplete(ctx context.Context, resourceGroupName string) (result PermissionGetResultIterator, err error) {
 	result.page, err = client.ListForResourceGroup(ctx, resourceGroupName)

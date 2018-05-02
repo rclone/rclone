@@ -406,7 +406,10 @@ var marshalingTests = []struct {
 	{"Any with message and indent", marshalerAllOptions, anySimple, anySimplePrettyJSON},
 	{"Any with WKT", marshaler, anyWellKnown, anyWellKnownJSON},
 	{"Any with WKT and indent", marshalerAllOptions, anyWellKnown, anyWellKnownPrettyJSON},
-	{"Duration", marshaler, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 3}}, `{"dur":"3.000s"}`},
+	{"Duration", marshaler, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 3}}, `{"dur":"3s"}`},
+	{"Duration", marshaler, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 3, Nanos: 1e6}}, `{"dur":"3.001s"}`},
+	{"Duration beyond float64 precision", marshaler, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 100000000, Nanos: 1}}, `{"dur":"100000000.000000001s"}`},
+	{"negative Duration", marshaler, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: -123, Nanos: -456}}, `{"dur":"-123.000000456s"}`},
 	{"Struct", marshaler, &pb.KnownTypes{St: &stpb.Struct{
 		Fields: map[string]*stpb.Value{
 			"one": {Kind: &stpb.Value_StringValue{"loneliest number"}},
@@ -421,6 +424,7 @@ var marshalingTests = []struct {
 		{Kind: &stpb.Value_BoolValue{true}},
 	}}}, `{"lv":["x",null,3,true]}`},
 	{"Timestamp", marshaler, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 14e8, Nanos: 21e6}}, `{"ts":"2014-05-13T16:53:20.021Z"}`},
+	{"Timestamp", marshaler, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 14e8, Nanos: 0}}, `{"ts":"2014-05-13T16:53:20Z"}`},
 	{"number Value", marshaler, &pb.KnownTypes{Val: &stpb.Value{Kind: &stpb.Value_NumberValue{1}}}, `{"val":1}`},
 	{"null Value", marshaler, &pb.KnownTypes{Val: &stpb.Value{Kind: &stpb.Value_NullValue{stpb.NullValue_NULL_VALUE}}}, `{"val":null}`},
 	{"string number value", marshaler, &pb.KnownTypes{Val: &stpb.Value{Kind: &stpb.Value_StringValue{"9223372036854775807"}}}, `{"val":"9223372036854775807"}`},
@@ -449,6 +453,9 @@ var marshalingTests = []struct {
 	{"BoolValue", marshaler, &pb.KnownTypes{Bool: &wpb.BoolValue{Value: true}}, `{"bool":true}`},
 	{"StringValue", marshaler, &pb.KnownTypes{Str: &wpb.StringValue{Value: "plush"}}, `{"str":"plush"}`},
 	{"BytesValue", marshaler, &pb.KnownTypes{Bytes: &wpb.BytesValue{Value: []byte("wow")}}, `{"bytes":"d293"}`},
+
+	{"required", marshaler, &pb.MsgWithRequired{Str: proto.String("hello")}, `{"str":"hello"}`},
+	{"required bytes", marshaler, &pb.MsgWithRequiredBytes{Byts: []byte{}}, `{"byts":""}`},
 }
 
 func TestMarshaling(t *testing.T) {
@@ -458,6 +465,40 @@ func TestMarshaling(t *testing.T) {
 			t.Errorf("%s: marshaling error: %v", tt.desc, err)
 		} else if tt.json != json {
 			t.Errorf("%s: got [%v] want [%v]", tt.desc, json, tt.json)
+		}
+	}
+}
+
+func TestMarshalingNil(t *testing.T) {
+	var msg *pb.Simple
+	m := &Marshaler{}
+	if _, err := m.MarshalToString(msg); err == nil {
+		t.Errorf("mashaling nil returned no error")
+	}
+}
+
+func TestMarshalIllegalTime(t *testing.T) {
+	tests := []struct {
+		pb   proto.Message
+		fail bool
+	}{
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: 1, Nanos: 0}}, false},
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: -1, Nanos: 0}}, false},
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: 1, Nanos: -1}}, true},
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: -1, Nanos: 1}}, true},
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: 1, Nanos: 1000000000}}, true},
+		{&pb.KnownTypes{Dur: &durpb.Duration{Seconds: -1, Nanos: -1000000000}}, true},
+		{&pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 1, Nanos: 1}}, false},
+		{&pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 1, Nanos: -1}}, true},
+		{&pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 1, Nanos: 1000000000}}, true},
+	}
+	for _, tt := range tests {
+		_, err := marshaler.MarshalToString(tt.pb)
+		if err == nil && tt.fail {
+			t.Errorf("marshaler.MarshalToString(%v) = _, <nil>; want _, <non-nil>", tt.pb)
+		}
+		if err != nil && !tt.fail {
+			t.Errorf("marshaler.MarshalToString(%v) = _, %v; want _, <nil>", tt.pb, err)
 		}
 	}
 }
@@ -489,6 +530,104 @@ func TestMarshalAnyJSONPBMarshaler(t *testing.T) {
 	expected := `{"@type":"type.googleapis.com/` + dynamicMessageName + `","baz":[0,1,2,3],"foo":"bar"}`
 	if str != expected {
 		t.Errorf("marshalling JSON produced incorrect output: got %s, wanted %s", str, expected)
+	}
+}
+
+func TestMarshalWithCustomValidation(t *testing.T) {
+	msg := dynamicMessage{rawJson: `{ "foo": "bar", "baz": [0, 1, 2, 3] }`, dummy: &dynamicMessage{}}
+
+	js, err := new(Marshaler).MarshalToString(&msg)
+	if err != nil {
+		t.Errorf("an unexpected error occurred when marshalling to json: %v", err)
+	}
+	err = Unmarshal(strings.NewReader(js), &msg)
+	if err != nil {
+		t.Errorf("an unexpected error occurred when unmarshalling from json: %v", err)
+	}
+}
+
+// Test marshaling message containing unset required fields should produce error.
+func TestMarshalUnsetRequiredFields(t *testing.T) {
+	msgExt := &pb.Real{}
+	proto.SetExtension(msgExt, pb.E_Extm, &pb.MsgWithRequired{})
+
+	tests := []struct {
+		desc      string
+		marshaler *Marshaler
+		pb        proto.Message
+	}{
+		{
+			desc:      "direct required field",
+			marshaler: &Marshaler{},
+			pb:        &pb.MsgWithRequired{},
+		},
+		{
+			desc:      "direct required field + emit defaults",
+			marshaler: &Marshaler{EmitDefaults: true},
+			pb:        &pb.MsgWithRequired{},
+		},
+		{
+			desc:      "indirect required field",
+			marshaler: &Marshaler{},
+			pb:        &pb.MsgWithIndirectRequired{Subm: &pb.MsgWithRequired{}},
+		},
+		{
+			desc:      "indirect required field + emit defaults",
+			marshaler: &Marshaler{EmitDefaults: true},
+			pb:        &pb.MsgWithIndirectRequired{Subm: &pb.MsgWithRequired{}},
+		},
+		{
+			desc:      "direct required wkt field",
+			marshaler: &Marshaler{},
+			pb:        &pb.MsgWithRequiredWKT{},
+		},
+		{
+			desc:      "direct required wkt field + emit defaults",
+			marshaler: &Marshaler{EmitDefaults: true},
+			pb:        &pb.MsgWithRequiredWKT{},
+		},
+		{
+			desc:      "direct required bytes field",
+			marshaler: &Marshaler{},
+			pb:        &pb.MsgWithRequiredBytes{},
+		},
+		{
+			desc:      "required in map value",
+			marshaler: &Marshaler{},
+			pb: &pb.MsgWithIndirectRequired{
+				MapField: map[string]*pb.MsgWithRequired{
+					"key": {},
+				},
+			},
+		},
+		{
+			desc:      "required in repeated item",
+			marshaler: &Marshaler{},
+			pb: &pb.MsgWithIndirectRequired{
+				SliceField: []*pb.MsgWithRequired{
+					{Str: proto.String("hello")},
+					{},
+				},
+			},
+		},
+		{
+			desc:      "required inside oneof",
+			marshaler: &Marshaler{},
+			pb: &pb.MsgWithOneof{
+				Union: &pb.MsgWithOneof_MsgWithRequired{&pb.MsgWithRequired{}},
+			},
+		},
+		{
+			desc:      "required inside extension",
+			marshaler: &Marshaler{},
+			pb:        msgExt,
+		},
+	}
+
+	for _, tc := range tests {
+		if _, err := tc.marshaler.MarshalToString(tc.pb); err == nil {
+			t.Errorf("%s: expecting error in marshaling with unset required fields %+v", tc.desc, tc.pb)
+		}
 	}
 }
 
@@ -553,8 +692,10 @@ var unmarshalingTests = []struct {
 	{"camelName input", Unmarshaler{}, `{"oBool":true}`, &pb.Simple{OBool: proto.Bool(true)}},
 
 	{"Duration", Unmarshaler{}, `{"dur":"3.000s"}`, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 3}}},
+	{"Duration", Unmarshaler{}, `{"dur":"4s"}`, &pb.KnownTypes{Dur: &durpb.Duration{Seconds: 4}}},
 	{"null Duration", Unmarshaler{}, `{"dur":null}`, &pb.KnownTypes{Dur: nil}},
 	{"Timestamp", Unmarshaler{}, `{"ts":"2014-05-13T16:53:20.021Z"}`, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 14e8, Nanos: 21e6}}},
+	{"Timestamp", Unmarshaler{}, `{"ts":"2014-05-13T16:53:20Z"}`, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: 14e8, Nanos: 0}}},
 	{"PreEpochTimestamp", Unmarshaler{}, `{"ts":"1969-12-31T23:59:58.999999995Z"}`, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: -2, Nanos: 999999995}}},
 	{"ZeroTimeTimestamp", Unmarshaler{}, `{"ts":"0001-01-01T00:00:00Z"}`, &pb.KnownTypes{Ts: &tspb.Timestamp{Seconds: -62135596800, Nanos: 0}}},
 	{"null Timestamp", Unmarshaler{}, `{"ts":null}`, &pb.KnownTypes{Ts: nil}},
@@ -623,6 +764,9 @@ var unmarshalingTests = []struct {
 	{"null BoolValue", Unmarshaler{}, `{"bool":null}`, &pb.KnownTypes{Bool: nil}},
 	{"null StringValue", Unmarshaler{}, `{"str":null}`, &pb.KnownTypes{Str: nil}},
 	{"null BytesValue", Unmarshaler{}, `{"bytes":null}`, &pb.KnownTypes{Bytes: nil}},
+
+	{"required", Unmarshaler{}, `{"str":"hello"}`, &pb.MsgWithRequired{Str: proto.String("hello")}},
+	{"required bytes", Unmarshaler{}, `{"byts": []}`, &pb.MsgWithRequiredBytes{Byts: []byte{}}},
 }
 
 func TestUnmarshaling(t *testing.T) {
@@ -821,7 +965,7 @@ func TestUnmarshalAnyJSONPBUnmarshaler(t *testing.T) {
 	}
 
 	if !proto.Equal(&got, &want) {
-		t.Errorf("message contents not set correctly after unmarshalling JSON: got %s, wanted %s", got, want)
+		t.Errorf("message contents not set correctly after unmarshalling JSON: got %v, wanted %v", got, want)
 	}
 }
 
@@ -873,6 +1017,10 @@ func (s *stringField) UnmarshalJSONPB(jum *Unmarshaler, js []byte) error {
 // It provides implementations of JSONPBMarshaler and JSONPBUnmarshaler for JSON support.
 type dynamicMessage struct {
 	rawJson string `protobuf:"bytes,1,opt,name=rawJson"`
+
+	// an unexported nested message is present just to ensure that it
+	// won't result in a panic (see issue #509)
+	dummy *dynamicMessage `protobuf:"bytes,2,opt,name=dummy"`
 }
 
 func (m *dynamicMessage) Reset() {
@@ -893,4 +1041,110 @@ func (m *dynamicMessage) MarshalJSONPB(jm *Marshaler) ([]byte, error) {
 func (m *dynamicMessage) UnmarshalJSONPB(jum *Unmarshaler, js []byte) error {
 	m.rawJson = string(js)
 	return nil
+}
+
+// Test unmarshaling message containing unset required fields should produce error.
+func TestUnmarshalUnsetRequiredFields(t *testing.T) {
+	tests := []struct {
+		desc string
+		pb   proto.Message
+		json string
+	}{
+		{
+			desc: "direct required field missing",
+			pb:   &pb.MsgWithRequired{},
+			json: `{}`,
+		},
+		{
+			desc: "direct required field set to null",
+			pb:   &pb.MsgWithRequired{},
+			json: `{"str": null}`,
+		},
+		{
+			desc: "indirect required field missing",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"subm": {}}`,
+		},
+		{
+			desc: "indirect required field set to null",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"subm": {"str": null}}`,
+		},
+		{
+			desc: "direct required bytes field missing",
+			pb:   &pb.MsgWithRequiredBytes{},
+			json: `{}`,
+		},
+		{
+			desc: "direct required bytes field set to null",
+			pb:   &pb.MsgWithRequiredBytes{},
+			json: `{"byts": null}`,
+		},
+		{
+			desc: "direct required wkt field missing",
+			pb:   &pb.MsgWithRequiredWKT{},
+			json: `{}`,
+		},
+		{
+			desc: "direct required wkt field set to null",
+			pb:   &pb.MsgWithRequiredWKT{},
+			json: `{"str": null}`,
+		},
+		{
+			desc: "any containing message with required field set to null",
+			pb:   &pb.KnownTypes{},
+			json: `{"an": {"@type": "example.com/jsonpb.MsgWithRequired", "str": null}}`,
+		},
+		{
+			desc: "any containing message with missing required field",
+			pb:   &pb.KnownTypes{},
+			json: `{"an": {"@type": "example.com/jsonpb.MsgWithRequired"}}`,
+		},
+		{
+			desc: "missing required in map value",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"map_field": {"a": {}, "b": {"str": "hi"}}}`,
+		},
+		{
+			desc: "required in map value set to null",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"map_field": {"a": {"str": "hello"}, "b": {"str": null}}}`,
+		},
+		{
+			desc: "missing required in slice item",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"slice_field": [{}, {"str": "hi"}]}`,
+		},
+		{
+			desc: "required in slice item set to null",
+			pb:   &pb.MsgWithIndirectRequired{},
+			json: `{"slice_field": [{"str": "hello"}, {"str": null}]}`,
+		},
+		{
+			desc: "required inside oneof missing",
+			pb:   &pb.MsgWithOneof{},
+			json: `{"msgWithRequired": {}}`,
+		},
+		{
+			desc: "required inside oneof set to null",
+			pb:   &pb.MsgWithOneof{},
+			json: `{"msgWithRequired": {"str": null}}`,
+		},
+		{
+			desc: "required field in extension missing",
+			pb:   &pb.Real{},
+			json: `{"[jsonpb.extm]":{}}`,
+		},
+		{
+			desc: "required field in extension set to null",
+			pb:   &pb.Real{},
+			json: `{"[jsonpb.extm]":{"str": null}}`,
+		},
+	}
+
+	for _, tc := range tests {
+		if err := UnmarshalString(tc.json, tc.pb); err == nil {
+			t.Errorf("%s: expecting error in unmarshaling with unset required fields %s", tc.desc, tc.json)
+		}
+	}
 }

@@ -349,7 +349,7 @@
               ]
             },
             "delete": {
-              "description": "Delete a tenancy unit.  Before the tenancy unit is deleted, there should be\nno tenant resource in it.\nOperation\u003cresponse: Empty\u003e.",
+              "description": "Delete a tenancy unit.  Before the tenancy unit is deleted, there should be\nno tenant resources in it.\nOperation\u003cresponse: Empty\u003e.",
               "flatPath": "v1/services/{servicesId}/{servicesId1}/{servicesId2}/tenancyUnits/{tenancyUnitsId}",
               "httpMethod": "DELETE",
               "id": "serviceconsumermanagement.services.tenancyUnits.delete",
@@ -447,7 +447,7 @@
       }
     }
   },
-  "revision": "20180313",
+  "revision": "20180330",
   "rootUrl": "https://serviceconsumermanagement.googleapis.com/",
   "schemas": {
     "AddTenantProjectRequest": {
@@ -585,7 +585,7 @@
       "id": "AuthenticationRule",
       "properties": {
         "allowWithoutCredential": {
-          "description": "Whether to allow requests without a credential. The credential can be\nan OAuth token, Google cookies (first-party auth) or EndUserCreds.\n\nFor requests without credentials, if the service control environment is\nspecified, each incoming request **must** be associated with a service\nconsumer. This can be done by passing an API key that belongs to a consumer\nproject.",
+          "description": "If true, the service accepts API keys without any other credential.",
           "type": "boolean"
         },
         "customAuth": {
@@ -862,7 +862,7 @@
       "type": "object"
     },
     "Documentation": {
-      "description": "`Documentation` provides the information for describing a service.\n\nExample:\n\u003cpre\u003e\u003ccode\u003edocumentation:\n  summary: \u003e\n    The Google Calendar API gives access\n    to most calendar features.\n  pages:\n  - name: Overview\n    content: \u0026#40;== include google/foo/overview.md ==\u0026#41;\n  - name: Tutorial\n    content: \u0026#40;== include google/foo/tutorial.md ==\u0026#41;\n    subpages;\n    - name: Java\n      content: \u0026#40;== include google/foo/tutorial_java.md ==\u0026#41;\n  rules:\n  - selector: google.calendar.Calendar.Get\n    description: \u003e\n      ...\n  - selector: google.calendar.Calendar.Put\n    description: \u003e\n      ...\n\u003c/code\u003e\u003c/pre\u003e\nDocumentation is provided in markdown syntax. In addition to\nstandard markdown features, definition lists, tables and fenced\ncode blocks are supported. Section headers can be provided and are\ninterpreted relative to the section nesting of the context where\na documentation fragment is embedded.\n\nDocumentation from the IDL is merged with documentation defined\nvia the config at normalization time, where documentation provided\nby config rules overrides IDL provided.\n\nA number of constructs specific to the API platform are supported\nin documentation text.\n\nIn order to reference a proto element, the following\nnotation can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;fully.qualified.proto.name]\u0026#91;]\u003c/code\u003e\u003c/pre\u003e\nTo override the display text used for the link, this can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;display text]\u0026#91;fully.qualified.proto.name]\u003c/code\u003e\u003c/pre\u003e\nText can be excluded from doc using the following notation:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;-- internal comment --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nComments can be made conditional using a visibility label. The below\ntext will be only rendered if the `BETA` label is available:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;--BETA: comment for BETA users --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nA few directives are available in documentation. Note that\ndirectives must appear on a single line to be properly\nidentified. The `include` directive includes a markdown file from\nan external source:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== include path/to/file ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe `resource_for` directive marks a message to be the resource of\na collection in REST view. If it is not specified, tools attempt\nto infer the resource from the operations in a collection:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== resource_for v1.shelves.books ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe directive `suppress_warning` does not directly affect documentation\nand is documented together with service config validation.",
+      "description": "`Documentation` provides the information for describing a service.\n\nExample:\n\u003cpre\u003e\u003ccode\u003edocumentation:\n  summary: \u003e\n    The Google Calendar API gives access\n    to most calendar features.\n  pages:\n  - name: Overview\n    content: \u0026#40;== include google/foo/overview.md ==\u0026#41;\n  - name: Tutorial\n    content: \u0026#40;== include google/foo/tutorial.md ==\u0026#41;\n    subpages;\n    - name: Java\n      content: \u0026#40;== include google/foo/tutorial_java.md ==\u0026#41;\n  rules:\n  - selector: google.calendar.Calendar.Get\n    description: \u003e\n      ...\n  - selector: google.calendar.Calendar.Put\n    description: \u003e\n      ...\n\u003c/code\u003e\u003c/pre\u003e\nDocumentation is provided in markdown syntax. In addition to\nstandard markdown features, definition lists, tables and fenced\ncode blocks are supported. Section headers can be provided and are\ninterpreted relative to the section nesting of the context where\na documentation fragment is embedded.\n\nDocumentation from the IDL is merged with documentation defined\nvia the config at normalization time, where documentation provided\nby config rules overrides IDL provided.\n\nA number of constructs specific to the API platform are supported\nin documentation text.\n\nIn order to reference a proto element, the following\nnotation can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;fully.qualified.proto.name]\u0026#91;]\u003c/code\u003e\u003c/pre\u003e\nTo override the display text used for the link, this can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;display text]\u0026#91;fully.qualified.proto.name]\u003c/code\u003e\u003c/pre\u003e\nText can be excluded from doc using the following notation:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;-- internal comment --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\n\nA few directives are available in documentation. Note that\ndirectives must appear on a single line to be properly\nidentified. The `include` directive includes a markdown file from\nan external source:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== include path/to/file ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe `resource_for` directive marks a message to be the resource of\na collection in REST view. If it is not specified, tools attempt\nto infer the resource from the operations in a collection:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== resource_for v1.shelves.books ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe directive `suppress_warning` does not directly affect documentation\nand is documented together with service config validation.",
       "id": "Documentation",
       "properties": {
         "documentationRootUrl": {
@@ -1995,10 +1995,6 @@
         "usage": {
           "$ref": "Usage",
           "description": "Configuration controlling usage of this service."
-        },
-        "visibility": {
-          "$ref": "Visibility",
-          "description": "API visibility configuration."
         }
       },
       "type": "object"
@@ -2008,7 +2004,7 @@
       "id": "ServiceAccountConfig",
       "properties": {
         "accountId": {
-          "description": "ID of the IAM service account to be created in tenant project.\nThe email format of the service account will be\n\"\u003caccount-id\u003e@\u003ctenant-project-id\u003e.iam.gserviceaccount.com\".\nThis account id has to be unique within tenant project and producers\nhave to guarantee it.",
+          "description": "ID of the IAM service account to be created in tenant project.\nThe email format of the service account will be\n\"\u003caccount-id\u003e@\u003ctenant-project-id\u003e.iam.gserviceaccount.com\".\nThis account id has to be unique within tenant project and producers\nhave to guarantee it. And it must be 6-30 characters long, and matches the\nregular expression `[a-z]([-a-z0-9]*[a-z0-9])`.",
           "type": "string"
         },
         "tenantProjectRoles": {
@@ -2183,7 +2179,7 @@
           "description": "Configuration for IAM service account on tenant project."
         },
         "services": {
-          "description": "Google Cloud API names of services that will be activated on this project\nduring provisioning.  If any of these services can not be activated,\nthe `addTenantProject` method will fail.\nFor example: 'compute.googleapis.com','cloudfunctions.googleapis.com'",
+          "description": "Google Cloud API names of services that will be activated on this project\nduring provisioning.  If any of these services can not be activated,\nrequest will fail.\nFor example: 'compute.googleapis.com','cloudfunctions.googleapis.com'",
           "items": {
             "type": "string"
           },
@@ -2331,35 +2327,6 @@
         "skipServiceControl": {
           "description": "If true, the selected method should skip service control and the control\nplane features, such as quota and billing, will not be available.\nThis flag is used by Google Cloud Endpoints to bypass checks for internal\nmethods, such as service health check methods.",
           "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "Visibility": {
-      "description": "`Visibility` defines restrictions for the visibility of service\nelements.  Restrictions are specified using visibility labels\n(e.g., TRUSTED_TESTER) that are elsewhere linked to users and projects.\n\nUsers and projects can have access to more than one visibility label. The\neffective visibility for multiple labels is the union of each label's\nelements, plus any unrestricted elements.\n\nIf an element and its parents have no restrictions, visibility is\nunconditionally granted.\n\nExample:\n\n    visibility:\n      rules:\n      - selector: google.calendar.Calendar.EnhancedSearch\n        restriction: TRUSTED_TESTER\n      - selector: google.calendar.Calendar.Delegate\n        restriction: GOOGLE_INTERNAL\n\nHere, all methods are publicly visible except for the restricted methods\nEnhancedSearch and Delegate.",
-      "id": "Visibility",
-      "properties": {
-        "rules": {
-          "description": "A list of visibility rules that apply to individual API elements.\n\n**NOTE:** All service configuration rules follow \"last one wins\" order.",
-          "items": {
-            "$ref": "VisibilityRule"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "VisibilityRule": {
-      "description": "A visibility rule provides visibility configuration for an individual API\nelement.",
-      "id": "VisibilityRule",
-      "properties": {
-        "restriction": {
-          "description": "A comma-separated list of visibility labels that apply to the `selector`.\nAny of the listed labels can be used to grant the visibility.\n\nIf a rule has multiple labels, removing one of the labels but not all of\nthem can break clients.\n\nExample:\n\n    visibility:\n      rules:\n      - selector: google.calendar.Calendar.EnhancedSearch\n        restriction: GOOGLE_INTERNAL, TRUSTED_TESTER\n\nRemoving GOOGLE_INTERNAL from this restriction will break clients that\nrely on this method and only had access to it through GOOGLE_INTERNAL.",
-          "type": "string"
-        },
-        "selector": {
-          "description": "Selects methods, messages, fields, enums, etc. to which this rule applies.\n\nRefer to selector for syntax details.",
-          "type": "string"
         }
       },
       "type": "object"

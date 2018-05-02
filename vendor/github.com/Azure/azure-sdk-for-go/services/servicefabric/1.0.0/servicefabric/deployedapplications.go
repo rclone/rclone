@@ -40,8 +40,9 @@ func NewDeployedApplicationsClientWithBaseURI(baseURI string, timeout *int32) De
 }
 
 // Get get deployed applications
-//
-// nodeName is the name of the node applicationName is the name of the application
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
 func (client DeployedApplicationsClient) Get(ctx context.Context, nodeName string, applicationName string) (result DeployedApplication, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName)
 	if err != nil {
@@ -108,8 +109,8 @@ func (client DeployedApplicationsClient) GetResponder(resp *http.Response) (resu
 }
 
 // List list deployed applications
-//
-// nodeName is the name of the node
+// Parameters:
+// nodeName - the name of the node
 func (client DeployedApplicationsClient) List(ctx context.Context, nodeName string) (result ListDeployedApplication, err error) {
 	req, err := client.ListPreparer(ctx, nodeName)
 	if err != nil {

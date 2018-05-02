@@ -51,8 +51,10 @@ func NewListManagementImageClient(baseURL AzureRegionBaseURL) ListManagementImag
 }
 
 // AddImage add an image to the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list. tag is tag for the image. label is the image label.
+// Parameters:
+// listID - list Id of the image list.
+// tag - tag for the image.
+// label - the image label.
 func (client ListManagementImageClient) AddImage(ctx context.Context, listID string, tag *int32, label string) (result Image, err error) {
 	req, err := client.AddImagePreparer(ctx, listID, tag, label)
 	if err != nil {
@@ -122,10 +124,11 @@ func (client ListManagementImageClient) AddImageResponder(resp *http.Response) (
 }
 
 // AddImageFileInput add an image to the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list. imageStream is the image file. imageStream will be closed upon successful
-// return. Callers should ensure closure when receiving an error.tag is tag for the image. label is the image
-// label.
+// Parameters:
+// listID - list Id of the image list.
+// imageStream - the image file.
+// tag - tag for the image.
+// label - the image label.
 func (client ListManagementImageClient) AddImageFileInput(ctx context.Context, listID string, imageStream io.ReadCloser, tag *int32, label string) (result Image, err error) {
 	req, err := client.AddImageFileInputPreparer(ctx, listID, imageStream, tag, label)
 	if err != nil {
@@ -167,7 +170,7 @@ func (client ListManagementImageClient) AddImageFileInputPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("image/gif"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPathParameters("/contentmoderator/lists/v1.0/imagelists/{listId}/images", pathParameters),
@@ -197,9 +200,12 @@ func (client ListManagementImageClient) AddImageFileInputResponder(resp *http.Re
 }
 
 // AddImageURLInput add an image to the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list. contentType is the content type. imageURL is the image url. tag is tag for
-// the image. label is the image label.
+// Parameters:
+// listID - list Id of the image list.
+// contentType - the content type.
+// imageURL - the image url.
+// tag - tag for the image.
+// label - the image label.
 func (client ListManagementImageClient) AddImageURLInput(ctx context.Context, listID string, contentType string, imageURL BodyModel, tag *int32, label string) (result Image, err error) {
 	req, err := client.AddImageURLInputPreparer(ctx, listID, contentType, imageURL, tag, label)
 	if err != nil {
@@ -241,7 +247,7 @@ func (client ListManagementImageClient) AddImageURLInputPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPathParameters("/contentmoderator/lists/v1.0/imagelists/{listId}/images", pathParameters),
@@ -272,8 +278,8 @@ func (client ListManagementImageClient) AddImageURLInputResponder(resp *http.Res
 }
 
 // DeleteAllImages deletes all images from the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementImageClient) DeleteAllImages(ctx context.Context, listID string) (result String, err error) {
 	req, err := client.DeleteAllImagesPreparer(ctx, listID)
 	if err != nil {
@@ -334,8 +340,9 @@ func (client ListManagementImageClient) DeleteAllImagesResponder(resp *http.Resp
 }
 
 // DeleteImage deletes an image from the list with list Id and image Id passed.
-//
-// listID is list Id of the image list. imageID is id of the image.
+// Parameters:
+// listID - list Id of the image list.
+// imageID - id of the image.
 func (client ListManagementImageClient) DeleteImage(ctx context.Context, listID string, imageID string) (result String, err error) {
 	req, err := client.DeleteImagePreparer(ctx, listID, imageID)
 	if err != nil {
@@ -397,8 +404,8 @@ func (client ListManagementImageClient) DeleteImageResponder(resp *http.Response
 }
 
 // GetAllImageIds gets all image Ids from the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementImageClient) GetAllImageIds(ctx context.Context, listID string) (result ImageIds, err error) {
 	req, err := client.GetAllImageIdsPreparer(ctx, listID)
 	if err != nil {

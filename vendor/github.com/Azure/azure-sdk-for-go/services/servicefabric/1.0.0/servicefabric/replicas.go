@@ -40,8 +40,9 @@ func NewReplicasClientWithBaseURI(baseURI string, timeout *int32) ReplicasClient
 }
 
 // Get get replicas
-//
-// partitionID is the id of the partition replicaID is the id of the replica
+// Parameters:
+// partitionID - the id of the partition
+// replicaID - the id of the replica
 func (client ReplicasClient) Get(ctx context.Context, partitionID string, replicaID string) (result Replica, err error) {
 	req, err := client.GetPreparer(ctx, partitionID, replicaID)
 	if err != nil {
@@ -108,8 +109,8 @@ func (client ReplicasClient) GetResponder(resp *http.Response) (result Replica, 
 }
 
 // List list replicas
-//
-// partitionID is the id of the partition
+// Parameters:
+// partitionID - the id of the partition
 func (client ReplicasClient) List(ctx context.Context, partitionID string) (result ReplicaList, err error) {
 	req, err := client.ListPreparer(ctx, partitionID)
 	if err != nil {

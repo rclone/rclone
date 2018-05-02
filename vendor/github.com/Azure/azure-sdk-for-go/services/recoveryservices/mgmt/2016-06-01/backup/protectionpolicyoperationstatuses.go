@@ -44,10 +44,11 @@ func NewProtectionPolicyOperationStatusesClientWithBaseURI(baseURI string, subsc
 // Get provides the status of the asynchronous operations like backup or restore. The status can be: in progress,
 // completed, or failed. You can refer to the Operation Status enumeration for the possible states of an operation.
 // Some operations create jobs. This method returns the list of jobs associated with the operation.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. policyName is the backup policy name used in this GET operation.
-// operationID is the ID associated with this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// policyName - the backup policy name used in this GET operation.
+// operationID - the ID associated with this GET operation.
 func (client ProtectionPolicyOperationStatusesClient) Get(ctx context.Context, vaultName string, resourceGroupName string, policyName string, operationID string) (result OperationStatus, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, policyName, operationID)
 	if err != nil {

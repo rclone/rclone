@@ -26,55 +26,23 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type ClientGroupsClient = original.ClientGroupsClient
-
-func NewClientGroupsClient(subscriptionID string) ClientGroupsClient {
-	return original.NewClientGroupsClient(subscriptionID)
-}
-func NewClientGroupsClientWithBaseURI(baseURI string, subscriptionID string) ClientGroupsClient {
-	return original.NewClientGroupsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type MachineGroupsClient = original.MachineGroupsClient
-
-func NewMachineGroupsClient(subscriptionID string) MachineGroupsClient {
-	return original.NewMachineGroupsClient(subscriptionID)
-}
-func NewMachineGroupsClientWithBaseURI(baseURI string, subscriptionID string) MachineGroupsClient {
-	return original.NewMachineGroupsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type MachinesClient = original.MachinesClient
-
-func NewMachinesClient(subscriptionID string) MachinesClient {
-	return original.NewMachinesClient(subscriptionID)
-}
-func NewMachinesClientWithBaseURI(baseURI string, subscriptionID string) MachinesClient {
-	return original.NewMachinesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type MapsClient = original.MapsClient
-
-func NewMapsClient(subscriptionID string) MapsClient {
-	return original.NewMapsClient(subscriptionID)
-}
-func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient {
-	return original.NewMapsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type Accuracy = original.Accuracy
 
 const (
 	Actual    Accuracy = original.Actual
 	Estimated Accuracy = original.Estimated
+)
+
+type AzureCloudServiceRoleType = original.AzureCloudServiceRoleType
+
+const (
+	Unknown AzureCloudServiceRoleType = original.Unknown
+	Web     AzureCloudServiceRoleType = original.Web
+	Worker  AzureCloudServiceRoleType = original.Worker
 )
 
 type Bitness = original.Bitness
@@ -95,13 +63,14 @@ const (
 type HypervisorType = original.HypervisorType
 
 const (
-	Hyperv  HypervisorType = original.Hyperv
-	Unknown HypervisorType = original.Unknown
+	HypervisorTypeHyperv  HypervisorType = original.HypervisorTypeHyperv
+	HypervisorTypeUnknown HypervisorType = original.HypervisorTypeUnknown
 )
 
 type Kind = original.Kind
 
 const (
+	KindRefclientgroup      Kind = original.KindRefclientgroup
 	KindRefmachine          Kind = original.KindRefmachine
 	KindRefmachinewithhints Kind = original.KindRefmachinewithhints
 	KindRefport             Kind = original.KindRefport
@@ -120,12 +89,28 @@ const (
 	KindProcess      KindBasicCoreResource = original.KindProcess
 )
 
+type KindBasicHostingConfiguration = original.KindBasicHostingConfiguration
+
+const (
+	KindHostingConfiguration KindBasicHostingConfiguration = original.KindHostingConfiguration
+	KindProviderazure        KindBasicHostingConfiguration = original.KindProviderazure
+)
+
 type KindBasicMapRequest = original.KindBasicMapRequest
 
 const (
 	KindMapmachineGroupDependency  KindBasicMapRequest = original.KindMapmachineGroupDependency
+	KindMapmachineListDependency   KindBasicMapRequest = original.KindMapmachineListDependency
 	KindMapRequest                 KindBasicMapRequest = original.KindMapRequest
 	KindMapsingleMachineDependency KindBasicMapRequest = original.KindMapsingleMachineDependency
+	KindMultipleMachinesMapRequest KindBasicMapRequest = original.KindMultipleMachinesMapRequest
+)
+
+type KindBasicProcessHostingConfiguration = original.KindBasicProcessHostingConfiguration
+
+const (
+	KindBasicProcessHostingConfigurationKindProcessHostingConfiguration KindBasicProcessHostingConfiguration = original.KindBasicProcessHostingConfigurationKindProcessHostingConfiguration
+	KindBasicProcessHostingConfigurationKindProviderazure               KindBasicProcessHostingConfiguration = original.KindBasicProcessHostingConfigurationKindProviderazure
 )
 
 type KindBasicRelationship = original.KindBasicRelationship
@@ -134,6 +119,16 @@ const (
 	KindRelacceptor   KindBasicRelationship = original.KindRelacceptor
 	KindRelationship  KindBasicRelationship = original.KindRelationship
 	KindRelconnection KindBasicRelationship = original.KindRelconnection
+)
+
+type MachineGroupType = original.MachineGroupType
+
+const (
+	MachineGroupTypeAzureCs    MachineGroupType = original.MachineGroupTypeAzureCs
+	MachineGroupTypeAzureSf    MachineGroupType = original.MachineGroupTypeAzureSf
+	MachineGroupTypeAzureVmss  MachineGroupType = original.MachineGroupTypeAzureVmss
+	MachineGroupTypeUnknown    MachineGroupType = original.MachineGroupTypeUnknown
+	MachineGroupTypeUserStatic MachineGroupType = original.MachineGroupTypeUserStatic
 )
 
 type MachineRebootStatus = original.MachineRebootStatus
@@ -171,6 +166,18 @@ const (
 	WebServer      ProcessRole = original.WebServer
 )
 
+type Provider = original.Provider
+
+const (
+	Azure Provider = original.Azure
+)
+
+type Provider1 = original.Provider1
+
+const (
+	Provider1Azure Provider1 = original.Provider1Azure
+)
+
 type VirtualizationState = original.VirtualizationState
 
 const (
@@ -195,6 +202,11 @@ const (
 type Acceptor = original.Acceptor
 type AcceptorProperties = original.AcceptorProperties
 type AgentConfiguration = original.AgentConfiguration
+type AzureCloudServiceConfiguration = original.AzureCloudServiceConfiguration
+type AzureHostingConfiguration = original.AzureHostingConfiguration
+type AzureProcessHostingConfiguration = original.AzureProcessHostingConfiguration
+type AzureServiceFabricClusterConfiguration = original.AzureServiceFabricClusterConfiguration
+type AzureVMScaleSetConfiguration = original.AzureVMScaleSetConfiguration
 type ClientGroup = original.ClientGroup
 type ClientGroupMember = original.ClientGroupMember
 type ClientGroupMemberProperties = original.ClientGroupMemberProperties
@@ -203,6 +215,7 @@ type ClientGroupMembersCollectionIterator = original.ClientGroupMembersCollectio
 type ClientGroupMembersCollectionPage = original.ClientGroupMembersCollectionPage
 type ClientGroupMembersCount = original.ClientGroupMembersCount
 type ClientGroupProperties = original.ClientGroupProperties
+type ClientGroupReference = original.ClientGroupReference
 type Connection = original.Connection
 type ConnectionCollection = original.ConnectionCollection
 type ConnectionCollectionIterator = original.ConnectionCollectionIterator
@@ -212,7 +225,10 @@ type BasicCoreResource = original.BasicCoreResource
 type CoreResource = original.CoreResource
 type Error = original.Error
 type ErrorResponse = original.ErrorResponse
+type BasicHostingConfiguration = original.BasicHostingConfiguration
+type HostingConfiguration = original.HostingConfiguration
 type HypervisorConfiguration = original.HypervisorConfiguration
+type ImageConfiguration = original.ImageConfiguration
 type Ipv4NetworkInterface = original.Ipv4NetworkInterface
 type Ipv6NetworkInterface = original.Ipv6NetworkInterface
 type Liveness = original.Liveness
@@ -227,6 +243,7 @@ type MachineGroupCollectionIterator = original.MachineGroupCollectionIterator
 type MachineGroupCollectionPage = original.MachineGroupCollectionPage
 type MachineGroupMapRequest = original.MachineGroupMapRequest
 type MachineGroupProperties = original.MachineGroupProperties
+type MachineListMapRequest = original.MachineListMapRequest
 type MachineProperties = original.MachineProperties
 type MachineReference = original.MachineReference
 type MachineReferenceWithHints = original.MachineReferenceWithHints
@@ -240,6 +257,8 @@ type MapNodes = original.MapNodes
 type BasicMapRequest = original.BasicMapRequest
 type MapRequest = original.MapRequest
 type MapResponse = original.MapResponse
+type BasicMultipleMachinesMapRequest = original.BasicMultipleMachinesMapRequest
+type MultipleMachinesMapRequest = original.MultipleMachinesMapRequest
 type NetworkConfiguration = original.NetworkConfiguration
 type OperatingSystemConfiguration = original.OperatingSystemConfiguration
 type Port = original.Port
@@ -254,6 +273,9 @@ type ProcessCollection = original.ProcessCollection
 type ProcessCollectionIterator = original.ProcessCollectionIterator
 type ProcessCollectionPage = original.ProcessCollectionPage
 type ProcessDetails = original.ProcessDetails
+type ProcessHostedService = original.ProcessHostedService
+type BasicProcessHostingConfiguration = original.BasicProcessHostingConfiguration
+type ProcessHostingConfiguration = original.ProcessHostingConfiguration
 type ProcessProperties = original.ProcessProperties
 type ProcessReference = original.ProcessReference
 type ProcessReferenceProperties = original.ProcessReferenceProperties
@@ -270,25 +292,111 @@ type SummaryProperties = original.SummaryProperties
 type Timezone = original.Timezone
 type VirtualMachineConfiguration = original.VirtualMachineConfiguration
 type PortsClient = original.PortsClient
+type ProcessesClient = original.ProcessesClient
+type SummariesClient = original.SummariesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewClientGroupsClient(subscriptionID string) ClientGroupsClient {
+	return original.NewClientGroupsClient(subscriptionID)
+}
+func NewClientGroupsClientWithBaseURI(baseURI string, subscriptionID string) ClientGroupsClient {
+	return original.NewClientGroupsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewMachineGroupsClient(subscriptionID string) MachineGroupsClient {
+	return original.NewMachineGroupsClient(subscriptionID)
+}
+func NewMachineGroupsClientWithBaseURI(baseURI string, subscriptionID string) MachineGroupsClient {
+	return original.NewMachineGroupsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewMachinesClient(subscriptionID string) MachinesClient {
+	return original.NewMachinesClient(subscriptionID)
+}
+func NewMachinesClientWithBaseURI(baseURI string, subscriptionID string) MachinesClient {
+	return original.NewMachinesClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewMapsClient(subscriptionID string) MapsClient {
+	return original.NewMapsClient(subscriptionID)
+}
+func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient {
+	return original.NewMapsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccuracyValues() []Accuracy {
+	return original.PossibleAccuracyValues()
+}
+func PossibleAzureCloudServiceRoleTypeValues() []AzureCloudServiceRoleType {
+	return original.PossibleAzureCloudServiceRoleTypeValues()
+}
+func PossibleBitnessValues() []Bitness {
+	return original.PossibleBitnessValues()
+}
+func PossibleConnectionFailureStateValues() []ConnectionFailureState {
+	return original.PossibleConnectionFailureStateValues()
+}
+func PossibleHypervisorTypeValues() []HypervisorType {
+	return original.PossibleHypervisorTypeValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossibleKindBasicCoreResourceValues() []KindBasicCoreResource {
+	return original.PossibleKindBasicCoreResourceValues()
+}
+func PossibleKindBasicHostingConfigurationValues() []KindBasicHostingConfiguration {
+	return original.PossibleKindBasicHostingConfigurationValues()
+}
+func PossibleKindBasicMapRequestValues() []KindBasicMapRequest {
+	return original.PossibleKindBasicMapRequestValues()
+}
+func PossibleKindBasicProcessHostingConfigurationValues() []KindBasicProcessHostingConfiguration {
+	return original.PossibleKindBasicProcessHostingConfigurationValues()
+}
+func PossibleKindBasicRelationshipValues() []KindBasicRelationship {
+	return original.PossibleKindBasicRelationshipValues()
+}
+func PossibleMachineGroupTypeValues() []MachineGroupType {
+	return original.PossibleMachineGroupTypeValues()
+}
+func PossibleMachineRebootStatusValues() []MachineRebootStatus {
+	return original.PossibleMachineRebootStatusValues()
+}
+func PossibleMonitoringStateValues() []MonitoringState {
+	return original.PossibleMonitoringStateValues()
+}
+func PossibleOperatingSystemFamilyValues() []OperatingSystemFamily {
+	return original.PossibleOperatingSystemFamilyValues()
+}
+func PossibleProcessRoleValues() []ProcessRole {
+	return original.PossibleProcessRoleValues()
+}
+func PossibleProviderValues() []Provider {
+	return original.PossibleProviderValues()
+}
+func PossibleProvider1Values() []Provider1 {
+	return original.PossibleProvider1Values()
+}
+func PossibleVirtualizationStateValues() []VirtualizationState {
+	return original.PossibleVirtualizationStateValues()
+}
+func PossibleVirtualMachineTypeValues() []VirtualMachineType {
+	return original.PossibleVirtualMachineTypeValues()
+}
 func NewPortsClient(subscriptionID string) PortsClient {
 	return original.NewPortsClient(subscriptionID)
 }
 func NewPortsClientWithBaseURI(baseURI string, subscriptionID string) PortsClient {
 	return original.NewPortsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProcessesClient = original.ProcessesClient
-
 func NewProcessesClient(subscriptionID string) ProcessesClient {
 	return original.NewProcessesClient(subscriptionID)
 }
 func NewProcessesClientWithBaseURI(baseURI string, subscriptionID string) ProcessesClient {
 	return original.NewProcessesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SummariesClient = original.SummariesClient
-
 func NewSummariesClient(subscriptionID string) SummariesClient {
 	return original.NewSummariesClient(subscriptionID)
 }

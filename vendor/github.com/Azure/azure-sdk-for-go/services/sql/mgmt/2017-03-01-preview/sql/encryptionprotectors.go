@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorsClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type EncryptionProtectorsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewEncryptionProtectorsClient creates an instance of the EncryptionProtectorsClient client.
 func NewEncryptionProtectorsClient(subscriptionID string) EncryptionProtectorsClient {
 	return NewEncryptionProtectorsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewEncryptionProtectorsClientWithBaseURI creates an instance of the EncryptionProtectorsClient client.
 func NewEncryptionProtectorsClientWithBaseURI(baseURI string, subscriptionID string) EncryptionProtectorsClient {
 	return EncryptionProtectorsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdate updates an existing encryption protector.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -62,6 +66,7 @@ func (client EncryptionProtectorsClient) CreateOrUpdate(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client EncryptionProtectorsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, parameters EncryptionProtector) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -77,7 +82,7 @@ func (client EncryptionProtectorsClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/encryptionProtector/{encryptionProtectorName}", pathParameters),
@@ -86,6 +91,7 @@ func (client EncryptionProtectorsClient) CreateOrUpdatePreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client EncryptionProtectorsClient) CreateOrUpdateSender(req *http.Request) (future EncryptionProtectorsCreateOrUpdateFuture, err error) {
@@ -101,6 +107,7 @@ func (client EncryptionProtectorsClient) CreateOrUpdateSender(req *http.Request)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client EncryptionProtectorsClient) CreateOrUpdateResponder(resp *http.Response) (result EncryptionProtector, err error) {
@@ -114,6 +121,7 @@ func (client EncryptionProtectorsClient) CreateOrUpdateResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a server encryption protector.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -140,6 +148,7 @@ func (client EncryptionProtectorsClient) Get(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client EncryptionProtectorsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -162,6 +171,7 @@ func (client EncryptionProtectorsClient) GetPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client EncryptionProtectorsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -169,6 +179,7 @@ func (client EncryptionProtectorsClient) GetSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client EncryptionProtectorsClient) GetResponder(resp *http.Response) (result EncryptionProtector, err error) {
@@ -182,6 +193,7 @@ func (client EncryptionProtectorsClient) GetResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServer gets a list of server encryption protectors
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -209,6 +221,7 @@ func (client EncryptionProtectorsClient) ListByServer(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerPreparer prepares the ListByServer request.
 func (client EncryptionProtectorsClient) ListByServerPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -230,6 +243,7 @@ func (client EncryptionProtectorsClient) ListByServerPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client EncryptionProtectorsClient) ListByServerSender(req *http.Request) (*http.Response, error) {
@@ -237,6 +251,7 @@ func (client EncryptionProtectorsClient) ListByServerSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerResponder handles the response to the ListByServer request. The method always
 // closes the http.Response Body.
 func (client EncryptionProtectorsClient) ListByServerResponder(resp *http.Response) (result EncryptionProtectorListResult, err error) {
@@ -271,6 +286,7 @@ func (client EncryptionProtectorsClient) listByServerNextResults(lastResults Enc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerComplete enumerates all values, automatically crossing page boundaries as required.
 func (client EncryptionProtectorsClient) ListByServerComplete(ctx context.Context, resourceGroupName string, serverName string) (result EncryptionProtectorListResultIterator, err error) {
 	result.page, err = client.ListByServer(ctx, resourceGroupName, serverName)

@@ -41,18 +41,20 @@ func NewProductSubscriptionsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // ListByProducts lists the collection of subscriptions to the specified product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. filter is |
-// Field        | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// filter - | Field        | Supported operators    | Supported functions                         |
 // |--------------|------------------------|---------------------------------------------|
 // | id           | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name         | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | stateComment | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | userId       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | productId    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | state        | eq                     |                                             | top is number of records
-// to return. skip is number of records to skip.
+// | state        | eq                     |                                             |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client ProductSubscriptionsClient) ListByProducts(ctx context.Context, resourceGroupName string, serviceName string, productID string, filter string, top *int32, skip *int32) (result SubscriptionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

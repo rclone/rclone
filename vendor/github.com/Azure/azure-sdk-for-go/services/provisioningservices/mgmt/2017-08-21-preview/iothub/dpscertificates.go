@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DpsCertificatesClient is the API for using the Azure IoT Hub Device Provisioning Service features.
 type DpsCertificatesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewDpsCertificatesClient creates an instance of the DpsCertificatesClient client.
 func NewDpsCertificatesClient(subscriptionID string) DpsCertificatesClient {
 	return NewDpsCertificatesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewDpsCertificatesClientWithBaseURI creates an instance of the DpsCertificatesClient client.
 func NewDpsCertificatesClientWithBaseURI(baseURI string, subscriptionID string) DpsCertificatesClient {
 	return DpsCertificatesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // List get all the certificates tied to the provisioning service.
 //
 // resourceGroupName is name of resource group. provisioningServiceName is name of provisioning service to retrieve
@@ -65,6 +69,7 @@ func (client DpsCertificatesClient) List(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListPreparer prepares the List request.
 func (client DpsCertificatesClient) ListPreparer(ctx context.Context, resourceGroupName string, provisioningServiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -86,6 +91,7 @@ func (client DpsCertificatesClient) ListPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificatesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -93,6 +99,7 @@ func (client DpsCertificatesClient) ListSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client DpsCertificatesClient) ListResponder(resp *http.Response) (result CertificateListDescription, err error) {

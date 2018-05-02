@@ -90,10 +90,10 @@
   "baseUrl": "https://www.googleapis.com/admin/directory/v1/",
   "batchPath": "batch/admin/directory_v1",
   "canonicalName": "directory",
-  "description": "The Admin SDK Directory API lets you view and manage enterprise resources such as users and groups, administrative notifications, security features, and more.",
+  "description": "Manages enterprise resources such as users and groups, administrative notifications, security features, and more.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/admin-sdk/directory/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/FEIM1JSTcD4HhoBpMoEeP9vkMCQ\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/cqLS0IwH2Is5IhWrKMNCt4VPtGQ\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -139,12 +139,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -923,7 +923,7 @@
           ]
         },
         "list": {
-          "description": "Retrieve all groups in a domain (paginated)",
+          "description": "Retrieve all groups of a domain or of a user given a userKey (paginated)",
           "httpMethod": "GET",
           "id": "directory.groups.list",
           "parameters": {
@@ -944,13 +944,42 @@
               "minimum": "1",
               "type": "integer"
             },
+            "orderBy": {
+              "description": "Column to use for sorting results",
+              "enum": [
+                "email"
+              ],
+              "enumDescriptions": [
+                "Email of the group."
+              ],
+              "location": "query",
+              "type": "string"
+            },
             "pageToken": {
               "description": "Token to specify next page in the list",
               "location": "query",
               "type": "string"
             },
+            "query": {
+              "description": "Query string search. Should be of the form \"\". Complete documentation is at https://developers.google.com/admin-sdk/directory/v1/guides/search-users",
+              "location": "query",
+              "type": "string"
+            },
+            "sortOrder": {
+              "description": "Whether to return results in ascending or descending order. Only of use when orderBy is also used",
+              "enum": [
+                "ASCENDING",
+                "DESCENDING"
+              ],
+              "enumDescriptions": [
+                "Ascending order.",
+                "Descending order."
+              ],
+              "location": "query",
+              "type": "string"
+            },
             "userKey": {
-              "description": "Email or immutable ID of the user if only those groups are to be listed, the given user is a member of. If ID, it should match with id of user object",
+              "description": "Email or immutable Id of the user if only those groups are to be listed, the given user is a member of. If Id, it should match with id of user object",
               "location": "query",
               "type": "string"
             }
@@ -1166,7 +1195,7 @@
           ]
         },
         "hasMember": {
-          "description": "Checks Membership of an user within a Group",
+          "description": "Checks whether the given user is a member of the group. Membership can be direct or nested.",
           "httpMethod": "GET",
           "id": "directory.members.hasMember",
           "parameterOrder": [
@@ -1175,13 +1204,13 @@
           ],
           "parameters": {
             "groupKey": {
-              "description": "Email or immutable Id of the group",
+              "description": "Identifies the group in the API request. The value can be the group's email address, group alias, or the unique group ID.",
               "location": "path",
               "required": true,
               "type": "string"
             },
             "memberKey": {
-              "description": "Email or immutable Id of the member",
+              "description": "Identifies the user member in the API request. The value can be the user's primary email address, alias, or unique ID.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1238,6 +1267,11 @@
               "location": "path",
               "required": true,
               "type": "string"
+            },
+            "includeDerivedMembership": {
+              "description": "Whether to list indirect memberships. Default: false.",
+              "location": "query",
+              "type": "boolean"
             },
             "maxResults": {
               "description": "Maximum number of results to return. Default is 200",
@@ -2056,6 +2090,19 @@
                   "location": "path",
                   "required": true,
                   "type": "string"
+                },
+                "maxResults": {
+                  "description": "Maximum number of results to return.",
+                  "format": "int32",
+                  "location": "query",
+                  "maximum": "500",
+                  "minimum": "1",
+                  "type": "integer"
+                },
+                "pageToken": {
+                  "description": "Token to specify the next page in the list.",
+                  "location": "query",
+                  "type": "string"
                 }
               },
               "path": "customer/{customer}/resources/buildings",
@@ -2254,7 +2301,7 @@
                   "type": "string"
                 },
                 "query": {
-                  "description": "String query used to filter results. Should be of the form \"field operator value\" where field can be any of supported fields and operators can be any of supported operations. Operators include '=' for exact match and ':' for prefix match where applicable. For prefix match, the value should always be followed by a *.",
+                  "description": "String query used to filter results. Should be of the form \"field operator value\" where field can be any of supported fields and operators can be any of supported operations. Operators include '=' for exact match and ':' for prefix match or HAS match where applicable. For prefix match, the value should always be followed by a *. Supported fields include generatedResourceName, name, buildingId, featureInstances.feature.name. For example buildingId=US-NYC-9TH AND featureInstances.feature.name:Phone.",
                   "location": "query",
                   "type": "string"
                 }
@@ -2435,6 +2482,14 @@
                   "location": "path",
                   "required": true,
                   "type": "string"
+                },
+                "maxResults": {
+                  "description": "Maximum number of results to return.",
+                  "format": "int32",
+                  "location": "query",
+                  "maximum": "500",
+                  "minimum": "1",
+                  "type": "integer"
                 },
                 "pageToken": {
                   "description": "Token to specify the next page in the list.",
@@ -3914,7 +3969,7 @@
       }
     }
   },
-  "revision": "20171212",
+  "revision": "20180423",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Alias": {
@@ -4353,7 +4408,7 @@
                 "type": "string"
               },
               "downloadUrl": {
-                "description": "File downlod URL",
+                "description": "File download URL",
                 "type": "string"
               },
               "name": {
@@ -4463,23 +4518,30 @@
           "type": "string"
         },
         "tpmVersionInfo": {
+          "description": "Trusted Platform Module (TPM) (Read-only)",
           "properties": {
             "family": {
+              "description": "TPM family.",
               "type": "string"
             },
             "firmwareVersion": {
+              "description": "TPM firmware version.",
               "type": "string"
             },
             "manufacturer": {
+              "description": "TPM manufacturer code.",
               "type": "string"
             },
             "specLevel": {
+              "description": "TPM specification level.",
               "type": "string"
             },
             "tpmModel": {
+              "description": "TPM model number.",
               "type": "string"
             },
             "vendorSpecific": {
+              "description": "Vendor-specific information such as Vendor ID.",
               "type": "string"
             }
           },
@@ -4804,7 +4866,8 @@
       "id": "FeatureInstance",
       "properties": {
         "feature": {
-          "$ref": "Feature"
+          "$ref": "Feature",
+          "description": "The feature that this is an instance of. A calendar resource may have multiple instances of a feature."
         }
       },
       "type": "object"
@@ -5007,7 +5070,7 @@
       "id": "MembersHasMember",
       "properties": {
         "isMember": {
-          "description": "Identifies whether given user is a member or not.",
+          "description": "Identifies whether the given user is a member of the group. Membership can be direct or nested.",
           "readOnly": true,
           "type": "boolean"
         }
@@ -5636,6 +5699,15 @@
       "description": "JSON template for Schema resource in Directory API.",
       "id": "Schema",
       "properties": {
+        "displayName": {
+          "annotations": {
+            "required": [
+              "directory.schemas.insert"
+            ]
+          },
+          "description": "Display name for the schema.",
+          "type": "string"
+        },
         "etag": {
           "description": "ETag of the resource.",
           "type": "string"
@@ -5678,6 +5750,16 @@
       "description": "JSON template for FieldSpec resource for Schemas in Directory API.",
       "id": "SchemaFieldSpec",
       "properties": {
+        "displayName": {
+          "annotations": {
+            "required": [
+              "directory.schemas.insert",
+              "directory.schemas.update"
+            ]
+          },
+          "description": "Display Name of the field.",
+          "type": "string"
+        },
         "etag": {
           "description": "ETag of the resource.",
           "type": "string"
@@ -6528,6 +6610,10 @@
         },
         "homeDirectory": {
           "description": "The path to the home directory for this account.",
+          "type": "string"
+        },
+        "operatingSystemType": {
+          "description": "The operating system type for this account.",
           "type": "string"
         },
         "primary": {

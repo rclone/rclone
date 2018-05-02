@@ -109,7 +109,7 @@ func (client JobScheduleClient) AddPreparer(ctx context.Context, cloudJobSchedul
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/jobschedules"),
@@ -861,7 +861,7 @@ func (client JobScheduleClient) PatchPreparer(ctx context.Context, jobScheduleID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobschedules/{jobScheduleId}", pathParameters),
@@ -1099,7 +1099,7 @@ func (client JobScheduleClient) UpdatePreparer(ctx context.Context, jobScheduleI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobschedules/{jobScheduleId}", pathParameters),

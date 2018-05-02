@@ -21,25 +21,30 @@ import (
 	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/validation"
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // MachineGroupsClient is the service Map API Reference
 type MachineGroupsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMachineGroupsClient creates an instance of the MachineGroupsClient client.
 func NewMachineGroupsClient(subscriptionID string) MachineGroupsClient {
 	return NewMachineGroupsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMachineGroupsClientWithBaseURI creates an instance of the MachineGroupsClient client.
 func NewMachineGroupsClientWithBaseURI(baseURI string, subscriptionID string) MachineGroupsClient {
 	return MachineGroupsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Create creates a new machine group.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -85,6 +90,7 @@ func (client MachineGroupsClient) Create(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // CreatePreparer prepares the Create request.
 func (client MachineGroupsClient) CreatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineGroup MachineGroup) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -99,7 +105,7 @@ func (client MachineGroupsClient) CreatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/features/serviceMap/machineGroups", pathParameters),
@@ -108,6 +114,7 @@ func (client MachineGroupsClient) CreatePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineGroupsClient) CreateSender(req *http.Request) (*http.Response, error) {
@@ -115,6 +122,7 @@ func (client MachineGroupsClient) CreateSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client MachineGroupsClient) CreateResponder(resp *http.Response) (result MachineGroup, err error) {
@@ -128,6 +136,7 @@ func (client MachineGroupsClient) CreateResponder(resp *http.Response) (result M
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Delete deletes the specified Machine Group.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -169,6 +178,7 @@ func (client MachineGroupsClient) Delete(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // DeletePreparer prepares the Delete request.
 func (client MachineGroupsClient) DeletePreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -191,6 +201,7 @@ func (client MachineGroupsClient) DeletePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineGroupsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -198,6 +209,7 @@ func (client MachineGroupsClient) DeleteSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client MachineGroupsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -210,11 +222,14 @@ func (client MachineGroupsClient) DeleteResponder(resp *http.Response) (result a
 	return
 }
 
-// Get returns the specified machine group.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
+// Get returns the specified machine group as it existed during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineGroupName is machine Group resource name.
-func (client MachineGroupsClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string) (result MachineGroup, err error) {
+// containing the resources of interest. machineGroupName is machine Group resource name. startTime is UTC date and
+// time specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime
+// is UTC date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
+func (client MachineGroupsClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string, startTime *date.Time, endTime *date.Time) (result MachineGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
@@ -230,7 +245,7 @@ func (client MachineGroupsClient) Get(ctx context.Context, resourceGroupName str
 		return result, validation.NewError("servicemap.MachineGroupsClient", "Get", err.Error())
 	}
 
-	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, machineGroupName)
+	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, machineGroupName, startTime, endTime)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "servicemap.MachineGroupsClient", "Get", nil, "Failure preparing request")
 		return
@@ -251,8 +266,9 @@ func (client MachineGroupsClient) Get(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetPreparer prepares the Get request.
-func (client MachineGroupsClient) GetPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string) (*http.Request, error) {
+func (client MachineGroupsClient) GetPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"machineGroupName":  autorest.Encode("path", machineGroupName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -264,6 +280,12 @@ func (client MachineGroupsClient) GetPreparer(ctx context.Context, resourceGroup
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
+	if startTime != nil {
+		queryParameters["startTime"] = autorest.Encode("query", *startTime)
+	}
+	if endTime != nil {
+		queryParameters["endTime"] = autorest.Encode("query", *endTime)
+	}
 
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
@@ -273,6 +295,7 @@ func (client MachineGroupsClient) GetPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineGroupsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -280,6 +303,7 @@ func (client MachineGroupsClient) GetSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client MachineGroupsClient) GetResponder(resp *http.Response) (result MachineGroup, err error) {
@@ -293,11 +317,14 @@ func (client MachineGroupsClient) GetResponder(resp *http.Response) (result Mach
 	return
 }
 
-// ListByWorkspace returns all machine groups.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
+// ListByWorkspace returns all machine groups during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest.
-func (client MachineGroupsClient) ListByWorkspace(ctx context.Context, resourceGroupName string, workspaceName string) (result MachineGroupCollectionPage, err error) {
+// containing the resources of interest. startTime is UTC date and time specifying the start time of an interval.
+// When not specified the service uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time
+// of an interval. When not specified the service uses DateTime.UtcNow
+func (client MachineGroupsClient) ListByWorkspace(ctx context.Context, resourceGroupName string, workspaceName string, startTime *date.Time, endTime *date.Time) (result MachineGroupCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
@@ -311,7 +338,7 @@ func (client MachineGroupsClient) ListByWorkspace(ctx context.Context, resourceG
 	}
 
 	result.fn = client.listByWorkspaceNextResults
-	req, err := client.ListByWorkspacePreparer(ctx, resourceGroupName, workspaceName)
+	req, err := client.ListByWorkspacePreparer(ctx, resourceGroupName, workspaceName, startTime, endTime)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "servicemap.MachineGroupsClient", "ListByWorkspace", nil, "Failure preparing request")
 		return
@@ -332,8 +359,9 @@ func (client MachineGroupsClient) ListByWorkspace(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspacePreparer prepares the ListByWorkspace request.
-func (client MachineGroupsClient) ListByWorkspacePreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
+func (client MachineGroupsClient) ListByWorkspacePreparer(ctx context.Context, resourceGroupName string, workspaceName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -344,6 +372,12 @@ func (client MachineGroupsClient) ListByWorkspacePreparer(ctx context.Context, r
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
+	if startTime != nil {
+		queryParameters["startTime"] = autorest.Encode("query", *startTime)
+	}
+	if endTime != nil {
+		queryParameters["endTime"] = autorest.Encode("query", *endTime)
+	}
 
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
@@ -353,6 +387,7 @@ func (client MachineGroupsClient) ListByWorkspacePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceSender sends the ListByWorkspace request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineGroupsClient) ListByWorkspaceSender(req *http.Request) (*http.Response, error) {
@@ -360,6 +395,7 @@ func (client MachineGroupsClient) ListByWorkspaceSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceResponder handles the response to the ListByWorkspace request. The method always
 // closes the http.Response Body.
 func (client MachineGroupsClient) ListByWorkspaceResponder(resp *http.Response) (result MachineGroupCollection, err error) {
@@ -394,12 +430,14 @@ func (client MachineGroupsClient) listByWorkspaceNextResults(lastResults Machine
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceComplete enumerates all values, automatically crossing page boundaries as required.
-func (client MachineGroupsClient) ListByWorkspaceComplete(ctx context.Context, resourceGroupName string, workspaceName string) (result MachineGroupCollectionIterator, err error) {
-	result.page, err = client.ListByWorkspace(ctx, resourceGroupName, workspaceName)
+func (client MachineGroupsClient) ListByWorkspaceComplete(ctx context.Context, resourceGroupName string, workspaceName string, startTime *date.Time, endTime *date.Time) (result MachineGroupCollectionIterator, err error) {
+	result.page, err = client.ListByWorkspace(ctx, resourceGroupName, workspaceName, startTime, endTime)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Update updates a machine group.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -449,6 +487,7 @@ func (client MachineGroupsClient) Update(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // UpdatePreparer prepares the Update request.
 func (client MachineGroupsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string, machineGroup MachineGroup) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -464,7 +503,7 @@ func (client MachineGroupsClient) UpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/features/serviceMap/machineGroups/{machineGroupName}", pathParameters),
@@ -473,6 +512,7 @@ func (client MachineGroupsClient) UpdatePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineGroupsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -480,6 +520,7 @@ func (client MachineGroupsClient) UpdateSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client MachineGroupsClient) UpdateResponder(resp *http.Response) (result MachineGroup, err error) {

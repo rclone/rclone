@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/internal/trace"
 	"golang.org/x/net/context"
 
 	"cloud.google.com/go/internal/optional"
@@ -242,7 +243,10 @@ func (t *Table) implicitTable() bool {
 // Expiration can only be set during table creation.
 // After table creation, a view can be modified only if its table was initially created
 // with a view.
-func (t *Table) Create(ctx context.Context, tm *TableMetadata) error {
+func (t *Table) Create(ctx context.Context, tm *TableMetadata) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Table.Create")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	table, err := tm.toBQ()
 	if err != nil {
 		return err
@@ -323,11 +327,14 @@ func (tm *TableMetadata) toBQ() (*bq.Table, error) {
 }
 
 // Metadata fetches the metadata for the table.
-func (t *Table) Metadata(ctx context.Context) (*TableMetadata, error) {
+func (t *Table) Metadata(ctx context.Context) (md *TableMetadata, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Table.Metadata")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	req := t.c.bqs.Tables.Get(t.ProjectID, t.DatasetID, t.TableID).Context(ctx)
 	setClientHeader(req.Header())
 	var table *bq.Table
-	err := runWithRetry(ctx, func() (err error) {
+	err = runWithRetry(ctx, func() (err error) {
 		table, err = req.Do()
 		return err
 	})
@@ -378,7 +385,10 @@ func bqToTableMetadata(t *bq.Table) (*TableMetadata, error) {
 }
 
 // Delete deletes the table.
-func (t *Table) Delete(ctx context.Context) error {
+func (t *Table) Delete(ctx context.Context) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Table.Delete")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	req := t.c.bqs.Tables.Delete(t.ProjectID, t.DatasetID, t.TableID).Context(ctx)
 	setClientHeader(req.Header())
 	return req.Do()
@@ -394,7 +404,10 @@ func (t *Table) read(ctx context.Context, pf pageFetcher) *RowIterator {
 }
 
 // Update modifies specific Table metadata fields.
-func (t *Table) Update(ctx context.Context, tm TableMetadataToUpdate, etag string) (*TableMetadata, error) {
+func (t *Table) Update(ctx context.Context, tm TableMetadataToUpdate, etag string) (md *TableMetadata, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Table.Update")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	bqt := tm.toBQ()
 	call := t.c.bqs.Tables.Patch(t.ProjectID, t.DatasetID, t.TableID, bqt).Context(ctx)
 	setClientHeader(call.Header())

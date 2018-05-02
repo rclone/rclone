@@ -40,9 +40,10 @@ func NewServiceManifestsClientWithBaseURI(baseURI string, timeout *int32) Servic
 }
 
 // Get get service manifests
-//
-// applicationTypeName is the name of the application type applicationTypeVersion is the version of the application
-// type serviceManifestName is the name of the service manifest
+// Parameters:
+// applicationTypeName - the name of the application type
+// applicationTypeVersion - the version of the application type
+// serviceManifestName - the name of the service manifest
 func (client ServiceManifestsClient) Get(ctx context.Context, applicationTypeName string, applicationTypeVersion string, serviceManifestName string) (result ServiceManifest, err error) {
 	req, err := client.GetPreparer(ctx, applicationTypeName, applicationTypeVersion, serviceManifestName)
 	if err != nil {

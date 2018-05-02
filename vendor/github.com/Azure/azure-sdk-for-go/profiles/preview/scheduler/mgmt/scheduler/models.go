@@ -26,32 +26,8 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type JobCollectionsClient = original.JobCollectionsClient
-
-func NewJobCollectionsClient(subscriptionID string) JobCollectionsClient {
-	return original.NewJobCollectionsClient(subscriptionID)
-}
-func NewJobCollectionsClientWithBaseURI(baseURI string, subscriptionID string) JobCollectionsClient {
-	return original.NewJobCollectionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type JobsClient = original.JobsClient
-
-func NewJobsClient(subscriptionID string) JobsClient {
-	return original.NewJobsClient(subscriptionID)
-}
-func NewJobsClientWithBaseURI(baseURI string, subscriptionID string) JobsClient {
-	return original.NewJobsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DayOfWeek = original.DayOfWeek
 
 const (
@@ -212,6 +188,63 @@ type ServiceBusTopicMessage = original.ServiceBusTopicMessage
 type Sku = original.Sku
 type StorageQueueMessage = original.StorageQueueMessage
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewJobCollectionsClient(subscriptionID string) JobCollectionsClient {
+	return original.NewJobCollectionsClient(subscriptionID)
+}
+func NewJobCollectionsClientWithBaseURI(baseURI string, subscriptionID string) JobCollectionsClient {
+	return original.NewJobCollectionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewJobsClient(subscriptionID string) JobsClient {
+	return original.NewJobsClient(subscriptionID)
+}
+func NewJobsClientWithBaseURI(baseURI string, subscriptionID string) JobsClient {
+	return original.NewJobsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return original.PossibleDayOfWeekValues()
+}
+func PossibleJobActionTypeValues() []JobActionType {
+	return original.PossibleJobActionTypeValues()
+}
+func PossibleJobCollectionStateValues() []JobCollectionState {
+	return original.PossibleJobCollectionStateValues()
+}
+func PossibleJobExecutionStatusValues() []JobExecutionStatus {
+	return original.PossibleJobExecutionStatusValues()
+}
+func PossibleJobHistoryActionNameValues() []JobHistoryActionName {
+	return original.PossibleJobHistoryActionNameValues()
+}
+func PossibleJobScheduleDayValues() []JobScheduleDay {
+	return original.PossibleJobScheduleDayValues()
+}
+func PossibleJobStateValues() []JobState {
+	return original.PossibleJobStateValues()
+}
+func PossibleRecurrenceFrequencyValues() []RecurrenceFrequency {
+	return original.PossibleRecurrenceFrequencyValues()
+}
+func PossibleRetryTypeValues() []RetryType {
+	return original.PossibleRetryTypeValues()
+}
+func PossibleServiceBusAuthenticationTypeValues() []ServiceBusAuthenticationType {
+	return original.PossibleServiceBusAuthenticationTypeValues()
+}
+func PossibleServiceBusTransportTypeValues() []ServiceBusTransportType {
+	return original.PossibleServiceBusTransportTypeValues()
+}
+func PossibleSkuDefinitionValues() []SkuDefinition {
+	return original.PossibleSkuDefinitionValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

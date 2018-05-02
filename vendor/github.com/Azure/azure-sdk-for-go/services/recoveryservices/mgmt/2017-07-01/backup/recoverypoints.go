@@ -41,11 +41,13 @@ func NewRecoveryPointsClientWithBaseURI(baseURI string, subscriptionID string) R
 
 // Get provides the information of the backed up data identified using RecoveryPointID. This is an asynchronous
 // operation. To know the status of the operation, call the GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with backed up item. containerName
-// is container name associated with backed up item. protectedItemName is backed up item name whose backup data
-// needs to be fetched. recoveryPointID is recoveryPointID represents the backed up data to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with backed up item.
+// containerName - container name associated with backed up item.
+// protectedItemName - backed up item name whose backup data needs to be fetched.
+// recoveryPointID - recoveryPointID represents the backed up data to be fetched.
 func (client RecoveryPointsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string) (result RecoveryPointResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID)
 	if err != nil {
@@ -114,11 +116,13 @@ func (client RecoveryPointsClient) GetResponder(resp *http.Response) (result Rec
 }
 
 // List lists the backup copies for the backed up item.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backed up item.
-// containerName is container name associated with the backed up item. protectedItemName is backed up item whose
-// backup copies are to be fetched. filter is oData filter options.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backed up item.
+// containerName - container name associated with the backed up item.
+// protectedItemName - backed up item whose backup copies are to be fetched.
+// filter - oData filter options.
 func (client RecoveryPointsClient) List(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, filter string) (result RecoveryPointResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, filter)

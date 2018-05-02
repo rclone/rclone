@@ -12,7 +12,7 @@
   "baseUrl": "https://cloudfunctions.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "Cloud Functions",
-  "description": "API for managing lightweight user-provided functions executed in response to events.",
+  "description": "Manages lightweight user-provided functions executed in response to events.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/functions",
   "fullyEncodeReservedExpansion": true,
@@ -340,7 +340,7 @@
                   ]
                 },
                 "generateUploadUrl": {
-                  "description": "Returns a signed URL for uploading a function source code.\nFor more information about the signed URL usage see:\nhttps://cloud.google.com/storage/docs/access-control/signed-urls.\nOnce the function source code upload is complete, the used signed\nURL should be provided in CreateFunction or UpdateFunction request\nas a reference to the function source code.\n\nWhen uploading source code to the generated signed URL, please follow\nthese restrictions:\n\n* Source file type should be a zip file.\n* Source file size should not exceed 100MB limit.\n\nWhen making a HTTP PUT request, these two headers need to be specified:\n\n* `content-type: application/zip`\n* `x-google-content-length-range: 0,104857600`",
+                  "description": "Returns a signed URL for uploading a function source code.\nFor more information about the signed URL usage see:\nhttps://cloud.google.com/storage/docs/access-control/signed-urls.\nOnce the function source code upload is complete, the used signed\nURL should be provided in CreateFunction or UpdateFunction request\nas a reference to the function source code.\n\nWhen uploading source code to the generated signed URL, please follow\nthese restrictions:\n\n* Source file type should be a zip file.\n* Source file size should not exceed 100MB limit.\n\nWhen making a HTTP PUT request, these two headers need to be specified:\n\n* `content-type: application/zip`\n* `x-goog-content-length-range: 0,104857600`",
                   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/functions:generateUploadUrl",
                   "httpMethod": "POST",
                   "id": "cloudfunctions.projects.locations.functions.generateUploadUrl",
@@ -469,7 +469,7 @@
       }
     }
   },
-  "revision": "20180120",
+  "revision": "20180416",
   "rootUrl": "https://cloudfunctions.googleapis.com/",
   "schemas": {
     "CallFunctionRequest": {
@@ -735,6 +735,10 @@
       "description": "A resource that represents Google Cloud Platform location.",
       "id": "Location",
       "properties": {
+        "displayName": {
+          "description": "The friendly name for this location, typically a nearby city name.\nFor example, \"Tokyo\".",
+          "type": "string"
+        },
         "labels": {
           "additionalProperties": {
             "type": "string"

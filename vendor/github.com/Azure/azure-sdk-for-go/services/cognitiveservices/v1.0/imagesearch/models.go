@@ -350,6 +350,11 @@ const (
 	ZMW Currency = "ZMW"
 )
 
+// PossibleCurrencyValues returns an array of possible values for the Currency const type.
+func PossibleCurrencyValues() []Currency {
+	return []Currency{AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, BMD, BND, BOB, BOV, BRL, BSD, BTN, BWP, BYR, BZD, CAD, CDF, CHE, CHF, CHW, CLF, CLP, CNY, COP, COU, CRC, CUC, CUP, CVE, CZK, DJF, DKK, DOP, DZD, EGP, ERN, ETB, EUR, FJD, FKP, GBP, GEL, GHS, GIP, GMD, GNF, GTQ, GYD, HKD, HNL, HRK, HTG, HUF, IDR, ILS, INR, IQD, IRR, ISK, JMD, JOD, JPY, KES, KGS, KHR, KMF, KPW, KRW, KWD, KYD, KZT, LAK, LBP, LKR, LRD, LSL, LYD, MAD, MDL, MGA, MKD, MMK, MNT, MOP, MRO, MUR, MVR, MWK, MXN, MXV, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PGK, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SBD, SCR, SDG, SEK, SGD, SHP, SLL, SOS, SRD, SSP, STD, SYP, SZL, THB, TJS, TMT, TND, TOP, TRY, TTD, TWD, TZS, UAH, UGX, USD, UYU, UZS, VEF, VND, VUV, WST, XAF, XCD, XOF, XPF, YER, ZAR, ZMW}
+}
+
 // ErrorCode enumerates the values for error code.
 type ErrorCode string
 
@@ -367,6 +372,11 @@ const (
 	// ServerError ...
 	ServerError ErrorCode = "ServerError"
 )
+
+// PossibleErrorCodeValues returns an array of possible values for the ErrorCode const type.
+func PossibleErrorCodeValues() []ErrorCode {
+	return []ErrorCode{InsufficientAuthorization, InvalidAuthorization, InvalidRequest, None, RateLimitExceeded, ServerError}
+}
 
 // ErrorSubCode enumerates the values for error sub code.
 type ErrorSubCode string
@@ -396,6 +406,11 @@ const (
 	UnexpectedError ErrorSubCode = "UnexpectedError"
 )
 
+// PossibleErrorSubCodeValues returns an array of possible values for the ErrorSubCode const type.
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return []ErrorSubCode{AuthorizationDisabled, AuthorizationExpired, AuthorizationMissing, AuthorizationRedundancy, Blocked, HTTPNotAllowed, NotImplemented, ParameterInvalidValue, ParameterMissing, ResourceError, UnexpectedError}
+}
+
 // Freshness enumerates the values for freshness.
 type Freshness string
 
@@ -407,6 +422,11 @@ const (
 	// Week ...
 	Week Freshness = "Week"
 )
+
+// PossibleFreshnessValues returns an array of possible values for the Freshness const type.
+func PossibleFreshnessValues() []Freshness {
+	return []Freshness{Day, Month, Week}
+}
 
 // ImageAspect enumerates the values for image aspect.
 type ImageAspect string
@@ -421,6 +441,11 @@ const (
 	// Wide ...
 	Wide ImageAspect = "Wide"
 )
+
+// PossibleImageAspectValues returns an array of possible values for the ImageAspect const type.
+func PossibleImageAspectValues() []ImageAspect {
+	return []ImageAspect{All, Square, Tall, Wide}
+}
 
 // ImageColor enumerates the values for image color.
 type ImageColor string
@@ -456,6 +481,11 @@ const (
 	Yellow ImageColor = "Yellow"
 )
 
+// PossibleImageColorValues returns an array of possible values for the ImageColor const type.
+func PossibleImageColorValues() []ImageColor {
+	return []ImageColor{Black, Blue, Brown, ColorOnly, Gray, Green, Monochrome, Orange, Pink, Purple, Red, Teal, White, Yellow}
+}
+
 // ImageContent enumerates the values for image content.
 type ImageContent string
 
@@ -466,6 +496,11 @@ const (
 	Portrait ImageContent = "Portrait"
 )
 
+// PossibleImageContentValues returns an array of possible values for the ImageContent const type.
+func PossibleImageContentValues() []ImageContent {
+	return []ImageContent{Face, Portrait}
+}
+
 // ImageCropType enumerates the values for image crop type.
 type ImageCropType string
 
@@ -473,6 +508,11 @@ const (
 	// Rectangular ...
 	Rectangular ImageCropType = "Rectangular"
 )
+
+// PossibleImageCropTypeValues returns an array of possible values for the ImageCropType const type.
+func PossibleImageCropTypeValues() []ImageCropType {
+	return []ImageCropType{Rectangular}
+}
 
 // ImageInsightModule enumerates the values for image insight module.
 type ImageInsightModule string
@@ -504,6 +544,11 @@ const (
 	ImageInsightModuleTags ImageInsightModule = "Tags"
 )
 
+// PossibleImageInsightModuleValues returns an array of possible values for the ImageInsightModule const type.
+func PossibleImageInsightModuleValues() []ImageInsightModule {
+	return []ImageInsightModule{ImageInsightModuleAll, ImageInsightModuleBRQ, ImageInsightModuleCaption, ImageInsightModuleCollections, ImageInsightModulePagesIncluding, ImageInsightModuleRecipes, ImageInsightModuleRecognizedEntities, ImageInsightModuleRelatedSearches, ImageInsightModuleShoppingSources, ImageInsightModuleSimilarImages, ImageInsightModuleSimilarProducts, ImageInsightModuleTags}
+}
+
 // ImageLicense enumerates the values for image license.
 type ImageLicense string
 
@@ -524,6 +569,11 @@ const (
 	ImageLicenseShareCommercially ImageLicense = "ShareCommercially"
 )
 
+// PossibleImageLicenseValues returns an array of possible values for the ImageLicense const type.
+func PossibleImageLicenseValues() []ImageLicense {
+	return []ImageLicense{ImageLicenseAll, ImageLicenseAny, ImageLicenseModify, ImageLicenseModifyCommercially, ImageLicensePublic, ImageLicenseShare, ImageLicenseShareCommercially}
+}
+
 // ImageSize enumerates the values for image size.
 type ImageSize string
 
@@ -539,6 +589,11 @@ const (
 	// ImageSizeWallpaper ...
 	ImageSizeWallpaper ImageSize = "Wallpaper"
 )
+
+// PossibleImageSizeValues returns an array of possible values for the ImageSize const type.
+func PossibleImageSizeValues() []ImageSize {
+	return []ImageSize{ImageSizeAll, ImageSizeLarge, ImageSizeMedium, ImageSizeSmall, ImageSizeWallpaper}
+}
 
 // ImageType enumerates the values for image type.
 type ImageType string
@@ -557,6 +612,11 @@ const (
 	// Transparent ...
 	Transparent ImageType = "Transparent"
 )
+
+// PossibleImageTypeValues returns an array of possible values for the ImageType const type.
+func PossibleImageTypeValues() []ImageType {
+	return []ImageType{AnimatedGif, Clipart, Line, Photo, Shopping, Transparent}
+}
 
 // ItemAvailability enumerates the values for item availability.
 type ItemAvailability string
@@ -580,6 +640,11 @@ const (
 	SoldOut ItemAvailability = "SoldOut"
 )
 
+// PossibleItemAvailabilityValues returns an array of possible values for the ItemAvailability const type.
+func PossibleItemAvailabilityValues() []ItemAvailability {
+	return []ItemAvailability{Discontinued, InStock, InStoreOnly, LimitedAvailability, OnlineOnly, OutOfStock, PreOrder, SoldOut}
+}
+
 // SafeSearch enumerates the values for safe search.
 type SafeSearch string
 
@@ -592,6 +657,11 @@ const (
 	Strict SafeSearch = "Strict"
 )
 
+// PossibleSafeSearchValues returns an array of possible values for the SafeSearch const type.
+func PossibleSafeSearchValues() []SafeSearch {
+	return []SafeSearch{Moderate, Off, Strict}
+}
+
 // Type enumerates the values for type.
 type Type string
 
@@ -603,6 +673,11 @@ const (
 	// TypeRating ...
 	TypeRating Type = "Rating"
 )
+
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeAggregateRating, TypePropertiesItem, TypeRating}
+}
 
 // TypeBasicResponseBase enumerates the values for type basic response base.
 type TypeBasicResponseBase string
@@ -662,28 +737,15 @@ const (
 	TypeWebPage TypeBasicResponseBase = "WebPage"
 )
 
+// PossibleTypeBasicResponseBaseValues returns an array of possible values for the TypeBasicResponseBase const type.
+func PossibleTypeBasicResponseBaseValues() []TypeBasicResponseBase {
+	return []TypeBasicResponseBase{TypeAggregateOffer, TypeAnswer, TypeCollectionPage, TypeCreativeWork, TypeErrorResponse, TypeIdentifiable, TypeImageGallery, TypeImageInsights, TypeImageObject, TypeImages, TypeIntangible, TypeMediaObject, TypeNormalizedRectangle, TypeOffer, TypeOrganization, TypePerson, TypeRecipe, TypeRecognizedEntity, TypeRecognizedEntityRegion, TypeResponse, TypeResponseBase, TypeSearchResultsAnswer, TypeStructuredValue, TypeThing, TypeTrendingImages, TypeWebPage}
+}
+
 // AggregateOffer defines a list of offers from merchants that are related to the image.
 type AggregateOffer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Name - The name of the thing represented by this object.
-	Name *string `json:"name,omitempty"`
-	// URL - The URL to get more information about the thing represented by this object.
-	URL *string `json:"url,omitempty"`
-	// Image - An image of the item.
-	Image *ImageObject `json:"image,omitempty"`
-	// Description - A short description of the item.
-	Description *string `json:"description,omitempty"`
-	// AlternateName - An alias for the item
-	AlternateName *string `json:"alternateName,omitempty"`
-	// BingID - An ID that uniquely identifies this item.
-	BingID *string `json:"bingId,omitempty"`
+	// Offers - A list of offers from merchants that have offerings related to the image.
+	Offers *[]BasicOffer `json:"offers,omitempty"`
 	// Seller - Seller for this offer
 	Seller *Organization `json:"seller,omitempty"`
 	// Price - The item's price.
@@ -696,19 +758,84 @@ type AggregateOffer struct {
 	AggregateRating *AggregateRating `json:"aggregateRating,omitempty"`
 	// LastUpdated - The last date that the offer was updated. The date is in the form YYYY-MM-DD.
 	LastUpdated *string `json:"lastUpdated,omitempty"`
-	// Offers - A list of offers from merchants that have offerings related to the image.
-	Offers *[]BasicOffer `json:"offers,omitempty"`
+	// Name - The name of the thing represented by this object.
+	Name *string `json:"name,omitempty"`
+	// URL - The URL to get more information about the thing represented by this object.
+	URL *string `json:"url,omitempty"`
+	// Image - An image of the item.
+	Image *ImageObject `json:"image,omitempty"`
+	// Description - A short description of the item.
+	Description *string `json:"description,omitempty"`
+	// AlternateName - An alias for the item
+	AlternateName *string `json:"alternateName,omitempty"`
+	// BingID - An ID that uniquely identifies this item.
+	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for AggregateOffer.
 func (ao AggregateOffer) MarshalJSON() ([]byte, error) {
 	ao.Type = TypeAggregateOffer
-	type Alias AggregateOffer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ao),
-	})
+	objectMap := make(map[string]interface{})
+	if ao.Offers != nil {
+		objectMap["offers"] = ao.Offers
+	}
+	if ao.Seller != nil {
+		objectMap["seller"] = ao.Seller
+	}
+	if ao.Price != nil {
+		objectMap["price"] = ao.Price
+	}
+	if ao.PriceCurrency != "" {
+		objectMap["priceCurrency"] = ao.PriceCurrency
+	}
+	if ao.Availability != "" {
+		objectMap["availability"] = ao.Availability
+	}
+	if ao.AggregateRating != nil {
+		objectMap["aggregateRating"] = ao.AggregateRating
+	}
+	if ao.LastUpdated != nil {
+		objectMap["lastUpdated"] = ao.LastUpdated
+	}
+	if ao.Name != nil {
+		objectMap["name"] = ao.Name
+	}
+	if ao.URL != nil {
+		objectMap["url"] = ao.URL
+	}
+	if ao.Image != nil {
+		objectMap["image"] = ao.Image
+	}
+	if ao.Description != nil {
+		objectMap["description"] = ao.Description
+	}
+	if ao.AlternateName != nil {
+		objectMap["alternateName"] = ao.AlternateName
+	}
+	if ao.BingID != nil {
+		objectMap["bingId"] = ao.BingID
+	}
+	if ao.ReadLink != nil {
+		objectMap["readLink"] = ao.ReadLink
+	}
+	if ao.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ao.WebSearchURL
+	}
+	if ao.ID != nil {
+		objectMap["id"] = ao.ID
+	}
+	if ao.Type != "" {
+		objectMap["_type"] = ao.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for AggregateOffer.
@@ -913,175 +1040,161 @@ func (ao *AggregateOffer) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["offers"]
-	if v != nil {
-		offers, err := unmarshalBasicOfferArray(*m["offers"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "offers":
+			if v != nil {
+				offers, err := unmarshalBasicOfferArray(*v)
+				if err != nil {
+					return err
+				}
+				ao.Offers = &offers
+			}
+		case "seller":
+			if v != nil {
+				var seller Organization
+				err = json.Unmarshal(*v, &seller)
+				if err != nil {
+					return err
+				}
+				ao.Seller = &seller
+			}
+		case "price":
+			if v != nil {
+				var price float64
+				err = json.Unmarshal(*v, &price)
+				if err != nil {
+					return err
+				}
+				ao.Price = &price
+			}
+		case "priceCurrency":
+			if v != nil {
+				var priceCurrency Currency
+				err = json.Unmarshal(*v, &priceCurrency)
+				if err != nil {
+					return err
+				}
+				ao.PriceCurrency = priceCurrency
+			}
+		case "availability":
+			if v != nil {
+				var availability ItemAvailability
+				err = json.Unmarshal(*v, &availability)
+				if err != nil {
+					return err
+				}
+				ao.Availability = availability
+			}
+		case "aggregateRating":
+			if v != nil {
+				var aggregateRating AggregateRating
+				err = json.Unmarshal(*v, &aggregateRating)
+				if err != nil {
+					return err
+				}
+				ao.AggregateRating = &aggregateRating
+			}
+		case "lastUpdated":
+			if v != nil {
+				var lastUpdated string
+				err = json.Unmarshal(*v, &lastUpdated)
+				if err != nil {
+					return err
+				}
+				ao.LastUpdated = &lastUpdated
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ao.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				ao.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				ao.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				ao.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				ao.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				ao.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				ao.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				ao.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ao.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ao.Type = typeVar
+			}
 		}
-		ao.Offers = &offers
-	}
-
-	v = m["seller"]
-	if v != nil {
-		var seller Organization
-		err = json.Unmarshal(*m["seller"], &seller)
-		if err != nil {
-			return err
-		}
-		ao.Seller = &seller
-	}
-
-	v = m["price"]
-	if v != nil {
-		var price float64
-		err = json.Unmarshal(*m["price"], &price)
-		if err != nil {
-			return err
-		}
-		ao.Price = &price
-	}
-
-	v = m["priceCurrency"]
-	if v != nil {
-		var priceCurrency Currency
-		err = json.Unmarshal(*m["priceCurrency"], &priceCurrency)
-		if err != nil {
-			return err
-		}
-		ao.PriceCurrency = priceCurrency
-	}
-
-	v = m["availability"]
-	if v != nil {
-		var availability ItemAvailability
-		err = json.Unmarshal(*m["availability"], &availability)
-		if err != nil {
-			return err
-		}
-		ao.Availability = availability
-	}
-
-	v = m["aggregateRating"]
-	if v != nil {
-		var aggregateRating AggregateRating
-		err = json.Unmarshal(*m["aggregateRating"], &aggregateRating)
-		if err != nil {
-			return err
-		}
-		ao.AggregateRating = &aggregateRating
-	}
-
-	v = m["lastUpdated"]
-	if v != nil {
-		var lastUpdated string
-		err = json.Unmarshal(*m["lastUpdated"], &lastUpdated)
-		if err != nil {
-			return err
-		}
-		ao.LastUpdated = &lastUpdated
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ao.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		ao.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		ao.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		ao.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		ao.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		ao.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		ao.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		ao.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ao.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		ao.Type = _type
 	}
 
 	return nil
@@ -1089,27 +1202,38 @@ func (ao *AggregateOffer) UnmarshalJSON(body []byte) error {
 
 // AggregateRating defines the metrics that indicate how well an item was rated by others.
 type AggregateRating struct {
-	// Text - Text representation of an item.
-	Text *string `json:"text,omitempty"`
-	// Type - Possible values include: 'TypePropertiesItem', 'TypeAggregateRating', 'TypeRating'
-	Type Type `json:"_type,omitempty"`
+	// ReviewCount - The number of times the recipe has been rated or reviewed.
+	ReviewCount *int32 `json:"reviewCount,omitempty"`
 	// RatingValue - The mean (average) rating. The possible values are 1.0 through 5.0.
 	RatingValue *float64 `json:"ratingValue,omitempty"`
 	// BestRating - The highest rated review. The possible values are 1.0 through 5.0.
 	BestRating *float64 `json:"bestRating,omitempty"`
-	// ReviewCount - The number of times the recipe has been rated or reviewed.
-	ReviewCount *int32 `json:"reviewCount,omitempty"`
+	// Text - Text representation of an item.
+	Text *string `json:"text,omitempty"`
+	// Type - Possible values include: 'TypePropertiesItem', 'TypeAggregateRating', 'TypeRating'
+	Type Type `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for AggregateRating.
 func (ar AggregateRating) MarshalJSON() ([]byte, error) {
 	ar.Type = TypeAggregateRating
-	type Alias AggregateRating
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ar),
-	})
+	objectMap := make(map[string]interface{})
+	if ar.ReviewCount != nil {
+		objectMap["reviewCount"] = ar.ReviewCount
+	}
+	if ar.RatingValue != nil {
+		objectMap["ratingValue"] = ar.RatingValue
+	}
+	if ar.BestRating != nil {
+		objectMap["bestRating"] = ar.BestRating
+	}
+	if ar.Text != nil {
+		objectMap["text"] = ar.Text
+	}
+	if ar.Type != "" {
+		objectMap["_type"] = ar.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsAggregateRating is the BasicPropertiesItem implementation for AggregateRating.
@@ -1147,14 +1271,14 @@ type BasicAnswer interface {
 
 // Answer defines an answer.
 type Answer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
 	// ReadLink - The URL that returns this resource.
 	ReadLink *string `json:"readLink,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicAnswer(body []byte) (BasicAnswer, error) {
@@ -1201,12 +1325,20 @@ func unmarshalBasicAnswerArray(body []byte) ([]BasicAnswer, error) {
 // MarshalJSON is the custom marshaler for Answer.
 func (a Answer) MarshalJSON() ([]byte, error) {
 	a.Type = TypeAnswer
-	type Alias Answer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(a),
-	})
+	objectMap := make(map[string]interface{})
+	if a.ReadLink != nil {
+		objectMap["readLink"] = a.ReadLink
+	}
+	if a.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = a.WebSearchURL
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Type != "" {
+		objectMap["_type"] = a.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Answer.
@@ -1412,14 +1544,14 @@ type BasicCollectionPage interface {
 
 // CollectionPage defines a link to a webpage that contains a collection.
 type CollectionPage struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -1432,14 +1564,14 @@ type CollectionPage struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicCollectionPage(body []byte) (BasicCollectionPage, error) {
@@ -1482,12 +1614,50 @@ func unmarshalBasicCollectionPageArray(body []byte) ([]BasicCollectionPage, erro
 // MarshalJSON is the custom marshaler for CollectionPage.
 func (cp CollectionPage) MarshalJSON() ([]byte, error) {
 	cp.Type = TypeCollectionPage
-	type Alias CollectionPage
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cp),
-	})
+	objectMap := make(map[string]interface{})
+	if cp.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = cp.ThumbnailURL
+	}
+	if cp.Provider != nil {
+		objectMap["provider"] = cp.Provider
+	}
+	if cp.DatePublished != nil {
+		objectMap["datePublished"] = cp.DatePublished
+	}
+	if cp.Text != nil {
+		objectMap["text"] = cp.Text
+	}
+	if cp.Name != nil {
+		objectMap["name"] = cp.Name
+	}
+	if cp.URL != nil {
+		objectMap["url"] = cp.URL
+	}
+	if cp.Image != nil {
+		objectMap["image"] = cp.Image
+	}
+	if cp.Description != nil {
+		objectMap["description"] = cp.Description
+	}
+	if cp.AlternateName != nil {
+		objectMap["alternateName"] = cp.AlternateName
+	}
+	if cp.BingID != nil {
+		objectMap["bingId"] = cp.BingID
+	}
+	if cp.ReadLink != nil {
+		objectMap["readLink"] = cp.ReadLink
+	}
+	if cp.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = cp.WebSearchURL
+	}
+	if cp.ID != nil {
+		objectMap["id"] = cp.ID
+	}
+	if cp.Type != "" {
+		objectMap["_type"] = cp.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for CollectionPage.
@@ -1692,145 +1862,134 @@ func (cp *CollectionPage) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				cp.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				cp.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				cp.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				cp.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cp.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				cp.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				cp.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				cp.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				cp.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				cp.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				cp.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				cp.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cp.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cp.Type = typeVar
+			}
 		}
-		cp.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		cp.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		cp.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		cp.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cp.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		cp.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		cp.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		cp.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		cp.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		cp.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		cp.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		cp.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cp.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		cp.Type = _type
 	}
 
 	return nil
@@ -1851,16 +2010,17 @@ type BasicCreativeWork interface {
 	AsCreativeWork() (*CreativeWork, bool)
 }
 
-// CreativeWork the most generic kind of creative work, including books, movies, photographs, software programs, etc.
+// CreativeWork the most generic kind of creative work, including books, movies, photographs, software programs,
+// etc.
 type CreativeWork struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -1873,14 +2033,14 @@ type CreativeWork struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicCreativeWork(body []byte) (BasicCreativeWork, error) {
@@ -1943,12 +2103,50 @@ func unmarshalBasicCreativeWorkArray(body []byte) ([]BasicCreativeWork, error) {
 // MarshalJSON is the custom marshaler for CreativeWork.
 func (cw CreativeWork) MarshalJSON() ([]byte, error) {
 	cw.Type = TypeCreativeWork
-	type Alias CreativeWork
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cw),
-	})
+	objectMap := make(map[string]interface{})
+	if cw.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = cw.ThumbnailURL
+	}
+	if cw.Provider != nil {
+		objectMap["provider"] = cw.Provider
+	}
+	if cw.DatePublished != nil {
+		objectMap["datePublished"] = cw.DatePublished
+	}
+	if cw.Text != nil {
+		objectMap["text"] = cw.Text
+	}
+	if cw.Name != nil {
+		objectMap["name"] = cw.Name
+	}
+	if cw.URL != nil {
+		objectMap["url"] = cw.URL
+	}
+	if cw.Image != nil {
+		objectMap["image"] = cw.Image
+	}
+	if cw.Description != nil {
+		objectMap["description"] = cw.Description
+	}
+	if cw.AlternateName != nil {
+		objectMap["alternateName"] = cw.AlternateName
+	}
+	if cw.BingID != nil {
+		objectMap["bingId"] = cw.BingID
+	}
+	if cw.ReadLink != nil {
+		objectMap["readLink"] = cw.ReadLink
+	}
+	if cw.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = cw.WebSearchURL
+	}
+	if cw.ID != nil {
+		objectMap["id"] = cw.ID
+	}
+	if cw.Type != "" {
+		objectMap["_type"] = cw.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for CreativeWork.
@@ -2153,145 +2351,134 @@ func (cw *CreativeWork) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				cw.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				cw.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				cw.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				cw.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cw.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				cw.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				cw.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				cw.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				cw.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				cw.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				cw.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				cw.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cw.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cw.Type = typeVar
+			}
 		}
-		cw.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		cw.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		cw.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		cw.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cw.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		cw.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		cw.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		cw.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		cw.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		cw.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		cw.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		cw.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cw.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		cw.Type = _type
 	}
 
 	return nil
@@ -2315,27 +2502,38 @@ type Error struct {
 
 // ErrorResponse the top-level response that represents a failed request.
 type ErrorResponse struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	// Errors - A list of errors that describe the reasons why the request failed.
+	Errors *[]Error `json:"errors,omitempty"`
 	// ReadLink - The URL that returns this resource.
 	ReadLink *string `json:"readLink,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Errors - A list of errors that describe the reasons why the request failed.
-	Errors *[]Error `json:"errors,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ErrorResponse.
 func (er ErrorResponse) MarshalJSON() ([]byte, error) {
 	er.Type = TypeErrorResponse
-	type Alias ErrorResponse
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(er),
-	})
+	objectMap := make(map[string]interface{})
+	if er.Errors != nil {
+		objectMap["errors"] = er.Errors
+	}
+	if er.ReadLink != nil {
+		objectMap["readLink"] = er.ReadLink
+	}
+	if er.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = er.WebSearchURL
+	}
+	if er.ID != nil {
+		objectMap["id"] = er.ID
+	}
+	if er.Type != "" {
+		objectMap["_type"] = er.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for ErrorResponse.
@@ -2575,10 +2773,10 @@ type BasicIdentifiable interface {
 
 // Identifiable defines the identity of a resource.
 type Identifiable struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
 	// ID - A String identifier.
 	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicIdentifiable(body []byte) (BasicIdentifiable, error) {
@@ -2713,12 +2911,14 @@ func unmarshalBasicIdentifiableArray(body []byte) ([]BasicIdentifiable, error) {
 // MarshalJSON is the custom marshaler for Identifiable.
 func (i Identifiable) MarshalJSON() ([]byte, error) {
 	i.Type = TypeIdentifiable
-	type Alias Identifiable
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i),
-	})
+	objectMap := make(map[string]interface{})
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != "" {
+		objectMap["_type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Identifiable.
@@ -2918,14 +3118,20 @@ func (i Identifiable) AsBasicResponseBase() (BasicResponseBase, bool) {
 
 // ImageGallery defines a link to a webpage that contains a collection of related images.
 type ImageGallery struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Source - The publisher or social network where the images were found. You must attribute the publisher as the source where the collection was found.
+	Source *string `json:"source,omitempty"`
+	// ImagesCount - The number of related images found in the collection.
+	ImagesCount *int64 `json:"imagesCount,omitempty"`
+	// FollowersCount - The number of users on the social network that follow the creator.
+	FollowersCount *int64 `json:"followersCount,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -2938,31 +3144,72 @@ type ImageGallery struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
-	// Source - The publisher or social network where the images were found. You must attribute the publisher as the source where the collection was found.
-	Source *string `json:"source,omitempty"`
-	// ImagesCount - The number of related images found in the collection.
-	ImagesCount *int64 `json:"imagesCount,omitempty"`
-	// FollowersCount - The number of users on the social network that follow the creator.
-	FollowersCount *int64 `json:"followersCount,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ImageGallery.
 func (ig ImageGallery) MarshalJSON() ([]byte, error) {
 	ig.Type = TypeImageGallery
-	type Alias ImageGallery
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ig),
-	})
+	objectMap := make(map[string]interface{})
+	if ig.Source != nil {
+		objectMap["source"] = ig.Source
+	}
+	if ig.ImagesCount != nil {
+		objectMap["imagesCount"] = ig.ImagesCount
+	}
+	if ig.FollowersCount != nil {
+		objectMap["followersCount"] = ig.FollowersCount
+	}
+	if ig.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = ig.ThumbnailURL
+	}
+	if ig.Provider != nil {
+		objectMap["provider"] = ig.Provider
+	}
+	if ig.DatePublished != nil {
+		objectMap["datePublished"] = ig.DatePublished
+	}
+	if ig.Text != nil {
+		objectMap["text"] = ig.Text
+	}
+	if ig.Name != nil {
+		objectMap["name"] = ig.Name
+	}
+	if ig.URL != nil {
+		objectMap["url"] = ig.URL
+	}
+	if ig.Image != nil {
+		objectMap["image"] = ig.Image
+	}
+	if ig.Description != nil {
+		objectMap["description"] = ig.Description
+	}
+	if ig.AlternateName != nil {
+		objectMap["alternateName"] = ig.AlternateName
+	}
+	if ig.BingID != nil {
+		objectMap["bingId"] = ig.BingID
+	}
+	if ig.ReadLink != nil {
+		objectMap["readLink"] = ig.ReadLink
+	}
+	if ig.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ig.WebSearchURL
+	}
+	if ig.ID != nil {
+		objectMap["id"] = ig.ID
+	}
+	if ig.Type != "" {
+		objectMap["_type"] = ig.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for ImageGallery.
@@ -3167,175 +3414,161 @@ func (ig *ImageGallery) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["source"]
-	if v != nil {
-		var source string
-		err = json.Unmarshal(*m["source"], &source)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "source":
+			if v != nil {
+				var source string
+				err = json.Unmarshal(*v, &source)
+				if err != nil {
+					return err
+				}
+				ig.Source = &source
+			}
+		case "imagesCount":
+			if v != nil {
+				var imagesCount int64
+				err = json.Unmarshal(*v, &imagesCount)
+				if err != nil {
+					return err
+				}
+				ig.ImagesCount = &imagesCount
+			}
+		case "followersCount":
+			if v != nil {
+				var followersCount int64
+				err = json.Unmarshal(*v, &followersCount)
+				if err != nil {
+					return err
+				}
+				ig.FollowersCount = &followersCount
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				ig.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				ig.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				ig.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				ig.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ig.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				ig.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				ig.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				ig.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				ig.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				ig.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				ig.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				ig.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ig.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ig.Type = typeVar
+			}
 		}
-		ig.Source = &source
-	}
-
-	v = m["imagesCount"]
-	if v != nil {
-		var imagesCount int64
-		err = json.Unmarshal(*m["imagesCount"], &imagesCount)
-		if err != nil {
-			return err
-		}
-		ig.ImagesCount = &imagesCount
-	}
-
-	v = m["followersCount"]
-	if v != nil {
-		var followersCount int64
-		err = json.Unmarshal(*m["followersCount"], &followersCount)
-		if err != nil {
-			return err
-		}
-		ig.FollowersCount = &followersCount
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		ig.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		ig.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		ig.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		ig.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ig.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		ig.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		ig.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		ig.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		ig.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		ig.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		ig.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		ig.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ig.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		ig.Type = _type
 	}
 
 	return nil
@@ -3349,14 +3582,6 @@ func (ig *ImageGallery) UnmarshalJSON(body []byte) error {
 // to only Caption, then this object includes only the imageCaption field.
 type ImageInsights struct {
 	autorest.Response `json:"-"`
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// ImageInsightsToken - A token that you use in a subsequent call to the Image Search API to get more information about the image. For information about using this token, see the insightsToken query parameter. This token has the same usage as the token in the Image object.
 	ImageInsightsToken *string `json:"imageInsightsToken,omitempty"`
 	// BestRepresentativeQuery - The query term that best represents the image. Clicking the link in the Query object, takes the user to a webpage with more pictures of the image.
@@ -3381,17 +3606,69 @@ type ImageInsights struct {
 	RecognizedEntityGroups *RecognizedEntitiesModule `json:"recognizedEntityGroups,omitempty"`
 	// ImageTags - A list of characteristics of the content found in the image. For example, if the image is of a person, the tags might indicate the person's gender and the type of clothes they're wearing.
 	ImageTags *ImageTagsModule `json:"imageTags,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ImageInsights.
 func (ii ImageInsights) MarshalJSON() ([]byte, error) {
 	ii.Type = TypeImageInsights
-	type Alias ImageInsights
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ii),
-	})
+	objectMap := make(map[string]interface{})
+	if ii.ImageInsightsToken != nil {
+		objectMap["imageInsightsToken"] = ii.ImageInsightsToken
+	}
+	if ii.BestRepresentativeQuery != nil {
+		objectMap["bestRepresentativeQuery"] = ii.BestRepresentativeQuery
+	}
+	if ii.ImageCaption != nil {
+		objectMap["imageCaption"] = ii.ImageCaption
+	}
+	if ii.RelatedCollections != nil {
+		objectMap["relatedCollections"] = ii.RelatedCollections
+	}
+	if ii.PagesIncluding != nil {
+		objectMap["pagesIncluding"] = ii.PagesIncluding
+	}
+	if ii.ShoppingSources != nil {
+		objectMap["shoppingSources"] = ii.ShoppingSources
+	}
+	if ii.RelatedSearches != nil {
+		objectMap["relatedSearches"] = ii.RelatedSearches
+	}
+	if ii.Recipes != nil {
+		objectMap["recipes"] = ii.Recipes
+	}
+	if ii.VisuallySimilarImages != nil {
+		objectMap["visuallySimilarImages"] = ii.VisuallySimilarImages
+	}
+	if ii.VisuallySimilarProducts != nil {
+		objectMap["visuallySimilarProducts"] = ii.VisuallySimilarProducts
+	}
+	if ii.RecognizedEntityGroups != nil {
+		objectMap["recognizedEntityGroups"] = ii.RecognizedEntityGroups
+	}
+	if ii.ImageTags != nil {
+		objectMap["imageTags"] = ii.ImageTags
+	}
+	if ii.ReadLink != nil {
+		objectMap["readLink"] = ii.ReadLink
+	}
+	if ii.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ii.WebSearchURL
+	}
+	if ii.ID != nil {
+		objectMap["id"] = ii.ID
+	}
+	if ii.Type != "" {
+		objectMap["_type"] = ii.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for ImageInsights.
@@ -3601,34 +3878,18 @@ type ImageInsightsImageCaption struct {
 
 // ImageObject defines an image
 type ImageObject struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Name - The name of the thing represented by this object.
-	Name *string `json:"name,omitempty"`
-	// URL - The URL to get more information about the thing represented by this object.
-	URL *string `json:"url,omitempty"`
-	// Image - An image of the item.
-	Image *ImageObject `json:"image,omitempty"`
-	// Description - A short description of the item.
-	Description *string `json:"description,omitempty"`
-	// AlternateName - An alias for the item
-	AlternateName *string `json:"alternateName,omitempty"`
-	// BingID - An ID that uniquely identifies this item.
-	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
+	// Thumbnail - The URL to a thumbnail of the image
+	Thumbnail *ImageObject `json:"thumbnail,omitempty"`
+	// ImageInsightsToken - The token that you use in a subsequent call to the Image Search API to get additional information about the image. For information about using this token, see the insightsToken query parameter.
+	ImageInsightsToken *string `json:"imageInsightsToken,omitempty"`
+	// InsightsMetadata - A count of the number of websites where you can shop or perform other actions related to the image. For example, if the image is of an apple pie, this object includes a count of the number of websites where you can buy an apple pie. To indicate the number of offers in your UX, include badging such as a shopping cart icon that contains the count. When the user clicks on the icon, use imageInisghtsToken to get the list of websites.
+	InsightsMetadata *ImagesImageMetadata `json:"insightsMetadata,omitempty"`
+	// ImageID - Unique Id for the image
+	ImageID *string `json:"imageId,omitempty"`
+	// AccentColor - A three-byte hexadecimal number that represents the color that dominates the image. Use the color as the temporary background in your client until the image is loaded.
+	AccentColor *string `json:"accentColor,omitempty"`
+	// VisualWords - Visual representation of the image. Used for getting more sizes
+	VisualWords *string `json:"visualWords,omitempty"`
 	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
 	ContentURL *string `json:"contentUrl,omitempty"`
 	// HostPageURL - URL of the page that hosts the media object.
@@ -3643,29 +3904,122 @@ type ImageObject struct {
 	Width *int32 `json:"width,omitempty"`
 	// Height - The height of the source media object, in pixels.
 	Height *int32 `json:"height,omitempty"`
-	// Thumbnail - The URL to a thumbnail of the image
-	Thumbnail *ImageObject `json:"thumbnail,omitempty"`
-	// ImageInsightsToken - The token that you use in a subsequent call to the Image Search API to get additional information about the image. For information about using this token, see the insightsToken query parameter.
-	ImageInsightsToken *string `json:"imageInsightsToken,omitempty"`
-	// InsightsMetadata - A count of the number of websites where you can shop or perform other actions related to the image. For example, if the image is of an apple pie, this object includes a count of the number of websites where you can buy an apple pie. To indicate the number of offers in your UX, include badging such as a shopping cart icon that contains the count. When the user clicks on the icon, use imageInisghtsToken to get the list of websites.
-	InsightsMetadata *ImagesImageMetadata `json:"insightsMetadata,omitempty"`
-	// ImageID - Unique Id for the image
-	ImageID *string `json:"imageId,omitempty"`
-	// AccentColor - A three-byte hexadecimal number that represents the color that dominates the image. Use the color as the temporary background in your client until the image is loaded.
-	AccentColor *string `json:"accentColor,omitempty"`
-	// VisualWords - Visual representation of the image. Used for getting more sizes
-	VisualWords *string `json:"visualWords,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
+	// Name - The name of the thing represented by this object.
+	Name *string `json:"name,omitempty"`
+	// URL - The URL to get more information about the thing represented by this object.
+	URL *string `json:"url,omitempty"`
+	// Image - An image of the item.
+	Image *ImageObject `json:"image,omitempty"`
+	// Description - A short description of the item.
+	Description *string `json:"description,omitempty"`
+	// AlternateName - An alias for the item
+	AlternateName *string `json:"alternateName,omitempty"`
+	// BingID - An ID that uniquely identifies this item.
+	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ImageObject.
 func (ioVar ImageObject) MarshalJSON() ([]byte, error) {
 	ioVar.Type = TypeImageObject
-	type Alias ImageObject
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ioVar),
-	})
+	objectMap := make(map[string]interface{})
+	if ioVar.Thumbnail != nil {
+		objectMap["thumbnail"] = ioVar.Thumbnail
+	}
+	if ioVar.ImageInsightsToken != nil {
+		objectMap["imageInsightsToken"] = ioVar.ImageInsightsToken
+	}
+	if ioVar.InsightsMetadata != nil {
+		objectMap["insightsMetadata"] = ioVar.InsightsMetadata
+	}
+	if ioVar.ImageID != nil {
+		objectMap["imageId"] = ioVar.ImageID
+	}
+	if ioVar.AccentColor != nil {
+		objectMap["accentColor"] = ioVar.AccentColor
+	}
+	if ioVar.VisualWords != nil {
+		objectMap["visualWords"] = ioVar.VisualWords
+	}
+	if ioVar.ContentURL != nil {
+		objectMap["contentUrl"] = ioVar.ContentURL
+	}
+	if ioVar.HostPageURL != nil {
+		objectMap["hostPageUrl"] = ioVar.HostPageURL
+	}
+	if ioVar.ContentSize != nil {
+		objectMap["contentSize"] = ioVar.ContentSize
+	}
+	if ioVar.EncodingFormat != nil {
+		objectMap["encodingFormat"] = ioVar.EncodingFormat
+	}
+	if ioVar.HostPageDisplayURL != nil {
+		objectMap["hostPageDisplayUrl"] = ioVar.HostPageDisplayURL
+	}
+	if ioVar.Width != nil {
+		objectMap["width"] = ioVar.Width
+	}
+	if ioVar.Height != nil {
+		objectMap["height"] = ioVar.Height
+	}
+	if ioVar.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = ioVar.ThumbnailURL
+	}
+	if ioVar.Provider != nil {
+		objectMap["provider"] = ioVar.Provider
+	}
+	if ioVar.DatePublished != nil {
+		objectMap["datePublished"] = ioVar.DatePublished
+	}
+	if ioVar.Text != nil {
+		objectMap["text"] = ioVar.Text
+	}
+	if ioVar.Name != nil {
+		objectMap["name"] = ioVar.Name
+	}
+	if ioVar.URL != nil {
+		objectMap["url"] = ioVar.URL
+	}
+	if ioVar.Image != nil {
+		objectMap["image"] = ioVar.Image
+	}
+	if ioVar.Description != nil {
+		objectMap["description"] = ioVar.Description
+	}
+	if ioVar.AlternateName != nil {
+		objectMap["alternateName"] = ioVar.AlternateName
+	}
+	if ioVar.BingID != nil {
+		objectMap["bingId"] = ioVar.BingID
+	}
+	if ioVar.ReadLink != nil {
+		objectMap["readLink"] = ioVar.ReadLink
+	}
+	if ioVar.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ioVar.WebSearchURL
+	}
+	if ioVar.ID != nil {
+		objectMap["id"] = ioVar.ID
+	}
+	if ioVar.Type != "" {
+		objectMap["_type"] = ioVar.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for ImageObject.
@@ -3870,275 +4224,251 @@ func (ioVar *ImageObject) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnail"]
-	if v != nil {
-		var thumbnail ImageObject
-		err = json.Unmarshal(*m["thumbnail"], &thumbnail)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnail":
+			if v != nil {
+				var thumbnail ImageObject
+				err = json.Unmarshal(*v, &thumbnail)
+				if err != nil {
+					return err
+				}
+				ioVar.Thumbnail = &thumbnail
+			}
+		case "imageInsightsToken":
+			if v != nil {
+				var imageInsightsToken string
+				err = json.Unmarshal(*v, &imageInsightsToken)
+				if err != nil {
+					return err
+				}
+				ioVar.ImageInsightsToken = &imageInsightsToken
+			}
+		case "insightsMetadata":
+			if v != nil {
+				var insightsMetadata ImagesImageMetadata
+				err = json.Unmarshal(*v, &insightsMetadata)
+				if err != nil {
+					return err
+				}
+				ioVar.InsightsMetadata = &insightsMetadata
+			}
+		case "imageId":
+			if v != nil {
+				var imageID string
+				err = json.Unmarshal(*v, &imageID)
+				if err != nil {
+					return err
+				}
+				ioVar.ImageID = &imageID
+			}
+		case "accentColor":
+			if v != nil {
+				var accentColor string
+				err = json.Unmarshal(*v, &accentColor)
+				if err != nil {
+					return err
+				}
+				ioVar.AccentColor = &accentColor
+			}
+		case "visualWords":
+			if v != nil {
+				var visualWords string
+				err = json.Unmarshal(*v, &visualWords)
+				if err != nil {
+					return err
+				}
+				ioVar.VisualWords = &visualWords
+			}
+		case "contentUrl":
+			if v != nil {
+				var contentURL string
+				err = json.Unmarshal(*v, &contentURL)
+				if err != nil {
+					return err
+				}
+				ioVar.ContentURL = &contentURL
+			}
+		case "hostPageUrl":
+			if v != nil {
+				var hostPageURL string
+				err = json.Unmarshal(*v, &hostPageURL)
+				if err != nil {
+					return err
+				}
+				ioVar.HostPageURL = &hostPageURL
+			}
+		case "contentSize":
+			if v != nil {
+				var contentSize string
+				err = json.Unmarshal(*v, &contentSize)
+				if err != nil {
+					return err
+				}
+				ioVar.ContentSize = &contentSize
+			}
+		case "encodingFormat":
+			if v != nil {
+				var encodingFormat string
+				err = json.Unmarshal(*v, &encodingFormat)
+				if err != nil {
+					return err
+				}
+				ioVar.EncodingFormat = &encodingFormat
+			}
+		case "hostPageDisplayUrl":
+			if v != nil {
+				var hostPageDisplayURL string
+				err = json.Unmarshal(*v, &hostPageDisplayURL)
+				if err != nil {
+					return err
+				}
+				ioVar.HostPageDisplayURL = &hostPageDisplayURL
+			}
+		case "width":
+			if v != nil {
+				var width int32
+				err = json.Unmarshal(*v, &width)
+				if err != nil {
+					return err
+				}
+				ioVar.Width = &width
+			}
+		case "height":
+			if v != nil {
+				var height int32
+				err = json.Unmarshal(*v, &height)
+				if err != nil {
+					return err
+				}
+				ioVar.Height = &height
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				ioVar.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				ioVar.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				ioVar.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ioVar.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				ioVar.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				ioVar.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				ioVar.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				ioVar.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				ioVar.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				ioVar.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ioVar.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Type = typeVar
+			}
 		}
-		ioVar.Thumbnail = &thumbnail
-	}
-
-	v = m["imageInsightsToken"]
-	if v != nil {
-		var imageInsightsToken string
-		err = json.Unmarshal(*m["imageInsightsToken"], &imageInsightsToken)
-		if err != nil {
-			return err
-		}
-		ioVar.ImageInsightsToken = &imageInsightsToken
-	}
-
-	v = m["insightsMetadata"]
-	if v != nil {
-		var insightsMetadata ImagesImageMetadata
-		err = json.Unmarshal(*m["insightsMetadata"], &insightsMetadata)
-		if err != nil {
-			return err
-		}
-		ioVar.InsightsMetadata = &insightsMetadata
-	}
-
-	v = m["imageId"]
-	if v != nil {
-		var imageID string
-		err = json.Unmarshal(*m["imageId"], &imageID)
-		if err != nil {
-			return err
-		}
-		ioVar.ImageID = &imageID
-	}
-
-	v = m["accentColor"]
-	if v != nil {
-		var accentColor string
-		err = json.Unmarshal(*m["accentColor"], &accentColor)
-		if err != nil {
-			return err
-		}
-		ioVar.AccentColor = &accentColor
-	}
-
-	v = m["visualWords"]
-	if v != nil {
-		var visualWords string
-		err = json.Unmarshal(*m["visualWords"], &visualWords)
-		if err != nil {
-			return err
-		}
-		ioVar.VisualWords = &visualWords
-	}
-
-	v = m["contentUrl"]
-	if v != nil {
-		var contentURL string
-		err = json.Unmarshal(*m["contentUrl"], &contentURL)
-		if err != nil {
-			return err
-		}
-		ioVar.ContentURL = &contentURL
-	}
-
-	v = m["hostPageUrl"]
-	if v != nil {
-		var hostPageURL string
-		err = json.Unmarshal(*m["hostPageUrl"], &hostPageURL)
-		if err != nil {
-			return err
-		}
-		ioVar.HostPageURL = &hostPageURL
-	}
-
-	v = m["contentSize"]
-	if v != nil {
-		var contentSize string
-		err = json.Unmarshal(*m["contentSize"], &contentSize)
-		if err != nil {
-			return err
-		}
-		ioVar.ContentSize = &contentSize
-	}
-
-	v = m["encodingFormat"]
-	if v != nil {
-		var encodingFormat string
-		err = json.Unmarshal(*m["encodingFormat"], &encodingFormat)
-		if err != nil {
-			return err
-		}
-		ioVar.EncodingFormat = &encodingFormat
-	}
-
-	v = m["hostPageDisplayUrl"]
-	if v != nil {
-		var hostPageDisplayURL string
-		err = json.Unmarshal(*m["hostPageDisplayUrl"], &hostPageDisplayURL)
-		if err != nil {
-			return err
-		}
-		ioVar.HostPageDisplayURL = &hostPageDisplayURL
-	}
-
-	v = m["width"]
-	if v != nil {
-		var width int32
-		err = json.Unmarshal(*m["width"], &width)
-		if err != nil {
-			return err
-		}
-		ioVar.Width = &width
-	}
-
-	v = m["height"]
-	if v != nil {
-		var height int32
-		err = json.Unmarshal(*m["height"], &height)
-		if err != nil {
-			return err
-		}
-		ioVar.Height = &height
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		ioVar.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		ioVar.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		ioVar.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		ioVar.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ioVar.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		ioVar.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		ioVar.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		ioVar.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		ioVar.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		ioVar.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		ioVar.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		ioVar.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ioVar.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		ioVar.Type = _type
 	}
 
 	return nil
@@ -4147,16 +4477,6 @@ func (ioVar *ImageObject) UnmarshalJSON(body []byte) error {
 // Images defines an image answer
 type Images struct {
 	autorest.Response `json:"-"`
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// TotalEstimatedMatches - The estimated number of webpages that are relevant to the query. Use this number along with the count and offset query parameters to page the results.
-	TotalEstimatedMatches *int64 `json:"totalEstimatedMatches,omitempty"`
 	// NextOffset - Used as part of deduping. Tells client the next offset that client should use in the next pagination request
 	NextOffset *int32 `json:"nextOffset,omitempty"`
 	// Value - A list of image objects that are relevant to the query. If there are no results, the List is empty.
@@ -4167,17 +4487,53 @@ type Images struct {
 	PivotSuggestions *[]PivotSuggestions `json:"pivotSuggestions,omitempty"`
 	// SimilarTerms - A list of terms that are similar in meaning to the user's query term.
 	SimilarTerms *[]Query `json:"similarTerms,omitempty"`
+	// TotalEstimatedMatches - The estimated number of webpages that are relevant to the query. Use this number along with the count and offset query parameters to page the results.
+	TotalEstimatedMatches *int64 `json:"totalEstimatedMatches,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Images.
 func (i Images) MarshalJSON() ([]byte, error) {
 	i.Type = TypeImages
-	type Alias Images
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i),
-	})
+	objectMap := make(map[string]interface{})
+	if i.NextOffset != nil {
+		objectMap["nextOffset"] = i.NextOffset
+	}
+	if i.Value != nil {
+		objectMap["value"] = i.Value
+	}
+	if i.QueryExpansions != nil {
+		objectMap["queryExpansions"] = i.QueryExpansions
+	}
+	if i.PivotSuggestions != nil {
+		objectMap["pivotSuggestions"] = i.PivotSuggestions
+	}
+	if i.SimilarTerms != nil {
+		objectMap["similarTerms"] = i.SimilarTerms
+	}
+	if i.TotalEstimatedMatches != nil {
+		objectMap["totalEstimatedMatches"] = i.TotalEstimatedMatches
+	}
+	if i.ReadLink != nil {
+		objectMap["readLink"] = i.ReadLink
+	}
+	if i.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = i.WebSearchURL
+	}
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != "" {
+		objectMap["_type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Images.
@@ -4375,8 +4731,8 @@ func (i Images) AsBasicResponseBase() (BasicResponseBase, bool) {
 	return &i, true
 }
 
-// ImagesImageMetadata defines a count of the number of websites where you can shop or perform other actions related to
-// the image.
+// ImagesImageMetadata defines a count of the number of websites where you can shop or perform other actions
+// related to the image.
 type ImagesImageMetadata struct {
 	// ShoppingSourcesCount - The number of websites that offer goods of the products seen in the image.
 	ShoppingSourcesCount *int32 `json:"shoppingSourcesCount,omitempty"`
@@ -4416,14 +4772,6 @@ type BasicIntangible interface {
 // Intangible a utility class that serves as the umbrella for a number of 'intangible' things such as quantities,
 // structured values, etc.
 type Intangible struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -4436,6 +4784,14 @@ type Intangible struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicIntangible(body []byte) (BasicIntangible, error) {
@@ -4482,12 +4838,38 @@ func unmarshalBasicIntangibleArray(body []byte) ([]BasicIntangible, error) {
 // MarshalJSON is the custom marshaler for Intangible.
 func (i Intangible) MarshalJSON() ([]byte, error) {
 	i.Type = TypeIntangible
-	type Alias Intangible
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i),
-	})
+	objectMap := make(map[string]interface{})
+	if i.Name != nil {
+		objectMap["name"] = i.Name
+	}
+	if i.URL != nil {
+		objectMap["url"] = i.URL
+	}
+	if i.Image != nil {
+		objectMap["image"] = i.Image
+	}
+	if i.Description != nil {
+		objectMap["description"] = i.Description
+	}
+	if i.AlternateName != nil {
+		objectMap["alternateName"] = i.AlternateName
+	}
+	if i.BingID != nil {
+		objectMap["bingId"] = i.BingID
+	}
+	if i.ReadLink != nil {
+		objectMap["readLink"] = i.ReadLink
+	}
+	if i.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = i.WebSearchURL
+	}
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != "" {
+		objectMap["_type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Intangible.
@@ -4693,34 +5075,6 @@ type BasicMediaObject interface {
 
 // MediaObject defines a media object.
 type MediaObject struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Name - The name of the thing represented by this object.
-	Name *string `json:"name,omitempty"`
-	// URL - The URL to get more information about the thing represented by this object.
-	URL *string `json:"url,omitempty"`
-	// Image - An image of the item.
-	Image *ImageObject `json:"image,omitempty"`
-	// Description - A short description of the item.
-	Description *string `json:"description,omitempty"`
-	// AlternateName - An alias for the item
-	AlternateName *string `json:"alternateName,omitempty"`
-	// BingID - An ID that uniquely identifies this item.
-	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
 	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
 	ContentURL *string `json:"contentUrl,omitempty"`
 	// HostPageURL - URL of the page that hosts the media object.
@@ -4735,6 +5089,34 @@ type MediaObject struct {
 	Width *int32 `json:"width,omitempty"`
 	// Height - The height of the source media object, in pixels.
 	Height *int32 `json:"height,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
+	// Name - The name of the thing represented by this object.
+	Name *string `json:"name,omitempty"`
+	// URL - The URL to get more information about the thing represented by this object.
+	URL *string `json:"url,omitempty"`
+	// Image - An image of the item.
+	Image *ImageObject `json:"image,omitempty"`
+	// Description - A short description of the item.
+	Description *string `json:"description,omitempty"`
+	// AlternateName - An alias for the item
+	AlternateName *string `json:"alternateName,omitempty"`
+	// BingID - An ID that uniquely identifies this item.
+	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicMediaObject(body []byte) (BasicMediaObject, error) {
@@ -4777,12 +5159,71 @@ func unmarshalBasicMediaObjectArray(body []byte) ([]BasicMediaObject, error) {
 // MarshalJSON is the custom marshaler for MediaObject.
 func (mo MediaObject) MarshalJSON() ([]byte, error) {
 	mo.Type = TypeMediaObject
-	type Alias MediaObject
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mo),
-	})
+	objectMap := make(map[string]interface{})
+	if mo.ContentURL != nil {
+		objectMap["contentUrl"] = mo.ContentURL
+	}
+	if mo.HostPageURL != nil {
+		objectMap["hostPageUrl"] = mo.HostPageURL
+	}
+	if mo.ContentSize != nil {
+		objectMap["contentSize"] = mo.ContentSize
+	}
+	if mo.EncodingFormat != nil {
+		objectMap["encodingFormat"] = mo.EncodingFormat
+	}
+	if mo.HostPageDisplayURL != nil {
+		objectMap["hostPageDisplayUrl"] = mo.HostPageDisplayURL
+	}
+	if mo.Width != nil {
+		objectMap["width"] = mo.Width
+	}
+	if mo.Height != nil {
+		objectMap["height"] = mo.Height
+	}
+	if mo.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = mo.ThumbnailURL
+	}
+	if mo.Provider != nil {
+		objectMap["provider"] = mo.Provider
+	}
+	if mo.DatePublished != nil {
+		objectMap["datePublished"] = mo.DatePublished
+	}
+	if mo.Text != nil {
+		objectMap["text"] = mo.Text
+	}
+	if mo.Name != nil {
+		objectMap["name"] = mo.Name
+	}
+	if mo.URL != nil {
+		objectMap["url"] = mo.URL
+	}
+	if mo.Image != nil {
+		objectMap["image"] = mo.Image
+	}
+	if mo.Description != nil {
+		objectMap["description"] = mo.Description
+	}
+	if mo.AlternateName != nil {
+		objectMap["alternateName"] = mo.AlternateName
+	}
+	if mo.BingID != nil {
+		objectMap["bingId"] = mo.BingID
+	}
+	if mo.ReadLink != nil {
+		objectMap["readLink"] = mo.ReadLink
+	}
+	if mo.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = mo.WebSearchURL
+	}
+	if mo.ID != nil {
+		objectMap["id"] = mo.ID
+	}
+	if mo.Type != "" {
+		objectMap["_type"] = mo.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for MediaObject.
@@ -4987,232 +5428,214 @@ func (mo *MediaObject) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["contentUrl"]
-	if v != nil {
-		var contentURL string
-		err = json.Unmarshal(*m["contentUrl"], &contentURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "contentUrl":
+			if v != nil {
+				var contentURL string
+				err = json.Unmarshal(*v, &contentURL)
+				if err != nil {
+					return err
+				}
+				mo.ContentURL = &contentURL
+			}
+		case "hostPageUrl":
+			if v != nil {
+				var hostPageURL string
+				err = json.Unmarshal(*v, &hostPageURL)
+				if err != nil {
+					return err
+				}
+				mo.HostPageURL = &hostPageURL
+			}
+		case "contentSize":
+			if v != nil {
+				var contentSize string
+				err = json.Unmarshal(*v, &contentSize)
+				if err != nil {
+					return err
+				}
+				mo.ContentSize = &contentSize
+			}
+		case "encodingFormat":
+			if v != nil {
+				var encodingFormat string
+				err = json.Unmarshal(*v, &encodingFormat)
+				if err != nil {
+					return err
+				}
+				mo.EncodingFormat = &encodingFormat
+			}
+		case "hostPageDisplayUrl":
+			if v != nil {
+				var hostPageDisplayURL string
+				err = json.Unmarshal(*v, &hostPageDisplayURL)
+				if err != nil {
+					return err
+				}
+				mo.HostPageDisplayURL = &hostPageDisplayURL
+			}
+		case "width":
+			if v != nil {
+				var width int32
+				err = json.Unmarshal(*v, &width)
+				if err != nil {
+					return err
+				}
+				mo.Width = &width
+			}
+		case "height":
+			if v != nil {
+				var height int32
+				err = json.Unmarshal(*v, &height)
+				if err != nil {
+					return err
+				}
+				mo.Height = &height
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				mo.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				mo.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				mo.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				mo.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mo.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				mo.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				mo.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				mo.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				mo.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				mo.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				mo.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				mo.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mo.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mo.Type = typeVar
+			}
 		}
-		mo.ContentURL = &contentURL
-	}
-
-	v = m["hostPageUrl"]
-	if v != nil {
-		var hostPageURL string
-		err = json.Unmarshal(*m["hostPageUrl"], &hostPageURL)
-		if err != nil {
-			return err
-		}
-		mo.HostPageURL = &hostPageURL
-	}
-
-	v = m["contentSize"]
-	if v != nil {
-		var contentSize string
-		err = json.Unmarshal(*m["contentSize"], &contentSize)
-		if err != nil {
-			return err
-		}
-		mo.ContentSize = &contentSize
-	}
-
-	v = m["encodingFormat"]
-	if v != nil {
-		var encodingFormat string
-		err = json.Unmarshal(*m["encodingFormat"], &encodingFormat)
-		if err != nil {
-			return err
-		}
-		mo.EncodingFormat = &encodingFormat
-	}
-
-	v = m["hostPageDisplayUrl"]
-	if v != nil {
-		var hostPageDisplayURL string
-		err = json.Unmarshal(*m["hostPageDisplayUrl"], &hostPageDisplayURL)
-		if err != nil {
-			return err
-		}
-		mo.HostPageDisplayURL = &hostPageDisplayURL
-	}
-
-	v = m["width"]
-	if v != nil {
-		var width int32
-		err = json.Unmarshal(*m["width"], &width)
-		if err != nil {
-			return err
-		}
-		mo.Width = &width
-	}
-
-	v = m["height"]
-	if v != nil {
-		var height int32
-		err = json.Unmarshal(*m["height"], &height)
-		if err != nil {
-			return err
-		}
-		mo.Height = &height
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		mo.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		mo.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		mo.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		mo.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mo.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		mo.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		mo.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		mo.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		mo.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		mo.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		mo.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		mo.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mo.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		mo.Type = _type
 	}
 
 	return nil
 }
 
-// NormalizedRectangle defines a region of an image. The region is defined by the coordinates of the top, left corner
-// and bottom, right corner of the region. The coordinates are fractional values of the original image's width and
-// height in the range 0.0 through 1.0.
+// NormalizedRectangle defines a region of an image. The region is defined by the coordinates of the top, left
+// corner and bottom, right corner of the region. The coordinates are fractional values of the original image's
+// width and height in the range 0.0 through 1.0.
 type NormalizedRectangle struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Left - The left coordinate.
+	Left *float64 `json:"left,omitempty"`
+	// Top - The top coordinate
+	Top *float64 `json:"top,omitempty"`
+	// Right - The right coordinate
+	Right *float64 `json:"right,omitempty"`
+	// Bottom - The bottom coordinate
+	Bottom *float64 `json:"bottom,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5225,25 +5648,63 @@ type NormalizedRectangle struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Left - The left coordinate.
-	Left *float64 `json:"left,omitempty"`
-	// Top - The top coordinate
-	Top *float64 `json:"top,omitempty"`
-	// Right - The right coordinate
-	Right *float64 `json:"right,omitempty"`
-	// Bottom - The bottom coordinate
-	Bottom *float64 `json:"bottom,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NormalizedRectangle.
 func (nr NormalizedRectangle) MarshalJSON() ([]byte, error) {
 	nr.Type = TypeNormalizedRectangle
-	type Alias NormalizedRectangle
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(nr),
-	})
+	objectMap := make(map[string]interface{})
+	if nr.Left != nil {
+		objectMap["left"] = nr.Left
+	}
+	if nr.Top != nil {
+		objectMap["top"] = nr.Top
+	}
+	if nr.Right != nil {
+		objectMap["right"] = nr.Right
+	}
+	if nr.Bottom != nil {
+		objectMap["bottom"] = nr.Bottom
+	}
+	if nr.Name != nil {
+		objectMap["name"] = nr.Name
+	}
+	if nr.URL != nil {
+		objectMap["url"] = nr.URL
+	}
+	if nr.Image != nil {
+		objectMap["image"] = nr.Image
+	}
+	if nr.Description != nil {
+		objectMap["description"] = nr.Description
+	}
+	if nr.AlternateName != nil {
+		objectMap["alternateName"] = nr.AlternateName
+	}
+	if nr.BingID != nil {
+		objectMap["bingId"] = nr.BingID
+	}
+	if nr.ReadLink != nil {
+		objectMap["readLink"] = nr.ReadLink
+	}
+	if nr.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = nr.WebSearchURL
+	}
+	if nr.ID != nil {
+		objectMap["id"] = nr.ID
+	}
+	if nr.Type != "" {
+		objectMap["_type"] = nr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for NormalizedRectangle.
@@ -5449,26 +5910,6 @@ type BasicOffer interface {
 
 // Offer defines a merchant's offer.
 type Offer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Name - The name of the thing represented by this object.
-	Name *string `json:"name,omitempty"`
-	// URL - The URL to get more information about the thing represented by this object.
-	URL *string `json:"url,omitempty"`
-	// Image - An image of the item.
-	Image *ImageObject `json:"image,omitempty"`
-	// Description - A short description of the item.
-	Description *string `json:"description,omitempty"`
-	// AlternateName - An alias for the item
-	AlternateName *string `json:"alternateName,omitempty"`
-	// BingID - An ID that uniquely identifies this item.
-	BingID *string `json:"bingId,omitempty"`
 	// Seller - Seller for this offer
 	Seller *Organization `json:"seller,omitempty"`
 	// Price - The item's price.
@@ -5481,6 +5922,26 @@ type Offer struct {
 	AggregateRating *AggregateRating `json:"aggregateRating,omitempty"`
 	// LastUpdated - The last date that the offer was updated. The date is in the form YYYY-MM-DD.
 	LastUpdated *string `json:"lastUpdated,omitempty"`
+	// Name - The name of the thing represented by this object.
+	Name *string `json:"name,omitempty"`
+	// URL - The URL to get more information about the thing represented by this object.
+	URL *string `json:"url,omitempty"`
+	// Image - An image of the item.
+	Image *ImageObject `json:"image,omitempty"`
+	// Description - A short description of the item.
+	Description *string `json:"description,omitempty"`
+	// AlternateName - An alias for the item
+	AlternateName *string `json:"alternateName,omitempty"`
+	// BingID - An ID that uniquely identifies this item.
+	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicOffer(body []byte) (BasicOffer, error) {
@@ -5523,12 +5984,56 @@ func unmarshalBasicOfferArray(body []byte) ([]BasicOffer, error) {
 // MarshalJSON is the custom marshaler for Offer.
 func (o Offer) MarshalJSON() ([]byte, error) {
 	o.Type = TypeOffer
-	type Alias Offer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(o),
-	})
+	objectMap := make(map[string]interface{})
+	if o.Seller != nil {
+		objectMap["seller"] = o.Seller
+	}
+	if o.Price != nil {
+		objectMap["price"] = o.Price
+	}
+	if o.PriceCurrency != "" {
+		objectMap["priceCurrency"] = o.PriceCurrency
+	}
+	if o.Availability != "" {
+		objectMap["availability"] = o.Availability
+	}
+	if o.AggregateRating != nil {
+		objectMap["aggregateRating"] = o.AggregateRating
+	}
+	if o.LastUpdated != nil {
+		objectMap["lastUpdated"] = o.LastUpdated
+	}
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.URL != nil {
+		objectMap["url"] = o.URL
+	}
+	if o.Image != nil {
+		objectMap["image"] = o.Image
+	}
+	if o.Description != nil {
+		objectMap["description"] = o.Description
+	}
+	if o.AlternateName != nil {
+		objectMap["alternateName"] = o.AlternateName
+	}
+	if o.BingID != nil {
+		objectMap["bingId"] = o.BingID
+	}
+	if o.ReadLink != nil {
+		objectMap["readLink"] = o.ReadLink
+	}
+	if o.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = o.WebSearchURL
+	}
+	if o.ID != nil {
+		objectMap["id"] = o.ID
+	}
+	if o.Type != "" {
+		objectMap["_type"] = o.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Offer.
@@ -5728,14 +6233,6 @@ func (o Offer) AsBasicResponseBase() (BasicResponseBase, bool) {
 
 // Organization defines an organization.
 type Organization struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5748,17 +6245,51 @@ type Organization struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Organization.
 func (o Organization) MarshalJSON() ([]byte, error) {
 	o.Type = TypeOrganization
-	type Alias Organization
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(o),
-	})
+	objectMap := make(map[string]interface{})
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.URL != nil {
+		objectMap["url"] = o.URL
+	}
+	if o.Image != nil {
+		objectMap["image"] = o.Image
+	}
+	if o.Description != nil {
+		objectMap["description"] = o.Description
+	}
+	if o.AlternateName != nil {
+		objectMap["alternateName"] = o.AlternateName
+	}
+	if o.BingID != nil {
+		objectMap["bingId"] = o.BingID
+	}
+	if o.ReadLink != nil {
+		objectMap["readLink"] = o.ReadLink
+	}
+	if o.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = o.WebSearchURL
+	}
+	if o.ID != nil {
+		objectMap["id"] = o.ID
+	}
+	if o.Type != "" {
+		objectMap["_type"] = o.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Organization.
@@ -5958,14 +6489,10 @@ func (o Organization) AsBasicResponseBase() (BasicResponseBase, bool) {
 
 // Person defines a person.
 type Person struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// JobTitle - The person's job title.
+	JobTitle *string `json:"jobTitle,omitempty"`
+	// TwitterProfile - The URL of the person's twitter profile.
+	TwitterProfile *string `json:"twitterProfile,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5978,21 +6505,57 @@ type Person struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// JobTitle - The person's job title.
-	JobTitle *string `json:"jobTitle,omitempty"`
-	// TwitterProfile - The URL of the person's twitter profile.
-	TwitterProfile *string `json:"twitterProfile,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Person.
 func (p Person) MarshalJSON() ([]byte, error) {
 	p.Type = TypePerson
-	type Alias Person
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.JobTitle != nil {
+		objectMap["jobTitle"] = p.JobTitle
+	}
+	if p.TwitterProfile != nil {
+		objectMap["twitterProfile"] = p.TwitterProfile
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	if p.URL != nil {
+		objectMap["url"] = p.URL
+	}
+	if p.Image != nil {
+		objectMap["image"] = p.Image
+	}
+	if p.Description != nil {
+		objectMap["description"] = p.Description
+	}
+	if p.AlternateName != nil {
+		objectMap["alternateName"] = p.AlternateName
+	}
+	if p.BingID != nil {
+		objectMap["bingId"] = p.BingID
+	}
+	if p.ReadLink != nil {
+		objectMap["readLink"] = p.ReadLink
+	}
+	if p.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = p.WebSearchURL
+	}
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Type != "" {
+		objectMap["_type"] = p.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Person.
@@ -6258,12 +6821,14 @@ func unmarshalBasicPropertiesItemArray(body []byte) ([]BasicPropertiesItem, erro
 // MarshalJSON is the custom marshaler for PropertiesItem.
 func (pi PropertiesItem) MarshalJSON() ([]byte, error) {
 	pi.Type = TypePropertiesItem
-	type Alias PropertiesItem
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pi),
-	})
+	objectMap := make(map[string]interface{})
+	if pi.Text != nil {
+		objectMap["text"] = pi.Text
+	}
+	if pi.Type != "" {
+		objectMap["_type"] = pi.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsAggregateRating is the BasicPropertiesItem implementation for PropertiesItem.
@@ -6313,14 +6878,14 @@ type BasicRating interface {
 
 // Rating defines a rating.
 type Rating struct {
-	// Text - Text representation of an item.
-	Text *string `json:"text,omitempty"`
-	// Type - Possible values include: 'TypePropertiesItem', 'TypeAggregateRating', 'TypeRating'
-	Type Type `json:"_type,omitempty"`
 	// RatingValue - The mean (average) rating. The possible values are 1.0 through 5.0.
 	RatingValue *float64 `json:"ratingValue,omitempty"`
 	// BestRating - The highest rated review. The possible values are 1.0 through 5.0.
 	BestRating *float64 `json:"bestRating,omitempty"`
+	// Text - Text representation of an item.
+	Text *string `json:"text,omitempty"`
+	// Type - Possible values include: 'TypePropertiesItem', 'TypeAggregateRating', 'TypeRating'
+	Type Type `json:"_type,omitempty"`
 }
 
 func unmarshalBasicRating(body []byte) (BasicRating, error) {
@@ -6363,12 +6928,20 @@ func unmarshalBasicRatingArray(body []byte) ([]BasicRating, error) {
 // MarshalJSON is the custom marshaler for Rating.
 func (r Rating) MarshalJSON() ([]byte, error) {
 	r.Type = TypeRating
-	type Alias Rating
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	if r.RatingValue != nil {
+		objectMap["ratingValue"] = r.RatingValue
+	}
+	if r.BestRating != nil {
+		objectMap["bestRating"] = r.BestRating
+	}
+	if r.Text != nil {
+		objectMap["text"] = r.Text
+	}
+	if r.Type != "" {
+		objectMap["_type"] = r.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsAggregateRating is the BasicPropertiesItem implementation for Rating.
@@ -6398,14 +6971,20 @@ func (r Rating) AsBasicPropertiesItem() (BasicPropertiesItem, bool) {
 
 // Recipe defines a cooking recipe.
 type Recipe struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// CookTime - The amount of time the food takes to cook. For example, PT25M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
+	CookTime *string `json:"cookTime,omitempty"`
+	// PrepTime - The amount of time required to prepare the ingredients. For example, PT15M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
+	PrepTime *string `json:"prepTime,omitempty"`
+	// TotalTime - The total amount of time it takes to prepare and cook the recipe. For example, PT45M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
+	TotalTime *string `json:"totalTime,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -6418,31 +6997,72 @@ type Recipe struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
-	// CookTime - The amount of time the food takes to cook. For example, PT25M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
-	CookTime *string `json:"cookTime,omitempty"`
-	// PrepTime - The amount of time required to prepare the ingredients. For example, PT15M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
-	PrepTime *string `json:"prepTime,omitempty"`
-	// TotalTime - The total amount of time it takes to prepare and cook the recipe. For example, PT45M. For information about the time format, see http://en.wikipedia.org/wiki/ISO_8601#Durations.
-	TotalTime *string `json:"totalTime,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Recipe.
 func (r Recipe) MarshalJSON() ([]byte, error) {
 	r.Type = TypeRecipe
-	type Alias Recipe
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	if r.CookTime != nil {
+		objectMap["cookTime"] = r.CookTime
+	}
+	if r.PrepTime != nil {
+		objectMap["prepTime"] = r.PrepTime
+	}
+	if r.TotalTime != nil {
+		objectMap["totalTime"] = r.TotalTime
+	}
+	if r.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = r.ThumbnailURL
+	}
+	if r.Provider != nil {
+		objectMap["provider"] = r.Provider
+	}
+	if r.DatePublished != nil {
+		objectMap["datePublished"] = r.DatePublished
+	}
+	if r.Text != nil {
+		objectMap["text"] = r.Text
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.URL != nil {
+		objectMap["url"] = r.URL
+	}
+	if r.Image != nil {
+		objectMap["image"] = r.Image
+	}
+	if r.Description != nil {
+		objectMap["description"] = r.Description
+	}
+	if r.AlternateName != nil {
+		objectMap["alternateName"] = r.AlternateName
+	}
+	if r.BingID != nil {
+		objectMap["bingId"] = r.BingID
+	}
+	if r.ReadLink != nil {
+		objectMap["readLink"] = r.ReadLink
+	}
+	if r.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = r.WebSearchURL
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Type != "" {
+		objectMap["_type"] = r.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Recipe.
@@ -6647,175 +7267,161 @@ func (r *Recipe) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["cookTime"]
-	if v != nil {
-		var cookTime string
-		err = json.Unmarshal(*m["cookTime"], &cookTime)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "cookTime":
+			if v != nil {
+				var cookTime string
+				err = json.Unmarshal(*v, &cookTime)
+				if err != nil {
+					return err
+				}
+				r.CookTime = &cookTime
+			}
+		case "prepTime":
+			if v != nil {
+				var prepTime string
+				err = json.Unmarshal(*v, &prepTime)
+				if err != nil {
+					return err
+				}
+				r.PrepTime = &prepTime
+			}
+		case "totalTime":
+			if v != nil {
+				var totalTime string
+				err = json.Unmarshal(*v, &totalTime)
+				if err != nil {
+					return err
+				}
+				r.TotalTime = &totalTime
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				r.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				r.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				r.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				r.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				r.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				r.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				r.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				r.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				r.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				r.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				r.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				r.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				r.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				r.Type = typeVar
+			}
 		}
-		r.CookTime = &cookTime
-	}
-
-	v = m["prepTime"]
-	if v != nil {
-		var prepTime string
-		err = json.Unmarshal(*m["prepTime"], &prepTime)
-		if err != nil {
-			return err
-		}
-		r.PrepTime = &prepTime
-	}
-
-	v = m["totalTime"]
-	if v != nil {
-		var totalTime string
-		err = json.Unmarshal(*m["totalTime"], &totalTime)
-		if err != nil {
-			return err
-		}
-		r.TotalTime = &totalTime
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		r.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		r.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		r.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		r.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		r.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		r.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		r.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		r.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		r.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		r.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		r.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		r.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		r.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		r.Type = _type
 	}
 
 	return nil
@@ -6835,29 +7441,41 @@ type RecognizedEntitiesModule struct {
 
 // RecognizedEntity defines a recognized entity.
 type RecognizedEntity struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Entity - The entity that was recognized. The following are the possible entity objects: Person
 	Entity BasicThing `json:"entity,omitempty"`
 	// MatchConfidence - The confidence that Bing has that the entity in the image matches this entity. The confidence ranges from 0.0 through 1.0 with 1.0 being very confident.
 	MatchConfidence *float64 `json:"matchConfidence,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for RecognizedEntity.
 func (re RecognizedEntity) MarshalJSON() ([]byte, error) {
 	re.Type = TypeRecognizedEntity
-	type Alias RecognizedEntity
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(re),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["entity"] = re.Entity
+	if re.MatchConfidence != nil {
+		objectMap["matchConfidence"] = re.MatchConfidence
+	}
+	if re.ReadLink != nil {
+		objectMap["readLink"] = re.ReadLink
+	}
+	if re.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = re.WebSearchURL
+	}
+	if re.ID != nil {
+		objectMap["id"] = re.ID
+	}
+	if re.Type != "" {
+		objectMap["_type"] = re.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for RecognizedEntity.
@@ -7062,65 +7680,62 @@ func (re *RecognizedEntity) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["entity"]
-	if v != nil {
-		entity, err := unmarshalBasicThing(*m["entity"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "entity":
+			if v != nil {
+				entity, err := unmarshalBasicThing(*v)
+				if err != nil {
+					return err
+				}
+				re.Entity = entity
+			}
+		case "matchConfidence":
+			if v != nil {
+				var matchConfidence float64
+				err = json.Unmarshal(*v, &matchConfidence)
+				if err != nil {
+					return err
+				}
+				re.MatchConfidence = &matchConfidence
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				re.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				re.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				re.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				re.Type = typeVar
+			}
 		}
-		re.Entity = entity
-	}
-
-	v = m["matchConfidence"]
-	if v != nil {
-		var matchConfidence float64
-		err = json.Unmarshal(*m["matchConfidence"], &matchConfidence)
-		if err != nil {
-			return err
-		}
-		re.MatchConfidence = &matchConfidence
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		re.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		re.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		re.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		re.Type = _type
 	}
 
 	return nil
@@ -7137,29 +7752,43 @@ type RecognizedEntityGroup struct {
 // RecognizedEntityRegion defines a region of the image where an entity was found and a list of entities that might
 // match it.
 type RecognizedEntityRegion struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Region - A region of the image that contains an entity. The values of the rectangle are relative to the width and height of the original image and are in the range 0.0 through 1.0. For example, if the image is 300x200 and the region's top, left corner is at point (10, 20) and the bottom, right corner is at point (290, 150), then the normalized rectangle is: Left = 0.0333333333333333, Top = 0.1, Right = 0.9666666666666667, Bottom = 0.75. For people, the region represents the person's face.
 	Region *NormalizedRectangle `json:"region,omitempty"`
 	// MatchingEntities - A list of entities that Bing believes match the entity found in the region. The entities are in descending order of confidence (see the matchConfidence field of RecognizedEntity).
 	MatchingEntities *[]RecognizedEntity `json:"matchingEntities,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for RecognizedEntityRegion.
 func (rer RecognizedEntityRegion) MarshalJSON() ([]byte, error) {
 	rer.Type = TypeRecognizedEntityRegion
-	type Alias RecognizedEntityRegion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rer),
-	})
+	objectMap := make(map[string]interface{})
+	if rer.Region != nil {
+		objectMap["region"] = rer.Region
+	}
+	if rer.MatchingEntities != nil {
+		objectMap["matchingEntities"] = rer.MatchingEntities
+	}
+	if rer.ReadLink != nil {
+		objectMap["readLink"] = rer.ReadLink
+	}
+	if rer.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = rer.WebSearchURL
+	}
+	if rer.ID != nil {
+		objectMap["id"] = rer.ID
+	}
+	if rer.Type != "" {
+		objectMap["_type"] = rer.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for RecognizedEntityRegion.
@@ -7408,16 +8037,17 @@ type BasicResponse interface {
 	AsResponse() (*Response, bool)
 }
 
-// Response defines a response. All schemas that could be returned at the root of a response should inherit from this
+// Response defines a response. All schemas that could be returned at the root of a response should inherit from
+// this
 type Response struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
 	// ReadLink - The URL that returns this resource.
 	ReadLink *string `json:"readLink,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicResponse(body []byte) (BasicResponse, error) {
@@ -7548,12 +8178,20 @@ func unmarshalBasicResponseArray(body []byte) ([]BasicResponse, error) {
 // MarshalJSON is the custom marshaler for Response.
 func (r Response) MarshalJSON() ([]byte, error) {
 	r.Type = TypeResponse
-	type Alias Response
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	if r.ReadLink != nil {
+		objectMap["readLink"] = r.ReadLink
+	}
+	if r.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = r.WebSearchURL
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Type != "" {
+		objectMap["_type"] = r.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Response.
@@ -7935,12 +8573,11 @@ func unmarshalBasicResponseBaseArray(body []byte) ([]BasicResponseBase, error) {
 // MarshalJSON is the custom marshaler for ResponseBase.
 func (rb ResponseBase) MarshalJSON() ([]byte, error) {
 	rb.Type = TypeResponseBase
-	type Alias ResponseBase
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rb),
-	})
+	objectMap := make(map[string]interface{})
+	if rb.Type != "" {
+		objectMap["_type"] = rb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for ResponseBase.
@@ -8146,16 +8783,16 @@ type BasicSearchResultsAnswer interface {
 
 // SearchResultsAnswer defines a search result answer.
 type SearchResultsAnswer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	// TotalEstimatedMatches - The estimated number of webpages that are relevant to the query. Use this number along with the count and offset query parameters to page the results.
+	TotalEstimatedMatches *int64 `json:"totalEstimatedMatches,omitempty"`
 	// ReadLink - The URL that returns this resource.
 	ReadLink *string `json:"readLink,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// TotalEstimatedMatches - The estimated number of webpages that are relevant to the query. Use this number along with the count and offset query parameters to page the results.
-	TotalEstimatedMatches *int64 `json:"totalEstimatedMatches,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicSearchResultsAnswer(body []byte) (BasicSearchResultsAnswer, error) {
@@ -8198,12 +8835,23 @@ func unmarshalBasicSearchResultsAnswerArray(body []byte) ([]BasicSearchResultsAn
 // MarshalJSON is the custom marshaler for SearchResultsAnswer.
 func (sra SearchResultsAnswer) MarshalJSON() ([]byte, error) {
 	sra.Type = TypeSearchResultsAnswer
-	type Alias SearchResultsAnswer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sra),
-	})
+	objectMap := make(map[string]interface{})
+	if sra.TotalEstimatedMatches != nil {
+		objectMap["totalEstimatedMatches"] = sra.TotalEstimatedMatches
+	}
+	if sra.ReadLink != nil {
+		objectMap["readLink"] = sra.ReadLink
+	}
+	if sra.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = sra.WebSearchURL
+	}
+	if sra.ID != nil {
+		objectMap["id"] = sra.ID
+	}
+	if sra.Type != "" {
+		objectMap["_type"] = sra.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for SearchResultsAnswer.
@@ -8401,22 +9049,14 @@ func (sra SearchResultsAnswer) AsBasicResponseBase() (BasicResponseBase, bool) {
 	return &sra, true
 }
 
-// BasicStructuredValue
+// BasicStructuredValue ...
 type BasicStructuredValue interface {
 	AsNormalizedRectangle() (*NormalizedRectangle, bool)
 	AsStructuredValue() (*StructuredValue, bool)
 }
 
-// StructuredValue
+// StructuredValue ...
 type StructuredValue struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -8429,6 +9069,14 @@ type StructuredValue struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicStructuredValue(body []byte) (BasicStructuredValue, error) {
@@ -8471,12 +9119,38 @@ func unmarshalBasicStructuredValueArray(body []byte) ([]BasicStructuredValue, er
 // MarshalJSON is the custom marshaler for StructuredValue.
 func (sv StructuredValue) MarshalJSON() ([]byte, error) {
 	sv.Type = TypeStructuredValue
-	type Alias StructuredValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sv),
-	})
+	objectMap := make(map[string]interface{})
+	if sv.Name != nil {
+		objectMap["name"] = sv.Name
+	}
+	if sv.URL != nil {
+		objectMap["url"] = sv.URL
+	}
+	if sv.Image != nil {
+		objectMap["image"] = sv.Image
+	}
+	if sv.Description != nil {
+		objectMap["description"] = sv.Description
+	}
+	if sv.AlternateName != nil {
+		objectMap["alternateName"] = sv.AlternateName
+	}
+	if sv.BingID != nil {
+		objectMap["bingId"] = sv.BingID
+	}
+	if sv.ReadLink != nil {
+		objectMap["readLink"] = sv.ReadLink
+	}
+	if sv.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = sv.WebSearchURL
+	}
+	if sv.ID != nil {
+		objectMap["id"] = sv.ID
+	}
+	if sv.Type != "" {
+		objectMap["_type"] = sv.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for StructuredValue.
@@ -8702,14 +9376,6 @@ type BasicThing interface {
 
 // Thing defines a thing.
 type Thing struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -8722,6 +9388,14 @@ type Thing struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicThing(body []byte) (BasicThing, error) {
@@ -8816,12 +9490,38 @@ func unmarshalBasicThingArray(body []byte) ([]BasicThing, error) {
 // MarshalJSON is the custom marshaler for Thing.
 func (t Thing) MarshalJSON() ([]byte, error) {
 	t.Type = TypeThing
-	type Alias Thing
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(t),
-	})
+	objectMap := make(map[string]interface{})
+	if t.Name != nil {
+		objectMap["name"] = t.Name
+	}
+	if t.URL != nil {
+		objectMap["url"] = t.URL
+	}
+	if t.Image != nil {
+		objectMap["image"] = t.Image
+	}
+	if t.Description != nil {
+		objectMap["description"] = t.Description
+	}
+	if t.AlternateName != nil {
+		objectMap["alternateName"] = t.AlternateName
+	}
+	if t.BingID != nil {
+		objectMap["bingId"] = t.BingID
+	}
+	if t.ReadLink != nil {
+		objectMap["readLink"] = t.ReadLink
+	}
+	if t.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = t.WebSearchURL
+	}
+	if t.ID != nil {
+		objectMap["id"] = t.ID
+	}
+	if t.Type != "" {
+		objectMap["_type"] = t.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for Thing.
@@ -9022,27 +9722,38 @@ func (t Thing) AsBasicResponseBase() (BasicResponseBase, bool) {
 // TrendingImages the top-level object that the response includes when a trending images request succeeds.
 type TrendingImages struct {
 	autorest.Response `json:"-"`
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	// Categories - A list that identifies categories of images and a list of trending images in that category.
+	Categories *[]TrendingImagesCategory `json:"categories,omitempty"`
 	// ReadLink - The URL that returns this resource.
 	ReadLink *string `json:"readLink,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Categories - A list that identifies categories of images and a list of trending images in that category.
-	Categories *[]TrendingImagesCategory `json:"categories,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for TrendingImages.
 func (ti TrendingImages) MarshalJSON() ([]byte, error) {
 	ti.Type = TypeTrendingImages
-	type Alias TrendingImages
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ti),
-	})
+	objectMap := make(map[string]interface{})
+	if ti.Categories != nil {
+		objectMap["categories"] = ti.Categories
+	}
+	if ti.ReadLink != nil {
+		objectMap["readLink"] = ti.ReadLink
+	}
+	if ti.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ti.WebSearchURL
+	}
+	if ti.ID != nil {
+		objectMap["id"] = ti.ID
+	}
+	if ti.Type != "" {
+		objectMap["_type"] = ti.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for TrendingImages.
@@ -9266,14 +9977,14 @@ type BasicWebPage interface {
 
 // WebPage defines a webpage that is relevant to the query.
 type WebPage struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ReadLink - The URL that returns this resource.
-	ReadLink *string `json:"readLink,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	// DatePublished - The date on which the CreativeWork was published.
+	DatePublished *string `json:"datePublished,omitempty"`
+	// Text - Text content of this creative work
+	Text *string `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -9286,14 +9997,14 @@ type WebPage struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	// DatePublished - The date on which the CreativeWork was published.
-	DatePublished *string `json:"datePublished,omitempty"`
-	// Text - Text content of this creative work
-	Text *string `json:"text,omitempty"`
+	// ReadLink - The URL that returns this resource.
+	ReadLink *string `json:"readLink,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeOrganization', 'TypeOffer', 'TypeAggregateOffer', 'TypeImageObject', 'TypeImages', 'TypeSearchResultsAnswer', 'TypeAnswer', 'TypeMediaObject', 'TypeResponse', 'TypeThing', 'TypeCreativeWork', 'TypeIdentifiable', 'TypeErrorResponse', 'TypeImageGallery', 'TypeRecipe', 'TypeNormalizedRectangle', 'TypeRecognizedEntity', 'TypeRecognizedEntityRegion', 'TypeImageInsights', 'TypeTrendingImages', 'TypeWebPage', 'TypePerson', 'TypeIntangible', 'TypeCollectionPage', 'TypeStructuredValue'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicWebPage(body []byte) (BasicWebPage, error) {
@@ -9340,12 +10051,50 @@ func unmarshalBasicWebPageArray(body []byte) ([]BasicWebPage, error) {
 // MarshalJSON is the custom marshaler for WebPage.
 func (wp WebPage) MarshalJSON() ([]byte, error) {
 	wp.Type = TypeWebPage
-	type Alias WebPage
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wp),
-	})
+	objectMap := make(map[string]interface{})
+	if wp.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = wp.ThumbnailURL
+	}
+	if wp.Provider != nil {
+		objectMap["provider"] = wp.Provider
+	}
+	if wp.DatePublished != nil {
+		objectMap["datePublished"] = wp.DatePublished
+	}
+	if wp.Text != nil {
+		objectMap["text"] = wp.Text
+	}
+	if wp.Name != nil {
+		objectMap["name"] = wp.Name
+	}
+	if wp.URL != nil {
+		objectMap["url"] = wp.URL
+	}
+	if wp.Image != nil {
+		objectMap["image"] = wp.Image
+	}
+	if wp.Description != nil {
+		objectMap["description"] = wp.Description
+	}
+	if wp.AlternateName != nil {
+		objectMap["alternateName"] = wp.AlternateName
+	}
+	if wp.BingID != nil {
+		objectMap["bingId"] = wp.BingID
+	}
+	if wp.ReadLink != nil {
+		objectMap["readLink"] = wp.ReadLink
+	}
+	if wp.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = wp.WebSearchURL
+	}
+	if wp.ID != nil {
+		objectMap["id"] = wp.ID
+	}
+	if wp.Type != "" {
+		objectMap["_type"] = wp.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsOrganization is the BasicResponseBase implementation for WebPage.
@@ -9550,145 +10299,134 @@ func (wp *WebPage) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				wp.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				wp.Provider = &provider
+			}
+		case "datePublished":
+			if v != nil {
+				var datePublished string
+				err = json.Unmarshal(*v, &datePublished)
+				if err != nil {
+					return err
+				}
+				wp.DatePublished = &datePublished
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				wp.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wp.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				wp.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				wp.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				wp.Description = &description
+			}
+		case "alternateName":
+			if v != nil {
+				var alternateName string
+				err = json.Unmarshal(*v, &alternateName)
+				if err != nil {
+					return err
+				}
+				wp.AlternateName = &alternateName
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				wp.BingID = &bingID
+			}
+		case "readLink":
+			if v != nil {
+				var readLink string
+				err = json.Unmarshal(*v, &readLink)
+				if err != nil {
+					return err
+				}
+				wp.ReadLink = &readLink
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				wp.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wp.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wp.Type = typeVar
+			}
 		}
-		wp.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		wp.Provider = &provider
-	}
-
-	v = m["datePublished"]
-	if v != nil {
-		var datePublished string
-		err = json.Unmarshal(*m["datePublished"], &datePublished)
-		if err != nil {
-			return err
-		}
-		wp.DatePublished = &datePublished
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		wp.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wp.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		wp.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		wp.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		wp.Description = &description
-	}
-
-	v = m["alternateName"]
-	if v != nil {
-		var alternateName string
-		err = json.Unmarshal(*m["alternateName"], &alternateName)
-		if err != nil {
-			return err
-		}
-		wp.AlternateName = &alternateName
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		wp.BingID = &bingID
-	}
-
-	v = m["readLink"]
-	if v != nil {
-		var readLink string
-		err = json.Unmarshal(*m["readLink"], &readLink)
-		if err != nil {
-			return err
-		}
-		wp.ReadLink = &readLink
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		wp.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wp.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		wp.Type = _type
 	}
 
 	return nil

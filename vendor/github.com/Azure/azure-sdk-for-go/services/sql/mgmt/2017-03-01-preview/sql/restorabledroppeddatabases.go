@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorableDroppedDatabasesClient is the the Azure SQL Database management API provides a RESTful set of web services
 // that interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve,
 // update, and delete databases.
@@ -31,16 +32,19 @@ type RestorableDroppedDatabasesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRestorableDroppedDatabasesClient creates an instance of the RestorableDroppedDatabasesClient client.
 func NewRestorableDroppedDatabasesClient(subscriptionID string) RestorableDroppedDatabasesClient {
 	return NewRestorableDroppedDatabasesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRestorableDroppedDatabasesClientWithBaseURI creates an instance of the RestorableDroppedDatabasesClient client.
 func NewRestorableDroppedDatabasesClientWithBaseURI(baseURI string, subscriptionID string) RestorableDroppedDatabasesClient {
 	return RestorableDroppedDatabasesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a deleted database that can be restored
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -69,6 +73,7 @@ func (client RestorableDroppedDatabasesClient) Get(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client RestorableDroppedDatabasesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, restorableDroppededDatabaseID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,6 +96,7 @@ func (client RestorableDroppedDatabasesClient) GetPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RestorableDroppedDatabasesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -98,6 +104,7 @@ func (client RestorableDroppedDatabasesClient) GetSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RestorableDroppedDatabasesClient) GetResponder(resp *http.Response) (result RestorableDroppedDatabase, err error) {
@@ -111,6 +118,7 @@ func (client RestorableDroppedDatabasesClient) GetResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServer gets a list of deleted databases that can be restored
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -137,6 +145,7 @@ func (client RestorableDroppedDatabasesClient) ListByServer(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerPreparer prepares the ListByServer request.
 func (client RestorableDroppedDatabasesClient) ListByServerPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -158,6 +167,7 @@ func (client RestorableDroppedDatabasesClient) ListByServerPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client RestorableDroppedDatabasesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
@@ -165,6 +175,7 @@ func (client RestorableDroppedDatabasesClient) ListByServerSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerResponder handles the response to the ListByServer request. The method always
 // closes the http.Response Body.
 func (client RestorableDroppedDatabasesClient) ListByServerResponder(resp *http.Response) (result RestorableDroppedDatabaseListResult, err error) {

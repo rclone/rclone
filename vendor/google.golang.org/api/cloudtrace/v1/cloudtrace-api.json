@@ -261,7 +261,7 @@
       }
     }
   },
-  "revision": "20180312",
+  "revision": "20180430",
   "rootUrl": "https://cloudtrace.googleapis.com/",
   "schemas": {
     "Empty": {
@@ -279,7 +279,7 @@
           "type": "string"
         },
         "traces": {
-          "description": "List of trace records returned.",
+          "description": "List of trace records as specified by the view parameter.",
           "items": {
             "$ref": "Trace"
           },

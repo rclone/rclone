@@ -26,9 +26,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/net/context"
 	edpb "google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // Test if runRetryable loop deals with various errors correctly.
@@ -37,10 +37,10 @@ func TestRetry(t *testing.T) {
 		t.SkipNow()
 	}
 	responses := []error{
-		grpc.Errorf(codes.Internal, "transport is closing"),
-		grpc.Errorf(codes.Unknown, "unexpected EOF"),
-		grpc.Errorf(codes.Internal, "stream terminated by RST_STREAM with error code: 2"),
-		grpc.Errorf(codes.Unavailable, "service is currently unavailable"),
+		status.Errorf(codes.Internal, "transport is closing"),
+		status.Errorf(codes.Unknown, "unexpected EOF"),
+		status.Errorf(codes.Internal, "stream terminated by RST_STREAM with error code: 2"),
+		status.Errorf(codes.Unavailable, "service is currently unavailable"),
 		errRetry(fmt.Errorf("just retry it")),
 	}
 	err := runRetryable(context.Background(), func(ct context.Context) error {
@@ -100,7 +100,7 @@ func TestRetryInfo(t *testing.T) {
 	trailers := map[string]string{
 		retryInfoKey: string(b),
 	}
-	gotDelay, ok := extractRetryDelay(errRetry(toSpannerErrorWithMetadata(grpc.Errorf(codes.Aborted, ""), metadata.New(trailers))))
+	gotDelay, ok := extractRetryDelay(errRetry(toSpannerErrorWithMetadata(status.Errorf(codes.Aborted, ""), metadata.New(trailers))))
 	if !ok || !testEqual(time.Second, gotDelay) {
 		t.Errorf("<ok, retryDelay> = <%t, %v>, want <true, %v>", ok, gotDelay, time.Second)
 	}

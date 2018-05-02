@@ -33,6 +33,11 @@ const (
 	Job AccessScope = "job"
 )
 
+// PossibleAccessScopeValues returns an array of possible values for the AccessScope const type.
+func PossibleAccessScopeValues() []AccessScope {
+	return []AccessScope{Job}
+}
+
 // AllocationState enumerates the values for allocation state.
 type AllocationState string
 
@@ -48,6 +53,11 @@ const (
 	Stopping AllocationState = "stopping"
 )
 
+// PossibleAllocationStateValues returns an array of possible values for the AllocationState const type.
+func PossibleAllocationStateValues() []AllocationState {
+	return []AllocationState{Resizing, Steady, Stopping}
+}
+
 // AutoUserScope enumerates the values for auto user scope.
 type AutoUserScope string
 
@@ -58,6 +68,11 @@ const (
 	// Task Specifies that the service should create a new user for the task.
 	Task AutoUserScope = "task"
 )
+
+// PossibleAutoUserScopeValues returns an array of possible values for the AutoUserScope const type.
+func PossibleAutoUserScopeValues() []AutoUserScope {
+	return []AutoUserScope{Pool, Task}
+}
 
 // CachingType enumerates the values for caching type.
 type CachingType string
@@ -71,6 +86,11 @@ const (
 	ReadWrite CachingType = "readwrite"
 )
 
+// PossibleCachingTypeValues returns an array of possible values for the CachingType const type.
+func PossibleCachingTypeValues() []CachingType {
+	return []CachingType{None, ReadOnly, ReadWrite}
+}
+
 // CertificateFormat enumerates the values for certificate format.
 type CertificateFormat string
 
@@ -80,6 +100,11 @@ const (
 	// Pfx The certificate is a PFX (PKCS#12) formatted certificate or certificate chain.
 	Pfx CertificateFormat = "pfx"
 )
+
+// PossibleCertificateFormatValues returns an array of possible values for the CertificateFormat const type.
+func PossibleCertificateFormatValues() []CertificateFormat {
+	return []CertificateFormat{Cer, Pfx}
+}
 
 // CertificateState enumerates the values for certificate state.
 type CertificateState string
@@ -98,6 +123,11 @@ const (
 	Deleting CertificateState = "deleting"
 )
 
+// PossibleCertificateStateValues returns an array of possible values for the CertificateState const type.
+func PossibleCertificateStateValues() []CertificateState {
+	return []CertificateState{Active, DeleteFailed, Deleting}
+}
+
 // CertificateStoreLocation enumerates the values for certificate store location.
 type CertificateStoreLocation string
 
@@ -107,6 +137,11 @@ const (
 	// LocalMachine Certificates should be installed to the LocalMachine certificate store.
 	LocalMachine CertificateStoreLocation = "localmachine"
 )
+
+// PossibleCertificateStoreLocationValues returns an array of possible values for the CertificateStoreLocation const type.
+func PossibleCertificateStoreLocationValues() []CertificateStoreLocation {
+	return []CertificateStoreLocation{CurrentUser, LocalMachine}
+}
 
 // CertificateVisibility enumerates the values for certificate visibility.
 type CertificateVisibility string
@@ -122,6 +157,11 @@ const (
 	// are run.
 	CertificateVisibilityTask CertificateVisibility = "task"
 )
+
+// PossibleCertificateVisibilityValues returns an array of possible values for the CertificateVisibility const type.
+func PossibleCertificateVisibilityValues() []CertificateVisibility {
+	return []CertificateVisibility{CertificateVisibilityRemoteUser, CertificateVisibilityStartTask, CertificateVisibilityTask}
+}
 
 // ComputeNodeDeallocationOption enumerates the values for compute node deallocation option.
 type ComputeNodeDeallocationOption string
@@ -141,6 +181,11 @@ const (
 	Terminate ComputeNodeDeallocationOption = "terminate"
 )
 
+// PossibleComputeNodeDeallocationOptionValues returns an array of possible values for the ComputeNodeDeallocationOption const type.
+func PossibleComputeNodeDeallocationOptionValues() []ComputeNodeDeallocationOption {
+	return []ComputeNodeDeallocationOption{Requeue, RetainedData, TaskCompletion, Terminate}
+}
+
 // ComputeNodeFillType enumerates the values for compute node fill type.
 type ComputeNodeFillType string
 
@@ -151,6 +196,11 @@ const (
 	// Spread Tasks should be assigned evenly across all nodes in the pool.
 	Spread ComputeNodeFillType = "spread"
 )
+
+// PossibleComputeNodeFillTypeValues returns an array of possible values for the ComputeNodeFillType const type.
+func PossibleComputeNodeFillTypeValues() []ComputeNodeFillType {
+	return []ComputeNodeFillType{Pack, Spread}
+}
 
 // ComputeNodeRebootOption enumerates the values for compute node reboot option.
 type ComputeNodeRebootOption string
@@ -172,6 +222,11 @@ const (
 	ComputeNodeRebootOptionTerminate ComputeNodeRebootOption = "terminate"
 )
 
+// PossibleComputeNodeRebootOptionValues returns an array of possible values for the ComputeNodeRebootOption const type.
+func PossibleComputeNodeRebootOptionValues() []ComputeNodeRebootOption {
+	return []ComputeNodeRebootOption{ComputeNodeRebootOptionRequeue, ComputeNodeRebootOptionRetainedData, ComputeNodeRebootOptionTaskCompletion, ComputeNodeRebootOptionTerminate}
+}
+
 // ComputeNodeReimageOption enumerates the values for compute node reimage option.
 type ComputeNodeReimageOption string
 
@@ -191,6 +246,11 @@ const (
 	// been terminated.
 	ComputeNodeReimageOptionTerminate ComputeNodeReimageOption = "terminate"
 )
+
+// PossibleComputeNodeReimageOptionValues returns an array of possible values for the ComputeNodeReimageOption const type.
+func PossibleComputeNodeReimageOptionValues() []ComputeNodeReimageOption {
+	return []ComputeNodeReimageOption{ComputeNodeReimageOptionRequeue, ComputeNodeReimageOptionRetainedData, ComputeNodeReimageOptionTaskCompletion, ComputeNodeReimageOptionTerminate}
+}
 
 // ComputeNodeState enumerates the values for compute node state.
 type ComputeNodeState string
@@ -229,6 +289,11 @@ const (
 	WaitingForStartTask ComputeNodeState = "waitingforstarttask"
 )
 
+// PossibleComputeNodeStateValues returns an array of possible values for the ComputeNodeState const type.
+func PossibleComputeNodeStateValues() []ComputeNodeState {
+	return []ComputeNodeState{Creating, Idle, LeavingPool, Offline, Preempted, Rebooting, Reimaging, Running, Starting, StartTaskFailed, Unknown, Unusable, WaitingForStartTask}
+}
+
 // DependencyAction enumerates the values for dependency action.
 type DependencyAction string
 
@@ -238,6 +303,11 @@ const (
 	// Satisfy Satisfy the task's dependencies.
 	Satisfy DependencyAction = "satisfy"
 )
+
+// PossibleDependencyActionValues returns an array of possible values for the DependencyAction const type.
+func PossibleDependencyActionValues() []DependencyAction {
+	return []DependencyAction{Block, Satisfy}
+}
 
 // DisableComputeNodeSchedulingOption enumerates the values for disable compute node scheduling option.
 type DisableComputeNodeSchedulingOption string
@@ -256,6 +326,11 @@ const (
 	DisableComputeNodeSchedulingOptionTerminate DisableComputeNodeSchedulingOption = "terminate"
 )
 
+// PossibleDisableComputeNodeSchedulingOptionValues returns an array of possible values for the DisableComputeNodeSchedulingOption const type.
+func PossibleDisableComputeNodeSchedulingOptionValues() []DisableComputeNodeSchedulingOption {
+	return []DisableComputeNodeSchedulingOption{DisableComputeNodeSchedulingOptionRequeue, DisableComputeNodeSchedulingOptionTaskCompletion, DisableComputeNodeSchedulingOptionTerminate}
+}
+
 // DisableJobOption enumerates the values for disable job option.
 type DisableJobOption string
 
@@ -270,6 +345,11 @@ const (
 	DisableJobOptionWait DisableJobOption = "wait"
 )
 
+// PossibleDisableJobOptionValues returns an array of possible values for the DisableJobOption const type.
+func PossibleDisableJobOptionValues() []DisableJobOption {
+	return []DisableJobOption{DisableJobOptionRequeue, DisableJobOptionTerminate, DisableJobOptionWait}
+}
+
 // ElevationLevel enumerates the values for elevation level.
 type ElevationLevel string
 
@@ -279,6 +359,11 @@ const (
 	// NonAdmin The user is a standard user without elevated access.
 	NonAdmin ElevationLevel = "nonadmin"
 )
+
+// PossibleElevationLevelValues returns an array of possible values for the ElevationLevel const type.
+func PossibleElevationLevelValues() []ElevationLevel {
+	return []ElevationLevel{Admin, NonAdmin}
+}
 
 // ErrorCategory enumerates the values for error category.
 type ErrorCategory string
@@ -290,6 +375,11 @@ const (
 	UserError ErrorCategory = "usererror"
 )
 
+// PossibleErrorCategoryValues returns an array of possible values for the ErrorCategory const type.
+func PossibleErrorCategoryValues() []ErrorCategory {
+	return []ErrorCategory{ServerError, UserError}
+}
+
 // InboundEndpointProtocol enumerates the values for inbound endpoint protocol.
 type InboundEndpointProtocol string
 
@@ -299,6 +389,11 @@ const (
 	// UDP Use UDP for the endpoint.
 	UDP InboundEndpointProtocol = "udp"
 )
+
+// PossibleInboundEndpointProtocolValues returns an array of possible values for the InboundEndpointProtocol const type.
+func PossibleInboundEndpointProtocolValues() []InboundEndpointProtocol {
+	return []InboundEndpointProtocol{TCP, UDP}
+}
 
 // JobAction enumerates the values for job action.
 type JobAction string
@@ -314,6 +409,11 @@ const (
 	JobActionTerminate JobAction = "terminate"
 )
 
+// PossibleJobActionValues returns an array of possible values for the JobAction const type.
+func PossibleJobActionValues() []JobAction {
+	return []JobAction{JobActionDisable, JobActionNone, JobActionTerminate}
+}
+
 // JobPreparationTaskState enumerates the values for job preparation task state.
 type JobPreparationTaskState string
 
@@ -326,6 +426,11 @@ const (
 	JobPreparationTaskStateRunning JobPreparationTaskState = "running"
 )
 
+// PossibleJobPreparationTaskStateValues returns an array of possible values for the JobPreparationTaskState const type.
+func PossibleJobPreparationTaskStateValues() []JobPreparationTaskState {
+	return []JobPreparationTaskState{JobPreparationTaskStateCompleted, JobPreparationTaskStateRunning}
+}
+
 // JobReleaseTaskState enumerates the values for job release task state.
 type JobReleaseTaskState string
 
@@ -337,6 +442,11 @@ const (
 	// JobReleaseTaskStateRunning The task is currently running (including retrying).
 	JobReleaseTaskStateRunning JobReleaseTaskState = "running"
 )
+
+// PossibleJobReleaseTaskStateValues returns an array of possible values for the JobReleaseTaskState const type.
+func PossibleJobReleaseTaskStateValues() []JobReleaseTaskState {
+	return []JobReleaseTaskState{JobReleaseTaskStateCompleted, JobReleaseTaskStateRunning}
+}
 
 // JobScheduleState enumerates the values for job schedule state.
 type JobScheduleState string
@@ -360,6 +470,11 @@ const (
 	// jobs for this schedule, nor is any existing job active.
 	JobScheduleStateTerminating JobScheduleState = "terminating"
 )
+
+// PossibleJobScheduleStateValues returns an array of possible values for the JobScheduleState const type.
+func PossibleJobScheduleStateValues() []JobScheduleState {
+	return []JobScheduleState{JobScheduleStateActive, JobScheduleStateCompleted, JobScheduleStateDeleting, JobScheduleStateDisabled, JobScheduleStateTerminating}
+}
 
 // JobState enumerates the values for job state.
 type JobState string
@@ -387,6 +502,11 @@ const (
 	JobStateTerminating JobState = "terminating"
 )
 
+// PossibleJobStateValues returns an array of possible values for the JobState const type.
+func PossibleJobStateValues() []JobState {
+	return []JobState{JobStateActive, JobStateCompleted, JobStateDeleting, JobStateDisabled, JobStateDisabling, JobStateEnabling, JobStateTerminating}
+}
+
 // NetworkSecurityGroupRuleAccess enumerates the values for network security group rule access.
 type NetworkSecurityGroupRuleAccess string
 
@@ -397,6 +517,11 @@ const (
 	Deny NetworkSecurityGroupRuleAccess = "deny"
 )
 
+// PossibleNetworkSecurityGroupRuleAccessValues returns an array of possible values for the NetworkSecurityGroupRuleAccess const type.
+func PossibleNetworkSecurityGroupRuleAccessValues() []NetworkSecurityGroupRuleAccess {
+	return []NetworkSecurityGroupRuleAccess{Allow, Deny}
+}
+
 // OnAllTasksComplete enumerates the values for on all tasks complete.
 type OnAllTasksComplete string
 
@@ -406,6 +531,11 @@ const (
 	// TerminateJob Terminate the job. The job's terminateReason is set to 'AllTasksComplete'.
 	TerminateJob OnAllTasksComplete = "terminatejob"
 )
+
+// PossibleOnAllTasksCompleteValues returns an array of possible values for the OnAllTasksComplete const type.
+func PossibleOnAllTasksCompleteValues() []OnAllTasksComplete {
+	return []OnAllTasksComplete{NoAction, TerminateJob}
+}
 
 // OnTaskFailure enumerates the values for on task failure.
 type OnTaskFailure string
@@ -420,6 +550,11 @@ const (
 	OnTaskFailurePerformExitOptionsJobAction OnTaskFailure = "performexitoptionsjobaction"
 )
 
+// PossibleOnTaskFailureValues returns an array of possible values for the OnTaskFailure const type.
+func PossibleOnTaskFailureValues() []OnTaskFailure {
+	return []OnTaskFailure{OnTaskFailureNoAction, OnTaskFailurePerformExitOptionsJobAction}
+}
+
 // OSType enumerates the values for os type.
 type OSType string
 
@@ -429,6 +564,11 @@ const (
 	// Windows The Windows operating system.
 	Windows OSType = "windows"
 )
+
+// PossibleOSTypeValues returns an array of possible values for the OSType const type.
+func PossibleOSTypeValues() []OSType {
+	return []OSType{Linux, Windows}
+}
 
 // OutputFileUploadCondition enumerates the values for output file upload condition.
 type OutputFileUploadCondition string
@@ -445,6 +585,11 @@ const (
 	OutputFileUploadConditionTaskSuccess OutputFileUploadCondition = "tasksuccess"
 )
 
+// PossibleOutputFileUploadConditionValues returns an array of possible values for the OutputFileUploadCondition const type.
+func PossibleOutputFileUploadConditionValues() []OutputFileUploadCondition {
+	return []OutputFileUploadCondition{OutputFileUploadConditionTaskCompletion, OutputFileUploadConditionTaskFailure, OutputFileUploadConditionTaskSuccess}
+}
+
 // PoolLifetimeOption enumerates the values for pool lifetime option.
 type PoolLifetimeOption string
 
@@ -458,6 +603,11 @@ const (
 	// schedules, not to jobs.
 	PoolLifetimeOptionJobSchedule PoolLifetimeOption = "jobschedule"
 )
+
+// PossiblePoolLifetimeOptionValues returns an array of possible values for the PoolLifetimeOption const type.
+func PossiblePoolLifetimeOptionValues() []PoolLifetimeOption {
+	return []PoolLifetimeOption{PoolLifetimeOptionJob, PoolLifetimeOptionJobSchedule}
+}
 
 // PoolState enumerates the values for pool state.
 type PoolState string
@@ -475,6 +625,11 @@ const (
 	PoolStateUpgrading PoolState = "upgrading"
 )
 
+// PossiblePoolStateValues returns an array of possible values for the PoolState const type.
+func PossiblePoolStateValues() []PoolState {
+	return []PoolState{PoolStateActive, PoolStateDeleting, PoolStateUpgrading}
+}
+
 // SchedulingState enumerates the values for scheduling state.
 type SchedulingState string
 
@@ -485,6 +640,11 @@ const (
 	// Enabled Tasks can be scheduled on the node.
 	Enabled SchedulingState = "enabled"
 )
+
+// PossibleSchedulingStateValues returns an array of possible values for the SchedulingState const type.
+func PossibleSchedulingStateValues() []SchedulingState {
+	return []SchedulingState{Disabled, Enabled}
+}
 
 // StartTaskState enumerates the values for start task state.
 type StartTaskState string
@@ -498,6 +658,11 @@ const (
 	StartTaskStateRunning StartTaskState = "running"
 )
 
+// PossibleStartTaskStateValues returns an array of possible values for the StartTaskState const type.
+func PossibleStartTaskStateValues() []StartTaskState {
+	return []StartTaskState{StartTaskStateCompleted, StartTaskStateRunning}
+}
+
 // StorageAccountType enumerates the values for storage account type.
 type StorageAccountType string
 
@@ -507,6 +672,11 @@ const (
 	// StandardLRS The data disk should use standard locally redundant storage.
 	StandardLRS StorageAccountType = "standard_lrs"
 )
+
+// PossibleStorageAccountTypeValues returns an array of possible values for the StorageAccountType const type.
+func PossibleStorageAccountTypeValues() []StorageAccountType {
+	return []StorageAccountType{PremiumLRS, StandardLRS}
+}
 
 // SubtaskState enumerates the values for subtask state.
 type SubtaskState string
@@ -527,6 +697,11 @@ const (
 	SubtaskStateRunning SubtaskState = "running"
 )
 
+// PossibleSubtaskStateValues returns an array of possible values for the SubtaskState const type.
+func PossibleSubtaskStateValues() []SubtaskState {
+	return []SubtaskState{SubtaskStateCompleted, SubtaskStatePreparing, SubtaskStateRunning}
+}
+
 // TaskAddStatus enumerates the values for task add status.
 type TaskAddStatus string
 
@@ -541,6 +716,11 @@ const (
 	TaskAddStatusSuccess TaskAddStatus = "success"
 )
 
+// PossibleTaskAddStatusValues returns an array of possible values for the TaskAddStatus const type.
+func PossibleTaskAddStatusValues() []TaskAddStatus {
+	return []TaskAddStatus{TaskAddStatusClientError, TaskAddStatusServerError, TaskAddStatusSuccess}
+}
+
 // TaskCountValidationStatus enumerates the values for task count validation status.
 type TaskCountValidationStatus string
 
@@ -554,6 +734,11 @@ const (
 	Validated TaskCountValidationStatus = "validated"
 )
 
+// PossibleTaskCountValidationStatusValues returns an array of possible values for the TaskCountValidationStatus const type.
+func PossibleTaskCountValidationStatusValues() []TaskCountValidationStatus {
+	return []TaskCountValidationStatus{Unvalidated, Validated}
+}
+
 // TaskExecutionResult enumerates the values for task execution result.
 type TaskExecutionResult string
 
@@ -564,6 +749,11 @@ const (
 	// Success The task ran successfully.
 	Success TaskExecutionResult = "success"
 )
+
+// PossibleTaskExecutionResultValues returns an array of possible values for the TaskExecutionResult const type.
+func PossibleTaskExecutionResultValues() []TaskExecutionResult {
+	return []TaskExecutionResult{Failure, Success}
+}
 
 // TaskState enumerates the values for task state.
 type TaskState string
@@ -587,6 +777,11 @@ const (
 	// necessarily mean that the task command line has started executing.
 	TaskStateRunning TaskState = "running"
 )
+
+// PossibleTaskStateValues returns an array of possible values for the TaskState const type.
+func PossibleTaskStateValues() []TaskState {
+	return []TaskState{TaskStateActive, TaskStateCompleted, TaskStatePreparing, TaskStateRunning}
+}
 
 // AccountListNodeAgentSkusResult ...
 type AccountListNodeAgentSkusResult struct {

@@ -42,11 +42,13 @@ func NewAPIExportClientWithBaseURI(baseURI string, subscriptionID string) APIExp
 
 // Get gets the details of the API specified by its identifier in the format specified to the Storage Blob with SAS Key
 // valid for 5 minutes.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. formatParameter is format in which to export the
-// Api Details to the Storage Blob with Sas Key valid for 5 minutes.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// formatParameter - format in which to export the Api Details to the Storage Blob with Sas Key valid for 5
+// minutes.
 func (client APIExportClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, formatParameter ExportFormat) (result APIExportResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

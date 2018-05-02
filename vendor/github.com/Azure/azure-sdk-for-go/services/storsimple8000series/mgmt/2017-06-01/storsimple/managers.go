@@ -41,9 +41,10 @@ func NewManagersClientWithBaseURI(baseURI string, subscriptionID string) Manager
 }
 
 // CreateExtendedInfo creates the extended info of the manager.
-//
-// parameters is the manager extended information. resourceGroupName is the resource group name managerName is the
-// manager name
+// Parameters:
+// parameters - the manager extended information.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) CreateExtendedInfo(ctx context.Context, parameters ManagerExtendedInfo, resourceGroupName string, managerName string) (result ManagerExtendedInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -92,7 +93,7 @@ func (client ManagersClient) CreateExtendedInfoPreparer(ctx context.Context, par
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/extendedInformation/vaultExtendedInfo", pathParameters),
@@ -122,8 +123,10 @@ func (client ManagersClient) CreateExtendedInfoResponder(resp *http.Response) (r
 }
 
 // CreateOrUpdate creates or updates the manager.
-//
-// parameters is the manager. resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// parameters - the manager.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) CreateOrUpdate(ctx context.Context, parameters Manager, resourceGroupName string, managerName string) (result Manager, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -172,7 +175,7 @@ func (client ManagersClient) CreateOrUpdatePreparer(ctx context.Context, paramet
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}", pathParameters),
@@ -202,8 +205,9 @@ func (client ManagersClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) Delete(ctx context.Context, resourceGroupName string, managerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -274,8 +278,9 @@ func (client ManagersClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // DeleteExtendedInfo deletes the extended info of the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) DeleteExtendedInfo(ctx context.Context, resourceGroupName string, managerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -346,8 +351,9 @@ func (client ManagersClient) DeleteExtendedInfoResponder(resp *http.Response) (r
 }
 
 // Get returns the properties of the specified manager name.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) Get(ctx context.Context, resourceGroupName string, managerName string) (result Manager, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -419,8 +425,9 @@ func (client ManagersClient) GetResponder(resp *http.Response) (result Manager, 
 }
 
 // GetActivationKey returns the activation key of the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) GetActivationKey(ctx context.Context, resourceGroupName string, managerName string) (result Key, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -492,8 +499,10 @@ func (client ManagersClient) GetActivationKeyResponder(resp *http.Response) (res
 }
 
 // GetDevicePublicEncryptionKey returns the public encryption key of the device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) GetDevicePublicEncryptionKey(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result PublicKey, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -566,8 +575,9 @@ func (client ManagersClient) GetDevicePublicEncryptionKeyResponder(resp *http.Re
 }
 
 // GetEncryptionSettings returns the encryption settings of the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) GetEncryptionSettings(ctx context.Context, resourceGroupName string, managerName string) (result EncryptionSettings, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -639,8 +649,9 @@ func (client ManagersClient) GetEncryptionSettingsResponder(resp *http.Response)
 }
 
 // GetExtendedInfo returns the extended information of the specified manager name.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) GetExtendedInfo(ctx context.Context, resourceGroupName string, managerName string) (result ManagerExtendedInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -712,8 +723,9 @@ func (client ManagersClient) GetExtendedInfoResponder(resp *http.Response) (resu
 }
 
 // GetPublicEncryptionKey returns the symmetric encrypted public encryption key of the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) GetPublicEncryptionKey(ctx context.Context, resourceGroupName string, managerName string) (result SymmetricEncryptedSecret, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -847,8 +859,8 @@ func (client ManagersClient) ListResponder(resp *http.Response) (result ManagerL
 }
 
 // ListByResourceGroup retrieves all the managers in a resource group.
-//
-// resourceGroupName is the resource group name
+// Parameters:
+// resourceGroupName - the resource group name
 func (client ManagersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ManagerList, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -912,8 +924,10 @@ func (client ManagersClient) ListByResourceGroupResponder(resp *http.Response) (
 }
 
 // ListFeatureSupportStatus lists the features and their support status
-//
-// resourceGroupName is the resource group name managerName is the manager name filter is oData Filter options
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// filter - oData Filter options
 func (client ManagersClient) ListFeatureSupportStatus(ctx context.Context, resourceGroupName string, managerName string, filter string) (result FeatureList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -988,8 +1002,9 @@ func (client ManagersClient) ListFeatureSupportStatusResponder(resp *http.Respon
 }
 
 // ListMetricDefinition gets the metric definitions for the specified manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) ListMetricDefinition(ctx context.Context, resourceGroupName string, managerName string) (result MetricDefinitionList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1061,8 +1076,10 @@ func (client ManagersClient) ListMetricDefinitionResponder(resp *http.Response) 
 }
 
 // ListMetrics gets the metrics for the specified manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name filter is oData Filter options
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// filter - oData Filter options
 func (client ManagersClient) ListMetrics(ctx context.Context, resourceGroupName string, managerName string, filter string) (result MetricList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1135,8 +1152,9 @@ func (client ManagersClient) ListMetricsResponder(resp *http.Response) (result M
 }
 
 // RegenerateActivationKey re-generates and returns the activation key of the manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) RegenerateActivationKey(ctx context.Context, resourceGroupName string, managerName string) (result Key, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1208,9 +1226,10 @@ func (client ManagersClient) RegenerateActivationKeyResponder(resp *http.Respons
 }
 
 // Update updates the StorSimple Manager.
-//
-// parameters is the manager update parameters. resourceGroupName is the resource group name managerName is the
-// manager name
+// Parameters:
+// parameters - the manager update parameters.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client ManagersClient) Update(ctx context.Context, parameters ManagerPatch, resourceGroupName string, managerName string) (result Manager, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1254,7 +1273,7 @@ func (client ManagersClient) UpdatePreparer(ctx context.Context, parameters Mana
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}", pathParameters),
@@ -1284,9 +1303,11 @@ func (client ManagersClient) UpdateResponder(resp *http.Response) (result Manage
 }
 
 // UpdateExtendedInfo updates the extended info of the manager.
-//
-// parameters is the manager extended information. resourceGroupName is the resource group name managerName is the
-// manager name ifMatch is pass the ETag of ExtendedInfo fetched from GET call
+// Parameters:
+// parameters - the manager extended information.
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// ifMatch - pass the ETag of ExtendedInfo fetched from GET call
 func (client ManagersClient) UpdateExtendedInfo(ctx context.Context, parameters ManagerExtendedInfo, resourceGroupName string, managerName string, ifMatch string) (result ManagerExtendedInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1330,7 +1351,7 @@ func (client ManagersClient) UpdateExtendedInfoPreparer(ctx context.Context, par
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/extendedInformation/vaultExtendedInfo", pathParameters),

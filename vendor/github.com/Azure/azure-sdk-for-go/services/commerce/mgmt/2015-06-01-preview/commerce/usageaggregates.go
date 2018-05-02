@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // UsageAggregatesClient is the client for the UsageAggregates methods of the Commerce service.
 type UsageAggregatesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // NewUsageAggregatesClient creates an instance of the UsageAggregatesClient client.
 func NewUsageAggregatesClient(subscriptionID string) UsageAggregatesClient {
 	return NewUsageAggregatesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // NewUsageAggregatesClientWithBaseURI creates an instance of the UsageAggregatesClient client.
 func NewUsageAggregatesClientWithBaseURI(baseURI string, subscriptionID string) UsageAggregatesClient {
 	return UsageAggregatesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // List query aggregated Azure subscription consumption data for a date range.
 //
 // reportedStartTime is the start of the time range to retrieve data for. reportedEndTime is the end of the time
@@ -74,6 +78,7 @@ func (client UsageAggregatesClient) List(ctx context.Context, reportedStartTime 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // ListPreparer prepares the List request.
 func (client UsageAggregatesClient) ListPreparer(ctx context.Context, reportedStartTime date.Time, reportedEndTime date.Time, showDetails *bool, aggregationGranularity AggregationGranularity, continuationToken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -106,6 +111,7 @@ func (client UsageAggregatesClient) ListPreparer(ctx context.Context, reportedSt
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageAggregatesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -113,6 +119,7 @@ func (client UsageAggregatesClient) ListSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client UsageAggregatesClient) ListResponder(resp *http.Response) (result UsageAggregationListResult, err error) {
@@ -147,6 +154,7 @@ func (client UsageAggregatesClient) listNextResults(lastResults UsageAggregation
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UsageAggregatesClient) ListComplete(ctx context.Context, reportedStartTime date.Time, reportedEndTime date.Time, showDetails *bool, aggregationGranularity AggregationGranularity, continuationToken string) (result UsageAggregationListResultIterator, err error) {
 	result.page, err = client.List(ctx, reportedStartTime, reportedEndTime, showDetails, aggregationGranularity, continuationToken)

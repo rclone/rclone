@@ -1,4 +1,4 @@
-// Package runtime implements the Azure ARM Runtime service API version v2.0.
+// Package runtime implements the Azure ARM Runtime service API version v2.0 preview.
 //
 //
 package runtime

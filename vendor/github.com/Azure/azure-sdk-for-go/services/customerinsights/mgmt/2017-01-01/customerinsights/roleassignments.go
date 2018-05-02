@@ -43,9 +43,11 @@ func NewRoleAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // CreateOrUpdate creates or updates a role assignment in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the
-// assignment name parameters is parameters supplied to the CreateOrUpdate RoleAssignment operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// assignmentName - the assignment name
+// parameters - parameters supplied to the CreateOrUpdate RoleAssignment operation.
 func (client RoleAssignmentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, assignmentName string, parameters RoleAssignmentResourceFormat) (result RoleAssignmentsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: assignmentName,
@@ -88,7 +90,7 @@ func (client RoleAssignmentsClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/roleAssignments/{assignmentName}", pathParameters),
@@ -126,9 +128,10 @@ func (client RoleAssignmentsClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // Delete deletes the role assignment in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name
-// of the role assignment.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// assignmentName - the name of the role assignment.
 func (client RoleAssignmentsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, assignmentName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, assignmentName)
 	if err != nil {
@@ -193,9 +196,10 @@ func (client RoleAssignmentsClient) DeleteResponder(resp *http.Response) (result
 }
 
 // Get gets the role assignment in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name
-// of the role assignment.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// assignmentName - the name of the role assignment.
 func (client RoleAssignmentsClient) Get(ctx context.Context, resourceGroupName string, hubName string, assignmentName string) (result RoleAssignmentResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, assignmentName)
 	if err != nil {
@@ -261,8 +265,9 @@ func (client RoleAssignmentsClient) GetResponder(resp *http.Response) (result Ro
 }
 
 // ListByHub gets all the role assignments for the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client RoleAssignmentsClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result RoleAssignmentListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)

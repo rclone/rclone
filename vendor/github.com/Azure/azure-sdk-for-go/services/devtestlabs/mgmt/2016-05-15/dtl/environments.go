@@ -41,10 +41,12 @@ func NewEnvironmentsClientWithBaseURI(baseURI string, subscriptionID string) Env
 }
 
 // CreateOrUpdate create or replace an existing environment. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the environment. dtlEnvironment is an environment, which is essentially an ARM
-// template deployment.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the environment.
+// dtlEnvironment - an environment, which is essentially an ARM template deployment.
 func (client EnvironmentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, userName string, name string, dtlEnvironment Environment) (result EnvironmentsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: dtlEnvironment,
@@ -83,7 +85,7 @@ func (client EnvironmentsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/users/{userName}/environments/{name}", pathParameters),
@@ -121,9 +123,11 @@ func (client EnvironmentsClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete delete environment. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the environment.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the environment.
 func (client EnvironmentsClient) Delete(ctx context.Context, resourceGroupName string, labName string, userName string, name string) (result EnvironmentsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, userName, name)
 	if err != nil {
@@ -191,10 +195,12 @@ func (client EnvironmentsClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get get environment.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the environment. expand is specify the $expand query. Example:
-// 'properties($select=deploymentProperties)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the environment.
+// expand - specify the $expand query. Example: 'properties($select=deploymentProperties)'
 func (client EnvironmentsClient) Get(ctx context.Context, resourceGroupName string, labName string, userName string, name string, expand string) (result Environment, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, userName, name, expand)
 	if err != nil {
@@ -264,11 +270,14 @@ func (client EnvironmentsClient) GetResponder(resp *http.Response) (result Envir
 }
 
 // List list environments in a given user profile.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. expand is specify the $expand query. Example: 'properties($select=deploymentProperties)' filter is
-// the filter to apply to the operation. top is the maximum number of resources to return from the operation.
-// orderby is the ordering expression for the results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// expand - specify the $expand query. Example: 'properties($select=deploymentProperties)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client EnvironmentsClient) List(ctx context.Context, resourceGroupName string, labName string, userName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationDtlEnvironmentPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, userName, expand, filter, top, orderby)

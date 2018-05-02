@@ -41,11 +41,12 @@ func NewAdminKeysClientWithBaseURI(baseURI string, subscriptionID string) AdminK
 }
 
 // Get gets the primary and secondary admin API keys for the specified Azure Search service.
-//
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
-// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
-// associated with the specified resource group. clientRequestID is a client-generated GUID value that identifies
-// this request. If specified, this will be included in response information as a way to track the request.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription. You can obtain this
+// value from the Azure Resource Manager API or the portal.
+// searchServiceName - the name of the Azure Search service associated with the specified resource group.
+// clientRequestID - a client-generated GUID value that identifies this request. If specified, this will be
+// included in response information as a way to track the request.
 func (client AdminKeysClient) Get(ctx context.Context, resourceGroupName string, searchServiceName string, clientRequestID *uuid.UUID) (result AdminKeyResult, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, searchServiceName, clientRequestID)
 	if err != nil {
@@ -114,12 +115,13 @@ func (client AdminKeysClient) GetResponder(resp *http.Response) (result AdminKey
 }
 
 // Regenerate regenerates either the primary or secondary admin API key. You can only regenerate one key at a time.
-//
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
-// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
-// associated with the specified resource group. keyKind is specifies which key to regenerate. Valid values include
-// 'primary' and 'secondary'. clientRequestID is a client-generated GUID value that identifies this request. If
-// specified, this will be included in response information as a way to track the request.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription. You can obtain this
+// value from the Azure Resource Manager API or the portal.
+// searchServiceName - the name of the Azure Search service associated with the specified resource group.
+// keyKind - specifies which key to regenerate. Valid values include 'primary' and 'secondary'.
+// clientRequestID - a client-generated GUID value that identifies this request. If specified, this will be
+// included in response information as a way to track the request.
 func (client AdminKeysClient) Regenerate(ctx context.Context, resourceGroupName string, searchServiceName string, keyKind AdminKeyKind, clientRequestID *uuid.UUID) (result AdminKeyResult, err error) {
 	req, err := client.RegeneratePreparer(ctx, resourceGroupName, searchServiceName, keyKind, clientRequestID)
 	if err != nil {

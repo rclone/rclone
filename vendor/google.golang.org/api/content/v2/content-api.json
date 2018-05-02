@@ -15,7 +15,7 @@
   "description": "Manages product items, inventory, and Merchant Center accounts for Google Shopping.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/shopping-content",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/viqemhmQQxAoxqj8nxZHD7zTSa8\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/PNUnFmurkt6UcyajxjbWsLH2mTY\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -60,12 +60,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -398,6 +398,12 @@
               "required": true,
               "type": "string"
             },
+            "destinations": {
+              "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+              "location": "query",
+              "repeated": true,
+              "type": "string"
+            },
             "merchantId": {
               "description": "The ID of the managing account. If this parameter is not the same as accountId, then this account must be a multi-client account and accountId must be the ID of a sub-account of this account.",
               "format": "uint64",
@@ -422,6 +428,12 @@
             "merchantId"
           ],
           "parameters": {
+            "destinations": {
+              "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+              "location": "query",
+              "repeated": true,
+              "type": "string"
+            },
             "maxResults": {
               "description": "The maximum number of account statuses to return in the response, used for paging.",
               "format": "uint32",
@@ -677,6 +689,43 @@
             }
           },
           "path": "{merchantId}/datafeeds/{datafeedId}",
+          "scopes": [
+            "https://www.googleapis.com/auth/content"
+          ]
+        },
+        "fetchnow": {
+          "description": "Invokes a fetch for the datafeed in your Merchant Center account.",
+          "httpMethod": "POST",
+          "id": "content.datafeeds.fetchnow",
+          "parameterOrder": [
+            "merchantId",
+            "datafeedId"
+          ],
+          "parameters": {
+            "datafeedId": {
+              "description": "The ID of the datafeed to be fetched.",
+              "format": "uint64",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "dryRun": {
+              "description": "Flag to run the request in dry-run mode.",
+              "location": "query",
+              "type": "boolean"
+            },
+            "merchantId": {
+              "description": "The ID of the account that manages the datafeed. This account cannot be a multi-client account.",
+              "format": "uint64",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{merchantId}/datafeeds/{datafeedId}/fetchNow",
+          "response": {
+            "$ref": "DatafeedsFetchNowResponse"
+          },
           "scopes": [
             "https://www.googleapis.com/auth/content"
           ]
@@ -1032,7 +1081,7 @@
     "liasettings": {
       "methods": {
         "custombatch": {
-          "description": "Retrieves and updates the Lia settings of multiple accounts in a single request.",
+          "description": "Retrieves and/or updates the LIA settings of multiple accounts in a single request.",
           "httpMethod": "POST",
           "id": "content.liasettings.custombatch",
           "parameters": {
@@ -1054,7 +1103,7 @@
           ]
         },
         "get": {
-          "description": "Retrieves the Lia settings of the account.",
+          "description": "Retrieves the LIA settings of the account.",
           "httpMethod": "GET",
           "id": "content.liasettings.get",
           "parameterOrder": [
@@ -1063,7 +1112,7 @@
           ],
           "parameters": {
             "accountId": {
-              "description": "The ID of the account for which to get/update Lia settings.",
+              "description": "The ID of the account for which to get or update LIA settings.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -1086,7 +1135,7 @@
           ]
         },
         "getaccessiblegmbaccounts": {
-          "description": "Retrieves the list of accesable Google My Business accounts.",
+          "description": "Retrieves the list of accessible Google My Business accounts.",
           "httpMethod": "GET",
           "id": "content.liasettings.getaccessiblegmbaccounts",
           "parameterOrder": [
@@ -1095,7 +1144,7 @@
           ],
           "parameters": {
             "accountId": {
-              "description": "The ID of the account for which to retrieve the accessible Google My Business accounts.",
+              "description": "The ID of the account for which to retrieve accessible Google My Business accounts.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -1118,7 +1167,7 @@
           ]
         },
         "list": {
-          "description": "Lists the Lia settings of the sub-accounts in your Merchant Center account.",
+          "description": "Lists the LIA settings of the sub-accounts in your Merchant Center account.",
           "httpMethod": "GET",
           "id": "content.liasettings.list",
           "parameterOrder": [
@@ -1126,7 +1175,7 @@
           ],
           "parameters": {
             "maxResults": {
-              "description": "The maximum number of Lia settings to return in the response, used for paging.",
+              "description": "The maximum number of LIA settings to return in the response, used for paging.",
               "format": "uint32",
               "location": "query",
               "type": "integer"
@@ -1153,7 +1202,7 @@
           ]
         },
         "patch": {
-          "description": "Updates the Lia settings of the account. This method supports patch semantics.",
+          "description": "Updates the LIA settings of the account. This method supports patch semantics.",
           "httpMethod": "PATCH",
           "id": "content.liasettings.patch",
           "parameterOrder": [
@@ -1162,7 +1211,7 @@
           ],
           "parameters": {
             "accountId": {
-              "description": "The ID of the account for which to get/update Lia settings.",
+              "description": "The ID of the account for which to get or update LIA settings.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -1193,7 +1242,7 @@
           ]
         },
         "requestgmbaccess": {
-          "description": "Requests access to a specified Google By Business account.",
+          "description": "Requests access to a specified Google My Business account.",
           "httpMethod": "POST",
           "id": "content.liasettings.requestgmbaccess",
           "parameterOrder": [
@@ -1209,7 +1258,7 @@
               "type": "string"
             },
             "gmbEmail": {
-              "description": "The email of the Google My Business Account.",
+              "description": "The email of the Google My Business account.",
               "location": "query",
               "type": "string"
             },
@@ -1230,7 +1279,7 @@
           ]
         },
         "requestinventoryverification": {
-          "description": "Requests the inventory validation for the specified country.",
+          "description": "Requests inventory validation for the specified country.",
           "httpMethod": "POST",
           "id": "content.liasettings.requestinventoryverification",
           "parameterOrder": [
@@ -1247,7 +1296,7 @@
               "type": "string"
             },
             "country": {
-              "description": "The country for which the inventory validation is requested.",
+              "description": "The country for which inventory validation is requested.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1269,7 +1318,7 @@
           ]
         },
         "setinventoryverificationcontact": {
-          "description": "Sets the inventory validation verification for the specified country.",
+          "description": "Sets the inventory verification contract for the specified country.",
           "httpMethod": "POST",
           "id": "content.liasettings.setinventoryverificationcontact",
           "parameterOrder": [
@@ -1285,7 +1334,7 @@
               "type": "string"
             },
             "contactEmail": {
-              "description": "The email of the inventory check contact.",
+              "description": "The email of the inventory verification contact.",
               "location": "query",
               "type": "string"
             },
@@ -1295,12 +1344,12 @@
               "type": "string"
             },
             "country": {
-              "description": "The country for which the inventory verification is requested.",
+              "description": "The country for which inventory verification is requested.",
               "location": "query",
               "type": "string"
             },
             "language": {
-              "description": "The country for which the inventory verification is requested.",
+              "description": "The language for which inventory verification is requested.",
               "location": "query",
               "type": "string"
             },
@@ -1321,7 +1370,7 @@
           ]
         },
         "update": {
-          "description": "Updates the Lia settings of the account.",
+          "description": "Updates the LIA settings of the account.",
           "httpMethod": "PUT",
           "id": "content.liasettings.update",
           "parameterOrder": [
@@ -1330,7 +1379,7 @@
           ],
           "parameters": {
             "accountId": {
-              "description": "The ID of the account for which to get/update Lia settings.",
+              "description": "The ID of the account for which to get or update LIA settings.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2121,7 +2170,7 @@
               "type": "boolean"
             },
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2157,7 +2206,7 @@
           ],
           "parameters": {
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2200,7 +2249,7 @@
               "type": "boolean"
             },
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2240,7 +2289,7 @@
               "type": "boolean"
             },
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2275,7 +2324,7 @@
           ],
           "parameters": {
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2312,7 +2361,7 @@
               "type": "boolean"
             },
             "merchantId": {
-              "description": "The ID of the POS provider.",
+              "description": "The ID of the POS or inventory data provider.",
               "format": "uint64",
               "location": "path",
               "required": true,
@@ -2534,6 +2583,12 @@
             "productId"
           ],
           "parameters": {
+            "destinations": {
+              "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+              "location": "query",
+              "repeated": true,
+              "type": "string"
+            },
             "includeAttributes": {
               "description": "Flag to include full product data in the result of this get request. The default value is false.",
               "location": "query",
@@ -2569,6 +2624,12 @@
             "merchantId"
           ],
           "parameters": {
+            "destinations": {
+              "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+              "location": "query",
+              "repeated": true,
+              "type": "string"
+            },
             "includeAttributes": {
               "description": "Flag to include full product data in the results of the list request. The default value is false.",
               "location": "query",
@@ -2830,7 +2891,7 @@
       }
     }
   },
-  "revision": "20180314",
+  "revision": "20180410",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Account": {
@@ -2992,6 +3053,10 @@
           "description": "Country for which this issue is reported.",
           "type": "string"
         },
+        "destination": {
+          "description": "The destination the issue applies to.",
+          "type": "string"
+        },
         "detail": {
           "description": "Additional details about the issue.",
           "type": "string"
@@ -3016,6 +3081,10 @@
       "properties": {
         "country": {
           "description": "Country for which this issue is reported.",
+          "type": "string"
+        },
+        "destination": {
+          "description": "The destination the issue applies to.",
           "type": "string"
         },
         "detail": {
@@ -3347,6 +3416,13 @@
           "description": "An entry ID, unique within the batch request.",
           "format": "uint32",
           "type": "integer"
+        },
+        "destinations": {
+          "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "merchantId": {
           "description": "The ID of the managing account.",
@@ -3937,6 +4013,17 @@
       },
       "type": "object"
     },
+    "DatafeedsFetchNowResponse": {
+      "id": "DatafeedsFetchNowResponse",
+      "properties": {
+        "kind": {
+          "default": "content#datafeedsFetchNowResponse",
+          "description": "Identifies what kind of resource this is. Value: the fixed string \"content#datafeedsFetchNowResponse\".",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "DatafeedsListResponse": {
       "id": "DatafeedsListResponse",
       "properties": {
@@ -4137,7 +4224,7 @@
           "type": "string"
         },
         "gmbAccounts": {
-          "description": "A list of GMB account which are available to the merchant.",
+          "description": "A list of GMB accounts which are available to the merchant.",
           "items": {
             "$ref": "GmbAccountsGmbAccount"
           },
@@ -4163,7 +4250,7 @@
           "type": "string"
         },
         "type": {
-          "description": "Type of the GMB account (User or Business).",
+          "description": "The type of the GMB account (User or Business).",
           "type": "string"
         }
       },
@@ -4487,11 +4574,11 @@
       "id": "LiaAboutPageSettings",
       "properties": {
         "status": {
-          "description": "The status verification process.",
+          "description": "The status of the verification process for the About page.",
           "type": "string"
         },
         "url": {
-          "description": "The about URL.",
+          "description": "The URL for the About page.",
           "type": "string"
         }
       },
@@ -4502,7 +4589,7 @@
       "properties": {
         "about": {
           "$ref": "LiaAboutPageSettings",
-          "description": "The about page settings."
+          "description": "The settings for the About page."
         },
         "country": {
           "annotations": {
@@ -4519,7 +4606,7 @@
         },
         "inventory": {
           "$ref": "LiaInventorySettings",
-          "description": "LIA inventory settings."
+          "description": "LIA inventory verification settings."
         },
         "onDisplayToOrder": {
           "$ref": "LiaOnDisplayToOrderSettings",
@@ -4536,11 +4623,11 @@
       "id": "LiaInventorySettings",
       "properties": {
         "inventoryVerificationContactEmail": {
-          "description": "The email of contact which will be contacted during the verification process.",
+          "description": "The email of the contact for the inventory verification process.",
           "type": "string"
         },
         "inventoryVerificationContactName": {
-          "description": "The name of contact which will be contacted during the verification process.",
+          "description": "The name of the contact for the inventory verification process.",
           "type": "string"
         },
         "inventoryVerificationContactStatus": {
@@ -4703,7 +4790,7 @@
           "type": "string"
         },
         "gmbAccounts": {
-          "description": "A list of GMB account which are available to the merchant.",
+          "description": "A list of GMB accounts which are available to the merchant.",
           "items": {
             "$ref": "GmbAccountsGmbAccount"
           },
@@ -4726,7 +4813,7 @@
           "type": "string"
         },
         "nextPageToken": {
-          "description": "The token for the retrieval of the next page of Lia settings.",
+          "description": "The token for the retrieval of the next page of LIA settings.",
           "type": "string"
         },
         "resources": {
@@ -4978,15 +5065,37 @@
       "id": "OrderCustomer",
       "properties": {
         "email": {
-          "description": "Email address of the customer.",
+          "description": "Email address that should be used for order related communications. In certain cases this might not be a real users email, but a proxy email.",
           "type": "string"
         },
         "explicitMarketingPreference": {
-          "description": "If set, this indicates the user explicitly chose to opt in or out of providing marketing rights to the merchant. If unset, this indicates the user has already made this choice in a previous purchase, and was thus not shown the marketing right opt in/out checkbox during the checkout flow.",
+          "description": "Deprecated. Please use marketingRightsInfo instead.",
           "type": "boolean"
         },
         "fullName": {
           "description": "Full name of the customer.",
+          "type": "string"
+        },
+        "marketingRightsInfo": {
+          "$ref": "OrderCustomerMarketingRightsInfo",
+          "description": "Customer's marketing preferences."
+        }
+      },
+      "type": "object"
+    },
+    "OrderCustomerMarketingRightsInfo": {
+      "id": "OrderCustomerMarketingRightsInfo",
+      "properties": {
+        "explicitMarketingPreference": {
+          "description": "Last known user selection regarding marketing preferences. In certain cases this selection might not be known, so this field would be empty.",
+          "type": "string"
+        },
+        "lastUpdatedTimestamp": {
+          "description": "Timestamp when last time marketing preference was updated. Could be empty, if user wasn't offered a selection yet.",
+          "type": "string"
+        },
+        "marketingEmailAddress": {
+          "description": "Email address that can be used for marketing purposes. This field is only filled when explicitMarketingPreference is equal to 'granted'.",
           "type": "string"
         }
       },
@@ -6648,7 +6757,7 @@
           "description": "The store information to submit. Set this only if the method is insert."
         },
         "storeCode": {
-          "description": "The store code. Required only to get/submit store information.",
+          "description": "The store code. Set this only if the method is delete or get.",
           "type": "string"
         },
         "targetMerchantId": {
@@ -6765,7 +6874,7 @@
               "content.pos.inventory"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -6839,7 +6948,7 @@
               "content.pos.inventory"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -6918,7 +7027,7 @@
               "content.pos.inventory"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -7019,7 +7128,7 @@
               "content.pos.sale"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -7097,7 +7206,7 @@
               "content.pos.sale"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -7180,7 +7289,7 @@
               "content.pos.sale"
             ]
           },
-          "description": "The identifier of the merchant's store.",
+          "description": "The identifier of the merchant's store. Either a storeCode inserted via the API or the code of the store in Google My Business.",
           "type": "string"
         },
         "targetCountry": {
@@ -7854,6 +7963,10 @@
     "ProductStatusDataQualityIssue": {
       "id": "ProductStatusDataQualityIssue",
       "properties": {
+        "destination": {
+          "description": "The destination the issue applies to.",
+          "type": "string"
+        },
         "detail": {
           "description": "A more detailed error string.",
           "type": "string"
@@ -7922,8 +8035,20 @@
           "description": "The error code of the issue.",
           "type": "string"
         },
+        "description": {
+          "description": "A short issue description in English.",
+          "type": "string"
+        },
         "destination": {
           "description": "The destination the issue applies to.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A detailed issue description in English.",
+          "type": "string"
+        },
+        "documentation": {
+          "description": "The URL of a web page to help with resolving this issue.",
           "type": "string"
         },
         "resolution": {
@@ -8126,6 +8251,13 @@
           "format": "uint32",
           "type": "integer"
         },
+        "destinations": {
+          "description": "If set, only issues for the specified destinations are returned, otherwise only issues for the Shopping destination.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "includeAttributes": {
           "type": "boolean"
         },
@@ -8274,6 +8406,10 @@
         "deliveryTime": {
           "$ref": "DeliveryTime",
           "description": "Time spent in various aspects from order to the delivery of the product. Required."
+        },
+        "eligibility": {
+          "description": "Eligibility for this service.",
+          "type": "string"
         },
         "minimumOrderValue": {
           "$ref": "Price",
@@ -8582,11 +8718,29 @@
           "type": "string"
         },
         "explicitMarketingPreference": {
-          "description": "If set, this indicates the user explicitly chose to opt in or out of providing marketing rights to the merchant. If unset, this indicates the user has already made this choice in a previous purchase, and was thus not shown the marketing right opt in/out checkbox during the checkout flow. Optional.",
+          "description": "Deprecated. Please use marketingRightsInfo instead.",
           "type": "boolean"
         },
         "fullName": {
           "description": "Full name of the customer.",
+          "type": "string"
+        },
+        "marketingRightsInfo": {
+          "$ref": "TestOrderCustomerMarketingRightsInfo",
+          "description": "Customer's marketing preferences."
+        }
+      },
+      "type": "object"
+    },
+    "TestOrderCustomerMarketingRightsInfo": {
+      "id": "TestOrderCustomerMarketingRightsInfo",
+      "properties": {
+        "explicitMarketingPreference": {
+          "description": "Last know user use selection regards marketing preferences. In certain cases selection might not be known, so this field would be empty.",
+          "type": "string"
+        },
+        "lastUpdatedTimestamp": {
+          "description": "Timestamp when last time marketing preference was updated. Could be empty, if user wasn't offered a selection yet.",
           "type": "string"
         }
       },

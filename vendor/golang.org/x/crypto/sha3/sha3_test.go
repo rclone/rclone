@@ -36,15 +36,16 @@ func newHashShake256() hash.Hash {
 }
 
 // testDigests contains functions returning hash.Hash instances
-// with output-length equal to the KAT length for both SHA-3 and
-// SHAKE instances.
+// with output-length equal to the KAT length for SHA-3, Keccak
+// and SHAKE instances.
 var testDigests = map[string]func() hash.Hash{
-	"SHA3-224": New224,
-	"SHA3-256": New256,
-	"SHA3-384": New384,
-	"SHA3-512": New512,
-	"SHAKE128": newHashShake128,
-	"SHAKE256": newHashShake256,
+	"SHA3-224":   New224,
+	"SHA3-256":   New256,
+	"SHA3-384":   New384,
+	"SHA3-512":   New512,
+	"Keccak-256": NewLegacyKeccak256,
+	"SHAKE128":   newHashShake128,
+	"SHAKE256":   newHashShake256,
 }
 
 // testShakes contains functions that return ShakeHash instances for
@@ -124,9 +125,34 @@ func TestKeccakKats(t *testing.T) {
 	})
 }
 
+// TestKeccak does a basic test of the non-standardized Keccak hash functions.
+func TestKeccak(t *testing.T) {
+	tests := []struct {
+		fn   func() hash.Hash
+		data []byte
+		want string
+	}{
+		{
+			NewLegacyKeccak256,
+			[]byte("abc"),
+			"4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45",
+		},
+	}
+
+	for _, u := range tests {
+		h := u.fn()
+		h.Write(u.data)
+		got := h.Sum(nil)
+		want := decodeHex(u.want)
+		if !bytes.Equal(got, want) {
+			t.Errorf("unexpected hash for size %d: got '%x' want '%s'", h.Size()*8, got, u.want)
+		}
+	}
+}
+
 // TestUnalignedWrite tests that writing data in an arbitrary pattern with
 // small input buffers.
-func testUnalignedWrite(t *testing.T) {
+func TestUnalignedWrite(t *testing.T) {
 	testUnalignedAndGeneric(t, func(impl string) {
 		buf := sequentialBytes(0x10000)
 		for alg, df := range testDigests {

@@ -41,10 +41,12 @@ func NewSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) Su
 }
 
 // CreateOrUpdate creates or updates the subscription of specified user to the specified product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management. parameters is create parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
+// parameters - create parameters.
 func (client SubscriptionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, sid string, parameters SubscriptionCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -108,7 +110,7 @@ func (client SubscriptionsClient) CreateOrUpdatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/subscriptions/{sid}", pathParameters),
@@ -137,11 +139,13 @@ func (client SubscriptionsClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete deletes the specified subscription.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management. ifMatch is eTag of the Subscription Entity. ETag should match the current entity state from the
-// header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
+// ifMatch - eTag of the Subscription Entity. ETag should match the current entity state from the header
+// response of the GET request or it should be * for unconditional update.
 func (client SubscriptionsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, sid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -218,10 +222,11 @@ func (client SubscriptionsClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets the specified Subscription entity.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
 func (client SubscriptionsClient) Get(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result SubscriptionContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -298,17 +303,19 @@ func (client SubscriptionsClient) GetResponder(resp *http.Response) (result Subs
 }
 
 // List lists all subscriptions of the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field        | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field        | Supported operators    | Supported functions                         |
 // |--------------|------------------------|---------------------------------------------|
 // | id           | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name         | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | stateComment | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | userId       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | productId    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | state        | eq                     |                                             | top is number of records
-// to return. skip is number of records to skip.
+// | state        | eq                     |                                             |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client SubscriptionsClient) List(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result SubscriptionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -424,10 +431,11 @@ func (client SubscriptionsClient) ListComplete(ctx context.Context, resourceGrou
 }
 
 // RegeneratePrimaryKey regenerates primary key of existing subscription of the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
 func (client SubscriptionsClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -503,10 +511,11 @@ func (client SubscriptionsClient) RegeneratePrimaryKeyResponder(resp *http.Respo
 }
 
 // RegenerateSecondaryKey regenerates secondary key of existing subscription of the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
 func (client SubscriptionsClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -582,11 +591,14 @@ func (client SubscriptionsClient) RegenerateSecondaryKeyResponder(resp *http.Res
 }
 
 // Update updates the details of a subscription specificied by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
-// is subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management. parameters is update parameters. ifMatch is eTag of the Subscription Entity. ETag should match the
-// current entity state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// sid - subscription entity Identifier. The entity represents the association between a user and a product in
+// API Management.
+// parameters - update parameters.
+// ifMatch - eTag of the Subscription Entity. ETag should match the current entity state from the header
+// response of the GET request or it should be * for unconditional update.
 func (client SubscriptionsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, sid string, parameters SubscriptionUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -635,7 +647,7 @@ func (client SubscriptionsClient) UpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/subscriptions/{sid}", pathParameters),

@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // SnapshotsClient is the compute Client
 type SnapshotsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewSnapshotsClient creates an instance of the SnapshotsClient client.
 func NewSnapshotsClient(subscriptionID string) SnapshotsClient {
 	return NewSnapshotsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewSnapshotsClientWithBaseURI creates an instance of the SnapshotsClient client.
 func NewSnapshotsClientWithBaseURI(baseURI string, subscriptionID string) SnapshotsClient {
 	return SnapshotsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdate creates or updates a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -81,6 +85,7 @@ func (client SnapshotsClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client SnapshotsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, snapshotName string, snapshot Snapshot) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -95,7 +100,7 @@ func (client SnapshotsClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}", pathParameters),
@@ -104,6 +109,7 @@ func (client SnapshotsClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) CreateOrUpdateSender(req *http.Request) (future SnapshotsCreateOrUpdateFuture, err error) {
@@ -119,6 +125,7 @@ func (client SnapshotsClient) CreateOrUpdateSender(req *http.Request) (future Sn
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) CreateOrUpdateResponder(resp *http.Response) (result Snapshot, err error) {
@@ -132,6 +139,7 @@ func (client SnapshotsClient) CreateOrUpdateResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Delete deletes a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -152,6 +160,7 @@ func (client SnapshotsClient) Delete(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeletePreparer prepares the Delete request.
 func (client SnapshotsClient) DeletePreparer(ctx context.Context, resourceGroupName string, snapshotName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -173,6 +182,7 @@ func (client SnapshotsClient) DeletePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) DeleteSender(req *http.Request) (future SnapshotsDeleteFuture, err error) {
@@ -188,6 +198,7 @@ func (client SnapshotsClient) DeleteSender(req *http.Request) (future SnapshotsD
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) DeleteResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -201,6 +212,7 @@ func (client SnapshotsClient) DeleteResponder(resp *http.Response) (result Opera
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Get gets information about a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -227,6 +239,7 @@ func (client SnapshotsClient) Get(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client SnapshotsClient) GetPreparer(ctx context.Context, resourceGroupName string, snapshotName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -248,6 +261,7 @@ func (client SnapshotsClient) GetPreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -255,6 +269,7 @@ func (client SnapshotsClient) GetSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) GetResponder(resp *http.Response) (result Snapshot, err error) {
@@ -268,6 +283,7 @@ func (client SnapshotsClient) GetResponder(resp *http.Response) (result Snapshot
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccess grants access to a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -295,6 +311,7 @@ func (client SnapshotsClient) GrantAccess(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessPreparer prepares the GrantAccess request.
 func (client SnapshotsClient) GrantAccessPreparer(ctx context.Context, resourceGroupName string, snapshotName string, grantAccessData GrantAccessData) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -309,7 +326,7 @@ func (client SnapshotsClient) GrantAccessPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}/beginGetAccess", pathParameters),
@@ -318,6 +335,7 @@ func (client SnapshotsClient) GrantAccessPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessSender sends the GrantAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) GrantAccessSender(req *http.Request) (future SnapshotsGrantAccessFuture, err error) {
@@ -333,6 +351,7 @@ func (client SnapshotsClient) GrantAccessSender(req *http.Request) (future Snaps
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessResponder handles the response to the GrantAccess request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) GrantAccessResponder(resp *http.Response) (result AccessURI, err error) {
@@ -346,6 +365,7 @@ func (client SnapshotsClient) GrantAccessResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List lists snapshots under a subscription.
 func (client SnapshotsClient) List(ctx context.Context) (result SnapshotListPage, err error) {
 	result.fn = client.listNextResults
@@ -370,6 +390,7 @@ func (client SnapshotsClient) List(ctx context.Context) (result SnapshotListPage
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client SnapshotsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -389,6 +410,7 @@ func (client SnapshotsClient) ListPreparer(ctx context.Context) (*http.Request, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -396,6 +418,7 @@ func (client SnapshotsClient) ListSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) ListResponder(resp *http.Response) (result SnapshotList, err error) {
@@ -430,12 +453,14 @@ func (client SnapshotsClient) listNextResults(lastResults SnapshotList) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SnapshotsClient) ListComplete(ctx context.Context) (result SnapshotListIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroup lists snapshots under a resource group.
 //
 // resourceGroupName is the name of the resource group.
@@ -462,6 +487,7 @@ func (client SnapshotsClient) ListByResourceGroup(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client SnapshotsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -482,6 +508,7 @@ func (client SnapshotsClient) ListByResourceGroupPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -489,6 +516,7 @@ func (client SnapshotsClient) ListByResourceGroupSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) ListByResourceGroupResponder(resp *http.Response) (result SnapshotList, err error) {
@@ -523,12 +551,14 @@ func (client SnapshotsClient) listByResourceGroupNextResults(lastResults Snapsho
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SnapshotsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result SnapshotListIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccess revokes access to a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -549,6 +579,7 @@ func (client SnapshotsClient) RevokeAccess(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessPreparer prepares the RevokeAccess request.
 func (client SnapshotsClient) RevokeAccessPreparer(ctx context.Context, resourceGroupName string, snapshotName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -570,6 +601,7 @@ func (client SnapshotsClient) RevokeAccessPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessSender sends the RevokeAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) RevokeAccessSender(req *http.Request) (future SnapshotsRevokeAccessFuture, err error) {
@@ -585,6 +617,7 @@ func (client SnapshotsClient) RevokeAccessSender(req *http.Request) (future Snap
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessResponder handles the response to the RevokeAccess request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) RevokeAccessResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -598,6 +631,7 @@ func (client SnapshotsClient) RevokeAccessResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Update updates (patches) a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
@@ -619,6 +653,7 @@ func (client SnapshotsClient) Update(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdatePreparer prepares the Update request.
 func (client SnapshotsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, snapshotName string, snapshot SnapshotUpdate) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -633,7 +668,7 @@ func (client SnapshotsClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}", pathParameters),
@@ -642,6 +677,7 @@ func (client SnapshotsClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client SnapshotsClient) UpdateSender(req *http.Request) (future SnapshotsUpdateFuture, err error) {
@@ -657,6 +693,7 @@ func (client SnapshotsClient) UpdateSender(req *http.Request) (future SnapshotsU
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client SnapshotsClient) UpdateResponder(resp *http.Response) (result Snapshot, err error) {

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DomainsClient is the webSite Management Client
 type DomainsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewDomainsClient creates an instance of the DomainsClient client.
 func NewDomainsClient(subscriptionID string) DomainsClient {
 	return NewDomainsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewDomainsClientWithBaseURI creates an instance of the DomainsClient client.
 func NewDomainsClientWithBaseURI(baseURI string, subscriptionID string) DomainsClient {
 	return DomainsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateDomain sends the create or update domain request.
 //
 // resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain
@@ -65,6 +69,7 @@ func (client DomainsClient) CreateOrUpdateDomain(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateDomainPreparer prepares the CreateOrUpdateDomain request.
 func (client DomainsClient) CreateOrUpdateDomainPreparer(ctx context.Context, resourceGroupName string, domainName string, domain Domain) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -79,7 +84,7 @@ func (client DomainsClient) CreateOrUpdateDomainPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DomainRegistration/domains/{domainName}", pathParameters),
@@ -88,6 +93,7 @@ func (client DomainsClient) CreateOrUpdateDomainPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateDomainSender sends the CreateOrUpdateDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) CreateOrUpdateDomainSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client DomainsClient) CreateOrUpdateDomainSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateDomainResponder handles the response to the CreateOrUpdateDomain request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) CreateOrUpdateDomainResponder(resp *http.Response) (result Domain, err error) {
@@ -108,6 +115,7 @@ func (client DomainsClient) CreateOrUpdateDomainResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDomain sends the delete domain request.
 //
 // resourceGroupName is name of the resource group domainName is name of the domain forceHardDeleteDomain is if
@@ -134,6 +142,7 @@ func (client DomainsClient) DeleteDomain(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDomainPreparer prepares the DeleteDomain request.
 func (client DomainsClient) DeleteDomainPreparer(ctx context.Context, resourceGroupName string, domainName string, forceHardDeleteDomain *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -158,6 +167,7 @@ func (client DomainsClient) DeleteDomainPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDomainSender sends the DeleteDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) DeleteDomainSender(req *http.Request) (*http.Response, error) {
@@ -165,6 +175,7 @@ func (client DomainsClient) DeleteDomainSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDomainResponder handles the response to the DeleteDomain request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) DeleteDomainResponder(resp *http.Response) (result SetObject, err error) {
@@ -178,6 +189,7 @@ func (client DomainsClient) DeleteDomainResponder(resp *http.Response) (result S
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomain sends the get domain request.
 //
 // resourceGroupName is name of the resource group domainName is name of the domain
@@ -203,6 +215,7 @@ func (client DomainsClient) GetDomain(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainPreparer prepares the GetDomain request.
 func (client DomainsClient) GetDomainPreparer(ctx context.Context, resourceGroupName string, domainName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -224,6 +237,7 @@ func (client DomainsClient) GetDomainPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainSender sends the GetDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetDomainSender(req *http.Request) (*http.Response, error) {
@@ -231,6 +245,7 @@ func (client DomainsClient) GetDomainSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainResponder handles the response to the GetDomain request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) GetDomainResponder(resp *http.Response) (result Domain, err error) {
@@ -244,6 +259,7 @@ func (client DomainsClient) GetDomainResponder(resp *http.Response) (result Doma
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainOperation sends the get domain operation request.
 //
 // resourceGroupName is name of the resource group domainName is name of the domain operationID is domain purchase
@@ -270,6 +286,7 @@ func (client DomainsClient) GetDomainOperation(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainOperationPreparer prepares the GetDomainOperation request.
 func (client DomainsClient) GetDomainOperationPreparer(ctx context.Context, resourceGroupName string, domainName string, operationID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -292,6 +309,7 @@ func (client DomainsClient) GetDomainOperationPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainOperationSender sends the GetDomainOperation request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetDomainOperationSender(req *http.Request) (*http.Response, error) {
@@ -299,6 +317,7 @@ func (client DomainsClient) GetDomainOperationSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainOperationResponder handles the response to the GetDomainOperation request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) GetDomainOperationResponder(resp *http.Response) (result Domain, err error) {
@@ -312,6 +331,7 @@ func (client DomainsClient) GetDomainOperationResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomains sends the get domains request.
 //
 // resourceGroupName is name of the resource group
@@ -338,6 +358,7 @@ func (client DomainsClient) GetDomains(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainsPreparer prepares the GetDomains request.
 func (client DomainsClient) GetDomainsPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -358,6 +379,7 @@ func (client DomainsClient) GetDomainsPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainsSender sends the GetDomains request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetDomainsSender(req *http.Request) (*http.Response, error) {
@@ -365,6 +387,7 @@ func (client DomainsClient) GetDomainsSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainsResponder handles the response to the GetDomains request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) GetDomainsResponder(resp *http.Response) (result DomainCollection, err error) {
@@ -399,12 +422,14 @@ func (client DomainsClient) getDomainsNextResults(lastResults DomainCollection) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDomainsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client DomainsClient) GetDomainsComplete(ctx context.Context, resourceGroupName string) (result DomainCollectionIterator, err error) {
 	result.page, err = client.GetDomains(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateDomain sends the update domain request.
 //
 // resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain
@@ -431,6 +456,7 @@ func (client DomainsClient) UpdateDomain(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateDomainPreparer prepares the UpdateDomain request.
 func (client DomainsClient) UpdateDomainPreparer(ctx context.Context, resourceGroupName string, domainName string, domain Domain) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -445,7 +471,7 @@ func (client DomainsClient) UpdateDomainPreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DomainRegistration/domains/{domainName}", pathParameters),
@@ -454,6 +480,7 @@ func (client DomainsClient) UpdateDomainPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateDomainSender sends the UpdateDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) UpdateDomainSender(req *http.Request) (*http.Response, error) {
@@ -461,6 +488,7 @@ func (client DomainsClient) UpdateDomainSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateDomainResponder handles the response to the UpdateDomain request. The method always
 // closes the http.Response Body.
 func (client DomainsClient) UpdateDomainResponder(resp *http.Response) (result Domain, err error) {

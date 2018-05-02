@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/testutil"
+	"google.golang.org/grpc/status"
 
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
@@ -102,7 +103,7 @@ func testStreamingPullIteration(t *testing.T, client *Client, server *fakeServer
 			t.Errorf("%d: no message for ackID %q", i, want.ackID)
 			continue
 		}
-		if !testutil.Equal(got, want, cmp.AllowUnexported(Message{}), cmpopts.IgnoreTypes(func(string, bool) {})) {
+		if !testutil.Equal(got, want, cmp.AllowUnexported(Message{}), cmpopts.IgnoreTypes(time.Time{}, func(string, bool, time.Time) {})) {
 			t.Errorf("%d: got\n%#v\nwant\n%#v", i, got, want)
 		}
 	}
@@ -127,7 +128,7 @@ func TestStreamingPullError(t *testing.T) {
 	// acked.
 	client, server := newFake(t)
 	server.addStreamingPullMessages(testMessages[:1])
-	server.addStreamingPullError(grpc.Errorf(codes.Unknown, ""))
+	server.addStreamingPullError(status.Errorf(codes.Unknown, ""))
 	sub := newTestSubscription(t, client, "s")
 	// Use only one goroutine, since the fake server is configured to
 	// return only one error.
@@ -180,8 +181,8 @@ func TestStreamingPullRetry(t *testing.T) {
 	server.addStreamingPullError(io.EOF)
 	server.addStreamingPullError(io.EOF)
 	server.addStreamingPullMessages(testMessages[1:2])
-	server.addStreamingPullError(grpc.Errorf(codes.Unavailable, ""))
-	server.addStreamingPullError(grpc.Errorf(codes.Unavailable, ""))
+	server.addStreamingPullError(status.Errorf(codes.Unavailable, ""))
+	server.addStreamingPullError(status.Errorf(codes.Unavailable, ""))
 	server.addStreamingPullMessages(testMessages[2:])
 
 	testStreamingPullIteration(t, client, server, testMessages)

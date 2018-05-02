@@ -15,7 +15,6 @@ func noErrors(at, depth int) error {
 	}
 	return noErrors(at+1, depth)
 }
-
 func yesErrors(at, depth int) error {
 	if at >= depth {
 		return New("ye error")
@@ -23,11 +22,8 @@ func yesErrors(at, depth int) error {
 	return yesErrors(at+1, depth)
 }
 
-// GlobalE is an exported global to store the result of benchmark results,
-// preventing the compiler from optimising the benchmark functions away.
-var GlobalE error
-
 func BenchmarkErrors(b *testing.B) {
+	var toperr error
 	type run struct {
 		stack int
 		std   bool
@@ -57,7 +53,7 @@ func BenchmarkErrors(b *testing.B) {
 				err = f(0, r.stack)
 			}
 			b.StopTimer()
-			GlobalE = err
+			toperr = err
 		})
 	}
 }

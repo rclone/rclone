@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // MapsClient is the service Map API Reference
 type MapsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMapsClient creates an instance of the MapsClient client.
 func NewMapsClient(subscriptionID string) MapsClient {
 	return NewMapsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMapsClientWithBaseURI creates an instance of the MapsClient client.
 func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient {
 	return MapsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Generate generates the specified map.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -78,6 +82,7 @@ func (client MapsClient) Generate(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GeneratePreparer prepares the Generate request.
 func (client MapsClient) GeneratePreparer(ctx context.Context, resourceGroupName string, workspaceName string, request BasicMapRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,7 +97,7 @@ func (client MapsClient) GeneratePreparer(ctx context.Context, resourceGroupName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/features/serviceMap/generateMap", pathParameters),
@@ -101,6 +106,7 @@ func (client MapsClient) GeneratePreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GenerateSender sends the Generate request. The method will close the
 // http.Response Body if it receives an error.
 func (client MapsClient) GenerateSender(req *http.Request) (*http.Response, error) {
@@ -108,6 +114,7 @@ func (client MapsClient) GenerateSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GenerateResponder handles the response to the Generate request. The method always
 // closes the http.Response Body.
 func (client MapsClient) GenerateResponder(resp *http.Response) (result MapResponse, err error) {

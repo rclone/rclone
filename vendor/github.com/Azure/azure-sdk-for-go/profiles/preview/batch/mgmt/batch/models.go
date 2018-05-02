@@ -22,63 +22,16 @@ package batch
 import original "github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2017-09-01/batch"
 
 type AccountClient = original.AccountClient
-
-func NewAccountClient(subscriptionID string) AccountClient {
-	return original.NewAccountClient(subscriptionID)
-}
-func NewAccountClientWithBaseURI(baseURI string, subscriptionID string) AccountClient {
-	return original.NewAccountClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type ApplicationClient = original.ApplicationClient
-
-func NewApplicationClient(subscriptionID string) ApplicationClient {
-	return original.NewApplicationClient(subscriptionID)
-}
-func NewApplicationClientWithBaseURI(baseURI string, subscriptionID string) ApplicationClient {
-	return original.NewApplicationClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type ApplicationPackageClient = original.ApplicationPackageClient
-
-func NewApplicationPackageClient(subscriptionID string) ApplicationPackageClient {
-	return original.NewApplicationPackageClient(subscriptionID)
-}
-func NewApplicationPackageClientWithBaseURI(baseURI string, subscriptionID string) ApplicationPackageClient {
-	return original.NewApplicationPackageClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type CertificateClient = original.CertificateClient
-
-func NewCertificateClient(subscriptionID string) CertificateClient {
-	return original.NewCertificateClient(subscriptionID)
-}
-func NewCertificateClientWithBaseURI(baseURI string, subscriptionID string) CertificateClient {
-	return original.NewCertificateClientWithBaseURI(baseURI, subscriptionID)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type LocationClient = original.LocationClient
-
-func NewLocationClient(subscriptionID string) LocationClient {
-	return original.NewLocationClient(subscriptionID)
-}
-func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) LocationClient {
-	return original.NewLocationClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccountKeyType = original.AccountKeyType
 
 const (
@@ -314,16 +267,110 @@ type UserIdentity = original.UserIdentity
 type VirtualMachineConfiguration = original.VirtualMachineConfiguration
 type WindowsConfiguration = original.WindowsConfiguration
 type OperationsClient = original.OperationsClient
+type PoolClient = original.PoolClient
 
+func NewAccountClient(subscriptionID string) AccountClient {
+	return original.NewAccountClient(subscriptionID)
+}
+func NewAccountClientWithBaseURI(baseURI string, subscriptionID string) AccountClient {
+	return original.NewAccountClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewApplicationClient(subscriptionID string) ApplicationClient {
+	return original.NewApplicationClient(subscriptionID)
+}
+func NewApplicationClientWithBaseURI(baseURI string, subscriptionID string) ApplicationClient {
+	return original.NewApplicationClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewApplicationPackageClient(subscriptionID string) ApplicationPackageClient {
+	return original.NewApplicationPackageClient(subscriptionID)
+}
+func NewApplicationPackageClientWithBaseURI(baseURI string, subscriptionID string) ApplicationPackageClient {
+	return original.NewApplicationPackageClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewCertificateClient(subscriptionID string) CertificateClient {
+	return original.NewCertificateClient(subscriptionID)
+}
+func NewCertificateClientWithBaseURI(baseURI string, subscriptionID string) CertificateClient {
+	return original.NewCertificateClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewLocationClient(subscriptionID string) LocationClient {
+	return original.NewLocationClient(subscriptionID)
+}
+func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) LocationClient {
+	return original.NewLocationClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccountKeyTypeValues() []AccountKeyType {
+	return original.PossibleAccountKeyTypeValues()
+}
+func PossibleAllocationStateValues() []AllocationState {
+	return original.PossibleAllocationStateValues()
+}
+func PossibleAutoUserScopeValues() []AutoUserScope {
+	return original.PossibleAutoUserScopeValues()
+}
+func PossibleCachingTypeValues() []CachingType {
+	return original.PossibleCachingTypeValues()
+}
+func PossibleCertificateFormatValues() []CertificateFormat {
+	return original.PossibleCertificateFormatValues()
+}
+func PossibleCertificateProvisioningStateValues() []CertificateProvisioningState {
+	return original.PossibleCertificateProvisioningStateValues()
+}
+func PossibleCertificateStoreLocationValues() []CertificateStoreLocation {
+	return original.PossibleCertificateStoreLocationValues()
+}
+func PossibleCertificateVisibilityValues() []CertificateVisibility {
+	return original.PossibleCertificateVisibilityValues()
+}
+func PossibleComputeNodeDeallocationOptionValues() []ComputeNodeDeallocationOption {
+	return original.PossibleComputeNodeDeallocationOptionValues()
+}
+func PossibleComputeNodeFillTypeValues() []ComputeNodeFillType {
+	return original.PossibleComputeNodeFillTypeValues()
+}
+func PossibleElevationLevelValues() []ElevationLevel {
+	return original.PossibleElevationLevelValues()
+}
+func PossibleInboundEndpointProtocolValues() []InboundEndpointProtocol {
+	return original.PossibleInboundEndpointProtocolValues()
+}
+func PossibleInterNodeCommunicationStateValues() []InterNodeCommunicationState {
+	return original.PossibleInterNodeCommunicationStateValues()
+}
+func PossibleNameAvailabilityReasonValues() []NameAvailabilityReason {
+	return original.PossibleNameAvailabilityReasonValues()
+}
+func PossibleNetworkSecurityGroupRuleAccessValues() []NetworkSecurityGroupRuleAccess {
+	return original.PossibleNetworkSecurityGroupRuleAccessValues()
+}
+func PossiblePackageStateValues() []PackageState {
+	return original.PossiblePackageStateValues()
+}
+func PossiblePoolAllocationModeValues() []PoolAllocationMode {
+	return original.PossiblePoolAllocationModeValues()
+}
+func PossiblePoolProvisioningStateValues() []PoolProvisioningState {
+	return original.PossiblePoolProvisioningStateValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleStorageAccountTypeValues() []StorageAccountType {
+	return original.PossibleStorageAccountTypeValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PoolClient = original.PoolClient
-
 func NewPoolClient(subscriptionID string) PoolClient {
 	return original.NewPoolClient(subscriptionID)
 }

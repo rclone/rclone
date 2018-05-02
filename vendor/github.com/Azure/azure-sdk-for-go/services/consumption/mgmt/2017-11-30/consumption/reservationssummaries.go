@@ -41,12 +41,13 @@ func NewReservationsSummariesClientWithBaseURI(baseURI string, subscriptionID st
 }
 
 // List lists the reservations summaries for daily or monthly grain.
-//
-// scope is the scope of the reservation summaries. The scope can be
+// Parameters:
+// scope - the scope of the reservation summaries. The scope can be
 // 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}' or
-// 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}/reservations/{ReservationId}' grain is can
-// be daily or monthly filter is required only for daily grain. The properties/UsageDate for start date and end
-// date. The filter supports 'le' and  'ge'
+// 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}/reservations/{ReservationId}'
+// grain - can be daily or monthly
+// filter - required only for daily grain. The properties/UsageDate for start date and end date. The filter
+// supports 'le' and  'ge'
 func (client ReservationsSummariesClient) List(ctx context.Context, scope string, grain Datagrain, filter string) (result ReservationSummariesListResult, err error) {
 	req, err := client.ListPreparer(ctx, scope, grain, filter)
 	if err != nil {

@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // HeatMapClient is the client for the HeatMap methods of the Trafficmanager service.
 type HeatMapClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewHeatMapClient creates an instance of the HeatMapClient client.
 func NewHeatMapClient(subscriptionID string) HeatMapClient {
 	return NewHeatMapClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewHeatMapClientWithBaseURI creates an instance of the HeatMapClient client.
 func NewHeatMapClientWithBaseURI(baseURI string, subscriptionID string) HeatMapClient {
 	return HeatMapClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Get gets latest heatmap for Traffic Manager profile.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager endpoint. profileName is the
@@ -81,6 +85,7 @@ func (client HeatMapClient) Get(ctx context.Context, resourceGroupName string, p
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetPreparer prepares the Get request.
 func (client HeatMapClient) GetPreparer(ctx context.Context, resourceGroupName string, profileName string, topLeft []float64, botRight []float64) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -109,6 +114,7 @@ func (client HeatMapClient) GetPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client HeatMapClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -116,6 +122,7 @@ func (client HeatMapClient) GetSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client HeatMapClient) GetResponder(resp *http.Response) (result HeatMapModel, err error) {

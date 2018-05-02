@@ -16,7 +16,7 @@ const opCreateApplication = "CreateApplication"
 
 // CreateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -109,7 +109,7 @@ const opCreateApplicationVersion = "CreateApplicationVersion"
 
 // CreateApplicationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApplicationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -201,7 +201,7 @@ const opCreateCloudFormationChangeSet = "CreateCloudFormationChangeSet"
 
 // CreateCloudFormationChangeSetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateCloudFormationChangeSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -290,7 +290,7 @@ const opDeleteApplication = "DeleteApplication"
 
 // DeleteApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -388,7 +388,7 @@ const opGetApplication = "GetApplication"
 
 // GetApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the GetApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -481,7 +481,7 @@ const opGetApplicationPolicy = "GetApplicationPolicy"
 
 // GetApplicationPolicyRequest generates a "aws/request.Request" representing the
 // client's request for the GetApplicationPolicy operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -574,7 +574,7 @@ const opListApplicationVersions = "ListApplicationVersions"
 
 // ListApplicationVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListApplicationVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -723,7 +723,7 @@ const opListApplications = "ListApplications"
 
 // ListApplicationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListApplications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -869,7 +869,7 @@ const opPutApplicationPolicy = "PutApplicationPolicy"
 
 // PutApplicationPolicyRequest generates a "aws/request.Request" representing the
 // client's request for the PutApplicationPolicy operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -962,7 +962,7 @@ const opUpdateApplication = "UpdateApplication"
 
 // UpdateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1174,7 +1174,7 @@ type ApplicationSummary struct {
 	// Name is a required field
 	Name *string `locationName:"name" type:"string" required:"true"`
 
-	// A valid identifier from https://spdx.org/licenses/.
+	// A valid identifier from https://spdx.org/licenses/ (https://spdx.org/licenses/).
 	SpdxLicenseId *string `locationName:"spdxLicenseId" type:"string"`
 }
 
@@ -2649,7 +2649,7 @@ type Version struct {
 
 	// The semantic version of the application:
 	//
-	// https://semver.org/
+	// https://semver.org/ (https://semver.org/)
 	//
 	// SemanticVersion is a required field
 	SemanticVersion *string `locationName:"semanticVersion" type:"string" required:"true"`
@@ -2725,7 +2725,7 @@ type VersionSummary struct {
 
 	// The semantic version of the application:
 	//
-	// https://semver.org/
+	// https://semver.org/ (https://semver.org/)
 	//
 	// SemanticVersion is a required field
 	SemanticVersion *string `locationName:"semanticVersion" type:"string" required:"true"`

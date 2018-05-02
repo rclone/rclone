@@ -31,6 +31,11 @@ const (
 	Autocreate AppendModeType = "autocreate"
 )
 
+// PossibleAppendModeTypeValues returns an array of possible values for the AppendModeType const type.
+func PossibleAppendModeTypeValues() []AppendModeType {
+	return []AppendModeType{Autocreate}
+}
+
 // Exception enumerates the values for exception.
 type Exception string
 
@@ -59,6 +64,11 @@ const (
 	ExceptionUnsupportedOperationException Exception = "UnsupportedOperationException"
 )
 
+// PossibleExceptionValues returns an array of possible values for the Exception const type.
+func PossibleExceptionValues() []Exception {
+	return []Exception{ExceptionAccessControlException, ExceptionAdlsRemoteException, ExceptionBadOffsetException, ExceptionFileAlreadyExistsException, ExceptionFileNotFoundException, ExceptionIllegalArgumentException, ExceptionIOException, ExceptionRuntimeException, ExceptionSecurityException, ExceptionThrottledException, ExceptionUnsupportedOperationException}
+}
+
 // ExpiryOptionType enumerates the values for expiry option type.
 type ExpiryOptionType string
 
@@ -73,6 +83,11 @@ const (
 	RelativeToNow ExpiryOptionType = "RelativeToNow"
 )
 
+// PossibleExpiryOptionTypeValues returns an array of possible values for the ExpiryOptionType const type.
+func PossibleExpiryOptionTypeValues() []ExpiryOptionType {
+	return []ExpiryOptionType{Absolute, NeverExpire, RelativeToCreationDate, RelativeToNow}
+}
+
 // FileType enumerates the values for file type.
 type FileType string
 
@@ -82,6 +97,11 @@ const (
 	// FILE ...
 	FILE FileType = "FILE"
 )
+
+// PossibleFileTypeValues returns an array of possible values for the FileType const type.
+func PossibleFileTypeValues() []FileType {
+	return []FileType{DIRECTORY, FILE}
+}
 
 // SyncFlag enumerates the values for sync flag.
 type SyncFlag string
@@ -94,6 +114,11 @@ const (
 	// METADATA ...
 	METADATA SyncFlag = "METADATA"
 )
+
+// PossibleSyncFlagValues returns an array of possible values for the SyncFlag const type.
+func PossibleSyncFlagValues() []SyncFlag {
+	return []SyncFlag{CLOSE, DATA, METADATA}
+}
 
 // ACLStatus data Lake Store file or directory Access Control List information.
 type ACLStatus struct {
@@ -137,7 +162,9 @@ func (aace AdlsAccessControlException) MarshalJSON() ([]byte, error) {
 	if aace.Message != nil {
 		objectMap["message"] = aace.Message
 	}
-	objectMap["exception"] = aace.Exception
+	if aace.Exception != "" {
+		objectMap["exception"] = aace.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -222,7 +249,9 @@ func (aboe AdlsBadOffsetException) MarshalJSON() ([]byte, error) {
 	if aboe.Message != nil {
 		objectMap["message"] = aboe.Message
 	}
-	objectMap["exception"] = aboe.Exception
+	if aboe.Exception != "" {
+		objectMap["exception"] = aboe.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -336,7 +365,9 @@ func (afaee AdlsFileAlreadyExistsException) MarshalJSON() ([]byte, error) {
 	if afaee.Message != nil {
 		objectMap["message"] = afaee.Message
 	}
-	objectMap["exception"] = afaee.Exception
+	if afaee.Exception != "" {
+		objectMap["exception"] = afaee.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -421,7 +452,9 @@ func (afnfe AdlsFileNotFoundException) MarshalJSON() ([]byte, error) {
 	if afnfe.Message != nil {
 		objectMap["message"] = afnfe.Message
 	}
-	objectMap["exception"] = afnfe.Exception
+	if afnfe.Exception != "" {
+		objectMap["exception"] = afnfe.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -506,7 +539,9 @@ func (aiae AdlsIllegalArgumentException) MarshalJSON() ([]byte, error) {
 	if aiae.Message != nil {
 		objectMap["message"] = aiae.Message
 	}
-	objectMap["exception"] = aiae.Exception
+	if aiae.Exception != "" {
+		objectMap["exception"] = aiae.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -591,7 +626,9 @@ func (aie AdlsIOException) MarshalJSON() ([]byte, error) {
 	if aie.Message != nil {
 		objectMap["message"] = aie.Message
 	}
-	objectMap["exception"] = aie.Exception
+	if aie.Exception != "" {
+		objectMap["exception"] = aie.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -765,7 +802,9 @@ func (are AdlsRemoteException) MarshalJSON() ([]byte, error) {
 	if are.Message != nil {
 		objectMap["message"] = are.Message
 	}
-	objectMap["exception"] = are.Exception
+	if are.Exception != "" {
+		objectMap["exception"] = are.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -850,7 +889,9 @@ func (are AdlsRuntimeException) MarshalJSON() ([]byte, error) {
 	if are.Message != nil {
 		objectMap["message"] = are.Message
 	}
-	objectMap["exception"] = are.Exception
+	if are.Exception != "" {
+		objectMap["exception"] = are.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -935,7 +976,9 @@ func (ase AdlsSecurityException) MarshalJSON() ([]byte, error) {
 	if ase.Message != nil {
 		objectMap["message"] = ase.Message
 	}
-	objectMap["exception"] = ase.Exception
+	if ase.Exception != "" {
+		objectMap["exception"] = ase.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1020,7 +1063,9 @@ func (ate AdlsThrottledException) MarshalJSON() ([]byte, error) {
 	if ate.Message != nil {
 		objectMap["message"] = ate.Message
 	}
-	objectMap["exception"] = ate.Exception
+	if ate.Exception != "" {
+		objectMap["exception"] = ate.Exception
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1105,7 +1150,9 @@ func (auoe AdlsUnsupportedOperationException) MarshalJSON() ([]byte, error) {
 	if auoe.Message != nil {
 		objectMap["message"] = auoe.Message
 	}
-	objectMap["exception"] = auoe.Exception
+	if auoe.Exception != "" {
+		objectMap["exception"] = auoe.Exception
+	}
 	return json.Marshal(objectMap)
 }
 

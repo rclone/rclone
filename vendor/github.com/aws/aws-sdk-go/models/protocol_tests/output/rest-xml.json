@@ -42,6 +42,12 @@
           },
           "Timestamp": {
             "shape": "TimestampType"
+          },
+          "Blobs": {
+            "shape": "Blobs"
+          },
+          "Timestamps": {
+            "shape": "Timestamps"
           }
         }
       },
@@ -76,6 +82,17 @@
       },
       "TimestampType": {
         "type": "timestamp"
+      },
+      "BlobType": {
+        "type": "blob"
+      },
+      "Blobs": {
+          "type":"list",
+          "member":{"shape":"BlobType"}
+      },
+      "Timestamps":{
+        "type":"list",
+        "member":{"shape":"TimestampType"}
       }
     },
     "cases": [
@@ -135,6 +152,23 @@
             "X-Foo": "abc"
           },
           "body": "<OperationNameResponse><Str></Str><FooNum>123</FooNum><FalseBool>false</FalseBool><TrueBool>true</TrueBool><Float>1.2</Float><Double>1.3</Double><Long>200</Long><Char>a</Char><Timestamp>2015-01-25T08:00:00Z</Timestamp></OperationNameResponse>"
+        }
+      },
+      {
+        "given": {
+          "output": {
+            "shape": "OutputShape"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+		  "Blobs": ["value", "value2"],
+		  "Timestamps": [1422172800, 1422172801]
+        },
+        "response": {
+          "status_code": 200,
+          "headers": {},
+          "body": "<OperationNameResponse><Blobs><member>dmFsdWU=</member><member>dmFsdWUy</member></Blobs><Timestamps><member>2015-01-25T08:00:00Z</member><member>2015-01-25T08:00:01Z</member></Timestamps></OperationNameResponse>"
         }
       }
     ]

@@ -46,9 +46,10 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 // CreateOrUpdate create or update a web service. This call will overwrite an existing web service. Note that there is
 // no warning or confirmation. This is a nonrecoverable operation. If your intent is to create a new web service, call
 // the Get operation first to verify that it does not exist.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service. createOrUpdatePayload is the payload that is used to create or update the web service.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
+// createOrUpdatePayload - the payload that is used to create or update the web service.
 func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, webServiceName string, createOrUpdatePayload WebService) (result CreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: createOrUpdatePayload,
@@ -106,7 +107,7 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearning/webServices/{webServiceName}", pathParameters),
@@ -147,9 +148,10 @@ func (client Client) CreateOrUpdateResponder(resp *http.Response) (result WebSer
 // service from a region other than the region in which it has been created, you must first call Create Regional Web
 // Services Properties to create a copy of the encrypted credential parameter blob in that region. You only need to do
 // this before the first time that you get the web service in the new region.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service. region is the region for which encrypted credential parameters are created.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
+// region - the region for which encrypted credential parameters are created.
 func (client Client) CreateRegionalProperties(ctx context.Context, resourceGroupName string, webServiceName string, region string) (result CreateRegionalPropertiesFuture, err error) {
 	req, err := client.CreateRegionalPropertiesPreparer(ctx, resourceGroupName, webServiceName, region)
 	if err != nil {
@@ -218,9 +220,10 @@ func (client Client) CreateRegionalPropertiesResponder(resp *http.Response) (res
 
 // Get gets the Web Service Definition as specified by a subscription, resource group, and name. Note that the storage
 // credentials and web service keys are not returned by this call. To get the web service access keys, call List Keys.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service. region is the region for which encrypted credential parameters are valid.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
+// region - the region for which encrypted credential parameters are valid.
 func (client Client) Get(ctx context.Context, resourceGroupName string, webServiceName string, region string) (result WebService, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, webServiceName, region)
 	if err != nil {
@@ -288,9 +291,9 @@ func (client Client) GetResponder(resp *http.Response) (result WebService, err e
 }
 
 // ListByResourceGroup gets the web services in the specified resource group.
-//
-// resourceGroupName is name of the resource group in which the web service is located. skiptoken is continuation
-// token for pagination.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// skiptoken - continuation token for pagination.
 func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName string, skiptoken string) (result PaginatedWebServicesListPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, skiptoken)
@@ -385,8 +388,8 @@ func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGr
 }
 
 // ListBySubscriptionID gets the web services in the specified subscription.
-//
-// skiptoken is continuation token for pagination.
+// Parameters:
+// skiptoken - continuation token for pagination.
 func (client Client) ListBySubscriptionID(ctx context.Context, skiptoken string) (result PaginatedWebServicesListPage, err error) {
 	result.fn = client.listBySubscriptionIDNextResults
 	req, err := client.ListBySubscriptionIDPreparer(ctx, skiptoken)
@@ -480,9 +483,9 @@ func (client Client) ListBySubscriptionIDComplete(ctx context.Context, skiptoken
 }
 
 // ListKeys gets the access keys for the specified web service.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
 func (client Client) ListKeys(ctx context.Context, resourceGroupName string, webServiceName string) (result Keys, err error) {
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, webServiceName)
 	if err != nil {
@@ -548,9 +551,10 @@ func (client Client) ListKeysResponder(resp *http.Response) (result Keys, err er
 
 // Patch modifies an existing web service resource. The PATCH API call is an asynchronous operation. To determine
 // whether it has completed successfully, you must perform a Get operation.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service. patchPayload is the payload to use to patch the web service.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
+// patchPayload - the payload to use to patch the web service.
 func (client Client) Patch(ctx context.Context, resourceGroupName string, webServiceName string, patchPayload WebService) (result PatchFuture, err error) {
 	req, err := client.PatchPreparer(ctx, resourceGroupName, webServiceName, patchPayload)
 	if err != nil {
@@ -581,7 +585,7 @@ func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearning/webServices/{webServiceName}", pathParameters),
@@ -619,9 +623,9 @@ func (client Client) PatchResponder(resp *http.Response) (result WebService, err
 }
 
 // Remove deletes the specified web service.
-//
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
-// of the web service.
+// Parameters:
+// resourceGroupName - name of the resource group in which the web service is located.
+// webServiceName - the name of the web service.
 func (client Client) Remove(ctx context.Context, resourceGroupName string, webServiceName string) (result RemoveFuture, err error) {
 	req, err := client.RemovePreparer(ctx, resourceGroupName, webServiceName)
 	if err != nil {

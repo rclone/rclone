@@ -22,14 +22,6 @@ package keyvault
 import original "github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithoutDefaults() BaseClient {
-	return original.NewWithoutDefaults()
-}
-
 type ActionType = original.ActionType
 
 const (
@@ -212,6 +204,36 @@ type SubjectAlternativeNames = original.SubjectAlternativeNames
 type Trigger = original.Trigger
 type X509CertificateProperties = original.X509CertificateProperties
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithoutDefaults() BaseClient {
+	return original.NewWithoutDefaults()
+}
+func PossibleActionTypeValues() []ActionType {
+	return original.PossibleActionTypeValues()
+}
+func PossibleDeletionRecoveryLevelValues() []DeletionRecoveryLevel {
+	return original.PossibleDeletionRecoveryLevelValues()
+}
+func PossibleJSONWebKeyCurveNameValues() []JSONWebKeyCurveName {
+	return original.PossibleJSONWebKeyCurveNameValues()
+}
+func PossibleJSONWebKeyEncryptionAlgorithmValues() []JSONWebKeyEncryptionAlgorithm {
+	return original.PossibleJSONWebKeyEncryptionAlgorithmValues()
+}
+func PossibleJSONWebKeyOperationValues() []JSONWebKeyOperation {
+	return original.PossibleJSONWebKeyOperationValues()
+}
+func PossibleJSONWebKeySignatureAlgorithmValues() []JSONWebKeySignatureAlgorithm {
+	return original.PossibleJSONWebKeySignatureAlgorithmValues()
+}
+func PossibleJSONWebKeyTypeValues() []JSONWebKeyType {
+	return original.PossibleJSONWebKeyTypeValues()
+}
+func PossibleKeyUsageTypeValues() []KeyUsageType {
+	return original.PossibleKeyUsageTypeValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

@@ -331,7 +331,7 @@ func TestBadStructs(t *testing.T) {
 
 func TestStructToMutationParams(t *testing.T) {
 	// Tests cases not covered elsewhere.
-	type S struct{ F int }
+	type S struct{ F interface{} }
 
 	for _, test := range []struct {
 		in       interface{}
@@ -343,6 +343,7 @@ func TestStructToMutationParams(t *testing.T) {
 		{3, nil, nil, errNotStruct(3)},
 		{(*S)(nil), nil, nil, nil},
 		{&S{F: 1}, []string{"F"}, []interface{}{1}, nil},
+		{&S{F: CommitTimestamp}, []string{"F"}, []interface{}{CommitTimestamp}, nil},
 	} {
 		gotCols, gotVals, gotErr := structToMutationParams(test.in)
 		if !testEqual(gotCols, test.wantCols) {

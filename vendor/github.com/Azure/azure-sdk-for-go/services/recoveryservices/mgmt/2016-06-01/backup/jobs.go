@@ -41,13 +41,13 @@ func NewJobsClientWithBaseURI(baseURI string, subscriptionID string) JobsClient 
 
 // Export exports all jobs for a given Shared Access Signatures (SAS) URL. The SAS URL expires within 15 minutes of its
 // creation.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is the OData filter options. status eq { InProgress ,
-// Completed , Failed , CompletedWithWarnings , Cancelled , Cancelling } and backupManagementType eq {AzureIaasVM,
-// MAB, DPM, AzureBackupServer, AzureSql } and operation eq { ConfigureBackup , Backup , Restore , DisableBackup ,
-// DeleteBackupData } and jobId eq {guid} and startTime eq { yyyy-mm-dd hh:mm:ss PM } and endTime eq { yyyy-mm-dd
-// hh:mm:ss PM }.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - the OData filter options. status eq { InProgress , Completed , Failed , CompletedWithWarnings ,
+// Cancelled , Cancelling } and backupManagementType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }
+// and operation eq { ConfigureBackup , Backup , Restore , DisableBackup , DeleteBackupData } and jobId eq
+// {guid} and startTime eq { yyyy-mm-dd hh:mm:ss PM } and endTime eq { yyyy-mm-dd hh:mm:ss PM }.
 func (client JobsClient) Export(ctx context.Context, vaultName string, resourceGroupName string, filter string) (result autorest.Response, err error) {
 	req, err := client.ExportPreparer(ctx, vaultName, resourceGroupName, filter)
 	if err != nil {
@@ -114,14 +114,15 @@ func (client JobsClient) ExportResponder(resp *http.Response) (result autorest.R
 }
 
 // List provides a pageable list of jobs.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is the following equation can be used to filter the list of
-// jobs based on status, type, start date, and end date. status eq { InProgress , Completed , Failed ,
-// CompletedWithWarnings , Cancelled , Cancelling } and backupManagementType eq {AzureIaasVM, MAB, DPM,
-// AzureBackupServer, AzureSql } and operation eq { ConfigureBackup , Backup , Restore , DisableBackup ,
-// DeleteBackupData } and jobId eq {guid} and startTime eq { yyyy-mm-dd hh:mm:ss PM } and endTime eq { yyyy-mm-dd
-// hh:mm:ss PM }. skipToken is the Skip Token filter.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - the following equation can be used to filter the list of jobs based on status, type, start date,
+// and end date. status eq { InProgress , Completed , Failed , CompletedWithWarnings , Cancelled , Cancelling }
+// and backupManagementType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql } and operation eq {
+// ConfigureBackup , Backup , Restore , DisableBackup , DeleteBackupData } and jobId eq {guid} and startTime eq
+// { yyyy-mm-dd hh:mm:ss PM } and endTime eq { yyyy-mm-dd hh:mm:ss PM }.
+// skipToken - the Skip Token filter.
 func (client JobsClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result JobResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

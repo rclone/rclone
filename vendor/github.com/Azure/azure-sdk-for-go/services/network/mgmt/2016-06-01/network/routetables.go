@@ -40,9 +40,10 @@ func NewRouteTablesClientWithBaseURI(baseURI string, subscriptionID string) Rout
 }
 
 // CreateOrUpdate the Put RouteTable operation creates/updates a route table in the specified resource group.
-//
-// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. parameters
-// is parameters supplied to the create/update Route Table operation
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// routeTableName - the name of the route table.
+// parameters - parameters supplied to the create/update Route Table operation
 func (client RouteTablesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, routeTableName string, parameters RouteTable) (result RouteTablesCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, routeTableName, parameters)
 	if err != nil {
@@ -73,7 +74,7 @@ func (client RouteTablesClient) CreateOrUpdatePreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/routeTables/{routeTableName}", pathParameters),
@@ -111,8 +112,9 @@ func (client RouteTablesClient) CreateOrUpdateResponder(resp *http.Response) (re
 }
 
 // Delete the Delete RouteTable operation deletes the specified Route Table
-//
-// resourceGroupName is the name of the resource group. routeTableName is the name of the route table.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// routeTableName - the name of the route table.
 func (client RouteTablesClient) Delete(ctx context.Context, resourceGroupName string, routeTableName string) (result RouteTablesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, routeTableName)
 	if err != nil {
@@ -178,9 +180,10 @@ func (client RouteTablesClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get the Get RouteTables operation retrieves information about the specified route table.
-//
-// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. expand is
-// expand references resources.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// routeTableName - the name of the route table.
+// expand - expand references resources.
 func (client RouteTablesClient) Get(ctx context.Context, resourceGroupName string, routeTableName string, expand string) (result RouteTable, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, routeTableName, expand)
 	if err != nil {
@@ -248,8 +251,8 @@ func (client RouteTablesClient) GetResponder(resp *http.Response) (result RouteT
 }
 
 // List the list RouteTables returns all route tables in a resource group
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client RouteTablesClient) List(ctx context.Context, resourceGroupName string) (result RouteTableListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)

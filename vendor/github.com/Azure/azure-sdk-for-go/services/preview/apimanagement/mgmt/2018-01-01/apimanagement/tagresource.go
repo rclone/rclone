@@ -41,9 +41,10 @@ func NewTagResourceClientWithBaseURI(baseURI string, subscriptionID string) TagR
 }
 
 // ListByService lists a collection of resources associated with tags.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field       | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
@@ -57,8 +58,9 @@ func NewTagResourceClientWithBaseURI(baseURI string, subscriptionID string) TagR
 // | urlTemplate | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | terms       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | state       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | isCurrent   | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | isCurrent   | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client TagResourceClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result TagResourceCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

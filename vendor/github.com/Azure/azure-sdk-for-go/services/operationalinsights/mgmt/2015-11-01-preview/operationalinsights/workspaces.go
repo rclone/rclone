@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspacesClient is the operational Insights Client
 type WorkspacesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NewWorkspacesClient creates an instance of the WorkspacesClient client.
 func NewWorkspacesClient(subscriptionID string) WorkspacesClient {
 	return NewWorkspacesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NewWorkspacesClientWithBaseURI creates an instance of the WorkspacesClient client.
 func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) WorkspacesClient {
 	return WorkspacesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // CreateOrUpdate create or update a workspace.
 //
 // resourceGroupName is the resource group name of the workspace. workspaceName is the name of the workspace.
@@ -75,6 +79,7 @@ func (client WorkspacesClient) CreateOrUpdate(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, parameters Workspace) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -89,7 +94,7 @@ func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}", pathParameters),
@@ -98,6 +103,7 @@ func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) CreateOrUpdateSender(req *http.Request) (future WorkspacesCreateOrUpdateFuture, err error) {
@@ -113,6 +119,7 @@ func (client WorkspacesClient) CreateOrUpdateSender(req *http.Request) (future W
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) CreateOrUpdateResponder(resp *http.Response) (result Workspace, err error) {
@@ -126,6 +133,7 @@ func (client WorkspacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Delete deletes a workspace instance.
 //
 // resourceGroupName is the resource group name of the workspace. workspaceName is name of the Log Analytics
@@ -152,6 +160,7 @@ func (client WorkspacesClient) Delete(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DeletePreparer prepares the Delete request.
 func (client WorkspacesClient) DeletePreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -173,6 +182,7 @@ func (client WorkspacesClient) DeletePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -180,6 +190,7 @@ func (client WorkspacesClient) DeleteSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -192,6 +203,7 @@ func (client WorkspacesClient) DeleteResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DisableIntelligencePack disables an intelligence pack for a given workspace.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
@@ -226,6 +238,7 @@ func (client WorkspacesClient) DisableIntelligencePack(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DisableIntelligencePackPreparer prepares the DisableIntelligencePack request.
 func (client WorkspacesClient) DisableIntelligencePackPreparer(ctx context.Context, resourceGroupName string, workspaceName string, intelligencePackName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -248,6 +261,7 @@ func (client WorkspacesClient) DisableIntelligencePackPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DisableIntelligencePackSender sends the DisableIntelligencePack request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) DisableIntelligencePackSender(req *http.Request) (*http.Response, error) {
@@ -255,6 +269,7 @@ func (client WorkspacesClient) DisableIntelligencePackSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DisableIntelligencePackResponder handles the response to the DisableIntelligencePack request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) DisableIntelligencePackResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -267,6 +282,7 @@ func (client WorkspacesClient) DisableIntelligencePackResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // EnableIntelligencePack enables an intelligence pack for a given workspace.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
@@ -301,6 +317,7 @@ func (client WorkspacesClient) EnableIntelligencePack(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // EnableIntelligencePackPreparer prepares the EnableIntelligencePack request.
 func (client WorkspacesClient) EnableIntelligencePackPreparer(ctx context.Context, resourceGroupName string, workspaceName string, intelligencePackName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -323,6 +340,7 @@ func (client WorkspacesClient) EnableIntelligencePackPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // EnableIntelligencePackSender sends the EnableIntelligencePack request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) EnableIntelligencePackSender(req *http.Request) (*http.Response, error) {
@@ -330,6 +348,7 @@ func (client WorkspacesClient) EnableIntelligencePackSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // EnableIntelligencePackResponder handles the response to the EnableIntelligencePack request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) EnableIntelligencePackResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -342,6 +361,7 @@ func (client WorkspacesClient) EnableIntelligencePackResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Get gets a workspace instance.
 //
 // resourceGroupName is the resource group name of the workspace. workspaceName is name of the Log Analytics
@@ -368,6 +388,7 @@ func (client WorkspacesClient) Get(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetPreparer prepares the Get request.
 func (client WorkspacesClient) GetPreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -389,6 +410,7 @@ func (client WorkspacesClient) GetPreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -396,6 +418,7 @@ func (client WorkspacesClient) GetSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) GetResponder(resp *http.Response) (result Workspace, err error) {
@@ -409,6 +432,7 @@ func (client WorkspacesClient) GetResponder(resp *http.Response) (result Workspa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetSharedKeys gets the shared keys for a workspace.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
@@ -443,6 +467,7 @@ func (client WorkspacesClient) GetSharedKeys(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetSharedKeysPreparer prepares the GetSharedKeys request.
 func (client WorkspacesClient) GetSharedKeysPreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -464,6 +489,7 @@ func (client WorkspacesClient) GetSharedKeysPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetSharedKeysSender sends the GetSharedKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSharedKeysSender(req *http.Request) (*http.Response, error) {
@@ -471,6 +497,7 @@ func (client WorkspacesClient) GetSharedKeysSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // GetSharedKeysResponder handles the response to the GetSharedKeys request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) GetSharedKeysResponder(resp *http.Response) (result SharedKeys, err error) {
@@ -484,6 +511,7 @@ func (client WorkspacesClient) GetSharedKeysResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // List gets the workspaces in a subscription.
 func (client WorkspacesClient) List(ctx context.Context) (result WorkspaceListResult, err error) {
 	req, err := client.ListPreparer(ctx)
@@ -507,6 +535,7 @@ func (client WorkspacesClient) List(ctx context.Context) (result WorkspaceListRe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListPreparer prepares the List request.
 func (client WorkspacesClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -526,6 +555,7 @@ func (client WorkspacesClient) ListPreparer(ctx context.Context) (*http.Request,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -533,6 +563,7 @@ func (client WorkspacesClient) ListSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListResponder(resp *http.Response) (result WorkspaceListResult, err error) {
@@ -546,6 +577,7 @@ func (client WorkspacesClient) ListResponder(resp *http.Response) (result Worksp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListByResourceGroup gets workspaces in a resource group.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive.
@@ -579,6 +611,7 @@ func (client WorkspacesClient) ListByResourceGroup(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client WorkspacesClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -599,6 +632,7 @@ func (client WorkspacesClient) ListByResourceGroupPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -606,6 +640,7 @@ func (client WorkspacesClient) ListByResourceGroupSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListByResourceGroupResponder(resp *http.Response) (result WorkspaceListResult, err error) {
@@ -619,6 +654,7 @@ func (client WorkspacesClient) ListByResourceGroupResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListIntelligencePacks lists all the intelligence packs possible and whether they are enabled or disabled for a given
 // workspace.
 //
@@ -654,6 +690,7 @@ func (client WorkspacesClient) ListIntelligencePacks(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListIntelligencePacksPreparer prepares the ListIntelligencePacks request.
 func (client WorkspacesClient) ListIntelligencePacksPreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -675,6 +712,7 @@ func (client WorkspacesClient) ListIntelligencePacksPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListIntelligencePacksSender sends the ListIntelligencePacks request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListIntelligencePacksSender(req *http.Request) (*http.Response, error) {
@@ -682,6 +720,7 @@ func (client WorkspacesClient) ListIntelligencePacksSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListIntelligencePacksResponder handles the response to the ListIntelligencePacks request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListIntelligencePacksResponder(resp *http.Response) (result ListIntelligencePack, err error) {
@@ -695,6 +734,7 @@ func (client WorkspacesClient) ListIntelligencePacksResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListManagementGroups gets a list of management groups connected to a workspace.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is the
@@ -729,6 +769,7 @@ func (client WorkspacesClient) ListManagementGroups(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListManagementGroupsPreparer prepares the ListManagementGroups request.
 func (client WorkspacesClient) ListManagementGroupsPreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -750,6 +791,7 @@ func (client WorkspacesClient) ListManagementGroupsPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListManagementGroupsSender sends the ListManagementGroups request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListManagementGroupsSender(req *http.Request) (*http.Response, error) {
@@ -757,6 +799,7 @@ func (client WorkspacesClient) ListManagementGroupsSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListManagementGroupsResponder handles the response to the ListManagementGroups request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListManagementGroupsResponder(resp *http.Response) (result WorkspaceListManagementGroupsResult, err error) {
@@ -770,6 +813,7 @@ func (client WorkspacesClient) ListManagementGroupsResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListUsages gets a list of usage metrics for a workspace.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is the
@@ -804,6 +848,7 @@ func (client WorkspacesClient) ListUsages(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListUsagesPreparer prepares the ListUsages request.
 func (client WorkspacesClient) ListUsagesPreparer(ctx context.Context, resourceGroupName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -825,6 +870,7 @@ func (client WorkspacesClient) ListUsagesPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListUsagesSender sends the ListUsages request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListUsagesSender(req *http.Request) (*http.Response, error) {
@@ -832,6 +878,7 @@ func (client WorkspacesClient) ListUsagesSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListUsagesResponder handles the response to the ListUsages request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListUsagesResponder(resp *http.Response) (result WorkspaceListUsagesResult, err error) {
@@ -845,6 +892,7 @@ func (client WorkspacesClient) ListUsagesResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Update updates a workspace.
 //
 // resourceGroupName is the resource group name of the workspace. workspaceName is the name of the workspace.
@@ -879,6 +927,7 @@ func (client WorkspacesClient) Update(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UpdatePreparer prepares the Update request.
 func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, parameters Workspace) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -893,7 +942,7 @@ func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}", pathParameters),
@@ -902,6 +951,7 @@ func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -909,6 +959,7 @@ func (client WorkspacesClient) UpdateSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) UpdateResponder(resp *http.Response) (result Workspace, err error) {

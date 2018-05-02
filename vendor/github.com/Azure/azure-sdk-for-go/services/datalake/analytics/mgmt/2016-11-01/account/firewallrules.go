@@ -42,10 +42,11 @@ func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) Fi
 
 // CreateOrUpdate creates or updates the specified firewall rule. During update, the firewall rule with the specified
 // name will be replaced with this new firewall rule.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. firewallRuleName is the name of the firewall rule to create or update. parameters is parameters
-// supplied to create or update the firewall rule.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// firewallRuleName - the name of the firewall rule to create or update.
+// parameters - parameters supplied to create or update the firewall rule.
 func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters CreateOrUpdateFirewallRuleParameters) (result FirewallRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -92,7 +93,7 @@ func (client FirewallRulesClient) CreateOrUpdatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/firewallRules/{firewallRuleName}", pathParameters),
@@ -122,9 +123,10 @@ func (client FirewallRulesClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete deletes the specified firewall rule from the specified Data Lake Analytics account
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. firewallRuleName is the name of the firewall rule to delete.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// firewallRuleName - the name of the firewall rule to delete.
 func (client FirewallRulesClient) Delete(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -189,9 +191,10 @@ func (client FirewallRulesClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets the specified Data Lake Analytics firewall rule.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. firewallRuleName is the name of the firewall rule to retrieve.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// firewallRuleName - the name of the firewall rule to retrieve.
 func (client FirewallRulesClient) Get(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result FirewallRule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -257,9 +260,9 @@ func (client FirewallRulesClient) GetResponder(resp *http.Response) (result Fire
 }
 
 // ListByAccount lists the Data Lake Analytics firewall rules within the specified Data Lake Analytics account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
 func (client FirewallRulesClient) ListByAccount(ctx context.Context, resourceGroupName string, accountName string) (result FirewallRuleListResultPage, err error) {
 	result.fn = client.listByAccountNextResults
 	req, err := client.ListByAccountPreparer(ctx, resourceGroupName, accountName)
@@ -352,10 +355,11 @@ func (client FirewallRulesClient) ListByAccountComplete(ctx context.Context, res
 }
 
 // Update updates the specified firewall rule.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. firewallRuleName is the name of the firewall rule to update. parameters is parameters supplied to
-// update the firewall rule.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// firewallRuleName - the name of the firewall rule to update.
+// parameters - parameters supplied to update the firewall rule.
 func (client FirewallRulesClient) Update(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters *UpdateFirewallRuleParameters) (result FirewallRule, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, firewallRuleName, parameters)
 	if err != nil {
@@ -393,7 +397,7 @@ func (client FirewallRulesClient) UpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}/firewallRules/{firewallRuleName}", pathParameters),

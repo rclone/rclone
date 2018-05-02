@@ -41,6 +41,11 @@ const (
 	Security Category = "Security"
 )
 
+// PossibleCategoryValues returns an array of possible values for the Category const type.
+func PossibleCategoryValues() []Category {
+	return []Category{Cost, HighAvailability, Performance, Security}
+}
+
 // Impact enumerates the values for impact.
 type Impact string
 
@@ -53,6 +58,11 @@ const (
 	Medium Impact = "Medium"
 )
 
+// PossibleImpactValues returns an array of possible values for the Impact const type.
+func PossibleImpactValues() []Impact {
+	return []Impact{High, Low, Medium}
+}
+
 // Risk enumerates the values for risk.
 type Risk string
 
@@ -64,6 +74,11 @@ const (
 	// Warning ...
 	Warning Risk = "Warning"
 )
+
+// PossibleRiskValues returns an array of possible values for the Risk const type.
+func PossibleRiskValues() []Risk {
+	return []Risk{Error, None, Warning}
+}
 
 // ARMErrorResponseBody ARM error response body.
 type ARMErrorResponseBody struct {
@@ -118,6 +133,99 @@ type ConfigurationListResult struct {
 	Value *[]ConfigData `json:"value,omitempty"`
 	// NextLink - The link used to get the next page of configurations.
 	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// ConfigurationListResultIterator provides access to a complete listing of ConfigData values.
+type ConfigurationListResultIterator struct {
+	i    int
+	page ConfigurationListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *ConfigurationListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter ConfigurationListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter ConfigurationListResultIterator) Response() ConfigurationListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter ConfigurationListResultIterator) Value() ConfigData {
+	if !iter.page.NotDone() {
+		return ConfigData{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (clr ConfigurationListResult) IsEmpty() bool {
+	return clr.Value == nil || len(*clr.Value) == 0
+}
+
+// configurationListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (clr ConfigurationListResult) configurationListResultPreparer() (*http.Request, error) {
+	if clr.NextLink == nil || len(to.String(clr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(clr.NextLink)))
+}
+
+// ConfigurationListResultPage contains a page of ConfigData values.
+type ConfigurationListResultPage struct {
+	fn  func(ConfigurationListResult) (ConfigurationListResult, error)
+	clr ConfigurationListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *ConfigurationListResultPage) Next() error {
+	next, err := page.fn(page.clr)
+	if err != nil {
+		return err
+	}
+	page.clr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page ConfigurationListResultPage) NotDone() bool {
+	return !page.clr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page ConfigurationListResultPage) Response() ConfigurationListResult {
+	return page.clr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page ConfigurationListResultPage) Values() []ConfigData {
+	if page.clr.IsEmpty() {
+		return nil
+	}
+	return *page.clr.Value
 }
 
 // OperationDisplayInfo the operation supported by Advisor.
@@ -269,8 +377,12 @@ type RecommendationProperties struct {
 // MarshalJSON is the custom marshaler for RecommendationProperties.
 func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["category"] = rp.Category
-	objectMap["impact"] = rp.Impact
+	if rp.Category != "" {
+		objectMap["category"] = rp.Category
+	}
+	if rp.Impact != "" {
+		objectMap["impact"] = rp.Impact
+	}
 	if rp.ImpactedField != nil {
 		objectMap["impactedField"] = rp.ImpactedField
 	}
@@ -286,7 +398,9 @@ func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
 	if rp.RecommendationTypeID != nil {
 		objectMap["recommendationTypeId"] = rp.RecommendationTypeID
 	}
-	objectMap["risk"] = rp.Risk
+	if rp.Risk != "" {
+		objectMap["risk"] = rp.Risk
+	}
 	if rp.ShortDescription != nil {
 		objectMap["shortDescription"] = rp.ShortDescription
 	}
@@ -366,6 +480,24 @@ type ResourceRecommendationBase struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceRecommendationBase.
+func (rrb ResourceRecommendationBase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rrb.RecommendationProperties != nil {
+		objectMap["properties"] = rrb.RecommendationProperties
+	}
+	if rrb.ID != nil {
+		objectMap["id"] = rrb.ID
+	}
+	if rrb.Name != nil {
+		objectMap["name"] = rrb.Name
+	}
+	if rrb.Type != nil {
+		objectMap["type"] = rrb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ResourceRecommendationBase struct.
@@ -542,6 +674,24 @@ type SuppressionContract struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SuppressionContract.
+func (sc SuppressionContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sc.SuppressionProperties != nil {
+		objectMap["properties"] = sc.SuppressionProperties
+	}
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Name != nil {
+		objectMap["name"] = sc.Name
+	}
+	if sc.Type != nil {
+		objectMap["type"] = sc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SuppressionContract struct.

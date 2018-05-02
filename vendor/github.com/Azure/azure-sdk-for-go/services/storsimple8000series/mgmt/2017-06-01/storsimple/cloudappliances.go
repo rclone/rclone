@@ -41,8 +41,9 @@ func NewCloudAppliancesClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // ListSupportedConfigurations lists supported cloud appliance models and supported configurations.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client CloudAppliancesClient) ListSupportedConfigurations(ctx context.Context, resourceGroupName string, managerName string) (result CloudApplianceConfigurationList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -114,8 +115,10 @@ func (client CloudAppliancesClient) ListSupportedConfigurationsResponder(resp *h
 }
 
 // Provision provisions cloud appliance.
-//
-// parameters is the cloud appliance resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// parameters - the cloud appliance
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client CloudAppliancesClient) Provision(ctx context.Context, parameters CloudAppliance, resourceGroupName string, managerName string) (result CloudAppliancesProvisionFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -156,7 +159,7 @@ func (client CloudAppliancesClient) ProvisionPreparer(ctx context.Context, param
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/provisionCloudAppliance", pathParameters),

@@ -45,14 +45,14 @@ const (
 //     svc := dynamodbstreams.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *DynamoDBStreams {
 	c := p.ClientConfig(EndpointsID, cfgs...)
+	if c.SigningNameDerived || len(c.SigningName) == 0 {
+		c.SigningName = "dynamodb"
+	}
 	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
 func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *DynamoDBStreams {
-	if len(signingName) == 0 {
-		signingName = "dynamodb"
-	}
 	svc := &DynamoDBStreams{
 		Client: client.New(
 			cfg,

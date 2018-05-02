@@ -51,8 +51,9 @@ func NewListManagementImageListsClient(baseURL AzureRegionBaseURL) ListManagemen
 }
 
 // Create creates an image list.
-//
-// contentType is the content type. body is schema of the body.
+// Parameters:
+// contentType - the content type.
+// body - schema of the body.
 func (client ListManagementImageListsClient) Create(ctx context.Context, contentType string, body Body) (result ImageList, err error) {
 	req, err := client.CreatePreparer(ctx, contentType, body)
 	if err != nil {
@@ -82,7 +83,7 @@ func (client ListManagementImageListsClient) CreatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/lists/v1.0/imagelists"),
@@ -112,8 +113,8 @@ func (client ListManagementImageListsClient) CreateResponder(resp *http.Response
 }
 
 // Delete deletes image list with the list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementImageListsClient) Delete(ctx context.Context, listID string) (result String, err error) {
 	req, err := client.DeletePreparer(ctx, listID)
 	if err != nil {
@@ -230,8 +231,8 @@ func (client ListManagementImageListsClient) GetAllImageListsResponder(resp *htt
 }
 
 // GetDetails returns the details of the image list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementImageListsClient) GetDetails(ctx context.Context, listID string) (result ImageList, err error) {
 	req, err := client.GetDetailsPreparer(ctx, listID)
 	if err != nil {
@@ -292,8 +293,8 @@ func (client ListManagementImageListsClient) GetDetailsResponder(resp *http.Resp
 }
 
 // RefreshIndexMethod refreshes the index of the list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementImageListsClient) RefreshIndexMethod(ctx context.Context, listID string) (result RefreshIndex, err error) {
 	req, err := client.RefreshIndexMethodPreparer(ctx, listID)
 	if err != nil {
@@ -354,8 +355,10 @@ func (client ListManagementImageListsClient) RefreshIndexMethodResponder(resp *h
 }
 
 // Update updates an image list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list. contentType is the content type. body is schema of the body.
+// Parameters:
+// listID - list Id of the image list.
+// contentType - the content type.
+// body - schema of the body.
 func (client ListManagementImageListsClient) Update(ctx context.Context, listID string, contentType string, body Body) (result ImageList, err error) {
 	req, err := client.UpdatePreparer(ctx, listID, contentType, body)
 	if err != nil {
@@ -389,7 +392,7 @@ func (client ListManagementImageListsClient) UpdatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPathParameters("/contentmoderator/lists/v1.0/imagelists/{listId}", pathParameters),

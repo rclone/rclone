@@ -36,6 +36,11 @@ const (
 	AssetTypeResource AssetType = "Resource"
 )
 
+// PossibleAssetTypeValues returns an array of possible values for the AssetType const type.
+func PossibleAssetTypeValues() []AssetType {
+	return []AssetType{AssetTypeModule, AssetTypeResource}
+}
+
 // ColumnFormat enumerates the values for column format.
 type ColumnFormat string
 
@@ -76,6 +81,11 @@ const (
 	Uint8 ColumnFormat = "Uint8"
 )
 
+// PossibleColumnFormatValues returns an array of possible values for the ColumnFormat const type.
+func PossibleColumnFormatValues() []ColumnFormat {
+	return []ColumnFormat{Byte, Char, Complex128, Complex64, DateTime, DateTimeOffset, Double, Duration, Float, Int16, Int32, Int64, Int8, Uint16, Uint32, Uint64, Uint8}
+}
+
 // ColumnType enumerates the values for column type.
 type ColumnType string
 
@@ -90,6 +100,11 @@ const (
 	String ColumnType = "String"
 )
 
+// PossibleColumnTypeValues returns an array of possible values for the ColumnType const type.
+func PossibleColumnTypeValues() []ColumnType {
+	return []ColumnType{Boolean, Integer, Number, String}
+}
+
 // DiagnosticsLevel enumerates the values for diagnostics level.
 type DiagnosticsLevel string
 
@@ -102,6 +117,11 @@ const (
 	None DiagnosticsLevel = "None"
 )
 
+// PossibleDiagnosticsLevelValues returns an array of possible values for the DiagnosticsLevel const type.
+func PossibleDiagnosticsLevelValues() []DiagnosticsLevel {
+	return []DiagnosticsLevel{All, Error, None}
+}
+
 // InputPortType enumerates the values for input port type.
 type InputPortType string
 
@@ -110,6 +130,11 @@ const (
 	Dataset InputPortType = "Dataset"
 )
 
+// PossibleInputPortTypeValues returns an array of possible values for the InputPortType const type.
+func PossibleInputPortTypeValues() []InputPortType {
+	return []InputPortType{Dataset}
+}
+
 // OutputPortType enumerates the values for output port type.
 type OutputPortType string
 
@@ -117,6 +142,11 @@ const (
 	// OutputPortTypeDataset ...
 	OutputPortTypeDataset OutputPortType = "Dataset"
 )
+
+// PossibleOutputPortTypeValues returns an array of possible values for the OutputPortType const type.
+func PossibleOutputPortTypeValues() []OutputPortType {
+	return []OutputPortType{OutputPortTypeDataset}
+}
 
 // PackageType enumerates the values for package type.
 type PackageType string
@@ -127,6 +157,11 @@ const (
 	// PackageTypeWebServiceProperties ...
 	PackageTypeWebServiceProperties PackageType = "WebServiceProperties"
 )
+
+// PossiblePackageTypeValues returns an array of possible values for the PackageType const type.
+func PossiblePackageTypeValues() []PackageType {
+	return []PackageType{PackageTypeGraph, PackageTypeWebServiceProperties}
+}
 
 // ParameterType enumerates the values for parameter type.
 type ParameterType string
@@ -158,6 +193,11 @@ const (
 	ParameterTypeString ParameterType = "String"
 )
 
+// PossibleParameterTypeValues returns an array of possible values for the ParameterType const type.
+func PossibleParameterTypeValues() []ParameterType {
+	return []ParameterType{ParameterTypeBoolean, ParameterTypeColumnPicker, ParameterTypeCredential, ParameterTypeDataGatewayName, ParameterTypeDouble, ParameterTypeEnumerated, ParameterTypeFloat, ParameterTypeInt, ParameterTypeMode, ParameterTypeParameterRange, ParameterTypeScript, ParameterTypeString}
+}
+
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -171,6 +211,11 @@ const (
 	// Unknown ...
 	Unknown ProvisioningState = "Unknown"
 )
+
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Failed, Provisioning, Succeeded, Unknown}
+}
 
 // AssetItem information about an asset associated with the web service.
 type AssetItem struct {
@@ -201,7 +246,9 @@ func (ai AssetItem) MarshalJSON() ([]byte, error) {
 	if ai.ID != nil {
 		objectMap["id"] = ai.ID
 	}
-	objectMap["type"] = ai.Type
+	if ai.Type != "" {
+		objectMap["type"] = ai.Type
+	}
 	if ai.LocationInfo != nil {
 		objectMap["locationInfo"] = ai.LocationInfo
 	}
@@ -844,7 +891,9 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 	if p.ModifiedOn != nil {
 		objectMap["modifiedOn"] = p.ModifiedOn
 	}
-	objectMap["provisioningState"] = p.ProvisioningState
+	if p.ProvisioningState != "" {
+		objectMap["provisioningState"] = p.ProvisioningState
+	}
 	if p.Keys != nil {
 		objectMap["keys"] = p.Keys
 	}
@@ -893,7 +942,9 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 	if p.PayloadsLocation != nil {
 		objectMap["payloadsLocation"] = p.PayloadsLocation
 	}
-	objectMap["packageType"] = p.PackageType
+	if p.PackageType != "" {
+		objectMap["packageType"] = p.PackageType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -981,7 +1032,9 @@ func (pfg PropertiesForGraph) MarshalJSON() ([]byte, error) {
 	if pfg.ModifiedOn != nil {
 		objectMap["modifiedOn"] = pfg.ModifiedOn
 	}
-	objectMap["provisioningState"] = pfg.ProvisioningState
+	if pfg.ProvisioningState != "" {
+		objectMap["provisioningState"] = pfg.ProvisioningState
+	}
 	if pfg.Keys != nil {
 		objectMap["keys"] = pfg.Keys
 	}
@@ -1030,7 +1083,9 @@ func (pfg PropertiesForGraph) MarshalJSON() ([]byte, error) {
 	if pfg.PayloadsLocation != nil {
 		objectMap["payloadsLocation"] = pfg.PayloadsLocation
 	}
-	objectMap["packageType"] = pfg.PackageType
+	if pfg.PackageType != "" {
+		objectMap["packageType"] = pfg.PackageType
+	}
 	return json.Marshal(objectMap)
 }
 

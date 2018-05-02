@@ -40,9 +40,9 @@ func NewAdminKeysClientWithBaseURI(baseURI string, subscriptionID string) AdminK
 }
 
 // List returns the primary and secondary API keys for the given Azure Search service.
-//
-// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of
-// the Search service for which to list admin keys.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription.
+// serviceName - the name of the Search service for which to list admin keys.
 func (client AdminKeysClient) List(ctx context.Context, resourceGroupName string, serviceName string) (result AdminKeyResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, serviceName)
 	if err != nil {

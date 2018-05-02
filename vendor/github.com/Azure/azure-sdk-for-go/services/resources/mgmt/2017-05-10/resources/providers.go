@@ -40,9 +40,10 @@ func NewProvidersClientWithBaseURI(baseURI string, subscriptionID string) Provid
 }
 
 // Get gets the specified resource provider.
-//
-// resourceProviderNamespace is the namespace of the resource provider. expand is the $expand query parameter. For
-// example, to include property aliases in response, use $expand=resourceTypes/aliases.
+// Parameters:
+// resourceProviderNamespace - the namespace of the resource provider.
+// expand - the $expand query parameter. For example, to include property aliases in response, use
+// $expand=resourceTypes/aliases.
 func (client ProvidersClient) Get(ctx context.Context, resourceProviderNamespace string, expand string) (result Provider, err error) {
 	req, err := client.GetPreparer(ctx, resourceProviderNamespace, expand)
 	if err != nil {
@@ -109,10 +110,11 @@ func (client ProvidersClient) GetResponder(resp *http.Response) (result Provider
 }
 
 // List gets all resource providers for a subscription.
-//
-// top is the number of results to return. If null is passed returns all deployments. expand is the properties to
-// include in the results. For example, use &$expand=metadata in the query string to retrieve resource provider
-// metadata. To include property aliases in response, use $expand=resourceTypes/aliases.
+// Parameters:
+// top - the number of results to return. If null is passed returns all deployments.
+// expand - the properties to include in the results. For example, use &$expand=metadata in the query string to
+// retrieve resource provider metadata. To include property aliases in response, use
+// $expand=resourceTypes/aliases.
 func (client ProvidersClient) List(ctx context.Context, top *int32, expand string) (result ProviderListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, top, expand)
@@ -209,8 +211,8 @@ func (client ProvidersClient) ListComplete(ctx context.Context, top *int32, expa
 }
 
 // Register registers a subscription with a resource provider.
-//
-// resourceProviderNamespace is the namespace of the resource provider to register.
+// Parameters:
+// resourceProviderNamespace - the namespace of the resource provider to register.
 func (client ProvidersClient) Register(ctx context.Context, resourceProviderNamespace string) (result Provider, err error) {
 	req, err := client.RegisterPreparer(ctx, resourceProviderNamespace)
 	if err != nil {
@@ -274,8 +276,8 @@ func (client ProvidersClient) RegisterResponder(resp *http.Response) (result Pro
 }
 
 // Unregister unregisters a subscription from a resource provider.
-//
-// resourceProviderNamespace is the namespace of the resource provider to unregister.
+// Parameters:
+// resourceProviderNamespace - the namespace of the resource provider to unregister.
 func (client ProvidersClient) Unregister(ctx context.Context, resourceProviderNamespace string) (result Provider, err error) {
 	req, err := client.UnregisterPreparer(ctx, resourceProviderNamespace)
 	if err != nil {

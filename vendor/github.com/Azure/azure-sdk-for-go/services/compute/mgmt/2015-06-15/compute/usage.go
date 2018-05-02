@@ -42,8 +42,8 @@ func NewUsageClientWithBaseURI(baseURI string, subscriptionID string) UsageClien
 
 // List gets, for the specified location, the current compute resource usage information as well as the limits for
 // compute resources under the subscription.
-//
-// location is the location for which resource usage is queried.
+// Parameters:
+// location - the location for which resource usage is queried.
 func (client UsageClient) List(ctx context.Context, location string) (result ListUsagesResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: location,

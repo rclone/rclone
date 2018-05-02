@@ -40,8 +40,8 @@ func NewTagsClientWithBaseURI(baseURI string, subscriptionID string) TagsClient 
 }
 
 // CreateOrUpdate create a subscription resource tag.
-//
-// tagName is the name of the tag.
+// Parameters:
+// tagName - the name of the tag.
 func (client TagsClient) CreateOrUpdate(ctx context.Context, tagName string) (result TagDetails, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, tagName)
 	if err != nil {
@@ -105,8 +105,9 @@ func (client TagsClient) CreateOrUpdateResponder(resp *http.Response) (result Ta
 }
 
 // CreateOrUpdateValue create a subscription resource tag value.
-//
-// tagName is the name of the tag. tagValue is the value of the tag.
+// Parameters:
+// tagName - the name of the tag.
+// tagValue - the value of the tag.
 func (client TagsClient) CreateOrUpdateValue(ctx context.Context, tagName string, tagValue string) (result TagValue, err error) {
 	req, err := client.CreateOrUpdateValuePreparer(ctx, tagName, tagValue)
 	if err != nil {
@@ -171,8 +172,8 @@ func (client TagsClient) CreateOrUpdateValueResponder(resp *http.Response) (resu
 }
 
 // Delete delete a subscription resource tag.
-//
-// tagName is the name of the tag.
+// Parameters:
+// tagName - the name of the tag.
 func (client TagsClient) Delete(ctx context.Context, tagName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, tagName)
 	if err != nil {
@@ -235,8 +236,9 @@ func (client TagsClient) DeleteResponder(resp *http.Response) (result autorest.R
 }
 
 // DeleteValue delete a subscription resource tag value.
-//
-// tagName is the name of the tag. tagValue is the value of the tag.
+// Parameters:
+// tagName - the name of the tag.
+// tagValue - the value of the tag.
 func (client TagsClient) DeleteValue(ctx context.Context, tagName string, tagValue string) (result autorest.Response, err error) {
 	req, err := client.DeleteValuePreparer(ctx, tagName, tagValue)
 	if err != nil {

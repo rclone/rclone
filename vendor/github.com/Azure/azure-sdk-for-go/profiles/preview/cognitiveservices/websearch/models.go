@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type AnswerType = original.AnswerType
 
 const (
@@ -180,16 +172,44 @@ type WebPage = original.WebPage
 type WebWebAnswer = original.WebWebAnswer
 type BasicWebWebGrouping = original.BasicWebWebGrouping
 type WebWebGrouping = original.WebWebGrouping
+type WebClient = original.WebClient
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func PossibleAnswerTypeValues() []AnswerType {
+	return original.PossibleAnswerTypeValues()
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleFreshnessValues() []Freshness {
+	return original.PossibleFreshnessValues()
+}
+func PossibleSafeSearchValues() []SafeSearch {
+	return original.PossibleSafeSearchValues()
+}
+func PossibleTextFormatValues() []TextFormat {
+	return original.PossibleTextFormatValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleTypeBasicResponseBaseValues() []TypeBasicResponseBase {
+	return original.PossibleTypeBasicResponseBaseValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }
 func Version() string {
 	return original.Version()
 }
-
-type WebClient = original.WebClient
-
 func NewWebClient() WebClient {
 	return original.NewWebClient()
 }

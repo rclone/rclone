@@ -29,7 +29,7 @@
   "description": "Views and manages your Google Analytics data.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/analytics/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/pZyXISvfodVzorQpGHmIl5L61w8\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/6p-mtXtqM7RLWG_i-dRwl-jH568\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/analytics-16.png",
     "x32": "https://www.google.com/images/icons/product/analytics-32.png"
@@ -74,12 +74,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -3759,7 +3759,7 @@
       }
     }
   },
-  "revision": "20180309",
+  "revision": "20180417",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Account": {
@@ -3976,22 +3976,16 @@
         },
         "accountSettings": {
           "properties": {
-            "admobReporting": {
+            "shareAnonymouslyWithOthers": {
               "type": "boolean"
             },
-            "sharingWithGoogleAnySales": {
+            "shareWithGoogleProducts": {
               "type": "boolean"
             },
-            "sharingWithGoogleProducts": {
+            "shareWithSpecialists": {
               "type": "boolean"
             },
-            "sharingWithGoogleSales": {
-              "type": "boolean"
-            },
-            "sharingWithGoogleSupport": {
-              "type": "boolean"
-            },
-            "sharingWithOthers": {
+            "shareWithSupport": {
               "type": "boolean"
             }
           },
@@ -4047,22 +4041,16 @@
         },
         "accountSettings": {
           "properties": {
-            "admobReporting": {
+            "shareAnonymouslyWithOthers": {
               "type": "boolean"
             },
-            "sharingWithGoogleAnySales": {
+            "shareWithGoogleProducts": {
               "type": "boolean"
             },
-            "sharingWithGoogleProducts": {
+            "shareWithSpecialists": {
               "type": "boolean"
             },
-            "sharingWithGoogleSales": {
-              "type": "boolean"
-            },
-            "sharingWithGoogleSupport": {
-              "type": "boolean"
-            },
-            "sharingWithOthers": {
+            "shareWithSupport": {
               "type": "boolean"
             }
           },

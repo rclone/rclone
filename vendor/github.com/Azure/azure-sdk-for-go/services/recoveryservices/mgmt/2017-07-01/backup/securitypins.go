@@ -40,9 +40,9 @@ func NewSecurityPINsClientWithBaseURI(baseURI string, subscriptionID string) Sec
 }
 
 // Get get the security PIN.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
 func (client SecurityPINsClient) Get(ctx context.Context, vaultName string, resourceGroupName string) (result TokenInformation, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName)
 	if err != nil {

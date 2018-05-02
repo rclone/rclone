@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "cloud.google.com/go/rpcreplay/proto/intstore"
 )
@@ -74,7 +75,7 @@ func (s *intStoreServer) setItem(item *pb.Item) int32 {
 func (s *intStoreServer) Get(_ context.Context, req *pb.GetRequest) (*pb.Item, error) {
 	val, ok := s.items[req.Name]
 	if !ok {
-		return nil, grpc.Errorf(codes.NotFound, "%q", req.Name)
+		return nil, status.Errorf(codes.NotFound, "%q", req.Name)
 	}
 	return &pb.Item{Name: req.Name, Value: val}, nil
 }

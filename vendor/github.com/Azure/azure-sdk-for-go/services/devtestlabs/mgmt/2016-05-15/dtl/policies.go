@@ -41,9 +41,12 @@ func NewPoliciesClientWithBaseURI(baseURI string, subscriptionID string) Policie
 }
 
 // CreateOrUpdate create or replace an existing policy.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
-// of the policy set. name is the name of the policy. policy is a Policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// policySetName - the name of the policy set.
+// name - the name of the policy.
+// policy - a Policy.
 func (client PoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy Policy) (result Policy, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: policy,
@@ -88,7 +91,7 @@ func (client PoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/policysets/{policySetName}/policies/{name}", pathParameters),
@@ -118,9 +121,11 @@ func (client PoliciesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete delete policy.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
-// of the policy set. name is the name of the policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// policySetName - the name of the policy set.
+// name - the name of the policy.
 func (client PoliciesClient) Delete(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, policySetName, name)
 	if err != nil {
@@ -186,10 +191,12 @@ func (client PoliciesClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get get policy.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
-// of the policy set. name is the name of the policy. expand is specify the $expand query. Example:
-// 'properties($select=description)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// policySetName - the name of the policy set.
+// name - the name of the policy.
+// expand - specify the $expand query. Example: 'properties($select=description)'
 func (client PoliciesClient) Get(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, expand string) (result Policy, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, policySetName, name, expand)
 	if err != nil {
@@ -259,11 +266,14 @@ func (client PoliciesClient) GetResponder(resp *http.Response) (result Policy, e
 }
 
 // List list policies in a given policy set.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
-// of the policy set. expand is specify the $expand query. Example: 'properties($select=description)' filter is the
-// filter to apply to the operation. top is the maximum number of resources to return from the operation. orderby
-// is the ordering expression for the results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// policySetName - the name of the policy set.
+// expand - specify the $expand query. Example: 'properties($select=description)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client PoliciesClient) List(ctx context.Context, resourceGroupName string, labName string, policySetName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationPolicyPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, policySetName, expand, filter, top, orderby)
@@ -369,9 +379,12 @@ func (client PoliciesClient) ListComplete(ctx context.Context, resourceGroupName
 }
 
 // Update modify properties of policies.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
-// of the policy set. name is the name of the policy. policy is a Policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// policySetName - the name of the policy set.
+// name - the name of the policy.
+// policy - a Policy.
 func (client PoliciesClient) Update(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy PolicyFragment) (result Policy, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, labName, policySetName, name, policy)
 	if err != nil {
@@ -410,7 +423,7 @@ func (client PoliciesClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/policysets/{policySetName}/policies/{name}", pathParameters),

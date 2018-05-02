@@ -40,9 +40,10 @@ func NewExpressRouteCircuitsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // CreateOrUpdate creates or updates an express route circuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. parameters is
-// parameters supplied to the create or update express route circuit operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the circuit.
+// parameters - parameters supplied to the create or update express route circuit operation.
 func (client ExpressRouteCircuitsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, circuitName string, parameters ExpressRouteCircuit) (result ExpressRouteCircuitsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, circuitName, parameters)
 	if err != nil {
@@ -73,7 +74,7 @@ func (client ExpressRouteCircuitsClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}", pathParameters),
@@ -111,8 +112,9 @@ func (client ExpressRouteCircuitsClient) CreateOrUpdateResponder(resp *http.Resp
 }
 
 // Delete deletes the specified express route circuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the express route circuit.
 func (client ExpressRouteCircuitsClient) Delete(ctx context.Context, resourceGroupName string, circuitName string) (result ExpressRouteCircuitsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, circuitName)
 	if err != nil {
@@ -178,8 +180,9 @@ func (client ExpressRouteCircuitsClient) DeleteResponder(resp *http.Response) (r
 }
 
 // Get gets information about the specified express route circuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of express route circuit.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of express route circuit.
 func (client ExpressRouteCircuitsClient) Get(ctx context.Context, resourceGroupName string, circuitName string) (result ExpressRouteCircuit, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, circuitName)
 	if err != nil {
@@ -244,8 +247,8 @@ func (client ExpressRouteCircuitsClient) GetResponder(resp *http.Response) (resu
 }
 
 // List gets all the express route circuits in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client ExpressRouteCircuitsClient) List(ctx context.Context, resourceGroupName string) (result ExpressRouteCircuitListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)
@@ -428,8 +431,9 @@ func (client ExpressRouteCircuitsClient) ListAllComplete(ctx context.Context) (r
 
 // ListArpTable the ListArpTable from ExpressRouteCircuit opertion retrieves the currently advertised arp table
 // associated with the ExpressRouteCircuits in a resource group.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the circuit.
 func (client ExpressRouteCircuitsClient) ListArpTable(ctx context.Context, resourceGroupName string, circuitName string) (result ExpressRouteCircuitsArpTableListResultPage, err error) {
 	result.fn = client.listArpTableNextResults
 	req, err := client.ListArpTablePreparer(ctx, resourceGroupName, circuitName)
@@ -523,8 +527,9 @@ func (client ExpressRouteCircuitsClient) ListArpTableComplete(ctx context.Contex
 
 // ListRoutesTable the ListRoutesTable from ExpressRouteCircuit opertion retrieves the currently advertised routes
 // table associated with the ExpressRouteCircuits in a resource group.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the circuit.
 func (client ExpressRouteCircuitsClient) ListRoutesTable(ctx context.Context, resourceGroupName string, circuitName string) (result ExpressRouteCircuitsRoutesTableListResultPage, err error) {
 	result.fn = client.listRoutesTableNextResults
 	req, err := client.ListRoutesTablePreparer(ctx, resourceGroupName, circuitName)
@@ -618,8 +623,9 @@ func (client ExpressRouteCircuitsClient) ListRoutesTableComplete(ctx context.Con
 
 // ListStats the Liststats ExpressRouteCircuit opertion retrieves all the stats from a ExpressRouteCircuits in a
 // resource group.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the loadBalancer.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the loadBalancer.
 func (client ExpressRouteCircuitsClient) ListStats(ctx context.Context, resourceGroupName string, circuitName string) (result ExpressRouteCircuitsStatsListResultPage, err error) {
 	result.fn = client.listStatsNextResults
 	req, err := client.ListStatsPreparer(ctx, resourceGroupName, circuitName)

@@ -37,9 +37,11 @@ func NewModelClient(azureRegion AzureRegions) ModelClient {
 }
 
 // AddClosedList adds a closed list model to the application.
-//
-// appID is the application ID. versionID is the version ID. closedListModelCreateObject is a model containing the
-// name and words for the new closed list entity extractor.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// closedListModelCreateObject - a model containing the name and words for the new closed list entity
+// extractor.
 func (client ModelClient) AddClosedList(ctx context.Context, appID uuid.UUID, versionID string, closedListModelCreateObject ClosedListModelCreateObject) (result UUID, err error) {
 	req, err := client.AddClosedListPreparer(ctx, appID, versionID, closedListModelCreateObject)
 	if err != nil {
@@ -74,7 +76,7 @@ func (client ModelClient) AddClosedListPreparer(ctx context.Context, appID uuid.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/closedlists", pathParameters),
@@ -103,9 +105,10 @@ func (client ModelClient) AddClosedListResponder(resp *http.Response) (result UU
 }
 
 // AddCompositeEntity adds a composite entity extractor to the application.
-//
-// appID is the application ID. versionID is the version ID. compositeModelCreateObject is a model containing the
-// name and children of the new entity extractor.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// compositeModelCreateObject - a model containing the name and children of the new entity extractor.
 func (client ModelClient) AddCompositeEntity(ctx context.Context, appID uuid.UUID, versionID string, compositeModelCreateObject CompositeEntityModel) (result UUID, err error) {
 	req, err := client.AddCompositeEntityPreparer(ctx, appID, versionID, compositeModelCreateObject)
 	if err != nil {
@@ -140,7 +143,7 @@ func (client ModelClient) AddCompositeEntityPreparer(ctx context.Context, appID 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/compositeentities", pathParameters),
@@ -169,9 +172,11 @@ func (client ModelClient) AddCompositeEntityResponder(resp *http.Response) (resu
 }
 
 // AddCompositeEntityChild creates a single child in an existing composite entity model.
-//
-// appID is the application ID. versionID is the version ID. cEntityID is the composite entity extractor ID.
-// compositeChildModelCreateObject is a model object containing the name of the new composite child model.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// cEntityID - the composite entity extractor ID.
+// compositeChildModelCreateObject - a model object containing the name of the new composite child model.
 func (client ModelClient) AddCompositeEntityChild(ctx context.Context, appID uuid.UUID, versionID string, cEntityID uuid.UUID, compositeChildModelCreateObject CompositeChildModelCreateObject) (result UUID, err error) {
 	req, err := client.AddCompositeEntityChildPreparer(ctx, appID, versionID, cEntityID, compositeChildModelCreateObject)
 	if err != nil {
@@ -207,7 +212,7 @@ func (client ModelClient) AddCompositeEntityChildPreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/compositeentities/{cEntityId}/children", pathParameters),
@@ -236,9 +241,10 @@ func (client ModelClient) AddCompositeEntityChildResponder(resp *http.Response) 
 }
 
 // AddCustomPrebuiltDomain adds a customizable prebuilt domain along with all of its models to this application.
-//
-// appID is the application ID. versionID is the version ID. prebuiltDomainObject is a prebuilt domain create
-// object containing the name of the domain.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltDomainObject - a prebuilt domain create object containing the name of the domain.
 func (client ModelClient) AddCustomPrebuiltDomain(ctx context.Context, appID uuid.UUID, versionID string, prebuiltDomainObject PrebuiltDomainCreateBaseObject) (result ListUUID, err error) {
 	req, err := client.AddCustomPrebuiltDomainPreparer(ctx, appID, versionID, prebuiltDomainObject)
 	if err != nil {
@@ -273,7 +279,7 @@ func (client ModelClient) AddCustomPrebuiltDomainPreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/customprebuiltdomains", pathParameters),
@@ -302,9 +308,11 @@ func (client ModelClient) AddCustomPrebuiltDomainResponder(resp *http.Response) 
 }
 
 // AddCustomPrebuiltEntity adds a custom prebuilt entity model to the application.
-//
-// appID is the application ID. versionID is the version ID. prebuiltDomainModelCreateObject is a model object
-// containing the name of the custom prebuilt entity and the name of the domain to which this model belongs.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltDomainModelCreateObject - a model object containing the name of the custom prebuilt entity and the
+// name of the domain to which this model belongs.
 func (client ModelClient) AddCustomPrebuiltEntity(ctx context.Context, appID uuid.UUID, versionID string, prebuiltDomainModelCreateObject PrebuiltDomainModelCreateObject) (result UUID, err error) {
 	req, err := client.AddCustomPrebuiltEntityPreparer(ctx, appID, versionID, prebuiltDomainModelCreateObject)
 	if err != nil {
@@ -339,7 +347,7 @@ func (client ModelClient) AddCustomPrebuiltEntityPreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/customprebuiltentities", pathParameters),
@@ -368,9 +376,11 @@ func (client ModelClient) AddCustomPrebuiltEntityResponder(resp *http.Response) 
 }
 
 // AddCustomPrebuiltIntent adds a custom prebuilt intent model to the application.
-//
-// appID is the application ID. versionID is the version ID. prebuiltDomainModelCreateObject is a model object
-// containing the name of the custom prebuilt intent and the name of the domain to which this model belongs.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltDomainModelCreateObject - a model object containing the name of the custom prebuilt intent and the
+// name of the domain to which this model belongs.
 func (client ModelClient) AddCustomPrebuiltIntent(ctx context.Context, appID uuid.UUID, versionID string, prebuiltDomainModelCreateObject PrebuiltDomainModelCreateObject) (result UUID, err error) {
 	req, err := client.AddCustomPrebuiltIntentPreparer(ctx, appID, versionID, prebuiltDomainModelCreateObject)
 	if err != nil {
@@ -405,7 +415,7 @@ func (client ModelClient) AddCustomPrebuiltIntentPreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/customprebuiltintents", pathParameters),
@@ -434,9 +444,10 @@ func (client ModelClient) AddCustomPrebuiltIntentResponder(resp *http.Response) 
 }
 
 // AddEntity adds an entity extractor to the application.
-//
-// appID is the application ID. versionID is the version ID. modelCreateObject is a model object containing the
-// name for the new entity extractor.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// modelCreateObject - a model object containing the name for the new entity extractor.
 func (client ModelClient) AddEntity(ctx context.Context, appID uuid.UUID, versionID string, modelCreateObject ModelCreateObject) (result UUID, err error) {
 	req, err := client.AddEntityPreparer(ctx, appID, versionID, modelCreateObject)
 	if err != nil {
@@ -471,7 +482,7 @@ func (client ModelClient) AddEntityPreparer(ctx context.Context, appID uuid.UUID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/entities", pathParameters),
@@ -500,9 +511,10 @@ func (client ModelClient) AddEntityResponder(resp *http.Response) (result UUID, 
 }
 
 // AddHierarchicalEntity adds a hierarchical entity extractor to the application version.
-//
-// appID is the application ID. versionID is the version ID. hierarchicalModelCreateObject is a model containing
-// the name and children of the new entity extractor.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hierarchicalModelCreateObject - a model containing the name and children of the new entity extractor.
 func (client ModelClient) AddHierarchicalEntity(ctx context.Context, appID uuid.UUID, versionID string, hierarchicalModelCreateObject HierarchicalEntityModel) (result UUID, err error) {
 	req, err := client.AddHierarchicalEntityPreparer(ctx, appID, versionID, hierarchicalModelCreateObject)
 	if err != nil {
@@ -537,7 +549,7 @@ func (client ModelClient) AddHierarchicalEntityPreparer(ctx context.Context, app
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/hierarchicalentities", pathParameters),
@@ -566,9 +578,11 @@ func (client ModelClient) AddHierarchicalEntityResponder(resp *http.Response) (r
 }
 
 // AddHierarchicalEntityChild creates a single child in an existing hierarchical entity model.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
-// hierarchicalChildModelCreateObject is a model object containing the name of the new hierarchical child model.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
+// hierarchicalChildModelCreateObject - a model object containing the name of the new hierarchical child model.
 func (client ModelClient) AddHierarchicalEntityChild(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID, hierarchicalChildModelCreateObject HierarchicalChildModelCreateObject) (result UUID, err error) {
 	req, err := client.AddHierarchicalEntityChildPreparer(ctx, appID, versionID, hEntityID, hierarchicalChildModelCreateObject)
 	if err != nil {
@@ -604,7 +618,7 @@ func (client ModelClient) AddHierarchicalEntityChildPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/hierarchicalentities/{hEntityId}/children", pathParameters),
@@ -633,9 +647,10 @@ func (client ModelClient) AddHierarchicalEntityChildResponder(resp *http.Respons
 }
 
 // AddIntent adds an intent classifier to the application.
-//
-// appID is the application ID. versionID is the version ID. intentCreateObject is a model object containing the
-// name of the new intent classifier.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// intentCreateObject - a model object containing the name of the new intent classifier.
 func (client ModelClient) AddIntent(ctx context.Context, appID uuid.UUID, versionID string, intentCreateObject ModelCreateObject) (result UUID, err error) {
 	req, err := client.AddIntentPreparer(ctx, appID, versionID, intentCreateObject)
 	if err != nil {
@@ -670,7 +685,7 @@ func (client ModelClient) AddIntentPreparer(ctx context.Context, appID uuid.UUID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/intents", pathParameters),
@@ -699,9 +714,10 @@ func (client ModelClient) AddIntentResponder(resp *http.Response) (result UUID, 
 }
 
 // AddPrebuilt adds a list of prebuilt entity extractors to the application.
-//
-// appID is the application ID. versionID is the version ID. prebuiltExtractorNames is an array of prebuilt entity
-// extractor names.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltExtractorNames - an array of prebuilt entity extractor names.
 func (client ModelClient) AddPrebuilt(ctx context.Context, appID uuid.UUID, versionID string, prebuiltExtractorNames []string) (result ListPrebuiltEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: prebuiltExtractorNames,
@@ -742,7 +758,7 @@ func (client ModelClient) AddPrebuiltPreparer(ctx context.Context, appID uuid.UU
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/prebuilts", pathParameters),
@@ -771,9 +787,11 @@ func (client ModelClient) AddPrebuiltResponder(resp *http.Response) (result List
 }
 
 // AddSubList adds a list to an existing closed list.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list entity extractor ID.
-// wordListCreateObject is words list.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list entity extractor ID.
+// wordListCreateObject - words list.
 func (client ModelClient) AddSubList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID, wordListCreateObject WordListObject) (result Int32, err error) {
 	req, err := client.AddSubListPreparer(ctx, appID, versionID, clEntityID, wordListCreateObject)
 	if err != nil {
@@ -809,7 +827,7 @@ func (client ModelClient) AddSubListPreparer(ctx context.Context, appID uuid.UUI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/closedlists/{clEntityId}/sublists", pathParameters),
@@ -838,8 +856,10 @@ func (client ModelClient) AddSubListResponder(resp *http.Response) (result Int32
 }
 
 // DeleteClosedList deletes a closed list model from the application.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list model ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list model ID.
 func (client ModelClient) DeleteClosedList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteClosedListPreparer(ctx, appID, versionID, clEntityID)
 	if err != nil {
@@ -902,8 +922,10 @@ func (client ModelClient) DeleteClosedListResponder(resp *http.Response) (result
 }
 
 // DeleteCompositeEntity deletes a composite entity extractor from the application.
-//
-// appID is the application ID. versionID is the version ID. cEntityID is the composite entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// cEntityID - the composite entity extractor ID.
 func (client ModelClient) DeleteCompositeEntity(ctx context.Context, appID uuid.UUID, versionID string, cEntityID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteCompositeEntityPreparer(ctx, appID, versionID, cEntityID)
 	if err != nil {
@@ -966,9 +988,11 @@ func (client ModelClient) DeleteCompositeEntityResponder(resp *http.Response) (r
 }
 
 // DeleteCompositeEntityChild deletes a composite entity extractor child from the application.
-//
-// appID is the application ID. versionID is the version ID. cEntityID is the composite entity extractor ID.
-// cChildID is the hierarchical entity extractor child ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// cEntityID - the composite entity extractor ID.
+// cChildID - the hierarchical entity extractor child ID.
 func (client ModelClient) DeleteCompositeEntityChild(ctx context.Context, appID uuid.UUID, versionID string, cEntityID uuid.UUID, cChildID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteCompositeEntityChildPreparer(ctx, appID, versionID, cEntityID, cChildID)
 	if err != nil {
@@ -1032,8 +1056,10 @@ func (client ModelClient) DeleteCompositeEntityChildResponder(resp *http.Respons
 }
 
 // DeleteCustomPrebuiltDomain deletes a prebuilt domain's models from the application.
-//
-// appID is the application ID. versionID is the version ID. domainName is domain name.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// domainName - domain name.
 func (client ModelClient) DeleteCustomPrebuiltDomain(ctx context.Context, appID uuid.UUID, versionID string, domainName string) (result OperationStatus, err error) {
 	req, err := client.DeleteCustomPrebuiltDomainPreparer(ctx, appID, versionID, domainName)
 	if err != nil {
@@ -1096,8 +1122,10 @@ func (client ModelClient) DeleteCustomPrebuiltDomainResponder(resp *http.Respons
 }
 
 // DeleteEntity deletes an entity extractor from the application.
-//
-// appID is the application ID. versionID is the version ID. entityID is the entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// entityID - the entity extractor ID.
 func (client ModelClient) DeleteEntity(ctx context.Context, appID uuid.UUID, versionID string, entityID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteEntityPreparer(ctx, appID, versionID, entityID)
 	if err != nil {
@@ -1160,8 +1188,10 @@ func (client ModelClient) DeleteEntityResponder(resp *http.Response) (result Ope
 }
 
 // DeleteHierarchicalEntity deletes a hierarchical entity extractor from the application version.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
 func (client ModelClient) DeleteHierarchicalEntity(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteHierarchicalEntityPreparer(ctx, appID, versionID, hEntityID)
 	if err != nil {
@@ -1224,9 +1254,11 @@ func (client ModelClient) DeleteHierarchicalEntityResponder(resp *http.Response)
 }
 
 // DeleteHierarchicalEntityChild deletes a hierarchical entity extractor child from the application.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
-// hChildID is the hierarchical entity extractor child ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
+// hChildID - the hierarchical entity extractor child ID.
 func (client ModelClient) DeleteHierarchicalEntityChild(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID, hChildID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeleteHierarchicalEntityChildPreparer(ctx, appID, versionID, hEntityID, hChildID)
 	if err != nil {
@@ -1290,10 +1322,12 @@ func (client ModelClient) DeleteHierarchicalEntityChildResponder(resp *http.Resp
 }
 
 // DeleteIntent deletes an intent classifier from the application.
-//
-// appID is the application ID. versionID is the version ID. intentID is the intent classifier ID. deleteUtterances
-// is also delete the intent's utterances (true). Or move the utterances to the None intent (false - the default
-// value).
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// intentID - the intent classifier ID.
+// deleteUtterances - also delete the intent's utterances (true). Or move the utterances to the None intent
+// (false - the default value).
 func (client ModelClient) DeleteIntent(ctx context.Context, appID uuid.UUID, versionID string, intentID uuid.UUID, deleteUtterances *bool) (result OperationStatus, err error) {
 	req, err := client.DeleteIntentPreparer(ctx, appID, versionID, intentID, deleteUtterances)
 	if err != nil {
@@ -1364,8 +1398,10 @@ func (client ModelClient) DeleteIntentResponder(resp *http.Response) (result Ope
 }
 
 // DeletePrebuilt deletes a prebuilt entity extractor from the application.
-//
-// appID is the application ID. versionID is the version ID. prebuiltID is the prebuilt entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltID - the prebuilt entity extractor ID.
 func (client ModelClient) DeletePrebuilt(ctx context.Context, appID uuid.UUID, versionID string, prebuiltID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeletePrebuiltPreparer(ctx, appID, versionID, prebuiltID)
 	if err != nil {
@@ -1428,9 +1464,11 @@ func (client ModelClient) DeletePrebuiltResponder(resp *http.Response) (result O
 }
 
 // DeleteSubList deletes a sublist of a specific closed list model.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list entity extractor ID.
-// subListID is the sublist ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list entity extractor ID.
+// subListID - the sublist ID.
 func (client ModelClient) DeleteSubList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID, subListID int32) (result OperationStatus, err error) {
 	req, err := client.DeleteSubListPreparer(ctx, appID, versionID, clEntityID, subListID)
 	if err != nil {
@@ -1494,8 +1532,10 @@ func (client ModelClient) DeleteSubListResponder(resp *http.Response) (result Op
 }
 
 // GetClosedList gets information of a closed list model.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list model ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list model ID.
 func (client ModelClient) GetClosedList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID) (result ClosedListEntityExtractor, err error) {
 	req, err := client.GetClosedListPreparer(ctx, appID, versionID, clEntityID)
 	if err != nil {
@@ -1558,8 +1598,10 @@ func (client ModelClient) GetClosedListResponder(resp *http.Response) (result Cl
 }
 
 // GetCompositeEntity gets information about the composite entity model.
-//
-// appID is the application ID. versionID is the version ID. cEntityID is the composite entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// cEntityID - the composite entity extractor ID.
 func (client ModelClient) GetCompositeEntity(ctx context.Context, appID uuid.UUID, versionID string, cEntityID uuid.UUID) (result CompositeEntityExtractor, err error) {
 	req, err := client.GetCompositeEntityPreparer(ctx, appID, versionID, cEntityID)
 	if err != nil {
@@ -1622,8 +1664,10 @@ func (client ModelClient) GetCompositeEntityResponder(resp *http.Response) (resu
 }
 
 // GetEntity gets information about the entity model.
-//
-// appID is the application ID. versionID is the version ID. entityID is the entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// entityID - the entity extractor ID.
 func (client ModelClient) GetEntity(ctx context.Context, appID uuid.UUID, versionID string, entityID uuid.UUID) (result EntityExtractor, err error) {
 	req, err := client.GetEntityPreparer(ctx, appID, versionID, entityID)
 	if err != nil {
@@ -1686,9 +1730,11 @@ func (client ModelClient) GetEntityResponder(resp *http.Response) (result Entity
 }
 
 // GetEntitySuggestions get suggestion examples that would improve the accuracy of the entity model.
-//
-// appID is the application ID. versionID is the version ID. entityID is the target entity extractor model to
-// enhance. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// entityID - the target entity extractor model to enhance.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) GetEntitySuggestions(ctx context.Context, appID uuid.UUID, versionID string, entityID uuid.UUID, take *int32) (result ListEntitiesSuggestionExample, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: take,
@@ -1768,8 +1814,10 @@ func (client ModelClient) GetEntitySuggestionsResponder(resp *http.Response) (re
 }
 
 // GetHierarchicalEntity gets information about the hierarchical entity model.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
 func (client ModelClient) GetHierarchicalEntity(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID) (result HierarchicalEntityExtractor, err error) {
 	req, err := client.GetHierarchicalEntityPreparer(ctx, appID, versionID, hEntityID)
 	if err != nil {
@@ -1832,9 +1880,11 @@ func (client ModelClient) GetHierarchicalEntityResponder(resp *http.Response) (r
 }
 
 // GetHierarchicalEntityChild gets information about the hierarchical entity child model.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
-// hChildID is the hierarchical entity extractor child ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
+// hChildID - the hierarchical entity extractor child ID.
 func (client ModelClient) GetHierarchicalEntityChild(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID, hChildID uuid.UUID) (result HierarchicalChildEntity, err error) {
 	req, err := client.GetHierarchicalEntityChildPreparer(ctx, appID, versionID, hEntityID, hChildID)
 	if err != nil {
@@ -1898,8 +1948,10 @@ func (client ModelClient) GetHierarchicalEntityChildResponder(resp *http.Respons
 }
 
 // GetIntent gets information about the intent model.
-//
-// appID is the application ID. versionID is the version ID. intentID is the intent classifier ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// intentID - the intent classifier ID.
 func (client ModelClient) GetIntent(ctx context.Context, appID uuid.UUID, versionID string, intentID uuid.UUID) (result IntentClassifier, err error) {
 	req, err := client.GetIntentPreparer(ctx, appID, versionID, intentID)
 	if err != nil {
@@ -1962,9 +2014,11 @@ func (client ModelClient) GetIntentResponder(resp *http.Response) (result Intent
 }
 
 // GetIntentSuggestions suggests examples that would improve the accuracy of the intent model.
-//
-// appID is the application ID. versionID is the version ID. intentID is the intent classifier ID. take is the
-// number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// intentID - the intent classifier ID.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) GetIntentSuggestions(ctx context.Context, appID uuid.UUID, versionID string, intentID uuid.UUID, take *int32) (result ListIntentsSuggestionExample, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: take,
@@ -2044,8 +2098,10 @@ func (client ModelClient) GetIntentSuggestionsResponder(resp *http.Response) (re
 }
 
 // GetPrebuilt gets information about the prebuilt entity model.
-//
-// appID is the application ID. versionID is the version ID. prebuiltID is the prebuilt entity extractor ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// prebuiltID - the prebuilt entity extractor ID.
 func (client ModelClient) GetPrebuilt(ctx context.Context, appID uuid.UUID, versionID string, prebuiltID uuid.UUID) (result PrebuiltEntityExtractor, err error) {
 	req, err := client.GetPrebuiltPreparer(ctx, appID, versionID, prebuiltID)
 	if err != nil {
@@ -2108,9 +2164,11 @@ func (client ModelClient) GetPrebuiltResponder(resp *http.Response) (result Preb
 }
 
 // ListClosedLists gets information about the closedlist models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListClosedLists(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListClosedListEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2197,9 +2255,11 @@ func (client ModelClient) ListClosedListsResponder(resp *http.Response) (result 
 }
 
 // ListCompositeEntities gets information about the composite entity models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListCompositeEntities(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListCompositeEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2286,8 +2346,9 @@ func (client ModelClient) ListCompositeEntitiesResponder(resp *http.Response) (r
 }
 
 // ListCustomPrebuiltEntities gets all custom prebuilt entities information of this application.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client ModelClient) ListCustomPrebuiltEntities(ctx context.Context, appID uuid.UUID, versionID string) (result ListEntityExtractor, err error) {
 	req, err := client.ListCustomPrebuiltEntitiesPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -2349,8 +2410,9 @@ func (client ModelClient) ListCustomPrebuiltEntitiesResponder(resp *http.Respons
 }
 
 // ListCustomPrebuiltIntents gets custom prebuilt intents information of this application.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client ModelClient) ListCustomPrebuiltIntents(ctx context.Context, appID uuid.UUID, versionID string) (result ListIntentClassifier, err error) {
 	req, err := client.ListCustomPrebuiltIntentsPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -2412,8 +2474,9 @@ func (client ModelClient) ListCustomPrebuiltIntentsResponder(resp *http.Response
 }
 
 // ListCustomPrebuiltModels gets all custom prebuilt models information of this application.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client ModelClient) ListCustomPrebuiltModels(ctx context.Context, appID uuid.UUID, versionID string) (result ListCustomPrebuiltModel, err error) {
 	req, err := client.ListCustomPrebuiltModelsPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -2475,9 +2538,11 @@ func (client ModelClient) ListCustomPrebuiltModelsResponder(resp *http.Response)
 }
 
 // ListEntities gets information about the entity models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListEntities(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2564,9 +2629,11 @@ func (client ModelClient) ListEntitiesResponder(resp *http.Response) (result Lis
 }
 
 // ListHierarchicalEntities gets information about the hierarchical entity models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListHierarchicalEntities(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListHierarchicalEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2653,9 +2720,11 @@ func (client ModelClient) ListHierarchicalEntitiesResponder(resp *http.Response)
 }
 
 // ListIntents gets information about the intent models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListIntents(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListIntentClassifier, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2742,9 +2811,11 @@ func (client ModelClient) ListIntentsResponder(resp *http.Response) (result List
 }
 
 // ListModels gets information about the application version models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListModels(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListModelInfoResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2831,8 +2902,9 @@ func (client ModelClient) ListModelsResponder(resp *http.Response) (result ListM
 }
 
 // ListPrebuiltEntities gets all the available prebuilt entity extractors for the application.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client ModelClient) ListPrebuiltEntities(ctx context.Context, appID uuid.UUID, versionID string) (result ListAvailablePrebuiltEntityModel, err error) {
 	req, err := client.ListPrebuiltEntitiesPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -2894,9 +2966,11 @@ func (client ModelClient) ListPrebuiltEntitiesResponder(resp *http.Response) (re
 }
 
 // ListPrebuilts gets information about the prebuilt entity models.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ModelClient) ListPrebuilts(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListPrebuiltEntityExtractor, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -2983,9 +3057,11 @@ func (client ModelClient) ListPrebuiltsResponder(resp *http.Response) (result Li
 }
 
 // PatchClosedList adds a batch of sublists to an existing closedlist.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list model ID.
-// closedListModelPatchObject is a words list batch.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list model ID.
+// closedListModelPatchObject - a words list batch.
 func (client ModelClient) PatchClosedList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID, closedListModelPatchObject ClosedListModelPatchObject) (result OperationStatus, err error) {
 	req, err := client.PatchClosedListPreparer(ctx, appID, versionID, clEntityID, closedListModelPatchObject)
 	if err != nil {
@@ -3021,7 +3097,7 @@ func (client ModelClient) PatchClosedListPreparer(ctx context.Context, appID uui
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/closedlists/{clEntityId}", pathParameters),
@@ -3050,9 +3126,11 @@ func (client ModelClient) PatchClosedListResponder(resp *http.Response) (result 
 }
 
 // UpdateClosedList updates the closed list model.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list model ID.
-// closedListModelUpdateObject is the new entity name and words list.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list model ID.
+// closedListModelUpdateObject - the new entity name and words list.
 func (client ModelClient) UpdateClosedList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID, closedListModelUpdateObject ClosedListModelUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateClosedListPreparer(ctx, appID, versionID, clEntityID, closedListModelUpdateObject)
 	if err != nil {
@@ -3088,7 +3166,7 @@ func (client ModelClient) UpdateClosedListPreparer(ctx context.Context, appID uu
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/closedlists/{clEntityId}", pathParameters),
@@ -3117,9 +3195,11 @@ func (client ModelClient) UpdateClosedListResponder(resp *http.Response) (result
 }
 
 // UpdateCompositeEntity updates the composite entity extractor.
-//
-// appID is the application ID. versionID is the version ID. cEntityID is the composite entity extractor ID.
-// compositeModelUpdateObject is a model object containing the new entity extractor name and children.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// cEntityID - the composite entity extractor ID.
+// compositeModelUpdateObject - a model object containing the new entity extractor name and children.
 func (client ModelClient) UpdateCompositeEntity(ctx context.Context, appID uuid.UUID, versionID string, cEntityID uuid.UUID, compositeModelUpdateObject CompositeEntityModel) (result OperationStatus, err error) {
 	req, err := client.UpdateCompositeEntityPreparer(ctx, appID, versionID, cEntityID, compositeModelUpdateObject)
 	if err != nil {
@@ -3155,7 +3235,7 @@ func (client ModelClient) UpdateCompositeEntityPreparer(ctx context.Context, app
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/compositeentities/{cEntityId}", pathParameters),
@@ -3184,9 +3264,11 @@ func (client ModelClient) UpdateCompositeEntityResponder(resp *http.Response) (r
 }
 
 // UpdateEntity updates the name of an entity extractor.
-//
-// appID is the application ID. versionID is the version ID. entityID is the entity extractor ID. modelUpdateObject
-// is a model object containing the new entity extractor name.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// entityID - the entity extractor ID.
+// modelUpdateObject - a model object containing the new entity extractor name.
 func (client ModelClient) UpdateEntity(ctx context.Context, appID uuid.UUID, versionID string, entityID uuid.UUID, modelUpdateObject ModelUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateEntityPreparer(ctx, appID, versionID, entityID, modelUpdateObject)
 	if err != nil {
@@ -3222,7 +3304,7 @@ func (client ModelClient) UpdateEntityPreparer(ctx context.Context, appID uuid.U
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/entities/{entityId}", pathParameters),
@@ -3251,9 +3333,11 @@ func (client ModelClient) UpdateEntityResponder(resp *http.Response) (result Ope
 }
 
 // UpdateHierarchicalEntity updates the name and children of a hierarchical entity model.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
-// hierarchicalModelUpdateObject is model containing names of the children of the hierarchical entity.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
+// hierarchicalModelUpdateObject - model containing names of the children of the hierarchical entity.
 func (client ModelClient) UpdateHierarchicalEntity(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID, hierarchicalModelUpdateObject HierarchicalEntityModel) (result OperationStatus, err error) {
 	req, err := client.UpdateHierarchicalEntityPreparer(ctx, appID, versionID, hEntityID, hierarchicalModelUpdateObject)
 	if err != nil {
@@ -3289,7 +3373,7 @@ func (client ModelClient) UpdateHierarchicalEntityPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/hierarchicalentities/{hEntityId}", pathParameters),
@@ -3318,10 +3402,12 @@ func (client ModelClient) UpdateHierarchicalEntityResponder(resp *http.Response)
 }
 
 // UpdateHierarchicalEntityChild renames a single child in an existing hierarchical entity model.
-//
-// appID is the application ID. versionID is the version ID. hEntityID is the hierarchical entity extractor ID.
-// hChildID is the hierarchical entity extractor child ID. hierarchicalChildModelUpdateObject is model object
-// containing new name of the hierarchical entity child.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// hEntityID - the hierarchical entity extractor ID.
+// hChildID - the hierarchical entity extractor child ID.
+// hierarchicalChildModelUpdateObject - model object containing new name of the hierarchical entity child.
 func (client ModelClient) UpdateHierarchicalEntityChild(ctx context.Context, appID uuid.UUID, versionID string, hEntityID uuid.UUID, hChildID uuid.UUID, hierarchicalChildModelUpdateObject HierarchicalChildModelUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateHierarchicalEntityChildPreparer(ctx, appID, versionID, hEntityID, hChildID, hierarchicalChildModelUpdateObject)
 	if err != nil {
@@ -3358,7 +3444,7 @@ func (client ModelClient) UpdateHierarchicalEntityChildPreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/hierarchicalentities/{hEntityId}/children/{hChildId}", pathParameters),
@@ -3387,9 +3473,11 @@ func (client ModelClient) UpdateHierarchicalEntityChildResponder(resp *http.Resp
 }
 
 // UpdateIntent updates the name of an intent classifier.
-//
-// appID is the application ID. versionID is the version ID. intentID is the intent classifier ID.
-// modelUpdateObject is a model object containing the new intent classifier name.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// intentID - the intent classifier ID.
+// modelUpdateObject - a model object containing the new intent classifier name.
 func (client ModelClient) UpdateIntent(ctx context.Context, appID uuid.UUID, versionID string, intentID uuid.UUID, modelUpdateObject ModelUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateIntentPreparer(ctx, appID, versionID, intentID, modelUpdateObject)
 	if err != nil {
@@ -3425,7 +3513,7 @@ func (client ModelClient) UpdateIntentPreparer(ctx context.Context, appID uuid.U
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/intents/{intentId}", pathParameters),
@@ -3454,10 +3542,12 @@ func (client ModelClient) UpdateIntentResponder(resp *http.Response) (result Ope
 }
 
 // UpdateSubList updates one of the closed list's sublists.
-//
-// appID is the application ID. versionID is the version ID. clEntityID is the closed list entity extractor ID.
-// subListID is the sublist ID. wordListBaseUpdateObject is a sublist update object containing the new canonical
-// form and the list of words.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// clEntityID - the closed list entity extractor ID.
+// subListID - the sublist ID.
+// wordListBaseUpdateObject - a sublist update object containing the new canonical form and the list of words.
 func (client ModelClient) UpdateSubList(ctx context.Context, appID uuid.UUID, versionID string, clEntityID uuid.UUID, subListID int32, wordListBaseUpdateObject WordListBaseUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateSubListPreparer(ctx, appID, versionID, clEntityID, subListID, wordListBaseUpdateObject)
 	if err != nil {
@@ -3494,7 +3584,7 @@ func (client ModelClient) UpdateSubListPreparer(ctx context.Context, appID uuid.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/closedlists/{clEntityId}/sublists/{subListId}", pathParameters),

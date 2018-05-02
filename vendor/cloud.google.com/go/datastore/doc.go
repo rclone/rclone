@@ -158,14 +158,33 @@ Example code:
 	}
 
 
+Slice Fields
+
+A field of slice type corresponds to a Datastore array property, except for []byte, which corresponds
+to a Datastore blob.
+
+Zero-length slice fields are not saved. Slice fields of length 1 or greater are saved
+as Datastore arrays. When a zero-length Datastore array is loaded into a slice field,
+the slice field remains unchanged.
+
+If a non-array value is loaded into a slice field, the result will be a slice with
+one element, containing the value.
+
+Loading Nulls
+
+Loading a Datastore Null into a basic type (int, float, etc.) results in a zero value.
+Loading a Null into a slice of basic type results in a slice of size 1 containing the zero value.
+Loading a Null into a pointer field results in nil.
+Loading a Null into a field of struct type is an error.
+
 Pointer Fields
 
-A struct field can be a pointer to a signed integer, floating-point number, string or bool.
-Putting a non-nil pointer will store its dereferenced value. Putting a nil pointer will
-store a Datastore NULL, unless the field is marked omitempty, in which case no property
-will be stored.
+A struct field can be a pointer to a signed integer, floating-point number, string or
+bool. Putting a non-nil pointer will store its dereferenced value. Putting a nil
+pointer will store a Datastore Null property, unless the field is marked omitempty,
+in which case no property will be stored.
 
-Getting a NULL into a pointer field sets the pointer to nil. Getting any other value
+Loading a Null into a pointer field sets the pointer to nil. Loading any other value
 allocates new storage with the value, and sets the field to point to it.
 
 

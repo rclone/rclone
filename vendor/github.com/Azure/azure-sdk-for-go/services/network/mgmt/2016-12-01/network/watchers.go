@@ -41,9 +41,10 @@ func NewWatchersClientWithBaseURI(baseURI string, subscriptionID string) Watcher
 }
 
 // CreateOrUpdate creates or updates a network watcher in the specified resource group.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
-// parameters is parameters that define the network watcher resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
+// parameters - parameters that define the network watcher resource.
 func (client WatchersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters Watcher) (result Watcher, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, networkWatcherName, parameters)
 	if err != nil {
@@ -80,7 +81,7 @@ func (client WatchersClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}", pathParameters),
@@ -110,8 +111,9 @@ func (client WatchersClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes the specified network watcher resource.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
 func (client WatchersClient) Delete(ctx context.Context, resourceGroupName string, networkWatcherName string) (result WatchersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, networkWatcherName)
 	if err != nil {
@@ -177,8 +179,9 @@ func (client WatchersClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get gets the specified network watcher by resource group.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
 func (client WatchersClient) Get(ctx context.Context, resourceGroupName string, networkWatcherName string) (result Watcher, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, networkWatcherName)
 	if err != nil {
@@ -243,9 +246,10 @@ func (client WatchersClient) GetResponder(resp *http.Response) (result Watcher, 
 }
 
 // GetFlowLogStatus queries status of flow log on a specified resource.
-//
-// resourceGroupName is the name of the network watcher resource group. networkWatcherName is the name of the
-// network watcher resource. parameters is parameters that define a resource to query flow log status.
+// Parameters:
+// resourceGroupName - the name of the network watcher resource group.
+// networkWatcherName - the name of the network watcher resource.
+// parameters - parameters that define a resource to query flow log status.
 func (client WatchersClient) GetFlowLogStatus(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters FlowLogStatusParameters) (result WatchersGetFlowLogStatusFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -282,7 +286,7 @@ func (client WatchersClient) GetFlowLogStatusPreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryFlowLogStatus", pathParameters),
@@ -320,9 +324,10 @@ func (client WatchersClient) GetFlowLogStatusResponder(resp *http.Response) (res
 }
 
 // GetNextHop gets the next hop from the specified VM.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
-// parameters is parameters that define the source and destination endpoint.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
+// parameters - parameters that define the source and destination endpoint.
 func (client WatchersClient) GetNextHop(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters NextHopParameters) (result WatchersGetNextHopFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -361,7 +366,7 @@ func (client WatchersClient) GetNextHopPreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/nextHop", pathParameters),
@@ -399,9 +404,10 @@ func (client WatchersClient) GetNextHopResponder(resp *http.Response) (result Ne
 }
 
 // GetTopology gets the current network topology by resource group.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
-// parameters is parameters that define the representation of topology.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
+// parameters - parameters that define the representation of topology.
 func (client WatchersClient) GetTopology(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters TopologyParameters) (result Topology, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -444,7 +450,7 @@ func (client WatchersClient) GetTopologyPreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/topology", pathParameters),
@@ -474,9 +480,10 @@ func (client WatchersClient) GetTopologyResponder(resp *http.Response) (result T
 }
 
 // GetTroubleshooting initiate troubleshooting on a specified resource
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher
-// resource. parameters is parameters that define the resource to troubleshoot.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher resource.
+// parameters - parameters that define the resource to troubleshoot.
 func (client WatchersClient) GetTroubleshooting(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters TroubleshootingParameters) (result WatchersGetTroubleshootingFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -517,7 +524,7 @@ func (client WatchersClient) GetTroubleshootingPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/troubleshoot", pathParameters),
@@ -555,9 +562,10 @@ func (client WatchersClient) GetTroubleshootingResponder(resp *http.Response) (r
 }
 
 // GetTroubleshootingResult get the last completed troubleshooting result on a specified resource
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher
-// resource. parameters is parameters that define the resource to query the troubleshooting result.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher resource.
+// parameters - parameters that define the resource to query the troubleshooting result.
 func (client WatchersClient) GetTroubleshootingResult(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters QueryTroubleshootingParameters) (result WatchersGetTroubleshootingResultFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -594,7 +602,7 @@ func (client WatchersClient) GetTroubleshootingResultPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryTroubleshootResult", pathParameters),
@@ -632,9 +640,10 @@ func (client WatchersClient) GetTroubleshootingResultResponder(resp *http.Respon
 }
 
 // GetVMSecurityRules gets the configured and effective security group rules on the specified VM.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
-// parameters is parameters that define the VM to check security groups for.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
+// parameters - parameters that define the VM to check security groups for.
 func (client WatchersClient) GetVMSecurityRules(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters SecurityGroupViewParameters) (result WatchersGetVMSecurityRulesFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -671,7 +680,7 @@ func (client WatchersClient) GetVMSecurityRulesPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/securityGroupView", pathParameters),
@@ -709,8 +718,8 @@ func (client WatchersClient) GetVMSecurityRulesResponder(resp *http.Response) (r
 }
 
 // List gets all network watchers by resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client WatchersClient) List(ctx context.Context, resourceGroupName string) (result WatcherListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -836,9 +845,10 @@ func (client WatchersClient) ListAllResponder(resp *http.Response) (result Watch
 }
 
 // SetFlowLogConfiguration configures flow log on a specified resource.
-//
-// resourceGroupName is the name of the network watcher resource group. networkWatcherName is the name of the
-// network watcher resource. parameters is parameters that define the configuration of flow log.
+// Parameters:
+// resourceGroupName - the name of the network watcher resource group.
+// networkWatcherName - the name of the network watcher resource.
+// parameters - parameters that define the configuration of flow log.
 func (client WatchersClient) SetFlowLogConfiguration(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters FlowLogInformation) (result WatchersSetFlowLogConfigurationFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -879,7 +889,7 @@ func (client WatchersClient) SetFlowLogConfigurationPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/configureFlowLog", pathParameters),
@@ -917,9 +927,10 @@ func (client WatchersClient) SetFlowLogConfigurationResponder(resp *http.Respons
 }
 
 // VerifyIPFlow verify IP flow from the specified VM to a location given the currently configured NSG rules.
-//
-// resourceGroupName is the name of the resource group. networkWatcherName is the name of the network watcher.
-// parameters is parameters that define the IP flow to be verified.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkWatcherName - the name of the network watcher.
+// parameters - parameters that define the IP flow to be verified.
 func (client WatchersClient) VerifyIPFlow(ctx context.Context, resourceGroupName string, networkWatcherName string, parameters VerificationIPFlowParameters) (result WatchersVerifyIPFlowFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -960,7 +971,7 @@ func (client WatchersClient) VerifyIPFlowPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/ipFlowVerify", pathParameters),

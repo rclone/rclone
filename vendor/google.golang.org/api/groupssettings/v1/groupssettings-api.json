@@ -14,7 +14,7 @@
   "description": "Lets you manage permission levels and related settings of a group.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/google-apps/groups-settings/get_started",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/OtGmapWnnxLrnB8PsHnXNA0QJ0I\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/GfziMf-yuHbuK8ebZWiYhJ8rjhg\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -61,12 +61,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -153,7 +153,7 @@
       }
     }
   },
-  "revision": "20170607",
+  "revision": "20180404",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Groups": {
@@ -255,7 +255,7 @@
           "type": "string"
         },
         "whoCanAdd": {
-          "description": "Permissions to add members. Possible values are: ALL_MANAGERS_CAN_ADD ALL_MEMBERS_CAN_ADD NONE_CAN_ADD",
+          "description": "Permissions to add members. Possible values are: ALL_MANAGERS_CAN_ADD ALL_OWNERS_CAN_ADD ALL_MEMBERS_CAN_ADD NONE_CAN_ADD",
           "type": "string"
         },
         "whoCanContactOwner": {
@@ -263,7 +263,7 @@
           "type": "string"
         },
         "whoCanInvite": {
-          "description": "Permissions to invite members. Possible values are: ALL_MEMBERS_CAN_INVITE ALL_MANAGERS_CAN_INVITE NONE_CAN_INVITE",
+          "description": "Permissions to invite members. Possible values are: ALL_MEMBERS_CAN_INVITE ALL_MANAGERS_CAN_INVITE ALL_OWNERS_CAN_INVITE NONE_CAN_INVITE",
           "type": "string"
         },
         "whoCanJoin": {
@@ -271,7 +271,7 @@
           "type": "string"
         },
         "whoCanLeaveGroup": {
-          "description": "Permission to leave the group. Possible values are: ALL_MANAGERS_CAN_LEAVE ALL_MEMBERS_CAN_LEAVE NONE_CAN_LEAVE",
+          "description": "Permission to leave the group. Possible values are: ALL_MANAGERS_CAN_LEAVE ALL_OWNERS_CAN_LEAVE ALL_MEMBERS_CAN_LEAVE NONE_CAN_LEAVE",
           "type": "string"
         },
         "whoCanPostMessage": {
@@ -279,7 +279,7 @@
           "type": "string"
         },
         "whoCanViewGroup": {
-          "description": "Permissions to view group. Possible values are: ANYONE_CAN_VIEW ALL_IN_DOMAIN_CAN_VIEW ALL_MEMBERS_CAN_VIEW ALL_MANAGERS_CAN_VIEW",
+          "description": "Permissions to view group. Possible values are: ANYONE_CAN_VIEW ALL_IN_DOMAIN_CAN_VIEW ALL_MEMBERS_CAN_VIEW ALL_MANAGERS_CAN_VIEW ALL_OWNERS_CAN_VIEW",
           "type": "string"
         },
         "whoCanViewMembership": {

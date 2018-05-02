@@ -40,10 +40,12 @@ func NewProtectionIntentClientWithBaseURI(baseURI string, subscriptionID string)
 }
 
 // CreateOrUpdate create Intent for Enabling backup of an item. This is a synchronous operation.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backup item.
-// intentObjectName is intent object name. parameters is resource backed up item
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backup item.
+// intentObjectName - intent object name.
+// parameters - resource backed up item
 func (client ProtectionIntentClient) CreateOrUpdate(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, intentObjectName string, parameters ProtectionIntentResource) (result ProtectionIntentResource, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, vaultName, resourceGroupName, fabricName, intentObjectName, parameters)
 	if err != nil {
@@ -82,7 +84,7 @@ func (client ProtectionIntentClient) CreateOrUpdatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/backupProtectionIntent/{intentObjectName}", pathParameters),
@@ -112,8 +114,9 @@ func (client ProtectionIntentClient) CreateOrUpdateResponder(resp *http.Response
 }
 
 // Validate sends the validate request.
-//
-// azureRegion is azure region to hit Api parameters is enable backup validation request on Virtual Machine
+// Parameters:
+// azureRegion - azure region to hit Api
+// parameters - enable backup validation request on Virtual Machine
 func (client ProtectionIntentClient) Validate(ctx context.Context, azureRegion string, parameters PreValidateEnableBackupRequest) (result PreValidateEnableBackupResponse, err error) {
 	req, err := client.ValidatePreparer(ctx, azureRegion, parameters)
 	if err != nil {
@@ -149,7 +152,7 @@ func (client ProtectionIntentClient) ValidatePreparer(ctx context.Context, azure
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/providers/Microsoft.RecoveryServices/locations/{azureRegion}/backupPreValidateProtection", pathParameters),

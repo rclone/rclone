@@ -53,22 +53,6 @@ func TestNewLockFile(test *testing.T) {
 	}
 }
 
-func TestGetFdName(test *testing.T) {
-	name, err := GetFdName(0)
-	if err != nil {
-		test.Error(err)
-	} else {
-		if name != "/dev/null" {
-			test.Errorf("Filename of fd 0: `%s'", name)
-		}
-	}
-
-	name, err = GetFdName(1011)
-	if err == nil {
-		test.Errorf("GetFdName(): Error was not detected on invalid fd, name: `%s'", name)
-	}
-}
-
 func TestReadPid(test *testing.T) {
 	lock, err := CreatePidFile(filename, fileperm)
 	if err != nil {

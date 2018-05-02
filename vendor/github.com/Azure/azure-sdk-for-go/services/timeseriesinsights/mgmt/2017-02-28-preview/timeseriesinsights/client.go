@@ -29,6 +29,7 @@ const (
 	DefaultBaseURI = "https://management.azure.com"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // BaseClient is the base client for Timeseriesinsights.
 type BaseClient struct {
 	autorest.Client
@@ -36,11 +37,13 @@ type BaseClient struct {
 	SubscriptionID string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // New creates an instance of the BaseClient client.
 func New(subscriptionID string) BaseClient {
 	return NewWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewWithBaseURI creates an instance of the BaseClient client.
 func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return BaseClient{

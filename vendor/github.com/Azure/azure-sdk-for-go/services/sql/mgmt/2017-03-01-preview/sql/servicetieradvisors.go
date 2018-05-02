@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceTierAdvisorsClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type ServiceTierAdvisorsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewServiceTierAdvisorsClient creates an instance of the ServiceTierAdvisorsClient client.
 func NewServiceTierAdvisorsClient(subscriptionID string) ServiceTierAdvisorsClient {
 	return NewServiceTierAdvisorsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewServiceTierAdvisorsClientWithBaseURI creates an instance of the ServiceTierAdvisorsClient client.
 func NewServiceTierAdvisorsClientWithBaseURI(baseURI string, subscriptionID string) ServiceTierAdvisorsClient {
 	return ServiceTierAdvisorsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a service tier advisor.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -68,6 +72,7 @@ func (client ServiceTierAdvisorsClient) Get(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client ServiceTierAdvisorsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, serviceTierAdvisorName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,6 +96,7 @@ func (client ServiceTierAdvisorsClient) GetPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceTierAdvisorsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -98,6 +104,7 @@ func (client ServiceTierAdvisorsClient) GetSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ServiceTierAdvisorsClient) GetResponder(resp *http.Response) (result ServiceTierAdvisor, err error) {
@@ -111,6 +118,7 @@ func (client ServiceTierAdvisorsClient) GetResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabase returns service tier advisors for specified database.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -138,6 +146,7 @@ func (client ServiceTierAdvisorsClient) ListByDatabase(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client ServiceTierAdvisorsClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -160,6 +169,7 @@ func (client ServiceTierAdvisorsClient) ListByDatabasePreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceTierAdvisorsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -167,6 +177,7 @@ func (client ServiceTierAdvisorsClient) ListByDatabaseSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client ServiceTierAdvisorsClient) ListByDatabaseResponder(resp *http.Response) (result ServiceTierAdvisorListResult, err error) {

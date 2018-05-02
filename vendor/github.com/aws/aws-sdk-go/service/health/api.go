@@ -14,7 +14,7 @@ const opDescribeAffectedEntities = "DescribeAffectedEntities"
 
 // DescribeAffectedEntitiesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAffectedEntities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -160,7 +160,7 @@ const opDescribeEntityAggregates = "DescribeEntityAggregates"
 
 // DescribeEntityAggregatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEntityAggregates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -236,7 +236,7 @@ const opDescribeEventAggregates = "DescribeEventAggregates"
 
 // DescribeEventAggregatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventAggregates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -373,7 +373,7 @@ const opDescribeEventDetails = "DescribeEventDetails"
 
 // DescribeEventDetailsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventDetails operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -459,7 +459,7 @@ const opDescribeEventTypes = "DescribeEventTypes"
 
 // DescribeEventTypesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventTypes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -598,7 +598,7 @@ const opDescribeEvents = "DescribeEvents"
 
 // DescribeEventsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEvents operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

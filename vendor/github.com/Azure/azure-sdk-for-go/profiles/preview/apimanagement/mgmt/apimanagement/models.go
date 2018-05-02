@@ -19,238 +19,51 @@
 
 package apimanagement
 
-import original "github.com/Azure/azure-sdk-for-go/services/preview/apimanagement/mgmt/2018-01-01/apimanagement"
+import original "github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2017-03-01/apimanagement"
 
 type APIClient = original.APIClient
-
-func NewAPIClient(subscriptionID string) APIClient {
-	return original.NewAPIClient(subscriptionID)
-}
-func NewAPIClientWithBaseURI(baseURI string, subscriptionID string) APIClient {
-	return original.NewAPIClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIDiagnosticClient = original.APIDiagnosticClient
-
-func NewAPIDiagnosticClient(subscriptionID string) APIDiagnosticClient {
-	return original.NewAPIDiagnosticClient(subscriptionID)
-}
-func NewAPIDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticClient {
-	return original.NewAPIDiagnosticClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIDiagnosticLoggerClient = original.APIDiagnosticLoggerClient
-
-func NewAPIDiagnosticLoggerClient(subscriptionID string) APIDiagnosticLoggerClient {
-	return original.NewAPIDiagnosticLoggerClient(subscriptionID)
-}
-func NewAPIDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticLoggerClient {
-	return original.NewAPIDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIExportClient = original.APIExportClient
-
-func NewAPIExportClient(subscriptionID string) APIExportClient {
-	return original.NewAPIExportClient(subscriptionID)
-}
-func NewAPIExportClientWithBaseURI(baseURI string, subscriptionID string) APIExportClient {
-	return original.NewAPIExportClientWithBaseURI(baseURI, subscriptionID)
-}
-
+type APIIssuAttachmentClient = original.APIIssuAttachmentClient
+type APIIssuCommentClient = original.APIIssuCommentClient
+type APIIssueClient = original.APIIssueClient
+type APIIssueAttachmentClient = original.APIIssueAttachmentClient
+type APIIssueAttachmentsClient = original.APIIssueAttachmentsClient
+type APIIssueCommentClient = original.APIIssueCommentClient
+type APIIssueCommentsClient = original.APIIssueCommentsClient
+type APIIssuesClient = original.APIIssuesClient
 type APIOperationClient = original.APIOperationClient
-
-func NewAPIOperationClient(subscriptionID string) APIOperationClient {
-	return original.NewAPIOperationClient(subscriptionID)
-}
-func NewAPIOperationClientWithBaseURI(baseURI string, subscriptionID string) APIOperationClient {
-	return original.NewAPIOperationClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIOperationPolicyClient = original.APIOperationPolicyClient
-
-func NewAPIOperationPolicyClient(subscriptionID string) APIOperationPolicyClient {
-	return original.NewAPIOperationPolicyClient(subscriptionID)
-}
-func NewAPIOperationPolicyClientWithBaseURI(baseURI string, subscriptionID string) APIOperationPolicyClient {
-	return original.NewAPIOperationPolicyClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIPolicyClient = original.APIPolicyClient
-
-func NewAPIPolicyClient(subscriptionID string) APIPolicyClient {
-	return original.NewAPIPolicyClient(subscriptionID)
-}
-func NewAPIPolicyClientWithBaseURI(baseURI string, subscriptionID string) APIPolicyClient {
-	return original.NewAPIPolicyClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIProductClient = original.APIProductClient
-
-func NewAPIProductClient(subscriptionID string) APIProductClient {
-	return original.NewAPIProductClient(subscriptionID)
-}
-func NewAPIProductClientWithBaseURI(baseURI string, subscriptionID string) APIProductClient {
-	return original.NewAPIProductClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIReleaseClient = original.APIReleaseClient
-
-func NewAPIReleaseClient(subscriptionID string) APIReleaseClient {
-	return original.NewAPIReleaseClient(subscriptionID)
-}
-func NewAPIReleaseClientWithBaseURI(baseURI string, subscriptionID string) APIReleaseClient {
-	return original.NewAPIReleaseClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIRevisionsClient = original.APIRevisionsClient
-
-func NewAPIRevisionsClient(subscriptionID string) APIRevisionsClient {
-	return original.NewAPIRevisionsClient(subscriptionID)
-}
-func NewAPIRevisionsClientWithBaseURI(baseURI string, subscriptionID string) APIRevisionsClient {
-	return original.NewAPIRevisionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APISchemaClient = original.APISchemaClient
-
-func NewAPISchemaClient(subscriptionID string) APISchemaClient {
-	return original.NewAPISchemaClient(subscriptionID)
-}
-func NewAPISchemaClientWithBaseURI(baseURI string, subscriptionID string) APISchemaClient {
-	return original.NewAPISchemaClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIVersionSetClient = original.APIVersionSetClient
-
-func NewAPIVersionSetClient(subscriptionID string) APIVersionSetClient {
-	return original.NewAPIVersionSetClient(subscriptionID)
-}
-func NewAPIVersionSetClientWithBaseURI(baseURI string, subscriptionID string) APIVersionSetClient {
-	return original.NewAPIVersionSetClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AuthorizationServerClient = original.AuthorizationServerClient
-
-func NewAuthorizationServerClient(subscriptionID string) AuthorizationServerClient {
-	return original.NewAuthorizationServerClient(subscriptionID)
-}
-func NewAuthorizationServerClientWithBaseURI(baseURI string, subscriptionID string) AuthorizationServerClient {
-	return original.NewAuthorizationServerClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type BackendClient = original.BackendClient
-
-func NewBackendClient(subscriptionID string) BackendClient {
-	return original.NewBackendClient(subscriptionID)
-}
-func NewBackendClientWithBaseURI(baseURI string, subscriptionID string) BackendClient {
-	return original.NewBackendClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type CertificateClient = original.CertificateClient
-
-func NewCertificateClient(subscriptionID string) CertificateClient {
-	return original.NewCertificateClient(subscriptionID)
-}
-func NewCertificateClientWithBaseURI(baseURI string, subscriptionID string) CertificateClient {
-	return original.NewCertificateClientWithBaseURI(baseURI, subscriptionID)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type DelegationSettingsClient = original.DelegationSettingsClient
-
-func NewDelegationSettingsClient(subscriptionID string) DelegationSettingsClient {
-	return original.NewDelegationSettingsClient(subscriptionID)
-}
-func NewDelegationSettingsClientWithBaseURI(baseURI string, subscriptionID string) DelegationSettingsClient {
-	return original.NewDelegationSettingsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DiagnosticClient = original.DiagnosticClient
-
-func NewDiagnosticClient(subscriptionID string) DiagnosticClient {
-	return original.NewDiagnosticClient(subscriptionID)
-}
-func NewDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticClient {
-	return original.NewDiagnosticClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DiagnosticLoggerClient = original.DiagnosticLoggerClient
-
-func NewDiagnosticLoggerClient(subscriptionID string) DiagnosticLoggerClient {
-	return original.NewDiagnosticLoggerClient(subscriptionID)
-}
-func NewDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticLoggerClient {
-	return original.NewDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EmailTemplateClient = original.EmailTemplateClient
-
-func NewEmailTemplateClient(subscriptionID string) EmailTemplateClient {
-	return original.NewEmailTemplateClient(subscriptionID)
-}
-func NewEmailTemplateClientWithBaseURI(baseURI string, subscriptionID string) EmailTemplateClient {
-	return original.NewEmailTemplateClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type GroupClient = original.GroupClient
-
-func NewGroupClient(subscriptionID string) GroupClient {
-	return original.NewGroupClient(subscriptionID)
-}
-func NewGroupClientWithBaseURI(baseURI string, subscriptionID string) GroupClient {
-	return original.NewGroupClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type GroupUserClient = original.GroupUserClient
-
-func NewGroupUserClient(subscriptionID string) GroupUserClient {
-	return original.NewGroupUserClient(subscriptionID)
-}
-func NewGroupUserClientWithBaseURI(baseURI string, subscriptionID string) GroupUserClient {
-	return original.NewGroupUserClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type IdentityProviderClient = original.IdentityProviderClient
-
-func NewIdentityProviderClient(subscriptionID string) IdentityProviderClient {
-	return original.NewIdentityProviderClient(subscriptionID)
-}
-func NewIdentityProviderClientWithBaseURI(baseURI string, subscriptionID string) IdentityProviderClient {
-	return original.NewIdentityProviderClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type LoggerClient = original.LoggerClient
-
-func NewLoggerClient(subscriptionID string) LoggerClient {
-	return original.NewLoggerClient(subscriptionID)
-}
-func NewLoggerClientWithBaseURI(baseURI string, subscriptionID string) LoggerClient {
-	return original.NewLoggerClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type APIType = original.APIType
 
 const (
 	HTTP APIType = original.HTTP
 	Soap APIType = original.Soap
 )
-
-func PossibleAPITypeValues() []APIType {
-	return original.PossibleAPITypeValues()
-}
 
 type AsyncOperationStatus = original.AsyncOperationStatus
 
@@ -260,10 +73,6 @@ const (
 	Started    AsyncOperationStatus = original.Started
 	Succeeded  AsyncOperationStatus = original.Succeeded
 )
-
-func PossibleAsyncOperationStatusValues() []AsyncOperationStatus {
-	return original.PossibleAsyncOperationStatusValues()
-}
 
 type AuthorizationMethod = original.AuthorizationMethod
 
@@ -278,20 +87,12 @@ const (
 	TRACE   AuthorizationMethod = original.TRACE
 )
 
-func PossibleAuthorizationMethodValues() []AuthorizationMethod {
-	return original.PossibleAuthorizationMethodValues()
-}
-
 type BackendProtocol = original.BackendProtocol
 
 const (
 	BackendProtocolHTTP BackendProtocol = original.BackendProtocolHTTP
 	BackendProtocolSoap BackendProtocol = original.BackendProtocolSoap
 )
-
-func PossibleBackendProtocolValues() []BackendProtocol {
-	return original.PossibleBackendProtocolValues()
-}
 
 type BearerTokenSendingMethod = original.BearerTokenSendingMethod
 
@@ -300,20 +101,12 @@ const (
 	Query               BearerTokenSendingMethod = original.Query
 )
 
-func PossibleBearerTokenSendingMethodValues() []BearerTokenSendingMethod {
-	return original.PossibleBearerTokenSendingMethodValues()
-}
-
 type ClientAuthenticationMethod = original.ClientAuthenticationMethod
 
 const (
 	Basic ClientAuthenticationMethod = original.Basic
 	Body  ClientAuthenticationMethod = original.Body
 )
-
-func PossibleClientAuthenticationMethodValues() []ClientAuthenticationMethod {
-	return original.PossibleClientAuthenticationMethodValues()
-}
 
 type Confirmation = original.Confirmation
 
@@ -322,10 +115,6 @@ const (
 	Signup Confirmation = original.Signup
 )
 
-func PossibleConfirmationValues() []Confirmation {
-	return original.PossibleConfirmationValues()
-}
-
 type ConnectivityStatusType = original.ConnectivityStatusType
 
 const (
@@ -333,10 +122,6 @@ const (
 	Initializing ConnectivityStatusType = original.Initializing
 	Success      ConnectivityStatusType = original.Success
 )
-
-func PossibleConnectivityStatusTypeValues() []ConnectivityStatusType {
-	return original.PossibleConnectivityStatusTypeValues()
-}
 
 type ContentFormat = original.ContentFormat
 
@@ -349,22 +134,6 @@ const (
 	WsdlLink        ContentFormat = original.WsdlLink
 )
 
-func PossibleContentFormatValues() []ContentFormat {
-	return original.PossibleContentFormatValues()
-}
-
-type ExportFormat = original.ExportFormat
-
-const (
-	ExportFormatSwagger ExportFormat = original.ExportFormatSwagger
-	ExportFormatWadl    ExportFormat = original.ExportFormatWadl
-	ExportFormatWsdl    ExportFormat = original.ExportFormatWsdl
-)
-
-func PossibleExportFormatValues() []ExportFormat {
-	return original.PossibleExportFormatValues()
-}
-
 type GrantType = original.GrantType
 
 const (
@@ -374,10 +143,6 @@ const (
 	ResourceOwnerPassword GrantType = original.ResourceOwnerPassword
 )
 
-func PossibleGrantTypeValues() []GrantType {
-	return original.PossibleGrantTypeValues()
-}
-
 type GroupType = original.GroupType
 
 const (
@@ -385,10 +150,6 @@ const (
 	External GroupType = original.External
 	System   GroupType = original.System
 )
-
-func PossibleGroupTypeValues() []GroupType {
-	return original.PossibleGroupTypeValues()
-}
 
 type HostnameType = original.HostnameType
 
@@ -398,10 +159,6 @@ const (
 	Proxy      HostnameType = original.Proxy
 	Scm        HostnameType = original.Scm
 )
-
-func PossibleHostnameTypeValues() []HostnameType {
-	return original.PossibleHostnameTypeValues()
-}
 
 type IdentityProviderType = original.IdentityProviderType
 
@@ -414,20 +171,12 @@ const (
 	Twitter   IdentityProviderType = original.Twitter
 )
 
-func PossibleIdentityProviderTypeValues() []IdentityProviderType {
-	return original.PossibleIdentityProviderTypeValues()
-}
-
 type KeyType = original.KeyType
 
 const (
 	Primary   KeyType = original.Primary
 	Secondary KeyType = original.Secondary
 )
-
-func PossibleKeyTypeValues() []KeyType {
-	return original.PossibleKeyTypeValues()
-}
 
 type LoggerType = original.LoggerType
 
@@ -436,10 +185,6 @@ const (
 	AzureEventHub       LoggerType = original.AzureEventHub
 )
 
-func PossibleLoggerTypeValues() []LoggerType {
-	return original.PossibleLoggerTypeValues()
-}
-
 type NameAvailabilityReason = original.NameAvailabilityReason
 
 const (
@@ -447,10 +192,6 @@ const (
 	Invalid       NameAvailabilityReason = original.Invalid
 	Valid         NameAvailabilityReason = original.Valid
 )
-
-func PossibleNameAvailabilityReasonValues() []NameAvailabilityReason {
-	return original.PossibleNameAvailabilityReasonValues()
-}
 
 type NotificationName = original.NotificationName
 
@@ -464,21 +205,6 @@ const (
 	RequestPublisherNotificationMessage               NotificationName = original.RequestPublisherNotificationMessage
 )
 
-func PossibleNotificationNameValues() []NotificationName {
-	return original.PossibleNotificationNameValues()
-}
-
-type PolicyContentFormat = original.PolicyContentFormat
-
-const (
-	XML     PolicyContentFormat = original.XML
-	XMLLink PolicyContentFormat = original.XMLLink
-)
-
-func PossiblePolicyContentFormatValues() []PolicyContentFormat {
-	return original.PossiblePolicyContentFormatValues()
-}
-
 type PolicyScopeContract = original.PolicyScopeContract
 
 const (
@@ -489,20 +215,12 @@ const (
 	PolicyScopeContractTenant    PolicyScopeContract = original.PolicyScopeContractTenant
 )
 
-func PossiblePolicyScopeContractValues() []PolicyScopeContract {
-	return original.PossiblePolicyScopeContractValues()
-}
-
 type ProductState = original.ProductState
 
 const (
 	NotPublished ProductState = original.NotPublished
 	Published    ProductState = original.Published
 )
-
-func PossibleProductStateValues() []ProductState {
-	return original.PossibleProductStateValues()
-}
 
 type Protocol = original.Protocol
 
@@ -511,9 +229,12 @@ const (
 	ProtocolHTTPS Protocol = original.ProtocolHTTPS
 )
 
-func PossibleProtocolValues() []Protocol {
-	return original.PossibleProtocolValues()
-}
+type SamplingType = original.SamplingType
+
+const (
+	Adaptive SamplingType = original.Adaptive
+	Fixed    SamplingType = original.Fixed
+)
 
 type SkuType = original.SkuType
 
@@ -524,20 +245,15 @@ const (
 	SkuTypeStandard  SkuType = original.SkuTypeStandard
 )
 
-func PossibleSkuTypeValues() []SkuType {
-	return original.PossibleSkuTypeValues()
-}
-
-type SoapAPIType = original.SoapAPIType
+type State = original.State
 
 const (
-	SoapPassThrough SoapAPIType = original.SoapPassThrough
-	SoapToRest      SoapAPIType = original.SoapToRest
+	Closed   State = original.Closed
+	Open     State = original.Open
+	Proposed State = original.Proposed
+	Removed  State = original.Removed
+	Resolved State = original.Resolved
 )
-
-func PossibleSoapAPITypeValues() []SoapAPIType {
-	return original.PossibleSoapAPITypeValues()
-}
 
 type StoreName = original.StoreName
 
@@ -545,10 +261,6 @@ const (
 	CertificateAuthority StoreName = original.CertificateAuthority
 	Root                 StoreName = original.Root
 )
-
-func PossibleStoreNameValues() []StoreName {
-	return original.PossibleStoreNameValues()
-}
 
 type SubscriptionState = original.SubscriptionState
 
@@ -560,10 +272,6 @@ const (
 	Submitted SubscriptionState = original.Submitted
 	Suspended SubscriptionState = original.Suspended
 )
-
-func PossibleSubscriptionStateValues() []SubscriptionState {
-	return original.PossibleSubscriptionStateValues()
-}
 
 type TemplateName = original.TemplateName
 
@@ -584,10 +292,6 @@ const (
 	RequestDeveloperNotificationMessage               TemplateName = original.RequestDeveloperNotificationMessage
 )
 
-func PossibleTemplateNameValues() []TemplateName {
-	return original.PossibleTemplateNameValues()
-}
-
 type UserState = original.UserState
 
 const (
@@ -597,10 +301,6 @@ const (
 	UserStatePending UserState = original.UserStatePending
 )
 
-func PossibleUserStateValues() []UserState {
-	return original.PossibleUserStateValues()
-}
-
 type VersioningScheme = original.VersioningScheme
 
 const (
@@ -609,22 +309,6 @@ const (
 	VersioningSchemeSegment VersioningScheme = original.VersioningSchemeSegment
 )
 
-func PossibleVersioningSchemeValues() []VersioningScheme {
-	return original.PossibleVersioningSchemeValues()
-}
-
-type VersioningScheme1 = original.VersioningScheme1
-
-const (
-	VersioningScheme1Header  VersioningScheme1 = original.VersioningScheme1Header
-	VersioningScheme1Query   VersioningScheme1 = original.VersioningScheme1Query
-	VersioningScheme1Segment VersioningScheme1 = original.VersioningScheme1Segment
-)
-
-func PossibleVersioningScheme1Values() []VersioningScheme1 {
-	return original.PossibleVersioningScheme1Values()
-}
-
 type VirtualNetworkType = original.VirtualNetworkType
 
 const (
@@ -632,10 +316,6 @@ const (
 	VirtualNetworkTypeInternal VirtualNetworkType = original.VirtualNetworkTypeInternal
 	VirtualNetworkTypeNone     VirtualNetworkType = original.VirtualNetworkTypeNone
 )
-
-func PossibleVirtualNetworkTypeValues() []VirtualNetworkType {
-	return original.PossibleVirtualNetworkTypeValues()
-}
 
 type AccessInformationContract = original.AccessInformationContract
 type AccessInformationUpdateParameters = original.AccessInformationUpdateParameters
@@ -661,14 +341,13 @@ type APIRevisionCollection = original.APIRevisionCollection
 type APIRevisionCollectionIterator = original.APIRevisionCollectionIterator
 type APIRevisionCollectionPage = original.APIRevisionCollectionPage
 type APIRevisionContract = original.APIRevisionContract
+type APIRevisionContractProperties = original.APIRevisionContractProperties
 type APIRevisionInfoContract = original.APIRevisionInfoContract
-type APITagResourceContractProperties = original.APITagResourceContractProperties
 type APIUpdateContract = original.APIUpdateContract
 type APIVersionSetCollection = original.APIVersionSetCollection
 type APIVersionSetCollectionIterator = original.APIVersionSetCollectionIterator
 type APIVersionSetCollectionPage = original.APIVersionSetCollectionPage
 type APIVersionSetContract = original.APIVersionSetContract
-type APIVersionSetContractDetails = original.APIVersionSetContractDetails
 type APIVersionSetContractProperties = original.APIVersionSetContractProperties
 type APIVersionSetEntityBase = original.APIVersionSetEntityBase
 type APIVersionSetUpdateParameters = original.APIVersionSetUpdateParameters
@@ -740,20 +419,33 @@ type IdentityProviderBaseParameters = original.IdentityProviderBaseParameters
 type IdentityProviderContract = original.IdentityProviderContract
 type IdentityProviderContractProperties = original.IdentityProviderContractProperties
 type IdentityProviderList = original.IdentityProviderList
-type IdentityProviderListIterator = original.IdentityProviderListIterator
-type IdentityProviderListPage = original.IdentityProviderListPage
 type IdentityProviderUpdateParameters = original.IdentityProviderUpdateParameters
 type IdentityProviderUpdateProperties = original.IdentityProviderUpdateProperties
-type ListNetworkStatusContractByLocation = original.ListNetworkStatusContractByLocation
+type IssueAttachmentCollection = original.IssueAttachmentCollection
+type IssueAttachmentCollectionIterator = original.IssueAttachmentCollectionIterator
+type IssueAttachmentCollectionPage = original.IssueAttachmentCollectionPage
+type IssueAttachmentContract = original.IssueAttachmentContract
+type IssueAttachmentContractProperties = original.IssueAttachmentContractProperties
+type IssueCollection = original.IssueCollection
+type IssueCollectionIterator = original.IssueCollectionIterator
+type IssueCollectionPage = original.IssueCollectionPage
+type IssueCommentCollection = original.IssueCommentCollection
+type IssueCommentCollectionIterator = original.IssueCommentCollectionIterator
+type IssueCommentCollectionPage = original.IssueCommentCollectionPage
+type IssueCommentContract = original.IssueCommentContract
+type IssueCommentContractProperties = original.IssueCommentContractProperties
+type IssueContract = original.IssueContract
+type IssueContractProperties = original.IssueContractProperties
 type LoggerCollection = original.LoggerCollection
 type LoggerCollectionIterator = original.LoggerCollectionIterator
 type LoggerCollectionPage = original.LoggerCollectionPage
 type LoggerContract = original.LoggerContract
 type LoggerContractProperties = original.LoggerContractProperties
+type LoggerSamplingContract = original.LoggerSamplingContract
+type LoggerSamplingProperties = original.LoggerSamplingProperties
 type LoggerUpdateContract = original.LoggerUpdateContract
 type LoggerUpdateParameters = original.LoggerUpdateParameters
 type NetworkStatusContract = original.NetworkStatusContract
-type NetworkStatusContractByLocation = original.NetworkStatusContractByLocation
 type NotificationCollection = original.NotificationCollection
 type NotificationCollectionIterator = original.NotificationCollectionIterator
 type NotificationCollectionPage = original.NotificationCollectionPage
@@ -775,12 +467,13 @@ type OperationContract = original.OperationContract
 type OperationContractProperties = original.OperationContractProperties
 type OperationDisplay = original.OperationDisplay
 type OperationEntityBaseContract = original.OperationEntityBaseContract
+type OperationEntityContract = original.OperationEntityContract
+type OperationEntityContractProperties = original.OperationEntityContractProperties
 type OperationListResult = original.OperationListResult
 type OperationListResultIterator = original.OperationListResultIterator
 type OperationListResultPage = original.OperationListResultPage
 type OperationResultContract = original.OperationResultContract
 type OperationResultLogItemContract = original.OperationResultLogItemContract
-type OperationTagResourceContractProperties = original.OperationTagResourceContractProperties
 type OperationUpdateContract = original.OperationUpdateContract
 type OperationUpdateContractProperties = original.OperationUpdateContractProperties
 type ParameterContract = original.ParameterContract
@@ -801,7 +494,6 @@ type ProductCollectionPage = original.ProductCollectionPage
 type ProductContract = original.ProductContract
 type ProductContractProperties = original.ProductContractProperties
 type ProductEntityBaseParameters = original.ProductEntityBaseParameters
-type ProductTagResourceContractProperties = original.ProductTagResourceContractProperties
 type ProductUpdateParameters = original.ProductUpdateParameters
 type ProductUpdateProperties = original.ProductUpdateProperties
 type PropertyCollection = original.PropertyCollection
@@ -825,8 +517,6 @@ type RecipientUserContract = original.RecipientUserContract
 type RecipientUsersContractProperties = original.RecipientUsersContractProperties
 type RegionContract = original.RegionContract
 type RegionListResult = original.RegionListResult
-type RegionListResultIterator = original.RegionListResultIterator
-type RegionListResultPage = original.RegionListResultPage
 type RegistrationDelegationSettingsProperties = original.RegistrationDelegationSettingsProperties
 type ReportCollection = original.ReportCollection
 type ReportCollectionIterator = original.ReportCollectionIterator
@@ -896,7 +586,7 @@ type TagResourceCollection = original.TagResourceCollection
 type TagResourceCollectionIterator = original.TagResourceCollectionIterator
 type TagResourceCollectionPage = original.TagResourceCollectionPage
 type TagResourceContract = original.TagResourceContract
-type TagTagResourceContractProperties = original.TagTagResourceContractProperties
+type TagResourceContractProperties = original.TagResourceContractProperties
 type TenantConfigurationDeployFuture = original.TenantConfigurationDeployFuture
 type TenantConfigurationSaveFuture = original.TenantConfigurationSaveFuture
 type TenantConfigurationSyncStateContract = original.TenantConfigurationSyncStateContract
@@ -912,8 +602,6 @@ type UserCreateParameterProperties = original.UserCreateParameterProperties
 type UserCreateParameters = original.UserCreateParameters
 type UserEntityBaseParameters = original.UserEntityBaseParameters
 type UserIdentityCollection = original.UserIdentityCollection
-type UserIdentityCollectionIterator = original.UserIdentityCollectionIterator
-type UserIdentityCollectionPage = original.UserIdentityCollectionPage
 type UserIdentityContract = original.UserIdentityContract
 type UserTokenParameters = original.UserTokenParameters
 type UserTokenResult = original.UserTokenResult
@@ -922,295 +610,510 @@ type UserUpdateParametersProperties = original.UserUpdateParametersProperties
 type VirtualNetworkConfiguration = original.VirtualNetworkConfiguration
 type X509CertificateName = original.X509CertificateName
 type NetworkStatusClient = original.NetworkStatusClient
+type NotificationClient = original.NotificationClient
+type NotificationRecipientEmailClient = original.NotificationRecipientEmailClient
+type NotificationRecipientUserClient = original.NotificationRecipientUserClient
+type OpenIDConnectProviderClient = original.OpenIDConnectProviderClient
+type OperationClient = original.OperationClient
+type OperationsClient = original.OperationsClient
+type PolicyClient = original.PolicyClient
+type PolicySnippetsClient = original.PolicySnippetsClient
+type ProductClient = original.ProductClient
+type ProductAPIClient = original.ProductAPIClient
+type ProductGroupClient = original.ProductGroupClient
+type ProductPolicyClient = original.ProductPolicyClient
+type ProductSubscriptionsClient = original.ProductSubscriptionsClient
+type PropertyClient = original.PropertyClient
+type QuotaByCounterKeysClient = original.QuotaByCounterKeysClient
+type QuotaByPeriodKeysClient = original.QuotaByPeriodKeysClient
+type RegionsClient = original.RegionsClient
+type ReportsClient = original.ReportsClient
+type ServiceClient = original.ServiceClient
+type SignInSettingsClient = original.SignInSettingsClient
+type SignUpSettingsClient = original.SignUpSettingsClient
+type SubscriptionClient = original.SubscriptionClient
+type TagClient = original.TagClient
+type TagDescriptionClient = original.TagDescriptionClient
+type TagResourceClient = original.TagResourceClient
+type TenantAccessClient = original.TenantAccessClient
+type TenantAccessGitClient = original.TenantAccessGitClient
+type TenantConfigurationClient = original.TenantConfigurationClient
+type UserClient = original.UserClient
+type UserGroupClient = original.UserGroupClient
+type UserIdentitiesClient = original.UserIdentitiesClient
+type UserSubscriptionClient = original.UserSubscriptionClient
 
+func NewAPIClient(subscriptionID string) APIClient {
+	return original.NewAPIClient(subscriptionID)
+}
+func NewAPIClientWithBaseURI(baseURI string, subscriptionID string) APIClient {
+	return original.NewAPIClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIDiagnosticClient(subscriptionID string) APIDiagnosticClient {
+	return original.NewAPIDiagnosticClient(subscriptionID)
+}
+func NewAPIDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticClient {
+	return original.NewAPIDiagnosticClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIDiagnosticLoggerClient(subscriptionID string) APIDiagnosticLoggerClient {
+	return original.NewAPIDiagnosticLoggerClient(subscriptionID)
+}
+func NewAPIDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticLoggerClient {
+	return original.NewAPIDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIExportClient(subscriptionID string) APIExportClient {
+	return original.NewAPIExportClient(subscriptionID)
+}
+func NewAPIExportClientWithBaseURI(baseURI string, subscriptionID string) APIExportClient {
+	return original.NewAPIExportClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssuAttachmentClient(subscriptionID string) APIIssuAttachmentClient {
+	return original.NewAPIIssuAttachmentClient(subscriptionID)
+}
+func NewAPIIssuAttachmentClientWithBaseURI(baseURI string, subscriptionID string) APIIssuAttachmentClient {
+	return original.NewAPIIssuAttachmentClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssuCommentClient(subscriptionID string) APIIssuCommentClient {
+	return original.NewAPIIssuCommentClient(subscriptionID)
+}
+func NewAPIIssuCommentClientWithBaseURI(baseURI string, subscriptionID string) APIIssuCommentClient {
+	return original.NewAPIIssuCommentClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssueClient(subscriptionID string) APIIssueClient {
+	return original.NewAPIIssueClient(subscriptionID)
+}
+func NewAPIIssueClientWithBaseURI(baseURI string, subscriptionID string) APIIssueClient {
+	return original.NewAPIIssueClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssueAttachmentClient(subscriptionID string) APIIssueAttachmentClient {
+	return original.NewAPIIssueAttachmentClient(subscriptionID)
+}
+func NewAPIIssueAttachmentClientWithBaseURI(baseURI string, subscriptionID string) APIIssueAttachmentClient {
+	return original.NewAPIIssueAttachmentClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssueAttachmentsClient(subscriptionID string) APIIssueAttachmentsClient {
+	return original.NewAPIIssueAttachmentsClient(subscriptionID)
+}
+func NewAPIIssueAttachmentsClientWithBaseURI(baseURI string, subscriptionID string) APIIssueAttachmentsClient {
+	return original.NewAPIIssueAttachmentsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssueCommentClient(subscriptionID string) APIIssueCommentClient {
+	return original.NewAPIIssueCommentClient(subscriptionID)
+}
+func NewAPIIssueCommentClientWithBaseURI(baseURI string, subscriptionID string) APIIssueCommentClient {
+	return original.NewAPIIssueCommentClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssueCommentsClient(subscriptionID string) APIIssueCommentsClient {
+	return original.NewAPIIssueCommentsClient(subscriptionID)
+}
+func NewAPIIssueCommentsClientWithBaseURI(baseURI string, subscriptionID string) APIIssueCommentsClient {
+	return original.NewAPIIssueCommentsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIIssuesClient(subscriptionID string) APIIssuesClient {
+	return original.NewAPIIssuesClient(subscriptionID)
+}
+func NewAPIIssuesClientWithBaseURI(baseURI string, subscriptionID string) APIIssuesClient {
+	return original.NewAPIIssuesClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIOperationClient(subscriptionID string) APIOperationClient {
+	return original.NewAPIOperationClient(subscriptionID)
+}
+func NewAPIOperationClientWithBaseURI(baseURI string, subscriptionID string) APIOperationClient {
+	return original.NewAPIOperationClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIOperationPolicyClient(subscriptionID string) APIOperationPolicyClient {
+	return original.NewAPIOperationPolicyClient(subscriptionID)
+}
+func NewAPIOperationPolicyClientWithBaseURI(baseURI string, subscriptionID string) APIOperationPolicyClient {
+	return original.NewAPIOperationPolicyClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIPolicyClient(subscriptionID string) APIPolicyClient {
+	return original.NewAPIPolicyClient(subscriptionID)
+}
+func NewAPIPolicyClientWithBaseURI(baseURI string, subscriptionID string) APIPolicyClient {
+	return original.NewAPIPolicyClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIProductClient(subscriptionID string) APIProductClient {
+	return original.NewAPIProductClient(subscriptionID)
+}
+func NewAPIProductClientWithBaseURI(baseURI string, subscriptionID string) APIProductClient {
+	return original.NewAPIProductClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIReleaseClient(subscriptionID string) APIReleaseClient {
+	return original.NewAPIReleaseClient(subscriptionID)
+}
+func NewAPIReleaseClientWithBaseURI(baseURI string, subscriptionID string) APIReleaseClient {
+	return original.NewAPIReleaseClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIRevisionsClient(subscriptionID string) APIRevisionsClient {
+	return original.NewAPIRevisionsClient(subscriptionID)
+}
+func NewAPIRevisionsClientWithBaseURI(baseURI string, subscriptionID string) APIRevisionsClient {
+	return original.NewAPIRevisionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPISchemaClient(subscriptionID string) APISchemaClient {
+	return original.NewAPISchemaClient(subscriptionID)
+}
+func NewAPISchemaClientWithBaseURI(baseURI string, subscriptionID string) APISchemaClient {
+	return original.NewAPISchemaClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAPIVersionSetClient(subscriptionID string) APIVersionSetClient {
+	return original.NewAPIVersionSetClient(subscriptionID)
+}
+func NewAPIVersionSetClientWithBaseURI(baseURI string, subscriptionID string) APIVersionSetClient {
+	return original.NewAPIVersionSetClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewAuthorizationServerClient(subscriptionID string) AuthorizationServerClient {
+	return original.NewAuthorizationServerClient(subscriptionID)
+}
+func NewAuthorizationServerClientWithBaseURI(baseURI string, subscriptionID string) AuthorizationServerClient {
+	return original.NewAuthorizationServerClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewBackendClient(subscriptionID string) BackendClient {
+	return original.NewBackendClient(subscriptionID)
+}
+func NewBackendClientWithBaseURI(baseURI string, subscriptionID string) BackendClient {
+	return original.NewBackendClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewCertificateClient(subscriptionID string) CertificateClient {
+	return original.NewCertificateClient(subscriptionID)
+}
+func NewCertificateClientWithBaseURI(baseURI string, subscriptionID string) CertificateClient {
+	return original.NewCertificateClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewDelegationSettingsClient(subscriptionID string) DelegationSettingsClient {
+	return original.NewDelegationSettingsClient(subscriptionID)
+}
+func NewDelegationSettingsClientWithBaseURI(baseURI string, subscriptionID string) DelegationSettingsClient {
+	return original.NewDelegationSettingsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewDiagnosticClient(subscriptionID string) DiagnosticClient {
+	return original.NewDiagnosticClient(subscriptionID)
+}
+func NewDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticClient {
+	return original.NewDiagnosticClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewDiagnosticLoggerClient(subscriptionID string) DiagnosticLoggerClient {
+	return original.NewDiagnosticLoggerClient(subscriptionID)
+}
+func NewDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticLoggerClient {
+	return original.NewDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewEmailTemplateClient(subscriptionID string) EmailTemplateClient {
+	return original.NewEmailTemplateClient(subscriptionID)
+}
+func NewEmailTemplateClientWithBaseURI(baseURI string, subscriptionID string) EmailTemplateClient {
+	return original.NewEmailTemplateClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewGroupClient(subscriptionID string) GroupClient {
+	return original.NewGroupClient(subscriptionID)
+}
+func NewGroupClientWithBaseURI(baseURI string, subscriptionID string) GroupClient {
+	return original.NewGroupClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewGroupUserClient(subscriptionID string) GroupUserClient {
+	return original.NewGroupUserClient(subscriptionID)
+}
+func NewGroupUserClientWithBaseURI(baseURI string, subscriptionID string) GroupUserClient {
+	return original.NewGroupUserClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewIdentityProviderClient(subscriptionID string) IdentityProviderClient {
+	return original.NewIdentityProviderClient(subscriptionID)
+}
+func NewIdentityProviderClientWithBaseURI(baseURI string, subscriptionID string) IdentityProviderClient {
+	return original.NewIdentityProviderClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewLoggerClient(subscriptionID string) LoggerClient {
+	return original.NewLoggerClient(subscriptionID)
+}
+func NewLoggerClientWithBaseURI(baseURI string, subscriptionID string) LoggerClient {
+	return original.NewLoggerClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAPITypeValues() []APIType {
+	return original.PossibleAPITypeValues()
+}
+func PossibleAsyncOperationStatusValues() []AsyncOperationStatus {
+	return original.PossibleAsyncOperationStatusValues()
+}
+func PossibleAuthorizationMethodValues() []AuthorizationMethod {
+	return original.PossibleAuthorizationMethodValues()
+}
+func PossibleBackendProtocolValues() []BackendProtocol {
+	return original.PossibleBackendProtocolValues()
+}
+func PossibleBearerTokenSendingMethodValues() []BearerTokenSendingMethod {
+	return original.PossibleBearerTokenSendingMethodValues()
+}
+func PossibleClientAuthenticationMethodValues() []ClientAuthenticationMethod {
+	return original.PossibleClientAuthenticationMethodValues()
+}
+func PossibleConfirmationValues() []Confirmation {
+	return original.PossibleConfirmationValues()
+}
+func PossibleConnectivityStatusTypeValues() []ConnectivityStatusType {
+	return original.PossibleConnectivityStatusTypeValues()
+}
+func PossibleContentFormatValues() []ContentFormat {
+	return original.PossibleContentFormatValues()
+}
+func PossibleGrantTypeValues() []GrantType {
+	return original.PossibleGrantTypeValues()
+}
+func PossibleGroupTypeValues() []GroupType {
+	return original.PossibleGroupTypeValues()
+}
+func PossibleHostnameTypeValues() []HostnameType {
+	return original.PossibleHostnameTypeValues()
+}
+func PossibleIdentityProviderTypeValues() []IdentityProviderType {
+	return original.PossibleIdentityProviderTypeValues()
+}
+func PossibleKeyTypeValues() []KeyType {
+	return original.PossibleKeyTypeValues()
+}
+func PossibleLoggerTypeValues() []LoggerType {
+	return original.PossibleLoggerTypeValues()
+}
+func PossibleNameAvailabilityReasonValues() []NameAvailabilityReason {
+	return original.PossibleNameAvailabilityReasonValues()
+}
+func PossibleNotificationNameValues() []NotificationName {
+	return original.PossibleNotificationNameValues()
+}
+func PossiblePolicyScopeContractValues() []PolicyScopeContract {
+	return original.PossiblePolicyScopeContractValues()
+}
+func PossibleProductStateValues() []ProductState {
+	return original.PossibleProductStateValues()
+}
+func PossibleProtocolValues() []Protocol {
+	return original.PossibleProtocolValues()
+}
+func PossibleSamplingTypeValues() []SamplingType {
+	return original.PossibleSamplingTypeValues()
+}
+func PossibleSkuTypeValues() []SkuType {
+	return original.PossibleSkuTypeValues()
+}
+func PossibleStateValues() []State {
+	return original.PossibleStateValues()
+}
+func PossibleStoreNameValues() []StoreName {
+	return original.PossibleStoreNameValues()
+}
+func PossibleSubscriptionStateValues() []SubscriptionState {
+	return original.PossibleSubscriptionStateValues()
+}
+func PossibleTemplateNameValues() []TemplateName {
+	return original.PossibleTemplateNameValues()
+}
+func PossibleUserStateValues() []UserState {
+	return original.PossibleUserStateValues()
+}
+func PossibleVersioningSchemeValues() []VersioningScheme {
+	return original.PossibleVersioningSchemeValues()
+}
+func PossibleVirtualNetworkTypeValues() []VirtualNetworkType {
+	return original.PossibleVirtualNetworkTypeValues()
+}
 func NewNetworkStatusClient(subscriptionID string) NetworkStatusClient {
 	return original.NewNetworkStatusClient(subscriptionID)
 }
 func NewNetworkStatusClientWithBaseURI(baseURI string, subscriptionID string) NetworkStatusClient {
 	return original.NewNetworkStatusClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type NotificationClient = original.NotificationClient
-
 func NewNotificationClient(subscriptionID string) NotificationClient {
 	return original.NewNotificationClient(subscriptionID)
 }
 func NewNotificationClientWithBaseURI(baseURI string, subscriptionID string) NotificationClient {
 	return original.NewNotificationClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type NotificationRecipientEmailClient = original.NotificationRecipientEmailClient
-
 func NewNotificationRecipientEmailClient(subscriptionID string) NotificationRecipientEmailClient {
 	return original.NewNotificationRecipientEmailClient(subscriptionID)
 }
 func NewNotificationRecipientEmailClientWithBaseURI(baseURI string, subscriptionID string) NotificationRecipientEmailClient {
 	return original.NewNotificationRecipientEmailClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type NotificationRecipientUserClient = original.NotificationRecipientUserClient
-
 func NewNotificationRecipientUserClient(subscriptionID string) NotificationRecipientUserClient {
 	return original.NewNotificationRecipientUserClient(subscriptionID)
 }
 func NewNotificationRecipientUserClientWithBaseURI(baseURI string, subscriptionID string) NotificationRecipientUserClient {
 	return original.NewNotificationRecipientUserClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OpenIDConnectProviderClient = original.OpenIDConnectProviderClient
-
 func NewOpenIDConnectProviderClient(subscriptionID string) OpenIDConnectProviderClient {
 	return original.NewOpenIDConnectProviderClient(subscriptionID)
 }
 func NewOpenIDConnectProviderClientWithBaseURI(baseURI string, subscriptionID string) OpenIDConnectProviderClient {
 	return original.NewOpenIDConnectProviderClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OperationClient = original.OperationClient
-
 func NewOperationClient(subscriptionID string) OperationClient {
 	return original.NewOperationClient(subscriptionID)
 }
 func NewOperationClientWithBaseURI(baseURI string, subscriptionID string) OperationClient {
 	return original.NewOperationClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OperationsClient = original.OperationsClient
-
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PolicyClient = original.PolicyClient
-
 func NewPolicyClient(subscriptionID string) PolicyClient {
 	return original.NewPolicyClient(subscriptionID)
 }
 func NewPolicyClientWithBaseURI(baseURI string, subscriptionID string) PolicyClient {
 	return original.NewPolicyClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PolicySnippetsClient = original.PolicySnippetsClient
-
 func NewPolicySnippetsClient(subscriptionID string) PolicySnippetsClient {
 	return original.NewPolicySnippetsClient(subscriptionID)
 }
 func NewPolicySnippetsClientWithBaseURI(baseURI string, subscriptionID string) PolicySnippetsClient {
 	return original.NewPolicySnippetsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProductClient = original.ProductClient
-
 func NewProductClient(subscriptionID string) ProductClient {
 	return original.NewProductClient(subscriptionID)
 }
 func NewProductClientWithBaseURI(baseURI string, subscriptionID string) ProductClient {
 	return original.NewProductClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProductAPIClient = original.ProductAPIClient
-
 func NewProductAPIClient(subscriptionID string) ProductAPIClient {
 	return original.NewProductAPIClient(subscriptionID)
 }
 func NewProductAPIClientWithBaseURI(baseURI string, subscriptionID string) ProductAPIClient {
 	return original.NewProductAPIClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProductGroupClient = original.ProductGroupClient
-
 func NewProductGroupClient(subscriptionID string) ProductGroupClient {
 	return original.NewProductGroupClient(subscriptionID)
 }
 func NewProductGroupClientWithBaseURI(baseURI string, subscriptionID string) ProductGroupClient {
 	return original.NewProductGroupClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProductPolicyClient = original.ProductPolicyClient
-
 func NewProductPolicyClient(subscriptionID string) ProductPolicyClient {
 	return original.NewProductPolicyClient(subscriptionID)
 }
 func NewProductPolicyClientWithBaseURI(baseURI string, subscriptionID string) ProductPolicyClient {
 	return original.NewProductPolicyClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProductSubscriptionsClient = original.ProductSubscriptionsClient
-
 func NewProductSubscriptionsClient(subscriptionID string) ProductSubscriptionsClient {
 	return original.NewProductSubscriptionsClient(subscriptionID)
 }
 func NewProductSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) ProductSubscriptionsClient {
 	return original.NewProductSubscriptionsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PropertyClient = original.PropertyClient
-
 func NewPropertyClient(subscriptionID string) PropertyClient {
 	return original.NewPropertyClient(subscriptionID)
 }
 func NewPropertyClientWithBaseURI(baseURI string, subscriptionID string) PropertyClient {
 	return original.NewPropertyClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type QuotaByCounterKeysClient = original.QuotaByCounterKeysClient
-
 func NewQuotaByCounterKeysClient(subscriptionID string) QuotaByCounterKeysClient {
 	return original.NewQuotaByCounterKeysClient(subscriptionID)
 }
 func NewQuotaByCounterKeysClientWithBaseURI(baseURI string, subscriptionID string) QuotaByCounterKeysClient {
 	return original.NewQuotaByCounterKeysClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type QuotaByPeriodKeysClient = original.QuotaByPeriodKeysClient
-
 func NewQuotaByPeriodKeysClient(subscriptionID string) QuotaByPeriodKeysClient {
 	return original.NewQuotaByPeriodKeysClient(subscriptionID)
 }
 func NewQuotaByPeriodKeysClientWithBaseURI(baseURI string, subscriptionID string) QuotaByPeriodKeysClient {
 	return original.NewQuotaByPeriodKeysClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type RegionsClient = original.RegionsClient
-
 func NewRegionsClient(subscriptionID string) RegionsClient {
 	return original.NewRegionsClient(subscriptionID)
 }
 func NewRegionsClientWithBaseURI(baseURI string, subscriptionID string) RegionsClient {
 	return original.NewRegionsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ReportsClient = original.ReportsClient
-
 func NewReportsClient(subscriptionID string) ReportsClient {
 	return original.NewReportsClient(subscriptionID)
 }
 func NewReportsClientWithBaseURI(baseURI string, subscriptionID string) ReportsClient {
 	return original.NewReportsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ServiceClient = original.ServiceClient
-
 func NewServiceClient(subscriptionID string) ServiceClient {
 	return original.NewServiceClient(subscriptionID)
 }
 func NewServiceClientWithBaseURI(baseURI string, subscriptionID string) ServiceClient {
 	return original.NewServiceClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SignInSettingsClient = original.SignInSettingsClient
-
 func NewSignInSettingsClient(subscriptionID string) SignInSettingsClient {
 	return original.NewSignInSettingsClient(subscriptionID)
 }
 func NewSignInSettingsClientWithBaseURI(baseURI string, subscriptionID string) SignInSettingsClient {
 	return original.NewSignInSettingsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SignUpSettingsClient = original.SignUpSettingsClient
-
 func NewSignUpSettingsClient(subscriptionID string) SignUpSettingsClient {
 	return original.NewSignUpSettingsClient(subscriptionID)
 }
 func NewSignUpSettingsClientWithBaseURI(baseURI string, subscriptionID string) SignUpSettingsClient {
 	return original.NewSignUpSettingsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SubscriptionClient = original.SubscriptionClient
-
 func NewSubscriptionClient(subscriptionID string) SubscriptionClient {
 	return original.NewSubscriptionClient(subscriptionID)
 }
 func NewSubscriptionClientWithBaseURI(baseURI string, subscriptionID string) SubscriptionClient {
 	return original.NewSubscriptionClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TagClient = original.TagClient
-
 func NewTagClient(subscriptionID string) TagClient {
 	return original.NewTagClient(subscriptionID)
 }
 func NewTagClientWithBaseURI(baseURI string, subscriptionID string) TagClient {
 	return original.NewTagClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TagDescriptionClient = original.TagDescriptionClient
-
 func NewTagDescriptionClient(subscriptionID string) TagDescriptionClient {
 	return original.NewTagDescriptionClient(subscriptionID)
 }
 func NewTagDescriptionClientWithBaseURI(baseURI string, subscriptionID string) TagDescriptionClient {
 	return original.NewTagDescriptionClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TagResourceClient = original.TagResourceClient
-
 func NewTagResourceClient(subscriptionID string) TagResourceClient {
 	return original.NewTagResourceClient(subscriptionID)
 }
 func NewTagResourceClientWithBaseURI(baseURI string, subscriptionID string) TagResourceClient {
 	return original.NewTagResourceClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TenantAccessClient = original.TenantAccessClient
-
 func NewTenantAccessClient(subscriptionID string) TenantAccessClient {
 	return original.NewTenantAccessClient(subscriptionID)
 }
 func NewTenantAccessClientWithBaseURI(baseURI string, subscriptionID string) TenantAccessClient {
 	return original.NewTenantAccessClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TenantAccessGitClient = original.TenantAccessGitClient
-
 func NewTenantAccessGitClient(subscriptionID string) TenantAccessGitClient {
 	return original.NewTenantAccessGitClient(subscriptionID)
 }
 func NewTenantAccessGitClientWithBaseURI(baseURI string, subscriptionID string) TenantAccessGitClient {
 	return original.NewTenantAccessGitClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TenantConfigurationClient = original.TenantConfigurationClient
-
 func NewTenantConfigurationClient(subscriptionID string) TenantConfigurationClient {
 	return original.NewTenantConfigurationClient(subscriptionID)
 }
 func NewTenantConfigurationClientWithBaseURI(baseURI string, subscriptionID string) TenantConfigurationClient {
 	return original.NewTenantConfigurationClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UserClient = original.UserClient
-
 func NewUserClient(subscriptionID string) UserClient {
 	return original.NewUserClient(subscriptionID)
 }
 func NewUserClientWithBaseURI(baseURI string, subscriptionID string) UserClient {
 	return original.NewUserClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UserGroupClient = original.UserGroupClient
-
 func NewUserGroupClient(subscriptionID string) UserGroupClient {
 	return original.NewUserGroupClient(subscriptionID)
 }
 func NewUserGroupClientWithBaseURI(baseURI string, subscriptionID string) UserGroupClient {
 	return original.NewUserGroupClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UserIdentitiesClient = original.UserIdentitiesClient
-
 func NewUserIdentitiesClient(subscriptionID string) UserIdentitiesClient {
 	return original.NewUserIdentitiesClient(subscriptionID)
 }
 func NewUserIdentitiesClientWithBaseURI(baseURI string, subscriptionID string) UserIdentitiesClient {
 	return original.NewUserIdentitiesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UserSubscriptionClient = original.UserSubscriptionClient
-
 func NewUserSubscriptionClient(subscriptionID string) UserSubscriptionClient {
 	return original.NewUserSubscriptionClient(subscriptionID)
 }

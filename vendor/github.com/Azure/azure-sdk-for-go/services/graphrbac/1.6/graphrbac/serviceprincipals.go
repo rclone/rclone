@@ -42,8 +42,8 @@ func NewServicePrincipalsClientWithBaseURI(baseURI string, tenantID string) Serv
 }
 
 // Create creates a service principal in the directory.
-//
-// parameters is parameters to create a service principal.
+// Parameters:
+// parameters - parameters to create a service principal.
 func (client ServicePrincipalsClient) Create(ctx context.Context, parameters ServicePrincipalCreateParameters) (result ServicePrincipal, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -85,7 +85,7 @@ func (client ServicePrincipalsClient) CreatePreparer(ctx context.Context, parame
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/servicePrincipals", pathParameters),
@@ -115,8 +115,8 @@ func (client ServicePrincipalsClient) CreateResponder(resp *http.Response) (resu
 }
 
 // Delete deletes a service principal from the directory.
-//
-// objectID is the object ID of the service principal to delete.
+// Parameters:
+// objectID - the object ID of the service principal to delete.
 func (client ServicePrincipalsClient) Delete(ctx context.Context, objectID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, objectID)
 	if err != nil {
@@ -179,8 +179,8 @@ func (client ServicePrincipalsClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get gets service principal information from the directory.
-//
-// objectID is the object ID of the service principal to get.
+// Parameters:
+// objectID - the object ID of the service principal to get.
 func (client ServicePrincipalsClient) Get(ctx context.Context, objectID string) (result ServicePrincipal, err error) {
 	req, err := client.GetPreparer(ctx, objectID)
 	if err != nil {
@@ -244,8 +244,8 @@ func (client ServicePrincipalsClient) GetResponder(resp *http.Response) (result 
 }
 
 // List gets a list of service principals from the current tenant.
-//
-// filter is the filter to apply to the operation.
+// Parameters:
+// filter - the filter to apply to the operation.
 func (client ServicePrincipalsClient) List(ctx context.Context, filter string) (result ServicePrincipalListResultPage, err error) {
 	result.fn = func(lastResult ServicePrincipalListResult) (ServicePrincipalListResult, error) {
 		if lastResult.OdataNextLink == nil || len(to.String(lastResult.OdataNextLink)) < 1 {
@@ -323,8 +323,8 @@ func (client ServicePrincipalsClient) ListComplete(ctx context.Context, filter s
 }
 
 // ListKeyCredentials get the keyCredentials associated with the specified service principal.
-//
-// objectID is the object ID of the service principal for which to get keyCredentials.
+// Parameters:
+// objectID - the object ID of the service principal for which to get keyCredentials.
 func (client ServicePrincipalsClient) ListKeyCredentials(ctx context.Context, objectID string) (result KeyCredentialListResult, err error) {
 	req, err := client.ListKeyCredentialsPreparer(ctx, objectID)
 	if err != nil {
@@ -388,8 +388,8 @@ func (client ServicePrincipalsClient) ListKeyCredentialsResponder(resp *http.Res
 }
 
 // ListNext gets a list of service principals from the current tenant.
-//
-// nextLink is next link for the list operation.
+// Parameters:
+// nextLink - next link for the list operation.
 func (client ServicePrincipalsClient) ListNext(ctx context.Context, nextLink string) (result ServicePrincipalListResult, err error) {
 	req, err := client.ListNextPreparer(ctx, nextLink)
 	if err != nil {
@@ -453,8 +453,8 @@ func (client ServicePrincipalsClient) ListNextResponder(resp *http.Response) (re
 }
 
 // ListOwners the owners are a set of non-admin users who are allowed to modify this object.
-//
-// objectID is the object ID of the service principal for which to get owners.
+// Parameters:
+// objectID - the object ID of the service principal for which to get owners.
 func (client ServicePrincipalsClient) ListOwners(ctx context.Context, objectID string) (result DirectoryObjectListResult, err error) {
 	req, err := client.ListOwnersPreparer(ctx, objectID)
 	if err != nil {
@@ -518,8 +518,8 @@ func (client ServicePrincipalsClient) ListOwnersResponder(resp *http.Response) (
 }
 
 // ListPasswordCredentials gets the passwordCredentials associated with a service principal.
-//
-// objectID is the object ID of the service principal.
+// Parameters:
+// objectID - the object ID of the service principal.
 func (client ServicePrincipalsClient) ListPasswordCredentials(ctx context.Context, objectID string) (result PasswordCredentialListResult, err error) {
 	req, err := client.ListPasswordCredentialsPreparer(ctx, objectID)
 	if err != nil {
@@ -583,9 +583,9 @@ func (client ServicePrincipalsClient) ListPasswordCredentialsResponder(resp *htt
 }
 
 // UpdateKeyCredentials update the keyCredentials associated with a service principal.
-//
-// objectID is the object ID for which to get service principal information. parameters is parameters to update the
-// keyCredentials of an existing service principal.
+// Parameters:
+// objectID - the object ID for which to get service principal information.
+// parameters - parameters to update the keyCredentials of an existing service principal.
 func (client ServicePrincipalsClient) UpdateKeyCredentials(ctx context.Context, objectID string, parameters KeyCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdateKeyCredentialsPreparer(ctx, objectID, parameters)
 	if err != nil {
@@ -621,7 +621,7 @@ func (client ServicePrincipalsClient) UpdateKeyCredentialsPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/servicePrincipals/{objectId}/keyCredentials", pathParameters),
@@ -650,9 +650,9 @@ func (client ServicePrincipalsClient) UpdateKeyCredentialsResponder(resp *http.R
 }
 
 // UpdatePasswordCredentials updates the passwordCredentials associated with a service principal.
-//
-// objectID is the object ID of the service principal. parameters is parameters to update the passwordCredentials
-// of an existing service principal.
+// Parameters:
+// objectID - the object ID of the service principal.
+// parameters - parameters to update the passwordCredentials of an existing service principal.
 func (client ServicePrincipalsClient) UpdatePasswordCredentials(ctx context.Context, objectID string, parameters PasswordCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdatePasswordCredentialsPreparer(ctx, objectID, parameters)
 	if err != nil {
@@ -688,7 +688,7 @@ func (client ServicePrincipalsClient) UpdatePasswordCredentialsPreparer(ctx cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/servicePrincipals/{objectId}/passwordCredentials", pathParameters),

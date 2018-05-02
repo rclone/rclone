@@ -172,6 +172,10 @@ type CloudDirectoryAPI interface {
 	GetFacetWithContext(aws.Context, *clouddirectory.GetFacetInput, ...request.Option) (*clouddirectory.GetFacetOutput, error)
 	GetFacetRequest(*clouddirectory.GetFacetInput) (*request.Request, *clouddirectory.GetFacetOutput)
 
+	GetObjectAttributes(*clouddirectory.GetObjectAttributesInput) (*clouddirectory.GetObjectAttributesOutput, error)
+	GetObjectAttributesWithContext(aws.Context, *clouddirectory.GetObjectAttributesInput, ...request.Option) (*clouddirectory.GetObjectAttributesOutput, error)
+	GetObjectAttributesRequest(*clouddirectory.GetObjectAttributesInput) (*request.Request, *clouddirectory.GetObjectAttributesOutput)
+
 	GetObjectInformation(*clouddirectory.GetObjectInformationInput) (*clouddirectory.GetObjectInformationOutput, error)
 	GetObjectInformationWithContext(aws.Context, *clouddirectory.GetObjectInformationInput, ...request.Option) (*clouddirectory.GetObjectInformationOutput, error)
 	GetObjectInformationRequest(*clouddirectory.GetObjectInformationInput) (*request.Request, *clouddirectory.GetObjectInformationOutput)

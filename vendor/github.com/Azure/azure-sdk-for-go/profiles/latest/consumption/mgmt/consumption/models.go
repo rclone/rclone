@@ -19,46 +19,13 @@
 
 package consumption
 
-import original "github.com/Azure/azure-sdk-for-go/services/consumption/mgmt/2018-01-31/consumption"
-
-type BudgetsClient = original.BudgetsClient
-
-func NewBudgetsClient(subscriptionID string) BudgetsClient {
-	return original.NewBudgetsClient(subscriptionID)
-}
-func NewBudgetsClientWithBaseURI(baseURI string, subscriptionID string) BudgetsClient {
-	return original.NewBudgetsClientWithBaseURI(baseURI, subscriptionID)
-}
+import original "github.com/Azure/azure-sdk-for-go/services/consumption/mgmt/2017-11-30/consumption"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
-type MarketplacesClient = original.MarketplacesClient
-
-func NewMarketplacesClient(subscriptionID string) MarketplacesClient {
-	return original.NewMarketplacesClient(subscriptionID)
-}
-func NewMarketplacesClientWithBaseURI(baseURI string, subscriptionID string) MarketplacesClient {
-	return original.NewMarketplacesClientWithBaseURI(baseURI, subscriptionID)
-}
-
-type CategoryType = original.CategoryType
-
-const (
-	Cost  CategoryType = original.Cost
-	Usage CategoryType = original.Usage
-)
-
 type Datagrain = original.Datagrain
 
 const (
@@ -66,57 +33,19 @@ const (
 	MonthlyGrain Datagrain = original.MonthlyGrain
 )
 
-type OperatorType = original.OperatorType
-
-const (
-	EqualTo              OperatorType = original.EqualTo
-	GreaterThan          OperatorType = original.GreaterThan
-	GreaterThanOrEqualTo OperatorType = original.GreaterThanOrEqualTo
-)
-
-type TimeGrainType = original.TimeGrainType
-
-const (
-	Annually  TimeGrainType = original.Annually
-	Monthly   TimeGrainType = original.Monthly
-	Quarterly TimeGrainType = original.Quarterly
-)
-
-type Budget = original.Budget
-type BudgetProperties = original.BudgetProperties
-type BudgetsListResult = original.BudgetsListResult
-type BudgetsListResultIterator = original.BudgetsListResultIterator
-type BudgetsListResultPage = original.BudgetsListResultPage
-type BudgetTimePeriod = original.BudgetTimePeriod
-type CurrentSpend = original.CurrentSpend
 type ErrorDetails = original.ErrorDetails
 type ErrorResponse = original.ErrorResponse
-type Filters = original.Filters
-type Marketplace = original.Marketplace
-type MarketplaceProperties = original.MarketplaceProperties
-type MarketplacesListResult = original.MarketplacesListResult
-type MarketplacesListResultIterator = original.MarketplacesListResultIterator
-type MarketplacesListResultPage = original.MarketplacesListResultPage
 type MeterDetails = original.MeterDetails
-type Notification = original.Notification
 type Operation = original.Operation
 type OperationDisplay = original.OperationDisplay
 type OperationListResult = original.OperationListResult
 type OperationListResultIterator = original.OperationListResultIterator
 type OperationListResultPage = original.OperationListResultPage
-type PriceSheetModel = original.PriceSheetModel
-type PriceSheetProperties = original.PriceSheetProperties
-type PriceSheetResult = original.PriceSheetResult
-type ProxyResource = original.ProxyResource
 type ReservationDetails = original.ReservationDetails
 type ReservationDetailsListResult = original.ReservationDetailsListResult
-type ReservationDetailsListResultIterator = original.ReservationDetailsListResultIterator
-type ReservationDetailsListResultPage = original.ReservationDetailsListResultPage
 type ReservationDetailsProperties = original.ReservationDetailsProperties
 type ReservationSummaries = original.ReservationSummaries
 type ReservationSummariesListResult = original.ReservationSummariesListResult
-type ReservationSummariesListResultIterator = original.ReservationSummariesListResultIterator
-type ReservationSummariesListResultPage = original.ReservationSummariesListResultPage
 type ReservationSummariesProperties = original.ReservationSummariesProperties
 type Resource = original.Resource
 type UsageDetail = original.UsageDetail
@@ -125,43 +54,37 @@ type UsageDetailsListResult = original.UsageDetailsListResult
 type UsageDetailsListResultIterator = original.UsageDetailsListResultIterator
 type UsageDetailsListResultPage = original.UsageDetailsListResultPage
 type OperationsClient = original.OperationsClient
+type ReservationsDetailsClient = original.ReservationsDetailsClient
+type ReservationsSummariesClient = original.ReservationsSummariesClient
+type UsageDetailsClient = original.UsageDetailsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleDatagrainValues() []Datagrain {
+	return original.PossibleDatagrainValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PriceSheetClient = original.PriceSheetClient
-
-func NewPriceSheetClient(subscriptionID string) PriceSheetClient {
-	return original.NewPriceSheetClient(subscriptionID)
-}
-func NewPriceSheetClientWithBaseURI(baseURI string, subscriptionID string) PriceSheetClient {
-	return original.NewPriceSheetClientWithBaseURI(baseURI, subscriptionID)
-}
-
-type ReservationsDetailsClient = original.ReservationsDetailsClient
-
 func NewReservationsDetailsClient(subscriptionID string) ReservationsDetailsClient {
 	return original.NewReservationsDetailsClient(subscriptionID)
 }
 func NewReservationsDetailsClientWithBaseURI(baseURI string, subscriptionID string) ReservationsDetailsClient {
 	return original.NewReservationsDetailsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ReservationsSummariesClient = original.ReservationsSummariesClient
-
 func NewReservationsSummariesClient(subscriptionID string) ReservationsSummariesClient {
 	return original.NewReservationsSummariesClient(subscriptionID)
 }
 func NewReservationsSummariesClientWithBaseURI(baseURI string, subscriptionID string) ReservationsSummariesClient {
 	return original.NewReservationsSummariesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UsageDetailsClient = original.UsageDetailsClient
-
 func NewUsageDetailsClient(subscriptionID string) UsageDetailsClient {
 	return original.NewUsageDetailsClient(subscriptionID)
 }

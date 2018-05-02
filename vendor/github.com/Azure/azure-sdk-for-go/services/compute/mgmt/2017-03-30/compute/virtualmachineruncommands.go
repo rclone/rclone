@@ -41,8 +41,9 @@ func NewVirtualMachineRunCommandsClientWithBaseURI(baseURI string, subscriptionI
 }
 
 // Get gets specific run command for a subscription in a location.
-//
-// location is the location upon which run commands is queried. commandID is the command id.
+// Parameters:
+// location - the location upon which run commands is queried.
+// commandID - the command id.
 func (client VirtualMachineRunCommandsClient) Get(ctx context.Context, location string, commandID string) (result RunCommandDocument, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: location,
@@ -113,8 +114,8 @@ func (client VirtualMachineRunCommandsClient) GetResponder(resp *http.Response) 
 }
 
 // List lists all available run commands for a subscription in a location.
-//
-// location is the location upon which run commands is queried.
+// Parameters:
+// location - the location upon which run commands is queried.
 func (client VirtualMachineRunCommandsClient) List(ctx context.Context, location string) (result RunCommandListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: location,

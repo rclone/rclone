@@ -27,6 +27,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountState enumerates the values for data lake store account state.
 type DataLakeStoreAccountState string
 
@@ -37,6 +38,13 @@ const (
 	Suspended DataLakeStoreAccountState = "suspended"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleDataLakeStoreAccountStateValues returns an array of possible values for the DataLakeStoreAccountState const type.
+func PossibleDataLakeStoreAccountStateValues() []DataLakeStoreAccountState {
+	return []DataLakeStoreAccountState{Active, Suspended}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountStatus enumerates the values for data lake store account status.
 type DataLakeStoreAccountStatus string
 
@@ -61,6 +69,13 @@ const (
 	Suspending DataLakeStoreAccountStatus = "Suspending"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleDataLakeStoreAccountStatusValues returns an array of possible values for the DataLakeStoreAccountStatus const type.
+func PossibleDataLakeStoreAccountStatusValues() []DataLakeStoreAccountStatus {
+	return []DataLakeStoreAccountStatus{Creating, Deleted, Deleting, Failed, Patching, Resuming, Running, Succeeded, Suspending}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionConfigType enumerates the values for encryption config type.
 type EncryptionConfigType string
 
@@ -71,6 +86,13 @@ const (
 	UserManaged EncryptionConfigType = "UserManaged"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleEncryptionConfigTypeValues returns an array of possible values for the EncryptionConfigType const type.
+func PossibleEncryptionConfigTypeValues() []EncryptionConfigType {
+	return []EncryptionConfigType{ServiceManaged, UserManaged}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionIdentityType enumerates the values for encryption identity type.
 type EncryptionIdentityType string
 
@@ -79,6 +101,13 @@ const (
 	SystemAssigned EncryptionIdentityType = "SystemAssigned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleEncryptionIdentityTypeValues returns an array of possible values for the EncryptionIdentityType const type.
+func PossibleEncryptionIdentityTypeValues() []EncryptionIdentityType {
+	return []EncryptionIdentityType{SystemAssigned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionProvisioningState enumerates the values for encryption provisioning state.
 type EncryptionProvisioningState string
 
@@ -89,6 +118,13 @@ const (
 	EncryptionProvisioningStateSucceeded EncryptionProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleEncryptionProvisioningStateValues returns an array of possible values for the EncryptionProvisioningState const type.
+func PossibleEncryptionProvisioningStateValues() []EncryptionProvisioningState {
+	return []EncryptionProvisioningState{EncryptionProvisioningStateCreating, EncryptionProvisioningStateSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionState enumerates the values for encryption state.
 type EncryptionState string
 
@@ -99,6 +135,13 @@ const (
 	Enabled EncryptionState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleEncryptionStateValues returns an array of possible values for the EncryptionState const type.
+func PossibleEncryptionStateValues() []EncryptionState {
+	return []EncryptionState{Disabled, Enabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
 
@@ -111,6 +154,13 @@ const (
 	OperationStatusSucceeded OperationStatus = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{OperationStatusFailed, OperationStatusInProgress, OperationStatusSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // AzureAsyncOperationResult the response body contains the status of the specified asynchronous operation,
 // indicating whether it has succeeded, is in progress, or has failed. Note that this status is distinct from the
 // HTTP status code returned for the Get Operation Status operation itself. If the asynchronous operation
@@ -123,12 +173,14 @@ type AzureAsyncOperationResult struct {
 	Error  *Error          `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // CreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CreateFuture) Result(client Client) (dlsa DataLakeStoreAccount, err error) {
@@ -171,6 +223,7 @@ func (future CreateFuture) Result(client Client) (dlsa DataLakeStoreAccount, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccount data Lake Store account information
 type DataLakeStoreAccount struct {
 	autorest.Response `json:"-"`
@@ -190,6 +243,7 @@ type DataLakeStoreAccount struct {
 	Properties *DataLakeStoreAccountProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // MarshalJSON is the custom marshaler for DataLakeStoreAccount.
 func (dlsa DataLakeStoreAccount) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -217,6 +271,7 @@ func (dlsa DataLakeStoreAccount) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountListResult data Lake Store account list information response.
 type DataLakeStoreAccountListResult struct {
 	autorest.Response `json:"-"`
@@ -228,12 +283,14 @@ type DataLakeStoreAccountListResult struct {
 	Count *int64 `json:"count,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountListResultIterator provides access to a complete listing of DataLakeStoreAccount values.
 type DataLakeStoreAccountListResultIterator struct {
 	i    int
 	page DataLakeStoreAccountListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataLakeStoreAccountListResultIterator) Next() error {
@@ -250,16 +307,19 @@ func (iter *DataLakeStoreAccountListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataLakeStoreAccountListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter DataLakeStoreAccountListResultIterator) Response() DataLakeStoreAccountListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataLakeStoreAccountListResultIterator) Value() DataLakeStoreAccount {
@@ -269,6 +329,7 @@ func (iter DataLakeStoreAccountListResultIterator) Value() DataLakeStoreAccount 
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlsalr DataLakeStoreAccountListResult) IsEmpty() bool {
 	return dlsalr.Value == nil || len(*dlsalr.Value) == 0
@@ -286,12 +347,14 @@ func (dlsalr DataLakeStoreAccountListResult) dataLakeStoreAccountListResultPrepa
 		autorest.WithBaseURL(to.String(dlsalr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountListResultPage contains a page of DataLakeStoreAccount values.
 type DataLakeStoreAccountListResultPage struct {
 	fn     func(DataLakeStoreAccountListResult) (DataLakeStoreAccountListResult, error)
 	dlsalr DataLakeStoreAccountListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataLakeStoreAccountListResultPage) Next() error {
@@ -303,16 +366,19 @@ func (page *DataLakeStoreAccountListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataLakeStoreAccountListResultPage) NotDone() bool {
 	return !page.dlsalr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page DataLakeStoreAccountListResultPage) Response() DataLakeStoreAccountListResult {
 	return page.dlsalr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataLakeStoreAccountListResultPage) Values() []DataLakeStoreAccount {
 	if page.dlsalr.IsEmpty() {
@@ -321,6 +387,7 @@ func (page DataLakeStoreAccountListResultPage) Values() []DataLakeStoreAccount {
 	return *page.dlsalr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountProperties data Lake Store account properties information
 type DataLakeStoreAccountProperties struct {
 	// ProvisioningState - the status of the Data Lake Store account while being provisioned. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted'
@@ -343,6 +410,7 @@ type DataLakeStoreAccountProperties struct {
 	DefaultGroup *string `json:"defaultGroup,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreFirewallRuleListResult data Lake Store firewall rule list information.
 type DataLakeStoreFirewallRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -354,12 +422,14 @@ type DataLakeStoreFirewallRuleListResult struct {
 	Count *int64 `json:"count,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreFirewallRuleListResultIterator provides access to a complete listing of FirewallRule values.
 type DataLakeStoreFirewallRuleListResultIterator struct {
 	i    int
 	page DataLakeStoreFirewallRuleListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataLakeStoreFirewallRuleListResultIterator) Next() error {
@@ -376,16 +446,19 @@ func (iter *DataLakeStoreFirewallRuleListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataLakeStoreFirewallRuleListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter DataLakeStoreFirewallRuleListResultIterator) Response() DataLakeStoreFirewallRuleListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataLakeStoreFirewallRuleListResultIterator) Value() FirewallRule {
@@ -395,6 +468,7 @@ func (iter DataLakeStoreFirewallRuleListResultIterator) Value() FirewallRule {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlsfrlr DataLakeStoreFirewallRuleListResult) IsEmpty() bool {
 	return dlsfrlr.Value == nil || len(*dlsfrlr.Value) == 0
@@ -412,12 +486,14 @@ func (dlsfrlr DataLakeStoreFirewallRuleListResult) dataLakeStoreFirewallRuleList
 		autorest.WithBaseURL(to.String(dlsfrlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreFirewallRuleListResultPage contains a page of FirewallRule values.
 type DataLakeStoreFirewallRuleListResultPage struct {
 	fn      func(DataLakeStoreFirewallRuleListResult) (DataLakeStoreFirewallRuleListResult, error)
 	dlsfrlr DataLakeStoreFirewallRuleListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataLakeStoreFirewallRuleListResultPage) Next() error {
@@ -429,16 +505,19 @@ func (page *DataLakeStoreFirewallRuleListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataLakeStoreFirewallRuleListResultPage) NotDone() bool {
 	return !page.dlsfrlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page DataLakeStoreFirewallRuleListResultPage) Response() DataLakeStoreFirewallRuleListResult {
 	return page.dlsfrlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataLakeStoreFirewallRuleListResultPage) Values() []FirewallRule {
 	if page.dlsfrlr.IsEmpty() {
@@ -447,12 +526,14 @@ func (page DataLakeStoreFirewallRuleListResultPage) Values() []FirewallRule {
 	return *page.dlsfrlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
@@ -495,6 +576,7 @@ func (future DeleteFuture) Result(client Client) (ar autorest.Response, err erro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionConfig ...
 type EncryptionConfig struct {
 	// Type - The type of encryption configuration being used. Currently the only supported types are 'UserManaged' and 'ServiceManaged'. Possible values include: 'UserManaged', 'ServiceManaged'
@@ -503,6 +585,7 @@ type EncryptionConfig struct {
 	KeyVaultMetaInfo *KeyVaultMetaInfo `json:"keyVaultMetaInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // EncryptionIdentity ...
 type EncryptionIdentity struct {
 	// Type - The type of encryption being used. Currently the only supported type is 'SystemAssigned'. Possible values include: 'SystemAssigned'
@@ -513,6 +596,7 @@ type EncryptionIdentity struct {
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Error data Lake Store error information
 type Error struct {
 	// Code - the HTTP status code or error code associated with this error
@@ -527,6 +611,7 @@ type Error struct {
 	InnerError *InnerError `json:"innerError,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // ErrorDetails data Lake Store error details information
 type ErrorDetails struct {
 	// Code - the HTTP status code or error code associated with this error
@@ -537,6 +622,7 @@ type ErrorDetails struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // FirewallRule data Lake Store firewall rule information
 type FirewallRule struct {
 	autorest.Response `json:"-"`
@@ -552,6 +638,7 @@ type FirewallRule struct {
 	Properties *FirewallRuleProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // FirewallRuleProperties data Lake Store firewall rule properties information
 type FirewallRuleProperties struct {
 	// StartIPAddress - the start IP address for the firewall rule.
@@ -560,6 +647,7 @@ type FirewallRuleProperties struct {
 	EndIPAddress *string `json:"endIpAddress,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // InnerError data Lake Store inner error information
 type InnerError struct {
 	// Trace - the stack trace for the error
@@ -568,6 +656,7 @@ type InnerError struct {
 	Context *string `json:"context,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // KeyVaultMetaInfo ...
 type KeyVaultMetaInfo struct {
 	// KeyVaultResourceID - The resource identifier for the user managed Key Vault being used to encrypt.
@@ -578,12 +667,14 @@ type KeyVaultMetaInfo struct {
 	EncryptionKeyVersion *string `json:"encryptionKeyVersion,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // UpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type UpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future UpdateFuture) Result(client Client) (dlsa DataLakeStoreAccount, err error) {

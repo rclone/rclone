@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "firebasedynamiclinks:v1"
 const apiName = "firebasedynamiclinks"
 const apiVersion = "v1"
-const basePath = "https://firebasedynamiclinks-ipv6.googleapis.com/"
+const basePath = "https://firebasedynamiclinks.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -56,6 +56,7 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
+	s.ManagedShortLinks = NewManagedShortLinksService(s)
 	s.ShortLinks = NewShortLinksService(s)
 	s.V1 = NewV1Service(s)
 	return s, nil
@@ -65,6 +66,8 @@ type Service struct {
 	client    *http.Client
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
+
+	ManagedShortLinks *ManagedShortLinksService
 
 	ShortLinks *ShortLinksService
 
@@ -76,6 +79,15 @@ func (s *Service) userAgent() string {
 		return googleapi.UserAgent
 	}
 	return googleapi.UserAgent + " " + s.UserAgent
+}
+
+func NewManagedShortLinksService(s *Service) *ManagedShortLinksService {
+	rs := &ManagedShortLinksService{s: s}
+	return rs
+}
+
+type ManagedShortLinksService struct {
+	s *Service
 }
 
 func NewShortLinksService(s *Service) *ShortLinksService {
@@ -170,6 +182,103 @@ func (s *AndroidInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// CreateManagedShortLinkRequest: Request to create a managed Short
+// Dynamic Link.
+type CreateManagedShortLinkRequest struct {
+	// DynamicLinkInfo: Information about the Dynamic Link to be
+	// shortened.
+	// [Learn
+	// more](https://firebase.google.com/docs/reference/dynamic-links/link-sh
+	// ortener).
+	DynamicLinkInfo *DynamicLinkInfo `json:"dynamicLinkInfo,omitempty"`
+
+	// LongDynamicLink: Full long Dynamic Link URL with desired query
+	// parameters specified.
+	// For
+	// example,
+	// "https://sample.app.goo.gl/?link=http://www.google.com&apn=co
+	// m.sample",
+	// [Learn
+	// more](https://firebase.google.com/docs/reference/dynamic-links/link-sh
+	// ortener).
+	LongDynamicLink string `json:"longDynamicLink,omitempty"`
+
+	// Name: Link name to associate with the link. It's used for marketer to
+	// identify
+	// manually-created links in the Firebase
+	// console
+	// (https://console.firebase.google.com/).
+	// Links must be named to be tracked.
+	Name string `json:"name,omitempty"`
+
+	// Suffix: Short Dynamic Link suffix. Optional.
+	Suffix *Suffix `json:"suffix,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DynamicLinkInfo") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DynamicLinkInfo") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CreateManagedShortLinkRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod CreateManagedShortLinkRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CreateManagedShortLinkResponse: Response to create a short Dynamic
+// Link.
+type CreateManagedShortLinkResponse struct {
+	// ManagedShortLink: Short Dynamic Link value. e.g.
+	// https://abcd.app.goo.gl/wxyz
+	ManagedShortLink *ManagedShortLink `json:"managedShortLink,omitempty"`
+
+	// PreviewLink: Preview link to show the link flow chart. (debug info.)
+	PreviewLink string `json:"previewLink,omitempty"`
+
+	// Warning: Information about potential warnings on link creation.
+	Warning []*DynamicLinkWarning `json:"warning,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ManagedShortLink") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ManagedShortLink") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CreateManagedShortLinkResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod CreateManagedShortLinkResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // CreateShortDynamicLinkRequest: Request to create a short Dynamic
 // Link.
 type CreateShortDynamicLinkRequest struct {
@@ -221,7 +330,7 @@ func (s *CreateShortDynamicLinkRequest) MarshalJSON() ([]byte, error) {
 // CreateShortDynamicLinkResponse: Response to create a short Dynamic
 // Link.
 type CreateShortDynamicLinkResponse struct {
-	// PreviewLink: Preivew link to show the link flow chart.
+	// PreviewLink: Preview link to show the link flow chart. (debug info.)
 	PreviewLink string `json:"previewLink,omitempty"`
 
 	// ShortLink: Short Dynamic Link value. e.g.
@@ -371,9 +480,8 @@ type DynamicLinkEventStat struct {
 	//   "IOS" - Represents iOS platform.
 	// All apps and browsers on iOS are classfied in this category.
 	//   "DESKTOP" - Represents desktop.
-	// Note: other platforms like Windows, Blackberry, Amazon fall into
-	// this
-	// category.
+	//   "OTHER" - Platforms are not categorized as Android/iOS/Destop fall
+	// into here.
 	Platform string `json:"platform,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Count") to
@@ -421,6 +529,13 @@ type DynamicLinkInfo struct {
 	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
 	// ate-manually).
 	DesktopInfo *DesktopInfo `json:"desktopInfo,omitempty"`
+
+	// DomainUriPrefix: E.g. https://maps.app.goo.gl,
+	// https://maps.page.link, https://g.co/maps
+	// More examples can be found in description of getNormalizedUriPrefix
+	// in
+	// j/c/g/firebase/dynamiclinks/uri/DdlDomain.java
+	DomainUriPrefix string `json:"domainUriPrefix,omitempty"`
 
 	// DynamicLinkDomain: Dynamic Links domain that the project owns, e.g.
 	// abcd.app.goo.gl
@@ -954,6 +1069,71 @@ func (s *IosInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ManagedShortLink: Managed Short Link.
+type ManagedShortLink struct {
+	// CreationTime: Creation timestamp of the short link.
+	CreationTime string `json:"creationTime,omitempty"`
+
+	// FlaggedAttribute: Attributes that have been flagged about this short
+	// url.
+	//
+	// Possible values:
+	//   "UNSPECIFIED_ATTRIBUTE" - Indicates that no attributes were found
+	// for this short url.
+	//   "SPAM" - Indicates that short url has been flagged by AbuseIAm team
+	// as spam.
+	FlaggedAttribute []string `json:"flaggedAttribute,omitempty"`
+
+	// Info: Full Dyamic Link info
+	Info *DynamicLinkInfo `json:"info,omitempty"`
+
+	// Link: Short durable link url, for example,
+	// "https://sample.app.goo.gl/xyz123".
+	//
+	// Required.
+	Link string `json:"link,omitempty"`
+
+	// LinkName: Link name defined by the creator.
+	//
+	// Required.
+	LinkName string `json:"linkName,omitempty"`
+
+	// Visibility: Visibility status of link.
+	//
+	// Possible values:
+	//   "UNSPECIFIED_VISIBILITY" - Visibility of the link is not specified.
+	//   "UNARCHIVED" - Link created in console and should be shown in
+	// console.
+	//   "ARCHIVED" - Link created in console and should not be shown in
+	// console (but can
+	// be shown in the console again if it is unarchived).
+	//   "NEVER_SHOWN" - Link created outside of console and should never be
+	// shown in console.
+	Visibility string `json:"visibility,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CreationTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreationTime") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ManagedShortLink) MarshalJSON() ([]byte, error) {
+	type NoMethod ManagedShortLink
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // NavigationInfo: Information of navigation behavior.
 type NavigationInfo struct {
 	// EnableForcedRedirect: If this option is on, FDL click will be forced
@@ -1024,11 +1204,14 @@ func (s *SocialMetaTagInfo) MarshalJSON() ([]byte, error) {
 
 // Suffix: Short Dynamic Link suffix.
 type Suffix struct {
+	// CustomSuffix: Only applies to Option.CUSTOM.
+	CustomSuffix string `json:"customSuffix,omitempty"`
+
 	// Option: Suffix option.
 	//
 	// Possible values:
 	//   "OPTION_UNSPECIFIED" - The suffix option is not specified, performs
-	// as NOT_GUESSABLE .
+	// as UNGUESSABLE .
 	//   "UNGUESSABLE" - Short Dynamic Link suffix is a base62 [0-9A-Za-z]
 	// encoded string of
 	// a random generated 96 bit random number, which has a length of 17
@@ -1042,9 +1225,15 @@ type Suffix struct {
 	// length of 4 chars. the length will increase when all the space
 	// is
 	// occupied.
+	//   "CUSTOM" - Custom DDL suffix is a client specified string, for
+	// example,
+	// "buy2get1free".
+	// NOTE: custom suffix should only be available to managed short
+	// link
+	// creation
 	Option string `json:"option,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Option") to
+	// ForceSendFields is a list of field names (e.g. "CustomSuffix") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1052,10 +1241,10 @@ type Suffix struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Option") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "CustomSuffix") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -1065,6 +1254,144 @@ func (s *Suffix) MarshalJSON() ([]byte, error) {
 	type NoMethod Suffix
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// method id "firebasedynamiclinks.managedShortLinks.create":
+
+type ManagedShortLinksCreateCall struct {
+	s                             *Service
+	createmanagedshortlinkrequest *CreateManagedShortLinkRequest
+	urlParams_                    gensupport.URLParams
+	ctx_                          context.Context
+	header_                       http.Header
+}
+
+// Create: Creates a managed short Dynamic Link given either a valid
+// long Dynamic Link
+// or details such as Dynamic Link domain, Android and iOS app
+// information.
+// The created short Dynamic Link will not expire.
+//
+// This differs from CreateShortDynamicLink in the following ways:
+//   - The request will also contain a name for the link (non unique
+// name
+//     for the front end).
+//   - The response must be authenticated with an auth token (generated
+// with
+//     the admin service account).
+//   - The link will appear in the FDL list of links in the console
+// front end.
+//
+// The Dynamic Link domain in the request must be owned by
+// requester's
+// Firebase project.
+func (r *ManagedShortLinksService) Create(createmanagedshortlinkrequest *CreateManagedShortLinkRequest) *ManagedShortLinksCreateCall {
+	c := &ManagedShortLinksCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.createmanagedshortlinkrequest = createmanagedshortlinkrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ManagedShortLinksCreateCall) Fields(s ...googleapi.Field) *ManagedShortLinksCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ManagedShortLinksCreateCall) Context(ctx context.Context) *ManagedShortLinksCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ManagedShortLinksCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ManagedShortLinksCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.createmanagedshortlinkrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/managedShortLinks:create")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "firebasedynamiclinks.managedShortLinks.create" call.
+// Exactly one of *CreateManagedShortLinkResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *CreateManagedShortLinkResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ManagedShortLinksCreateCall) Do(opts ...googleapi.CallOption) (*CreateManagedShortLinkResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &CreateManagedShortLinkResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a managed short Dynamic Link given either a valid long Dynamic Link\nor details such as Dynamic Link domain, Android and iOS app information.\nThe created short Dynamic Link will not expire.\n\nThis differs from CreateShortDynamicLink in the following ways:\n  - The request will also contain a name for the link (non unique name\n    for the front end).\n  - The response must be authenticated with an auth token (generated with\n    the admin service account).\n  - The link will appear in the FDL list of links in the console front end.\n\nThe Dynamic Link domain in the request must be owned by requester's\nFirebase project.",
+	//   "flatPath": "v1/managedShortLinks:create",
+	//   "httpMethod": "POST",
+	//   "id": "firebasedynamiclinks.managedShortLinks.create",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/managedShortLinks:create",
+	//   "request": {
+	//     "$ref": "CreateManagedShortLinkRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "CreateManagedShortLinkResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/firebase"
+	//   ]
+	// }
+
 }
 
 // method id "firebasedynamiclinks.shortLinks.create":

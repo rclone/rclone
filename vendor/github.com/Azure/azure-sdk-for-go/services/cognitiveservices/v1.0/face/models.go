@@ -35,6 +35,11 @@ const (
 	Mask AccessoryType = "mask"
 )
 
+// PossibleAccessoryTypeValues returns an array of possible values for the AccessoryType const type.
+func PossibleAccessoryTypeValues() []AccessoryType {
+	return []AccessoryType{Glasses, HeadWear, Mask}
+}
+
 // AttributeType enumerates the values for attribute type.
 type AttributeType string
 
@@ -69,6 +74,11 @@ const (
 	AttributeTypeSmile AttributeType = "smile"
 )
 
+// PossibleAttributeTypeValues returns an array of possible values for the AttributeType const type.
+func PossibleAttributeTypeValues() []AttributeType {
+	return []AttributeType{AttributeTypeAccessories, AttributeTypeAge, AttributeTypeBlur, AttributeTypeEmotion, AttributeTypeExposure, AttributeTypeFacialHair, AttributeTypeGender, AttributeTypeGlasses, AttributeTypeHair, AttributeTypeHeadPose, AttributeTypeMakeup, AttributeTypeNoise, AttributeTypeOcclusion, AttributeTypeSmile}
+}
+
 // AzureRegions enumerates the values for azure regions.
 type AzureRegions string
 
@@ -99,6 +109,11 @@ const (
 	Westus2 AzureRegions = "westus2"
 )
 
+// PossibleAzureRegionsValues returns an array of possible values for the AzureRegions const type.
+func PossibleAzureRegionsValues() []AzureRegions {
+	return []AzureRegions{Australiaeast, Brazilsouth, Eastasia, Eastus, Eastus2, Northeurope, Southcentralus, Southeastasia, Westcentralus, Westeurope, Westus, Westus2}
+}
+
 // BlurLevel enumerates the values for blur level.
 type BlurLevel string
 
@@ -110,6 +125,11 @@ const (
 	// Medium ...
 	Medium BlurLevel = "Medium"
 )
+
+// PossibleBlurLevelValues returns an array of possible values for the BlurLevel const type.
+func PossibleBlurLevelValues() []BlurLevel {
+	return []BlurLevel{High, Low, Medium}
+}
 
 // ExposureLevel enumerates the values for exposure level.
 type ExposureLevel string
@@ -123,6 +143,11 @@ const (
 	UnderExposure ExposureLevel = "UnderExposure"
 )
 
+// PossibleExposureLevelValues returns an array of possible values for the ExposureLevel const type.
+func PossibleExposureLevelValues() []ExposureLevel {
+	return []ExposureLevel{GoodExposure, OverExposure, UnderExposure}
+}
+
 // FindSimilarMatchMode enumerates the values for find similar match mode.
 type FindSimilarMatchMode string
 
@@ -132,6 +157,11 @@ const (
 	// MatchPerson ...
 	MatchPerson FindSimilarMatchMode = "matchPerson"
 )
+
+// PossibleFindSimilarMatchModeValues returns an array of possible values for the FindSimilarMatchMode const type.
+func PossibleFindSimilarMatchModeValues() []FindSimilarMatchMode {
+	return []FindSimilarMatchMode{MatchFace, MatchPerson}
+}
 
 // Gender enumerates the values for gender.
 type Gender string
@@ -144,6 +174,11 @@ const (
 	// Male ...
 	Male Gender = "male"
 )
+
+// PossibleGenderValues returns an array of possible values for the Gender const type.
+func PossibleGenderValues() []Gender {
+	return []Gender{Female, Genderless, Male}
+}
 
 // GlassesType enumerates the values for glasses type.
 type GlassesType string
@@ -158,6 +193,11 @@ const (
 	// SwimmingGoggles ...
 	SwimmingGoggles GlassesType = "swimmingGoggles"
 )
+
+// PossibleGlassesTypeValues returns an array of possible values for the GlassesType const type.
+func PossibleGlassesTypeValues() []GlassesType {
+	return []GlassesType{NoGlasses, ReadingGlasses, Sunglasses, SwimmingGoggles}
+}
 
 // HairColorType enumerates the values for hair color type.
 type HairColorType string
@@ -181,6 +221,11 @@ const (
 	White HairColorType = "white"
 )
 
+// PossibleHairColorTypeValues returns an array of possible values for the HairColorType const type.
+func PossibleHairColorTypeValues() []HairColorType {
+	return []HairColorType{Black, Blond, Brown, Gray, Other, Red, Unknown, White}
+}
+
 // NoiseLevel enumerates the values for noise level.
 type NoiseLevel string
 
@@ -192,6 +237,11 @@ const (
 	// NoiseLevelMedium ...
 	NoiseLevelMedium NoiseLevel = "Medium"
 )
+
+// PossibleNoiseLevelValues returns an array of possible values for the NoiseLevel const type.
+func PossibleNoiseLevelValues() []NoiseLevel {
+	return []NoiseLevel{NoiseLevelHigh, NoiseLevelLow, NoiseLevelMedium}
+}
 
 // TrainingStatusType enumerates the values for training status type.
 type TrainingStatusType string
@@ -206,6 +256,11 @@ const (
 	// Succeeded ...
 	Succeeded TrainingStatusType = "succeeded"
 )
+
+// PossibleTrainingStatusTypeValues returns an array of possible values for the TrainingStatusType const type.
+func PossibleTrainingStatusTypeValues() []TrainingStatusType {
+	return []TrainingStatusType{Failed, Nonstarted, Running, Succeeded}
+}
 
 // Accessory accessory item and corresponding confidence level.
 type Accessory struct {

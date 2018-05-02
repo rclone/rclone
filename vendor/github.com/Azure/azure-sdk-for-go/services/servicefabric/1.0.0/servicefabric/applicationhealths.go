@@ -40,9 +40,10 @@ func NewApplicationHealthsClientWithBaseURI(baseURI string, timeout *int32) Appl
 }
 
 // Get get application healths
-//
-// applicationName is the name of the application eventsHealthStateFilter is the filter of the events health state
-// deployedApplicationsHealthStateFilter is the filter of the deployed application health state
+// Parameters:
+// applicationName - the name of the application
+// eventsHealthStateFilter - the filter of the events health state
+// deployedApplicationsHealthStateFilter - the filter of the deployed application health state
 func (client ApplicationHealthsClient) Get(ctx context.Context, applicationName string, eventsHealthStateFilter string, deployedApplicationsHealthStateFilter string) (result ApplicationHealth, err error) {
 	req, err := client.GetPreparer(ctx, applicationName, eventsHealthStateFilter, deployedApplicationsHealthStateFilter)
 	if err != nil {
@@ -114,8 +115,9 @@ func (client ApplicationHealthsClient) GetResponder(resp *http.Response) (result
 }
 
 // Send send application health
-//
-// applicationName is the name of the application applicationHealthReport is the report of the application health
+// Parameters:
+// applicationName - the name of the application
+// applicationHealthReport - the report of the application health
 func (client ApplicationHealthsClient) Send(ctx context.Context, applicationName string, applicationHealthReport ApplicationHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, applicationName, applicationHealthReport)
 	if err != nil {
@@ -153,7 +155,7 @@ func (client ApplicationHealthsClient) SendPreparer(ctx context.Context, applica
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/ReportHealth", pathParameters),

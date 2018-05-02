@@ -342,7 +342,7 @@ func debugLogReqError(r *Request, stage string, retrying bool, err error) {
 
 // Build will build the request's object so it can be signed and sent
 // to the service. Build will also validate all the request's parameters.
-// Anny additional build Handlers set on this request will be run
+// Any additional build Handlers set on this request will be run
 // in the order they were set.
 //
 // The request will only be built once. Multiple calls to build will have

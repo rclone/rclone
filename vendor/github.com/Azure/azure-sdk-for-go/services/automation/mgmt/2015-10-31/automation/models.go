@@ -40,15 +40,25 @@ const (
 	Unavailable AccountState = "Unavailable"
 )
 
+// PossibleAccountStateValues returns an array of possible values for the AccountState const type.
+func PossibleAccountStateValues() []AccountState {
+	return []AccountState{Ok, Suspended, Unavailable}
+}
+
 // AgentRegistrationKeyName enumerates the values for agent registration key name.
 type AgentRegistrationKeyName string
 
 const (
 	// Primary ...
-	Primary AgentRegistrationKeyName = "Primary"
+	Primary AgentRegistrationKeyName = "primary"
 	// Secondary ...
-	Secondary AgentRegistrationKeyName = "Secondary"
+	Secondary AgentRegistrationKeyName = "secondary"
 )
+
+// PossibleAgentRegistrationKeyNameValues returns an array of possible values for the AgentRegistrationKeyName const type.
+func PossibleAgentRegistrationKeyNameValues() []AgentRegistrationKeyName {
+	return []AgentRegistrationKeyName{Primary, Secondary}
+}
 
 // ContentSourceType enumerates the values for content source type.
 type ContentSourceType string
@@ -60,6 +70,11 @@ const (
 	URI ContentSourceType = "uri"
 )
 
+// PossibleContentSourceTypeValues returns an array of possible values for the ContentSourceType const type.
+func PossibleContentSourceTypeValues() []ContentSourceType {
+	return []ContentSourceType{EmbeddedContent, URI}
+}
+
 // DscConfigurationProvisioningState enumerates the values for dsc configuration provisioning state.
 type DscConfigurationProvisioningState string
 
@@ -67,6 +82,11 @@ const (
 	// Succeeded ...
 	Succeeded DscConfigurationProvisioningState = "Succeeded"
 )
+
+// PossibleDscConfigurationProvisioningStateValues returns an array of possible values for the DscConfigurationProvisioningState const type.
+func PossibleDscConfigurationProvisioningStateValues() []DscConfigurationProvisioningState {
+	return []DscConfigurationProvisioningState{Succeeded}
+}
 
 // DscConfigurationState enumerates the values for dsc configuration state.
 type DscConfigurationState string
@@ -79,6 +99,11 @@ const (
 	// DscConfigurationStatePublished ...
 	DscConfigurationStatePublished DscConfigurationState = "Published"
 )
+
+// PossibleDscConfigurationStateValues returns an array of possible values for the DscConfigurationState const type.
+func PossibleDscConfigurationStateValues() []DscConfigurationState {
+	return []DscConfigurationState{DscConfigurationStateEdit, DscConfigurationStateNew, DscConfigurationStatePublished}
+}
 
 // HTTPStatusCode enumerates the values for http status code.
 type HTTPStatusCode string
@@ -180,6 +205,30 @@ const (
 	UseProxy HTTPStatusCode = "UseProxy"
 )
 
+// PossibleHTTPStatusCodeValues returns an array of possible values for the HTTPStatusCode const type.
+func PossibleHTTPStatusCodeValues() []HTTPStatusCode {
+	return []HTTPStatusCode{Accepted, Ambiguous, BadGateway, BadRequest, Conflict, Continue, Created, ExpectationFailed, Forbidden, Found, GatewayTimeout, Gone, HTTPVersionNotSupported, InternalServerError, LengthRequired, MethodNotAllowed, Moved, MovedPermanently, MultipleChoices, NoContent, NonAuthoritativeInformation, NotAcceptable, NotFound, NotImplemented, NotModified, OK, PartialContent, PaymentRequired, PreconditionFailed, ProxyAuthenticationRequired, Redirect, RedirectKeepVerb, RedirectMethod, RequestedRangeNotSatisfiable, RequestEntityTooLarge, RequestTimeout, RequestURITooLong, ResetContent, SeeOther, ServiceUnavailable, SwitchingProtocols, TemporaryRedirect, Unauthorized, UnsupportedMediaType, Unused, UpgradeRequired, UseProxy}
+}
+
+// JobProvisioningState enumerates the values for job provisioning state.
+type JobProvisioningState string
+
+const (
+	// JobProvisioningStateFailed ...
+	JobProvisioningStateFailed JobProvisioningState = "Failed"
+	// JobProvisioningStateProcessing ...
+	JobProvisioningStateProcessing JobProvisioningState = "Processing"
+	// JobProvisioningStateSucceeded ...
+	JobProvisioningStateSucceeded JobProvisioningState = "Succeeded"
+	// JobProvisioningStateSuspended ...
+	JobProvisioningStateSuspended JobProvisioningState = "Suspended"
+)
+
+// PossibleJobProvisioningStateValues returns an array of possible values for the JobProvisioningState const type.
+func PossibleJobProvisioningStateValues() []JobProvisioningState {
+	return []JobProvisioningState{JobProvisioningStateFailed, JobProvisioningStateProcessing, JobProvisioningStateSucceeded, JobProvisioningStateSuspended}
+}
+
 // JobStatus enumerates the values for job status.
 type JobStatus string
 
@@ -212,6 +261,11 @@ const (
 	JobStatusSuspending JobStatus = "Suspending"
 )
 
+// PossibleJobStatusValues returns an array of possible values for the JobStatus const type.
+func PossibleJobStatusValues() []JobStatus {
+	return []JobStatus{JobStatusActivating, JobStatusBlocked, JobStatusCompleted, JobStatusDisconnected, JobStatusFailed, JobStatusNew, JobStatusRemoving, JobStatusResuming, JobStatusRunning, JobStatusStopped, JobStatusStopping, JobStatusSuspended, JobStatusSuspending}
+}
+
 // JobStreamType enumerates the values for job stream type.
 type JobStreamType string
 
@@ -231,6 +285,39 @@ const (
 	// Warning ...
 	Warning JobStreamType = "Warning"
 )
+
+// PossibleJobStreamTypeValues returns an array of possible values for the JobStreamType const type.
+func PossibleJobStreamTypeValues() []JobStreamType {
+	return []JobStreamType{Any, Debug, Error, Output, Progress, Verbose, Warning}
+}
+
+// KeyName enumerates the values for key name.
+type KeyName string
+
+const (
+	// KeyNamePrimary ...
+	KeyNamePrimary KeyName = "primary"
+	// KeyNameSecondary ...
+	KeyNameSecondary KeyName = "secondary"
+)
+
+// PossibleKeyNameValues returns an array of possible values for the KeyName const type.
+func PossibleKeyNameValues() []KeyName {
+	return []KeyName{KeyNamePrimary, KeyNameSecondary}
+}
+
+// KeyPermissions enumerates the values for key permissions.
+type KeyPermissions string
+
+const (
+	// Full ...
+	Full KeyPermissions = "Full"
+)
+
+// PossibleKeyPermissionsValues returns an array of possible values for the KeyPermissions const type.
+func PossibleKeyPermissionsValues() []KeyPermissions {
+	return []KeyPermissions{Full}
+}
 
 // ModuleProvisioningState enumerates the values for module provisioning state.
 type ModuleProvisioningState string
@@ -270,6 +357,11 @@ const (
 	ModuleProvisioningStateUpdating ModuleProvisioningState = "Updating"
 )
 
+// PossibleModuleProvisioningStateValues returns an array of possible values for the ModuleProvisioningState const type.
+func PossibleModuleProvisioningStateValues() []ModuleProvisioningState {
+	return []ModuleProvisioningState{ModuleProvisioningStateActivitiesStored, ModuleProvisioningStateCancelled, ModuleProvisioningStateConnectionTypeImported, ModuleProvisioningStateContentDownloaded, ModuleProvisioningStateContentRetrieved, ModuleProvisioningStateContentStored, ModuleProvisioningStateContentValidated, ModuleProvisioningStateCreated, ModuleProvisioningStateCreating, ModuleProvisioningStateFailed, ModuleProvisioningStateModuleDataStored, ModuleProvisioningStateModuleImportRunbookComplete, ModuleProvisioningStateRunningImportModuleRunbook, ModuleProvisioningStateStartingImportModuleRunbook, ModuleProvisioningStateSucceeded, ModuleProvisioningStateUpdating}
+}
+
 // RunbookProvisioningState enumerates the values for runbook provisioning state.
 type RunbookProvisioningState string
 
@@ -277,6 +369,11 @@ const (
 	// RunbookProvisioningStateSucceeded ...
 	RunbookProvisioningStateSucceeded RunbookProvisioningState = "Succeeded"
 )
+
+// PossibleRunbookProvisioningStateValues returns an array of possible values for the RunbookProvisioningState const type.
+func PossibleRunbookProvisioningStateValues() []RunbookProvisioningState {
+	return []RunbookProvisioningState{RunbookProvisioningStateSucceeded}
+}
 
 // RunbookState enumerates the values for runbook state.
 type RunbookState string
@@ -289,6 +386,11 @@ const (
 	// RunbookStatePublished ...
 	RunbookStatePublished RunbookState = "Published"
 )
+
+// PossibleRunbookStateValues returns an array of possible values for the RunbookState const type.
+func PossibleRunbookStateValues() []RunbookState {
+	return []RunbookState{RunbookStateEdit, RunbookStateNew, RunbookStatePublished}
+}
 
 // RunbookTypeEnum enumerates the values for runbook type enum.
 type RunbookTypeEnum string
@@ -307,6 +409,11 @@ const (
 	// Script ...
 	Script RunbookTypeEnum = "Script"
 )
+
+// PossibleRunbookTypeEnumValues returns an array of possible values for the RunbookTypeEnum const type.
+func PossibleRunbookTypeEnumValues() []RunbookTypeEnum {
+	return []RunbookTypeEnum{Graph, GraphPowerShell, GraphPowerShellWorkflow, PowerShell, PowerShellWorkflow, Script}
+}
 
 // ScheduleDay enumerates the values for schedule day.
 type ScheduleDay string
@@ -328,6 +435,11 @@ const (
 	Wednesday ScheduleDay = "Wednesday"
 )
 
+// PossibleScheduleDayValues returns an array of possible values for the ScheduleDay const type.
+func PossibleScheduleDayValues() []ScheduleDay {
+	return []ScheduleDay{Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday}
+}
+
 // ScheduleFrequency enumerates the values for schedule frequency.
 type ScheduleFrequency string
 
@@ -344,6 +456,11 @@ const (
 	Week ScheduleFrequency = "Week"
 )
 
+// PossibleScheduleFrequencyValues returns an array of possible values for the ScheduleFrequency const type.
+func PossibleScheduleFrequencyValues() []ScheduleFrequency {
+	return []ScheduleFrequency{Day, Hour, Month, OneTime, Week}
+}
+
 // SkuNameEnum enumerates the values for sku name enum.
 type SkuNameEnum string
 
@@ -353,6 +470,11 @@ const (
 	// Free ...
 	Free SkuNameEnum = "Free"
 )
+
+// PossibleSkuNameEnumValues returns an array of possible values for the SkuNameEnum const type.
+func PossibleSkuNameEnumValues() []SkuNameEnum {
+	return []SkuNameEnum{Basic, Free}
+}
 
 // Account definition of the automation account type.
 type Account struct {
@@ -781,6 +903,21 @@ type Activity struct {
 	*ActivityProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Activity.
+func (a Activity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.ActivityProperties != nil {
+		objectMap["properties"] = a.ActivityProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Activity struct.
 func (a *Activity) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1018,7 +1155,7 @@ type AgentRegistrationKeys struct {
 
 // AgentRegistrationRegenerateKeyParameter the parameters supplied to the regenerate keys operation.
 type AgentRegistrationRegenerateKeyParameter struct {
-	// KeyName - Gets or sets the agent registration key name - Primary or Secondary. Possible values include: 'Primary', 'Secondary'
+	// KeyName - Gets or sets the agent registration key name - primary or secondary. Possible values include: 'Primary', 'Secondary'
 	KeyName AgentRegistrationKeyName `json:"keyName,omitempty"`
 	// Name - Gets or sets the name of the resource.
 	Name *string `json:"name,omitempty"`
@@ -1031,7 +1168,9 @@ type AgentRegistrationRegenerateKeyParameter struct {
 // MarshalJSON is the custom marshaler for AgentRegistrationRegenerateKeyParameter.
 func (arrkp AgentRegistrationRegenerateKeyParameter) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["keyName"] = arrkp.KeyName
+	if arrkp.KeyName != "" {
+		objectMap["keyName"] = arrkp.KeyName
+	}
 	if arrkp.Name != nil {
 		objectMap["name"] = arrkp.Name
 	}
@@ -1055,6 +1194,24 @@ type Certificate struct {
 	Type *string `json:"type,omitempty"`
 	// CertificateProperties - Gets or sets the properties of the certificate.
 	*CertificateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Certificate.
+func (c Certificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.CertificateProperties != nil {
+		objectMap["properties"] = c.CertificateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Certificate struct.
@@ -1115,6 +1272,18 @@ type CertificateCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// CertificateCreateOrUpdateProperties - Gets or sets the properties of the certificate.
 	*CertificateCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateCreateOrUpdateParameters.
+func (ccoup CertificateCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ccoup.Name != nil {
+		objectMap["name"] = ccoup.Name
+	}
+	if ccoup.CertificateCreateOrUpdateProperties != nil {
+		objectMap["properties"] = ccoup.CertificateCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CertificateCreateOrUpdateParameters struct.
@@ -1288,6 +1457,18 @@ type CertificateUpdateParameters struct {
 	*CertificateUpdateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CertificateUpdateParameters.
+func (cup CertificateUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.Name != nil {
+		objectMap["name"] = cup.Name
+	}
+	if cup.CertificateUpdateProperties != nil {
+		objectMap["properties"] = cup.CertificateUpdateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CertificateUpdateParameters struct.
 func (cup *CertificateUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1338,6 +1519,24 @@ type Connection struct {
 	Type *string `json:"type,omitempty"`
 	// ConnectionProperties - Gets or sets the properties of the connection.
 	*ConnectionProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Connection.
+func (c Connection) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.ConnectionProperties != nil {
+		objectMap["properties"] = c.ConnectionProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Connection struct.
@@ -1397,6 +1596,18 @@ type ConnectionCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// ConnectionCreateOrUpdateProperties - Gets or sets the properties of the connection.
 	*ConnectionCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ConnectionCreateOrUpdateParameters.
+func (ccoup ConnectionCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ccoup.Name != nil {
+		objectMap["name"] = ccoup.Name
+	}
+	if ccoup.ConnectionCreateOrUpdateProperties != nil {
+		objectMap["properties"] = ccoup.ConnectionCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectionCreateOrUpdateParameters struct.
@@ -1607,6 +1818,24 @@ type ConnectionType struct {
 	*ConnectionTypeProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ConnectionType.
+func (ct ConnectionType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ct.ID != nil {
+		objectMap["id"] = ct.ID
+	}
+	if ct.Name != nil {
+		objectMap["name"] = ct.Name
+	}
+	if ct.Type != nil {
+		objectMap["type"] = ct.Type
+	}
+	if ct.ConnectionTypeProperties != nil {
+		objectMap["properties"] = ct.ConnectionTypeProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ConnectionType struct.
 func (ct *ConnectionType) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1671,6 +1900,18 @@ type ConnectionTypeCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// ConnectionTypeCreateOrUpdateProperties - Gets or sets the value of the connection type.
 	*ConnectionTypeCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ConnectionTypeCreateOrUpdateParameters.
+func (ctcoup ConnectionTypeCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ctcoup.Name != nil {
+		objectMap["name"] = ctcoup.Name
+	}
+	if ctcoup.ConnectionTypeCreateOrUpdateProperties != nil {
+		objectMap["properties"] = ctcoup.ConnectionTypeCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectionTypeCreateOrUpdateParameters struct.
@@ -1871,6 +2112,18 @@ type ConnectionUpdateParameters struct {
 	*ConnectionUpdateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ConnectionUpdateParameters.
+func (cup ConnectionUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.Name != nil {
+		objectMap["name"] = cup.Name
+	}
+	if cup.ConnectionUpdateProperties != nil {
+		objectMap["properties"] = cup.ConnectionUpdateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ConnectionUpdateParameters struct.
 func (cup *ConnectionUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1967,6 +2220,24 @@ type Credential struct {
 	*CredentialProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Credential.
+func (c Credential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.CredentialProperties != nil {
+		objectMap["properties"] = c.CredentialProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Credential struct.
 func (c *Credential) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2024,6 +2295,18 @@ type CredentialCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// CredentialCreateOrUpdateProperties - Gets or sets the properties of the credential.
 	*CredentialCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CredentialCreateOrUpdateParameters.
+func (ccoup CredentialCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ccoup.Name != nil {
+		objectMap["name"] = ccoup.Name
+	}
+	if ccoup.CredentialCreateOrUpdateProperties != nil {
+		objectMap["properties"] = ccoup.CredentialCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CredentialCreateOrUpdateParameters struct.
@@ -2191,6 +2474,18 @@ type CredentialUpdateParameters struct {
 	*CredentialUpdateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CredentialUpdateParameters.
+func (cup CredentialUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.Name != nil {
+		objectMap["name"] = cup.Name
+	}
+	if cup.CredentialUpdateProperties != nil {
+		objectMap["properties"] = cup.CredentialUpdateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CredentialUpdateParameters struct.
 func (cup *CredentialUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2237,10 +2532,32 @@ type CredentialUpdateProperties struct {
 // DscCompilationJob definition of the Dsc Compilation job.
 type DscCompilationJob struct {
 	autorest.Response `json:"-"`
-	// ID - Gets the id of the resource.
-	ID *string `json:"id,omitempty"`
 	// DscCompilationJobProperties - Gets or sets the properties of the Dsc Compilation job.
 	*DscCompilationJobProperties `json:"properties,omitempty"`
+	// ID - Resource Id
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DscCompilationJob.
+func (dcj DscCompilationJob) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dcj.DscCompilationJobProperties != nil {
+		objectMap["properties"] = dcj.DscCompilationJobProperties
+	}
+	if dcj.ID != nil {
+		objectMap["id"] = dcj.ID
+	}
+	if dcj.Name != nil {
+		objectMap["name"] = dcj.Name
+	}
+	if dcj.Type != nil {
+		objectMap["type"] = dcj.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DscCompilationJob struct.
@@ -2252,6 +2569,15 @@ func (dcj *DscCompilationJob) UnmarshalJSON(body []byte) error {
 	}
 	for k, v := range m {
 		switch k {
+		case "properties":
+			if v != nil {
+				var dscCompilationJobProperties DscCompilationJobProperties
+				err = json.Unmarshal(*v, &dscCompilationJobProperties)
+				if err != nil {
+					return err
+				}
+				dcj.DscCompilationJobProperties = &dscCompilationJobProperties
+			}
 		case "id":
 			if v != nil {
 				var ID string
@@ -2261,14 +2587,23 @@ func (dcj *DscCompilationJob) UnmarshalJSON(body []byte) error {
 				}
 				dcj.ID = &ID
 			}
-		case "properties":
+		case "name":
 			if v != nil {
-				var dscCompilationJobProperties DscCompilationJobProperties
-				err = json.Unmarshal(*v, &dscCompilationJobProperties)
+				var name string
+				err = json.Unmarshal(*v, &name)
 				if err != nil {
 					return err
 				}
-				dcj.DscCompilationJobProperties = &dscCompilationJobProperties
+				dcj.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				dcj.Type = &typeVar
 			}
 		}
 	}
@@ -2494,6 +2829,10 @@ type DscCompilationJobProperties struct {
 	JobID *uuid.UUID `json:"jobId,omitempty"`
 	// CreationTime - Gets the creation time of the job.
 	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// ProvisioningState - The current provisioning state of the job.
+	ProvisioningState *JobProvisioningStateProperty `json:"provisioningState,omitempty"`
+	// RunOn - Gets or sets the runOn which specifies the group name where the job is to be executed.
+	RunOn *string `json:"runOn,omitempty"`
 	// Status - Gets or sets the status of the job. Possible values include: 'JobStatusNew', 'JobStatusActivating', 'JobStatusRunning', 'JobStatusCompleted', 'JobStatusFailed', 'JobStatusStopped', 'JobStatusBlocked', 'JobStatusSuspended', 'JobStatusDisconnected', 'JobStatusSuspending', 'JobStatusStopping', 'JobStatusResuming', 'JobStatusRemoving'
 	Status JobStatus `json:"status,omitempty"`
 	// StatusDetails - Gets or sets the status details of the job.
@@ -2527,7 +2866,15 @@ func (dcjp DscCompilationJobProperties) MarshalJSON() ([]byte, error) {
 	if dcjp.CreationTime != nil {
 		objectMap["creationTime"] = dcjp.CreationTime
 	}
-	objectMap["status"] = dcjp.Status
+	if dcjp.ProvisioningState != nil {
+		objectMap["provisioningState"] = dcjp.ProvisioningState
+	}
+	if dcjp.RunOn != nil {
+		objectMap["runOn"] = dcjp.RunOn
+	}
+	if dcjp.Status != "" {
+		objectMap["status"] = dcjp.Status
+	}
 	if dcjp.StatusDetails != nil {
 		objectMap["statusDetails"] = dcjp.StatusDetails
 	}
@@ -2938,7 +3285,9 @@ type DscConfigurationProperties struct {
 // MarshalJSON is the custom marshaler for DscConfigurationProperties.
 func (dcp DscConfigurationProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["provisioningState"] = dcp.ProvisioningState
+	if dcp.ProvisioningState != "" {
+		objectMap["provisioningState"] = dcp.ProvisioningState
+	}
 	if dcp.JobCount != nil {
 		objectMap["jobCount"] = dcp.JobCount
 	}
@@ -2948,7 +3297,9 @@ func (dcp DscConfigurationProperties) MarshalJSON() ([]byte, error) {
 	if dcp.Source != nil {
 		objectMap["source"] = dcp.Source
 	}
-	objectMap["state"] = dcp.State
+	if dcp.State != "" {
+		objectMap["state"] = dcp.State
+	}
 	if dcp.LogVerbose != nil {
 		objectMap["logVerbose"] = dcp.LogVerbose
 	}
@@ -2962,6 +3313,73 @@ func (dcp DscConfigurationProperties) MarshalJSON() ([]byte, error) {
 		objectMap["description"] = dcp.Description
 	}
 	return json.Marshal(objectMap)
+}
+
+// DscConfigurationUpdateParameters the parameters supplied to the create or update configuration operation.
+type DscConfigurationUpdateParameters struct {
+	// DscConfigurationCreateOrUpdateProperties - Gets or sets configuration create or update properties.
+	*DscConfigurationCreateOrUpdateProperties `json:"properties,omitempty"`
+	// Name - Gets or sets name of the resource.
+	Name *string `json:"name,omitempty"`
+	// Tags - Gets or sets the tags attached to the resource.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for DscConfigurationUpdateParameters.
+func (dcup DscConfigurationUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dcup.DscConfigurationCreateOrUpdateProperties != nil {
+		objectMap["properties"] = dcup.DscConfigurationCreateOrUpdateProperties
+	}
+	if dcup.Name != nil {
+		objectMap["name"] = dcup.Name
+	}
+	if dcup.Tags != nil {
+		objectMap["tags"] = dcup.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for DscConfigurationUpdateParameters struct.
+func (dcup *DscConfigurationUpdateParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var dscConfigurationCreateOrUpdateProperties DscConfigurationCreateOrUpdateProperties
+				err = json.Unmarshal(*v, &dscConfigurationCreateOrUpdateProperties)
+				if err != nil {
+					return err
+				}
+				dcup.DscConfigurationCreateOrUpdateProperties = &dscConfigurationCreateOrUpdateProperties
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				dcup.Name = &name
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				dcup.Tags = tags
+			}
+		}
+	}
+
+	return nil
 }
 
 // DscMetaConfiguration definition of the DSC Meta Configuration.
@@ -3009,73 +3427,23 @@ type DscNode struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type
 	Type *string `json:"type,omitempty"`
-	// Location - Resource location
-	Location *string `json:"location,omitempty"`
-	// Tags - Resource tags
-	Tags map[string]*string `json:"tags"`
-}
-
-// MarshalJSON is the custom marshaler for DscNode.
-func (dn DscNode) MarshalJSON() ([]byte, error) {
-	objectMap := make(map[string]interface{})
-	if dn.LastSeen != nil {
-		objectMap["lastSeen"] = dn.LastSeen
-	}
-	if dn.RegistrationTime != nil {
-		objectMap["registrationTime"] = dn.RegistrationTime
-	}
-	if dn.IP != nil {
-		objectMap["ip"] = dn.IP
-	}
-	if dn.AccountID != nil {
-		objectMap["accountId"] = dn.AccountID
-	}
-	if dn.NodeConfiguration != nil {
-		objectMap["nodeConfiguration"] = dn.NodeConfiguration
-	}
-	if dn.Status != nil {
-		objectMap["status"] = dn.Status
-	}
-	if dn.NodeID != nil {
-		objectMap["nodeId"] = dn.NodeID
-	}
-	if dn.Etag != nil {
-		objectMap["etag"] = dn.Etag
-	}
-	if dn.ExtensionHandler != nil {
-		objectMap["extensionHandler"] = dn.ExtensionHandler
-	}
-	if dn.ID != nil {
-		objectMap["id"] = dn.ID
-	}
-	if dn.Name != nil {
-		objectMap["name"] = dn.Name
-	}
-	if dn.Type != nil {
-		objectMap["type"] = dn.Type
-	}
-	if dn.Location != nil {
-		objectMap["location"] = dn.Location
-	}
-	if dn.Tags != nil {
-		objectMap["tags"] = dn.Tags
-	}
-	return json.Marshal(objectMap)
 }
 
 // DscNodeConfiguration definition of the dsc node configuration.
 type DscNodeConfiguration struct {
 	autorest.Response `json:"-"`
-	// Name - Gets or sets the node configuration name.
-	Name *string `json:"name,omitempty"`
 	// LastModifiedTime - Gets or sets the last modified time.
 	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
 	// CreationTime - Gets or sets creation time.
 	CreationTime *date.Time `json:"creationTime,omitempty"`
 	// Configuration - Gets or sets the configuration of the node.
 	Configuration *DscConfigurationAssociationProperty `json:"configuration,omitempty"`
-	// ID - Gets or sets the id of the resource.
+	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
+	// Name - Resource name
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type
+	Type *string `json:"type,omitempty"`
 }
 
 // DscNodeConfigurationAssociationProperty the dsc nodeconfiguration property associated with the entity.
@@ -3661,10 +4029,22 @@ type HybridRunbookWorkerGroupUpdateParameters struct {
 // Job definition of the job.
 type Job struct {
 	autorest.Response `json:"-"`
-	// ID - Gets or sets the id of the resource.
+	// ID - Id of the resource.
 	ID *string `json:"id,omitempty"`
-	// JobProperties - Gets or sets the properties of the job.
+	// JobProperties - The properties of the job.
 	*JobProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Job.
+func (j Job) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if j.ID != nil {
+		objectMap["id"] = j.ID
+	}
+	if j.JobProperties != nil {
+		objectMap["properties"] = j.JobProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Job struct.
@@ -3704,12 +4084,6 @@ func (j *Job) UnmarshalJSON(body []byte) error {
 type JobCreateParameters struct {
 	// JobCreateProperties - Gets or sets the list of job properties.
 	*JobCreateProperties `json:"properties,omitempty"`
-	// Name - Gets or sets name of the resource.
-	Name *string `json:"name,omitempty"`
-	// Location - Gets or sets the location of the resource.
-	Location *string `json:"location,omitempty"`
-	// Tags - Gets or sets the tags attached to the resource.
-	Tags map[string]*string `json:"tags"`
 }
 
 // MarshalJSON is the custom marshaler for JobCreateParameters.
@@ -3717,15 +4091,6 @@ func (jcp JobCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
 	if jcp.JobCreateProperties != nil {
 		objectMap["properties"] = jcp.JobCreateProperties
-	}
-	if jcp.Name != nil {
-		objectMap["name"] = jcp.Name
-	}
-	if jcp.Location != nil {
-		objectMap["location"] = jcp.Location
-	}
-	if jcp.Tags != nil {
-		objectMap["tags"] = jcp.Tags
 	}
 	return json.Marshal(objectMap)
 }
@@ -3747,33 +4112,6 @@ func (jcp *JobCreateParameters) UnmarshalJSON(body []byte) error {
 					return err
 				}
 				jcp.JobCreateProperties = &jobCreateProperties
-			}
-		case "name":
-			if v != nil {
-				var name string
-				err = json.Unmarshal(*v, &name)
-				if err != nil {
-					return err
-				}
-				jcp.Name = &name
-			}
-		case "location":
-			if v != nil {
-				var location string
-				err = json.Unmarshal(*v, &location)
-				if err != nil {
-					return err
-				}
-				jcp.Location = &location
-			}
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				jcp.Tags = tags
 			}
 		}
 	}
@@ -3936,6 +4274,8 @@ type JobProperties struct {
 	LastStatusModifiedTime *date.Time `json:"lastStatusModifiedTime,omitempty"`
 	// Parameters - Gets or sets the parameters of the job.
 	Parameters map[string]*string `json:"parameters"`
+	// ProvisioningState - The provisioning state of a resource.
+	ProvisioningState *JobProvisioningStateProperty `json:"provisioningState,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for JobProperties.
@@ -3956,7 +4296,9 @@ func (jp JobProperties) MarshalJSON() ([]byte, error) {
 	if jp.CreationTime != nil {
 		objectMap["creationTime"] = jp.CreationTime
 	}
-	objectMap["status"] = jp.Status
+	if jp.Status != "" {
+		objectMap["status"] = jp.Status
+	}
 	if jp.StatusDetails != nil {
 		objectMap["statusDetails"] = jp.StatusDetails
 	}
@@ -3978,7 +4320,16 @@ func (jp JobProperties) MarshalJSON() ([]byte, error) {
 	if jp.Parameters != nil {
 		objectMap["parameters"] = jp.Parameters
 	}
+	if jp.ProvisioningState != nil {
+		objectMap["provisioningState"] = jp.ProvisioningState
+	}
 	return json.Marshal(objectMap)
+}
+
+// JobProvisioningStateProperty the provisioning state property.
+type JobProvisioningStateProperty struct {
+	// ProvisioningState - The provisioning state of the resource. Possible values include: 'JobProvisioningStateFailed', 'JobProvisioningStateSucceeded', 'JobProvisioningStateSuspended', 'JobProvisioningStateProcessing'
+	ProvisioningState JobProvisioningState `json:"provisioningState,omitempty"`
 }
 
 // JobSchedule definition of the job schedule.
@@ -3992,6 +4343,24 @@ type JobSchedule struct {
 	Type *string `json:"type,omitempty"`
 	// JobScheduleProperties - Gets or sets the properties of the job schedule.
 	*JobScheduleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for JobSchedule.
+func (js JobSchedule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if js.ID != nil {
+		objectMap["id"] = js.ID
+	}
+	if js.Name != nil {
+		objectMap["name"] = js.Name
+	}
+	if js.Type != nil {
+		objectMap["type"] = js.Type
+	}
+	if js.JobScheduleProperties != nil {
+		objectMap["properties"] = js.JobScheduleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for JobSchedule struct.
@@ -4049,6 +4418,15 @@ func (js *JobSchedule) UnmarshalJSON(body []byte) error {
 type JobScheduleCreateParameters struct {
 	// JobScheduleCreateProperties - Gets or sets the list of job schedule properties.
 	*JobScheduleCreateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for JobScheduleCreateParameters.
+func (jscp JobScheduleCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if jscp.JobScheduleCreateProperties != nil {
+		objectMap["properties"] = jscp.JobScheduleCreateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for JobScheduleCreateParameters struct.
@@ -4251,6 +4629,18 @@ type JobStream struct {
 	*JobStreamProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for JobStream.
+func (js JobStream) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if js.ID != nil {
+		objectMap["id"] = js.ID
+	}
+	if js.JobStreamProperties != nil {
+		objectMap["properties"] = js.JobStreamProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for JobStream struct.
 func (js *JobStream) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4411,7 +4801,9 @@ func (jsp JobStreamProperties) MarshalJSON() ([]byte, error) {
 	if jsp.Time != nil {
 		objectMap["time"] = jsp.Time
 	}
-	objectMap["streamType"] = jsp.StreamType
+	if jsp.StreamType != "" {
+		objectMap["streamType"] = jsp.StreamType
+	}
 	if jsp.StreamText != nil {
 		objectMap["streamText"] = jsp.StreamText
 	}
@@ -4422,6 +4814,30 @@ func (jsp JobStreamProperties) MarshalJSON() ([]byte, error) {
 		objectMap["value"] = jsp.Value
 	}
 	return json.Marshal(objectMap)
+}
+
+// Key automation key which is used to register a DSC Node
+type Key struct {
+	// KeyName - Automation key name. Possible values include: 'KeyNamePrimary', 'KeyNameSecondary'
+	KeyName KeyName `json:"keyName,omitempty"`
+	// Permissions - Automation key permissions. Possible values include: 'Full'
+	Permissions KeyPermissions `json:"permissions,omitempty"`
+	// Value - Value of the Automation Key used for registration.
+	Value *string `json:"value,omitempty"`
+}
+
+// KeyListResult ...
+type KeyListResult struct {
+	autorest.Response `json:"-"`
+	// Value - Lists the automation keys.
+	Value *[]Key `json:"value,omitempty"`
+}
+
+// LinkedWorkspace definition of the linked workspace.
+type LinkedWorkspace struct {
+	autorest.Response `json:"-"`
+	// ID - Gets the id of the linked workspace.
+	ID *string `json:"id,omitempty"`
 }
 
 // Module definition of the module type.
@@ -4881,6 +5297,16 @@ type OperationListResult struct {
 	Value *[]Operation `json:"value,omitempty"`
 }
 
+// ProxyResource the Resource definition.
+type ProxyResource struct {
+	// ID - Resource Id
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type
+	Type *string `json:"type,omitempty"`
+}
+
 // ReadCloser ...
 type ReadCloser struct {
 	autorest.Response `json:"-"`
@@ -5220,55 +5646,6 @@ func (rd RunbookDraft) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// RunbookDraftCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
-// operation.
-type RunbookDraftCreateOrUpdateFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future RunbookDraftCreateOrUpdateFuture) Result(client RunbookDraftClient) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "automation.RunbookDraftCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
-		return
-	}
-	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("automation.RunbookDraftCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "automation.RunbookDraftCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
-		return
-	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "automation.RunbookDraftCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "automation.RunbookDraftCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
-	}
-	return
-}
-
 // RunbookDraftPublishFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type RunbookDraftPublishFuture struct {
 	azure.Future
@@ -5277,7 +5654,7 @@ type RunbookDraftPublishFuture struct {
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RunbookDraftPublishFuture) Result(client RunbookDraftClient) (r Runbook, err error) {
+func (future RunbookDraftPublishFuture) Result(client RunbookDraftClient) (s String, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5285,10 +5662,10 @@ func (future RunbookDraftPublishFuture) Result(client RunbookDraftClient) (r Run
 		return
 	}
 	if !done {
-		return r, azure.NewAsyncOpIncompleteError("automation.RunbookDraftPublishFuture")
+		return s, azure.NewAsyncOpIncompleteError("automation.RunbookDraftPublishFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
-		r, err = client.PublishResponder(future.Response())
+		s, err = client.PublishResponder(future.Response())
 		if err != nil {
 			err = autorest.NewErrorWithError(err, "automation.RunbookDraftPublishFuture", "Result", future.Response(), "Failure responding to request")
 		}
@@ -5310,9 +5687,58 @@ func (future RunbookDraftPublishFuture) Result(client RunbookDraftClient) (r Run
 		err = autorest.NewErrorWithError(err, "automation.RunbookDraftPublishFuture", "Result", resp, "Failure sending request")
 		return
 	}
-	r, err = client.PublishResponder(resp)
+	s, err = client.PublishResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "automation.RunbookDraftPublishFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
+// RunbookDraftReplaceContentFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
+type RunbookDraftReplaceContentFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future RunbookDraftReplaceContentFuture) Result(client RunbookDraftClient) (s String, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "automation.RunbookDraftReplaceContentFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return s, azure.NewAsyncOpIncompleteError("automation.RunbookDraftReplaceContentFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		s, err = client.ReplaceContentResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "automation.RunbookDraftReplaceContentFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "automation.RunbookDraftReplaceContentFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	s, err = client.ReplaceContentResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "automation.RunbookDraftReplaceContentFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -5476,11 +5902,15 @@ type RunbookProperties struct {
 // MarshalJSON is the custom marshaler for RunbookProperties.
 func (rp RunbookProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["runbookType"] = rp.RunbookType
+	if rp.RunbookType != "" {
+		objectMap["runbookType"] = rp.RunbookType
+	}
 	if rp.PublishContentLink != nil {
 		objectMap["publishContentLink"] = rp.PublishContentLink
 	}
-	objectMap["state"] = rp.State
+	if rp.State != "" {
+		objectMap["state"] = rp.State
+	}
 	if rp.LogVerbose != nil {
 		objectMap["logVerbose"] = rp.LogVerbose
 	}
@@ -5502,7 +5932,9 @@ func (rp RunbookProperties) MarshalJSON() ([]byte, error) {
 	if rp.Draft != nil {
 		objectMap["draft"] = rp.Draft
 	}
-	objectMap["provisioningState"] = rp.ProvisioningState
+	if rp.ProvisioningState != "" {
+		objectMap["provisioningState"] = rp.ProvisioningState
+	}
 	if rp.LastModifiedBy != nil {
 		objectMap["lastModifiedBy"] = rp.LastModifiedBy
 	}
@@ -5624,6 +6056,24 @@ type Schedule struct {
 	*ScheduleProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Schedule.
+func (s Schedule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Type != nil {
+		objectMap["type"] = s.Type
+	}
+	if s.ScheduleProperties != nil {
+		objectMap["properties"] = s.ScheduleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Schedule struct.
 func (s *Schedule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5687,6 +6137,18 @@ type ScheduleCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// ScheduleCreateOrUpdateProperties - Gets or sets the list of schedule properties.
 	*ScheduleCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ScheduleCreateOrUpdateParameters.
+func (scoup ScheduleCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scoup.Name != nil {
+		objectMap["name"] = scoup.Name
+	}
+	if scoup.ScheduleCreateOrUpdateProperties != nil {
+		objectMap["properties"] = scoup.ScheduleCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ScheduleCreateOrUpdateParameters struct.
@@ -5882,6 +6344,18 @@ type ScheduleUpdateParameters struct {
 	*ScheduleUpdateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ScheduleUpdateParameters.
+func (sup ScheduleUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sup.Name != nil {
+		objectMap["name"] = sup.Name
+	}
+	if sup.ScheduleUpdateProperties != nil {
+		objectMap["properties"] = sup.ScheduleUpdateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ScheduleUpdateParameters struct.
 func (sup *ScheduleUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5921,6 +6395,12 @@ type ScheduleUpdateProperties struct {
 	Description *string `json:"description,omitempty"`
 	// IsEnabled - Gets or sets a value indicating whether this schedule is enabled.
 	IsEnabled *bool `json:"isEnabled,omitempty"`
+}
+
+// SetObject ...
+type SetObject struct {
+	autorest.Response `json:"-"`
+	Value             interface{} `json:"value,omitempty"`
 }
 
 // Sku the account SKU.
@@ -5989,6 +6469,8 @@ type TestJob struct {
 	LastStatusModifiedTime *date.Time `json:"lastStatusModifiedTime,omitempty"`
 	// Parameters - Gets or sets the parameters of the test job.
 	Parameters map[string]*string `json:"parameters"`
+	// LogActivityTrace - The activity-level tracing options of the runbook.
+	LogActivityTrace *int32 `json:"logActivityTrace,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for TestJob.
@@ -6024,13 +6506,14 @@ func (tj TestJob) MarshalJSON() ([]byte, error) {
 	if tj.Parameters != nil {
 		objectMap["parameters"] = tj.Parameters
 	}
+	if tj.LogActivityTrace != nil {
+		objectMap["logActivityTrace"] = tj.LogActivityTrace
+	}
 	return json.Marshal(objectMap)
 }
 
 // TestJobCreateParameters the parameters supplied to the create test job operation.
 type TestJobCreateParameters struct {
-	// RunbookName - Gets or sets the runbook name.
-	RunbookName *string `json:"runbookName,omitempty"`
 	// Parameters - Gets or sets the parameters of the test job.
 	Parameters map[string]*string `json:"parameters"`
 	// RunOn - Gets or sets the runOn which specifies the group name where the job is to be executed.
@@ -6040,9 +6523,6 @@ type TestJobCreateParameters struct {
 // MarshalJSON is the custom marshaler for TestJobCreateParameters.
 func (tjcp TestJobCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	if tjcp.RunbookName != nil {
-		objectMap["runbookName"] = tjcp.RunbookName
-	}
 	if tjcp.Parameters != nil {
 		objectMap["parameters"] = tjcp.Parameters
 	}
@@ -6111,6 +6591,24 @@ type Variable struct {
 	*VariableProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Variable.
+func (vVar Variable) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vVar.ID != nil {
+		objectMap["id"] = vVar.ID
+	}
+	if vVar.Name != nil {
+		objectMap["name"] = vVar.Name
+	}
+	if vVar.Type != nil {
+		objectMap["type"] = vVar.Type
+	}
+	if vVar.VariableProperties != nil {
+		objectMap["properties"] = vVar.VariableProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Variable struct.
 func (vVar *Variable) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6168,6 +6666,18 @@ type VariableCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// VariableCreateOrUpdateProperties - Gets or sets the properties of the variable.
 	*VariableCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VariableCreateOrUpdateParameters.
+func (vcoup VariableCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vcoup.Name != nil {
+		objectMap["name"] = vcoup.Name
+	}
+	if vcoup.VariableCreateOrUpdateProperties != nil {
+		objectMap["properties"] = vcoup.VariableCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VariableCreateOrUpdateParameters struct.
@@ -6337,6 +6847,18 @@ type VariableUpdateParameters struct {
 	*VariableUpdateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VariableUpdateParameters.
+func (vup VariableUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vup.Name != nil {
+		objectMap["name"] = vup.Name
+	}
+	if vup.VariableUpdateProperties != nil {
+		objectMap["properties"] = vup.VariableUpdateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VariableUpdateParameters struct.
 func (vup *VariableUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6381,12 +6903,32 @@ type VariableUpdateProperties struct {
 // Webhook definition of the webhook type.
 type Webhook struct {
 	autorest.Response `json:"-"`
-	// ID - Gets or sets the id of the resource.
+	// ID - Gets the id of the resource.
 	ID *string `json:"id,omitempty"`
-	// Name - Gets or sets the name of the webhook.
+	// Name - Gets the name of the webhook.
 	Name *string `json:"name,omitempty"`
+	// Type - Gets the type of the resource.
+	Type *string `json:"type,omitempty"`
 	// WebhookProperties - Gets or sets the webhook properties.
 	*WebhookProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Webhook.
+func (w Webhook) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if w.ID != nil {
+		objectMap["id"] = w.ID
+	}
+	if w.Name != nil {
+		objectMap["name"] = w.Name
+	}
+	if w.Type != nil {
+		objectMap["type"] = w.Type
+	}
+	if w.WebhookProperties != nil {
+		objectMap["properties"] = w.WebhookProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Webhook struct.
@@ -6416,6 +6958,15 @@ func (w *Webhook) UnmarshalJSON(body []byte) error {
 				}
 				w.Name = &name
 			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				w.Type = &typeVar
+			}
 		case "properties":
 			if v != nil {
 				var webhookProperties WebhookProperties
@@ -6437,6 +6988,18 @@ type WebhookCreateOrUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// WebhookCreateOrUpdateProperties - Gets or sets the properties of the webhook.
 	*WebhookCreateOrUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WebhookCreateOrUpdateParameters.
+func (wcoup WebhookCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wcoup.Name != nil {
+		objectMap["name"] = wcoup.Name
+	}
+	if wcoup.WebhookCreateOrUpdateProperties != nil {
+		objectMap["properties"] = wcoup.WebhookCreateOrUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WebhookCreateOrUpdateParameters struct.
@@ -6680,6 +7243,18 @@ type WebhookUpdateParameters struct {
 	Name *string `json:"name,omitempty"`
 	// WebhookUpdateProperties - Gets or sets the value of the webhook.
 	*WebhookUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WebhookUpdateParameters.
+func (wup WebhookUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wup.Name != nil {
+		objectMap["name"] = wup.Name
+	}
+	if wup.WebhookUpdateProperties != nil {
+		objectMap["properties"] = wup.WebhookUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WebhookUpdateParameters struct.

@@ -41,10 +41,11 @@ func NewDeployedApplicationHealthsClientWithBaseURI(baseURI string, timeout *int
 }
 
 // Get get deployed application healths
-//
-// nodeName is the name of the node applicationName is the name of the application eventsHealthStateFilter is the
-// filter of the events health state deployedServicePackagesHealthStateFilter is the filter of the deployed service
-// packages health state
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
+// eventsHealthStateFilter - the filter of the events health state
+// deployedServicePackagesHealthStateFilter - the filter of the deployed service packages health state
 func (client DeployedApplicationHealthsClient) Get(ctx context.Context, nodeName string, applicationName string, eventsHealthStateFilter string, deployedServicePackagesHealthStateFilter string) (result DeployedApplicationHealth, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName, eventsHealthStateFilter, deployedServicePackagesHealthStateFilter)
 	if err != nil {
@@ -117,9 +118,10 @@ func (client DeployedApplicationHealthsClient) GetResponder(resp *http.Response)
 }
 
 // Send send deployed application health
-//
-// nodeName is the name of the node applicationName is the name of the application deployedApplicationHealthReport
-// is the report of the deployed application health
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
+// deployedApplicationHealthReport - the report of the deployed application health
 func (client DeployedApplicationHealthsClient) Send(ctx context.Context, nodeName string, applicationName string, deployedApplicationHealthReport DeployedApplicationHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, nodeName, applicationName, deployedApplicationHealthReport)
 	if err != nil {
@@ -158,7 +160,7 @@ func (client DeployedApplicationHealthsClient) SendPreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationName}/$/ReportHealth", pathParameters),

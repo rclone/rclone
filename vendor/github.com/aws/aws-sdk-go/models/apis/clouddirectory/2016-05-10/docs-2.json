@@ -2,7 +2,7 @@
   "version": "2.0",
   "service": "<fullname>Amazon Cloud Directory</fullname> <p>Amazon Cloud Directory is a component of the AWS Directory Service that simplifies the development and management of cloud-scale web, mobile, and IoT applications. This guide describes the Cloud Directory operations that you can call programmatically and includes detailed information on data types and errors. For information about AWS Directory Services features, see <a href=\"https://aws.amazon.com/directoryservice/\">AWS Directory Service</a> and the <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html\">AWS Directory Service Administration Guide</a>.</p>",
   "operations": {
-    "AddFacetToObject": "<p>Adds a new <a>Facet</a> to an object.</p>",
+    "AddFacetToObject": "<p>Adds a new <a>Facet</a> to an object. An object can have more than one facet applied on it.</p>",
     "ApplySchema": "<p>Copies the input published schema, at the specified version, into the <a>Directory</a> with the same name and version as that of the published schema.</p>",
     "AttachObject": "<p>Attaches an existing object to another object. An object can be accessed in two ways:</p> <ol> <li> <p>Using the path</p> </li> <li> <p>Using <code>ObjectIdentifier</code> </p> </li> </ol>",
     "AttachPolicy": "<p>Attaches a policy object to a regular object. An object can have a limited number of attached policies.</p>",
@@ -30,6 +30,7 @@
     "GetAppliedSchemaVersion": "<p>Returns current applied schema version ARN, including the minor version in use.</p>",
     "GetDirectory": "<p>Retrieves metadata about a directory.</p>",
     "GetFacet": "<p>Gets details of the <a>Facet</a>, such as facet name, attributes, <a>Rule</a>s, or <code>ObjectType</code>. You can call this on all kinds of schema facets -- published, development, or applied.</p>",
+    "GetObjectAttributes": "<p>Retrieves attributes within a facet that are associated with an object.</p>",
     "GetObjectInformation": "<p>Retrieves metadata about an object.</p>",
     "GetSchemaAsJson": "<p>Retrieves a JSON representation of the schema. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_schemas.html#jsonformat\">JSON Schema Format</a> for more information.</p>",
     "GetTypedLinkFacetInformation": "<p>Returns the identity attribute order for a specific <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
@@ -40,7 +41,7 @@
     "ListFacetAttributes": "<p>Retrieves attributes attached to the facet.</p>",
     "ListFacetNames": "<p>Retrieves the names of facets that exist in a schema.</p>",
     "ListIncomingTypedLinks": "<p>Returns a paginated list of all the incoming <a>TypedLinkSpecifier</a> information for an object. It also supports filtering by typed link facet and identity attributes. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
-    "ListIndex": "<p>Lists objects and indexed values attached to the index.</p>",
+    "ListIndex": "<p>Lists objects attached to the specified index.</p>",
     "ListObjectAttributes": "<p>Lists all attributes that are associated with an object. </p>",
     "ListObjectChildren": "<p>Returns a paginated list of child objects that are associated with a given object.</p>",
     "ListObjectParentPaths": "<p>Retrieves all available parent paths for any object type such as node, leaf node, policy node, and index node objects. For more information about objects, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#dirstructure\">Directory Structure</a>.</p> <p>Use this API to evaluate all parents for an object. The call returns all objects from the root of the directory up to the requested object. The API returns the number of paths based on user-defined <code>MaxResults</code>, in case there are multiple paths to the parent. The order of the paths and nodes returned is consistent among multiple API calls unless the objects are deleted or moved. Paths not leading to the directory root are ignored from the target object.</p>",
@@ -48,7 +49,7 @@
     "ListObjectPolicies": "<p>Returns policies attached to an object in pagination fashion.</p>",
     "ListOutgoingTypedLinks": "<p>Returns a paginated list of all the outgoing <a>TypedLinkSpecifier</a> information for an object. It also supports filtering by typed link facet and identity attributes. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "ListPolicyAttachments": "<p>Returns all of the <code>ObjectIdentifiers</code> to which a given policy is attached.</p>",
-    "ListPublishedSchemaArns": "<p>Lists schema major versions for a published schema. If <code>SchemaArn</code> is provided, lists the minor version.</p>",
+    "ListPublishedSchemaArns": "<p>Lists the major version families of each published schema. If a major version ARN is provided as <code>SchemaArn</code>, the minor version revisions in that family are listed instead.</p>",
     "ListTagsForResource": "<p>Returns tags for a resource. Tagging is currently supported only for directories with a limit of 50 tags per directory. All 50 tags are returned for a given directory with this API call.</p>",
     "ListTypedLinkFacetAttributes": "<p>Returns a paginated list of all attribute definitions for a particular <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "ListTypedLinkFacetNames": "<p>Returns a paginated list of <code>TypedLink</code> facet names for a particular schema. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
@@ -132,6 +133,7 @@
         "GetAppliedSchemaVersionRequest$SchemaArn": "<p>The ARN of the applied schema.</p>",
         "GetAppliedSchemaVersionResponse$AppliedSchemaArn": "<p>Current applied schema ARN, including the minor version in use if one was provided.</p>",
         "GetFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Facet</a>. For more information, see <a>arns</a>.</p>",
+        "GetObjectAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where the object resides.</p>",
         "GetObjectInformationRequest$DirectoryArn": "<p>The ARN of the directory being retrieved.</p>",
         "GetSchemaAsJsonRequest$SchemaArn": "<p>The ARN of the schema to retrieve.</p>",
         "GetTypedLinkFacetInformationRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
@@ -246,8 +248,10 @@
         "AddFacetToObjectRequest$ObjectAttributeList": "<p>Attributes on the facet that you are adding to the object.</p>",
         "BatchAddFacetToObject$ObjectAttributeList": "<p>The attributes to set on the object.</p>",
         "BatchCreateObject$ObjectAttributeList": "<p>An attribute map, which contains an attribute ARN as the key and attribute value as the map value.</p>",
+        "BatchGetObjectAttributesResponse$Attributes": "<p>The attribute values that are associated with an object.</p>",
         "BatchListObjectAttributesResponse$Attributes": "<p>The attributes map that is associated with the object. <code>AttributeArn</code> is the key; attribute value is the value.</p>",
         "CreateObjectRequest$ObjectAttributeList": "<p>The attribute map whose attribute ARN contains the key and attribute value as the map value.</p>",
+        "GetObjectAttributesResponse$Attributes": "<p>The attributes that are associated with the object.</p>",
         "IndexAttachment$IndexedAttributes": "<p>The indexed attribute values.</p>",
         "ListObjectAttributesResponse$Attributes": "<p>Attributes map that is associated with the object. <code>AttributeArn</code> is the key, and attribute value is the value.</p>"
       }
@@ -288,6 +292,8 @@
     "AttributeNameList": {
       "base": null,
       "refs": {
+        "BatchGetObjectAttributes$AttributeNames": "<p>List of attribute names whose values will be retrieved.</p>",
+        "GetObjectAttributesRequest$AttributeNames": "<p>List of attribute names whose values will be retrieved.</p>",
         "GetTypedLinkFacetInformationResponse$IdentityAttributeOrder": "<p>The order of identity attributes for the facet, from most significant to least significant. The ability to filter typed links considers the order that the attributes are defined on the typed link facet. When providing ranges to typed link selection, any inexact ranges must be specified at the end. Any attributes that do not have a range specified are presumed to match the entire range. Filters are interpreted in the order of the attributes on the typed link facet, not the order in which they are supplied to any API calls. For more information about identity attributes, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
         "TypedLinkFacet$IdentityAttributeOrder": "<p>The set of attributes that distinguish links made from this facet from each other, in the order of significance. Listing typed links can filter on the values of these attributes. See <a>ListOutgoingTypedLinks</a> and <a>ListIncomingTypedLinks</a> for details.</p>",
         "UpdateTypedLinkFacetRequest$IdentityAttributeOrder": "<p>The order of identity attributes for the facet, from most significant to least significant. The ability to filter typed links considers the order that the attributes are defined on the typed link facet. When providing ranges to a typed link selection, any inexact ranges must be specified at the end. Any attributes that do not have a range specified are presumed to match the entire range. Filters are interpreted in the order of the attributes on the typed link facet, not the order in which they are supplied to any API calls. For more information about identity attributes, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>"
@@ -435,6 +441,18 @@
       "base": "<p>Represents the output of a <a>DetachTypedLink</a> response operation.</p>",
       "refs": {
         "BatchWriteOperationResponse$DetachTypedLink": "<p>Detaches a typed link from a specified source and target object. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>"
+      }
+    },
+    "BatchGetObjectAttributes": {
+      "base": "<p>Retrieves attributes within a facet that are associated with an object inside an <a>BatchRead</a> operation. For more information, see <a>GetObjectAttributes</a> and <a>BatchReadRequest$Operations</a>.</p>",
+      "refs": {
+        "BatchReadOperation$GetObjectAttributes": "<p>Retrieves attributes within a facet that are associated with an object.</p>"
+      }
+    },
+    "BatchGetObjectAttributesResponse": {
+      "base": "<p>Represents the output of a <a>GetObjectAttributes</a> response operation.</p>",
+      "refs": {
+        "BatchReadSuccessfulResponse$GetObjectAttributes": "<p>Retrieves attributes within a facet that are associated with an object.</p>"
       }
     },
     "BatchGetObjectInformation": {
@@ -736,6 +754,7 @@
       "base": null,
       "refs": {
         "BatchReadRequest$ConsistencyLevel": "<p>Represents the manner and timing in which the successful write or update of an object is reflected in a subsequent read operation of that same object.</p>",
+        "GetObjectAttributesRequest$ConsistencyLevel": "<p>The consistency level at which to retrieve the attributes on an object.</p>",
         "GetObjectInformationRequest$ConsistencyLevel": "<p>The consistency level at which to retrieve the object information.</p>",
         "ListAttachedIndicesRequest$ConsistencyLevel": "<p>The consistency level to use for this operation.</p>",
         "ListIncomingTypedLinksRequest$ConsistencyLevel": "<p>The consistency level to execute the request at.</p>",
@@ -950,7 +969,7 @@
       }
     },
     "DirectoryNotEnabledException": {
-      "base": "<p>An operation can only operate on a directory that is not enabled.</p>",
+      "base": "<p>Operations are only permitted on enabled directories.</p>",
       "refs": {
       }
     },
@@ -1023,7 +1042,7 @@
       }
     },
     "Facet": {
-      "base": "<p>A structure that contains <code>Name</code>, <code>ARN</code>, <code>Attributes</code>, <a>Rule</a>s, and <code>ObjectTypes</code>.</p>",
+      "base": "<p>A structure that contains <code>Name</code>, <code>ARN</code>, <code>Attributes</code>, <code> <a>Rule</a>s</code>, and <code>ObjectTypes</code>. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/whatarefacets.html\">Facets</a> for more information.</p>",
       "refs": {
         "GetFacetResponse$Facet": "<p>The <a>Facet</a> structure that is associated with the facet.</p>"
       }
@@ -1140,6 +1159,16 @@
       }
     },
     "GetFacetResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetObjectAttributesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetObjectAttributesResponse": {
       "base": null,
       "refs": {
       }
@@ -1706,6 +1735,7 @@
         "BatchDetachObject$ParentReference": "<p>Parent reference from which the object with the specified link name is detached.</p>",
         "BatchDetachPolicy$PolicyReference": "<p>Reference that identifies the policy object.</p>",
         "BatchDetachPolicy$ObjectReference": "<p>Reference that identifies the object whose policy object will be detached.</p>",
+        "BatchGetObjectAttributes$ObjectReference": "<p>Reference that identifies the object whose attributes will be retrieved.</p>",
         "BatchGetObjectInformation$ObjectReference": "<p>A reference to the object.</p>",
         "BatchListAttachedIndices$TargetReference": "<p>A reference to the object that has indices attached.</p>",
         "BatchListIncomingTypedLinks$ObjectReference": "<p>The reference that identifies the object whose attributes will be listed.</p>",
@@ -1727,6 +1757,7 @@
         "DetachObjectRequest$ParentReference": "<p>The parent reference from which the object with the specified link name is detached.</p>",
         "DetachPolicyRequest$PolicyReference": "<p>Reference that identifies the policy object.</p>",
         "DetachPolicyRequest$ObjectReference": "<p>Reference that identifies the object whose policy object will be detached.</p>",
+        "GetObjectAttributesRequest$ObjectReference": "<p>Reference that identifies the object whose attributes will be retrieved.</p>",
         "GetObjectInformationRequest$ObjectReference": "<p>A reference to the object.</p>",
         "ListAttachedIndicesRequest$TargetReference": "<p>A reference to the object that has indices attached.</p>",
         "ListIncomingTypedLinksRequest$ObjectReference": "<p>Reference that identifies the object whose attributes will be listed.</p>",
@@ -1916,8 +1947,10 @@
       "refs": {
         "AddFacetToObjectRequest$SchemaFacet": "<p>Identifiers for the facet that you are adding to the object. See <a>SchemaFacet</a> for details.</p>",
         "BatchAddFacetToObject$SchemaFacet": "<p>Represents the facet being added to the object.</p>",
+        "BatchGetObjectAttributes$SchemaFacet": "<p>Identifier for the facet whose attributes will be retrieved. See <a>SchemaFacet</a> for details.</p>",
         "BatchListObjectAttributes$FacetFilter": "<p>Used to filter the list of object attributes that are associated with a certain facet.</p>",
         "BatchRemoveFacetFromObject$SchemaFacet": "<p>The facet to remove from the object.</p>",
+        "GetObjectAttributesRequest$SchemaFacet": "<p>Identifier for the facet whose attributes will be retrieved. See <a>SchemaFacet</a> for details.</p>",
         "ListObjectAttributesRequest$FacetFilter": "<p>Used to filter the list of object attributes that are associated with a certain facet.</p>",
         "RemoveFacetFromObjectRequest$SchemaFacet": "<p>The facet to remove. See <a>SchemaFacet</a> for details.</p>",
         "SchemaFacetList$member": null
@@ -2026,7 +2059,7 @@
       }
     },
     "TypedAttributeValueRange": {
-      "base": "<p>A range of attribute values.</p>",
+      "base": "<p>A range of attribute values. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#rangefilters\">Range Filters</a>.</p>",
       "refs": {
         "ObjectAttributeRange$Range": "<p>The range of attribute values being selected.</p>",
         "TypedLinkAttributeRange$Range": "<p>The range of attribute values that are being selected.</p>"

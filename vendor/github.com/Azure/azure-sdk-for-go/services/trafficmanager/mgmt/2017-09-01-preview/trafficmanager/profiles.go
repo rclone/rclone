@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ProfilesClient is the client for the Profiles methods of the Trafficmanager service.
 type ProfilesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewProfilesClient creates an instance of the ProfilesClient client.
 func NewProfilesClient(subscriptionID string) ProfilesClient {
 	return NewProfilesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewProfilesClientWithBaseURI creates an instance of the ProfilesClient client.
 func NewProfilesClientWithBaseURI(baseURI string, subscriptionID string) ProfilesClient {
 	return ProfilesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CheckTrafficManagerRelativeDNSNameAvailability checks the availability of a Traffic Manager Relative DNS name.
 //
 // parameters is the Traffic Manager name parameters supplied to the CheckTrafficManagerNameAvailability operation.
@@ -64,6 +68,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailability(ctx 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CheckTrafficManagerRelativeDNSNameAvailabilityPreparer prepares the CheckTrafficManagerRelativeDNSNameAvailability request.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPreparer(ctx context.Context, parameters CheckTrafficManagerRelativeDNSNameAvailabilityParameters) (*http.Request, error) {
 	const APIVersion = "2017-05-01"
@@ -72,7 +77,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPrepa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Network/checkTrafficManagerNameAvailability"),
@@ -81,6 +86,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPrepa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CheckTrafficManagerRelativeDNSNameAvailabilitySender sends the CheckTrafficManagerRelativeDNSNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilitySender(req *http.Request) (*http.Response, error) {
@@ -88,6 +94,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilitySende
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CheckTrafficManagerRelativeDNSNameAvailabilityResponder handles the response to the CheckTrafficManagerRelativeDNSNameAvailability request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityResponder(resp *http.Response) (result NameAvailability, err error) {
@@ -101,6 +108,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityRespo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdate create or update a Traffic Manager profile.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
@@ -128,6 +136,7 @@ func (client ProfilesClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ProfilesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, profileName string, parameters Profile) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -142,7 +151,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}", pathParameters),
@@ -151,6 +160,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -158,6 +168,7 @@ func (client ProfilesClient) CreateOrUpdateSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) CreateOrUpdateResponder(resp *http.Response) (result Profile, err error) {
@@ -171,6 +182,7 @@ func (client ProfilesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Delete deletes a Traffic Manager profile.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager profile to be deleted.
@@ -197,6 +209,7 @@ func (client ProfilesClient) Delete(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeletePreparer prepares the Delete request.
 func (client ProfilesClient) DeletePreparer(ctx context.Context, resourceGroupName string, profileName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -218,6 +231,7 @@ func (client ProfilesClient) DeletePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -225,6 +239,7 @@ func (client ProfilesClient) DeleteSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) DeleteResponder(resp *http.Response) (result DeleteOperationResult, err error) {
@@ -238,6 +253,7 @@ func (client ProfilesClient) DeleteResponder(resp *http.Response) (result Delete
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Get gets a Traffic Manager profile.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
@@ -264,6 +280,7 @@ func (client ProfilesClient) Get(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetPreparer prepares the Get request.
 func (client ProfilesClient) GetPreparer(ctx context.Context, resourceGroupName string, profileName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -285,6 +302,7 @@ func (client ProfilesClient) GetPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -292,6 +310,7 @@ func (client ProfilesClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) GetResponder(resp *http.Response) (result Profile, err error) {
@@ -305,6 +324,7 @@ func (client ProfilesClient) GetResponder(resp *http.Response) (result Profile, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListByResourceGroup lists all Traffic Manager profiles within a resource group.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager profiles to be listed.
@@ -330,6 +350,7 @@ func (client ProfilesClient) ListByResourceGroup(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client ProfilesClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -350,6 +371,7 @@ func (client ProfilesClient) ListByResourceGroupPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -357,6 +379,7 @@ func (client ProfilesClient) ListByResourceGroupSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) ListByResourceGroupResponder(resp *http.Response) (result ProfileListResult, err error) {
@@ -370,6 +393,7 @@ func (client ProfilesClient) ListByResourceGroupResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListBySubscription lists all Traffic Manager profiles within a subscription.
 func (client ProfilesClient) ListBySubscription(ctx context.Context) (result ProfileListResult, err error) {
 	req, err := client.ListBySubscriptionPreparer(ctx)
@@ -393,6 +417,7 @@ func (client ProfilesClient) ListBySubscription(ctx context.Context) (result Pro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client ProfilesClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -412,6 +437,7 @@ func (client ProfilesClient) ListBySubscriptionPreparer(ctx context.Context) (*h
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -419,6 +445,7 @@ func (client ProfilesClient) ListBySubscriptionSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) ListBySubscriptionResponder(resp *http.Response) (result ProfileListResult, err error) {
@@ -432,6 +459,7 @@ func (client ProfilesClient) ListBySubscriptionResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Update update a Traffic Manager profile.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
@@ -459,6 +487,7 @@ func (client ProfilesClient) Update(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // UpdatePreparer prepares the Update request.
 func (client ProfilesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, profileName string, parameters Profile) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -473,7 +502,7 @@ func (client ProfilesClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}", pathParameters),
@@ -482,6 +511,7 @@ func (client ProfilesClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -489,6 +519,7 @@ func (client ProfilesClient) UpdateSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ProfilesClient) UpdateResponder(resp *http.Response) (result Profile, err error) {

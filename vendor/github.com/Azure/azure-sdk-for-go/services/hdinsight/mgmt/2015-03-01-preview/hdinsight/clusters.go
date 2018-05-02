@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClustersClient is the hDInsight Management Client
 type ClustersClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewClustersClient creates an instance of the ClustersClient client.
 func NewClustersClient(subscriptionID string) ClustersClient {
 	return NewClustersClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewClustersClientWithBaseURI creates an instance of the ClustersClient client.
 func NewClustersClientWithBaseURI(baseURI string, subscriptionID string) ClustersClient {
 	return ClustersClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Create creates a new HDInsight cluster with the specified parameters.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. parameters is the
@@ -60,6 +64,7 @@ func (client ClustersClient) Create(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // CreatePreparer prepares the Create request.
 func (client ClustersClient) CreatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters ClusterCreateParametersExtended) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client ClustersClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}", pathParameters),
@@ -83,6 +88,7 @@ func (client ClustersClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) CreateSender(req *http.Request) (future ClustersCreateFuture, err error) {
@@ -98,6 +104,7 @@ func (client ClustersClient) CreateSender(req *http.Request) (future ClustersCre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) CreateResponder(resp *http.Response) (result Cluster, err error) {
@@ -111,6 +118,7 @@ func (client ClustersClient) CreateResponder(resp *http.Response) (result Cluste
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Delete deletes the specified HDInsight cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster.
@@ -130,6 +138,7 @@ func (client ClustersClient) Delete(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // DeletePreparer prepares the Delete request.
 func (client ClustersClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -151,6 +160,7 @@ func (client ClustersClient) DeletePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) DeleteSender(req *http.Request) (future ClustersDeleteFuture, err error) {
@@ -166,6 +176,7 @@ func (client ClustersClient) DeleteSender(req *http.Request) (future ClustersDel
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -178,6 +189,7 @@ func (client ClustersClient) DeleteResponder(resp *http.Response) (result autore
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExecuteScriptActions executes script actions on the specified HDInsight cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. parameters is the
@@ -204,6 +216,7 @@ func (client ClustersClient) ExecuteScriptActions(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExecuteScriptActionsPreparer prepares the ExecuteScriptActions request.
 func (client ClustersClient) ExecuteScriptActionsPreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters ExecuteScriptActionParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -218,7 +231,7 @@ func (client ClustersClient) ExecuteScriptActionsPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}/executeScriptActions", pathParameters),
@@ -227,6 +240,7 @@ func (client ClustersClient) ExecuteScriptActionsPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExecuteScriptActionsSender sends the ExecuteScriptActions request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ExecuteScriptActionsSender(req *http.Request) (future ClustersExecuteScriptActionsFuture, err error) {
@@ -242,6 +256,7 @@ func (client ClustersClient) ExecuteScriptActionsSender(req *http.Request) (futu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExecuteScriptActionsResponder handles the response to the ExecuteScriptActions request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) ExecuteScriptActionsResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -254,6 +269,7 @@ func (client ClustersClient) ExecuteScriptActionsResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Get gets the specified cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster.
@@ -279,6 +295,7 @@ func (client ClustersClient) Get(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetPreparer prepares the Get request.
 func (client ClustersClient) GetPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -300,6 +317,7 @@ func (client ClustersClient) GetPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -307,6 +325,7 @@ func (client ClustersClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) GetResponder(resp *http.Response) (result Cluster, err error) {
@@ -320,6 +339,7 @@ func (client ClustersClient) GetResponder(resp *http.Response) (result Cluster, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // List lists all the HDInsight clusters under the subscription.
 func (client ClustersClient) List(ctx context.Context) (result ClusterListResultPage, err error) {
 	result.fn = client.listNextResults
@@ -344,6 +364,7 @@ func (client ClustersClient) List(ctx context.Context) (result ClusterListResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListPreparer prepares the List request.
 func (client ClustersClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -363,6 +384,7 @@ func (client ClustersClient) ListPreparer(ctx context.Context) (*http.Request, e
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -370,6 +392,7 @@ func (client ClustersClient) ListSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) ListResponder(resp *http.Response) (result ClusterListResult, err error) {
@@ -404,12 +427,14 @@ func (client ClustersClient) listNextResults(lastResults ClusterListResult) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ClustersClient) ListComplete(ctx context.Context) (result ClusterListResultIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListByResourceGroup lists the HDInsight clusters in a resource group.
 //
 // resourceGroupName is the name of the resource group.
@@ -436,6 +461,7 @@ func (client ClustersClient) ListByResourceGroup(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client ClustersClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -456,6 +482,7 @@ func (client ClustersClient) ListByResourceGroupPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -463,6 +490,7 @@ func (client ClustersClient) ListByResourceGroupSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) ListByResourceGroupResponder(resp *http.Response) (result ClusterListResult, err error) {
@@ -497,12 +525,14 @@ func (client ClustersClient) listByResourceGroupNextResults(lastResults ClusterL
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ClustersClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result ClusterListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Resize resizes the specified HDInsight cluster to the specified size.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. parameters is the
@@ -523,6 +553,7 @@ func (client ClustersClient) Resize(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ResizePreparer prepares the Resize request.
 func (client ClustersClient) ResizePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters ClusterResizeParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -538,7 +569,7 @@ func (client ClustersClient) ResizePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}/roles/{roleName}/resize", pathParameters),
@@ -547,6 +578,7 @@ func (client ClustersClient) ResizePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ResizeSender sends the Resize request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ResizeSender(req *http.Request) (future ClustersResizeFuture, err error) {
@@ -562,6 +594,7 @@ func (client ClustersClient) ResizeSender(req *http.Request) (future ClustersRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ResizeResponder handles the response to the Resize request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) ResizeResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -574,6 +607,7 @@ func (client ClustersClient) ResizeResponder(resp *http.Response) (result autore
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Update patch HDInsight cluster with the specified parameters.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. parameters is the
@@ -600,6 +634,7 @@ func (client ClustersClient) Update(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdatePreparer prepares the Update request.
 func (client ClustersClient) UpdatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters ClusterPatchParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -614,7 +649,7 @@ func (client ClustersClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}", pathParameters),
@@ -623,6 +658,7 @@ func (client ClustersClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -630,6 +666,7 @@ func (client ClustersClient) UpdateSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ClustersClient) UpdateResponder(resp *http.Response) (result Cluster, err error) {

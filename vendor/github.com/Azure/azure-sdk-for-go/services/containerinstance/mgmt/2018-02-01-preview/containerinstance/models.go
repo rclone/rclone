@@ -20,11 +20,13 @@ package containerinstance
 import (
 	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupNetworkProtocol enumerates the values for container group network protocol.
 type ContainerGroupNetworkProtocol string
 
@@ -35,6 +37,13 @@ const (
 	UDP ContainerGroupNetworkProtocol = "UDP"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// PossibleContainerGroupNetworkProtocolValues returns an array of possible values for the ContainerGroupNetworkProtocol const type.
+func PossibleContainerGroupNetworkProtocolValues() []ContainerGroupNetworkProtocol {
+	return []ContainerGroupNetworkProtocol{TCP, UDP}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupRestartPolicy enumerates the values for container group restart policy.
 type ContainerGroupRestartPolicy string
 
@@ -47,6 +56,13 @@ const (
 	OnFailure ContainerGroupRestartPolicy = "OnFailure"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// PossibleContainerGroupRestartPolicyValues returns an array of possible values for the ContainerGroupRestartPolicy const type.
+func PossibleContainerGroupRestartPolicyValues() []ContainerGroupRestartPolicy {
+	return []ContainerGroupRestartPolicy{Always, Never, OnFailure}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerNetworkProtocol enumerates the values for container network protocol.
 type ContainerNetworkProtocol string
 
@@ -57,6 +73,13 @@ const (
 	ContainerNetworkProtocolUDP ContainerNetworkProtocol = "UDP"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// PossibleContainerNetworkProtocolValues returns an array of possible values for the ContainerNetworkProtocol const type.
+func PossibleContainerNetworkProtocolValues() []ContainerNetworkProtocol {
+	return []ContainerNetworkProtocol{ContainerNetworkProtocolTCP, ContainerNetworkProtocolUDP}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // OperatingSystemTypes enumerates the values for operating system types.
 type OperatingSystemTypes string
 
@@ -67,6 +90,13 @@ const (
 	Windows OperatingSystemTypes = "Windows"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// PossibleOperatingSystemTypesValues returns an array of possible values for the OperatingSystemTypes const type.
+func PossibleOperatingSystemTypesValues() []OperatingSystemTypes {
+	return []OperatingSystemTypes{Linux, Windows}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // OperationsOrigin enumerates the values for operations origin.
 type OperationsOrigin string
 
@@ -77,6 +107,13 @@ const (
 	User OperationsOrigin = "User"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// PossibleOperationsOriginValues returns an array of possible values for the OperationsOrigin const type.
+func PossibleOperationsOriginValues() []OperationsOrigin {
+	return []OperationsOrigin{System, User}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // AzureFileVolume the properties of the Azure File volume. Azure File shares are mounted as volumes.
 type AzureFileVolume struct {
 	// ShareName - The name of the Azure File share to be mounted as a volume.
@@ -89,6 +126,7 @@ type AzureFileVolume struct {
 	StorageAccountKey *string `json:"storageAccountKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Container a container instance.
 type Container struct {
 	// Name - The user-provided name of the container instance.
@@ -97,6 +135,20 @@ type Container struct {
 	*ContainerProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// MarshalJSON is the custom marshaler for Container.
+func (c Container) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.ContainerProperties != nil {
+		objectMap["properties"] = c.ContainerProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // UnmarshalJSON is the custom unmarshaler for Container struct.
 func (c *Container) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -130,6 +182,35 @@ func (c *Container) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// ContainerExecRequest the start container exec request.
+type ContainerExecRequest struct {
+	// Command - The command to be executed.
+	Command *string `json:"command,omitempty"`
+	// TerminalSize - The size of the terminal.
+	TerminalSize *ContainerExecRequestTerminalSize `json:"terminalSize,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// ContainerExecRequestTerminalSize the size of the terminal.
+type ContainerExecRequestTerminalSize struct {
+	// Rows - The row size of the terminal
+	Rows *int32 `json:"rows,omitempty"`
+	// Cols - The column size of the terminal
+	Cols *int32 `json:"cols,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// ContainerExecResponse the information for the container exec command.
+type ContainerExecResponse struct {
+	autorest.Response `json:"-"`
+	// WebSocketURI - The uri for the exec websocket.
+	WebSocketURI *string `json:"webSocketUri,omitempty"`
+	// Password - The password to start the exec command.
+	Password *string `json:"password,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroup a container group.
 type ContainerGroup struct {
 	autorest.Response         `json:"-"`
@@ -146,6 +227,7 @@ type ContainerGroup struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // MarshalJSON is the custom marshaler for ContainerGroup.
 func (cg ContainerGroup) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -170,6 +252,7 @@ func (cg ContainerGroup) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // UnmarshalJSON is the custom unmarshaler for ContainerGroup struct.
 func (cg *ContainerGroup) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -239,6 +322,7 @@ func (cg *ContainerGroup) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupListResult the container group list response that contains the container group properties.
 type ContainerGroupListResult struct {
 	autorest.Response `json:"-"`
@@ -248,12 +332,14 @@ type ContainerGroupListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupListResultIterator provides access to a complete listing of ContainerGroup values.
 type ContainerGroupListResultIterator struct {
 	i    int
 	page ContainerGroupListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ContainerGroupListResultIterator) Next() error {
@@ -270,16 +356,19 @@ func (iter *ContainerGroupListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ContainerGroupListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Response returns the raw server response from the last page request.
 func (iter ContainerGroupListResultIterator) Response() ContainerGroupListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ContainerGroupListResultIterator) Value() ContainerGroup {
@@ -289,6 +378,7 @@ func (iter ContainerGroupListResultIterator) Value() ContainerGroup {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (cglr ContainerGroupListResult) IsEmpty() bool {
 	return cglr.Value == nil || len(*cglr.Value) == 0
@@ -306,12 +396,14 @@ func (cglr ContainerGroupListResult) containerGroupListResultPreparer() (*http.R
 		autorest.WithBaseURL(to.String(cglr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupListResultPage contains a page of ContainerGroup values.
 type ContainerGroupListResultPage struct {
 	fn   func(ContainerGroupListResult) (ContainerGroupListResult, error)
 	cglr ContainerGroupListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ContainerGroupListResultPage) Next() error {
@@ -323,16 +415,19 @@ func (page *ContainerGroupListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ContainerGroupListResultPage) NotDone() bool {
 	return !page.cglr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Response returns the raw server response from the last page request.
 func (page ContainerGroupListResultPage) Response() ContainerGroupListResult {
 	return page.cglr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ContainerGroupListResultPage) Values() []ContainerGroup {
 	if page.cglr.IsEmpty() {
@@ -341,6 +436,7 @@ func (page ContainerGroupListResultPage) Values() []ContainerGroup {
 	return *page.cglr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupProperties ...
 type ContainerGroupProperties struct {
 	// ProvisioningState - The provisioning state of the container group. This only appears in the response.
@@ -365,6 +461,7 @@ type ContainerGroupProperties struct {
 	InstanceView *ContainerGroupPropertiesInstanceView `json:"instanceView,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupPropertiesInstanceView the instance view of the container group. Only valid in response.
 type ContainerGroupPropertiesInstanceView struct {
 	// Events - The events of this container group.
@@ -373,6 +470,58 @@ type ContainerGroupPropertiesInstanceView struct {
 	State *string `json:"state,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// ContainerGroupsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
+type ContainerGroupsCreateOrUpdateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future ContainerGroupsCreateOrUpdateFuture) Result(client ContainerGroupsClient) (cg ContainerGroup, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerinstance.ContainerGroupsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return cg, azure.NewAsyncOpIncompleteError("containerinstance.ContainerGroupsCreateOrUpdateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		cg, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "containerinstance.ContainerGroupsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerinstance.ContainerGroupsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	cg, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerinstance.ContainerGroupsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerPort the port exposed on the container instance.
 type ContainerPort struct {
 	// Protocol - The protocol associated with the port. Possible values include: 'ContainerNetworkProtocolTCP', 'ContainerNetworkProtocolUDP'
@@ -381,6 +530,7 @@ type ContainerPort struct {
 	Port *int32 `json:"port,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerProperties the container instance properties.
 type ContainerProperties struct {
 	// Image - The name of the image used to create the container instance.
@@ -399,6 +549,7 @@ type ContainerProperties struct {
 	VolumeMounts *[]VolumeMount `json:"volumeMounts,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerPropertiesInstanceView the instance view of the container instance. Only valid in response.
 type ContainerPropertiesInstanceView struct {
 	// RestartCount - The number of times that the container instance has been restarted.
@@ -411,6 +562,7 @@ type ContainerPropertiesInstanceView struct {
 	Events *[]Event `json:"events,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerState the container instance state.
 type ContainerState struct {
 	// State - The state of the container instance.
@@ -425,6 +577,7 @@ type ContainerState struct {
 	DetailStatus *string `json:"detailStatus,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // EnvironmentVariable the environment variable to set within the container instance.
 type EnvironmentVariable struct {
 	// Name - The name of the environment variable.
@@ -433,6 +586,7 @@ type EnvironmentVariable struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Event a container group or container instance event.
 type Event struct {
 	// Count - The count of the event.
@@ -449,6 +603,7 @@ type Event struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // GitRepoVolume represents a volume that is populated with the contents of a git repository
 type GitRepoVolume struct {
 	// Directory - Target directory name. Must not contain or start with '..'.  If '.' is supplied, the volume directory will be the git repository.  Otherwise, if specified, the volume will contain the git repository in the subdirectory with the given name.
@@ -459,6 +614,7 @@ type GitRepoVolume struct {
 	Revision *string `json:"revision,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ImageRegistryCredential image registry credential.
 type ImageRegistryCredential struct {
 	// Server - The Docker image registry server without a protocol such as "http" and "https".
@@ -469,6 +625,7 @@ type ImageRegistryCredential struct {
 	Password *string `json:"password,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // IPAddress IP address for the container group.
 type IPAddress struct {
 	// Ports - The list of ports exposed on the container group.
@@ -483,6 +640,7 @@ type IPAddress struct {
 	Fqdn *string `json:"fqdn,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Logs the logs.
 type Logs struct {
 	autorest.Response `json:"-"`
@@ -490,6 +648,7 @@ type Logs struct {
 	Content *string `json:"content,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Operation an operation for Azure Container Instance service.
 type Operation struct {
 	// Name - The name of the operation.
@@ -500,6 +659,7 @@ type Operation struct {
 	Origin OperationsOrigin `json:"origin,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // OperationDisplay the display information of the operation.
 type OperationDisplay struct {
 	// Provider - The name of the provider of the operation.
@@ -512,6 +672,7 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // OperationListResult the operation list response that contains all operations for Azure Container Instance
 // service.
 type OperationListResult struct {
@@ -522,6 +683,7 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Port the port exposed on the container group.
 type Port struct {
 	// Protocol - The protocol associated with the port. Possible values include: 'TCP', 'UDP'
@@ -530,6 +692,7 @@ type Port struct {
 	Port *int32 `json:"port,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Resource the Resource model definition.
 type Resource struct {
 	// ID - The resource id.
@@ -544,6 +707,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -565,6 +729,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ResourceLimits the resource limits.
 type ResourceLimits struct {
 	// MemoryInGB - The memory limit in GB of this container instance.
@@ -573,6 +738,7 @@ type ResourceLimits struct {
 	CPU *float64 `json:"cpu,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ResourceRequests the resource requests.
 type ResourceRequests struct {
 	// MemoryInGB - The memory request in GB of this container instance.
@@ -581,6 +747,7 @@ type ResourceRequests struct {
 	CPU *float64 `json:"cpu,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ResourceRequirements the resource requirements.
 type ResourceRequirements struct {
 	// Requests - The resource requests of this container instance.
@@ -589,6 +756,7 @@ type ResourceRequirements struct {
 	Limits *ResourceLimits `json:"limits,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Usage a single usage result
 type Usage struct {
 	// Unit - Unit of the usage result
@@ -601,12 +769,14 @@ type Usage struct {
 	Name *UsageName `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // UsageListResult the response containing the usage data
 type UsageListResult struct {
 	autorest.Response `json:"-"`
 	Value             *[]Usage `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // UsageName the name object of the resource
 type UsageName struct {
 	// Value - The name of the resource
@@ -615,6 +785,7 @@ type UsageName struct {
 	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // Volume the properties of the volume.
 type Volume struct {
 	// Name - The name of the volume.
@@ -629,6 +800,7 @@ type Volume struct {
 	GitRepo *GitRepoVolume `json:"gitRepo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // MarshalJSON is the custom marshaler for Volume.
 func (vVar Volume) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -648,6 +820,7 @@ func (vVar Volume) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // VolumeMount the properties of the volume mount.
 type VolumeMount struct {
 	// Name - The name of the volume mount.

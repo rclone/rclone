@@ -154,6 +154,14 @@ func (qb *QingStorBuilder) setupHeaders(httpRequest *http.Request) error {
 		httpRequest.Header.Set("User-Agent", ua)
 	}
 
+	if s := httpRequest.Header.Get("X-QS-Fetch-Source"); s != "" {
+		u, err := url.Parse(s)
+		if err != nil {
+			return fmt.Errorf("invalid HTTP header value: %s", s)
+		}
+		httpRequest.Header.Set("X-QS-Fetch-Source", u.String())
+	}
+
 	if qb.baseBuilder.operation.APIName == "Delete Multiple Objects" {
 		buffer := &bytes.Buffer{}
 		buffer.ReadFrom(httpRequest.Body)

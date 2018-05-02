@@ -14,7 +14,7 @@ const opAssociateDelegateToResource = "AssociateDelegateToResource"
 
 // AssociateDelegateToResourceRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateDelegateToResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -109,7 +109,7 @@ const opAssociateMemberToGroup = "AssociateMemberToGroup"
 
 // AssociateMemberToGroupRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateMemberToGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -214,7 +214,7 @@ const opCreateAlias = "CreateAlias"
 
 // CreateAliasRequest generates a "aws/request.Request" representing the
 // client's request for the CreateAlias operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -321,7 +321,7 @@ const opCreateGroup = "CreateGroup"
 
 // CreateGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -425,7 +425,7 @@ const opCreateResource = "CreateResource"
 
 // CreateResourceRequest generates a "aws/request.Request" representing the
 // client's request for the CreateResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -526,7 +526,7 @@ const opCreateUser = "CreateUser"
 
 // CreateUserRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUser operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -634,7 +634,7 @@ const opDeleteAlias = "DeleteAlias"
 
 // DeleteAliasRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteAlias operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -729,7 +729,7 @@ const opDeleteGroup = "DeleteGroup"
 
 // DeleteGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -826,11 +826,106 @@ func (c *WorkMail) DeleteGroupWithContext(ctx aws.Context, input *DeleteGroupInp
 	return out, req.Send()
 }
 
+const opDeleteMailboxPermissions = "DeleteMailboxPermissions"
+
+// DeleteMailboxPermissionsRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteMailboxPermissions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteMailboxPermissions for more information on using the DeleteMailboxPermissions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteMailboxPermissionsRequest method.
+//    req, resp := client.DeleteMailboxPermissionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteMailboxPermissions
+func (c *WorkMail) DeleteMailboxPermissionsRequest(input *DeleteMailboxPermissionsInput) (req *request.Request, output *DeleteMailboxPermissionsOutput) {
+	op := &request.Operation{
+		Name:       opDeleteMailboxPermissions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteMailboxPermissionsInput{}
+	}
+
+	output = &DeleteMailboxPermissionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteMailboxPermissions API operation for Amazon WorkMail.
+//
+// Deletes permissions granted to a user or group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon WorkMail's
+// API operation DeleteMailboxPermissions for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   The identifier supplied for the entity is valid, but it does not exist in
+//   your organization.
+//
+//   * ErrCodeEntityStateException "EntityStateException"
+//   You are performing an operation on an entity that isn't in the expected state,
+//   such as trying to update a deleted user.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   One or more of the input parameters don't match the service's restrictions.
+//
+//   * ErrCodeOrganizationNotFoundException "OrganizationNotFoundException"
+//   An operation received a valid organization identifier that either doesn't
+//   belong or exist in the system.
+//
+//   * ErrCodeOrganizationStateException "OrganizationStateException"
+//   The organization must have a valid state (Active or Synchronizing) to perform
+//   certain operations on the organization or its entities.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteMailboxPermissions
+func (c *WorkMail) DeleteMailboxPermissions(input *DeleteMailboxPermissionsInput) (*DeleteMailboxPermissionsOutput, error) {
+	req, out := c.DeleteMailboxPermissionsRequest(input)
+	return out, req.Send()
+}
+
+// DeleteMailboxPermissionsWithContext is the same as DeleteMailboxPermissions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteMailboxPermissions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WorkMail) DeleteMailboxPermissionsWithContext(ctx aws.Context, input *DeleteMailboxPermissionsInput, opts ...request.Option) (*DeleteMailboxPermissionsOutput, error) {
+	req, out := c.DeleteMailboxPermissionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteResource = "DeleteResource"
 
 // DeleteResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -921,7 +1016,7 @@ const opDeleteUser = "DeleteUser"
 
 // DeleteUserRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUser operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1024,7 +1119,7 @@ const opDeregisterFromWorkMail = "DeregisterFromWorkMail"
 
 // DeregisterFromWorkMailRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterFromWorkMail operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1122,7 +1217,7 @@ const opDescribeGroup = "DescribeGroup"
 
 // DescribeGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1213,7 +1308,7 @@ const opDescribeOrganization = "DescribeOrganization"
 
 // DescribeOrganizationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeOrganization operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1296,7 +1391,7 @@ const opDescribeResource = "DescribeResource"
 
 // DescribeResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1387,7 +1482,7 @@ const opDescribeUser = "DescribeUser"
 
 // DescribeUserRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeUser operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1478,7 +1573,7 @@ const opDisassociateDelegateFromResource = "DisassociateDelegateFromResource"
 
 // DisassociateDelegateFromResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateDelegateFromResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1573,7 +1668,7 @@ const opDisassociateMemberFromGroup = "DisassociateMemberFromGroup"
 
 // DisassociateMemberFromGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateMemberFromGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1678,7 +1773,7 @@ const opListAliases = "ListAliases"
 
 // ListAliasesRequest generates a "aws/request.Request" representing the
 // client's request for the ListAliases operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1829,7 +1924,7 @@ const opListGroupMembers = "ListGroupMembers"
 
 // ListGroupMembersRequest generates a "aws/request.Request" representing the
 // client's request for the ListGroupMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1980,7 +2075,7 @@ const opListGroups = "ListGroups"
 
 // ListGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the ListGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2123,11 +2218,158 @@ func (c *WorkMail) ListGroupsPagesWithContext(ctx aws.Context, input *ListGroups
 	return p.Err()
 }
 
+const opListMailboxPermissions = "ListMailboxPermissions"
+
+// ListMailboxPermissionsRequest generates a "aws/request.Request" representing the
+// client's request for the ListMailboxPermissions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListMailboxPermissions for more information on using the ListMailboxPermissions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListMailboxPermissionsRequest method.
+//    req, resp := client.ListMailboxPermissionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListMailboxPermissions
+func (c *WorkMail) ListMailboxPermissionsRequest(input *ListMailboxPermissionsInput) (req *request.Request, output *ListMailboxPermissionsOutput) {
+	op := &request.Operation{
+		Name:       opListMailboxPermissions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListMailboxPermissionsInput{}
+	}
+
+	output = &ListMailboxPermissionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListMailboxPermissions API operation for Amazon WorkMail.
+//
+// Lists the mailbox permissions associated with a mailbox.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon WorkMail's
+// API operation ListMailboxPermissions for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   The identifier supplied for the entity is valid, but it does not exist in
+//   your organization.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   One or more of the input parameters don't match the service's restrictions.
+//
+//   * ErrCodeOrganizationNotFoundException "OrganizationNotFoundException"
+//   An operation received a valid organization identifier that either doesn't
+//   belong or exist in the system.
+//
+//   * ErrCodeOrganizationStateException "OrganizationStateException"
+//   The organization must have a valid state (Active or Synchronizing) to perform
+//   certain operations on the organization or its entities.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListMailboxPermissions
+func (c *WorkMail) ListMailboxPermissions(input *ListMailboxPermissionsInput) (*ListMailboxPermissionsOutput, error) {
+	req, out := c.ListMailboxPermissionsRequest(input)
+	return out, req.Send()
+}
+
+// ListMailboxPermissionsWithContext is the same as ListMailboxPermissions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListMailboxPermissions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WorkMail) ListMailboxPermissionsWithContext(ctx aws.Context, input *ListMailboxPermissionsInput, opts ...request.Option) (*ListMailboxPermissionsOutput, error) {
+	req, out := c.ListMailboxPermissionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListMailboxPermissionsPages iterates over the pages of a ListMailboxPermissions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListMailboxPermissions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListMailboxPermissions operation.
+//    pageNum := 0
+//    err := client.ListMailboxPermissionsPages(params,
+//        func(page *ListMailboxPermissionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *WorkMail) ListMailboxPermissionsPages(input *ListMailboxPermissionsInput, fn func(*ListMailboxPermissionsOutput, bool) bool) error {
+	return c.ListMailboxPermissionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListMailboxPermissionsPagesWithContext same as ListMailboxPermissionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WorkMail) ListMailboxPermissionsPagesWithContext(ctx aws.Context, input *ListMailboxPermissionsInput, fn func(*ListMailboxPermissionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListMailboxPermissionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListMailboxPermissionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListMailboxPermissionsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListOrganizations = "ListOrganizations"
 
 // ListOrganizationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListOrganizations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2262,7 +2504,7 @@ const opListResourceDelegates = "ListResourceDelegates"
 
 // ListResourceDelegatesRequest generates a "aws/request.Request" representing the
 // client's request for the ListResourceDelegates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2358,7 +2600,7 @@ const opListResources = "ListResources"
 
 // ListResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the ListResources operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2501,7 +2743,7 @@ const opListUsers = "ListUsers"
 
 // ListUsersRequest generates a "aws/request.Request" representing the
 // client's request for the ListUsers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2640,11 +2882,107 @@ func (c *WorkMail) ListUsersPagesWithContext(ctx aws.Context, input *ListUsersIn
 	return p.Err()
 }
 
+const opPutMailboxPermissions = "PutMailboxPermissions"
+
+// PutMailboxPermissionsRequest generates a "aws/request.Request" representing the
+// client's request for the PutMailboxPermissions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See PutMailboxPermissions for more information on using the PutMailboxPermissions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the PutMailboxPermissionsRequest method.
+//    req, resp := client.PutMailboxPermissionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/PutMailboxPermissions
+func (c *WorkMail) PutMailboxPermissionsRequest(input *PutMailboxPermissionsInput) (req *request.Request, output *PutMailboxPermissionsOutput) {
+	op := &request.Operation{
+		Name:       opPutMailboxPermissions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &PutMailboxPermissionsInput{}
+	}
+
+	output = &PutMailboxPermissionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// PutMailboxPermissions API operation for Amazon WorkMail.
+//
+// Sets permissions for a user or group. This replaces any pre-existing permissions
+// set for the entity.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon WorkMail's
+// API operation PutMailboxPermissions for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   The identifier supplied for the entity is valid, but it does not exist in
+//   your organization.
+//
+//   * ErrCodeEntityStateException "EntityStateException"
+//   You are performing an operation on an entity that isn't in the expected state,
+//   such as trying to update a deleted user.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   One or more of the input parameters don't match the service's restrictions.
+//
+//   * ErrCodeOrganizationNotFoundException "OrganizationNotFoundException"
+//   An operation received a valid organization identifier that either doesn't
+//   belong or exist in the system.
+//
+//   * ErrCodeOrganizationStateException "OrganizationStateException"
+//   The organization must have a valid state (Active or Synchronizing) to perform
+//   certain operations on the organization or its entities.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/PutMailboxPermissions
+func (c *WorkMail) PutMailboxPermissions(input *PutMailboxPermissionsInput) (*PutMailboxPermissionsOutput, error) {
+	req, out := c.PutMailboxPermissionsRequest(input)
+	return out, req.Send()
+}
+
+// PutMailboxPermissionsWithContext is the same as PutMailboxPermissions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutMailboxPermissions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WorkMail) PutMailboxPermissionsWithContext(ctx aws.Context, input *PutMailboxPermissionsInput, opts ...request.Option) (*PutMailboxPermissionsOutput, error) {
+	req, out := c.PutMailboxPermissionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opRegisterToWorkMail = "RegisterToWorkMail"
 
 // RegisterToWorkMailRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterToWorkMail operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2768,7 +3106,7 @@ const opResetPassword = "ResetPassword"
 
 // ResetPasswordRequest generates a "aws/request.Request" representing the
 // client's request for the ResetPassword operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2877,7 +3215,7 @@ const opUpdatePrimaryEmailAddress = "UpdatePrimaryEmailAddress"
 
 // UpdatePrimaryEmailAddressRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePrimaryEmailAddress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2999,7 +3337,7 @@ const opUpdateResource = "UpdateResource"
 
 // UpdateResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3880,6 +4218,95 @@ func (s DeleteGroupOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteGroupOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteMailboxPermissionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the entity (user or group) for which to delete mailbox
+	// permissions.
+	//
+	// EntityId is a required field
+	EntityId *string `min:"12" type:"string" required:"true"`
+
+	// The identifier of the entity (user or group) for which to delete granted
+	// permissions.
+	//
+	// GranteeId is a required field
+	GranteeId *string `min:"12" type:"string" required:"true"`
+
+	// The identifier of the organization under which the entity (user or group)
+	// exists.
+	//
+	// OrganizationId is a required field
+	OrganizationId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteMailboxPermissionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteMailboxPermissionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteMailboxPermissionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteMailboxPermissionsInput"}
+	if s.EntityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EntityId"))
+	}
+	if s.EntityId != nil && len(*s.EntityId) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("EntityId", 12))
+	}
+	if s.GranteeId == nil {
+		invalidParams.Add(request.NewErrParamRequired("GranteeId"))
+	}
+	if s.GranteeId != nil && len(*s.GranteeId) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("GranteeId", 12))
+	}
+	if s.OrganizationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("OrganizationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEntityId sets the EntityId field's value.
+func (s *DeleteMailboxPermissionsInput) SetEntityId(v string) *DeleteMailboxPermissionsInput {
+	s.EntityId = &v
+	return s
+}
+
+// SetGranteeId sets the GranteeId field's value.
+func (s *DeleteMailboxPermissionsInput) SetGranteeId(v string) *DeleteMailboxPermissionsInput {
+	s.GranteeId = &v
+	return s
+}
+
+// SetOrganizationId sets the OrganizationId field's value.
+func (s *DeleteMailboxPermissionsInput) SetOrganizationId(v string) *DeleteMailboxPermissionsInput {
+	s.OrganizationId = &v
+	return s
+}
+
+type DeleteMailboxPermissionsOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteMailboxPermissionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteMailboxPermissionsOutput) GoString() string {
 	return s.String()
 }
 
@@ -5193,6 +5620,120 @@ func (s *ListGroupsOutput) SetNextToken(v string) *ListGroupsOutput {
 	return s
 }
 
+type ListMailboxPermissionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the entity (user or group) for which to list mailbox permissions.
+	//
+	// EntityId is a required field
+	EntityId *string `min:"12" type:"string" required:"true"`
+
+	// The maximum number of results to return in a single call.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The token to use to retrieve the next page of results. The first call does
+	// not contain any tokens.
+	NextToken *string `min:"1" type:"string"`
+
+	// The identifier of the organization under which the entity (user or group)
+	// exists.
+	//
+	// OrganizationId is a required field
+	OrganizationId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ListMailboxPermissionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListMailboxPermissionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListMailboxPermissionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListMailboxPermissionsInput"}
+	if s.EntityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EntityId"))
+	}
+	if s.EntityId != nil && len(*s.EntityId) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("EntityId", 12))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+	if s.OrganizationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("OrganizationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEntityId sets the EntityId field's value.
+func (s *ListMailboxPermissionsInput) SetEntityId(v string) *ListMailboxPermissionsInput {
+	s.EntityId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListMailboxPermissionsInput) SetMaxResults(v int64) *ListMailboxPermissionsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMailboxPermissionsInput) SetNextToken(v string) *ListMailboxPermissionsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetOrganizationId sets the OrganizationId field's value.
+func (s *ListMailboxPermissionsInput) SetOrganizationId(v string) *ListMailboxPermissionsInput {
+	s.OrganizationId = &v
+	return s
+}
+
+type ListMailboxPermissionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The token to use to retrieve the next page of results. The value is "null"
+	// when there are no more results to return.
+	NextToken *string `min:"1" type:"string"`
+
+	// One page of the entity's mailbox permissions.
+	Permissions []*Permission `type:"list"`
+}
+
+// String returns the string representation
+func (s ListMailboxPermissionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListMailboxPermissionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMailboxPermissionsOutput) SetNextToken(v string) *ListMailboxPermissionsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetPermissions sets the Permissions field's value.
+func (s *ListMailboxPermissionsOutput) SetPermissions(v []*Permission) *ListMailboxPermissionsOutput {
+	s.Permissions = v
+	return s
+}
+
 type ListOrganizationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5701,6 +6242,168 @@ func (s *OrganizationSummary) SetOrganizationId(v string) *OrganizationSummary {
 func (s *OrganizationSummary) SetState(v string) *OrganizationSummary {
 	s.State = &v
 	return s
+}
+
+// Permission granted to an entity (user, group) to access a certain aspect
+// of another entity's mailbox.
+type Permission struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the entity (user or group) to which the permissions are
+	// granted.
+	//
+	// GranteeId is a required field
+	GranteeId *string `min:"12" type:"string" required:"true"`
+
+	// The type of entity (user, group) of the entity referred to in GranteeId.
+	//
+	// GranteeType is a required field
+	GranteeType *string `type:"string" required:"true" enum:"MemberType"`
+
+	// The permissions granted to the grantee. SEND_AS allows the grantee to send
+	// email as the owner of the mailbox (the grantee is not mentioned on these
+	// emails). SEND_ON_BEHALF allows the grantee to send email on behalf of the
+	// owner of the mailbox (the grantee is not mentioned as the physical sender
+	// of these emails). FULL_ACCESS allows the grantee full access to the mailbox,
+	// irrespective of other folder-level permissions set on the mailbox.
+	//
+	// PermissionValues is a required field
+	PermissionValues []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s Permission) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Permission) GoString() string {
+	return s.String()
+}
+
+// SetGranteeId sets the GranteeId field's value.
+func (s *Permission) SetGranteeId(v string) *Permission {
+	s.GranteeId = &v
+	return s
+}
+
+// SetGranteeType sets the GranteeType field's value.
+func (s *Permission) SetGranteeType(v string) *Permission {
+	s.GranteeType = &v
+	return s
+}
+
+// SetPermissionValues sets the PermissionValues field's value.
+func (s *Permission) SetPermissionValues(v []*string) *Permission {
+	s.PermissionValues = v
+	return s
+}
+
+type PutMailboxPermissionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the entity (user or group) for which to update mailbox
+	// permissions.
+	//
+	// EntityId is a required field
+	EntityId *string `min:"12" type:"string" required:"true"`
+
+	// The identifier of the entity (user or group) to which to grant the permissions.
+	//
+	// GranteeId is a required field
+	GranteeId *string `min:"12" type:"string" required:"true"`
+
+	// The identifier of the organization under which the entity (user or group)
+	// exists.
+	//
+	// OrganizationId is a required field
+	OrganizationId *string `type:"string" required:"true"`
+
+	// The permissions granted to the grantee. SEND_AS allows the grantee to send
+	// email as the owner of the mailbox (the grantee is not mentioned on these
+	// emails). SEND_ON_BEHALF allows the grantee to send email on behalf of the
+	// owner of the mailbox (the grantee is not mentioned as the physical sender
+	// of these emails). FULL_ACCESS allows the grantee full access to the mailbox,
+	// irrespective of other folder-level permissions set on the mailbox.
+	//
+	// PermissionValues is a required field
+	PermissionValues []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s PutMailboxPermissionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutMailboxPermissionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutMailboxPermissionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutMailboxPermissionsInput"}
+	if s.EntityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EntityId"))
+	}
+	if s.EntityId != nil && len(*s.EntityId) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("EntityId", 12))
+	}
+	if s.GranteeId == nil {
+		invalidParams.Add(request.NewErrParamRequired("GranteeId"))
+	}
+	if s.GranteeId != nil && len(*s.GranteeId) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("GranteeId", 12))
+	}
+	if s.OrganizationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("OrganizationId"))
+	}
+	if s.PermissionValues == nil {
+		invalidParams.Add(request.NewErrParamRequired("PermissionValues"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEntityId sets the EntityId field's value.
+func (s *PutMailboxPermissionsInput) SetEntityId(v string) *PutMailboxPermissionsInput {
+	s.EntityId = &v
+	return s
+}
+
+// SetGranteeId sets the GranteeId field's value.
+func (s *PutMailboxPermissionsInput) SetGranteeId(v string) *PutMailboxPermissionsInput {
+	s.GranteeId = &v
+	return s
+}
+
+// SetOrganizationId sets the OrganizationId field's value.
+func (s *PutMailboxPermissionsInput) SetOrganizationId(v string) *PutMailboxPermissionsInput {
+	s.OrganizationId = &v
+	return s
+}
+
+// SetPermissionValues sets the PermissionValues field's value.
+func (s *PutMailboxPermissionsInput) SetPermissionValues(v []*string) *PutMailboxPermissionsInput {
+	s.PermissionValues = v
+	return s
+}
+
+type PutMailboxPermissionsOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutMailboxPermissionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutMailboxPermissionsOutput) GoString() string {
+	return s.String()
 }
 
 type RegisterToWorkMailInput struct {
@@ -6230,6 +6933,17 @@ const (
 
 	// MemberTypeUser is a MemberType enum value
 	MemberTypeUser = "USER"
+)
+
+const (
+	// PermissionTypeFullAccess is a PermissionType enum value
+	PermissionTypeFullAccess = "FULL_ACCESS"
+
+	// PermissionTypeSendAs is a PermissionType enum value
+	PermissionTypeSendAs = "SEND_AS"
+
+	// PermissionTypeSendOnBehalf is a PermissionType enum value
+	PermissionTypeSendOnBehalf = "SEND_ON_BEHALF"
 )
 
 const (

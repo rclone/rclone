@@ -41,11 +41,13 @@ func NewAPIOperationsClientWithBaseURI(baseURI string, subscriptionID string) AP
 }
 
 // CreateOrUpdate creates a new API operation or updates an existing one.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance. parameters is create
-// parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// parameters - create parameters.
 func (client APIOperationsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters OperationContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -110,7 +112,7 @@ func (client APIOperationsClient) CreateOrUpdatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/operations/{operationId}", pathParameters),
@@ -139,12 +141,14 @@ func (client APIOperationsClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete deletes the specified operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance. ifMatch is eTag of the
-// API Operation Entity. ETag should match the current entity state from the header response of the GET request or
-// it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// ifMatch - eTag of the API Operation Entity. ETag should match the current entity state from the header
+// response of the GET request or it should be * for unconditional update.
 func (client APIOperationsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -227,10 +231,12 @@ func (client APIOperationsClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets the details of the API Operation specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
 func (client APIOperationsClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string) (result OperationContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -313,16 +319,18 @@ func (client APIOperationsClient) GetResponder(resp *http.Response) (result Oper
 }
 
 // ListByApis lists a collection of the operations for the specified API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. filter is | Field
-// | Supported operators    | Supported functions               |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// filter - | Field       | Supported operators    | Supported functions               |
 // |-------------|------------------------|-----------------------------------|
 // | name        | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
 // | method      | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
 // | description | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
-// | urlTemplate | ge, le, eq, ne, gt, lt | substringof, startswith, endswith | top is number of records to return.
-// skip is number of records to skip.
+// | urlTemplate | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client APIOperationsClient) ListByApis(ctx context.Context, resourceGroupName string, serviceName string, apiid string, filter string, top *int32, skip *int32) (result OperationCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -443,12 +451,15 @@ func (client APIOperationsClient) ListByApisComplete(ctx context.Context, resour
 }
 
 // Update updates the details of the operation specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance. parameters is API
-// Operation Update parameters. ifMatch is eTag of the API Operation Entity. ETag should match the current entity
-// state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// parameters - API Operation Update parameters.
+// ifMatch - eTag of the API Operation Entity. ETag should match the current entity state from the header
+// response of the GET request or it should be * for unconditional update.
 func (client APIOperationsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters OperationUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -503,7 +514,7 @@ func (client APIOperationsClient) UpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/operations/{operationId}", pathParameters),

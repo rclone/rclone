@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EndpointType enumerates the values for endpoint type.
 type EndpointType string
 
@@ -36,6 +37,13 @@ const (
 	EndpointTypeWebHook EndpointType = "WebHook"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleEndpointTypeValues returns an array of possible values for the EndpointType const type.
+func PossibleEndpointTypeValues() []EndpointType {
+	return []EndpointType{EndpointTypeEventHub, EndpointTypeEventSubscriptionDestination, EndpointTypeWebHook}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionProvisioningState enumerates the values for event subscription provisioning state.
 type EventSubscriptionProvisioningState string
 
@@ -54,6 +62,13 @@ const (
 	Updating EventSubscriptionProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleEventSubscriptionProvisioningStateValues returns an array of possible values for the EventSubscriptionProvisioningState const type.
+func PossibleEventSubscriptionProvisioningStateValues() []EventSubscriptionProvisioningState {
+	return []EventSubscriptionProvisioningState{Canceled, Creating, Deleting, Failed, Succeeded, Updating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // OperationOrigin enumerates the values for operation origin.
 type OperationOrigin string
 
@@ -66,6 +81,13 @@ const (
 	UserAndSystem OperationOrigin = "UserAndSystem"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{System, User, UserAndSystem}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ResourceRegionType enumerates the values for resource region type.
 type ResourceRegionType string
 
@@ -76,6 +98,13 @@ const (
 	RegionalResource ResourceRegionType = "RegionalResource"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleResourceRegionTypeValues returns an array of possible values for the ResourceRegionType const type.
+func PossibleResourceRegionTypeValues() []ResourceRegionType {
+	return []ResourceRegionType{GlobalResource, RegionalResource}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicProvisioningState enumerates the values for topic provisioning state.
 type TopicProvisioningState string
 
@@ -94,6 +123,13 @@ const (
 	TopicProvisioningStateUpdating TopicProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleTopicProvisioningStateValues returns an array of possible values for the TopicProvisioningState const type.
+func PossibleTopicProvisioningStateValues() []TopicProvisioningState {
+	return []TopicProvisioningState{TopicProvisioningStateCanceled, TopicProvisioningStateCreating, TopicProvisioningStateDeleting, TopicProvisioningStateFailed, TopicProvisioningStateSucceeded, TopicProvisioningStateUpdating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicTypeProvisioningState enumerates the values for topic type provisioning state.
 type TopicTypeProvisioningState string
 
@@ -112,6 +148,13 @@ const (
 	TopicTypeProvisioningStateUpdating TopicTypeProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// PossibleTopicTypeProvisioningStateValues returns an array of possible values for the TopicTypeProvisioningState const type.
+func PossibleTopicTypeProvisioningStateValues() []TopicTypeProvisioningState {
+	return []TopicTypeProvisioningState{TopicTypeProvisioningStateCanceled, TopicTypeProvisioningStateCreating, TopicTypeProvisioningStateDeleting, TopicTypeProvisioningStateFailed, TopicTypeProvisioningStateSucceeded, TopicTypeProvisioningStateUpdating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventHubEventSubscriptionDestination information about the event hub destination for an event subscription
 type EventHubEventSubscriptionDestination struct {
 	// EventHubEventSubscriptionDestinationProperties - Event Hub Properties of the event subscription destination
@@ -120,6 +163,7 @@ type EventHubEventSubscriptionDestination struct {
 	EndpointType EndpointType `json:"endpointType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for EventHubEventSubscriptionDestination.
 func (ehesd EventHubEventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	ehesd.EndpointType = EndpointTypeEventHub
@@ -127,30 +171,37 @@ func (ehesd EventHubEventSubscriptionDestination) MarshalJSON() ([]byte, error) 
 	if ehesd.EventHubEventSubscriptionDestinationProperties != nil {
 		objectMap["properties"] = ehesd.EventHubEventSubscriptionDestinationProperties
 	}
-	objectMap["endpointType"] = ehesd.EndpointType
+	if ehesd.EndpointType != "" {
+		objectMap["endpointType"] = ehesd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsWebHookEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventHubEventSubscriptionDestination.
 func (ehesd EventHubEventSubscriptionDestination) AsWebHookEventSubscriptionDestination() (*WebHookEventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventHubEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventHubEventSubscriptionDestination.
 func (ehesd EventHubEventSubscriptionDestination) AsEventHubEventSubscriptionDestination() (*EventHubEventSubscriptionDestination, bool) {
 	return &ehesd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventHubEventSubscriptionDestination.
 func (ehesd EventHubEventSubscriptionDestination) AsEventSubscriptionDestination() (*EventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsBasicEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventHubEventSubscriptionDestination.
 func (ehesd EventHubEventSubscriptionDestination) AsBasicEventSubscriptionDestination() (BasicEventSubscriptionDestination, bool) {
 	return &ehesd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for EventHubEventSubscriptionDestination struct.
 func (ehesd *EventHubEventSubscriptionDestination) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -184,12 +235,14 @@ func (ehesd *EventHubEventSubscriptionDestination) UnmarshalJSON(body []byte) er
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventHubEventSubscriptionDestinationProperties the properties for a event hub destination.
 type EventHubEventSubscriptionDestinationProperties struct {
 	// ResourceID - The Azure Resource Id that represents the endpoint of an Event Hub destination of an event subscription.
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscription event Subscription
 type EventSubscription struct {
 	autorest.Response `json:"-"`
@@ -203,6 +256,26 @@ type EventSubscription struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// MarshalJSON is the custom marshaler for EventSubscription.
+func (es EventSubscription) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if es.EventSubscriptionProperties != nil {
+		objectMap["properties"] = es.EventSubscriptionProperties
+	}
+	if es.ID != nil {
+		objectMap["id"] = es.ID
+	}
+	if es.Name != nil {
+		objectMap["name"] = es.Name
+	}
+	if es.Type != nil {
+		objectMap["type"] = es.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for EventSubscription struct.
 func (es *EventSubscription) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -254,6 +327,7 @@ func (es *EventSubscription) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // BasicEventSubscriptionDestination information about the destination for an event subscription
 type BasicEventSubscriptionDestination interface {
 	AsWebHookEventSubscriptionDestination() (*WebHookEventSubscriptionDestination, bool)
@@ -261,6 +335,7 @@ type BasicEventSubscriptionDestination interface {
 	AsEventSubscriptionDestination() (*EventSubscriptionDestination, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionDestination information about the destination for an event subscription
 type EventSubscriptionDestination struct {
 	// EndpointType - Possible values include: 'EndpointTypeEventSubscriptionDestination', 'EndpointTypeWebHook', 'EndpointTypeEventHub'
@@ -308,34 +383,42 @@ func unmarshalBasicEventSubscriptionDestinationArray(body []byte) ([]BasicEventS
 	return esdArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for EventSubscriptionDestination.
 func (esd EventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	esd.EndpointType = EndpointTypeEventSubscriptionDestination
 	objectMap := make(map[string]interface{})
-	objectMap["endpointType"] = esd.EndpointType
+	if esd.EndpointType != "" {
+		objectMap["endpointType"] = esd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsWebHookEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventSubscriptionDestination.
 func (esd EventSubscriptionDestination) AsWebHookEventSubscriptionDestination() (*WebHookEventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventHubEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventSubscriptionDestination.
 func (esd EventSubscriptionDestination) AsEventHubEventSubscriptionDestination() (*EventHubEventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventSubscriptionDestination.
 func (esd EventSubscriptionDestination) AsEventSubscriptionDestination() (*EventSubscriptionDestination, bool) {
 	return &esd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsBasicEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for EventSubscriptionDestination.
 func (esd EventSubscriptionDestination) AsBasicEventSubscriptionDestination() (BasicEventSubscriptionDestination, bool) {
 	return &esd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionFilter filter for the Event Subscription
 type EventSubscriptionFilter struct {
 	// SubjectBeginsWith - An optional string to filter events for an event subscription based on a resource path prefix.
@@ -353,6 +436,7 @@ type EventSubscriptionFilter struct {
 	IsSubjectCaseSensitive *bool `json:"isSubjectCaseSensitive,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionFullURL full endpoint url of an event subscription
 type EventSubscriptionFullURL struct {
 	autorest.Response `json:"-"`
@@ -360,6 +444,7 @@ type EventSubscriptionFullURL struct {
 	EndpointURL *string `json:"endpointUrl,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionProperties properties of the Event Subscription
 type EventSubscriptionProperties struct {
 	// Topic - Name of the topic of the event subscription.
@@ -374,6 +459,7 @@ type EventSubscriptionProperties struct {
 	Labels *[]string `json:"labels,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for EventSubscriptionProperties struct.
 func (esp *EventSubscriptionProperties) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -433,6 +519,7 @@ func (esp *EventSubscriptionProperties) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionsCreateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type EventSubscriptionsCreateFuture struct {
@@ -440,6 +527,7 @@ type EventSubscriptionsCreateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future EventSubscriptionsCreateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
@@ -482,6 +570,7 @@ func (future EventSubscriptionsCreateFuture) Result(client EventSubscriptionsCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type EventSubscriptionsDeleteFuture struct {
@@ -489,6 +578,7 @@ type EventSubscriptionsDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future EventSubscriptionsDeleteFuture) Result(client EventSubscriptionsClient) (ar autorest.Response, err error) {
@@ -531,6 +621,7 @@ func (future EventSubscriptionsDeleteFuture) Result(client EventSubscriptionsCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionsListResult result of the List EventSubscriptions operation
 type EventSubscriptionsListResult struct {
 	autorest.Response `json:"-"`
@@ -538,6 +629,7 @@ type EventSubscriptionsListResult struct {
 	Value *[]EventSubscription `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type EventSubscriptionsUpdateFuture struct {
@@ -545,6 +637,7 @@ type EventSubscriptionsUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future EventSubscriptionsUpdateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
@@ -587,6 +680,7 @@ func (future EventSubscriptionsUpdateFuture) Result(client EventSubscriptionsCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventSubscriptionUpdateParameters properties of the Event Subscription update
 type EventSubscriptionUpdateParameters struct {
 	// Destination - Information about the destination where events have to be delivered for the event subscription.
@@ -597,6 +691,7 @@ type EventSubscriptionUpdateParameters struct {
 	Labels *[]string `json:"labels,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for EventSubscriptionUpdateParameters struct.
 func (esup *EventSubscriptionUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -638,6 +733,7 @@ func (esup *EventSubscriptionUpdateParameters) UnmarshalJSON(body []byte) error 
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventType event Type for a subject under a topic
 type EventType struct {
 	// EventTypeProperties - Properties of the event type.
@@ -650,6 +746,26 @@ type EventType struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// MarshalJSON is the custom marshaler for EventType.
+func (et EventType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if et.EventTypeProperties != nil {
+		objectMap["properties"] = et.EventTypeProperties
+	}
+	if et.ID != nil {
+		objectMap["id"] = et.ID
+	}
+	if et.Name != nil {
+		objectMap["name"] = et.Name
+	}
+	if et.Type != nil {
+		objectMap["type"] = et.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for EventType struct.
 func (et *EventType) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -701,6 +817,7 @@ func (et *EventType) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventTypeProperties properties of the event type
 type EventTypeProperties struct {
 	// DisplayName - Display name of the event type.
@@ -711,6 +828,7 @@ type EventTypeProperties struct {
 	SchemaURL *string `json:"schemaUrl,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // EventTypesListResult result of the List Event Types operation
 type EventTypesListResult struct {
 	autorest.Response `json:"-"`
@@ -718,6 +836,7 @@ type EventTypesListResult struct {
 	Value *[]EventType `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Operation represents an operation returned by the GetOperations request
 type Operation struct {
 	// Name - Name of the operation
@@ -730,6 +849,7 @@ type Operation struct {
 	Properties interface{} `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // OperationInfo information about an operation
 type OperationInfo struct {
 	// Provider - Name of the provider
@@ -742,6 +862,7 @@ type OperationInfo struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // OperationsListResult result of the List Operations operation
 type OperationsListResult struct {
 	autorest.Response `json:"-"`
@@ -749,6 +870,7 @@ type OperationsListResult struct {
 	Value *[]Operation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Resource definition of a Resource
 type Resource struct {
 	// ID - Fully qualified identifier of the resource
@@ -759,6 +881,7 @@ type Resource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Topic eventGrid Topic
 type Topic struct {
 	autorest.Response `json:"-"`
@@ -776,6 +899,7 @@ type Topic struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for Topic.
 func (t Topic) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -800,6 +924,7 @@ func (t Topic) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for Topic struct.
 func (t *Topic) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -869,6 +994,7 @@ func (t *Topic) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicProperties properties of the Topic
 type TopicProperties struct {
 	// ProvisioningState - Provisioning state of the topic. Possible values include: 'TopicProvisioningStateCreating', 'TopicProvisioningStateUpdating', 'TopicProvisioningStateDeleting', 'TopicProvisioningStateSucceeded', 'TopicProvisioningStateCanceled', 'TopicProvisioningStateFailed'
@@ -877,18 +1003,21 @@ type TopicProperties struct {
 	Endpoint *string `json:"endpoint,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicRegenerateKeyRequest topic regenerate share access key key request
 type TopicRegenerateKeyRequest struct {
 	// KeyName - Key name to regenerate key1 or key2
 	KeyName *string `json:"keyName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TopicsCreateOrUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, err error) {
@@ -931,12 +1060,14 @@ func (future TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TopicsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future TopicsDeleteFuture) Result(client TopicsClient) (ar autorest.Response, err error) {
@@ -979,6 +1110,7 @@ func (future TopicsDeleteFuture) Result(client TopicsClient) (ar autorest.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicSharedAccessKeys shared access keys of the Topic
 type TopicSharedAccessKeys struct {
 	autorest.Response `json:"-"`
@@ -988,6 +1120,7 @@ type TopicSharedAccessKeys struct {
 	Key2 *string `json:"key2,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicsListResult result of the List Topics operation
 type TopicsListResult struct {
 	autorest.Response `json:"-"`
@@ -995,12 +1128,14 @@ type TopicsListResult struct {
 	Value *[]Topic `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TopicsUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future TopicsUpdateFuture) Result(client TopicsClient) (t Topic, err error) {
@@ -1043,6 +1178,7 @@ func (future TopicsUpdateFuture) Result(client TopicsClient) (t Topic, err error
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicTypeInfo properties of a topic type info.
 type TopicTypeInfo struct {
 	autorest.Response `json:"-"`
@@ -1056,6 +1192,26 @@ type TopicTypeInfo struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
+// MarshalJSON is the custom marshaler for TopicTypeInfo.
+func (tti TopicTypeInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tti.TopicTypeProperties != nil {
+		objectMap["properties"] = tti.TopicTypeProperties
+	}
+	if tti.ID != nil {
+		objectMap["id"] = tti.ID
+	}
+	if tti.Name != nil {
+		objectMap["name"] = tti.Name
+	}
+	if tti.Type != nil {
+		objectMap["type"] = tti.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for TopicTypeInfo struct.
 func (tti *TopicTypeInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1107,6 +1263,7 @@ func (tti *TopicTypeInfo) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicTypeProperties properties of a topic type.
 type TopicTypeProperties struct {
 	// Provider - Namespace of the provider of the topic type.
@@ -1123,6 +1280,7 @@ type TopicTypeProperties struct {
 	SupportedLocations *[]string `json:"supportedLocations,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicTypesListResult result of the List Topic Types operation
 type TopicTypesListResult struct {
 	autorest.Response `json:"-"`
@@ -1130,12 +1288,14 @@ type TopicTypesListResult struct {
 	Value *[]TopicTypeInfo `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicUpdateParameters properties of the Topic update
 type TopicUpdateParameters struct {
 	// Tags - Tags of the resource
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for TopicUpdateParameters.
 func (tup TopicUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1145,6 +1305,7 @@ func (tup TopicUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TrackedResource definition of a Tracked Resource
 type TrackedResource struct {
 	// Location - Location of the resource
@@ -1159,6 +1320,7 @@ type TrackedResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for TrackedResource.
 func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1180,6 +1342,7 @@ func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // WebHookEventSubscriptionDestination information about the webhook destination for an event subscription
 type WebHookEventSubscriptionDestination struct {
 	// WebHookEventSubscriptionDestinationProperties - WebHook Properties of the event subscription destination
@@ -1188,6 +1351,7 @@ type WebHookEventSubscriptionDestination struct {
 	EndpointType EndpointType `json:"endpointType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // MarshalJSON is the custom marshaler for WebHookEventSubscriptionDestination.
 func (whesd WebHookEventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	whesd.EndpointType = EndpointTypeWebHook
@@ -1195,30 +1359,37 @@ func (whesd WebHookEventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	if whesd.WebHookEventSubscriptionDestinationProperties != nil {
 		objectMap["properties"] = whesd.WebHookEventSubscriptionDestinationProperties
 	}
-	objectMap["endpointType"] = whesd.EndpointType
+	if whesd.EndpointType != "" {
+		objectMap["endpointType"] = whesd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsWebHookEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for WebHookEventSubscriptionDestination.
 func (whesd WebHookEventSubscriptionDestination) AsWebHookEventSubscriptionDestination() (*WebHookEventSubscriptionDestination, bool) {
 	return &whesd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventHubEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for WebHookEventSubscriptionDestination.
 func (whesd WebHookEventSubscriptionDestination) AsEventHubEventSubscriptionDestination() (*EventHubEventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for WebHookEventSubscriptionDestination.
 func (whesd WebHookEventSubscriptionDestination) AsEventSubscriptionDestination() (*EventSubscriptionDestination, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // AsBasicEventSubscriptionDestination is the BasicEventSubscriptionDestination implementation for WebHookEventSubscriptionDestination.
 func (whesd WebHookEventSubscriptionDestination) AsBasicEventSubscriptionDestination() (BasicEventSubscriptionDestination, bool) {
 	return &whesd, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // UnmarshalJSON is the custom unmarshaler for WebHookEventSubscriptionDestination struct.
 func (whesd *WebHookEventSubscriptionDestination) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1252,6 +1423,7 @@ func (whesd *WebHookEventSubscriptionDestination) UnmarshalJSON(body []byte) err
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // WebHookEventSubscriptionDestinationProperties information about the webhook destination properties for an event
 // subscription
 type WebHookEventSubscriptionDestinationProperties struct {

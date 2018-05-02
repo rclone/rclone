@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/internal/testutil"
+	"golang.org/x/net/context"
 	raw "google.golang.org/api/storage/v1"
 )
 
@@ -89,7 +90,7 @@ func TestAddNotificationsErrors(t *testing.T) {
 		{TopicProjectID: "p"},                          // missing TopicID
 		{TopicID: "t"},                                 // missing TopicProjectID
 	} {
-		_, err := b.AddNotification(nil, n)
+		_, err := b.AddNotification(context.Background(), n)
 		if err == nil {
 			t.Errorf("%+v: got nil, want error", n)
 		}

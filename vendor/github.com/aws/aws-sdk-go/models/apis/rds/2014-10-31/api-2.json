@@ -3976,7 +3976,8 @@
         "OptionGroupName":{"shape":"String"},
         "PreferredBackupWindow":{"shape":"String"},
         "PreferredMaintenanceWindow":{"shape":"String"},
-        "EnableIAMDatabaseAuthentication":{"shape":"BooleanOptional"}
+        "EnableIAMDatabaseAuthentication":{"shape":"BooleanOptional"},
+        "EngineVersion":{"shape":"String"}
       }
     },
     "ModifyDBClusterParameterGroupMessage":{

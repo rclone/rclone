@@ -32,11 +32,12 @@
 package proto_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
 	pb "github.com/golang/protobuf/proto/proto3_proto"
-	tpb "github.com/golang/protobuf/proto/testdata"
+	tpb "github.com/golang/protobuf/proto/test_proto"
 )
 
 func TestProto3ZeroValues(t *testing.T) {
@@ -131,5 +132,20 @@ func TestProto3SetDefaults(t *testing.T) {
 
 	if !proto.Equal(got, want) {
 		t.Errorf("with in = %v\nproto.SetDefaults(in) =>\ngot %v\nwant %v", in, got, want)
+	}
+}
+
+func TestUnknownFieldPreservation(t *testing.T) {
+	b1 := "\x0a\x05David"      // Known tag 1
+	b2 := "\xc2\x0c\x06Google" // Unknown tag 200
+	b := []byte(b1 + b2)
+
+	m := new(pb.Message)
+	if err := proto.Unmarshal(b, m); err != nil {
+		t.Fatalf("proto.Unmarshal: %v", err)
+	}
+
+	if !bytes.Equal(m.XXX_unrecognized, []byte(b2)) {
+		t.Fatalf("mismatching unknown fields:\ngot  %q\nwant %q", m.XXX_unrecognized, b2)
 	}
 }

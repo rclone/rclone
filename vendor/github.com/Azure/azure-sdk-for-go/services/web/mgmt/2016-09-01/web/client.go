@@ -55,8 +55,8 @@ func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 }
 
 // CheckNameAvailability check if a resource name is available.
-//
-// request is name availability request.
+// Parameters:
+// request - name availability request.
 func (client BaseClient) CheckNameAvailability(ctx context.Context, request ResourceNameAvailabilityRequest) (result ResourceNameAvailability, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: request,
@@ -97,7 +97,7 @@ func (client BaseClient) CheckNameAvailabilityPreparer(ctx context.Context, requ
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Web/checknameavailability", pathParameters),
@@ -185,8 +185,8 @@ func (client BaseClient) GetPublishingUserResponder(resp *http.Response) (result
 }
 
 // GetSourceControl gets source control token
-//
-// sourceControlType is type of source control
+// Parameters:
+// sourceControlType - type of source control
 func (client BaseClient) GetSourceControl(ctx context.Context, sourceControlType string) (result SourceControl, err error) {
 	req, err := client.GetSourceControlPreparer(ctx, sourceControlType)
 	if err != nil {
@@ -311,9 +311,10 @@ func (client BaseClient) GetSubscriptionDeploymentLocationsResponder(resp *http.
 }
 
 // ListGeoRegions get a list of available geographical regions.
-//
-// sku is name of SKU used to filter the regions. linuxWorkersEnabled is specify <code>true</code> if you want to
-// filter to only regions that support Linux workers.
+// Parameters:
+// sku - name of SKU used to filter the regions.
+// linuxWorkersEnabled - specify <code>true</code> if you want to filter to only regions that support Linux
+// workers.
 func (client BaseClient) ListGeoRegions(ctx context.Context, sku SkuName, linuxWorkersEnabled *bool) (result GeoRegionCollectionPage, err error) {
 	result.fn = client.listGeoRegionsNextResults
 	req, err := client.ListGeoRegionsPreparer(ctx, sku, linuxWorkersEnabled)
@@ -500,8 +501,8 @@ func (client BaseClient) ListPremierAddOnOffersComplete(ctx context.Context) (re
 }
 
 // ListSiteIdentifiersAssignedToHostName list all apps that are assigned to a hostname.
-//
-// nameIdentifier is hostname information.
+// Parameters:
+// nameIdentifier - hostname information.
 func (client BaseClient) ListSiteIdentifiersAssignedToHostName(ctx context.Context, nameIdentifier NameIdentifier) (result IdentifierCollectionPage, err error) {
 	result.fn = client.listSiteIdentifiersAssignedToHostNameNextResults
 	req, err := client.ListSiteIdentifiersAssignedToHostNamePreparer(ctx, nameIdentifier)
@@ -537,7 +538,7 @@ func (client BaseClient) ListSiteIdentifiersAssignedToHostNamePreparer(ctx conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Web/listSitesAssignedToHostName", pathParameters),
@@ -742,9 +743,9 @@ func (client BaseClient) ListSourceControlsComplete(ctx context.Context) (result
 }
 
 // Move move resources between resource groups.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. moveResourceEnvelope is object
-// that represents the resource to move.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// moveResourceEnvelope - object that represents the resource to move.
 func (client BaseClient) Move(ctx context.Context, resourceGroupName string, moveResourceEnvelope CsmMoveResourceEnvelope) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -794,7 +795,7 @@ func (client BaseClient) MovePreparer(ctx context.Context, resourceGroupName str
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/moveResources", pathParameters),
@@ -823,8 +824,8 @@ func (client BaseClient) MoveResponder(resp *http.Response) (result autorest.Res
 }
 
 // UpdatePublishingUser updates publishing user
-//
-// userDetails is details of publishing user
+// Parameters:
+// userDetails - details of publishing user
 func (client BaseClient) UpdatePublishingUser(ctx context.Context, userDetails User) (result User, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: userDetails,
@@ -862,7 +863,7 @@ func (client BaseClient) UpdatePublishingUserPreparer(ctx context.Context, userD
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Web/publishingUsers/web"),
@@ -892,8 +893,9 @@ func (client BaseClient) UpdatePublishingUserResponder(resp *http.Response) (res
 }
 
 // UpdateSourceControl updates source control token
-//
-// sourceControlType is type of source control requestMessage is source control token information
+// Parameters:
+// sourceControlType - type of source control
+// requestMessage - source control token information
 func (client BaseClient) UpdateSourceControl(ctx context.Context, sourceControlType string, requestMessage SourceControl) (result SourceControl, err error) {
 	req, err := client.UpdateSourceControlPreparer(ctx, sourceControlType, requestMessage)
 	if err != nil {
@@ -928,7 +930,7 @@ func (client BaseClient) UpdateSourceControlPreparer(ctx context.Context, source
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/providers/Microsoft.Web/sourcecontrols/{sourceControlType}", pathParameters),
@@ -958,9 +960,9 @@ func (client BaseClient) UpdateSourceControlResponder(resp *http.Response) (resu
 }
 
 // Validate validate if a resource can be created.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. validateRequest is request with
-// the resources to validate.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// validateRequest - request with the resources to validate.
 func (client BaseClient) Validate(ctx context.Context, resourceGroupName string, validateRequest ValidateRequest) (result ValidateResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1011,7 +1013,7 @@ func (client BaseClient) ValidatePreparer(ctx context.Context, resourceGroupName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/validate", pathParameters),
@@ -1041,9 +1043,9 @@ func (client BaseClient) ValidateResponder(resp *http.Response) (result Validate
 }
 
 // ValidateMove validate whether a resource can be moved.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. moveResourceEnvelope is object
-// that represents the resource to move.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// moveResourceEnvelope - object that represents the resource to move.
 func (client BaseClient) ValidateMove(ctx context.Context, resourceGroupName string, moveResourceEnvelope CsmMoveResourceEnvelope) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1093,7 +1095,7 @@ func (client BaseClient) ValidateMovePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/validateMoveResources", pathParameters),
@@ -1123,8 +1125,8 @@ func (client BaseClient) ValidateMoveResponder(resp *http.Response) (result auto
 
 // VerifyHostingEnvironmentVnet verifies if this VNET is compatible with an App Service Environment by analyzing the
 // Network Security Group rules.
-//
-// parameters is VNET information
+// Parameters:
+// parameters - VNET information
 func (client BaseClient) VerifyHostingEnvironmentVnet(ctx context.Context, parameters VnetParameters) (result VnetValidationFailureDetails, err error) {
 	req, err := client.VerifyHostingEnvironmentVnetPreparer(ctx, parameters)
 	if err != nil {
@@ -1159,7 +1161,7 @@ func (client BaseClient) VerifyHostingEnvironmentVnetPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", pathParameters),

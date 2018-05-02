@@ -62,6 +62,11 @@ const (
 	ServiceConnectDeviceConnect AccessRights = "ServiceConnect, DeviceConnect"
 )
 
+// PossibleAccessRightsValues returns an array of possible values for the AccessRights const type.
+func PossibleAccessRightsValues() []AccessRights {
+	return []AccessRights{DeviceConnect, RegistryRead, RegistryReadDeviceConnect, RegistryReadRegistryWrite, RegistryReadRegistryWriteDeviceConnect, RegistryReadRegistryWriteServiceConnect, RegistryReadRegistryWriteServiceConnectDeviceConnect, RegistryReadServiceConnect, RegistryReadServiceConnectDeviceConnect, RegistryWrite, RegistryWriteDeviceConnect, RegistryWriteServiceConnect, RegistryWriteServiceConnectDeviceConnect, ServiceConnect, ServiceConnectDeviceConnect}
+}
+
 // Capabilities enumerates the values for capabilities.
 type Capabilities string
 
@@ -72,6 +77,11 @@ const (
 	None Capabilities = "None"
 )
 
+// PossibleCapabilitiesValues returns an array of possible values for the Capabilities const type.
+func PossibleCapabilitiesValues() []Capabilities {
+	return []Capabilities{DeviceManagement, None}
+}
+
 // IotHubNameUnavailabilityReason enumerates the values for iot hub name unavailability reason.
 type IotHubNameUnavailabilityReason string
 
@@ -81,6 +91,11 @@ const (
 	// Invalid ...
 	Invalid IotHubNameUnavailabilityReason = "Invalid"
 )
+
+// PossibleIotHubNameUnavailabilityReasonValues returns an array of possible values for the IotHubNameUnavailabilityReason const type.
+func PossibleIotHubNameUnavailabilityReasonValues() []IotHubNameUnavailabilityReason {
+	return []IotHubNameUnavailabilityReason{AlreadyExists, Invalid}
+}
 
 // IotHubScaleType enumerates the values for iot hub scale type.
 type IotHubScaleType string
@@ -93,6 +108,11 @@ const (
 	// IotHubScaleTypeNone ...
 	IotHubScaleTypeNone IotHubScaleType = "None"
 )
+
+// PossibleIotHubScaleTypeValues returns an array of possible values for the IotHubScaleType const type.
+func PossibleIotHubScaleTypeValues() []IotHubScaleType {
+	return []IotHubScaleType{IotHubScaleTypeAutomatic, IotHubScaleTypeManual, IotHubScaleTypeNone}
+}
 
 // IotHubSku enumerates the values for iot hub sku.
 type IotHubSku string
@@ -108,6 +128,11 @@ const (
 	S3 IotHubSku = "S3"
 )
 
+// PossibleIotHubSkuValues returns an array of possible values for the IotHubSku const type.
+func PossibleIotHubSkuValues() []IotHubSku {
+	return []IotHubSku{F1, S1, S2, S3}
+}
+
 // IotHubSkuTier enumerates the values for iot hub sku tier.
 type IotHubSkuTier string
 
@@ -118,6 +143,11 @@ const (
 	Standard IotHubSkuTier = "Standard"
 )
 
+// PossibleIotHubSkuTierValues returns an array of possible values for the IotHubSkuTier const type.
+func PossibleIotHubSkuTierValues() []IotHubSkuTier {
+	return []IotHubSkuTier{Free, Standard}
+}
+
 // IPFilterActionType enumerates the values for ip filter action type.
 type IPFilterActionType string
 
@@ -127,6 +157,11 @@ const (
 	// Reject ...
 	Reject IPFilterActionType = "Reject"
 )
+
+// PossibleIPFilterActionTypeValues returns an array of possible values for the IPFilterActionType const type.
+func PossibleIPFilterActionTypeValues() []IPFilterActionType {
+	return []IPFilterActionType{Accept, Reject}
+}
 
 // JobStatus enumerates the values for job status.
 type JobStatus string
@@ -145,6 +180,11 @@ const (
 	// Unknown ...
 	Unknown JobStatus = "unknown"
 )
+
+// PossibleJobStatusValues returns an array of possible values for the JobStatus const type.
+func PossibleJobStatusValues() []JobStatus {
+	return []JobStatus{Cancelled, Completed, Enqueued, Failed, Running, Unknown}
+}
 
 // JobType enumerates the values for job type.
 type JobType string
@@ -172,6 +212,11 @@ const (
 	JobTypeWriteDeviceProperties JobType = "writeDeviceProperties"
 )
 
+// PossibleJobTypeValues returns an array of possible values for the JobType const type.
+func PossibleJobTypeValues() []JobType {
+	return []JobType{JobTypeBackup, JobTypeExport, JobTypeFactoryResetDevice, JobTypeFirmwareUpdate, JobTypeImport, JobTypeReadDeviceProperties, JobTypeRebootDevice, JobTypeUnknown, JobTypeUpdateDeviceConfiguration, JobTypeWriteDeviceProperties}
+}
+
 // OperationMonitoringLevel enumerates the values for operation monitoring level.
 type OperationMonitoringLevel string
 
@@ -185,6 +230,11 @@ const (
 	// OperationMonitoringLevelNone ...
 	OperationMonitoringLevelNone OperationMonitoringLevel = "None"
 )
+
+// PossibleOperationMonitoringLevelValues returns an array of possible values for the OperationMonitoringLevel const type.
+func PossibleOperationMonitoringLevelValues() []OperationMonitoringLevel {
+	return []OperationMonitoringLevel{OperationMonitoringLevelError, OperationMonitoringLevelErrorInformation, OperationMonitoringLevelInformation, OperationMonitoringLevelNone}
+}
 
 // CloudToDeviceProperties the IoT hub cloud-to-device messaging properties.
 type CloudToDeviceProperties struct {
@@ -622,7 +672,9 @@ func (ihp IotHubProperties) MarshalJSON() ([]byte, error) {
 	if ihp.OperationsMonitoringProperties != nil {
 		objectMap["operationsMonitoringProperties"] = ihp.OperationsMonitoringProperties
 	}
-	objectMap["features"] = ihp.Features
+	if ihp.Features != "" {
+		objectMap["features"] = ihp.Features
+	}
 	return json.Marshal(objectMap)
 }
 

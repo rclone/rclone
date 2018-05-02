@@ -311,7 +311,7 @@
       }
     }
   },
-  "revision": "20180312",
+  "revision": "20180409",
   "rootUrl": "https://slides.googleapis.com/",
   "schemas": {
     "AffineTransform": {
@@ -504,7 +504,7 @@
           "type": "string"
         },
         "url": {
-          "description": "The image URL.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length.",
+          "description": "The image URL.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length. The URL itself is saved\nwith the image, and exposed via the Image.source_url field.",
           "type": "string"
         }
       },
@@ -939,7 +939,7 @@
       "type": "object"
     },
     "CreateSheetsChartRequest": {
-      "description": "Creates an embedded Google Sheets chart.\n\nNOTE: Chart creation requires at least one of the spreadsheets.readonly,\nspreadsheets, drive.readonly, or drive OAuth scopes.",
+      "description": "Creates an embedded Google Sheets chart.\n\nNOTE: Chart creation requires at least one of the spreadsheets.readonly,\nspreadsheets, drive.readonly, drive.file, or drive OAuth scopes.",
       "id": "CreateSheetsChartRequest",
       "properties": {
         "chartId": {
@@ -1525,7 +1525,7 @@
       "type": "object"
     },
     "Line": {
-      "description": "A PageElement kind representing a\nline, curved connector, or bent connector.",
+      "description": "A PageElement kind representing a\nnon-connector line, straight connector, curved connector, or bent connector.",
       "id": "Line",
       "properties": {
         "lineProperties": {
@@ -1544,7 +1544,8 @@
             "CURVED_CONNECTOR_2",
             "CURVED_CONNECTOR_3",
             "CURVED_CONNECTOR_4",
-            "CURVED_CONNECTOR_5"
+            "CURVED_CONNECTOR_5",
+            "STRAIGHT_LINE"
           ],
           "enumDescriptions": [
             "An unspecified line type.",
@@ -1556,7 +1557,8 @@
             "Curved connector 2 form. Corresponds to ECMA-376 ST_ShapeType\n'curvedConnector2'.",
             "Curved connector 3 form. Corresponds to ECMA-376 ST_ShapeType\n'curvedConnector3'.",
             "Curved connector 4 form. Corresponds to ECMA-376 ST_ShapeType\n'curvedConnector4'.",
-            "Curved connector 5 form. Corresponds to ECMA-376 ST_ShapeType\n'curvedConnector5'."
+            "Curved connector 5 form. Corresponds to ECMA-376 ST_ShapeType\n'curvedConnector5'.",
+            "Straight line. Corresponds to ECMA-376 ST_ShapeType 'line'. This line\ntype is not a connector."
           ],
           "type": "string"
         }
@@ -2407,7 +2409,7 @@
       "type": "object"
     },
     "ReplaceAllShapesWithImageRequest": {
-      "description": "Replaces all shapes that match the given criteria with the provided image.",
+      "description": "Replaces all shapes that match the given criteria with the provided image.\n\nThe images replacing the shapes are rectangular after being inserted into\nthe presentation and do not take on the forms of the shapes.",
       "id": "ReplaceAllShapesWithImageRequest",
       "properties": {
         "containsText": {
@@ -2429,7 +2431,7 @@
           "type": "string"
         },
         "imageUrl": {
-          "description": "The image URL.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length.",
+          "description": "The image URL.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length. The URL itself is saved\nwith the image, and exposed via the Image.source_url field.",
           "type": "string"
         },
         "pageObjectIds": {
@@ -2574,7 +2576,7 @@
           "type": "string"
         },
         "url": {
-          "description": "The URL of the new image.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length.",
+          "description": "The URL of the new image.\n\nThe image is fetched once at insertion time and a copy is stored for\ndisplay inside the presentation. Images must be less than 50MB in size,\ncannot exceed 25 megapixels, and must be in one of PNG, JPEG, or GIF\nformat.\n\nThe provided URL can be at most 2 kB in length. The URL itself is saved\nwith the image, and exposed via the Image.source_url field.",
           "type": "string"
         }
       },

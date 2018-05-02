@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ResourceSkuRestrictionsReasonCode enumerates the values for resource sku restrictions reason code.
 type ResourceSkuRestrictionsReasonCode string
 
@@ -35,6 +36,13 @@ const (
 	QuotaID ResourceSkuRestrictionsReasonCode = "QuotaId"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
+// PossibleResourceSkuRestrictionsReasonCodeValues returns an array of possible values for the ResourceSkuRestrictionsReasonCode const type.
+func PossibleResourceSkuRestrictionsReasonCodeValues() []ResourceSkuRestrictionsReasonCode {
+	return []ResourceSkuRestrictionsReasonCode{NotAvailableForSubscription, QuotaID}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ResourceSkuRestrictionsType enumerates the values for resource sku restrictions type.
 type ResourceSkuRestrictionsType string
 
@@ -45,6 +53,13 @@ const (
 	Zone ResourceSkuRestrictionsType = "zone"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
+// PossibleResourceSkuRestrictionsTypeValues returns an array of possible values for the ResourceSkuRestrictionsType const type.
+func PossibleResourceSkuRestrictionsTypeValues() []ResourceSkuRestrictionsType {
+	return []ResourceSkuRestrictionsType{Location, Zone}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuCapacityScaleType enumerates the values for sku capacity scale type.
 type SkuCapacityScaleType string
 
@@ -57,6 +72,13 @@ const (
 	None SkuCapacityScaleType = "None"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
+// PossibleSkuCapacityScaleTypeValues returns an array of possible values for the SkuCapacityScaleType const type.
+func PossibleSkuCapacityScaleTypeValues() []SkuCapacityScaleType {
+	return []SkuCapacityScaleType{Automatic, Manual, None}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CatalogSku details of a commitment plan SKU.
 type CatalogSku struct {
 	// ResourceType - Resource type name
@@ -77,6 +99,7 @@ type CatalogSku struct {
 	Restrictions *[]SkuRestrictions `json:"restrictions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociation represents the association between a commitment plan and some other resource, such as a
 // Machine Learning web service.
 type CommitmentAssociation struct {
@@ -97,6 +120,7 @@ type CommitmentAssociation struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for CommitmentAssociation.
 func (ca CommitmentAssociation) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -124,6 +148,7 @@ func (ca CommitmentAssociation) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociationListResult a page of commitment association resources.
 type CommitmentAssociationListResult struct {
 	autorest.Response `json:"-"`
@@ -133,12 +158,14 @@ type CommitmentAssociationListResult struct {
 	Value *[]CommitmentAssociation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociationListResultIterator provides access to a complete listing of CommitmentAssociation values.
 type CommitmentAssociationListResultIterator struct {
 	i    int
 	page CommitmentAssociationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *CommitmentAssociationListResultIterator) Next() error {
@@ -155,16 +182,19 @@ func (iter *CommitmentAssociationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter CommitmentAssociationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (iter CommitmentAssociationListResultIterator) Response() CommitmentAssociationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter CommitmentAssociationListResultIterator) Value() CommitmentAssociation {
@@ -174,6 +204,7 @@ func (iter CommitmentAssociationListResultIterator) Value() CommitmentAssociatio
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (calr CommitmentAssociationListResult) IsEmpty() bool {
 	return calr.Value == nil || len(*calr.Value) == 0
@@ -191,12 +222,14 @@ func (calr CommitmentAssociationListResult) commitmentAssociationListResultPrepa
 		autorest.WithBaseURL(to.String(calr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociationListResultPage contains a page of CommitmentAssociation values.
 type CommitmentAssociationListResultPage struct {
 	fn   func(CommitmentAssociationListResult) (CommitmentAssociationListResult, error)
 	calr CommitmentAssociationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *CommitmentAssociationListResultPage) Next() error {
@@ -208,16 +241,19 @@ func (page *CommitmentAssociationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page CommitmentAssociationListResultPage) NotDone() bool {
 	return !page.calr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (page CommitmentAssociationListResultPage) Response() CommitmentAssociationListResult {
 	return page.calr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page CommitmentAssociationListResultPage) Values() []CommitmentAssociation {
 	if page.calr.IsEmpty() {
@@ -226,6 +262,7 @@ func (page CommitmentAssociationListResultPage) Values() []CommitmentAssociation
 	return *page.calr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociationProperties properties of an Azure ML commitment association.
 type CommitmentAssociationProperties struct {
 	// AssociatedResourceID - The ID of the resource this association points to, such as the ARM ID of an Azure ML web service.
@@ -236,6 +273,7 @@ type CommitmentAssociationProperties struct {
 	CreationDate *date.Time `json:"creationDate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentPlan an Azure ML commitment plan resource.
 type CommitmentPlan struct {
 	autorest.Response `json:"-"`
@@ -257,6 +295,7 @@ type CommitmentPlan struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for CommitmentPlan.
 func (cp CommitmentPlan) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -287,6 +326,7 @@ func (cp CommitmentPlan) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListResult a page of commitment plan resources.
 type ListResult struct {
 	autorest.Response `json:"-"`
@@ -296,12 +336,14 @@ type ListResult struct {
 	Value *[]CommitmentPlan `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListResultIterator provides access to a complete listing of CommitmentPlan values.
 type ListResultIterator struct {
 	i    int
 	page ListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ListResultIterator) Next() error {
@@ -318,16 +360,19 @@ func (iter *ListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (iter ListResultIterator) Response() ListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ListResultIterator) Value() CommitmentPlan {
@@ -337,6 +382,7 @@ func (iter ListResultIterator) Value() CommitmentPlan {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (lr ListResult) IsEmpty() bool {
 	return lr.Value == nil || len(*lr.Value) == 0
@@ -354,12 +400,14 @@ func (lr ListResult) listResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(lr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListResultPage contains a page of CommitmentPlan values.
 type ListResultPage struct {
 	fn func(ListResult) (ListResult, error)
 	lr ListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ListResultPage) Next() error {
@@ -371,16 +419,19 @@ func (page *ListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ListResultPage) NotDone() bool {
 	return !page.lr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (page ListResultPage) Response() ListResult {
 	return page.lr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ListResultPage) Values() []CommitmentPlan {
 	if page.lr.IsEmpty() {
@@ -389,12 +440,14 @@ func (page ListResultPage) Values() []CommitmentPlan {
 	return *page.lr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MoveCommitmentAssociationRequest specifies the destination Azure ML commitment plan for a move operation.
 type MoveCommitmentAssociationRequest struct {
 	// DestinationPlanID - The ARM ID of the commitment plan to re-parent the commitment association to.
 	DestinationPlanID *string `json:"destinationPlanId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PatchPayload the properties of a commitment plan which may be updated via PATCH.
 type PatchPayload struct {
 	// Tags - User-defined tags for the commitment plan.
@@ -403,6 +456,7 @@ type PatchPayload struct {
 	Sku *ResourceSku `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for PatchPayload.
 func (pp PatchPayload) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -415,6 +469,7 @@ func (pp PatchPayload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PlanQuantity represents the quantity a commitment plan provides of a metered resource.
 type PlanQuantity struct {
 	// Allowance - The quantity added to the commitment plan at an interval specified by its allowance frequency.
@@ -427,6 +482,7 @@ type PlanQuantity struct {
 	OverageMeter *string `json:"overageMeter,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PlanUsageHistory represents historical information about usage of the Azure resources associated with a
 // commitment plan.
 type PlanUsageHistory struct {
@@ -446,6 +502,7 @@ type PlanUsageHistory struct {
 	UsageDate *date.Time `json:"usageDate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for PlanUsageHistory.
 func (puh PlanUsageHistory) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -473,6 +530,7 @@ func (puh PlanUsageHistory) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PlanUsageHistoryListResult a page of usage history.
 type PlanUsageHistoryListResult struct {
 	autorest.Response `json:"-"`
@@ -482,12 +540,14 @@ type PlanUsageHistoryListResult struct {
 	Value *[]PlanUsageHistory `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PlanUsageHistoryListResultIterator provides access to a complete listing of PlanUsageHistory values.
 type PlanUsageHistoryListResultIterator struct {
 	i    int
 	page PlanUsageHistoryListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *PlanUsageHistoryListResultIterator) Next() error {
@@ -504,16 +564,19 @@ func (iter *PlanUsageHistoryListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter PlanUsageHistoryListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (iter PlanUsageHistoryListResultIterator) Response() PlanUsageHistoryListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter PlanUsageHistoryListResultIterator) Value() PlanUsageHistory {
@@ -523,6 +586,7 @@ func (iter PlanUsageHistoryListResultIterator) Value() PlanUsageHistory {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (puhlr PlanUsageHistoryListResult) IsEmpty() bool {
 	return puhlr.Value == nil || len(*puhlr.Value) == 0
@@ -540,12 +604,14 @@ func (puhlr PlanUsageHistoryListResult) planUsageHistoryListResultPreparer() (*h
 		autorest.WithBaseURL(to.String(puhlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // PlanUsageHistoryListResultPage contains a page of PlanUsageHistory values.
 type PlanUsageHistoryListResultPage struct {
 	fn    func(PlanUsageHistoryListResult) (PlanUsageHistoryListResult, error)
 	puhlr PlanUsageHistoryListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *PlanUsageHistoryListResultPage) Next() error {
@@ -557,16 +623,19 @@ func (page *PlanUsageHistoryListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page PlanUsageHistoryListResultPage) NotDone() bool {
 	return !page.puhlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Response returns the raw server response from the last page request.
 func (page PlanUsageHistoryListResultPage) Response() PlanUsageHistoryListResult {
 	return page.puhlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page PlanUsageHistoryListResultPage) Values() []PlanUsageHistory {
 	if page.puhlr.IsEmpty() {
@@ -575,6 +644,7 @@ func (page PlanUsageHistoryListResultPage) Values() []PlanUsageHistory {
 	return *page.puhlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Properties properties of an Azure ML commitment plan.
 type Properties struct {
 	// ChargeForOverage - Indicates whether usage beyond the commitment plan's included quantities will be charged.
@@ -599,6 +669,7 @@ type Properties struct {
 	SuspendPlanOnOverage *bool `json:"suspendPlanOnOverage,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for Properties.
 func (p Properties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -635,6 +706,7 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Resource common properties of an ARM resource.
 type Resource struct {
 	// ID - Resource Id.
@@ -649,6 +721,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -670,6 +743,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ResourceSku the SKU of a resource.
 type ResourceSku struct {
 	// Capacity - The scale-out capacity of the resource. 1 is 1x, 2 is 2x, etc. This impacts the quantities and cost of any commitment plan resource.
@@ -680,6 +754,7 @@ type ResourceSku struct {
 	Tier *string `json:"tier,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuCapability describes The SKU capabilites object.
 type SkuCapability struct {
 	// Name - The capability name.
@@ -688,6 +763,7 @@ type SkuCapability struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuCapacity describes scaling information of a SKU.
 type SkuCapacity struct {
 	// Minimum - The minimum capacity.
@@ -700,6 +776,7 @@ type SkuCapacity struct {
 	ScaleType SkuCapacityScaleType `json:"scaleType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuCost describes metadata for SKU cost info.
 type SkuCost struct {
 	// MeterID - The meter used for this part of a SKU's cost.
@@ -710,12 +787,14 @@ type SkuCost struct {
 	ExtendedUnit *string `json:"extendedUnit,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuListResult the list of commitment plan SKUs.
 type SkuListResult struct {
 	autorest.Response `json:"-"`
 	Value             *[]CatalogSku `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // SkuRestrictions describes restrictions which would prevent a SKU from being used.
 type SkuRestrictions struct {
 	// Type - The type of restrictions. Possible values include: 'Location', 'Zone'

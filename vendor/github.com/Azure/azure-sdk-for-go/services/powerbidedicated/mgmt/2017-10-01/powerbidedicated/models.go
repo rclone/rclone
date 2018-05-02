@@ -55,6 +55,11 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Deleting, Failed, Paused, Pausing, Preparing, Provisioning, Resuming, Scaling, Succeeded, Suspended, Suspending, Updating}
+}
+
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -62,6 +67,11 @@ const (
 	// PBIEAzure ...
 	PBIEAzure SkuTier = "PBIE_Azure"
 )
+
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{PBIEAzure}
+}
 
 // State enumerates the values for state.
 type State string
@@ -92,6 +102,11 @@ const (
 	// StateUpdating ...
 	StateUpdating State = "Updating"
 )
+
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{StateDeleting, StateFailed, StatePaused, StatePausing, StatePreparing, StateProvisioning, StateResuming, StateScaling, StateSucceeded, StateSuspended, StateSuspending, StateUpdating}
+}
 
 // CapacitiesCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CapacitiesCreateFuture struct {

@@ -26,41 +26,9 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type ConsumerGroupsClient = original.ConsumerGroupsClient
-
-func NewConsumerGroupsClient(subscriptionID string) ConsumerGroupsClient {
-	return original.NewConsumerGroupsClient(subscriptionID)
-}
-func NewConsumerGroupsClientWithBaseURI(baseURI string, subscriptionID string) ConsumerGroupsClient {
-	return original.NewConsumerGroupsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DisasterRecoveryConfigsClient = original.DisasterRecoveryConfigsClient
-
-func NewDisasterRecoveryConfigsClient(subscriptionID string) DisasterRecoveryConfigsClient {
-	return original.NewDisasterRecoveryConfigsClient(subscriptionID)
-}
-func NewDisasterRecoveryConfigsClientWithBaseURI(baseURI string, subscriptionID string) DisasterRecoveryConfigsClient {
-	return original.NewDisasterRecoveryConfigsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EventHubsClient = original.EventHubsClient
-
-func NewEventHubsClient(subscriptionID string) EventHubsClient {
-	return original.NewEventHubsClient(subscriptionID)
-}
-func NewEventHubsClientWithBaseURI(baseURI string, subscriptionID string) EventHubsClient {
-	return original.NewEventHubsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessRights = original.AccessRights
 
 const (
@@ -168,6 +136,13 @@ type ErrorResponse = original.ErrorResponse
 type ListResult = original.ListResult
 type ListResultIterator = original.ListResultIterator
 type ListResultPage = original.ListResultPage
+type MessagingPlan = original.MessagingPlan
+type MessagingPlanProperties = original.MessagingPlanProperties
+type MessagingRegions = original.MessagingRegions
+type MessagingRegionsListResult = original.MessagingRegionsListResult
+type MessagingRegionsListResultIterator = original.MessagingRegionsListResultIterator
+type MessagingRegionsListResultPage = original.MessagingRegionsListResultPage
+type MessagingRegionsProperties = original.MessagingRegionsProperties
 type Model = original.Model
 type NamespacesCreateOrUpdateFuture = original.NamespacesCreateOrUpdateFuture
 type NamespacesDeleteFuture = original.NamespacesDeleteFuture
@@ -182,21 +157,77 @@ type Resource = original.Resource
 type Sku = original.Sku
 type TrackedResource = original.TrackedResource
 type NamespacesClient = original.NamespacesClient
+type OperationsClient = original.OperationsClient
+type RegionsClient = original.RegionsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewConsumerGroupsClient(subscriptionID string) ConsumerGroupsClient {
+	return original.NewConsumerGroupsClient(subscriptionID)
+}
+func NewConsumerGroupsClientWithBaseURI(baseURI string, subscriptionID string) ConsumerGroupsClient {
+	return original.NewConsumerGroupsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewDisasterRecoveryConfigsClient(subscriptionID string) DisasterRecoveryConfigsClient {
+	return original.NewDisasterRecoveryConfigsClient(subscriptionID)
+}
+func NewDisasterRecoveryConfigsClientWithBaseURI(baseURI string, subscriptionID string) DisasterRecoveryConfigsClient {
+	return original.NewDisasterRecoveryConfigsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewEventHubsClient(subscriptionID string) EventHubsClient {
+	return original.NewEventHubsClient(subscriptionID)
+}
+func NewEventHubsClientWithBaseURI(baseURI string, subscriptionID string) EventHubsClient {
+	return original.NewEventHubsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessRightsValues() []AccessRights {
+	return original.PossibleAccessRightsValues()
+}
+func PossibleEncodingCaptureDescriptionValues() []EncodingCaptureDescription {
+	return original.PossibleEncodingCaptureDescriptionValues()
+}
+func PossibleEntityStatusValues() []EntityStatus {
+	return original.PossibleEntityStatusValues()
+}
+func PossibleKeyTypeValues() []KeyType {
+	return original.PossibleKeyTypeValues()
+}
+func PossibleProvisioningStateDRValues() []ProvisioningStateDR {
+	return original.PossibleProvisioningStateDRValues()
+}
+func PossibleRoleDisasterRecoveryValues() []RoleDisasterRecovery {
+	return original.PossibleRoleDisasterRecoveryValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleSkuTierValues() []SkuTier {
+	return original.PossibleSkuTierValues()
+}
+func PossibleUnavailableReasonValues() []UnavailableReason {
+	return original.PossibleUnavailableReasonValues()
+}
 func NewNamespacesClient(subscriptionID string) NamespacesClient {
 	return original.NewNamespacesClient(subscriptionID)
 }
 func NewNamespacesClientWithBaseURI(baseURI string, subscriptionID string) NamespacesClient {
 	return original.NewNamespacesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OperationsClient = original.OperationsClient
-
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewRegionsClient(subscriptionID string) RegionsClient {
+	return original.NewRegionsClient(subscriptionID)
+}
+func NewRegionsClientWithBaseURI(baseURI string, subscriptionID string) RegionsClient {
+	return original.NewRegionsClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

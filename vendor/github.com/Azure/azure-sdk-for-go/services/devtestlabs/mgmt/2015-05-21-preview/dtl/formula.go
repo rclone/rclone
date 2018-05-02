@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // FormulaClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type FormulaClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewFormulaClient creates an instance of the FormulaClient client.
 func NewFormulaClient(subscriptionID string) FormulaClient {
 	return NewFormulaClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewFormulaClientWithBaseURI creates an instance of the FormulaClient client.
 func NewFormulaClientWithBaseURI(baseURI string, subscriptionID string) FormulaClient {
 	return FormulaClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResource create or replace an existing Formula. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -59,6 +63,7 @@ func (client FormulaClient) CreateOrUpdateResource(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourcePreparer prepares the CreateOrUpdateResource request.
 func (client FormulaClient) CreateOrUpdateResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, formula Formula) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client FormulaClient) CreateOrUpdateResourcePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/formulas/{name}", pathParameters),
@@ -83,6 +88,7 @@ func (client FormulaClient) CreateOrUpdateResourcePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceSender sends the CreateOrUpdateResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client FormulaClient) CreateOrUpdateResourceSender(req *http.Request) (future FormulaCreateOrUpdateResourceFuture, err error) {
@@ -98,6 +104,7 @@ func (client FormulaClient) CreateOrUpdateResourceSender(req *http.Request) (fut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceResponder handles the response to the CreateOrUpdateResource request. The method always
 // closes the http.Response Body.
 func (client FormulaClient) CreateOrUpdateResourceResponder(resp *http.Response) (result Formula, err error) {
@@ -111,6 +118,7 @@ func (client FormulaClient) CreateOrUpdateResourceResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResource delete formula.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -137,6 +145,7 @@ func (client FormulaClient) DeleteResource(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourcePreparer prepares the DeleteResource request.
 func (client FormulaClient) DeleteResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -159,6 +168,7 @@ func (client FormulaClient) DeleteResourcePreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceSender sends the DeleteResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client FormulaClient) DeleteResourceSender(req *http.Request) (*http.Response, error) {
@@ -166,6 +176,7 @@ func (client FormulaClient) DeleteResourceSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceResponder handles the response to the DeleteResource request. The method always
 // closes the http.Response Body.
 func (client FormulaClient) DeleteResourceResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -178,6 +189,7 @@ func (client FormulaClient) DeleteResourceResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResource get formula.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -204,6 +216,7 @@ func (client FormulaClient) GetResource(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourcePreparer prepares the GetResource request.
 func (client FormulaClient) GetResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -226,6 +239,7 @@ func (client FormulaClient) GetResourcePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceSender sends the GetResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client FormulaClient) GetResourceSender(req *http.Request) (*http.Response, error) {
@@ -233,6 +247,7 @@ func (client FormulaClient) GetResourceSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceResponder handles the response to the GetResource request. The method always
 // closes the http.Response Body.
 func (client FormulaClient) GetResourceResponder(resp *http.Response) (result Formula, err error) {
@@ -246,6 +261,7 @@ func (client FormulaClient) GetResourceResponder(resp *http.Response) (result Fo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list formulas.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
@@ -273,6 +289,7 @@ func (client FormulaClient) List(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client FormulaClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -303,6 +320,7 @@ func (client FormulaClient) ListPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client FormulaClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -310,6 +328,7 @@ func (client FormulaClient) ListSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client FormulaClient) ListResponder(resp *http.Response) (result ResponseWithContinuationFormula, err error) {
@@ -344,6 +363,7 @@ func (client FormulaClient) listNextResults(lastResults ResponseWithContinuation
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client FormulaClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationFormulaIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, filter, top, orderBy)

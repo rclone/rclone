@@ -41,8 +41,8 @@ func NewPartitionLoadInformationsClientWithBaseURI(baseURI string, timeout *int3
 }
 
 // Get get partition load informations
-//
-// partitionID is the id of the partition
+// Parameters:
+// partitionID - the id of the partition
 func (client PartitionLoadInformationsClient) Get(ctx context.Context, partitionID string) (result PartitionLoadInformation, err error) {
 	req, err := client.GetPreparer(ctx, partitionID)
 	if err != nil {

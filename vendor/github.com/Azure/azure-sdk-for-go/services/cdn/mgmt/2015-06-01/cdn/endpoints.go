@@ -43,10 +43,11 @@ func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) Endpoi
 }
 
 // Create sends the create request.
-//
-// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// endpointProperties - endpoint properties
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) Create(ctx context.Context, endpointName string, endpointProperties EndpointCreateParameters, profileName string, resourceGroupName string) (result EndpointsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: endpointProperties,
@@ -86,7 +87,7 @@ func (client EndpointsClient) CreatePreparer(ctx context.Context, endpointName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/endpoints/{endpointName}", pathParameters),
@@ -124,9 +125,10 @@ func (client EndpointsClient) CreateResponder(resp *http.Response) (result Endpo
 }
 
 // DeleteIfExists sends the delete if exists request.
-//
-// endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the
-// resource group. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) DeleteIfExists(ctx context.Context, endpointName string, profileName string, resourceGroupName string) (result EndpointsDeleteIfExistsFuture, err error) {
 	req, err := client.DeleteIfExistsPreparer(ctx, endpointName, profileName, resourceGroupName)
 	if err != nil {
@@ -193,9 +195,10 @@ func (client EndpointsClient) DeleteIfExistsResponder(resp *http.Response) (resu
 }
 
 // Get sends the get request.
-//
-// endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the
-// resource group. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) Get(ctx context.Context, endpointName string, profileName string, resourceGroupName string) (result Endpoint, err error) {
 	req, err := client.GetPreparer(ctx, endpointName, profileName, resourceGroupName)
 	if err != nil {
@@ -261,9 +264,9 @@ func (client EndpointsClient) GetResponder(resp *http.Response) (result Endpoint
 }
 
 // ListByProfile sends the list by profile request.
-//
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) ListByProfile(ctx context.Context, profileName string, resourceGroupName string) (result EndpointListResult, err error) {
 	req, err := client.ListByProfilePreparer(ctx, profileName, resourceGroupName)
 	if err != nil {
@@ -328,10 +331,11 @@ func (client EndpointsClient) ListByProfileResponder(resp *http.Response) (resul
 }
 
 // LoadContent sends the load content request.
-//
-// endpointName is name of the endpoint within the CDN profile. contentFilePaths is the path to the content to be
-// loaded. Path should describe a file. profileName is name of the CDN profile within the resource group.
-// resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// contentFilePaths - the path to the content to be loaded. Path should describe a file.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) LoadContent(ctx context.Context, endpointName string, contentFilePaths LoadParameters, profileName string, resourceGroupName string) (result EndpointsLoadContentFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: contentFilePaths,
@@ -369,7 +373,7 @@ func (client EndpointsClient) LoadContentPreparer(ctx context.Context, endpointN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/endpoints/{endpointName}/load", pathParameters),
@@ -406,10 +410,11 @@ func (client EndpointsClient) LoadContentResponder(resp *http.Response) (result 
 }
 
 // PurgeContent sends the purge content request.
-//
-// endpointName is name of the endpoint within the CDN profile. contentFilePaths is the path to the content to be
-// purged. Path can describe a file or directory. profileName is name of the CDN profile within the resource group.
-// resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// contentFilePaths - the path to the content to be purged. Path can describe a file or directory.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) PurgeContent(ctx context.Context, endpointName string, contentFilePaths PurgeParameters, profileName string, resourceGroupName string) (result EndpointsPurgeContentFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: contentFilePaths,
@@ -447,7 +452,7 @@ func (client EndpointsClient) PurgeContentPreparer(ctx context.Context, endpoint
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/endpoints/{endpointName}/purge", pathParameters),
@@ -484,9 +489,10 @@ func (client EndpointsClient) PurgeContentResponder(resp *http.Response) (result
 }
 
 // Start sends the start request.
-//
-// endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the
-// resource group. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) Start(ctx context.Context, endpointName string, profileName string, resourceGroupName string) (result EndpointsStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, endpointName, profileName, resourceGroupName)
 	if err != nil {
@@ -554,9 +560,10 @@ func (client EndpointsClient) StartResponder(resp *http.Response) (result Endpoi
 }
 
 // Stop sends the stop request.
-//
-// endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the
-// resource group. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) Stop(ctx context.Context, endpointName string, profileName string, resourceGroupName string) (result EndpointsStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, endpointName, profileName, resourceGroupName)
 	if err != nil {
@@ -624,10 +631,11 @@ func (client EndpointsClient) StopResponder(resp *http.Response) (result Endpoin
 }
 
 // Update sends the update request.
-//
-// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// endpointProperties - endpoint properties
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) Update(ctx context.Context, endpointName string, endpointProperties EndpointUpdateParameters, profileName string, resourceGroupName string) (result EndpointsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, endpointName, endpointProperties, profileName, resourceGroupName)
 	if err != nil {
@@ -659,7 +667,7 @@ func (client EndpointsClient) UpdatePreparer(ctx context.Context, endpointName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/endpoints/{endpointName}", pathParameters),
@@ -697,10 +705,11 @@ func (client EndpointsClient) UpdateResponder(resp *http.Response) (result Endpo
 }
 
 // ValidateCustomDomain sends the validate custom domain request.
-//
-// endpointName is name of the endpoint within the CDN profile. customDomainProperties is custom domain to
-// validate. profileName is name of the CDN profile within the resource group. resourceGroupName is name of the
-// resource group within the Azure subscription.
+// Parameters:
+// endpointName - name of the endpoint within the CDN profile.
+// customDomainProperties - custom domain to validate.
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client EndpointsClient) ValidateCustomDomain(ctx context.Context, endpointName string, customDomainProperties ValidateCustomDomainInput, profileName string, resourceGroupName string) (result ValidateCustomDomainOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: customDomainProperties,
@@ -744,7 +753,7 @@ func (client EndpointsClient) ValidateCustomDomainPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/endpoints/{endpointName}/validateCustomDomain", pathParameters),

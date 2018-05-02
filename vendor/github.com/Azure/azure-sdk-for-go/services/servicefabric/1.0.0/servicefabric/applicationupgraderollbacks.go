@@ -41,8 +41,8 @@ func NewApplicationUpgradeRollbacksClientWithBaseURI(baseURI string, timeout *in
 }
 
 // Start start application upgrade rollbacks
-//
-// applicationName is the name of the application
+// Parameters:
+// applicationName - the name of the application
 func (client ApplicationUpgradeRollbacksClient) Start(ctx context.Context, applicationName string) (result String, err error) {
 	req, err := client.StartPreparer(ctx, applicationName)
 	if err != nil {

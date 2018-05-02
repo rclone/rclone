@@ -1,5 +1,6 @@
 package termbox
 
+import "math"
 import "syscall"
 import "unsafe"
 import "unicode/utf16"
@@ -57,6 +58,10 @@ type (
 		control_key_state dword
 		event_flags       dword
 	}
+	console_font_info struct {
+		font      uint32
+		font_size coord
+	}
 )
 
 const (
@@ -94,6 +99,7 @@ var (
 	proc_create_event                     = kernel32.NewProc("CreateEventW")
 	proc_wait_for_multiple_objects        = kernel32.NewProc("WaitForMultipleObjects")
 	proc_set_event                        = kernel32.NewProc("SetEvent")
+	proc_get_current_console_font         = kernel32.NewProc("GetCurrentConsoleFont")
 	get_system_metrics                    = moduser32.NewProc("GetSystemMetrics")
 )
 
@@ -339,6 +345,19 @@ func set_event(ev syscall.Handle) (err error) {
 	return
 }
 
+func get_current_console_font(h syscall.Handle, info *console_font_info) (err error) {
+	r0, _, e1 := syscall.Syscall(proc_get_current_console_font.Addr(),
+		3, uintptr(h), 0, uintptr(unsafe.Pointer(info)))
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
 type diff_msg struct {
 	pos   short
 	lines short
@@ -383,6 +402,7 @@ var (
 	tmp_coord0 = coord{0, 0}
 	tmp_coord  = coord{0, 0}
 	tmp_rect   = small_rect{0, 0, 0, 0}
+	tmp_finfo  console_font_info
 )
 
 func get_cursor_position(out syscall.Handle) coord {
@@ -411,9 +431,14 @@ func get_win_min_size(out syscall.Handle) coord {
 		}
 	}
 
+	err1 := get_current_console_font(out, &tmp_finfo)
+	if err1 != nil {
+		panic(err1)
+	}
+
 	return coord{
-		x: short(x),
-		y: short(y),
+		x: short(math.Ceil(float64(x) / float64(tmp_finfo.font_size.x))),
+		y: short(math.Ceil(float64(y) / float64(tmp_finfo.font_size.y))),
 	}
 }
 
@@ -442,8 +467,9 @@ func get_win_size(out syscall.Handle) coord {
 }
 
 func update_size_maybe() {
-	size := get_term_size(out)
+	size := get_win_size(out)
 	if size.x != term_size.x || size.y != term_size.y {
+		set_console_screen_buffer_size(out, size)
 		term_size = size
 		back_buffer.resize(int(size.x), int(size.y))
 		front_buffer.resize(int(size.x), int(size.y))

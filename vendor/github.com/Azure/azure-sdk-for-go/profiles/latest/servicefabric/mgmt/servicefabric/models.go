@@ -26,32 +26,8 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type ClustersClient = original.ClustersClient
-
-func NewClustersClient(subscriptionID string) ClustersClient {
-	return original.NewClustersClient(subscriptionID)
-}
-func NewClustersClientWithBaseURI(baseURI string, subscriptionID string) ClustersClient {
-	return original.NewClustersClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type ClusterVersionsClient = original.ClusterVersionsClient
-
-func NewClusterVersionsClient(subscriptionID string) ClusterVersionsClient {
-	return original.NewClusterVersionsClient(subscriptionID)
-}
-func NewClusterVersionsClientWithBaseURI(baseURI string, subscriptionID string) ClusterVersionsClient {
-	return original.NewClusterVersionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type ClusterState = original.ClusterState
 
 const (
@@ -171,6 +147,51 @@ type SettingsParameterDescription = original.SettingsParameterDescription
 type SettingsSectionDescription = original.SettingsSectionDescription
 type OperationsClient = original.OperationsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewClustersClient(subscriptionID string) ClustersClient {
+	return original.NewClustersClient(subscriptionID)
+}
+func NewClustersClientWithBaseURI(baseURI string, subscriptionID string) ClustersClient {
+	return original.NewClustersClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewClusterVersionsClient(subscriptionID string) ClusterVersionsClient {
+	return original.NewClusterVersionsClient(subscriptionID)
+}
+func NewClusterVersionsClientWithBaseURI(baseURI string, subscriptionID string) ClusterVersionsClient {
+	return original.NewClusterVersionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleClusterStateValues() []ClusterState {
+	return original.PossibleClusterStateValues()
+}
+func PossibleDurabilityLevelValues() []DurabilityLevel {
+	return original.PossibleDurabilityLevelValues()
+}
+func PossibleEnvironmentValues() []Environment {
+	return original.PossibleEnvironmentValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleReliabilityLevelValues() []ReliabilityLevel {
+	return original.PossibleReliabilityLevelValues()
+}
+func PossibleReliabilityLevel1Values() []ReliabilityLevel1 {
+	return original.PossibleReliabilityLevel1Values()
+}
+func PossibleUpgradeModeValues() []UpgradeMode {
+	return original.PossibleUpgradeModeValues()
+}
+func PossibleUpgradeMode1Values() []UpgradeMode1 {
+	return original.PossibleUpgradeMode1Values()
+}
+func PossibleX509StoreNameValues() []X509StoreName {
+	return original.PossibleX509StoreNameValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }

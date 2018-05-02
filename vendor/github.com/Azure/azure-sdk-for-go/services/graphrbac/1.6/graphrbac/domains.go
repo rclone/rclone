@@ -40,8 +40,8 @@ func NewDomainsClientWithBaseURI(baseURI string, tenantID string) DomainsClient 
 }
 
 // Get gets a specific domain in the current tenant.
-//
-// domainName is name of the domain.
+// Parameters:
+// domainName - name of the domain.
 func (client DomainsClient) Get(ctx context.Context, domainName string) (result Domain, err error) {
 	req, err := client.GetPreparer(ctx, domainName)
 	if err != nil {
@@ -105,8 +105,8 @@ func (client DomainsClient) GetResponder(resp *http.Response) (result Domain, er
 }
 
 // List gets a list of domains for the current tenant.
-//
-// filter is the filter to apply to the operation.
+// Parameters:
+// filter - the filter to apply to the operation.
 func (client DomainsClient) List(ctx context.Context, filter string) (result DomainListResult, err error) {
 	req, err := client.ListPreparer(ctx, filter)
 	if err != nil {

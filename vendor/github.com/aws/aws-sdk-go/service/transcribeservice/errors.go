@@ -7,9 +7,10 @@ const (
 	// ErrCodeBadRequestException for service response error code
 	// "BadRequestException".
 	//
-	// There is a problem with one of the input fields. Check the S3 bucket name,
-	// make sure that the job name is not a duplicate, and confirm that you are
-	// using the correct file format. Then resend your request.
+	// Your request didn't pass one or more validation tests. For example, a name
+	// already exists when createing a resource or a name may not exist when getting
+	// a transcription job or custom vocabulary. See the exception Message field
+	// for more information.
 	ErrCodeBadRequestException = "BadRequestException"
 
 	// ErrCodeConflictException for service response error code
@@ -29,15 +30,14 @@ const (
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
-	// Either you have sent too many requests or your input file is longer than
-	// 2 hours. Wait before you resend your request, or use a smaller file and resend
-	// the request.
+	// Either you have sent too many requests or your input file is too long. Wait
+	// before you resend your request, or use a smaller file and resend the request.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeNotFoundException for service response error code
 	// "NotFoundException".
 	//
-	// We can't find the requested job. Check the job name and try your request
-	// again.
+	// We can't find the requested transcription job or custom vocabulary. Check
+	// the name and try your request again.
 	ErrCodeNotFoundException = "NotFoundException"
 )

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
@@ -309,10 +310,101 @@ func TestBatchDelete(t *testing.T) {
 	}
 }
 
+func TestBatchDeleteError(t *testing.T) {
+	cases := []struct {
+		objects            []BatchDeleteObject
+		output             s3.DeleteObjectsOutput
+		size               int
+		expectedErrCode    string
+		expectedErrMessage string
+	}{
+		{
+			[]BatchDeleteObject{
+				{
+					Object: &s3.DeleteObjectInput{
+						Key:    aws.String("1"),
+						Bucket: aws.String("bucket1"),
+					},
+				},
+			},
+			s3.DeleteObjectsOutput{
+				Errors: []*s3.Error{
+					{
+						Code:    aws.String("foo code"),
+						Message: aws.String("foo error"),
+					},
+				},
+			},
+			1,
+			"foo code",
+			"foo error",
+		},
+		{
+			[]BatchDeleteObject{
+				{
+					Object: &s3.DeleteObjectInput{
+						Key:    aws.String("1"),
+						Bucket: aws.String("bucket1"),
+					},
+				},
+			},
+			s3.DeleteObjectsOutput{
+				Errors: []*s3.Error{
+					{},
+				},
+			},
+			1,
+			ErrDeleteBatchFailCode,
+			errDefaultDeleteBatchMessage,
+		},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	index := 0
+	svc := &mockS3Client{
+		S3: buildS3SvcClient(server.URL),
+		deleteObjects: func(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
+			output := &cases[index].output
+			index++
+			return output, nil
+		},
+	}
+	for _, c := range cases {
+		batcher := BatchDelete{
+			Client:    svc,
+			BatchSize: c.size,
+		}
+
+		err := batcher.Delete(aws.BackgroundContext(), &DeleteObjectsIterator{Objects: c.objects})
+		if err == nil {
+			t.Errorf("expected error, but received none")
+		}
+
+		berr := err.(*BatchError)
+
+		if len(berr.Errors) != 1 {
+			t.Errorf("expected 1 error, but received %d", len(berr.Errors))
+		}
+
+		aerr := berr.Errors[0].OrigErr.(awserr.Error)
+		if e, a := c.expectedErrCode, aerr.Code(); e != a {
+			t.Errorf("expected %q, but received %q", e, a)
+		}
+
+		if e, a := c.expectedErrMessage, aerr.Message(); e != a {
+			t.Errorf("expected %q, but received %q", e, a)
+		}
+	}
+}
+
 type mockS3Client struct {
 	*s3.S3
-	index   int
-	objects []*s3.ListObjectsOutput
+	index         int
+	objects       []*s3.ListObjectsOutput
+	deleteObjects func(*s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error)
 }
 
 func (client *mockS3Client) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
@@ -321,13 +413,29 @@ func (client *mockS3Client) ListObjects(input *s3.ListObjectsInput) (*s3.ListObj
 	return object, nil
 }
 
+func (client *mockS3Client) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
+	if client.deleteObjects == nil {
+		return client.S3.DeleteObjectsWithContext(aws.BackgroundContext(), input)
+	}
+
+	return client.deleteObjects(input)
+}
+
+func (client *mockS3Client) DeleteObjectsWithContext(ctx aws.Context, input *s3.DeleteObjectsInput, opt ...request.Option) (*s3.DeleteObjectsOutput, error) {
+	if client.deleteObjects == nil {
+		return client.S3.DeleteObjectsWithContext(ctx, input)
+	}
+
+	return client.deleteObjects(input)
+}
+
 func TestNilOrigError(t *testing.T) {
 	err := Error{
 		Bucket: aws.String("bucket"),
 		Key:    aws.String("key"),
 	}
 	errStr := err.Error()
-	const expected1 = `failed to upload "key" to "bucket"`
+	const expected1 = `failed to perform batch operation on "key" to "bucket"`
 	if errStr != expected1 {
 		t.Errorf("Expected %s, but received %s", expected1, errStr)
 	}
@@ -338,7 +446,7 @@ func TestNilOrigError(t *testing.T) {
 		Key:     aws.String("key"),
 	}
 	errStr = err.Error()
-	const expected2 = "failed to upload \"key\" to \"bucket\":\nfoo"
+	const expected2 = "failed to perform batch operation on \"key\" to \"bucket\":\nfoo"
 	if errStr != expected2 {
 		t.Errorf("Expected %s, but received %s", expected2, errStr)
 	}

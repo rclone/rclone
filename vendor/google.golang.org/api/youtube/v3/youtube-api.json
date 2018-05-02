@@ -30,7 +30,7 @@
   "description": "Supports core YouTube features, such as uploading videos, creating and managing playlists, searching for content, and much more.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/youtube/v3",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/-ZA6uS3KXkDeiPcCXgXN_f_GBAw\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/NBwQg_eXHjfoSxEvplEGyXUpgA4\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/youtube-16.png",
     "x32": "https://www.google.com/images/icons/product/youtube-32.png"
@@ -75,12 +75,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -1129,54 +1129,6 @@
           },
           "scopes": [
             "https://www.googleapis.com/auth/youtube.force-ssl"
-          ]
-        }
-      }
-    },
-    "fanFundingEvents": {
-      "methods": {
-        "list": {
-          "description": "Lists fan funding events for a channel.",
-          "httpMethod": "GET",
-          "id": "youtube.fanFundingEvents.list",
-          "parameterOrder": [
-            "part"
-          ],
-          "parameters": {
-            "hl": {
-              "description": "The hl parameter instructs the API to retrieve localized resource metadata for a specific application language that the YouTube website supports. The parameter value must be a language code included in the list returned by the i18nLanguages.list method.\n\nIf localized resource details are available in that language, the resource's snippet.localized object will contain the localized values. However, if localized details are not available, the snippet.localized object will contain resource details in the resource's default language.",
-              "location": "query",
-              "type": "string"
-            },
-            "maxResults": {
-              "default": "5",
-              "description": "The maxResults parameter specifies the maximum number of items that should be returned in the result set.",
-              "format": "uint32",
-              "location": "query",
-              "maximum": "50",
-              "minimum": "0",
-              "type": "integer"
-            },
-            "pageToken": {
-              "description": "The pageToken parameter identifies a specific page in the result set that should be returned. In an API response, the nextPageToken and prevPageToken properties identify other pages that could be retrieved.",
-              "location": "query",
-              "type": "string"
-            },
-            "part": {
-              "description": "The part parameter specifies the fanFundingEvent resource parts that the API response will include. Supported values are id and snippet.",
-              "location": "query",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "fanFundingEvents",
-          "response": {
-            "$ref": "FanFundingEventListResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/youtube",
-            "https://www.googleapis.com/auth/youtube.force-ssl",
-            "https://www.googleapis.com/auth/youtube.readonly"
           ]
         }
       }
@@ -3541,7 +3493,7 @@
       }
     }
   },
-  "revision": "20180308",
+  "revision": "20180430",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AccessPolicy": {
@@ -4919,9 +4871,11 @@
           "enum": [
             "private",
             "public",
-            "unlisted"
+            "unlisted",
+            "unlisted_new"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""
@@ -6006,12 +5960,14 @@
           "description": "The video's rating in Israel.",
           "enum": [
             "ilfilm12",
+            "ilfilm14",
             "ilfilm16",
             "ilfilm18",
             "ilfilmAa",
             "ilfilmUnrated"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",
@@ -6749,106 +6705,6 @@
             ""
           ],
           "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "FanFundingEvent": {
-      "description": "A fanFundingEvent resource represents a fan funding event on a YouTube channel. Fan funding events occur when a user gives one-time monetary support to the channel owner.",
-      "id": "FanFundingEvent",
-      "properties": {
-        "etag": {
-          "description": "Etag of this resource.",
-          "type": "string"
-        },
-        "id": {
-          "description": "The ID that YouTube assigns to uniquely identify the fan funding event.",
-          "type": "string"
-        },
-        "kind": {
-          "default": "youtube#fanFundingEvent",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"youtube#fanFundingEvent\".",
-          "type": "string"
-        },
-        "snippet": {
-          "$ref": "FanFundingEventSnippet",
-          "description": "The snippet object contains basic details about the fan funding event."
-        }
-      },
-      "type": "object"
-    },
-    "FanFundingEventListResponse": {
-      "id": "FanFundingEventListResponse",
-      "properties": {
-        "etag": {
-          "description": "Etag of this resource.",
-          "type": "string"
-        },
-        "eventId": {
-          "description": "Serialized EventId of the request which produced this response.",
-          "type": "string"
-        },
-        "items": {
-          "description": "A list of fan funding events that match the request criteria.",
-          "items": {
-            "$ref": "FanFundingEvent"
-          },
-          "type": "array"
-        },
-        "kind": {
-          "default": "youtube#fanFundingEventListResponse",
-          "description": "Identifies what kind of resource this is. Value: the fixed string \"youtube#fanFundingEventListResponse\".",
-          "type": "string"
-        },
-        "nextPageToken": {
-          "description": "The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.",
-          "type": "string"
-        },
-        "pageInfo": {
-          "$ref": "PageInfo"
-        },
-        "tokenPagination": {
-          "$ref": "TokenPagination"
-        },
-        "visitorId": {
-          "description": "The visitorId identifies the visitor.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "FanFundingEventSnippet": {
-      "id": "FanFundingEventSnippet",
-      "properties": {
-        "amountMicros": {
-          "description": "The amount of funding in micros of fund_currency. e.g., 1 is represented",
-          "format": "uint64",
-          "type": "string"
-        },
-        "channelId": {
-          "description": "Channel id where the funding event occurred.",
-          "type": "string"
-        },
-        "commentText": {
-          "description": "The text contents of the comment left by the user.",
-          "type": "string"
-        },
-        "createdAt": {
-          "description": "The date and time when the funding occurred. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "currency": {
-          "description": "The currency in which the fund was made. ISO 4217.",
-          "type": "string"
-        },
-        "displayString": {
-          "description": "A rendered string that displays the fund amount and currency (e.g., \"$1.00\"). The string is rendered for the given language.",
-          "type": "string"
-        },
-        "supporterDetails": {
-          "$ref": "ChannelProfileDetails",
-          "description": "Details about the supporter. Only filled if the event was made public by the user."
         }
       },
       "type": "object"
@@ -7690,9 +7546,11 @@
           "enum": [
             "private",
             "public",
-            "unlisted"
+            "unlisted",
+            "unlisted_new"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""
@@ -8870,9 +8728,11 @@
           "enum": [
             "private",
             "public",
-            "unlisted"
+            "unlisted",
+            "unlisted_new"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""
@@ -9012,9 +8872,11 @@
           "enum": [
             "private",
             "public",
-            "unlisted"
+            "unlisted",
+            "unlisted_new"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""
@@ -9241,10 +9103,6 @@
       "properties": {
         "etag": {
           "description": "Etag of this resource.",
-          "type": "string"
-        },
-        "id": {
-          "description": "The ID that YouTube assigns to uniquely identify the sponsor.",
           "type": "string"
         },
         "kind": {
@@ -10696,9 +10554,11 @@
           "enum": [
             "private",
             "public",
-            "unlisted"
+            "unlisted",
+            "unlisted_new"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""

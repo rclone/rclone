@@ -41,9 +41,9 @@ func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) Account
 }
 
 // CheckNameAvailability checks whether the specified account name is available or taken.
-//
-// location is the resource location without whitespace. parameters is parameters supplied to check the Data Lake
-// Store account name availability.
+// Parameters:
+// location - the resource location without whitespace.
+// parameters - parameters supplied to check the Data Lake Store account name availability.
 func (client AccountsClient) CheckNameAvailability(ctx context.Context, location string, parameters CheckNameAvailabilityParameters) (result NameAvailabilityInformation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -86,7 +86,7 @@ func (client AccountsClient) CheckNameAvailabilityPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.DataLakeStore/locations/{location}/checkNameAvailability", pathParameters),
@@ -116,9 +116,10 @@ func (client AccountsClient) CheckNameAvailabilityResponder(resp *http.Response)
 }
 
 // Create creates the specified Data Lake Store account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. parameters is parameters supplied to create the Data Lake Store account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// parameters - parameters supplied to create the Data Lake Store account.
 func (client AccountsClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters CreateDataLakeStoreAccountParameters) (result AccountsCreateFutureType, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -166,7 +167,7 @@ func (client AccountsClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeStore/accounts/{accountName}", pathParameters),
@@ -204,9 +205,9 @@ func (client AccountsClient) CreateResponder(resp *http.Response) (result DataLa
 }
 
 // Delete deletes the specified Data Lake Store account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
 func (client AccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountsDeleteFutureType, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -272,9 +273,9 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // EnableKeyVault attempts to enable a user managed Key Vault for encryption of the specified Data Lake Store account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
 func (client AccountsClient) EnableKeyVault(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	req, err := client.EnableKeyVaultPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -338,9 +339,9 @@ func (client AccountsClient) EnableKeyVaultResponder(resp *http.Response) (resul
 }
 
 // Get gets the specified Data Lake Store account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
 func (client AccountsClient) Get(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeStoreAccount, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -406,14 +407,17 @@ func (client AccountsClient) GetResponder(resp *http.Response) (result DataLakeS
 
 // List lists the Data Lake Store accounts within the subscription. The response includes a link to the next page of
 // results, if any.
-//
-// filter is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to
-// skip over before returning elements. Optional. selectParameter is oData Select statement. Limits the properties
-// on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is
-// orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending
-// on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the
-// Boolean value of true or false to request a count of the matching resources included with the resources in the
-// response, e.g. Categories?$count=true. Optional.
+// Parameters:
+// filter - oData filter. Optional.
+// top - the number of items to return. Optional.
+// skip - the number of items to skip over before returning elements. Optional.
+// selectParameter - oData Select statement. Limits the properties on each entry to just those requested, e.g.
+// Categories?$select=CategoryName,Description. Optional.
+// orderby - orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or
+// "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc.
+// Optional.
+// count - the Boolean value of true or false to request a count of the matching resources included with the
+// resources in the response, e.g. Categories?$count=true. Optional.
 func (client AccountsClient) List(ctx context.Context, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result DataLakeStoreAccountListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -533,15 +537,18 @@ func (client AccountsClient) ListComplete(ctx context.Context, filter string, to
 
 // ListByResourceGroup lists the Data Lake Store accounts within a specific resource group. The response includes a
 // link to the next page of results, if any.
-//
-// resourceGroupName is the name of the Azure resource group. filter is oData filter. Optional. top is the number
-// of items to return. Optional. skip is the number of items to skip over before returning elements. Optional.
-// selectParameter is oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted,
-// e.g. Categories?$orderby=CategoryName desc. Optional. count is a Boolean value of true or false to request a
-// count of the matching resources included with the resources in the response, e.g. Categories?$count=true.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// filter - oData filter. Optional.
+// top - the number of items to return. Optional.
+// skip - the number of items to skip over before returning elements. Optional.
+// selectParameter - oData Select statement. Limits the properties on each entry to just those requested, e.g.
+// Categories?$select=CategoryName,Description. Optional.
+// orderby - orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or
+// "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc.
 // Optional.
+// count - a Boolean value of true or false to request a count of the matching resources included with the
+// resources in the response, e.g. Categories?$count=true. Optional.
 func (client AccountsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result DataLakeStoreAccountListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -661,9 +668,10 @@ func (client AccountsClient) ListByResourceGroupComplete(ctx context.Context, re
 }
 
 // Update updates the specified Data Lake Store account information.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. parameters is parameters supplied to update the Data Lake Store account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// parameters - parameters supplied to update the Data Lake Store account.
 func (client AccountsClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters UpdateDataLakeStoreAccountParameters) (result AccountsUpdateFutureType, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)
 	if err != nil {
@@ -694,7 +702,7 @@ func (client AccountsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeStore/accounts/{accountName}", pathParameters),

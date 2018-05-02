@@ -41,10 +41,12 @@ func NewPropertyClientWithBaseURI(baseURI string, subscriptionID string) Propert
 }
 
 // CreateOrUpdate creates or updates a property.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// propID is identifier of the property. parameters is create parameters. ifMatch is eTag of the Entity. Not
-// required when creating an entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// propID - identifier of the property.
+// parameters - create parameters.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client PropertyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, propID string, parameters PropertyContract, ifMatch string) (result PropertyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -139,10 +141,12 @@ func (client PropertyClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes specific property from the the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// propID is identifier of the property. ifMatch is eTag of the Entity. ETag should match the current entity state
-// from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// propID - identifier of the property.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client PropertyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, propID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -219,9 +223,10 @@ func (client PropertyClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get gets the details of the property specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// propID is identifier of the property.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// propID - identifier of the property.
 func (client PropertyClient) Get(ctx context.Context, resourceGroupName string, serviceName string, propID string) (result PropertyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -298,9 +303,10 @@ func (client PropertyClient) GetResponder(resp *http.Response) (result PropertyC
 }
 
 // GetEntityTag gets the entity state (Etag) version of the property specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// propID is identifier of the property.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// propID - identifier of the property.
 func (client PropertyClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, propID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -376,13 +382,15 @@ func (client PropertyClient) GetEntityTagResponder(resp *http.Response) (result 
 }
 
 // ListByService lists a collection of properties defined within a service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field | Supported operators    | Supported functions                                   |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field | Supported operators    | Supported functions                                   |
 // |-------|------------------------|-------------------------------------------------------|
 // | tags  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith, any, all |
-// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith           | top is number of
-// records to return. skip is number of records to skip.
+// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith           |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client PropertyClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result PropertyCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -498,11 +506,13 @@ func (client PropertyClient) ListByServiceComplete(ctx context.Context, resource
 }
 
 // Update updates the specific property.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// propID is identifier of the property. parameters is update parameters. ifMatch is eTag of the Entity. ETag
-// should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// propID - identifier of the property.
+// parameters - update parameters.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client PropertyClient) Update(ctx context.Context, resourceGroupName string, serviceName string, propID string, parameters PropertyUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

@@ -78,7 +78,7 @@ func (m *Message) Put(options *PutMessageOptions) error {
 	if err != nil {
 		return err
 	}
-	defer readAndCloseBody(resp.Body)
+	defer drainRespBody(resp)
 	err = checkRespCode(resp, []int{http.StatusCreated})
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (m *Message) Update(options *UpdateMessageOptions) error {
 	if err != nil {
 		return err
 	}
-	defer readAndCloseBody(resp.Body)
+	defer drainRespBody(resp)
 
 	m.PopReceipt = resp.Header.Get("x-ms-popreceipt")
 	nextTimeStr := resp.Header.Get("x-ms-time-next-visible")
@@ -160,7 +160,7 @@ func (m *Message) Delete(options *QueueServiceOptions) error {
 	if err != nil {
 		return err
 	}
-	defer readAndCloseBody(resp.Body)
+	defer drainRespBody(resp)
 	return checkRespCode(resp, []int{http.StatusNoContent})
 }
 

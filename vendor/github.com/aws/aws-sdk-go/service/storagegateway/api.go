@@ -15,7 +15,7 @@ const opActivateGateway = "ActivateGateway"
 
 // ActivateGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the ActivateGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -106,7 +106,7 @@ const opAddCache = "AddCache"
 
 // AddCacheRequest generates a "aws/request.Request" representing the
 // client's request for the AddCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -196,7 +196,7 @@ const opAddTagsToResource = "AddTagsToResource"
 
 // AddTagsToResourceRequest generates a "aws/request.Request" representing the
 // client's request for the AddTagsToResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -293,7 +293,7 @@ const opAddUploadBuffer = "AddUploadBuffer"
 
 // AddUploadBufferRequest generates a "aws/request.Request" representing the
 // client's request for the AddUploadBuffer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -383,7 +383,7 @@ const opAddWorkingStorage = "AddWorkingStorage"
 
 // AddWorkingStorageRequest generates a "aws/request.Request" representing the
 // client's request for the AddWorkingStorage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -477,7 +477,7 @@ const opCancelArchival = "CancelArchival"
 
 // CancelArchivalRequest generates a "aws/request.Request" representing the
 // client's request for the CancelArchival operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -563,7 +563,7 @@ const opCancelRetrieval = "CancelRetrieval"
 
 // CancelRetrievalRequest generates a "aws/request.Request" representing the
 // client's request for the CancelRetrieval operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -649,7 +649,7 @@ const opCreateCachediSCSIVolume = "CreateCachediSCSIVolume"
 
 // CreateCachediSCSIVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the CreateCachediSCSIVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -749,7 +749,7 @@ const opCreateNFSFileShare = "CreateNFSFileShare"
 
 // CreateNFSFileShareRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNFSFileShare operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -845,7 +845,7 @@ const opCreateSnapshot = "CreateSnapshot"
 
 // CreateSnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSnapshot operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -956,7 +956,7 @@ const opCreateSnapshotFromVolumeRecoveryPoint = "CreateSnapshotFromVolumeRecover
 
 // CreateSnapshotFromVolumeRecoveryPointRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSnapshotFromVolumeRecoveryPoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1060,7 +1060,7 @@ const opCreateStorediSCSIVolume = "CreateStorediSCSIVolume"
 
 // CreateStorediSCSIVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the CreateStorediSCSIVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1156,7 +1156,7 @@ const opCreateTapeWithBarcode = "CreateTapeWithBarcode"
 
 // CreateTapeWithBarcodeRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTapeWithBarcode operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1246,7 +1246,7 @@ const opCreateTapes = "CreateTapes"
 
 // CreateTapesRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTapes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1335,7 +1335,7 @@ const opDeleteBandwidthRateLimit = "DeleteBandwidthRateLimit"
 
 // DeleteBandwidthRateLimitRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteBandwidthRateLimit operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1423,7 +1423,7 @@ const opDeleteChapCredentials = "DeleteChapCredentials"
 
 // DeleteChapCredentialsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteChapCredentials operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1508,7 +1508,7 @@ const opDeleteFileShare = "DeleteFileShare"
 
 // DeleteFileShareRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFileShare operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1593,7 +1593,7 @@ const opDeleteGateway = "DeleteGateway"
 
 // DeleteGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1692,7 +1692,7 @@ const opDeleteSnapshotSchedule = "DeleteSnapshotSchedule"
 
 // DeleteSnapshotScheduleRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSnapshotSchedule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1786,7 +1786,7 @@ const opDeleteTape = "DeleteTape"
 
 // DeleteTapeRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTape operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1871,7 +1871,7 @@ const opDeleteTapeArchive = "DeleteTapeArchive"
 
 // DeleteTapeArchiveRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTapeArchive operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1956,7 +1956,7 @@ const opDeleteVolume = "DeleteVolume"
 
 // DeleteVolumeRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVolume operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2054,7 +2054,7 @@ const opDescribeBandwidthRateLimit = "DescribeBandwidthRateLimit"
 
 // DescribeBandwidthRateLimitRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBandwidthRateLimit operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2144,7 +2144,7 @@ const opDescribeCache = "DescribeCache"
 
 // DescribeCacheRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2232,7 +2232,7 @@ const opDescribeCachediSCSIVolumes = "DescribeCachediSCSIVolumes"
 
 // DescribeCachediSCSIVolumesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeCachediSCSIVolumes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2321,7 +2321,7 @@ const opDescribeChapCredentials = "DescribeChapCredentials"
 
 // DescribeChapCredentialsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeChapCredentials operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2406,7 +2406,7 @@ const opDescribeGatewayInformation = "DescribeGatewayInformation"
 
 // DescribeGatewayInformationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeGatewayInformation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2493,7 +2493,7 @@ const opDescribeMaintenanceStartTime = "DescribeMaintenanceStartTime"
 
 // DescribeMaintenanceStartTimeRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMaintenanceStartTime operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2578,7 +2578,7 @@ const opDescribeNFSFileShares = "DescribeNFSFileShares"
 
 // DescribeNFSFileSharesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNFSFileShares operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2663,7 +2663,7 @@ const opDescribeSnapshotSchedule = "DescribeSnapshotSchedule"
 
 // DescribeSnapshotScheduleRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSnapshotSchedule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2750,7 +2750,7 @@ const opDescribeStorediSCSIVolumes = "DescribeStorediSCSIVolumes"
 
 // DescribeStorediSCSIVolumesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeStorediSCSIVolumes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2837,7 +2837,7 @@ const opDescribeTapeArchives = "DescribeTapeArchives"
 
 // DescribeTapeArchivesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTapeArchives operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2981,7 +2981,7 @@ const opDescribeTapeRecoveryPoints = "DescribeTapeRecoveryPoints"
 
 // DescribeTapeRecoveryPointsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTapeRecoveryPoints operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3127,7 +3127,7 @@ const opDescribeTapes = "DescribeTapes"
 
 // DescribeTapesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTapes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3270,7 +3270,7 @@ const opDescribeUploadBuffer = "DescribeUploadBuffer"
 
 // DescribeUploadBufferRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeUploadBuffer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3358,7 +3358,7 @@ const opDescribeVTLDevices = "DescribeVTLDevices"
 
 // DescribeVTLDevicesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeVTLDevices operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3501,7 +3501,7 @@ const opDescribeWorkingStorage = "DescribeWorkingStorage"
 
 // DescribeWorkingStorageRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeWorkingStorage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3593,7 +3593,7 @@ const opDisableGateway = "DisableGateway"
 
 // DisableGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the DisableGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3684,7 +3684,7 @@ const opListFileShares = "ListFileShares"
 
 // ListFileSharesRequest generates a "aws/request.Request" representing the
 // client's request for the ListFileShares operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3770,7 +3770,7 @@ const opListGateways = "ListGateways"
 
 // ListGatewaysRequest generates a "aws/request.Request" representing the
 // client's request for the ListGateways operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3920,7 +3920,7 @@ const opListLocalDisks = "ListLocalDisks"
 
 // ListLocalDisksRequest generates a "aws/request.Request" representing the
 // client's request for the ListLocalDisks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4013,7 +4013,7 @@ const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4098,7 +4098,7 @@ const opListTapes = "ListTapes"
 
 // ListTapesRequest generates a "aws/request.Request" representing the
 // client's request for the ListTapes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4192,7 +4192,7 @@ const opListVolumeInitiators = "ListVolumeInitiators"
 
 // ListVolumeInitiatorsRequest generates a "aws/request.Request" representing the
 // client's request for the ListVolumeInitiators operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4278,7 +4278,7 @@ const opListVolumeRecoveryPoints = "ListVolumeRecoveryPoints"
 
 // ListVolumeRecoveryPointsRequest generates a "aws/request.Request" representing the
 // client's request for the ListVolumeRecoveryPoints operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4369,7 +4369,7 @@ const opListVolumes = "ListVolumes"
 
 // ListVolumesRequest generates a "aws/request.Request" representing the
 // client's request for the ListVolumes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4520,7 +4520,7 @@ const opNotifyWhenUploaded = "NotifyWhenUploaded"
 
 // NotifyWhenUploadedRequest generates a "aws/request.Request" representing the
 // client's request for the NotifyWhenUploaded operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4617,7 +4617,7 @@ const opRefreshCache = "RefreshCache"
 
 // RefreshCacheRequest generates a "aws/request.Request" representing the
 // client's request for the RefreshCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4704,7 +4704,7 @@ const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
 // RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTagsFromResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4789,7 +4789,7 @@ const opResetCache = "ResetCache"
 
 // ResetCacheRequest generates a "aws/request.Request" representing the
 // client's request for the ResetCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4884,7 +4884,7 @@ const opRetrieveTapeArchive = "RetrieveTapeArchive"
 
 // RetrieveTapeArchiveRequest generates a "aws/request.Request" representing the
 // client's request for the RetrieveTapeArchive operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4977,7 +4977,7 @@ const opRetrieveTapeRecoveryPoint = "RetrieveTapeRecoveryPoint"
 
 // RetrieveTapeRecoveryPointRequest generates a "aws/request.Request" representing the
 // client's request for the RetrieveTapeRecoveryPoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5070,7 +5070,7 @@ const opSetLocalConsolePassword = "SetLocalConsolePassword"
 
 // SetLocalConsolePasswordRequest generates a "aws/request.Request" representing the
 // client's request for the SetLocalConsolePassword operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5157,7 +5157,7 @@ const opShutdownGateway = "ShutdownGateway"
 
 // ShutdownGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the ShutdownGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5261,7 +5261,7 @@ const opStartGateway = "StartGateway"
 
 // StartGatewayRequest generates a "aws/request.Request" representing the
 // client's request for the StartGateway operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5356,7 +5356,7 @@ const opUpdateBandwidthRateLimit = "UpdateBandwidthRateLimit"
 
 // UpdateBandwidthRateLimitRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateBandwidthRateLimit operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5449,7 +5449,7 @@ const opUpdateChapCredentials = "UpdateChapCredentials"
 
 // UpdateChapCredentialsRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateChapCredentials operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5538,7 +5538,7 @@ const opUpdateGatewayInformation = "UpdateGatewayInformation"
 
 // UpdateGatewayInformationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGatewayInformation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5628,7 +5628,7 @@ const opUpdateGatewaySoftwareNow = "UpdateGatewaySoftwareNow"
 
 // UpdateGatewaySoftwareNowRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGatewaySoftwareNow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5726,7 +5726,7 @@ const opUpdateMaintenanceStartTime = "UpdateMaintenanceStartTime"
 
 // UpdateMaintenanceStartTimeRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMaintenanceStartTime operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5812,7 +5812,7 @@ const opUpdateNFSFileShare = "UpdateNFSFileShare"
 
 // UpdateNFSFileShareRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateNFSFileShare operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5915,7 +5915,7 @@ const opUpdateSnapshotSchedule = "UpdateSnapshotSchedule"
 
 // UpdateSnapshotScheduleRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSnapshotSchedule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6008,7 +6008,7 @@ const opUpdateVTLDeviceType = "UpdateVTLDeviceType"
 
 // UpdateVTLDeviceTypeRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateVTLDeviceType operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

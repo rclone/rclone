@@ -207,6 +207,16 @@
                   "pattern": "^users/[^/]+/projects/[^/]+$",
                   "required": true,
                   "type": "string"
+                },
+                "operatingSystemType": {
+                  "description": "The type of operating system associated with the account.",
+                  "enum": [
+                    "OPERATING_SYSTEM_TYPE_UNSPECIFIED",
+                    "LINUX",
+                    "WINDOWS"
+                  ],
+                  "location": "query",
+                  "type": "string"
                 }
               },
               "path": "v1alpha/{+name}",
@@ -314,7 +324,7 @@
       }
     }
   },
-  "revision": "20180306",
+  "revision": "20180430",
   "rootUrl": "https://oslogin.googleapis.com/",
   "schemas": {
     "Empty": {
@@ -324,7 +334,7 @@
       "type": "object"
     },
     "ImportSshPublicKeyResponse": {
-      "description": "A response message for importing an SSH public key.",
+      "description": "A response message from importing an SSH public key.",
       "id": "ImportSshPublicKeyResponse",
       "properties": {
         "loginProfile": {
@@ -378,6 +388,20 @@
         },
         "homeDirectory": {
           "description": "The path to the home directory for this account.",
+          "type": "string"
+        },
+        "operatingSystemType": {
+          "description": "The operating system type where this account applies.",
+          "enum": [
+            "OPERATING_SYSTEM_TYPE_UNSPECIFIED",
+            "LINUX",
+            "WINDOWS"
+          ],
+          "enumDescriptions": [
+            "The operating system type associated with the user account information is\nunspecified.",
+            "Linux user account information.",
+            "Windows user account information."
+          ],
           "type": "string"
         },
         "primary": {

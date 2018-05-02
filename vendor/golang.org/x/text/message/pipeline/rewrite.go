@@ -24,11 +24,11 @@ const printerType = "golang.org/x/text/message.Printer"
 // machinery and rewrites strings to adopt best practices when possible.
 // If w is not nil the generated files are written to it, each files with a
 // "--- <filename>" header. Otherwise the files are overwritten.
-func Rewrite(w io.Writer, args ...string) error {
+func Rewrite(w io.Writer, goPackage string) error {
 	conf := &loader.Config{
 		AllowErrors: true, // Allow unused instances of message.Printer.
 	}
-	prog, err := loadPackages(conf, args)
+	prog, err := loadPackages(conf, []string{goPackage})
 	if err != nil {
 		return wrap(err, "")
 	}

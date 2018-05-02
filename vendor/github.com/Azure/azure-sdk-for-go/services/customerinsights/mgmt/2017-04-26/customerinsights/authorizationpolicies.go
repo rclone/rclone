@@ -43,9 +43,11 @@ func NewAuthorizationPoliciesClientWithBaseURI(baseURI string, subscriptionID st
 }
 
 // CreateOrUpdate creates an authorization policy or updates an existing authorization policy.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
-// the name of the policy. parameters is parameters supplied to the CreateOrUpdate authorization policy operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// authorizationPolicyName - the name of the policy.
+// parameters - parameters supplied to the CreateOrUpdate authorization policy operation.
 func (client AuthorizationPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string, parameters AuthorizationPolicyResourceFormat) (result AuthorizationPolicyResourceFormat, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: authorizationPolicyName,
@@ -96,7 +98,7 @@ func (client AuthorizationPoliciesClient) CreateOrUpdatePreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/authorizationPolicies/{authorizationPolicyName}", pathParameters),
@@ -126,9 +128,10 @@ func (client AuthorizationPoliciesClient) CreateOrUpdateResponder(resp *http.Res
 }
 
 // Get gets an authorization policy in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
-// the name of the policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// authorizationPolicyName - the name of the policy.
 func (client AuthorizationPoliciesClient) Get(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicyResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {
@@ -194,8 +197,9 @@ func (client AuthorizationPoliciesClient) GetResponder(resp *http.Response) (res
 }
 
 // ListByHub gets all the authorization policies in a specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client AuthorizationPoliciesClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result AuthorizationPolicyListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)
@@ -288,9 +292,10 @@ func (client AuthorizationPoliciesClient) ListByHubComplete(ctx context.Context,
 }
 
 // RegeneratePrimaryKey regenerates the primary policy key of the specified authorization policy.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
-// the name of the policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// authorizationPolicyName - the name of the policy.
 func (client AuthorizationPoliciesClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicy, err error) {
 	req, err := client.RegeneratePrimaryKeyPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {
@@ -356,9 +361,10 @@ func (client AuthorizationPoliciesClient) RegeneratePrimaryKeyResponder(resp *ht
 }
 
 // RegenerateSecondaryKey regenerates the secondary policy key of the specified authorization policy.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
-// the name of the policy.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// authorizationPolicyName - the name of the policy.
 func (client AuthorizationPoliciesClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicy, err error) {
 	req, err := client.RegenerateSecondaryKeyPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {

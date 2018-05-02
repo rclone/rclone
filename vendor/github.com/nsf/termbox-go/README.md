@@ -36,3 +36,4 @@ There are also some interesting projects using termbox-go:
  - [pinger](https://github.com/hirose31/pinger) helps you to monitor numerous hosts using ICMP ECHO_REQUEST.
  - [vixl44](https://github.com/sebashwa/vixl44) lets you create pixel art inside your terminal using vim movements
  - [zterm](https://github.com/varunrau/zterm) is a typing game inspired by http://zty.pe/
+ - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.

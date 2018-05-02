@@ -40,10 +40,84 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return Client{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// CheckNameAvailability checks that the redis cache name is valid and is not already in use.
+// Parameters:
+// parameters - parameters supplied to the CheckNameAvailability Redis operation. The only supported resource
+// type is 'Microsoft.Cache/redis'
+func (client Client) CheckNameAvailability(ctx context.Context, parameters CheckNameAvailabilityParameters) (result autorest.Response, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: parameters,
+			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
+				{Target: "parameters.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("redis.Client", "CheckNameAvailability", err.Error())
+	}
+
+	req, err := client.CheckNameAvailabilityPreparer(ctx, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.Client", "CheckNameAvailability", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.CheckNameAvailabilitySender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "redis.Client", "CheckNameAvailability", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.CheckNameAvailabilityResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.Client", "CheckNameAvailability", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
+func (client Client) CheckNameAvailabilityPreparer(ctx context.Context, parameters CheckNameAvailabilityParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Cache/CheckNameAvailability", pathParameters),
+		autorest.WithJSON(parameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
+// closes the http.Response Body.
+func (client Client) CheckNameAvailabilityResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+	result.Response = resp
+	return
+}
+
 // Create create or replace (overwrite/recreate, with potential downtime) an existing Redis cache.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// parameters supplied to the Create Redis operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - parameters supplied to the Create Redis operation.
 func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters CreateParameters) (result CreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -88,7 +162,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}", pathParameters),
@@ -126,8 +200,9 @@ func (client Client) CreateResponder(resp *http.Response) (result ResourceType, 
 }
 
 // Delete deletes a Redis cache.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
 func (client Client) Delete(ctx context.Context, resourceGroupName string, name string) (result DeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, name)
 	if err != nil {
@@ -193,9 +268,10 @@ func (client Client) DeleteResponder(resp *http.Response) (result autorest.Respo
 }
 
 // ExportData export data from the redis cache to blobs in a container.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// parameters for Redis export operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - parameters for Redis export operation.
 func (client Client) ExportData(ctx context.Context, resourceGroupName string, name string, parameters ExportRDBParameters) (result ExportDataFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -233,7 +309,7 @@ func (client Client) ExportDataPreparer(ctx context.Context, resourceGroupName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}/export", pathParameters),
@@ -271,9 +347,10 @@ func (client Client) ExportDataResponder(resp *http.Response) (result autorest.R
 
 // ForceReboot reboot specified Redis node(s). This operation requires write permission to the cache resource. There
 // can be potential data loss.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// specifies which Redis node(s) to reboot.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - specifies which Redis node(s) to reboot.
 func (client Client) ForceReboot(ctx context.Context, resourceGroupName string, name string, parameters RebootParameters) (result ForceRebootResponse, err error) {
 	req, err := client.ForceRebootPreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -310,7 +387,7 @@ func (client Client) ForceRebootPreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}/forceReboot", pathParameters),
@@ -340,8 +417,9 @@ func (client Client) ForceRebootResponder(resp *http.Response) (result ForceRebo
 }
 
 // Get gets a Redis cache (resource description).
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
 func (client Client) Get(ctx context.Context, resourceGroupName string, name string) (result ResourceType, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, name)
 	if err != nil {
@@ -406,9 +484,10 @@ func (client Client) GetResponder(resp *http.Response) (result ResourceType, err
 }
 
 // ImportData import data into Redis cache.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// parameters for Redis import operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - parameters for Redis import operation.
 func (client Client) ImportData(ctx context.Context, resourceGroupName string, name string, parameters ImportRDBParameters) (result ImportDataFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -445,7 +524,7 @@ func (client Client) ImportDataPreparer(ctx context.Context, resourceGroupName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}/import", pathParameters),
@@ -519,7 +598,7 @@ func (client Client) ListPreparer(ctx context.Context) (*http.Request, error) {
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Cache/Redis/", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Cache/Redis", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -572,8 +651,8 @@ func (client Client) ListComplete(ctx context.Context) (result ListResultIterato
 }
 
 // ListByResourceGroup lists all Redis caches in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -612,7 +691,7 @@ func (client Client) ListByResourceGroupPreparer(ctx context.Context, resourceGr
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -665,8 +744,9 @@ func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGr
 }
 
 // ListKeys retrieve a Redis cache's access keys. This operation requires write permission to the cache resource.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
 func (client Client) ListKeys(ctx context.Context, resourceGroupName string, name string) (result AccessKeys, err error) {
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, name)
 	if err != nil {
@@ -730,10 +810,80 @@ func (client Client) ListKeysResponder(resp *http.Response) (result AccessKeys, 
 	return
 }
 
+// ListUpgradeNotifications gets any upgrade notifications for a Redis cache.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// history - how many minutes in past to look for upgrade notifications
+func (client Client) ListUpgradeNotifications(ctx context.Context, resourceGroupName string, name string, history float64) (result NotificationListResponse, err error) {
+	req, err := client.ListUpgradeNotificationsPreparer(ctx, resourceGroupName, name, history)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.Client", "ListUpgradeNotifications", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListUpgradeNotificationsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "redis.Client", "ListUpgradeNotifications", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListUpgradeNotificationsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.Client", "ListUpgradeNotifications", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListUpgradeNotificationsPreparer prepares the ListUpgradeNotifications request.
+func (client Client) ListUpgradeNotificationsPreparer(ctx context.Context, resourceGroupName string, name string, history float64) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"name":              autorest.Encode("path", name),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+		"history":     autorest.Encode("query", history),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}/listUpgradeNotifications", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListUpgradeNotificationsSender sends the ListUpgradeNotifications request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) ListUpgradeNotificationsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListUpgradeNotificationsResponder handles the response to the ListUpgradeNotifications request. The method always
+// closes the http.Response Body.
+func (client Client) ListUpgradeNotificationsResponder(resp *http.Response) (result NotificationListResponse, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // RegenerateKey regenerate Redis cache's access keys. This operation requires write permission to the cache resource.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// specifies which key to regenerate.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - specifies which key to regenerate.
 func (client Client) RegenerateKey(ctx context.Context, resourceGroupName string, name string, parameters RegenerateKeyParameters) (result AccessKeys, err error) {
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -770,7 +920,7 @@ func (client Client) RegenerateKeyPreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}/regenerateKey", pathParameters),
@@ -800,9 +950,10 @@ func (client Client) RegenerateKeyResponder(resp *http.Response) (result AccessK
 }
 
 // Update update an existing Redis cache.
-//
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
-// parameters supplied to the Update Redis operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the Redis cache.
+// parameters - parameters supplied to the Update Redis operation.
 func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters UpdateParameters) (result ResourceType, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -839,7 +990,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/Redis/{name}", pathParameters),

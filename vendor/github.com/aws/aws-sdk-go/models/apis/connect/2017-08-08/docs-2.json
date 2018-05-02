@@ -1,0 +1,140 @@
+{
+  "version": "2.0",
+  "service": "<p>The Amazon Connect API Reference provides descriptions, syntax, and usage examples for each of the Amazon Connect actions, data types, parameters, and errors. Amazon Connect is a cloud-based contact center solution that makes it easy to set up and manage a customer contact center and provide reliable customer engagement at any scale.</p>",
+  "operations": {
+    "StartOutboundVoiceContact": "<p>The <code>StartOutboundVoiceContact</code> operation initiates a contact flow to place an outbound call to a customer.</p> <p>There is a throttling limit placed on usage of the API that includes a <code>RateLimit</code> of 2 per second, and a <code>BurstLimit</code> of 5 per second.</p> <p>If you are using an IAM account, it must have permissions to the <code>connect:StartOutboundVoiceContact</code> action.</p>",
+    "StopContact": "<p>Ends the contact initiated by the <code>StartOutboundVoiceContact</code> operation.</p> <p>If you are using an IAM account, it must have permissions to the <code>connect:StopContact</code> operation.</p>"
+  },
+  "shapes": {
+    "AttributeName": {
+      "base": "Key for the key value pair to be used for additional attributes.",
+      "refs": {
+        "Attributes$key": null
+      }
+    },
+    "AttributeValue": {
+      "base": "Value for the key value pair to be used for additional attributes.",
+      "refs": {
+        "Attributes$value": null
+      }
+    },
+    "Attributes": {
+      "base": "Additional attributes can be provided in the request using this field. This will be passed to the contact flow execution. Client can make use of this additional info in their contact flow.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$Attributes": "<p>Specify a custom key-value pair using an attribute map. The attributes are standard Amazon Connect attributes, and can be accessed in contact flows just like any other contact attributes.</p> <p>There can be up to 32,768 UTF-8 bytes across all key-value pairs. Attribute keys can include only alphanumeric, dash, and underscore characters.</p> <p>For example, to play a greeting when the customer answers the call, you can pass the customer name in attributes similar to the following:</p>"
+      }
+    },
+    "ClientToken": {
+      "base": "Dedupe token to be provided by the client. This token is used to avoid duplicate calls to the customer.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$ClientToken": "<p>A unique, case-sensitive identifier that you provide to ensure the idempotency of the request. The token is valid for 7 days after creation. If a contact is already started, the contact ID is returned. If the contact is disconnected, a new contact is started.</p>"
+      }
+    },
+    "ContactFlowId": {
+      "base": "Amazon resource name for the contact flow to be executed to handle the current call.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$ContactFlowId": "<p>The identifier for the contact flow to execute for the outbound call. This is a GUID value only. Amazon Resource Name (ARN) values are not supported.</p> <p>To find the <code>ContactFlowId</code>, open the contact flow to use in the Amazon Connect contact flow designer. The ID for the contact flow is displayed in the address bar as part of the URL. For example, an address displayed when you open a contact flow is similar to the following: <code>https://myconnectinstance.awsapps.com/connect/contact-flows/edit?id=arn:aws:connect:us-east-1:361814831152:instance/2fb42df9-78a2-4b99-b484-f5cf80dc300c/contact-flow/<i>b0b8f2dd-ed1b-4c44-af36-ce189a178181</i> </code>. At the end of the URL, you see <code>contact-flow/b0b8f2dd-ed1b-4c44-af36-ce189a178181</code>. The <code>ContactFlowID</code> for this contact flow is <code> <i>b0b8f2dd-ed1b-4c44-af36-ce189a178181</i> </code>. Make sure to include only the GUID after the \"contact-flow/\" in your requests.</p>"
+      }
+    },
+    "ContactId": {
+      "base": "Amazon Connect contact identifier. An unique ContactId will be generated for each contact request.",
+      "refs": {
+        "StartOutboundVoiceContactResponse$ContactId": "<p>The unique identifier of this contact within your Amazon Connect instance.</p>",
+        "StopContactRequest$ContactId": "<p>The unique identifier of the contact to end. This is the <code>ContactId</code> value returned from the <code>StartOutboundVoiceContact</code> operation.</p>"
+      }
+    },
+    "ContactNotFoundException": {
+      "base": "<p>The contact with the specified ID is not active or does not exist.</p>",
+      "refs": {
+      }
+    },
+    "DestinationNotAllowedException": {
+      "base": "<p>Outbound calls to the destination number are not allowed for your instance. You can request that the country be included in the allowed countries for your instance by submitting a <a href=\"https://console.aws.amazon.com/support/v1#/case/create?issueType=service-limit-increase\">Service Limit Increase</a>.</p>",
+      "refs": {
+      }
+    },
+    "InstanceId": {
+      "base": "Amazon Connect Organization ARN. A client must provide its organization ARN in order to place a call. This defines the call from organization.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$InstanceId": "<p>The identifier for your Amazon Connect instance. To find the <code>InstanceId</code> value for your Amazon Connect instance, open the <a href=\"https://console.aws.amazon.com/connect/\">Amazon Connect console</a>. Select the instance alias of the instance and view the instance ID in the <b>Overview</b> section. For example, the instance ID is the set of characters at the end of the instance ARN, after \"instance/\", such as 10a4c4eb-f57e-4d4c-b602-bf39176ced07.</p>",
+        "StopContactRequest$InstanceId": "<p>The identifier of the Amazon Connect instance in which the contact is active.</p>"
+      }
+    },
+    "InternalServiceException": {
+      "base": "<p>Request processing failed due to an error or failure with the service.</p>",
+      "refs": {
+      }
+    },
+    "InvalidParameterException": {
+      "base": "<p>One or more of the parameters provided to the operation are not valid.</p>",
+      "refs": {
+      }
+    },
+    "InvalidRequestException": {
+      "base": "<p>The request is not valid.</p>",
+      "refs": {
+      }
+    },
+    "LimitExceededException": {
+      "base": "<p>The limit exceeded the maximum allowed active calls in a queue.</p>",
+      "refs": {
+      }
+    },
+    "Message": {
+      "base": null,
+      "refs": {
+        "ContactNotFoundException$Message": "<p>The message.</p>",
+        "DestinationNotAllowedException$Message": "<p>The message.</p>",
+        "InternalServiceException$Message": "<p>The message.</p>",
+        "InvalidParameterException$Message": "<p>The message.</p>",
+        "InvalidRequestException$Message": "<p>The message.</p>",
+        "LimitExceededException$Message": "<p>The message.</p>",
+        "OutboundContactNotPermittedException$Message": "<p>The message.</p>",
+        "ResourceNotFoundException$Message": "<p>The message.</p>"
+      }
+    },
+    "OutboundContactNotPermittedException": {
+      "base": "<p>The contact is not permitted because outbound calling is not enabled for the instance.</p>",
+      "refs": {
+      }
+    },
+    "PhoneNumber": {
+      "base": "End customer's phone number to call.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$DestinationPhoneNumber": "<p>The phone number, in E.164 format, of the customer to call with the outbound contact.</p>",
+        "StartOutboundVoiceContactRequest$SourcePhoneNumber": "<p>The phone number, in E.164 format, associated with your Amazon Connect instance to use to place the outbound call.</p>"
+      }
+    },
+    "QueueId": {
+      "base": "Identifier of the queue to be used for the contact routing.",
+      "refs": {
+        "StartOutboundVoiceContactRequest$QueueId": "<p>The queue to which to add the call. If you specify a queue, the phone displayed for caller ID is the phone number defined for the queue. If you do not specify a queue, the queue used is the queue defined in the contact flow specified by <code>ContactFlowId</code>.</p> <p>To find the <code>QueueId</code>, open the queue to use in the Amazon Connect queue editor. The ID for the queue is displayed in the address bar as part of the URL. For example, the <code>QueueId</code> value is the set of characters at the end of the URL, after \"queue/\", such as <code>aeg40574-2d01-51c3-73d6-bf8624d2168c</code>.</p>"
+      }
+    },
+    "ResourceNotFoundException": {
+      "base": "<p>The specified resource was not found.</p>",
+      "refs": {
+      }
+    },
+    "StartOutboundVoiceContactRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartOutboundVoiceContactResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StopContactRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StopContactResponse": {
+      "base": null,
+      "refs": {
+      }
+    }
+  }
+}

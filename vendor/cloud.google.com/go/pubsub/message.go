@@ -43,13 +43,16 @@ type Message struct {
 	// This field is read-only.
 	PublishTime time.Time
 
+	// receiveTime is the time the message was received by the client.
+	receiveTime time.Time
+
 	// size is the approximate size of the message's data and attributes.
 	size int
 
 	calledDone bool
 
 	// The done method of the iterator that created this Message.
-	doneFunc func(string, bool)
+	doneFunc func(string, bool, time.Time)
 }
 
 func toMessage(resp *pb.ReceivedMessage) (*Message, error) {
@@ -93,5 +96,5 @@ func (m *Message) done(ack bool) {
 		return
 	}
 	m.calledDone = true
-	m.doneFunc(m.ackID, ack)
+	m.doneFunc(m.ackID, ack, m.receiveTime)
 }

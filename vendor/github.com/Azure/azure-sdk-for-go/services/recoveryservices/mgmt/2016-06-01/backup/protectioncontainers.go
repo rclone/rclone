@@ -40,10 +40,11 @@ func NewProtectionContainersClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Get gets details of the specific container registered to your Recovery Services vault.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the container.
-// containerName is the container name used for this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the container.
+// containerName - the container name used for this GET operation.
 func (client ProtectionContainersClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string) (result ProtectionContainerResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName)
 	if err != nil {
@@ -110,12 +111,13 @@ func (client ProtectionContainersClient) GetResponder(resp *http.Response) (resu
 }
 
 // List lists the containers registered to the Recovery Services vault.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is the following equation is used to sort or filter the
-// containers registered to the vault. providerType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql} and
-// status eq {Unknown, NotRegistered, Registered, Registering} and friendlyName eq {containername} and
-// backupManagementType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql}.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - the following equation is used to sort or filter the containers registered to the vault.
+// providerType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql} and status eq {Unknown, NotRegistered,
+// Registered, Registering} and friendlyName eq {containername} and backupManagementType eq {AzureIaasVM, MAB,
+// DPM, AzureBackupServer, AzureSql}.
 func (client ProtectionContainersClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string) (result ProtectionContainerResourceList, err error) {
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter)
 	if err != nil {
@@ -184,9 +186,10 @@ func (client ProtectionContainersClient) ListResponder(resp *http.Response) (res
 
 // Refresh discovers the containers in the subscription that can be protected in a Recovery Services vault. This is an
 // asynchronous operation. To learn the status of the operation, use the GetRefreshOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the container.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the container.
 func (client ProtectionContainersClient) Refresh(ctx context.Context, vaultName string, resourceGroupName string, fabricName string) (result autorest.Response, err error) {
 	req, err := client.RefreshPreparer(ctx, vaultName, resourceGroupName, fabricName)
 	if err != nil {
@@ -251,9 +254,10 @@ func (client ProtectionContainersClient) RefreshResponder(resp *http.Response) (
 }
 
 // Unregister unregisters the given container from your Recovery Services vault.
-//
-// resourceGroupName is the name of the resource group associated with the Recovery Services vault. vaultName is
-// the name of the Recovery Services vault. identityName is name of the protection container to unregister.
+// Parameters:
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// vaultName - the name of the Recovery Services vault.
+// identityName - name of the protection container to unregister.
 func (client ProtectionContainersClient) Unregister(ctx context.Context, resourceGroupName string, vaultName string, identityName string) (result autorest.Response, err error) {
 	req, err := client.UnregisterPreparer(ctx, resourceGroupName, vaultName, identityName)
 	if err != nil {

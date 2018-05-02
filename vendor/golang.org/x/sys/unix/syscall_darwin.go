@@ -13,7 +13,7 @@
 package unix
 
 import (
-	errorspkg "errors"
+	"errors"
 	"syscall"
 	"unsafe"
 )
@@ -98,7 +98,7 @@ type attrList struct {
 
 func getAttrList(path string, attrList attrList, attrBuf []byte, options uint) (attrs [][]byte, err error) {
 	if len(attrBuf) < 4 {
-		return nil, errorspkg.New("attrBuf too small")
+		return nil, errors.New("attrBuf too small")
 	}
 	attrList.bitmapCount = attrBitMapCount
 
@@ -134,12 +134,12 @@ func getAttrList(path string, attrList attrList, attrBuf []byte, options uint) (
 	for i := uint32(0); int(i) < len(dat); {
 		header := dat[i:]
 		if len(header) < 8 {
-			return attrs, errorspkg.New("truncated attribute header")
+			return attrs, errors.New("truncated attribute header")
 		}
 		datOff := *(*int32)(unsafe.Pointer(&header[0]))
 		attrLen := *(*uint32)(unsafe.Pointer(&header[4]))
 		if datOff < 0 || uint32(datOff)+attrLen > uint32(len(dat)) {
-			return attrs, errorspkg.New("truncated results; attrBuf too small")
+			return attrs, errors.New("truncated results; attrBuf too small")
 		}
 		end := uint32(datOff) + attrLen
 		attrs = append(attrs, dat[datOff:end])

@@ -40,8 +40,9 @@ func NewPartitionsClientWithBaseURI(baseURI string, timeout *int32) PartitionsCl
 }
 
 // Get get partitions
-//
-// serviceName is the name of the service partitionID is the id of the partition
+// Parameters:
+// serviceName - the name of the service
+// partitionID - the id of the partition
 func (client PartitionsClient) Get(ctx context.Context, serviceName string, partitionID string) (result Partition, err error) {
 	req, err := client.GetPreparer(ctx, serviceName, partitionID)
 	if err != nil {
@@ -108,8 +109,8 @@ func (client PartitionsClient) GetResponder(resp *http.Response) (result Partiti
 }
 
 // List list partitions
-//
-// serviceName is the name of the service
+// Parameters:
+// serviceName - the name of the service
 func (client PartitionsClient) List(ctx context.Context, serviceName string) (result PartitionList, err error) {
 	req, err := client.ListPreparer(ctx, serviceName)
 	if err != nil {
@@ -175,8 +176,8 @@ func (client PartitionsClient) ListResponder(resp *http.Response) (result Partit
 }
 
 // Repair repair partitions
-//
-// partitionID is the id of the partition
+// Parameters:
+// partitionID - the id of the partition
 func (client PartitionsClient) Repair(ctx context.Context, partitionID string) (result String, err error) {
 	req, err := client.RepairPreparer(ctx, partitionID)
 	if err != nil {

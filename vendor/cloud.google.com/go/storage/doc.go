@@ -74,15 +74,16 @@ Attrs:
 Objects
 
 An object holds arbitrary data as a sequence of bytes, like a file. You
-refer to objects using a handle, just as with buckets. You can use the
-standard Go io.Reader and io.Writer interfaces to read and write
-object data:
+refer to objects using a handle, just as with buckets, but unlike buckets
+you don't explicitly create an object. Instead, the first time you write
+to an object it will be created. You can use the standard Go io.Reader
+and io.Writer interfaces to read and write object data:
 
     obj := bkt.Object("data")
     // Write something to obj.
     // w implements io.Writer.
     w := obj.NewWriter(ctx)
-    // Write some text to obj. This will overwrite whatever is there.
+    // Write some text to obj. This will either create the object or overwrite whatever is there already.
     if _, err := fmt.Fprintf(w, "This object contains text.\n"); err != nil {
         // TODO: Handle error.
     }

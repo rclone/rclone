@@ -26,6 +26,7 @@
         {"shape":"TextSizeLimitExceededException"},
         {"shape":"TooManyRequestsException"},
         {"shape":"UnsupportedLanguagePairException"},
+        {"shape":"DetectedLanguageLowConfidenceException"},
         {"shape":"InternalServerException"},
         {"shape":"ServiceUnavailableException"}
       ]
@@ -34,8 +35,16 @@
   "shapes":{
     "BoundedLengthString":{
       "type":"string",
-      "max":1000,
+      "max":5000,
       "min":1
+    },
+    "DetectedLanguageLowConfidenceException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"},
+        "DetectedLanguageCode":{"shape":"LanguageCodeString"}
+      },
+      "exception":true
     },
     "InternalServerException":{
       "type":"structure",

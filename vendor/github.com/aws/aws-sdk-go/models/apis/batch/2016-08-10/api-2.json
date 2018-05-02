@@ -7,6 +7,7 @@
     "protocol":"rest-json",
     "serviceAbbreviation":"AWS Batch",
     "serviceFullName":"AWS Batch",
+    "serviceId":"Batch",
     "signatureVersion":"v4",
     "uid":"batch-2016-08-10"
   },
@@ -655,7 +656,8 @@
         "type":{"shape":"String"},
         "parameters":{"shape":"ParametersMap"},
         "retryStrategy":{"shape":"RetryStrategy"},
-        "containerProperties":{"shape":"ContainerProperties"}
+        "containerProperties":{"shape":"ContainerProperties"},
+        "timeout":{"shape":"JobTimeout"}
       }
     },
     "JobDefinitionList":{
@@ -702,7 +704,8 @@
         "jobDefinition":{"shape":"String"},
         "parameters":{"shape":"ParametersMap"},
         "container":{"shape":"ContainerDetail"},
-        "arrayProperties":{"shape":"ArrayPropertiesDetail"}
+        "arrayProperties":{"shape":"ArrayPropertiesDetail"},
+        "timeout":{"shape":"JobTimeout"}
       }
     },
     "JobDetailList":{
@@ -766,6 +769,12 @@
       "type":"list",
       "member":{"shape":"JobSummary"}
     },
+    "JobTimeout":{
+      "type":"structure",
+      "members":{
+        "attemptDurationSeconds":{"shape":"Integer"}
+      }
+    },
     "KeyValuePair":{
       "type":"structure",
       "members":{
@@ -820,7 +829,8 @@
         "type":{"shape":"JobDefinitionType"},
         "parameters":{"shape":"ParametersMap"},
         "containerProperties":{"shape":"ContainerProperties"},
-        "retryStrategy":{"shape":"RetryStrategy"}
+        "retryStrategy":{"shape":"RetryStrategy"},
+        "timeout":{"shape":"JobTimeout"}
       }
     },
     "RegisterJobDefinitionResponse":{
@@ -871,7 +881,8 @@
         "jobDefinition":{"shape":"String"},
         "parameters":{"shape":"ParametersMap"},
         "containerOverrides":{"shape":"ContainerOverrides"},
-        "retryStrategy":{"shape":"RetryStrategy"}
+        "retryStrategy":{"shape":"RetryStrategy"},
+        "timeout":{"shape":"JobTimeout"}
       }
     },
     "SubmitJobResponse":{

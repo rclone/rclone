@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // AccessRightsDescription enumerates the values for access rights description.
 type AccessRightsDescription string
 
@@ -44,6 +45,13 @@ const (
 	ServiceConfig AccessRightsDescription = "ServiceConfig"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleAccessRightsDescriptionValues returns an array of possible values for the AccessRightsDescription const type.
+func PossibleAccessRightsDescriptionValues() []AccessRightsDescription {
+	return []AccessRightsDescription{DeviceConnect, EnrollmentRead, EnrollmentWrite, RegistrationStatusRead, RegistrationStatusWrite, ServiceConfig}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // AllocationPolicy enumerates the values for allocation policy.
 type AllocationPolicy string
 
@@ -56,6 +64,13 @@ const (
 	Static AllocationPolicy = "Static"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleAllocationPolicyValues returns an array of possible values for the AllocationPolicy const type.
+func PossibleAllocationPolicyValues() []AllocationPolicy {
+	return []AllocationPolicy{GeoLatency, Hashed, Static}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CertificatePurpose enumerates the values for certificate purpose.
 type CertificatePurpose string
 
@@ -66,6 +81,13 @@ const (
 	ServerAuthentication CertificatePurpose = "serverAuthentication"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleCertificatePurposeValues returns an array of possible values for the CertificatePurpose const type.
+func PossibleCertificatePurposeValues() []CertificatePurpose {
+	return []CertificatePurpose{ClientAuthentication, ServerAuthentication}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSku enumerates the values for iot dps sku.
 type IotDpsSku string
 
@@ -74,6 +96,13 @@ const (
 	S1 IotDpsSku = "S1"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleIotDpsSkuValues returns an array of possible values for the IotDpsSku const type.
+func PossibleIotDpsSkuValues() []IotDpsSku {
+	return []IotDpsSku{S1}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NameUnavailabilityReason enumerates the values for name unavailability reason.
 type NameUnavailabilityReason string
 
@@ -84,6 +113,13 @@ const (
 	Invalid NameUnavailabilityReason = "Invalid"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleNameUnavailabilityReasonValues returns an array of possible values for the NameUnavailabilityReason const type.
+func PossibleNameUnavailabilityReasonValues() []NameUnavailabilityReason {
+	return []NameUnavailabilityReason{AlreadyExists, Invalid}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // State enumerates the values for state.
 type State string
 
@@ -114,6 +150,13 @@ const (
 	Transitioning State = "Transitioning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{Activating, ActivationFailed, Active, Deleted, Deleting, DeletionFailed, FailingOver, FailoverFailed, Resuming, Suspended, Suspending, Transitioning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // AsyncOperationResult result of a long running operation.
 type AsyncOperationResult struct {
 	autorest.Response `json:"-"`
@@ -121,12 +164,14 @@ type AsyncOperationResult struct {
 	Error             *ErrorMesssage `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CertificateBodyDescription the JSON-serialized X509 Certificate.
 type CertificateBodyDescription struct {
 	// Certificate - Base-64 representation of the X509 leaf certificate .cer file or just .pem file content.
 	Certificate *string `json:"certificate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CertificateListDescription the JSON-serialized array of Certificate objects.
 type CertificateListDescription struct {
 	autorest.Response `json:"-"`
@@ -134,6 +179,7 @@ type CertificateListDescription struct {
 	Value *[]CertificateResponse `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CertificateProperties the description of an X509 CA Certificate.
 type CertificateProperties struct {
 	// Subject - The certificate's subject name.
@@ -150,6 +196,7 @@ type CertificateProperties struct {
 	Updated *date.TimeRFC1123 `json:"updated,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CertificateResponse the X509 Certificate.
 type CertificateResponse struct {
 	autorest.Response `json:"-"`
@@ -164,6 +211,7 @@ type CertificateResponse struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DefinitionDescription description of the IoT hub.
 type DefinitionDescription struct {
 	ApplyAllocationPolicy *bool  `json:"applyAllocationPolicy,omitempty"`
@@ -176,6 +224,7 @@ type DefinitionDescription struct {
 	Location *string `json:"location,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ErrorDetails ...
 type ErrorDetails struct {
 	// Code - error code.
@@ -185,6 +234,7 @@ type ErrorDetails struct {
 	Details        *string `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ErrorMesssage error response containing message and code.
 type ErrorMesssage struct {
 	Code    *string `json:"code,omitempty"`
@@ -192,6 +242,7 @@ type ErrorMesssage struct {
 	Details *string `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsPropertiesDescription ...
 type IotDpsPropertiesDescription struct {
 	// State - Current state of the provisioning service. Possible values include: 'Activating', 'Active', 'Deleting', 'Deleted', 'ActivationFailed', 'DeletionFailed', 'Transitioning', 'Suspending', 'Suspended', 'Resuming', 'FailingOver', 'FailoverFailed'
@@ -211,6 +262,7 @@ type IotDpsPropertiesDescription struct {
 	AuthorizationPolicies *[]SharedAccessSignatureAuthorizationRuleAccessRightsDescription `json:"authorizationPolicies,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsResourceCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type IotDpsResourceCreateOrUpdateFuture struct {
@@ -218,6 +270,7 @@ type IotDpsResourceCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future IotDpsResourceCreateOrUpdateFuture) Result(client IotDpsResourceClient) (psd ProvisioningServiceDescription, err error) {
@@ -260,12 +313,14 @@ func (future IotDpsResourceCreateOrUpdateFuture) Result(client IotDpsResourceCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsResourceDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type IotDpsResourceDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future IotDpsResourceDeleteFuture) Result(client IotDpsResourceClient) (ar autorest.Response, err error) {
@@ -308,12 +363,14 @@ func (future IotDpsResourceDeleteFuture) Result(client IotDpsResourceClient) (ar
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSkuDefinition SKU definition in terms of tier and units.
 type IotDpsSkuDefinition struct {
 	// Name - Possible values include: 'S1'
 	Name IotDpsSku `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSkuDefinitionListResult list of available SKUs.
 type IotDpsSkuDefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -321,12 +378,14 @@ type IotDpsSkuDefinitionListResult struct {
 	NextLink          *string                `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSkuDefinitionListResultIterator provides access to a complete listing of IotDpsSkuDefinition values.
 type IotDpsSkuDefinitionListResultIterator struct {
 	i    int
 	page IotDpsSkuDefinitionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *IotDpsSkuDefinitionListResultIterator) Next() error {
@@ -343,16 +402,19 @@ func (iter *IotDpsSkuDefinitionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter IotDpsSkuDefinitionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (iter IotDpsSkuDefinitionListResultIterator) Response() IotDpsSkuDefinitionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter IotDpsSkuDefinitionListResultIterator) Value() IotDpsSkuDefinition {
@@ -362,6 +424,7 @@ func (iter IotDpsSkuDefinitionListResultIterator) Value() IotDpsSkuDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (idsdlr IotDpsSkuDefinitionListResult) IsEmpty() bool {
 	return idsdlr.Value == nil || len(*idsdlr.Value) == 0
@@ -379,12 +442,14 @@ func (idsdlr IotDpsSkuDefinitionListResult) iotDpsSkuDefinitionListResultPrepare
 		autorest.WithBaseURL(to.String(idsdlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSkuDefinitionListResultPage contains a page of IotDpsSkuDefinition values.
 type IotDpsSkuDefinitionListResultPage struct {
 	fn     func(IotDpsSkuDefinitionListResult) (IotDpsSkuDefinitionListResult, error)
 	idsdlr IotDpsSkuDefinitionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *IotDpsSkuDefinitionListResultPage) Next() error {
@@ -396,16 +461,19 @@ func (page *IotDpsSkuDefinitionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page IotDpsSkuDefinitionListResultPage) NotDone() bool {
 	return !page.idsdlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (page IotDpsSkuDefinitionListResultPage) Response() IotDpsSkuDefinitionListResult {
 	return page.idsdlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page IotDpsSkuDefinitionListResultPage) Values() []IotDpsSkuDefinition {
 	if page.idsdlr.IsEmpty() {
@@ -414,6 +482,7 @@ func (page IotDpsSkuDefinitionListResultPage) Values() []IotDpsSkuDefinition {
 	return *page.idsdlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsSkuInfo list of possible provisoning service SKUs.
 type IotDpsSkuInfo struct {
 	// Name - Possible values include: 'S1'
@@ -424,6 +493,7 @@ type IotDpsSkuInfo struct {
 	Capacity *int64 `json:"capacity,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NameAvailabilityInfo description of name availability.
 type NameAvailabilityInfo struct {
 	autorest.Response `json:"-"`
@@ -433,6 +503,7 @@ type NameAvailabilityInfo struct {
 	Message *string                  `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Operation ioT Hub REST API operation.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{read | write | action | delete}
@@ -441,6 +512,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // OperationDisplay the object that represents the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft Devices.
@@ -451,12 +523,14 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // OperationInputs input values for operation results call.
 type OperationInputs struct {
 	// Name - The name of the Provisioning Service to check.
 	Name *string `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // OperationListResult result of the request to list IoT Hub operations. It contains a list of operations and a URL
 // link to get the next set of results.
 type OperationListResult struct {
@@ -467,12 +541,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -489,16 +565,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -508,6 +587,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -525,12 +605,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -542,16 +624,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -560,6 +645,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ProvisioningServiceDescription the description of the provisioning service.
 type ProvisioningServiceDescription struct {
 	autorest.Response `json:"-"`
@@ -579,6 +665,7 @@ type ProvisioningServiceDescription struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // MarshalJSON is the custom marshaler for ProvisioningServiceDescription.
 func (psd ProvisioningServiceDescription) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -609,6 +696,7 @@ func (psd ProvisioningServiceDescription) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ProvisioningServiceDescriptionListResult list of provisioning service descriptions.
 type ProvisioningServiceDescriptionListResult struct {
 	autorest.Response `json:"-"`
@@ -616,6 +704,7 @@ type ProvisioningServiceDescriptionListResult struct {
 	NextLink          *string                           `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ProvisioningServiceDescriptionListResultIterator provides access to a complete listing of
 // ProvisioningServiceDescription values.
 type ProvisioningServiceDescriptionListResultIterator struct {
@@ -623,6 +712,7 @@ type ProvisioningServiceDescriptionListResultIterator struct {
 	page ProvisioningServiceDescriptionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ProvisioningServiceDescriptionListResultIterator) Next() error {
@@ -639,16 +729,19 @@ func (iter *ProvisioningServiceDescriptionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ProvisioningServiceDescriptionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (iter ProvisioningServiceDescriptionListResultIterator) Response() ProvisioningServiceDescriptionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ProvisioningServiceDescriptionListResultIterator) Value() ProvisioningServiceDescription {
@@ -658,6 +751,7 @@ func (iter ProvisioningServiceDescriptionListResultIterator) Value() Provisionin
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (psdlr ProvisioningServiceDescriptionListResult) IsEmpty() bool {
 	return psdlr.Value == nil || len(*psdlr.Value) == 0
@@ -675,12 +769,14 @@ func (psdlr ProvisioningServiceDescriptionListResult) provisioningServiceDescrip
 		autorest.WithBaseURL(to.String(psdlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ProvisioningServiceDescriptionListResultPage contains a page of ProvisioningServiceDescription values.
 type ProvisioningServiceDescriptionListResultPage struct {
 	fn    func(ProvisioningServiceDescriptionListResult) (ProvisioningServiceDescriptionListResult, error)
 	psdlr ProvisioningServiceDescriptionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ProvisioningServiceDescriptionListResultPage) Next() error {
@@ -692,16 +788,19 @@ func (page *ProvisioningServiceDescriptionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ProvisioningServiceDescriptionListResultPage) NotDone() bool {
 	return !page.psdlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (page ProvisioningServiceDescriptionListResultPage) Response() ProvisioningServiceDescriptionListResult {
 	return page.psdlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ProvisioningServiceDescriptionListResultPage) Values() []ProvisioningServiceDescription {
 	if page.psdlr.IsEmpty() {
@@ -710,6 +809,7 @@ func (page ProvisioningServiceDescriptionListResultPage) Values() []Provisioning
 	return *page.psdlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Resource the common properties of an Azure resource.
 type Resource struct {
 	// ID - The resource identifier.
@@ -724,6 +824,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -745,6 +846,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // SharedAccessSignatureAuthorizationRuleAccessRightsDescription description of the shared access key.
 type SharedAccessSignatureAuthorizationRuleAccessRightsDescription struct {
 	autorest.Response `json:"-"`
@@ -758,6 +860,7 @@ type SharedAccessSignatureAuthorizationRuleAccessRightsDescription struct {
 	Rights AccessRightsDescription `json:"rights,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // SharedAccessSignatureAuthorizationRuleListResult list of shared access keys.
 type SharedAccessSignatureAuthorizationRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -765,6 +868,7 @@ type SharedAccessSignatureAuthorizationRuleListResult struct {
 	NextLink          *string                                                          `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // SharedAccessSignatureAuthorizationRuleListResultIterator provides access to a complete listing of
 // SharedAccessSignatureAuthorizationRuleAccessRightsDescription values.
 type SharedAccessSignatureAuthorizationRuleListResultIterator struct {
@@ -772,6 +876,7 @@ type SharedAccessSignatureAuthorizationRuleListResultIterator struct {
 	page SharedAccessSignatureAuthorizationRuleListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SharedAccessSignatureAuthorizationRuleListResultIterator) Next() error {
@@ -788,16 +893,19 @@ func (iter *SharedAccessSignatureAuthorizationRuleListResultIterator) Next() err
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SharedAccessSignatureAuthorizationRuleListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (iter SharedAccessSignatureAuthorizationRuleListResultIterator) Response() SharedAccessSignatureAuthorizationRuleListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SharedAccessSignatureAuthorizationRuleListResultIterator) Value() SharedAccessSignatureAuthorizationRuleAccessRightsDescription {
@@ -807,6 +915,7 @@ func (iter SharedAccessSignatureAuthorizationRuleListResultIterator) Value() Sha
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sasarlr SharedAccessSignatureAuthorizationRuleListResult) IsEmpty() bool {
 	return sasarlr.Value == nil || len(*sasarlr.Value) == 0
@@ -824,6 +933,7 @@ func (sasarlr SharedAccessSignatureAuthorizationRuleListResult) sharedAccessSign
 		autorest.WithBaseURL(to.String(sasarlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // SharedAccessSignatureAuthorizationRuleListResultPage contains a page of
 // SharedAccessSignatureAuthorizationRuleAccessRightsDescription values.
 type SharedAccessSignatureAuthorizationRuleListResultPage struct {
@@ -831,6 +941,7 @@ type SharedAccessSignatureAuthorizationRuleListResultPage struct {
 	sasarlr SharedAccessSignatureAuthorizationRuleListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SharedAccessSignatureAuthorizationRuleListResultPage) Next() error {
@@ -842,16 +953,19 @@ func (page *SharedAccessSignatureAuthorizationRuleListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SharedAccessSignatureAuthorizationRuleListResultPage) NotDone() bool {
 	return !page.sasarlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Response returns the raw server response from the last page request.
 func (page SharedAccessSignatureAuthorizationRuleListResultPage) Response() SharedAccessSignatureAuthorizationRuleListResult {
 	return page.sasarlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SharedAccessSignatureAuthorizationRuleListResultPage) Values() []SharedAccessSignatureAuthorizationRuleAccessRightsDescription {
 	if page.sasarlr.IsEmpty() {
@@ -860,11 +974,13 @@ func (page SharedAccessSignatureAuthorizationRuleListResultPage) Values() []Shar
 	return *page.sasarlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerificationCodeRequest certificate to generate verification code for.
 type VerificationCodeRequest struct {
 	Certificate *string `json:"certificate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerificationCodeResponse description of the response of the verification code.
 type VerificationCodeResponse struct {
 	autorest.Response `json:"-"`

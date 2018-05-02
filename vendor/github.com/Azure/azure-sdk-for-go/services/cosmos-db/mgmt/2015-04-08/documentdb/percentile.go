@@ -42,11 +42,12 @@ func NewPercentileClientWithBaseURI(baseURI string, subscriptionID string) Perce
 
 // ListMetrics retrieves the metrics determined by the given filter for the given database account. This url is only
 // for PBS and Replication Latency data
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name. filter is
-// an OData filter expression that describes a subset of metrics to return. The parameters that can be filtered are
-// name.value (name of the metric, can have an or of multiple names), startTime, endTime, and timeGrain. The
-// supported operator is eq.
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// filter - an OData filter expression that describes a subset of metrics to return. The parameters that can be
+// filtered are name.value (name of the metric, can have an or of multiple names), startTime, endTime, and
+// timeGrain. The supported operator is eq.
 func (client PercentileClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, filter string) (result PercentileMetricListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

@@ -192,8 +192,7 @@ class GoClientBackend(CodeBackend):
             out('err = apiError')
             out('return')
         out('var apiError dropbox.APIError')
-        with self.block("if resp.StatusCode == http.StatusBadRequest || "
-                        "resp.StatusCode == http.StatusInternalServerError"):
+        with self.block('if resp.StatusCode == http.StatusBadRequest'):
             out('apiError.ErrorSummary = string(body)')
             out('err = apiError')
             out('return')

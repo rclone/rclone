@@ -41,9 +41,10 @@ func NewAppServicePlansClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // CreateOrUpdate creates or updates an App Service Plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. appServicePlan is details of the App Service plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// appServicePlan - details of the App Service plan.
 func (client AppServicePlansClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, name string, appServicePlan AppServicePlan) (result AppServicePlansCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -85,7 +86,7 @@ func (client AppServicePlansClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}", pathParameters),
@@ -123,10 +124,12 @@ func (client AppServicePlansClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // CreateOrUpdateVnetRoute create or update a Virtual Network route in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. routeName is name of the Virtual Network route. route is
-// definition of the Virtual Network route.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// routeName - name of the Virtual Network route.
+// route - definition of the Virtual Network route.
 func (client AppServicePlansClient) CreateOrUpdateVnetRoute(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string, route VnetRoute) (result VnetRoute, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -173,7 +176,7 @@ func (client AppServicePlansClient) CreateOrUpdateVnetRoutePreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/routes/{routeName}", pathParameters),
@@ -203,9 +206,9 @@ func (client AppServicePlansClient) CreateOrUpdateVnetRouteResponder(resp *http.
 }
 
 // Delete delete an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) Delete(ctx context.Context, resourceGroupName string, name string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -277,9 +280,11 @@ func (client AppServicePlansClient) DeleteResponder(resp *http.Response) (result
 }
 
 // DeleteHybridConnection delete a Hybrid Connection in use in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. namespaceName is name of the Service Bus namespace. relayName is name of the Service Bus relay.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// namespaceName - name of the Service Bus namespace.
+// relayName - name of the Service Bus relay.
 func (client AppServicePlansClient) DeleteHybridConnection(ctx context.Context, resourceGroupName string, name string, namespaceName string, relayName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -353,9 +358,11 @@ func (client AppServicePlansClient) DeleteHybridConnectionResponder(resp *http.R
 }
 
 // DeleteVnetRoute delete a Virtual Network route in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. routeName is name of the Virtual Network route.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// routeName - name of the Virtual Network route.
 func (client AppServicePlansClient) DeleteVnetRoute(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -429,9 +436,9 @@ func (client AppServicePlansClient) DeleteVnetRouteResponder(resp *http.Response
 }
 
 // Get get an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) Get(ctx context.Context, resourceGroupName string, name string) (result AppServicePlan, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -504,9 +511,11 @@ func (client AppServicePlansClient) GetResponder(resp *http.Response) (result Ap
 }
 
 // GetHybridConnection retrieve a Hybrid Connection in use in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. namespaceName is name of the Service Bus namespace. relayName is name of the Service Bus relay.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// namespaceName - name of the Service Bus namespace.
+// relayName - name of the Service Bus relay.
 func (client AppServicePlansClient) GetHybridConnection(ctx context.Context, resourceGroupName string, name string, namespaceName string, relayName string) (result HybridConnection, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -581,9 +590,9 @@ func (client AppServicePlansClient) GetHybridConnectionResponder(resp *http.Resp
 }
 
 // GetHybridConnectionPlanLimit get the maximum number of Hybrid Connections allowed in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) GetHybridConnectionPlanLimit(ctx context.Context, resourceGroupName string, name string) (result HybridConnectionLimits, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -656,9 +665,11 @@ func (client AppServicePlansClient) GetHybridConnectionPlanLimitResponder(resp *
 }
 
 // GetRouteForVnet get a Virtual Network route in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. routeName is name of the Virtual Network route.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// routeName - name of the Virtual Network route.
 func (client AppServicePlansClient) GetRouteForVnet(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string) (result ListVnetRoute, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -733,8 +744,9 @@ func (client AppServicePlansClient) GetRouteForVnetResponder(resp *http.Response
 }
 
 // GetServerFarmSkus gets all selectable sku's for a given App Service Plan
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of App Service Plan
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of App Service Plan
 func (client AppServicePlansClient) GetServerFarmSkus(ctx context.Context, resourceGroupName string, name string) (result SetObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -807,9 +819,10 @@ func (client AppServicePlansClient) GetServerFarmSkusResponder(resp *http.Respon
 }
 
 // GetVnetFromServerFarm get a Virtual Network associated with an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
 func (client AppServicePlansClient) GetVnetFromServerFarm(ctx context.Context, resourceGroupName string, name string, vnetName string) (result VnetInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -883,10 +896,11 @@ func (client AppServicePlansClient) GetVnetFromServerFarmResponder(resp *http.Re
 }
 
 // GetVnetGateway get a Virtual Network gateway.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. gatewayName is name of the gateway. Only the 'primary' gateway is
-// supported.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// gatewayName - name of the gateway. Only the 'primary' gateway is supported.
 func (client AppServicePlansClient) GetVnetGateway(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string) (result VnetGateway, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -961,8 +975,8 @@ func (client AppServicePlansClient) GetVnetGatewayResponder(resp *http.Response)
 }
 
 // List get all App Service plans for a subcription.
-//
-// detailed is specify <code>true</code> to return all App Service plan properties. The default is
+// Parameters:
+// detailed - specify <code>true</code> to return all App Service plan properties. The default is
 // <code>false</code>, which returns a subset of the properties.
 // Retrieval of all properties may increase the API latency.
 func (client AppServicePlansClient) List(ctx context.Context, detailed *bool) (result AppServicePlanCollectionPage, err error) {
@@ -1058,8 +1072,8 @@ func (client AppServicePlansClient) ListComplete(ctx context.Context, detailed *
 }
 
 // ListByResourceGroup get all App Service plans in a resource group.
-//
-// resourceGroupName is name of the resource group to which the resource belongs.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
 func (client AppServicePlansClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result AppServicePlanCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1159,9 +1173,9 @@ func (client AppServicePlansClient) ListByResourceGroupComplete(ctx context.Cont
 }
 
 // ListCapabilities list all capabilities of an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) ListCapabilities(ctx context.Context, resourceGroupName string, name string) (result ListCapability, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1234,9 +1248,11 @@ func (client AppServicePlansClient) ListCapabilitiesResponder(resp *http.Respons
 }
 
 // ListHybridConnectionKeys get the send key name and value of a Hybrid Connection.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. namespaceName is the name of the Service Bus namespace. relayName is the name of the Service Bus relay.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// namespaceName - the name of the Service Bus namespace.
+// relayName - the name of the Service Bus relay.
 func (client AppServicePlansClient) ListHybridConnectionKeys(ctx context.Context, resourceGroupName string, name string, namespaceName string, relayName string) (result HybridConnectionKey, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1311,9 +1327,9 @@ func (client AppServicePlansClient) ListHybridConnectionKeysResponder(resp *http
 }
 
 // ListHybridConnections retrieve all Hybrid Connections in use in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) ListHybridConnections(ctx context.Context, resourceGroupName string, name string) (result HybridConnectionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1414,9 +1430,9 @@ func (client AppServicePlansClient) ListHybridConnectionsComplete(ctx context.Co
 }
 
 // ListMetricDefintions get metrics that can be queried for an App Service plan, and their definitions.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) ListMetricDefintions(ctx context.Context, resourceGroupName string, name string) (result ResourceMetricDefinitionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1517,12 +1533,13 @@ func (client AppServicePlansClient) ListMetricDefintionsComplete(ctx context.Con
 }
 
 // ListMetrics get metrics for an App Serice plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. details is specify <code>true</code> to include instance details. The default is <code>false</code>.
-// filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
-// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime
-// eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// details - specify <code>true</code> to include instance details. The default is <code>false</code>.
+// filter - return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
+// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and
+// endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServicePlansClient) ListMetrics(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1629,9 +1646,10 @@ func (client AppServicePlansClient) ListMetricsComplete(ctx context.Context, res
 }
 
 // ListRoutesForVnet get all routes that are associated with a Virtual Network in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
 func (client AppServicePlansClient) ListRoutesForVnet(ctx context.Context, resourceGroupName string, name string, vnetName string) (result ListVnetRoute, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1705,9 +1723,10 @@ func (client AppServicePlansClient) ListRoutesForVnetResponder(resp *http.Respon
 }
 
 // ListUsages gets server farm usage information
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of App Service Plan
-// filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of App Service Plan
+// filter - return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
 // $filter=(name.value eq 'Metric1' or name.value eq 'Metric2').
 func (client AppServicePlansClient) ListUsages(ctx context.Context, resourceGroupName string, name string, filter string) (result CsmUsageQuotaCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -1812,9 +1831,9 @@ func (client AppServicePlansClient) ListUsagesComplete(ctx context.Context, reso
 }
 
 // ListVnets get all Virtual Networks associated with an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
 func (client AppServicePlansClient) ListVnets(ctx context.Context, resourceGroupName string, name string) (result ListVnetInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1887,12 +1906,14 @@ func (client AppServicePlansClient) ListVnetsResponder(resp *http.Response) (res
 }
 
 // ListWebApps get all apps associated with an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. skipToken is skip to a web app in the list of webapps associated with app service plan. If specified, the
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// skipToken - skip to a web app in the list of webapps associated with app service plan. If specified, the
 // resulting list will contain web apps starting from (including) the skipToken. Otherwise, the resulting list
-// contains web apps from the start of the list filter is supported filter: $filter=state eq running. Returns only
-// web apps that are currently running top is list page size. If specified, results are paged.
+// contains web apps from the start of the list
+// filter - supported filter: $filter=state eq running. Returns only web apps that are currently running
+// top - list page size. If specified, results are paged.
 func (client AppServicePlansClient) ListWebApps(ctx context.Context, resourceGroupName string, name string, skipToken string, filter string, top string) (result AppCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2002,10 +2023,11 @@ func (client AppServicePlansClient) ListWebAppsComplete(ctx context.Context, res
 }
 
 // ListWebAppsByHybridConnection get all apps that use a Hybrid Connection in an App Service Plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. namespaceName is name of the Hybrid Connection namespace. relayName is name of the Hybrid Connection
-// relay.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// namespaceName - name of the Hybrid Connection namespace.
+// relayName - name of the Hybrid Connection relay.
 func (client AppServicePlansClient) ListWebAppsByHybridConnection(ctx context.Context, resourceGroupName string, name string, namespaceName string, relayName string) (result ResourceCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2108,9 +2130,10 @@ func (client AppServicePlansClient) ListWebAppsByHybridConnectionComplete(ctx co
 }
 
 // RebootWorker reboot a worker machine in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. workerName is name of worker machine, which typically starts with RD.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// workerName - name of worker machine, which typically starts with RD.
 func (client AppServicePlansClient) RebootWorker(ctx context.Context, resourceGroupName string, name string, workerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2183,10 +2206,11 @@ func (client AppServicePlansClient) RebootWorkerResponder(resp *http.Response) (
 }
 
 // RestartWebApps restart all apps in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. softRestart is specify <code>true</code> to performa a soft restart, applies the configuration settings
-// and restarts the apps if necessary. The default is <code>false</code>, which always restarts and reprovisions
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// softRestart - specify <code>true</code> to performa a soft restart, applies the configuration settings and
+// restarts the apps if necessary. The default is <code>false</code>, which always restarts and reprovisions
 // the apps
 func (client AppServicePlansClient) RestartWebApps(ctx context.Context, resourceGroupName string, name string, softRestart *bool) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -2262,9 +2286,10 @@ func (client AppServicePlansClient) RestartWebAppsResponder(resp *http.Response)
 }
 
 // Update creates or updates an App Service Plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. appServicePlan is details of the App Service plan.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// appServicePlan - details of the App Service plan.
 func (client AppServicePlansClient) Update(ctx context.Context, resourceGroupName string, name string, appServicePlan AppServicePlanPatchResource) (result AppServicePlan, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2309,7 +2334,7 @@ func (client AppServicePlansClient) UpdatePreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}", pathParameters),
@@ -2339,10 +2364,12 @@ func (client AppServicePlansClient) UpdateResponder(resp *http.Response) (result
 }
 
 // UpdateVnetGateway update a Virtual Network gateway.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. gatewayName is name of the gateway. Only the 'primary' gateway is
-// supported. connectionEnvelope is definition of the gateway.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// gatewayName - name of the gateway. Only the 'primary' gateway is supported.
+// connectionEnvelope - definition of the gateway.
 func (client AppServicePlansClient) UpdateVnetGateway(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway) (result VnetGateway, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2392,7 +2419,7 @@ func (client AppServicePlansClient) UpdateVnetGatewayPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -2422,10 +2449,12 @@ func (client AppServicePlansClient) UpdateVnetGatewayResponder(resp *http.Respon
 }
 
 // UpdateVnetRoute create or update a Virtual Network route in an App Service plan.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// plan. vnetName is name of the Virtual Network. routeName is name of the Virtual Network route. route is
-// definition of the Virtual Network route.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the App Service plan.
+// vnetName - name of the Virtual Network.
+// routeName - name of the Virtual Network route.
+// route - definition of the Virtual Network route.
 func (client AppServicePlansClient) UpdateVnetRoute(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string, route VnetRoute) (result VnetRoute, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -2472,7 +2501,7 @@ func (client AppServicePlansClient) UpdateVnetRoutePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/routes/{routeName}", pathParameters),

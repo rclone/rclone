@@ -21,6 +21,110 @@ import (
 	"github.com/Azure/go-autorest/autorest/date"
 )
 
+// ContainerRegistryEventActor the agent that initiated the event. For most situations, this could be from the
+// authorization context of the request.
+type ContainerRegistryEventActor struct {
+	// Name - The subject or username associated with the request context that generated the event.
+	Name *string `json:"name,omitempty"`
+}
+
+// ContainerRegistryEventData the content of the event request message.
+type ContainerRegistryEventData struct {
+	// ID - The event ID.
+	ID *string `json:"id,omitempty"`
+	// Timestamp - The time at which the event occurred.
+	Timestamp *date.Time `json:"timestamp,omitempty"`
+	// Action - The action that encompasses the provided event.
+	Action *string `json:"action,omitempty"`
+	// Target - The target of the event.
+	Target *ContainerRegistryEventTarget `json:"target,omitempty"`
+	// Request - The request that generated the event.
+	Request *ContainerRegistryEventRequest `json:"request,omitempty"`
+	// Actor - The agent that initiated the event. For most situations, this could be from the authorization context of the request.
+	Actor *ContainerRegistryEventActor `json:"actor,omitempty"`
+	// Source - The registry node that generated the event. Put differently, while the actor initiates the event, the source generates it.
+	Source *ContainerRegistryEventSource `json:"source,omitempty"`
+}
+
+// ContainerRegistryEventRequest the request that generated the event.
+type ContainerRegistryEventRequest struct {
+	// ID - The ID of the request that initiated the event.
+	ID *string `json:"id,omitempty"`
+	// Addr - The IP or hostname and possibly port of the client connection that initiated the event. This is the RemoteAddr from the standard http request.
+	Addr *string `json:"addr,omitempty"`
+	// Host - The externally accessible hostname of the registry instance, as specified by the http host header on incoming requests.
+	Host *string `json:"host,omitempty"`
+	// Method - The request method that generated the event.
+	Method *string `json:"method,omitempty"`
+	// Useragent - The user agent header of the request.
+	Useragent *string `json:"useragent,omitempty"`
+}
+
+// ContainerRegistryEventSource the registry node that generated the event. Put differently, while the actor
+// initiates the event, the source generates it.
+type ContainerRegistryEventSource struct {
+	// Addr - The IP or hostname and the port of the registry node that generated the event. Generally, this will be resolved by os.Hostname() along with the running port.
+	Addr *string `json:"addr,omitempty"`
+	// InstanceID - The running instance of an application. Changes after each restart.
+	InstanceID *string `json:"instanceID,omitempty"`
+}
+
+// ContainerRegistryEventTarget the target of the event.
+type ContainerRegistryEventTarget struct {
+	// MediaType - The MIME type of the referenced object.
+	MediaType *string `json:"mediaType,omitempty"`
+	// Size - The number of bytes of the content. Same as Length field.
+	Size *int64 `json:"size,omitempty"`
+	// Digest - The digest of the content, as defined by the Registry V2 HTTP API Specification.
+	Digest *string `json:"digest,omitempty"`
+	// Length - The number of bytes of the content. Same as Size field.
+	Length *int64 `json:"length,omitempty"`
+	// Repository - The repository name.
+	Repository *string `json:"repository,omitempty"`
+	// URL - The direct URL to the content.
+	URL *string `json:"url,omitempty"`
+	// Tag - The tag name.
+	Tag *string `json:"tag,omitempty"`
+}
+
+// ContainerRegistryImageDeletedEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.ContainerRegistry.ImageDeleted event.
+type ContainerRegistryImageDeletedEventData struct {
+	// ID - The event ID.
+	ID *string `json:"id,omitempty"`
+	// Timestamp - The time at which the event occurred.
+	Timestamp *date.Time `json:"timestamp,omitempty"`
+	// Action - The action that encompasses the provided event.
+	Action *string `json:"action,omitempty"`
+	// Target - The target of the event.
+	Target *ContainerRegistryEventTarget `json:"target,omitempty"`
+	// Request - The request that generated the event.
+	Request *ContainerRegistryEventRequest `json:"request,omitempty"`
+	// Actor - The agent that initiated the event. For most situations, this could be from the authorization context of the request.
+	Actor *ContainerRegistryEventActor `json:"actor,omitempty"`
+	// Source - The registry node that generated the event. Put differently, while the actor initiates the event, the source generates it.
+	Source *ContainerRegistryEventSource `json:"source,omitempty"`
+}
+
+// ContainerRegistryImagePushedEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.ContainerRegistry.ImagePushed event.
+type ContainerRegistryImagePushedEventData struct {
+	// ID - The event ID.
+	ID *string `json:"id,omitempty"`
+	// Timestamp - The time at which the event occurred.
+	Timestamp *date.Time `json:"timestamp,omitempty"`
+	// Action - The action that encompasses the provided event.
+	Action *string `json:"action,omitempty"`
+	// Target - The target of the event.
+	Target *ContainerRegistryEventTarget `json:"target,omitempty"`
+	// Request - The request that generated the event.
+	Request *ContainerRegistryEventRequest `json:"request,omitempty"`
+	// Actor - The agent that initiated the event. For most situations, this could be from the authorization context of the request.
+	Actor *ContainerRegistryEventActor `json:"actor,omitempty"`
+	// Source - The registry node that generated the event. Put differently, while the actor initiates the event, the source generates it.
+	Source *ContainerRegistryEventSource `json:"source,omitempty"`
+}
+
 // DeviceLifeCycleEventProperties schema of the Data property of an EventGridEvent for a device life cycle event
 // (DeviceCreated, DeviceDeleted).
 type DeviceLifeCycleEventProperties struct {

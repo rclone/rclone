@@ -5,6 +5,9 @@
 // Package dnsmessage provides a mostly RFC 1035 compliant implementation of
 // DNS message packing and unpacking.
 //
+// The package also supports messages with Extension Mechanisms for DNS
+// (EDNS(0)) as defined in RFC 6891.
+//
 // This implementation is designed to minimize heap allocations and avoid
 // unnecessary packing and unpacking as much as possible.
 package dnsmessage
@@ -39,6 +42,7 @@ const (
 	TypeTXT   Type = 16
 	TypeAAAA  Type = 28
 	TypeSRV   Type = 33
+	TypeOPT   Type = 41
 
 	// Question.Type
 	TypeWKS   Type = 11
@@ -802,6 +806,24 @@ func (p *Parser) AAAAResource() (AAAAResource, error) {
 	return r, nil
 }
 
+// OPTResource parses a single OPTResource.
+//
+// One of the XXXHeader methods must have been called before calling this
+// method.
+func (p *Parser) OPTResource() (OPTResource, error) {
+	if !p.resHeaderValid || p.resHeader.Type != TypeOPT {
+		return OPTResource{}, ErrNotStarted
+	}
+	r, err := unpackOPTResource(p.msg, p.off, p.resHeader.Length)
+	if err != nil {
+		return OPTResource{}, err
+	}
+	p.off += int(p.resHeader.Length)
+	p.resHeaderValid = false
+	p.index++
+	return r, nil
+}
+
 // Unpack parses a full Message.
 func (m *Message) Unpack(msg []byte) error {
 	var p Parser
@@ -1278,6 +1300,30 @@ func (b *Builder) AAAAResource(h ResourceHeader, r AAAAResource) error {
 	return nil
 }
 
+// OPTResource adds a single OPTResource.
+func (b *Builder) OPTResource(h ResourceHeader, r OPTResource) error {
+	if err := b.checkResourceSection(); err != nil {
+		return err
+	}
+	h.Type = r.realType()
+	msg, length, err := h.pack(b.msg, b.compression, b.start)
+	if err != nil {
+		return &nestedError{"ResourceHeader", err}
+	}
+	preLen := len(msg)
+	if msg, err = r.pack(msg, b.compression, b.start); err != nil {
+		return &nestedError{"OPTResource body", err}
+	}
+	if err := h.fixLen(msg, length, preLen); err != nil {
+		return err
+	}
+	if err := b.incrementSectionCount(); err != nil {
+		return err
+	}
+	b.msg = msg
+	return nil
+}
+
 // Finish ends message building and generates a binary message.
 func (b *Builder) Finish() ([]byte, error) {
 	if b.section < sectionHeader {
@@ -1364,6 +1410,44 @@ func (h *ResourceHeader) fixLen(msg []byte, length []byte, preLen int) error {
 	h.Length = uint16(conLen)
 
 	return nil
+}
+
+// EDNS(0) wire costants.
+const (
+	edns0Version = 0
+
+	edns0DNSSECOK     = 0x00008000
+	ednsVersionMask   = 0x00ff0000
+	edns0DNSSECOKMask = 0x00ff8000
+)
+
+// SetEDNS0 configures h for EDNS(0).
+//
+// The provided extRCode must be an extedned RCode.
+func (h *ResourceHeader) SetEDNS0(udpPayloadLen int, extRCode RCode, dnssecOK bool) error {
+	h.Name = Name{Data: [nameLen]byte{'.'}, Length: 1} // RFC 6891 section 6.1.2
+	h.Type = TypeOPT
+	h.Class = Class(udpPayloadLen)
+	h.TTL = uint32(extRCode) >> 4 << 24
+	if dnssecOK {
+		h.TTL |= edns0DNSSECOK
+	}
+	return nil
+}
+
+// DNSSECAllowed reports whether the DNSSEC OK bit is set.
+func (h *ResourceHeader) DNSSECAllowed() bool {
+	return h.TTL&edns0DNSSECOKMask == edns0DNSSECOK // RFC 6891 section 6.1.3
+}
+
+// ExtendedRCode returns an extended RCode.
+//
+// The provided rcode must be the RCode in DNS message header.
+func (h *ResourceHeader) ExtendedRCode(rcode RCode) RCode {
+	if h.TTL&ednsVersionMask == edns0Version { // RFC 6891 section 6.1.3
+		return RCode(h.TTL>>24<<4) | rcode
+	}
+	return rcode
 }
 
 func skipResource(msg []byte, off int) (int, error) {
@@ -1794,6 +1878,11 @@ func unpackResourceBody(msg []byte, off int, hdr ResourceHeader) (ResourceBody, 
 		rb, err = unpackSRVResource(msg, off)
 		r = &rb
 		name = "SRV"
+	case TypeOPT:
+		var rb OPTResource
+		rb, err = unpackOPTResource(msg, off, hdr.Length)
+		r = &rb
+		name = "OPT"
 	}
 	if err != nil {
 		return nil, off, &nestedError{name + " record", err}
@@ -2100,4 +2189,59 @@ func unpackAAAAResource(msg []byte, off int) (AAAAResource, error) {
 		return AAAAResource{}, err
 	}
 	return AAAAResource{aaaa}, nil
+}
+
+// An OPTResource is an OPT pseudo Resource record.
+//
+// The pseudo resource record is part of the extension mechanisms for DNS
+// as defined in RFC 6891.
+type OPTResource struct {
+	Options []Option
+}
+
+// An Option represents a DNS message option within OPTResource.
+//
+// The message option is part of the extension mechanisms for DNS as
+// defined in RFC 6891.
+type Option struct {
+	Code uint16 // option code
+	Data []byte
+}
+
+func (r *OPTResource) realType() Type {
+	return TypeOPT
+}
+
+func (r *OPTResource) pack(msg []byte, compression map[string]int, compressionOff int) ([]byte, error) {
+	for _, opt := range r.Options {
+		msg = packUint16(msg, opt.Code)
+		l := uint16(len(opt.Data))
+		msg = packUint16(msg, l)
+		msg = packBytes(msg, opt.Data)
+	}
+	return msg, nil
+}
+
+func unpackOPTResource(msg []byte, off int, length uint16) (OPTResource, error) {
+	var opts []Option
+	for oldOff := off; off < oldOff+int(length); {
+		var err error
+		var o Option
+		o.Code, off, err = unpackUint16(msg, off)
+		if err != nil {
+			return OPTResource{}, &nestedError{"Code", err}
+		}
+		var l uint16
+		l, off, err = unpackUint16(msg, off)
+		if err != nil {
+			return OPTResource{}, &nestedError{"Data", err}
+		}
+		o.Data = make([]byte, l)
+		if copy(o.Data, msg[off:]) != int(l) {
+			return OPTResource{}, &nestedError{"Data", errCalcLen}
+		}
+		off += int(l)
+		opts = append(opts, o)
+	}
+	return OPTResource{opts}, nil
 }

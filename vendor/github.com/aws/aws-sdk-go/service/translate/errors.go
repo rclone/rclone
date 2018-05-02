@@ -4,6 +4,16 @@ package translate
 
 const (
 
+	// ErrCodeDetectedLanguageLowConfidenceException for service response error code
+	// "DetectedLanguageLowConfidenceException".
+	//
+	// The confidence that Amazon Comprehend accurately detected the source language
+	// is low. If a low confidence level is acceptable for your application, you
+	// can use the language in the exception to call Amazon Translate again. For
+	// more information, see the DetectDominantLanguage (https://docs.aws.amazon.com/comprehend/latest/dg/API_DetectDominantLanguage.html)
+	// operation in the Amazon Comprehend Developer Guide.
+	ErrCodeDetectedLanguageLowConfidenceException = "DetectedLanguageLowConfidenceException"
+
 	// ErrCodeInternalServerException for service response error code
 	// "InternalServerException".
 	//

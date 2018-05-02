@@ -541,6 +541,7 @@ func valuesToMap(vs []Value, schema Schema) (map[string]Value, error) {
 type StructSaver struct {
 	// Schema determines what fields of the struct are uploaded. It should
 	// match the table's schema.
+	// Schema is optional for StructSavers that are passed to Uploader.Put.
 	Schema Schema
 
 	// If non-empty, BigQuery will use InsertID to de-duplicate insertions

@@ -41,9 +41,11 @@ func NewNotificationChannelsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // CreateOrUpdate create or replace an existing notificationChannel.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// notificationChannel. notificationChannel is a notification.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the notificationChannel.
+// notificationChannel - a notification.
 func (client NotificationChannelsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, notificationChannel NotificationChannel) (result NotificationChannel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: notificationChannel,
@@ -87,7 +89,7 @@ func (client NotificationChannelsClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/notificationchannels/{name}", pathParameters),
@@ -117,9 +119,10 @@ func (client NotificationChannelsClient) CreateOrUpdateResponder(resp *http.Resp
 }
 
 // Delete delete notificationchannel.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// notificationChannel.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the notificationChannel.
 func (client NotificationChannelsClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -184,9 +187,11 @@ func (client NotificationChannelsClient) DeleteResponder(resp *http.Response) (r
 }
 
 // Get get notificationchannel.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// notificationChannel. expand is specify the $expand query. Example: 'properties($select=webHookUrl)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the notificationChannel.
+// expand - specify the $expand query. Example: 'properties($select=webHookUrl)'
 func (client NotificationChannelsClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result NotificationChannel, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {
@@ -255,11 +260,13 @@ func (client NotificationChannelsClient) GetResponder(resp *http.Response) (resu
 }
 
 // List list notificationchannels in a given lab.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
-// $expand query. Example: 'properties($select=webHookUrl)' filter is the filter to apply to the operation. top is
-// the maximum number of resources to return from the operation. orderby is the ordering expression for the
-// results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// expand - specify the $expand query. Example: 'properties($select=webHookUrl)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client NotificationChannelsClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationNotificationChannelPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)
@@ -364,9 +371,11 @@ func (client NotificationChannelsClient) ListComplete(ctx context.Context, resou
 }
 
 // Notify send notification to provided channel.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// notificationChannel. notifyParameters is properties for generating a Notification.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the notificationChannel.
+// notifyParameters - properties for generating a Notification.
 func (client NotificationChannelsClient) Notify(ctx context.Context, resourceGroupName string, labName string, name string, notifyParameters NotifyParameters) (result autorest.Response, err error) {
 	req, err := client.NotifyPreparer(ctx, resourceGroupName, labName, name, notifyParameters)
 	if err != nil {
@@ -404,7 +413,7 @@ func (client NotificationChannelsClient) NotifyPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/notificationchannels/{name}/notify", pathParameters),
@@ -433,9 +442,11 @@ func (client NotificationChannelsClient) NotifyResponder(resp *http.Response) (r
 }
 
 // Update modify properties of notificationchannels.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// notificationChannel. notificationChannel is a notification.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the notificationChannel.
+// notificationChannel - a notification.
 func (client NotificationChannelsClient) Update(ctx context.Context, resourceGroupName string, labName string, name string, notificationChannel NotificationChannelFragment) (result NotificationChannel, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, labName, name, notificationChannel)
 	if err != nil {
@@ -473,7 +484,7 @@ func (client NotificationChannelsClient) UpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/notificationchannels/{name}", pathParameters),

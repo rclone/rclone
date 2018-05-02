@@ -40,8 +40,9 @@ func NewReplicationNetworksClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // Get gets the details of a network.
-//
-// fabricName is server Id. networkName is primary network name.
+// Parameters:
+// fabricName - server Id.
+// networkName - primary network name.
 func (client ReplicationNetworksClient) Get(ctx context.Context, fabricName string, networkName string) (result Network, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, networkName)
 	if err != nil {
@@ -200,8 +201,8 @@ func (client ReplicationNetworksClient) ListComplete(ctx context.Context) (resul
 }
 
 // ListByReplicationFabrics lists the networks available for a fabric.
-//
-// fabricName is fabric name
+// Parameters:
+// fabricName - fabric name
 func (client ReplicationNetworksClient) ListByReplicationFabrics(ctx context.Context, fabricName string) (result NetworkCollectionPage, err error) {
 	result.fn = client.listByReplicationFabricsNextResults
 	req, err := client.ListByReplicationFabricsPreparer(ctx, fabricName)

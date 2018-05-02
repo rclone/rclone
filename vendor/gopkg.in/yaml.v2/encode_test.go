@@ -76,6 +76,9 @@ var marshalTests = []struct {
 		map[string]interface{}{"v": float64(0.1)},
 		"v: 0.1\n",
 	}, {
+		map[string]interface{}{"v": float32(0.99)},
+		"v: 0.99\n",
+	}, {
 		map[string]interface{}{"v": -0.1},
 		"v: -0.1\n",
 	}, {
@@ -148,6 +151,9 @@ var marshalTests = []struct {
 		&struct{ A []int }{[]int{1, 2}},
 		"a:\n- 1\n- 2\n",
 	}, {
+		&struct{ A [2]int }{[2]int{1, 2}},
+		"a:\n- 1\n- 2\n",
+	}, {
 		&struct {
 			B int "a"
 		}{1},
@@ -212,7 +218,7 @@ var marshalTests = []struct {
 			T2: time.Date(2018, 1, 9, 10, 40, 47, 0, time.UTC),
 			T4: newTime(time.Date(2098, 1, 9, 10, 40, 47, 0, time.UTC)),
 		},
-		"t2: !!timestamp 2018-01-09T10:40:47Z\nt4: !!timestamp 2098-01-09T10:40:47Z\n",
+		"t2: 2018-01-09T10:40:47Z\nt4: 2098-01-09T10:40:47Z\n",
 	},
 	// Nil interface that implements Marshaler.
 	{
@@ -329,11 +335,16 @@ var marshalTests = []struct {
 	// time.Time gets a timestamp tag.
 	{
 		map[string]time.Time{"a": time.Date(2015, 2, 24, 18, 19, 39, 0, time.UTC)},
-		"a: !!timestamp 2015-02-24T18:19:39Z\n",
+		"a: 2015-02-24T18:19:39Z\n",
 	},
 	{
 		map[string]*time.Time{"a": newTime(time.Date(2015, 2, 24, 18, 19, 39, 0, time.UTC))},
-		"a: !!timestamp 2015-02-24T18:19:39Z\n",
+		"a: 2015-02-24T18:19:39Z\n",
+	},
+	{
+		// This is confirmed to be properly decoded in Python (libyaml) without a timestamp tag.
+		map[string]time.Time{"a": time.Date(2015, 2, 24, 18, 19, 39, 123456789, time.FixedZone("FOO", -3*60*60))},
+		"a: 2015-02-24T18:19:39.123456789-03:00\n",
 	},
 	// Ensure timestamp-like strings are quoted.
 	{
@@ -527,8 +538,13 @@ func (s *S) TestSortedOutput(c *C) {
 		"1",
 		"2",
 		"a!10",
-		"a/2",
+		"a/0001",
+		"a/002",
+		"a/3",
 		"a/10",
+		"a/11",
+		"a/0012",
+		"a/100",
 		"a~10",
 		"ab/1",
 		"b/1",
@@ -543,6 +559,8 @@ func (s *S) TestSortedOutput(c *C) {
 		"c2.10",
 		"c10.2",
 		"d1",
+		"d7",
+		"d7abc",
 		"d12",
 		"d12a",
 	}

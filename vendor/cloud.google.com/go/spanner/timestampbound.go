@@ -39,11 +39,8 @@ const (
 // TimestampBound defines how Cloud Spanner will choose a timestamp for a single
 // read/query or read-only transaction.
 //
-// The types of timestamp bound are:
-//
-//	- Strong (the default).
-//	- Bounded staleness.
-//	- Exact staleness.
+// There are three types of timestamp bound: strong, bounded staleness and exact
+// staleness. Strong is the default.
 //
 // If the Cloud Spanner database to be read is geographically distributed, stale
 // read-only transactions can execute more quickly than strong or read-write
@@ -57,7 +54,7 @@ const (
 //
 // Strong reads are guaranteed to see the effects of all transactions that have
 // committed before the start of the read. Furthermore, all rows yielded by a
-// single read are consistent with each other - if any part of the read
+// single read are consistent with each other: if any part of the read
 // observes a transaction, all parts of the read see the transaction.
 //
 // Strong reads are not repeatable: two consecutive strong read-only
@@ -65,18 +62,17 @@ const (
 // writes. If consistency across reads is required, the reads should be
 // executed within a transaction or at an exact read timestamp.
 //
-// Use StrongRead() to create a bound of this type.
+// Use StrongRead to create a bound of this type.
 //
 // Exact staleness
 //
-// These timestamp bounds execute reads at a user-specified timestamp. Reads at
-// a timestamp are guaranteed to see a consistent prefix of the global
-// transaction history: they observe modifications done by all transactions
-// with a commit timestamp less than or equal to the read timestamp, and
-// observe none of the modifications done by transactions with a larger commit
-// timestamp. They will block until all conflicting transactions that may be
-// assigned commit timestamps less than or equal to the read timestamp have
-// finished.
+// An exact staleness timestamp bound executes reads at a user-specified timestamp.
+// Reads at a timestamp are guaranteed to see a consistent prefix of the global
+// transaction history: they observe modifications done by all transactions with a
+// commit timestamp less than or equal to the read timestamp, and observe none of the
+// modifications done by transactions with a larger commit timestamp. They will block
+// until all conflicting transactions that may be assigned commit timestamps less
+// than or equal to the read timestamp have finished.
 //
 // The timestamp can either be expressed as an absolute Cloud Spanner commit
 // timestamp or a staleness relative to the current time.
@@ -86,7 +82,7 @@ const (
 // concurrency modes. On the other hand, boundedly stale reads usually return
 // fresher results.
 //
-// Use ReadTimestamp() and ExactStaleness() to create a bound of this type.
+// Use ReadTimestamp and ExactStaleness to create a bound of this type.
 //
 // Bounded staleness
 //
@@ -95,17 +91,17 @@ const (
 // the staleness bound that allows execution of the reads at the closest
 // available replica without blocking.
 //
-// All rows yielded are consistent with each other -- if any part of the read
+// All rows yielded are consistent with each other: if any part of the read
 // observes a transaction, all parts of the read see the transaction. Boundedly
 // stale reads are not repeatable: two stale reads, even if they use the same
 // staleness bound, can execute at different timestamps and thus return
 // inconsistent results.
 //
-// Boundedly stale reads execute in two phases: the first phase negotiates a
+// Boundedly stale reads execute in two phases. The first phase negotiates a
 // timestamp among all replicas needed to serve the read. In the second phase,
 // reads are executed at the negotiated timestamp.
 //
-// As a result of the two phase execution, bounded staleness reads are usually
+// As a result of this two-phase execution, bounded staleness reads are usually
 // a little slower than comparable exact staleness reads. However, they are
 // typically able to return fresher results, and are more likely to execute at
 // the closest replica.
@@ -114,7 +110,7 @@ const (
 // will be read, it can only be used with single-use reads and single-use
 // read-only transactions.
 //
-// Use MinReadTimestamp() and MaxStaleness() to create a bound of this type.
+// Use MinReadTimestamp and MaxStaleness to create a bound of this type.
 //
 // Old read timestamps and garbage collection
 //
@@ -123,7 +119,7 @@ const (
 // GC". By default, version GC reclaims versions after they are four hours
 // old. Because of this, Cloud Spanner cannot perform reads at read timestamps more
 // than four hours in the past. This restriction also applies to in-progress
-// reads and/or SQL queries whose timestamp become too old while
+// reads and/or SQL queries whose timestamps become too old while
 // executing. Reads and SQL queries with too-old read timestamps fail with the
 // error ErrorCode.FAILED_PRECONDITION.
 type TimestampBound struct {
@@ -174,7 +170,6 @@ func ReadTimestamp(t time.Time) TimestampBound {
 	}
 }
 
-// String implements fmt.Stringer.
 func (tb TimestampBound) String() string {
 	switch tb.mode {
 	case strong:

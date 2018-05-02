@@ -951,6 +951,9 @@ func (cc *ClientConn) awaitOpenSlotForRequest(req *http.Request) error {
 	for {
 		cc.lastActive = time.Now()
 		if cc.closed || !cc.canTakeNewRequestLocked() {
+			if waitingForConn != nil {
+				close(waitingForConn)
+			}
 			return errClientConnUnusable
 		}
 		if int64(len(cc.streams))+1 <= int64(cc.maxConcurrentStreams) {

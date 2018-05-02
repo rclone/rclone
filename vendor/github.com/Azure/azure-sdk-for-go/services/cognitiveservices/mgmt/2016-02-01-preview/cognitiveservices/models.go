@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // KeyName enumerates the values for key name.
 type KeyName string
 
@@ -32,6 +33,13 @@ const (
 	Key2 KeyName = "Key2"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
+// PossibleKeyNameValues returns an array of possible values for the KeyName const type.
+func PossibleKeyNameValues() []KeyName {
+	return []KeyName{Key1, Key2}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // Kind enumerates the values for kind.
 type Kind string
 
@@ -72,6 +80,13 @@ const (
 	WebLM Kind = "WebLM"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
+// PossibleKindValues returns an array of possible values for the Kind const type.
+func PossibleKindValues() []Kind {
+	return []Kind{Academic, BingAutosuggest, BingSearch, BingSpeech, BingSpellCheck, ComputerVision, ContentModerator, Emotion, Face, LUIS, Recommendations, SpeakerRecognition, Speech, SpeechTranslation, TextAnalytics, TextTranslation, WebLM}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -86,6 +101,13 @@ const (
 	Succeeded ProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, Failed, ResolvingDNS, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // SkuName enumerates the values for sku name.
 type SkuName string
 
@@ -114,6 +136,13 @@ const (
 	S6 SkuName = "S6"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{F0, P0, P1, P2, S0, S1, S2, S3, S4, S5, S6}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -126,6 +155,13 @@ const (
 	Standard SkuTier = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Free, Premium, Standard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // Account cognitive Services Account is an Azure resource representing the provisioned account, its type, location
 // and SKU.
 type Account struct {
@@ -148,6 +184,7 @@ type Account struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // MarshalJSON is the custom marshaler for Account.
 func (a Account) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -181,6 +218,7 @@ func (a Account) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // UnmarshalJSON is the custom unmarshaler for Account struct.
 func (a *Account) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -277,6 +315,7 @@ func (a *Account) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountCreateParameters the parameters to provide for the account.
 type AccountCreateParameters struct {
 	Sku *Sku `json:"sku,omitempty"`
@@ -290,13 +329,16 @@ type AccountCreateParameters struct {
 	Properties interface{} `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // MarshalJSON is the custom marshaler for AccountCreateParameters.
 func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
 	if acp.Sku != nil {
 		objectMap["sku"] = acp.Sku
 	}
-	objectMap["kind"] = acp.Kind
+	if acp.Kind != "" {
+		objectMap["kind"] = acp.Kind
+	}
 	if acp.Location != nil {
 		objectMap["location"] = acp.Location
 	}
@@ -307,6 +349,7 @@ func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountEnumerateSkusResult the list of cognitive services accounts operation response.
 type AccountEnumerateSkusResult struct {
 	autorest.Response `json:"-"`
@@ -314,6 +357,7 @@ type AccountEnumerateSkusResult struct {
 	Value *[]ResourceAndSku `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountKeys the access keys for the cognitive services account.
 type AccountKeys struct {
 	autorest.Response `json:"-"`
@@ -323,6 +367,7 @@ type AccountKeys struct {
 	Key2 *string `json:"key2,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountListResult the list of cognitive services accounts operation response.
 type AccountListResult struct {
 	autorest.Response `json:"-"`
@@ -330,6 +375,7 @@ type AccountListResult struct {
 	Value *[]Account `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountProperties ...
 type AccountProperties struct {
 	// ProvisioningState - Gets the status of the cognitive services account at the time the operation was called. Possible values include: 'Creating', 'ResolvingDNS', 'Succeeded', 'Failed'
@@ -338,6 +384,7 @@ type AccountProperties struct {
 	Endpoint *string `json:"endpoint,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // AccountUpdateParameters the parameters to provide for the account.
 type AccountUpdateParameters struct {
 	Sku *Sku `json:"sku,omitempty"`
@@ -345,6 +392,7 @@ type AccountUpdateParameters struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // MarshalJSON is the custom marshaler for AccountUpdateParameters.
 func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -357,11 +405,13 @@ func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // Error ...
 type Error struct {
 	Error *ErrorBody `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // ErrorBody ...
 type ErrorBody struct {
 	// Code - error code
@@ -370,12 +420,14 @@ type ErrorBody struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // RegenerateKeyParameters regenerate key parameters.
 type RegenerateKeyParameters struct {
 	// KeyName - key name to generate (Key1|Key2). Possible values include: 'Key1', 'Key2'
 	KeyName KeyName `json:"keyName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // ResourceAndSku ...
 type ResourceAndSku struct {
 	// ResourceType - Resource Namespace and Type
@@ -383,6 +435,7 @@ type ResourceAndSku struct {
 	Sku          *Sku    `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/cognitiveservices/preview/mgmt/2016-02-01-preview/cognitiveservices instead.
 // Sku the SKU of the cognitive services account.
 type Sku struct {
 	// Name - Gets or sets the sku name. Required for account creation, optional for update. Possible values include: 'F0', 'P0', 'P1', 'P2', 'S0', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6'

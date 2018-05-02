@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // ContainerLogsClient is the client for the ContainerLogs methods of the Containerinstance service.
 type ContainerLogsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // NewContainerLogsClient creates an instance of the ContainerLogsClient client.
 func NewContainerLogsClient(subscriptionID string) ContainerLogsClient {
 	return NewContainerLogsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // NewContainerLogsClientWithBaseURI creates an instance of the ContainerLogsClient client.
 func NewContainerLogsClientWithBaseURI(baseURI string, subscriptionID string) ContainerLogsClient {
 	return ContainerLogsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // List get the logs for a specified container instance in a specified resource group and container group.
 //
 // resourceGroupName is the name of the resource group that contains the container instance. containerName is the
@@ -67,6 +71,7 @@ func (client ContainerLogsClient) List(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // ListPreparer prepares the List request.
 func (client ContainerLogsClient) ListPreparer(ctx context.Context, resourceGroupName string, containerName string, containerGroupName string, tail *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,6 +97,7 @@ func (client ContainerLogsClient) ListPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ContainerLogsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -99,6 +105,7 @@ func (client ContainerLogsClient) ListSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2017-08-01-preview/containerinstance instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ContainerLogsClient) ListResponder(resp *http.Response) (result Logs, err error) {

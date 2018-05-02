@@ -1630,7 +1630,7 @@
       }
     }
   },
-  "revision": "20180312",
+  "revision": "20180502",
   "rootUrl": "https://dataproc.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -1643,7 +1643,7 @@
           "type": "integer"
         },
         "acceleratorTypeUri": {
-          "description": "Full URL, partial URI, or short name of the accelerator type resource to expose to this instance. See Compute Engine AcceleratorTypes( /compute/docs/reference/beta/acceleratorTypes)Examples * https://www.googleapis.com/compute/beta/projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * nvidia-tesla-k80",
+          "description": "Full URL, partial URI, or short name of the accelerator type resource to expose to this instance. See Compute Engine AcceleratorTypes( /compute/docs/reference/beta/acceleratorTypes)Examples * https://www.googleapis.com/compute/beta/projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * nvidia-tesla-k80Auto Zone Exception: If you are using the Cloud Dataproc Auto Zone Placement feature, you must use the short name of the accelerator type resource, for example, nvidia-tesla-k80.",
           "type": "string"
         }
       },
@@ -1654,7 +1654,7 @@
       "id": "Binding",
       "properties": {
         "members": {
-          "description": "Specifies the identities requesting access for a Cloud Platform resource. members can have the following values:\nallUsers: A special identifier that represents anyone who is  on the internet; with or without a Google account.\nallAuthenticatedUsers: A special identifier that represents anyone  who is authenticated with a Google account or a service account.\nuser:{emailid}: An email address that represents a specific Google  account. For example, alice@gmail.com or joe@example.com.\nserviceAccount:{emailid}: An email address that represents a service  account. For example, my-other-app@appspot.gserviceaccount.com.\ngroup:{emailid}: An email address that represents a Google group.  For example, admins@example.com.\ndomain:{domain}: A Google Apps domain name that represents all the  users of that domain. For example, google.com or example.com.",
+          "description": "Specifies the identities requesting access for a Cloud Platform resource. members can have the following values:\nallUsers: A special identifier that represents anyone who is  on the internet; with or without a Google account.\nallAuthenticatedUsers: A special identifier that represents anyone  who is authenticated with a Google account or a service account.\nuser:{emailid}: An email address that represents a specific Google  account. For example, alice@gmail.com .\nserviceAccount:{emailid}: An email address that represents a service  account. For example, my-other-app@appspot.gserviceaccount.com.\ngroup:{emailid}: An email address that represents a Google group.  For example, admins@example.com.\ndomain:{domain}: A Google Apps domain name that represents all the  users of that domain. For example, google.com or example.com.",
           "items": {
             "type": "string"
           },
@@ -2018,11 +2018,11 @@
           "type": "string"
         },
         "serviceAccount": {
-          "description": "Optional. The service account of the instances. Defaults to the default Compute Engine service account. Custom service accounts need permissions equivalent to the folloing IAM roles:\nroles/logging.logWriter\nroles/storage.objectAdmin(see https://cloud.google.com/compute/docs/access/service-accounts#custom_service_accounts for more information). Example: [account_id]@[project_id].iam.gserviceaccount.com",
+          "description": "Optional. The service account of the instances. Defaults to the default Compute Engine service account. Custom service accounts need permissions equivalent to the following IAM roles:\nroles/logging.logWriter\nroles/storage.objectAdmin(see https://cloud.google.com/compute/docs/access/service-accounts#custom_service_accounts for more information). Example: [account_id]@[project_id].iam.gserviceaccount.com",
           "type": "string"
         },
         "serviceAccountScopes": {
-          "description": "Optional. The URIs of service account scopes to be included in Google Compute Engine instances. The following base set of scopes is always included:\nhttps://www.googleapis.com/auth/cloud.useraccounts.readonly\nhttps://www.googleapis.com/auth/devstorage.read_write\nhttps://www.googleapis.com/auth/logging.writeIf no scopes are specified, the following defaults are also provided:\nhttps://www.googleapis.com/auth/bigquery\nhttps://www.googleapis.com/auth/bigtable.admin.table\nhttps://www.googleapis.com/auth/bigtable.data\nhttps://www.googleapis.com/auth/devstorage.full_control",
+          "description": "Optional. The URIs of service account scopes to be included in Compute Engine instances. The following base set of scopes is always included:\nhttps://www.googleapis.com/auth/cloud.useraccounts.readonly\nhttps://www.googleapis.com/auth/devstorage.read_write\nhttps://www.googleapis.com/auth/logging.writeIf no scopes are specified, the following defaults are also provided:\nhttps://www.googleapis.com/auth/bigquery\nhttps://www.googleapis.com/auth/bigtable.admin.table\nhttps://www.googleapis.com/auth/bigtable.data\nhttps://www.googleapis.com/auth/devstorage.full_control",
           "items": {
             "type": "string"
           },
@@ -2044,6 +2044,12 @@
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "GetIamPolicyRequest": {
+      "description": "Request message for GetIamPolicy method.",
+      "id": "GetIamPolicyRequest",
+      "properties": {},
       "type": "object"
     },
     "HadoopJob": {
@@ -2160,7 +2166,7 @@
           "type": "string"
         },
         "instanceNames": {
-          "description": "Optional. The list of instance names. Cloud Dataproc derives the names from cluster_name, num_instances, and the instance group if not set by user (recommended practice is to let Cloud Dataproc derive the name).",
+          "description": "Output only. The list of instance names. Cloud Dataproc derives the names from cluster_name, num_instances, and the instance group.",
           "items": {
             "type": "string"
           },
@@ -2171,7 +2177,7 @@
           "type": "boolean"
         },
         "machineTypeUri": {
-          "description": "Optional. The Compute Engine machine type used for cluster instances.A full URL, partial URI, or short name are valid. Examples:\nhttps://www.googleapis.com/compute/v1/projects/[project_id]/zones/us-east1-a/machineTypes/n1-standard-2\nprojects/[project_id]/zones/us-east1-a/machineTypes/n1-standard-2\nn1-standard-2",
+          "description": "Optional. The Compute Engine machine type used for cluster instances.A full URL, partial URI, or short name are valid. Examples:\nhttps://www.googleapis.com/compute/v1/projects/[project_id]/zones/us-east1-a/machineTypes/n1-standard-2\nprojects/[project_id]/zones/us-east1-a/machineTypes/n1-standard-2\nn1-standard-2Auto Zone Exception: If you are using the Cloud Dataproc Auto Zone Placement feature, you must use the short name of the machine type resource, for example, n1-standard-2.",
           "type": "string"
         },
         "managedGroupConfig": {
@@ -2689,7 +2695,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "Defines an Identity and Access Management (IAM) policy. It is used to specify access control policies for Cloud Platform resources.A Policy consists of a list of bindings. A Binding binds a list of members to a role, where the members can be user accounts, Google groups, Google domains, and service accounts. A role is a named list of permissions defined by IAM.Example\n{\n  \"bindings\": [\n    {\n      \"role\": \"roles/owner\",\n      \"members\": [\n        \"user:mike@example.com\",\n        \"group:admins@example.com\",\n        \"domain:google.com\",\n        \"serviceAccount:my-other-app@appspot.gserviceaccount.com\",\n      ]\n    },\n    {\n      \"role\": \"roles/viewer\",\n      \"members\": [\"user:sean@example.com\"]\n    }\n  ]\n}\nFor a description of IAM and its features, see the IAM developer's guide (https://cloud.google.com/iam/docs).",
+      "description": "Defines an Identity and Access Management (IAM) policy. It is used to specify access control policies for Cloud Platform resources.A Policy consists of a list of bindings. A binding binds a list of members to a role, where the members can be user accounts, Google groups, Google domains, and service accounts. A role is a named list of permissions defined by IAM.JSON Example\n{\n  \"bindings\": [\n    {\n      \"role\": \"roles/owner\",\n      \"members\": [\n        \"user:mike@example.com\",\n        \"group:admins@example.com\",\n        \"domain:google.com\",\n        \"serviceAccount:my-other-app@appspot.gserviceaccount.com\"\n      ]\n    },\n    {\n      \"role\": \"roles/viewer\",\n      \"members\": [\"user:sean@example.com\"]\n    }\n  ]\n}\nYAML Example\nbindings:\n- members:\n  - user:mike@example.com\n  - group:admins@example.com\n  - domain:google.com\n  - serviceAccount:my-other-app@appspot.gserviceaccount.com\n  role: roles/owner\n- members:\n  - user:sean@example.com\n  role: roles/viewer\nFor a description of IAM and its features, see the IAM developer's guide (https://cloud.google.com/iam/docs).",
       "id": "Policy",
       "properties": {
         "bindings": {
@@ -2799,7 +2805,7 @@
       "id": "SoftwareConfig",
       "properties": {
         "imageVersion": {
-          "description": "Optional. The version of software inside the cluster. It must match the regular expression [0-9]+\\.[0-9]+. If unspecified, it defaults to the latest version (see Cloud Dataproc Versioning).",
+          "description": "Optional. The version of software inside the cluster. It must be one of the supported Cloud Dataproc Versions, such as \"1.2\" (including a subminor version, such as \"1.2.29\"), or the \"preview\" version. If unspecified, it defaults to the latest version.",
           "type": "string"
         },
         "properties": {
@@ -3010,6 +3016,13 @@
           "$ref": "WorkflowGraph",
           "description": "Output only. The workflow graph."
         },
+        "parameters": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map from parameter names to values that were used for those parameters.",
+          "type": "object"
+        },
         "state": {
           "description": "Output only. The workflow state.",
           "enum": [
@@ -3195,7 +3208,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Dataproc API",
+  "title": "Cloud Dataproc API",
   "version": "v1beta2",
   "version_module": true
 }

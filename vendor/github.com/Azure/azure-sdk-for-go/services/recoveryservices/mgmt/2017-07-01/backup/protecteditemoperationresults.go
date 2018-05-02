@@ -41,11 +41,13 @@ func NewProtectedItemOperationResultsClientWithBaseURI(baseURI string, subscript
 }
 
 // Get fetches the result of any operation on the backup item.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backup item. containerName
-// is container name associated with the backup item. protectedItemName is backup item name whose details are to be
-// fetched. operationID is operationID which represents the operation whose result needs to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backup item.
+// containerName - container name associated with the backup item.
+// protectedItemName - backup item name whose details are to be fetched.
+// operationID - operationID which represents the operation whose result needs to be fetched.
 func (client ProtectedItemOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, operationID string) (result ProtectedItemResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, operationID)
 	if err != nil {

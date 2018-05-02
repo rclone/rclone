@@ -14,7 +14,7 @@ const opAssociateTeamMember = "AssociateTeamMember"
 
 // AssociateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateTeamMember operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -112,7 +112,7 @@ const opCreateProject = "CreateProject"
 
 // CreateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -214,7 +214,7 @@ const opCreateUserProfile = "CreateUserProfile"
 
 // CreateUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUserProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -302,7 +302,7 @@ const opDeleteProject = "DeleteProject"
 
 // DeleteProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -390,7 +390,7 @@ const opDeleteUserProfile = "DeleteUserProfile"
 
 // DeleteUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUserProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -472,7 +472,7 @@ const opDescribeProject = "DescribeProject"
 
 // DescribeProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -564,7 +564,7 @@ const opDescribeUserProfile = "DescribeUserProfile"
 
 // DescribeUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeUserProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -646,7 +646,7 @@ const opDisassociateTeamMember = "DisassociateTeamMember"
 
 // DisassociateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateTeamMember operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -738,7 +738,7 @@ const opListProjects = "ListProjects"
 
 // ListProjectsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -820,7 +820,7 @@ const opListResources = "ListResources"
 
 // ListResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the ListResources operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -905,7 +905,7 @@ const opListTagsForProject = "ListTagsForProject"
 
 // ListTagsForProjectRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -990,7 +990,7 @@ const opListTeamMembers = "ListTeamMembers"
 
 // ListTeamMembersRequest generates a "aws/request.Request" representing the
 // client's request for the ListTeamMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1075,7 +1075,7 @@ const opListUserProfiles = "ListUserProfiles"
 
 // ListUserProfilesRequest generates a "aws/request.Request" representing the
 // client's request for the ListUserProfiles operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1157,7 +1157,7 @@ const opTagProject = "TagProject"
 
 // TagProjectRequest generates a "aws/request.Request" representing the
 // client's request for the TagProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1246,7 +1246,7 @@ const opUntagProject = "UntagProject"
 
 // UntagProjectRequest generates a "aws/request.Request" representing the
 // client's request for the UntagProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1335,7 +1335,7 @@ const opUpdateProject = "UpdateProject"
 
 // UpdateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1417,7 +1417,7 @@ const opUpdateTeamMember = "UpdateTeamMember"
 
 // UpdateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTeamMember operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1517,7 +1517,7 @@ const opUpdateUserProfile = "UpdateUserProfile"
 
 // UpdateUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateUserProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal"
+	"cloud.google.com/go/internal/trace"
 	gax "github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
 	bq "google.golang.org/api/bigquery/v2"
@@ -35,6 +36,7 @@ type Job struct {
 	c         *Client
 	projectID string
 	jobID     string
+	location  string
 
 	config     *bq.JobConfiguration
 	lastStatus *JobStatus
@@ -43,8 +45,21 @@ type Job struct {
 // JobFromID creates a Job which refers to an existing BigQuery job. The job
 // need not have been created by this package. For example, the job may have
 // been created in the BigQuery console.
+//
+// For jobs whose location is other than "US" or "EU", set Client.Location or use
+// JobFromIDLocation.
 func (c *Client) JobFromID(ctx context.Context, id string) (*Job, error) {
-	bqjob, err := c.getJobInternal(ctx, id, "configuration", "jobReference", "status", "statistics")
+	return c.JobFromIDLocation(ctx, id, c.Location)
+}
+
+// JobFromIDLocation creates a Job which refers to an existing BigQuery job. The job
+// need not have been created by this package (for example, it may have
+// been created in the BigQuery console), but it must exist in the specified location.
+func (c *Client) JobFromIDLocation(ctx context.Context, id, location string) (j *Job, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.JobFromIDLocation")
+	defer func() { trace.EndSpan(ctx, err) }()
+
+	bqjob, err := c.getJobInternal(ctx, id, location, "configuration", "jobReference", "status", "statistics")
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +69,11 @@ func (c *Client) JobFromID(ctx context.Context, id string) (*Job, error) {
 // ID returns the job's ID.
 func (j *Job) ID() string {
 	return j.jobID
+}
+
+// Location returns the job's location.
+func (j *Job) Location() string {
+	return j.location
 }
 
 // State is one of a sequence of states that a Job progresses through as it is processed.
@@ -120,14 +140,20 @@ type JobIDConfig struct {
 
 	// If AddJobIDSuffix is true, then a random string will be appended to JobID.
 	AddJobIDSuffix bool
+
+	// Location is the location for the job.
+	Location string
 }
 
 // createJobRef creates a JobReference.
-// projectID must be non-empty.
-func (j *JobIDConfig) createJobRef(projectID string) *bq.JobReference {
+func (j *JobIDConfig) createJobRef(c *Client) *bq.JobReference {
 	// We don't check whether projectID is empty; the server will return an
 	// error when it encounters the resulting JobReference.
-	jr := &bq.JobReference{ProjectId: projectID}
+	loc := j.Location
+	if loc == "" { // Use Client.Location as a default.
+		loc = c.Location
+	}
+	jr := &bq.JobReference{ProjectId: c.projectID, Location: loc}
 	if j.JobID == "" {
 		jr.JobId = randomIDFn()
 	} else if j.AddJobIDSuffix {
@@ -175,8 +201,11 @@ func (s *JobStatus) Err() error {
 }
 
 // Status retrieves the current status of the job from BigQuery. It fails if the Status could not be determined.
-func (j *Job) Status(ctx context.Context) (*JobStatus, error) {
-	bqjob, err := j.c.getJobInternal(ctx, j.jobID, "status", "statistics")
+func (j *Job) Status(ctx context.Context) (js *JobStatus, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Job.Status")
+	defer func() { trace.EndSpan(ctx, err) }()
+
+	bqjob, err := j.c.getJobInternal(ctx, j.jobID, j.location, "status", "statistics")
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +233,7 @@ func (j *Job) Cancel(ctx context.Context) error {
 	// to poll for the job status to see if the cancel completed
 	// successfully".  So it would be misleading to return a status.
 	call := j.c.bqs.Jobs.Cancel(j.projectID, j.jobID).
+		Location(j.location).
 		Fields(). // We don't need any of the response data.
 		Context(ctx)
 	setClientHeader(call.Header())
@@ -218,7 +248,10 @@ func (j *Job) Cancel(ctx context.Context) error {
 // If an error occurs while retrieving the status, Wait returns that error. But
 // Wait returns nil if the status was retrieved successfully, even if
 // status.Err() != nil. So callers must check both errors. See the example.
-func (j *Job) Wait(ctx context.Context) (*JobStatus, error) {
+func (j *Job) Wait(ctx context.Context) (js *JobStatus, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Job.Wait")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if j.isQuery() {
 		// We can avoid polling for query jobs.
 		if _, err := j.waitForQuery(ctx, j.projectID); err != nil {
@@ -232,8 +265,7 @@ func (j *Job) Wait(ctx context.Context) (*JobStatus, error) {
 		return js, nil
 	}
 	// Non-query jobs must poll.
-	var js *JobStatus
-	err := internal.Retry(ctx, gax.Backoff{}, func() (stop bool, err error) {
+	err = internal.Retry(ctx, gax.Backoff{}, func() (stop bool, err error) {
 		js, err = j.Status(ctx)
 		if err != nil {
 			return true, err
@@ -251,7 +283,10 @@ func (j *Job) Wait(ctx context.Context) (*JobStatus, error) {
 
 // Read fetches the results of a query job.
 // If j is not a query job, Read returns an error.
-func (j *Job) Read(ctx context.Context) (*RowIterator, error) {
+func (j *Job) Read(ctx context.Context) (ri *RowIterator, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Job.Read")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	return j.read(ctx, j.waitForQuery, fetchPage)
 }
 
@@ -281,7 +316,7 @@ func (j *Job) read(ctx context.Context, waitForQuery func(context.Context, strin
 // waitForQuery waits for the query job to complete and returns its schema.
 func (j *Job) waitForQuery(ctx context.Context, projectID string) (Schema, error) {
 	// Use GetQueryResults only to wait for completion, not to read results.
-	call := j.c.bqs.Jobs.GetQueryResults(projectID, j.jobID).Context(ctx).MaxResults(0)
+	call := j.c.bqs.Jobs.GetQueryResults(projectID, j.jobID).Location(j.location).Context(ctx).MaxResults(0)
 	setClientHeader(call.Header())
 	backoff := gax.Backoff{
 		Initial:    1 * time.Second,
@@ -525,9 +560,12 @@ func convertListedJob(j *bq.JobListJobs, c *Client) (*Job, error) {
 	return bqToJob2(j.JobReference, j.Configuration, j.Status, j.Statistics, c)
 }
 
-func (c *Client) getJobInternal(ctx context.Context, jobID string, fields ...googleapi.Field) (*bq.Job, error) {
+func (c *Client) getJobInternal(ctx context.Context, jobID, location string, fields ...googleapi.Field) (*bq.Job, error) {
 	var job *bq.Job
 	call := c.bqs.Jobs.Get(c.projectID, jobID).Context(ctx)
+	if location != "" {
+		call = call.Location(location)
+	}
 	if len(fields) > 0 {
 		call = call.Fields(fields...)
 	}
@@ -550,6 +588,7 @@ func bqToJob2(qr *bq.JobReference, qc *bq.JobConfiguration, qs *bq.JobStatus, qt
 	j := &Job{
 		projectID: qr.ProjectId,
 		jobID:     qr.JobId,
+		location:  qr.Location,
 		c:         c,
 	}
 	j.setConfig(qc)

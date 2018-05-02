@@ -35,7 +35,14 @@ func retry(t *testing.T, what string, fn func() error) {
 	t.Fatalf("%s failed: %v", what, err)
 }
 
+func skipIfNoCredentials(t *testing.T) {
+	if USER == "" || PASSWORD == "" {
+		t.Skip("MEGA_USER and MEGA_PASSWD not set - skipping integration tests")
+	}
+}
+
 func initSession(t *testing.T) *Mega {
+	skipIfNoCredentials(t)
 	m := New()
 	// m.SetDebugger(log.Printf)
 	retry(t, "Login", func() error {
@@ -113,6 +120,8 @@ func fileMD5(t *testing.T, name string) string {
 }
 
 func TestLogin(t *testing.T) {
+	skipIfNoCredentials(t)
+
 	m := New()
 	retry(t, "Login", func() error {
 		return m.Login(USER, PASSWORD)
@@ -233,6 +242,8 @@ func TestCreateDir(t *testing.T) {
 }
 
 func TestConfig(t *testing.T) {
+	skipIfNoCredentials(t)
+
 	m := New()
 	m.SetAPIUrl("http://invalid.domain")
 	err := m.Login(USER, PASSWORD)

@@ -17,6 +17,9 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"debug/elf"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -292,7 +295,7 @@ func (t *target) generateFiles() error {
 	return nil
 }
 
-// Create the Linux and glibc headers in the include directory.
+// Create the Linux, glibc and ABI (C compiler convention) headers in the include directory.
 func (t *target) makeHeaders() error {
 	// Make the Linux headers we need for this architecture
 	linuxMake := makeCommand("make", "headers_install", "ARCH="+t.LinuxArch, "INSTALL_HDR_PATH="+TempDir)
@@ -325,6 +328,114 @@ func (t *target) makeHeaders() error {
 		return err
 	} else {
 		file.Close()
+	}
+
+	// ABI headers will specify C compiler behavior for the target platform.
+	return t.makeABIHeaders()
+}
+
+// makeABIHeaders generates C header files based on the platform's calling convention.
+// While many platforms have formal Application Binary Interfaces, in practice, whatever the
+// dominant C compilers generate is the de-facto calling convention.
+//
+// We generate C headers instead of a Go file, so as to enable references to the ABI from Cgo.
+func (t *target) makeABIHeaders() (err error) {
+	abiDir := filepath.Join(IncludeDir, "abi")
+	if err = os.Mkdir(abiDir, os.ModePerm); err != nil {
+		return err
+	}
+
+	cc := os.Getenv("CC")
+	if cc == "" {
+		return errors.New("CC (compiler) env var not set")
+	}
+
+	// Build a sacrificial ELF file, to mine for C compiler behavior.
+	binPath := filepath.Join(TempDir, "tmp_abi.o")
+	bin, err := t.buildELF(cc, cCode, binPath)
+	if err != nil {
+		return fmt.Errorf("cannot build ELF to analyze: %v", err)
+	}
+	defer bin.Close()
+	defer os.Remove(binPath)
+
+	// Right now, we put everything in abi.h, but we may change this later.
+	abiFile, err := os.Create(filepath.Join(abiDir, "abi.h"))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if cerr := abiFile.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+
+	if err = t.writeBitFieldMasks(bin, abiFile); err != nil {
+		return fmt.Errorf("cannot write bitfield masks: %v", err)
+	}
+
+	return nil
+}
+
+func (t *target) buildELF(cc, src, path string) (*elf.File, error) {
+	// Compile the cCode source using the set compiler - we will need its .data section.
+	// Do not link the binary, so that we can find .data section offsets from the symbol values.
+	ccCmd := makeCommand(cc, "-o", path, "-gdwarf", "-x", "c", "-c", "-")
+	ccCmd.Stdin = strings.NewReader(src)
+	ccCmd.Stdout = os.Stdout
+	if err := ccCmd.Run(); err != nil {
+		return nil, fmt.Errorf("compiler error: %v", err)
+	}
+
+	bin, err := elf.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read ELF file %s: %v", path, err)
+	}
+
+	return bin, nil
+}
+
+func (t *target) writeBitFieldMasks(bin *elf.File, out io.Writer) error {
+	symbols, err := bin.Symbols()
+	if err != nil {
+		return fmt.Errorf("getting ELF symbols: %v", err)
+	}
+	var masksSym *elf.Symbol
+
+	for _, sym := range symbols {
+		if sym.Name == "masks" {
+			masksSym = &sym
+		}
+	}
+
+	if masksSym == nil {
+		return errors.New("could not find the 'masks' symbol in ELF symtab")
+	}
+
+	dataSection := bin.Section(".data")
+	if dataSection == nil {
+		return errors.New("ELF file has no .data section")
+	}
+
+	data, err := dataSection.Data()
+	if err != nil {
+		return fmt.Errorf("could not read .data section: %v\n", err)
+	}
+
+	var bo binary.ByteOrder
+	if t.BigEndian {
+		bo = binary.BigEndian
+	} else {
+		bo = binary.LittleEndian
+	}
+
+	// 64 bit masks of type uint64 are stored in the data section starting at masks.Value.
+	// Here we are running on AMD64, but these values may be big endian or little endian,
+	// depending on target architecture.
+	for i := uint64(0); i < 64; i++ {
+		off := masksSym.Value + i*8
+		// Define each mask in native by order, so as to match target endian.
+		fmt.Fprintf(out, "#define BITFIELD_MASK_%d %dULL\n", i, bo.Uint64(data[off:off+8]))
 	}
 
 	return nil
@@ -480,3 +591,160 @@ func writeOnePtrace(w io.Writer, arch, def string) {
 	fmt.Fprintf(w, "\treturn ptrace(PTRACE_SETREGS, pid, 0, uintptr(unsafe.Pointer(regs)))\n")
 	fmt.Fprintf(w, "}\n")
 }
+
+// cCode is compiled for the target architecture, and the resulting data section is carved for
+// the statically initialized bit masks.
+const cCode = `
+// Bit fields are used in some system calls and other ABIs, but their memory layout is
+// implementation-defined [1]. Even with formal ABIs, bit fields are a source of subtle bugs [2].
+// Here we generate the offsets for all 64 bits in an uint64.
+// 1: http://en.cppreference.com/w/c/language/bit_field
+// 2: https://lwn.net/Articles/478657/
+
+#include <stdint.h>
+
+struct bitfield {
+	union {
+		uint64_t val;
+		struct {
+			uint64_t u64_bit_0 : 1;
+			uint64_t u64_bit_1 : 1;
+			uint64_t u64_bit_2 : 1;
+			uint64_t u64_bit_3 : 1;
+			uint64_t u64_bit_4 : 1;
+			uint64_t u64_bit_5 : 1;
+			uint64_t u64_bit_6 : 1;
+			uint64_t u64_bit_7 : 1;
+			uint64_t u64_bit_8 : 1;
+			uint64_t u64_bit_9 : 1;
+			uint64_t u64_bit_10 : 1;
+			uint64_t u64_bit_11 : 1;
+			uint64_t u64_bit_12 : 1;
+			uint64_t u64_bit_13 : 1;
+			uint64_t u64_bit_14 : 1;
+			uint64_t u64_bit_15 : 1;
+			uint64_t u64_bit_16 : 1;
+			uint64_t u64_bit_17 : 1;
+			uint64_t u64_bit_18 : 1;
+			uint64_t u64_bit_19 : 1;
+			uint64_t u64_bit_20 : 1;
+			uint64_t u64_bit_21 : 1;
+			uint64_t u64_bit_22 : 1;
+			uint64_t u64_bit_23 : 1;
+			uint64_t u64_bit_24 : 1;
+			uint64_t u64_bit_25 : 1;
+			uint64_t u64_bit_26 : 1;
+			uint64_t u64_bit_27 : 1;
+			uint64_t u64_bit_28 : 1;
+			uint64_t u64_bit_29 : 1;
+			uint64_t u64_bit_30 : 1;
+			uint64_t u64_bit_31 : 1;
+			uint64_t u64_bit_32 : 1;
+			uint64_t u64_bit_33 : 1;
+			uint64_t u64_bit_34 : 1;
+			uint64_t u64_bit_35 : 1;
+			uint64_t u64_bit_36 : 1;
+			uint64_t u64_bit_37 : 1;
+			uint64_t u64_bit_38 : 1;
+			uint64_t u64_bit_39 : 1;
+			uint64_t u64_bit_40 : 1;
+			uint64_t u64_bit_41 : 1;
+			uint64_t u64_bit_42 : 1;
+			uint64_t u64_bit_43 : 1;
+			uint64_t u64_bit_44 : 1;
+			uint64_t u64_bit_45 : 1;
+			uint64_t u64_bit_46 : 1;
+			uint64_t u64_bit_47 : 1;
+			uint64_t u64_bit_48 : 1;
+			uint64_t u64_bit_49 : 1;
+			uint64_t u64_bit_50 : 1;
+			uint64_t u64_bit_51 : 1;
+			uint64_t u64_bit_52 : 1;
+			uint64_t u64_bit_53 : 1;
+			uint64_t u64_bit_54 : 1;
+			uint64_t u64_bit_55 : 1;
+			uint64_t u64_bit_56 : 1;
+			uint64_t u64_bit_57 : 1;
+			uint64_t u64_bit_58 : 1;
+			uint64_t u64_bit_59 : 1;
+			uint64_t u64_bit_60 : 1;
+			uint64_t u64_bit_61 : 1;
+			uint64_t u64_bit_62 : 1;
+			uint64_t u64_bit_63 : 1;
+		};
+	};
+};
+
+struct bitfield masks[] = {
+	{.u64_bit_0 = 1},
+	{.u64_bit_1 = 1},
+	{.u64_bit_2 = 1},
+	{.u64_bit_3 = 1},
+	{.u64_bit_4 = 1},
+	{.u64_bit_5 = 1},
+	{.u64_bit_6 = 1},
+	{.u64_bit_7 = 1},
+	{.u64_bit_8 = 1},
+	{.u64_bit_9 = 1},
+	{.u64_bit_10 = 1},
+	{.u64_bit_11 = 1},
+	{.u64_bit_12 = 1},
+	{.u64_bit_13 = 1},
+	{.u64_bit_14 = 1},
+	{.u64_bit_15 = 1},
+	{.u64_bit_16 = 1},
+	{.u64_bit_17 = 1},
+	{.u64_bit_18 = 1},
+	{.u64_bit_19 = 1},
+	{.u64_bit_20 = 1},
+	{.u64_bit_21 = 1},
+	{.u64_bit_22 = 1},
+	{.u64_bit_23 = 1},
+	{.u64_bit_24 = 1},
+	{.u64_bit_25 = 1},
+	{.u64_bit_26 = 1},
+	{.u64_bit_27 = 1},
+	{.u64_bit_28 = 1},
+	{.u64_bit_29 = 1},
+	{.u64_bit_30 = 1},
+	{.u64_bit_31 = 1},
+	{.u64_bit_32 = 1},
+	{.u64_bit_33 = 1},
+	{.u64_bit_34 = 1},
+	{.u64_bit_35 = 1},
+	{.u64_bit_36 = 1},
+	{.u64_bit_37 = 1},
+	{.u64_bit_38 = 1},
+	{.u64_bit_39 = 1},
+	{.u64_bit_40 = 1},
+	{.u64_bit_41 = 1},
+	{.u64_bit_42 = 1},
+	{.u64_bit_43 = 1},
+	{.u64_bit_44 = 1},
+	{.u64_bit_45 = 1},
+	{.u64_bit_46 = 1},
+	{.u64_bit_47 = 1},
+	{.u64_bit_48 = 1},
+	{.u64_bit_49 = 1},
+	{.u64_bit_50 = 1},
+	{.u64_bit_51 = 1},
+	{.u64_bit_52 = 1},
+	{.u64_bit_53 = 1},
+	{.u64_bit_54 = 1},
+	{.u64_bit_55 = 1},
+	{.u64_bit_56 = 1},
+	{.u64_bit_57 = 1},
+	{.u64_bit_58 = 1},
+	{.u64_bit_59 = 1},
+	{.u64_bit_60 = 1},
+	{.u64_bit_61 = 1},
+	{.u64_bit_62 = 1},
+	{.u64_bit_63 = 1}
+};
+
+int main(int argc, char **argv) {
+	struct bitfield *mask_ptr = &masks[0];
+	return mask_ptr->val;
+}
+
+`

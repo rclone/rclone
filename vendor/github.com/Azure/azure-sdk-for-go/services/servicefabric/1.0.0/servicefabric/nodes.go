@@ -40,8 +40,9 @@ func NewNodesClientWithBaseURI(baseURI string, timeout *int32) NodesClient {
 }
 
 // Disable disable nodes
-//
-// nodeName is the name of the node disableNode is the node
+// Parameters:
+// nodeName - the name of the node
+// disableNode - the node
 func (client NodesClient) Disable(ctx context.Context, nodeName string, disableNode DisableNode) (result String, err error) {
 	req, err := client.DisablePreparer(ctx, nodeName, disableNode)
 	if err != nil {
@@ -79,7 +80,7 @@ func (client NodesClient) DisablePreparer(ctx context.Context, nodeName string, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/Deactivate", pathParameters),
@@ -109,8 +110,8 @@ func (client NodesClient) DisableResponder(resp *http.Response) (result String, 
 }
 
 // Enable enable nodes
-//
-// nodeName is the name of the node
+// Parameters:
+// nodeName - the name of the node
 func (client NodesClient) Enable(ctx context.Context, nodeName string) (result String, err error) {
 	req, err := client.EnablePreparer(ctx, nodeName)
 	if err != nil {
@@ -176,8 +177,8 @@ func (client NodesClient) EnableResponder(resp *http.Response) (result String, e
 }
 
 // Get get nodes
-//
-// nodeName is the name of the node
+// Parameters:
+// nodeName - the name of the node
 func (client NodesClient) Get(ctx context.Context, nodeName string) (result Node, err error) {
 	req, err := client.GetPreparer(ctx, nodeName)
 	if err != nil {
@@ -243,8 +244,8 @@ func (client NodesClient) GetResponder(resp *http.Response) (result Node, err er
 }
 
 // List list nodes
-//
-// continuationToken is the token of the continuation
+// Parameters:
+// continuationToken - the token of the continuation
 func (client NodesClient) List(ctx context.Context, continuationToken string) (result NodeList, err error) {
 	req, err := client.ListPreparer(ctx, continuationToken)
 	if err != nil {

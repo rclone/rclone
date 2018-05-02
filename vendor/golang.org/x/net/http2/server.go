@@ -46,6 +46,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2/hpack"
 )
 
@@ -1817,7 +1818,7 @@ func (st *stream) processTrailerHeaders(f *MetaHeadersFrame) error {
 	if st.trailer != nil {
 		for _, hf := range f.RegularFields() {
 			key := sc.canonicalHeader(hf.Name)
-			if !ValidTrailerHeader(key) {
+			if !httpguts.ValidTrailerHeader(key) {
 				// TODO: send more details to the peer somehow. But http2 has
 				// no way to send debug data at a stream level. Discuss with
 				// HTTP folk.
@@ -2284,7 +2285,7 @@ func (rws *responseWriterState) hasTrailers() bool { return len(rws.trailers) !=
 // written in the trailers at the end of the response.
 func (rws *responseWriterState) declareTrailer(k string) {
 	k = http.CanonicalHeaderKey(k)
-	if !ValidTrailerHeader(k) {
+	if !httpguts.ValidTrailerHeader(k) {
 		// Forbidden by RFC 7230, section 4.1.2.
 		rws.conn.logf("ignoring invalid trailer %q", k)
 		return
@@ -2323,7 +2324,15 @@ func (rws *responseWriterState) writeChunk(p []byte) (n int, err error) {
 		}
 		_, hasContentType := rws.snapHeader["Content-Type"]
 		if !hasContentType && bodyAllowedForStatus(rws.status) && len(p) > 0 {
-			ctype = http.DetectContentType(p)
+			if cto := rws.snapHeader.Get("X-Content-Type-Options"); strings.EqualFold("nosniff", cto) {
+				// nosniff is an explicit directive not to guess a content-type.
+				// Content-sniffing is no less susceptible to polyglot attacks via
+				// hosted content when done on the server.
+				ctype = "application/octet-stream"
+				rws.conn.logf("http2: WriteHeader called with X-Content-Type-Options:nosniff but no Content-Type")
+			} else {
+				ctype = http.DetectContentType(p)
+			}
 		}
 		var date string
 		if _, ok := rws.snapHeader["Date"]; !ok {
@@ -2836,41 +2845,6 @@ func new400Handler(err error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-}
-
-// ValidTrailerHeader reports whether name is a valid header field name to appear
-// in trailers.
-// See: http://tools.ietf.org/html/rfc7230#section-4.1.2
-func ValidTrailerHeader(name string) bool {
-	name = http.CanonicalHeaderKey(name)
-	if strings.HasPrefix(name, "If-") || badTrailer[name] {
-		return false
-	}
-	return true
-}
-
-var badTrailer = map[string]bool{
-	"Authorization":       true,
-	"Cache-Control":       true,
-	"Connection":          true,
-	"Content-Encoding":    true,
-	"Content-Length":      true,
-	"Content-Range":       true,
-	"Content-Type":        true,
-	"Expect":              true,
-	"Host":                true,
-	"Keep-Alive":          true,
-	"Max-Forwards":        true,
-	"Pragma":              true,
-	"Proxy-Authenticate":  true,
-	"Proxy-Authorization": true,
-	"Proxy-Connection":    true,
-	"Range":               true,
-	"Realm":               true,
-	"Te":                  true,
-	"Trailer":             true,
-	"Transfer-Encoding":   true,
-	"Www-Authenticate":    true,
 }
 
 // h1ServerKeepAlivesDisabled reports whether hs has its keep-alives

@@ -31,7 +31,6 @@
 //   - flag # always resorts to fmt for printing
 //   - verb 'f', 'e', 'g', 'd' use localized formatting unless the '#' flag is
 //     specified.
-//   - verb 'm' inserts a translation of a string argument.
 //
 // See package fmt for more options.
 //

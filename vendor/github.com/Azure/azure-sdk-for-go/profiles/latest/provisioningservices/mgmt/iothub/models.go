@@ -19,48 +19,15 @@
 
 package iothub
 
-import original "github.com/Azure/azure-sdk-for-go/services/provisioningservices/mgmt/2017-11-15/iothub"
+import original "github.com/Azure/azure-sdk-for-go/services/provisioningservices/mgmt/2018-01-22/iothub"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type DpsCertificateClient = original.DpsCertificateClient
-
-func NewDpsCertificateClient(subscriptionID string) DpsCertificateClient {
-	return original.NewDpsCertificateClient(subscriptionID)
-}
-func NewDpsCertificateClientWithBaseURI(baseURI string, subscriptionID string) DpsCertificateClient {
-	return original.NewDpsCertificateClientWithBaseURI(baseURI, subscriptionID)
-}
-
-type DpsCertificatesClient = original.DpsCertificatesClient
-
-func NewDpsCertificatesClient(subscriptionID string) DpsCertificatesClient {
-	return original.NewDpsCertificatesClient(subscriptionID)
-}
-func NewDpsCertificatesClientWithBaseURI(baseURI string, subscriptionID string) DpsCertificatesClient {
-	return original.NewDpsCertificatesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type IotDpsResourceClient = original.IotDpsResourceClient
-
-func NewIotDpsResourceClient(subscriptionID string) IotDpsResourceClient {
-	return original.NewIotDpsResourceClient(subscriptionID)
-}
-func NewIotDpsResourceClientWithBaseURI(baseURI string, subscriptionID string) IotDpsResourceClient {
-	return original.NewIotDpsResourceClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessRightsDescription = original.AccessRightsDescription
 
 const (
@@ -156,6 +123,42 @@ type VerificationCodeResponse = original.VerificationCodeResponse
 type VerificationCodeResponseProperties = original.VerificationCodeResponseProperties
 type OperationsClient = original.OperationsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewDpsCertificateClient(subscriptionID string) DpsCertificateClient {
+	return original.NewDpsCertificateClient(subscriptionID)
+}
+func NewDpsCertificateClientWithBaseURI(baseURI string, subscriptionID string) DpsCertificateClient {
+	return original.NewDpsCertificateClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewIotDpsResourceClient(subscriptionID string) IotDpsResourceClient {
+	return original.NewIotDpsResourceClient(subscriptionID)
+}
+func NewIotDpsResourceClientWithBaseURI(baseURI string, subscriptionID string) IotDpsResourceClient {
+	return original.NewIotDpsResourceClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessRightsDescriptionValues() []AccessRightsDescription {
+	return original.PossibleAccessRightsDescriptionValues()
+}
+func PossibleAllocationPolicyValues() []AllocationPolicy {
+	return original.PossibleAllocationPolicyValues()
+}
+func PossibleCertificatePurposeValues() []CertificatePurpose {
+	return original.PossibleCertificatePurposeValues()
+}
+func PossibleIotDpsSkuValues() []IotDpsSku {
+	return original.PossibleIotDpsSkuValues()
+}
+func PossibleNameUnavailabilityReasonValues() []NameUnavailabilityReason {
+	return original.PossibleNameUnavailabilityReasonValues()
+}
+func PossibleStateValues() []State {
+	return original.PossibleStateValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }

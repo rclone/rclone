@@ -41,6 +41,11 @@ const (
 	Invalid AuthType = "Invalid"
 )
 
+// PossibleAuthTypeValues returns an array of possible values for the AuthType const type.
+func PossibleAuthTypeValues() []AuthType {
+	return []AuthType{AAD, AccessControlService, ACS, AzureActiveDirectory, Invalid}
+}
+
 // AuthTypeBasicResourceCertificateDetails enumerates the values for auth type basic resource certificate
 // details.
 type AuthTypeBasicResourceCertificateDetails string
@@ -54,6 +59,11 @@ const (
 	AuthTypeResourceCertificateDetails AuthTypeBasicResourceCertificateDetails = "ResourceCertificateDetails"
 )
 
+// PossibleAuthTypeBasicResourceCertificateDetailsValues returns an array of possible values for the AuthTypeBasicResourceCertificateDetails const type.
+func PossibleAuthTypeBasicResourceCertificateDetailsValues() []AuthTypeBasicResourceCertificateDetails {
+	return []AuthTypeBasicResourceCertificateDetails{AuthTypeAccessControlService, AuthTypeAzureActiveDirectory, AuthTypeResourceCertificateDetails}
+}
+
 // SkuName enumerates the values for sku name.
 type SkuName string
 
@@ -64,6 +74,11 @@ const (
 	Standard SkuName = "Standard"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{RS0, Standard}
+}
+
 // TriggerType enumerates the values for trigger type.
 type TriggerType string
 
@@ -73,6 +88,11 @@ const (
 	// UserTriggered ...
 	UserTriggered TriggerType = "UserTriggered"
 )
+
+// PossibleTriggerTypeValues returns an array of possible values for the TriggerType const type.
+func PossibleTriggerTypeValues() []TriggerType {
+	return []TriggerType{ForcedUpgrade, UserTriggered}
+}
 
 // UsagesUnit enumerates the values for usages unit.
 type UsagesUnit string
@@ -92,6 +112,11 @@ const (
 	Seconds UsagesUnit = "Seconds"
 )
 
+// PossibleUsagesUnitValues returns an array of possible values for the UsagesUnit const type.
+func PossibleUsagesUnitValues() []UsagesUnit {
+	return []UsagesUnit{Bytes, BytesPerSecond, Count, CountPerSecond, Percent, Seconds}
+}
+
 // VaultUpgradeState enumerates the values for vault upgrade state.
 type VaultUpgradeState string
 
@@ -105,6 +130,11 @@ const (
 	// Upgraded ...
 	Upgraded VaultUpgradeState = "Upgraded"
 )
+
+// PossibleVaultUpgradeStateValues returns an array of possible values for the VaultUpgradeState const type.
+func PossibleVaultUpgradeStateValues() []VaultUpgradeState {
+	return []VaultUpgradeState{Failed, InProgress, Unknown, Upgraded}
+}
 
 // CertificateRequest details of the certificate to be uploaded to the vault.
 type CertificateRequest struct {
@@ -501,7 +531,9 @@ func (rcaad ResourceCertificateAndAadDetails) MarshalJSON() ([]byte, error) {
 	if rcaad.ValidTo != nil {
 		objectMap["validTo"] = rcaad.ValidTo
 	}
-	objectMap["authType"] = rcaad.AuthType
+	if rcaad.AuthType != "" {
+		objectMap["authType"] = rcaad.AuthType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -590,7 +622,9 @@ func (rcaad ResourceCertificateAndAcsDetails) MarshalJSON() ([]byte, error) {
 	if rcaad.ValidTo != nil {
 		objectMap["validTo"] = rcaad.ValidTo
 	}
-	objectMap["authType"] = rcaad.AuthType
+	if rcaad.AuthType != "" {
+		objectMap["authType"] = rcaad.AuthType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -712,7 +746,9 @@ func (rcd ResourceCertificateDetails) MarshalJSON() ([]byte, error) {
 	if rcd.ValidTo != nil {
 		objectMap["validTo"] = rcd.ValidTo
 	}
-	objectMap["authType"] = rcd.AuthType
+	if rcd.AuthType != "" {
+		objectMap["authType"] = rcd.AuthType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -940,6 +976,27 @@ type VaultExtendedInfoResource struct {
 	Type *string `json:"type,omitempty"`
 	// ETag - Optional ETag.
 	ETag *string `json:"eTag,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VaultExtendedInfoResource.
+func (veir VaultExtendedInfoResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if veir.VaultExtendedInfo != nil {
+		objectMap["properties"] = veir.VaultExtendedInfo
+	}
+	if veir.ID != nil {
+		objectMap["id"] = veir.ID
+	}
+	if veir.Name != nil {
+		objectMap["name"] = veir.Name
+	}
+	if veir.Type != nil {
+		objectMap["type"] = veir.Type
+	}
+	if veir.ETag != nil {
+		objectMap["eTag"] = veir.ETag
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VaultExtendedInfoResource struct.

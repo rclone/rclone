@@ -571,11 +571,12 @@ func (s *Session) clientConfigWithErr(serviceName string, cfgs ...*aws.Config) (
 	}
 
 	return client.Config{
-		Config:        s.Config,
-		Handlers:      s.Handlers,
-		Endpoint:      resolved.URL,
-		SigningRegion: resolved.SigningRegion,
-		SigningName:   resolved.SigningName,
+		Config:             s.Config,
+		Handlers:           s.Handlers,
+		Endpoint:           resolved.URL,
+		SigningRegion:      resolved.SigningRegion,
+		SigningNameDerived: resolved.SigningNameDerived,
+		SigningName:        resolved.SigningName,
 	}, err
 }
 
@@ -595,10 +596,11 @@ func (s *Session) ClientConfigNoResolveEndpoint(cfgs ...*aws.Config) client.Conf
 	}
 
 	return client.Config{
-		Config:        s.Config,
-		Handlers:      s.Handlers,
-		Endpoint:      resolved.URL,
-		SigningRegion: resolved.SigningRegion,
-		SigningName:   resolved.SigningName,
+		Config:             s.Config,
+		Handlers:           s.Handlers,
+		Endpoint:           resolved.URL,
+		SigningRegion:      resolved.SigningRegion,
+		SigningNameDerived: resolved.SigningNameDerived,
+		SigningName:        resolved.SigningName,
 	}
 }

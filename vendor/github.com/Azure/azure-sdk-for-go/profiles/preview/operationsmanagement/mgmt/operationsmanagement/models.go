@@ -26,32 +26,8 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
-	return original.New(subscriptionID, providerName, resourceType, resourceName)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
-}
-
 type ManagementAssociationsClient = original.ManagementAssociationsClient
-
-func NewManagementAssociationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
-	return original.NewManagementAssociationsClient(subscriptionID, providerName, resourceType, resourceName)
-}
-func NewManagementAssociationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
-	return original.NewManagementAssociationsClientWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
-}
-
 type ManagementConfigurationsClient = original.ManagementConfigurationsClient
-
-func NewManagementConfigurationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) ManagementConfigurationsClient {
-	return original.NewManagementConfigurationsClient(subscriptionID, providerName, resourceType, resourceName)
-}
-func NewManagementConfigurationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) ManagementConfigurationsClient {
-	return original.NewManagementConfigurationsClientWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
-}
-
 type ArmTemplateParameter = original.ArmTemplateParameter
 type CodeMessageError = original.CodeMessageError
 type CodeMessageErrorError = original.CodeMessageErrorError
@@ -69,16 +45,32 @@ type SolutionPlan = original.SolutionPlan
 type SolutionProperties = original.SolutionProperties
 type SolutionPropertiesList = original.SolutionPropertiesList
 type OperationsClient = original.OperationsClient
+type SolutionsClient = original.SolutionsClient
 
+func New(subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
+	return original.New(subscriptionID, providerName, resourceType, resourceName)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
+}
+func NewManagementAssociationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
+	return original.NewManagementAssociationsClient(subscriptionID, providerName, resourceType, resourceName)
+}
+func NewManagementAssociationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
+	return original.NewManagementAssociationsClientWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
+}
+func NewManagementConfigurationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) ManagementConfigurationsClient {
+	return original.NewManagementConfigurationsClient(subscriptionID, providerName, resourceType, resourceName)
+}
+func NewManagementConfigurationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) ManagementConfigurationsClient {
+	return original.NewManagementConfigurationsClientWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
+}
 func NewOperationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID, providerName, resourceType, resourceName)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)
 }
-
-type SolutionsClient = original.SolutionsClient
-
 func NewSolutionsClient(subscriptionID string, providerName string, resourceType string, resourceName string) SolutionsClient {
 	return original.NewSolutionsClient(subscriptionID, providerName, resourceType, resourceName)
 }

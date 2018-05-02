@@ -44,12 +44,12 @@ func NewResourceLinksClientWithBaseURI(baseURI string, subscriptionID string) Re
 }
 
 // CreateOrUpdate creates or updates a resource link between the specified resources.
-//
-// linkID is the fully qualified ID of the resource link. Use the format,
+// Parameters:
+// linkID - the fully qualified ID of the resource link. Use the format,
 // /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/{provider-namespace}/{resource-type}/{resource-name}/Microsoft.Resources/links/{link-name}.
 // For example,
 // /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup/Microsoft.Web/sites/mySite/Microsoft.Resources/links/myLink
-// parameters is parameters for creating or updating a resource link.
+// parameters - parameters for creating or updating a resource link.
 func (client ResourceLinksClient) CreateOrUpdate(ctx context.Context, linkID string, parameters ResourceLink) (result ResourceLink, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -91,7 +91,7 @@ func (client ResourceLinksClient) CreateOrUpdatePreparer(ctx context.Context, li
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{linkId}", pathParameters),
@@ -121,8 +121,8 @@ func (client ResourceLinksClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete deletes a resource link with the specified ID.
-//
-// linkID is the fully qualified ID of the resource link. Use the format,
+// Parameters:
+// linkID - the fully qualified ID of the resource link. Use the format,
 // /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/{provider-namespace}/{resource-type}/{resource-name}/Microsoft.Resources/links/{link-name}.
 // For example,
 // /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup/Microsoft.Web/sites/mySite/Microsoft.Resources/links/myLink
@@ -187,8 +187,8 @@ func (client ResourceLinksClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets a resource link with the specified ID.
-//
-// linkID is the fully qualified Id of the resource link. For example,
+// Parameters:
+// linkID - the fully qualified Id of the resource link. For example,
 // /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup/Microsoft.Web/sites/mySite/Microsoft.Resources/links/myLink
 func (client ResourceLinksClient) Get(ctx context.Context, linkID string) (result ResourceLink, err error) {
 	req, err := client.GetPreparer(ctx, linkID)
@@ -252,11 +252,12 @@ func (client ResourceLinksClient) GetResponder(resp *http.Response) (result Reso
 }
 
 // ListAtSourceScope gets a list of resource links at and below the specified source scope.
-//
-// scope is the fully qualified ID of the scope for getting the resource links. For example, to list resource links
-// at and under a resource group, set the scope to
-// /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup. filter is the filter to apply when
-// getting resource links. To get links only at the specified scope (not below the scope), use Filter.atScope().
+// Parameters:
+// scope - the fully qualified ID of the scope for getting the resource links. For example, to list resource
+// links at and under a resource group, set the scope to
+// /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup.
+// filter - the filter to apply when getting resource links. To get links only at the specified scope (not
+// below the scope), use Filter.atScope().
 func (client ResourceLinksClient) ListAtSourceScope(ctx context.Context, scope string, filter Filter) (result ResourceLinkResultPage, err error) {
 	result.fn = client.listAtSourceScopeNextResults
 	req, err := client.ListAtSourceScopePreparer(ctx, scope, filter)
@@ -350,9 +351,9 @@ func (client ResourceLinksClient) ListAtSourceScopeComplete(ctx context.Context,
 }
 
 // ListAtSubscription gets all the linked resources for the subscription.
-//
-// filter is the filter to apply on the list resource links operation. The supported filter for list resource links
-// is targetid. For example, $filter=targetid eq {value}
+// Parameters:
+// filter - the filter to apply on the list resource links operation. The supported filter for list resource
+// links is targetid. For example, $filter=targetid eq {value}
 func (client ResourceLinksClient) ListAtSubscription(ctx context.Context, filter string) (result ResourceLinkResultPage, err error) {
 	result.fn = client.listAtSubscriptionNextResults
 	req, err := client.ListAtSubscriptionPreparer(ctx, filter)

@@ -40,8 +40,8 @@ func NewProvidersClientWithBaseURI(baseURI string, subscriptionID string) Provid
 }
 
 // Get gets a resource provider.
-//
-// resourceProviderNamespace is namespace of the resource provider.
+// Parameters:
+// resourceProviderNamespace - namespace of the resource provider.
 func (client ProvidersClient) Get(ctx context.Context, resourceProviderNamespace string) (result Provider, err error) {
 	req, err := client.GetPreparer(ctx, resourceProviderNamespace)
 	if err != nil {
@@ -105,8 +105,8 @@ func (client ProvidersClient) GetResponder(resp *http.Response) (result Provider
 }
 
 // List gets a list of resource providers.
-//
-// top is query parameters. If null is passed returns all deployments.
+// Parameters:
+// top - query parameters. If null is passed returns all deployments.
 func (client ProvidersClient) List(ctx context.Context, top *int32) (result ProviderListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, top)
@@ -200,8 +200,8 @@ func (client ProvidersClient) ListComplete(ctx context.Context, top *int32) (res
 }
 
 // Register registers provider to be used with a subscription.
-//
-// resourceProviderNamespace is namespace of the resource provider.
+// Parameters:
+// resourceProviderNamespace - namespace of the resource provider.
 func (client ProvidersClient) Register(ctx context.Context, resourceProviderNamespace string) (result Provider, err error) {
 	req, err := client.RegisterPreparer(ctx, resourceProviderNamespace)
 	if err != nil {
@@ -265,8 +265,8 @@ func (client ProvidersClient) RegisterResponder(resp *http.Response) (result Pro
 }
 
 // Unregister unregisters provider from a subscription.
-//
-// resourceProviderNamespace is namespace of the resource provider.
+// Parameters:
+// resourceProviderNamespace - namespace of the resource provider.
 func (client ProvidersClient) Unregister(ctx context.Context, resourceProviderNamespace string) (result Provider, err error) {
 	req, err := client.UnregisterPreparer(ctx, resourceProviderNamespace)
 	if err != nil {

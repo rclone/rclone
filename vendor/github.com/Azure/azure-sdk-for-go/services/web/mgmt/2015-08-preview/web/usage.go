@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UsageClient is the webSite Management Client
 type UsageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewUsageClient creates an instance of the UsageClient client.
 func NewUsageClient(subscriptionID string) UsageClient {
 	return NewUsageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewUsageClientWithBaseURI creates an instance of the UsageClient client.
 func NewUsageClientWithBaseURI(baseURI string, subscriptionID string) UsageClient {
 	return UsageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetUsage sends the get usage request.
 //
 // resourceGroupName is name of resource group environmentName is environment name lastID is last marker that was
@@ -65,6 +69,7 @@ func (client UsageClient) GetUsage(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetUsagePreparer prepares the GetUsage request.
 func (client UsageClient) GetUsagePreparer(ctx context.Context, resourceGroupName string, environmentName string, lastID string, batchSize int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -88,6 +93,7 @@ func (client UsageClient) GetUsagePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetUsageSender sends the GetUsage request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageClient) GetUsageSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client UsageClient) GetUsageSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetUsageResponder handles the response to the GetUsage request. The method always
 // closes the http.Response Body.
 func (client UsageClient) GetUsageResponder(resp *http.Response) (result SetObject, err error) {

@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type ActionType = original.ActionType
 
 const (
@@ -100,6 +92,27 @@ type SpellCheck = original.SpellCheck
 type SpellingFlaggedToken = original.SpellingFlaggedToken
 type SpellingTokenSuggestion = original.SpellingTokenSuggestion
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func PossibleActionTypeValues() []ActionType {
+	return original.PossibleActionTypeValues()
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleErrorTypeValues() []ErrorType {
+	return original.PossibleErrorTypeValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"
 }

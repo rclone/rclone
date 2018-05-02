@@ -12,7 +12,7 @@ const opText = "TranslateText"
 
 // TextRequest generates a "aws/request.Request" representing the
 // client's request for the Text operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -68,6 +68,10 @@ func (c *Translate) TextRequest(input *TextInput) (req *request.Request, output 
 //
 //    * Spanish (es)
 //
+// To have Amazon Translate determine the source language of your text, you
+// can specify auto in the SourceLanguageCode field. If you specify auto, Amazon
+// Translate will call Amazon Comprehend to determine the source language.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -89,6 +93,13 @@ func (c *Translate) TextRequest(input *TextInput) (req *request.Request, output 
 //   * ErrCodeUnsupportedLanguagePairException "UnsupportedLanguagePairException"
 //   Amazon Translate cannot translate input text in the source language into
 //   this target language. For more information, see how-to-error-msg.
+//
+//   * ErrCodeDetectedLanguageLowConfidenceException "DetectedLanguageLowConfidenceException"
+//   The confidence that Amazon Comprehend accurately detected the source language
+//   is low. If a low confidence level is acceptable for your application, you
+//   can use the language in the exception to call Amazon Translate again. For
+//   more information, see the DetectDominantLanguage (https://docs.aws.amazon.com/comprehend/latest/dg/API_DetectDominantLanguage.html)
+//   operation in the Amazon Comprehend Developer Guide.
 //
 //   * ErrCodeInternalServerException "InternalServerException"
 //   An internal server error occurred. Retry your request.
@@ -123,6 +134,10 @@ type TextInput struct {
 
 	// One of the supported language codes for the source text. If the TargetLanguageCode
 	// is not "en", the SourceLanguageCode must be "en".
+	//
+	// To have Amazon Translate determine the source language of your text, you
+	// can specify auto in the SourceLanguageCode field. If you specify auto, Amazon
+	// Translate will call Amazon Comprehend to determine the source language.
 	//
 	// SourceLanguageCode is a required field
 	SourceLanguageCode *string `min:"2" type:"string" required:"true"`

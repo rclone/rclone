@@ -41,9 +41,9 @@ func NewDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) Defi
 }
 
 // CreateOrUpdate creates or updates a policy definition.
-//
-// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition
-// properties.
+// Parameters:
+// policyDefinitionName - the name of the policy definition to create.
+// parameters - the policy definition properties.
 func (client DefinitionsClient) CreateOrUpdate(ctx context.Context, policyDefinitionName string, parameters Definition) (result Definition, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, policyDefinitionName, parameters)
 	if err != nil {
@@ -79,7 +79,7 @@ func (client DefinitionsClient) CreateOrUpdatePreparer(ctx context.Context, poli
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/policydefinitions/{policyDefinitionName}", pathParameters),
@@ -109,8 +109,8 @@ func (client DefinitionsClient) CreateOrUpdateResponder(resp *http.Response) (re
 }
 
 // Delete deletes a policy definition.
-//
-// policyDefinitionName is the name of the policy definition to delete.
+// Parameters:
+// policyDefinitionName - the name of the policy definition to delete.
 func (client DefinitionsClient) Delete(ctx context.Context, policyDefinitionName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, policyDefinitionName)
 	if err != nil {
@@ -173,8 +173,8 @@ func (client DefinitionsClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get gets the policy definition.
-//
-// policyDefinitionName is the name of the policy definition to get.
+// Parameters:
+// policyDefinitionName - the name of the policy definition to get.
 func (client DefinitionsClient) Get(ctx context.Context, policyDefinitionName string) (result Definition, err error) {
 	req, err := client.GetPreparer(ctx, policyDefinitionName)
 	if err != nil {
@@ -238,8 +238,8 @@ func (client DefinitionsClient) GetResponder(resp *http.Response) (result Defini
 }
 
 // List gets all the policy definitions for a subscription.
-//
-// filter is the filter to apply on the operation.
+// Parameters:
+// filter - the filter to apply on the operation.
 func (client DefinitionsClient) List(ctx context.Context, filter string) (result DefinitionListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter)

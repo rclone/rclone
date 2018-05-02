@@ -14,4 +14,4 @@
 
 package preview
 
-//go:generate go run ../../tools/profileBuilder/main.go latest --clear-output --name preview --preview
+//go:generate go run ../../tools/profileBuilder/main.go latest --clear-output --name preview --preview --verbose

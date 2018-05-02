@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountStatus enumerates the values for account status.
 type AccountStatus string
 
@@ -36,6 +37,13 @@ const (
 	Unavailable AccountStatus = "Unavailable"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleAccountStatusValues returns an array of possible values for the AccountStatus const type.
+func PossibleAccountStatusValues() []AccountStatus {
+	return []AccountStatus{Available, Unavailable}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountType enumerates the values for account type.
 type AccountType string
 
@@ -52,6 +60,13 @@ const (
 	StandardZRS AccountType = "Standard_ZRS"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleAccountTypeValues returns an array of possible values for the AccountType const type.
+func PossibleAccountTypeValues() []AccountType {
+	return []AccountType{PremiumLRS, StandardGRS, StandardLRS, StandardRAGRS, StandardZRS}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // KeyName enumerates the values for key name.
 type KeyName string
 
@@ -62,6 +77,13 @@ const (
 	Key2 KeyName = "key2"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleKeyNameValues returns an array of possible values for the KeyName const type.
+func PossibleKeyNameValues() []KeyName {
+	return []KeyName{Key1, Key2}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -74,6 +96,13 @@ const (
 	Succeeded ProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, ResolvingDNS, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Reason enumerates the values for reason.
 type Reason string
 
@@ -84,6 +113,13 @@ const (
 	AlreadyExists Reason = "AlreadyExists"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleReasonValues returns an array of possible values for the Reason const type.
+func PossibleReasonValues() []Reason {
+	return []Reason{AccountNameInvalid, AlreadyExists}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UsageUnit enumerates the values for usage unit.
 type UsageUnit string
 
@@ -102,6 +138,13 @@ const (
 	Seconds UsageUnit = "Seconds"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
+// PossibleUsageUnitValues returns an array of possible values for the UsageUnit const type.
+func PossibleUsageUnitValues() []UsageUnit {
+	return []UsageUnit{Bytes, BytesPerSecond, Count, CountsPerSecond, Percent, Seconds}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Account the storage account.
 type Account struct {
 	autorest.Response  `json:"-"`
@@ -118,6 +161,7 @@ type Account struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // MarshalJSON is the custom marshaler for Account.
 func (a Account) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -142,6 +186,7 @@ func (a Account) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UnmarshalJSON is the custom unmarshaler for Account struct.
 func (a *Account) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -211,12 +256,14 @@ func (a *Account) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountCheckNameAvailabilityParameters ...
 type AccountCheckNameAvailabilityParameters struct {
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountCreateParameters the parameters to provide for the account.
 type AccountCreateParameters struct {
 	*AccountPropertiesCreateParameters `json:"properties,omitempty"`
@@ -232,6 +279,7 @@ type AccountCreateParameters struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // MarshalJSON is the custom marshaler for AccountCreateParameters.
 func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -256,6 +304,7 @@ func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UnmarshalJSON is the custom unmarshaler for AccountCreateParameters struct.
 func (acp *AccountCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -325,6 +374,7 @@ func (acp *AccountCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountKeys the access keys for the storage account.
 type AccountKeys struct {
 	autorest.Response `json:"-"`
@@ -334,6 +384,7 @@ type AccountKeys struct {
 	Key2 *string `json:"key2,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountListResult the list storage accounts operation response.
 type AccountListResult struct {
 	autorest.Response `json:"-"`
@@ -343,12 +394,14 @@ type AccountListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountListResultIterator provides access to a complete listing of Account values.
 type AccountListResultIterator struct {
 	i    int
 	page AccountListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *AccountListResultIterator) Next() error {
@@ -365,16 +418,19 @@ func (iter *AccountListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter AccountListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Response returns the raw server response from the last page request.
 func (iter AccountListResultIterator) Response() AccountListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter AccountListResultIterator) Value() Account {
@@ -384,6 +440,7 @@ func (iter AccountListResultIterator) Value() Account {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (alr AccountListResult) IsEmpty() bool {
 	return alr.Value == nil || len(*alr.Value) == 0
@@ -401,12 +458,14 @@ func (alr AccountListResult) accountListResultPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(alr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountListResultPage contains a page of Account values.
 type AccountListResultPage struct {
 	fn  func(AccountListResult) (AccountListResult, error)
 	alr AccountListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *AccountListResultPage) Next() error {
@@ -418,16 +477,19 @@ func (page *AccountListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page AccountListResultPage) NotDone() bool {
 	return !page.alr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Response returns the raw server response from the last page request.
 func (page AccountListResultPage) Response() AccountListResult {
 	return page.alr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page AccountListResultPage) Values() []Account {
 	if page.alr.IsEmpty() {
@@ -436,6 +498,7 @@ func (page AccountListResultPage) Values() []Account {
 	return *page.alr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountProperties ...
 type AccountProperties struct {
 	// ProvisioningState - Gets the status of the storage account at the time the operation was called. Possible values include: 'Creating', 'ResolvingDNS', 'Succeeded'
@@ -462,12 +525,14 @@ type AccountProperties struct {
 	SecondaryEndpoints *Endpoints `json:"secondaryEndpoints,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountPropertiesCreateParameters ...
 type AccountPropertiesCreateParameters struct {
 	// AccountType - Gets or sets the account type. Possible values include: 'StandardLRS', 'StandardZRS', 'StandardGRS', 'StandardRAGRS', 'PremiumLRS'
 	AccountType AccountType `json:"accountType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountPropertiesUpdateParameters ...
 type AccountPropertiesUpdateParameters struct {
 	// AccountType - Gets or sets the account type. Note that StandardZRS and PremiumLRS accounts cannot be changed to other account types, and other account types cannot be changed to StandardZRS or PremiumLRS. Possible values include: 'StandardLRS', 'StandardZRS', 'StandardGRS', 'StandardRAGRS', 'PremiumLRS'
@@ -476,18 +541,21 @@ type AccountPropertiesUpdateParameters struct {
 	CustomDomain *CustomDomain `json:"customDomain,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountRegenerateKeyParameters ...
 type AccountRegenerateKeyParameters struct {
 	// KeyName - Possible values include: 'Key1', 'Key2'
 	KeyName KeyName `json:"keyName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future AccountsCreateFuture) Result(client AccountsClient) (a Account, err error) {
@@ -530,6 +598,7 @@ func (future AccountsCreateFuture) Result(client AccountsClient) (a Account, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // AccountUpdateParameters the parameters to update on the account.
 type AccountUpdateParameters struct {
 	*AccountPropertiesUpdateParameters `json:"properties,omitempty"`
@@ -545,6 +614,7 @@ type AccountUpdateParameters struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // MarshalJSON is the custom marshaler for AccountUpdateParameters.
 func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -569,6 +639,7 @@ func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UnmarshalJSON is the custom unmarshaler for AccountUpdateParameters struct.
 func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -638,6 +709,7 @@ func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CheckNameAvailabilityResult the CheckNameAvailability operation response.
 type CheckNameAvailabilityResult struct {
 	autorest.Response `json:"-"`
@@ -649,6 +721,7 @@ type CheckNameAvailabilityResult struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // CustomDomain the custom domain assigned to this storage account. This can be set via Update.
 type CustomDomain struct {
 	// Name - Gets or sets the custom domain name. Name is the CNAME source.
@@ -657,6 +730,7 @@ type CustomDomain struct {
 	UseSubDomain *bool `json:"useSubDomain,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Endpoints the URIs that are used to perform a retrieval of a public blob, queue or table object.
 type Endpoints struct {
 	// Blob - Gets the blob endpoint.
@@ -667,6 +741,7 @@ type Endpoints struct {
 	Table *string `json:"table,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Resource ...
 type Resource struct {
 	// ID - Resource Id
@@ -681,6 +756,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -702,12 +778,14 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // SubResource ...
 type SubResource struct {
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // Usage describes Storage Resource Usage.
 type Usage struct {
 	// Unit - Gets the unit of measurement. Possible values include: 'Count', 'Bytes', 'Seconds', 'Percent', 'CountsPerSecond', 'BytesPerSecond'
@@ -720,6 +798,7 @@ type Usage struct {
 	Name *UsageName `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UsageListResult the List Usages operation response.
 type UsageListResult struct {
 	autorest.Response `json:"-"`
@@ -727,6 +806,7 @@ type UsageListResult struct {
 	Value *[]Usage `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UsageName the Usage Names.
 type UsageName struct {
 	// Value - Gets a string describing the resource name.

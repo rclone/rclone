@@ -44,146 +44,162 @@ func NewVideosClientWithBaseURI(baseURI string) VideosClient {
 }
 
 // Details sends the details request.
-//
-// xBingApisSDK is activate swagger compliance query is the user's search query string. The query string cannot be
-// empty. The query string may contain [Bing Advanced Operators](http://msdn.microsoft.com/library/ff795620.aspx). For
-// example, to limit videos to a specific domain, use the [site:](http://msdn.microsoft.com/library/ff795613.aspx)
-// operator. Use this parameter only with the Video Search API. Do not specify this parameter when calling the Trending
-// Videos API. acceptLanguage is a comma-delimited list of one or more languages to use for user interface strings. The
-// list is in decreasing order of preference. For additional information, including expected format, see
+// Parameters:
+// query - the user's search query string. The query string cannot be empty. The query string may contain [Bing
+// Advanced Operators](http://msdn.microsoft.com/library/ff795620.aspx). For example, to limit videos to a
+// specific domain, use the [site:](http://msdn.microsoft.com/library/ff795613.aspx) operator. Use this
+// parameter only with the Video Search API. Do not specify this parameter when calling the Trending Videos
+// API.
+// acceptLanguage - a comma-delimited list of one or more languages to use for user interface strings. The list
+// is in decreasing order of preference. For additional information, including expected format, see
 // [RFC2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). This header and the
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameter are mutually exclusive; do not specify both. If you set this header, you must also specify the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter. To
-// determine the market to return results for, Bing uses the first supported language it finds from the list and
-// combines it with the cc parameter value. If the list does not include a supported language, Bing finds the closest
-// language and market that supports the request or it uses an aggregated or default market for the results. To
-// determine the market that Bing used, see the BingAPIs-Market header. Use this header and the cc query parameter only
-// if you specify multiple languages. Otherwise, use the
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameter are mutually exclusive; do not specify both. If you set this header, you must also specify
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter. To determine the market to return results for, Bing uses the first supported language it finds
+// from the list and combines it with the cc parameter value. If the list does not include a supported
+// language, Bing finds the closest language and market that supports the request or it uses an aggregated or
+// default market for the results. To determine the market that Bing used, see the BingAPIs-Market header. Use
+// this header and the cc query parameter only if you specify multiple languages. Otherwise, use the
 // [mkt](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#mkt) and
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameters. A user interface string is a string that's used as a label in a user interface. There are few user
-// interface strings in the JSON response objects. Any links to Bing.com properties in the response objects apply the
-// specified language. userAgent is the user agent originating the request. Bing uses the user agent to provide mobile
-// users with an optimized experience. Although optional, you are encouraged to always specify this header. The
-// user-agent should be the same string that any commonly used browser sends. For information about user agents, see
-// [RFC 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
-// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0; ARM;
-// Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build / GINGERBREAD)
-// AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla / 5.0 (iPhone; CPU
-// iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142 iPhone4; 1 BingWeb /
-// 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch; rv:11.0) like Gecko. iPad:
-// Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML, like Gecko) Version / 7.0 Mobile /
-// 11A465 Safari / 9537.53 clientID is bing uses this header to provide users with consistent behavior across Bing API
-// calls. Bing often flights new features and improvements, and it uses the client ID as a key for assigning traffic on
-// different flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign
-// the user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an inconsistent
-// user experience. For example, if the second request has a different flight assignment than the first, the experience
-// may be unexpected. Also, Bing can use the client ID to tailor web results to that client ID’s search history,
-// providing a richer experience for the user. Bing also uses this header to help improve result rankings by analyzing
-// the activity generated by a client ID. The relevance improvements help with better quality of results delivered by
-// Bing APIs and in turn enables higher click-through rates for the API consumer. IMPORTANT: Although optional, you
-// should consider this header required. Persisting the client ID across multiple requests for the same end user and
-// device combination enables 1) the API consumer to receive a consistent user experience, and 2) higher click-through
-// rates via better quality of results from the Bing APIs. Each user that uses your application on the device must have
-// a unique, Bing generated client ID. If you do not include this header in the request, Bing generates an ID and
-// returns it in the X-MSEdge-ClientID response header. The only time that you should NOT include this header in a
-// request is the first time the user uses your app on that device. Use the client ID for each Bing API request that
-// your app makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
-// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other apps
-// such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses your app on
-// that device, get the client ID that you persisted. Bing responses may or may not include this header. If the
-// response includes this header, capture the client ID and use it for all subsequent Bing requests for the user on
-// that device. If you include the X-MSEdge-ClientID, you must not include cookies in the request. clientIP is the IPv4
-// or IPv6 address of the client device. The IP address is used to discover the user's location. Bing uses the location
-// information to determine safe search behavior. Although optional, you are encouraged to always specify this header
-// and the X-Search-Location header. Do not obfuscate the address (for example, by changing the last octet to 0).
-// Obfuscating the address results in the location not being anywhere near the device's actual location, which may
-// result in Bing serving erroneous results. location is a semicolon-delimited list of key/value pairs that describe
-// the client's geographical location. Bing uses the location information to determine safe search behavior and to
-// return relevant local content. Specify the key/value pair as <key>:<value>. The following are the keys that you use
-// to specify the user's location. lat (required): The latitude of the client's location, in degrees. The latitude must
-// be greater than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
-// positive values indicate northern latitudes. long (required): The longitude of the client's location, in degrees.
-// The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative values indicate
-// western longitudes and positive values indicate eastern longitudes. re (required): The radius, in meters, which
-// specifies the horizontal accuracy of the coordinates. Pass the value returned by the device's location service.
-// Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation, and 18,000m for reverse IP lookup. ts
-// (optional): The UTC UNIX timestamp of when the client was at the location. (The UNIX timestamp is the number of
-// seconds since January 1, 1970.) head (optional): The client's relative heading or direction of travel. Specify the
-// direction of travel as degrees from 0 through 360, counting clockwise relative to true north. Specify this key only
-// if the sp key is nonzero. sp (optional): The horizontal velocity (speed), in meters per second, that the client
-// device is traveling. alt (optional): The altitude of the client device, in meters. are (optional): The radius, in
-// meters, that specifies the vertical accuracy of the coordinates. Specify this key only if you specify the alt key.
-// Although many of the keys are optional, the more information that you provide, the more accurate the location
-// results are. Although optional, you are encouraged to always specify the user's geographical location. Providing the
-// location is especially important if the client's IP address does not accurately reflect the user's physical location
-// (for example, if the client uses VPN). For optimal results, you should include this header and the X-MSEdge-ClientIP
-// header, but at a minimum, you should include this header. countryCode is a 2-character country code of the country
-// where the results come from. This API supports only the United States market. If you specify this query parameter,
-// it must be set to us. If you set this parameter, you must also specify the Accept-Language header. Bing uses the
-// first supported language it finds from the languages list, and combine that language with the country code that you
-// specify to determine the market to return results for. If the languages list does not include a supported language,
-// Bing finds the closest language and market that supports the request, or it may use an aggregated or default market
-// for the results instead of a specified one. You should use this query parameter and the Accept-Language query
-// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query parameters.
-// This parameter and the mkt query parameter are mutually exclusive—do not specify both. ID is an ID that uniquely
-// identifies a video. The
-// [Video](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#video) object's
-// videoId field contains the ID that you set this parameter to. You use this parameter to identify the video to get
-// insights of. modules is a comma-delimited list of insights to request. The following are the possible
-// case-insensitive values. All: Return all available insights. RelatedVideos: Return a list of videos that are similar
-// to the video specified by the id query parameter. VideoResult: Return the video that you're requesting insights of
-// (this is the video that you set the id query parameter to in your insights request). If you specify an insight and
-// there is no data for it, the response object does not include the related field. For example, if you specify
-// RelatedVideos and none exist, the response does not include the relatedVideos field. Although the user's query term
-// is not required, you should always include it because it helps to improve relevance and the results. market is the
-// market where the results come from. Typically, mkt is the country where the user is making the request from.
-// However, it could be a different country if the user is not located in a country where Bing delivers results. The
-// market must be in the form <language code>-<country code>. For example, en-US. The string is case insensitive. For a
-// list of possible market values, see [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes). NOTE:
-// If known, you are encouraged to always specify the market. Specifying the market helps Bing route the request and
-// return an appropriate and optimal response. If you specify a market that is not listed in [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes), Bing
-// uses a best fit market code based on an internal mapping that is subject to change. This parameter and the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter are
-// mutually exclusive—do not specify both. resolution is filter videos by the following resolutions: SD480p: Return
-// videos with a 480p or higher resolution. HD720p: Return videos with a 720p or higher resolution. HD1080p: Return
-// videos with a 1080p or higher resolution. All: Do not filter by resolution.Specifying this value is the same as not
-// specifying the resolution parameter. safeSearch is filter videos for adult content. The following are the possible
-// filter values. Off: If the request is through the Video Search API, the response includes adult videos and the
-// thumbnail images of the videos are clear (non-fuzzy). If the request is through the Web Search API, the response
-// includes adult videos but the thumbnail images of the videos are pixelated (fuzzy). Moderate: If the request is
-// through the Video Search API, the response does not include videos with adult content. If the request is through the
-// Web Search API, the response may include videos with adult content but the thumbnail images of the videos are
-// pixelated (fuzzy). Strict: Does not return videos with adult content. The default is Moderate. If the request comes
-// from a market that Bing's adult policy requires that safeSearch is set to Strict, Bing ignores the safeSearch value
-// and uses Strict. If you use the site: query operator, there is the chance that the response may contain adult
-// content regardless of what the safeSearch query parameter is set to. Use site: only if you are aware of the content
-// on the site and your scenario supports the possibility of adult content. setLang is the language to use for user
-// interface strings. Specify the language using the ISO 639-1 2-letter language code. For example, the language code
-// for English is EN. The default is EN (English). Although optional, you should always specify the language.
-// Typically, you set setLang to the same language specified by mkt unless the user wants the user interface strings
-// displayed in a different language. This parameter and the
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameters. A user interface string is a string that's used as a label in a user interface. There are
+// few user interface strings in the JSON response objects. Any links to Bing.com properties in the response
+// objects apply the specified language.
+// userAgent - the user agent originating the request. Bing uses the user agent to provide mobile users with an
+// optimized experience. Although optional, you are encouraged to always specify this header. The user-agent
+// should be the same string that any commonly used browser sends. For information about user agents, see [RFC
+// 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
+// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0;
+// ARM; Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build /
+// GINGERBREAD) AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla /
+// 5.0 (iPhone; CPU iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142
+// iPhone4; 1 BingWeb / 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch;
+// rv:11.0) like Gecko. iPad: Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML,
+// like Gecko) Version / 7.0 Mobile / 11A465 Safari / 9537.53
+// clientID - bing uses this header to provide users with consistent behavior across Bing API calls. Bing often
+// flights new features and improvements, and it uses the client ID as a key for assigning traffic on different
+// flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign the
+// user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an
+// inconsistent user experience. For example, if the second request has a different flight assignment than the
+// first, the experience may be unexpected. Also, Bing can use the client ID to tailor web results to that
+// client ID’s search history, providing a richer experience for the user. Bing also uses this header to help
+// improve result rankings by analyzing the activity generated by a client ID. The relevance improvements help
+// with better quality of results delivered by Bing APIs and in turn enables higher click-through rates for the
+// API consumer. IMPORTANT: Although optional, you should consider this header required. Persisting the client
+// ID across multiple requests for the same end user and device combination enables 1) the API consumer to
+// receive a consistent user experience, and 2) higher click-through rates via better quality of results from
+// the Bing APIs. Each user that uses your application on the device must have a unique, Bing generated client
+// ID. If you do not include this header in the request, Bing generates an ID and returns it in the
+// X-MSEdge-ClientID response header. The only time that you should NOT include this header in a request is the
+// first time the user uses your app on that device. Use the client ID for each Bing API request that your app
+// makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
+// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other
+// apps such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses
+// your app on that device, get the client ID that you persisted. Bing responses may or may not include this
+// header. If the response includes this header, capture the client ID and use it for all subsequent Bing
+// requests for the user on that device. If you include the X-MSEdge-ClientID, you must not include cookies in
+// the request.
+// clientIP - the IPv4 or IPv6 address of the client device. The IP address is used to discover the user's
+// location. Bing uses the location information to determine safe search behavior. Although optional, you are
+// encouraged to always specify this header and the X-Search-Location header. Do not obfuscate the address (for
+// example, by changing the last octet to 0). Obfuscating the address results in the location not being
+// anywhere near the device's actual location, which may result in Bing serving erroneous results.
+// location - a semicolon-delimited list of key/value pairs that describe the client's geographical location.
+// Bing uses the location information to determine safe search behavior and to return relevant local content.
+// Specify the key/value pair as <key>:<value>. The following are the keys that you use to specify the user's
+// location. lat (required): The latitude of the client's location, in degrees. The latitude must be greater
+// than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
+// positive values indicate northern latitudes. long (required): The longitude of the client's location, in
+// degrees. The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative
+// values indicate western longitudes and positive values indicate eastern longitudes. re (required): The
+// radius, in meters, which specifies the horizontal accuracy of the coordinates. Pass the value returned by
+// the device's location service. Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation,
+// and 18,000m for reverse IP lookup. ts (optional): The UTC UNIX timestamp of when the client was at the
+// location. (The UNIX timestamp is the number of seconds since January 1, 1970.) head (optional): The client's
+// relative heading or direction of travel. Specify the direction of travel as degrees from 0 through 360,
+// counting clockwise relative to true north. Specify this key only if the sp key is nonzero. sp (optional):
+// The horizontal velocity (speed), in meters per second, that the client device is traveling. alt (optional):
+// The altitude of the client device, in meters. are (optional): The radius, in meters, that specifies the
+// vertical accuracy of the coordinates. Specify this key only if you specify the alt key. Although many of the
+// keys are optional, the more information that you provide, the more accurate the location results are.
+// Although optional, you are encouraged to always specify the user's geographical location. Providing the
+// location is especially important if the client's IP address does not accurately reflect the user's physical
+// location (for example, if the client uses VPN). For optimal results, you should include this header and the
+// X-MSEdge-ClientIP header, but at a minimum, you should include this header.
+// countryCode - a 2-character country code of the country where the results come from. This API supports only
+// the United States market. If you specify this query parameter, it must be set to us. If you set this
+// parameter, you must also specify the Accept-Language header. Bing uses the first supported language it finds
+// from the languages list, and combine that language with the country code that you specify to determine the
+// market to return results for. If the languages list does not include a supported language, Bing finds the
+// closest language and market that supports the request, or it may use an aggregated or default market for the
+// results instead of a specified one. You should use this query parameter and the Accept-Language query
+// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query
+// parameters. This parameter and the mkt query parameter are mutually exclusive—do not specify both.
+// ID - an ID that uniquely identifies a video. The
+// [Video](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#video)
+// object's videoId field contains the ID that you set this parameter to. You use this parameter to identify
+// the video to get insights of.
+// modules - a comma-delimited list of insights to request. The following are the possible case-insensitive
+// values. All: Return all available insights. RelatedVideos: Return a list of videos that are similar to the
+// video specified by the id query parameter. VideoResult: Return the video that you're requesting insights of
+// (this is the video that you set the id query parameter to in your insights request). If you specify an
+// insight and there is no data for it, the response object does not include the related field. For example, if
+// you specify RelatedVideos and none exist, the response does not include the relatedVideos field. Although
+// the user's query term is not required, you should always include it because it helps to improve relevance
+// and the results.
+// market - the market where the results come from. Typically, mkt is the country where the user is making the
+// request from. However, it could be a different country if the user is not located in a country where Bing
+// delivers results. The market must be in the form <language code>-<country code>. For example, en-US. The
+// string is case insensitive. For a list of possible market values, see [Market
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes).
+// NOTE: If known, you are encouraged to always specify the market. Specifying the market helps Bing route the
+// request and return an appropriate and optimal response. If you specify a market that is not listed in
+// [Market
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes),
+// Bing uses a best fit market code based on an internal mapping that is subject to change. This parameter and
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter are mutually exclusive—do not specify both.
+// resolution - filter videos by the following resolutions: SD480p: Return videos with a 480p or higher
+// resolution. HD720p: Return videos with a 720p or higher resolution. HD1080p: Return videos with a 1080p or
+// higher resolution. All: Do not filter by resolution.Specifying this value is the same as not specifying the
+// resolution parameter.
+// safeSearch - filter videos for adult content. The following are the possible filter values. Off: If the
+// request is through the Video Search API, the response includes adult videos and the thumbnail images of the
+// videos are clear (non-fuzzy). If the request is through the Web Search API, the response includes adult
+// videos but the thumbnail images of the videos are pixelated (fuzzy). Moderate: If the request is through the
+// Video Search API, the response does not include videos with adult content. If the request is through the Web
+// Search API, the response may include videos with adult content but the thumbnail images of the videos are
+// pixelated (fuzzy). Strict: Does not return videos with adult content. The default is Moderate. If the
+// request comes from a market that Bing's adult policy requires that safeSearch is set to Strict, Bing ignores
+// the safeSearch value and uses Strict. If you use the site: query operator, there is the chance that the
+// response may contain adult content regardless of what the safeSearch query parameter is set to. Use site:
+// only if you are aware of the content on the site and your scenario supports the possibility of adult
+// content.
+// setLang - the language to use for user interface strings. Specify the language using the ISO 639-1 2-letter
+// language code. For example, the language code for English is EN. The default is EN (English). Although
+// optional, you should always specify the language. Typically, you set setLang to the same language specified
+// by mkt unless the user wants the user interface strings displayed in a different language. This parameter
+// and the
 // [Accept-Language](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#acceptlanguage)
-// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a label in a
-// user interface. There are few user interface strings in the JSON response objects. Also, any links to Bing.com
-// properties in the response objects apply the specified language. textDecorations is a Boolean value that determines
-// whether display strings contain decoration markers such as hit highlighting characters. If true, the strings may
-// include markers. The default is false. To specify whether to use Unicode characters or HTML tags as the markers, see
-// the [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
+// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a
+// label in a user interface. There are few user interface strings in the JSON response objects. Also, any
+// links to Bing.com properties in the response objects apply the specified language.
+// textDecorations - a Boolean value that determines whether display strings contain decoration markers such as
+// hit highlighting characters. If true, the strings may include markers. The default is false. To specify
+// whether to use Unicode characters or HTML tags as the markers, see the
+// [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
 // query parameter. For information about hit highlighting, see [Hit
-// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting). textFormat is
-// the type of markers to use for text decorations (see the textDecorations query parameter). Possible values are
-// Raw—Use Unicode characters to mark content that needs special formatting. The Unicode characters are in the range
-// E000 through E019. For example, Bing uses E000 and E001 to mark the beginning and end of query terms for hit
-// highlighting. HTML—Use HTML tags to mark content that needs special formatting. For example, use <b> tags to
-// highlight query terms in display strings. The default is Raw. For display strings that contain escapable HTML
-// characters such as <, >, and &, if textFormat is set to HTML, Bing escapes the characters as appropriate (for
-// example, < is escaped to &lt;).
-func (client VideosClient) Details(ctx context.Context, xBingApisSDK string, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, ID string, modules []VideoInsightModule, market string, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result VideoDetails, err error) {
-	req, err := client.DetailsPreparer(ctx, xBingApisSDK, query, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, ID, modules, market, resolution, safeSearch, setLang, textDecorations, textFormat)
+// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting).
+// textFormat - the type of markers to use for text decorations (see the textDecorations query parameter).
+// Possible values are Raw—Use Unicode characters to mark content that needs special formatting. The Unicode
+// characters are in the range E000 through E019. For example, Bing uses E000 and E001 to mark the beginning
+// and end of query terms for hit highlighting. HTML—Use HTML tags to mark content that needs special
+// formatting. For example, use <b> tags to highlight query terms in display strings. The default is Raw. For
+// display strings that contain escapable HTML characters such as <, >, and &, if textFormat is set to HTML,
+// Bing escapes the characters as appropriate (for example, < is escaped to &lt;).
+func (client VideosClient) Details(ctx context.Context, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, ID string, modules []VideoInsightModule, market string, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result VideoDetails, err error) {
+	req, err := client.DetailsPreparer(ctx, query, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, ID, modules, market, resolution, safeSearch, setLang, textDecorations, textFormat)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "videosearch.VideosClient", "Details", nil, "Failure preparing request")
 		return
@@ -205,7 +221,7 @@ func (client VideosClient) Details(ctx context.Context, xBingApisSDK string, que
 }
 
 // DetailsPreparer prepares the Details request.
-func (client VideosClient) DetailsPreparer(ctx context.Context, xBingApisSDK string, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, ID string, modules []VideoInsightModule, market string, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
+func (client VideosClient) DetailsPreparer(ctx context.Context, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, ID string, modules []VideoInsightModule, market string, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"q": autorest.Encode("query", query),
 	}
@@ -242,7 +258,7 @@ func (client VideosClient) DetailsPreparer(ctx context.Context, xBingApisSDK str
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/videos/details"),
 		autorest.WithQueryParameters(queryParameters),
-		autorest.WithHeader("X-BingApis-SDK", autorest.String(xBingApisSDK)))
+		autorest.WithHeader("X-BingApis-SDK", "true"))
 	if len(acceptLanguage) > 0 {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("Accept-Language", autorest.String(acceptLanguage)))
@@ -287,160 +303,179 @@ func (client VideosClient) DetailsResponder(resp *http.Response) (result VideoDe
 }
 
 // Search sends the search request.
-//
-// xBingApisSDK is activate swagger compliance query is the user's search query string. The query string cannot be
-// empty. The query string may contain [Bing Advanced Operators](http://msdn.microsoft.com/library/ff795620.aspx). For
-// example, to limit videos to a specific domain, use the [site:](http://msdn.microsoft.com/library/ff795613.aspx)
-// operator. Use this parameter only with the Video Search API. Do not specify this parameter when calling the Trending
-// Videos API. acceptLanguage is a comma-delimited list of one or more languages to use for user interface strings. The
-// list is in decreasing order of preference. For additional information, including expected format, see
+// Parameters:
+// query - the user's search query string. The query string cannot be empty. The query string may contain [Bing
+// Advanced Operators](http://msdn.microsoft.com/library/ff795620.aspx). For example, to limit videos to a
+// specific domain, use the [site:](http://msdn.microsoft.com/library/ff795613.aspx) operator. Use this
+// parameter only with the Video Search API. Do not specify this parameter when calling the Trending Videos
+// API.
+// acceptLanguage - a comma-delimited list of one or more languages to use for user interface strings. The list
+// is in decreasing order of preference. For additional information, including expected format, see
 // [RFC2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). This header and the
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameter are mutually exclusive; do not specify both. If you set this header, you must also specify the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter. To
-// determine the market to return results for, Bing uses the first supported language it finds from the list and
-// combines it with the cc parameter value. If the list does not include a supported language, Bing finds the closest
-// language and market that supports the request or it uses an aggregated or default market for the results. To
-// determine the market that Bing used, see the BingAPIs-Market header. Use this header and the cc query parameter only
-// if you specify multiple languages. Otherwise, use the
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameter are mutually exclusive; do not specify both. If you set this header, you must also specify
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter. To determine the market to return results for, Bing uses the first supported language it finds
+// from the list and combines it with the cc parameter value. If the list does not include a supported
+// language, Bing finds the closest language and market that supports the request or it uses an aggregated or
+// default market for the results. To determine the market that Bing used, see the BingAPIs-Market header. Use
+// this header and the cc query parameter only if you specify multiple languages. Otherwise, use the
 // [mkt](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#mkt) and
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameters. A user interface string is a string that's used as a label in a user interface. There are few user
-// interface strings in the JSON response objects. Any links to Bing.com properties in the response objects apply the
-// specified language. userAgent is the user agent originating the request. Bing uses the user agent to provide mobile
-// users with an optimized experience. Although optional, you are encouraged to always specify this header. The
-// user-agent should be the same string that any commonly used browser sends. For information about user agents, see
-// [RFC 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
-// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0; ARM;
-// Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build / GINGERBREAD)
-// AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla / 5.0 (iPhone; CPU
-// iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142 iPhone4; 1 BingWeb /
-// 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch; rv:11.0) like Gecko. iPad:
-// Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML, like Gecko) Version / 7.0 Mobile /
-// 11A465 Safari / 9537.53 clientID is bing uses this header to provide users with consistent behavior across Bing API
-// calls. Bing often flights new features and improvements, and it uses the client ID as a key for assigning traffic on
-// different flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign
-// the user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an inconsistent
-// user experience. For example, if the second request has a different flight assignment than the first, the experience
-// may be unexpected. Also, Bing can use the client ID to tailor web results to that client ID’s search history,
-// providing a richer experience for the user. Bing also uses this header to help improve result rankings by analyzing
-// the activity generated by a client ID. The relevance improvements help with better quality of results delivered by
-// Bing APIs and in turn enables higher click-through rates for the API consumer. IMPORTANT: Although optional, you
-// should consider this header required. Persisting the client ID across multiple requests for the same end user and
-// device combination enables 1) the API consumer to receive a consistent user experience, and 2) higher click-through
-// rates via better quality of results from the Bing APIs. Each user that uses your application on the device must have
-// a unique, Bing generated client ID. If you do not include this header in the request, Bing generates an ID and
-// returns it in the X-MSEdge-ClientID response header. The only time that you should NOT include this header in a
-// request is the first time the user uses your app on that device. Use the client ID for each Bing API request that
-// your app makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
-// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other apps
-// such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses your app on
-// that device, get the client ID that you persisted. Bing responses may or may not include this header. If the
-// response includes this header, capture the client ID and use it for all subsequent Bing requests for the user on
-// that device. If you include the X-MSEdge-ClientID, you must not include cookies in the request. clientIP is the IPv4
-// or IPv6 address of the client device. The IP address is used to discover the user's location. Bing uses the location
-// information to determine safe search behavior. Although optional, you are encouraged to always specify this header
-// and the X-Search-Location header. Do not obfuscate the address (for example, by changing the last octet to 0).
-// Obfuscating the address results in the location not being anywhere near the device's actual location, which may
-// result in Bing serving erroneous results. location is a semicolon-delimited list of key/value pairs that describe
-// the client's geographical location. Bing uses the location information to determine safe search behavior and to
-// return relevant local content. Specify the key/value pair as <key>:<value>. The following are the keys that you use
-// to specify the user's location. lat (required): The latitude of the client's location, in degrees. The latitude must
-// be greater than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
-// positive values indicate northern latitudes. long (required): The longitude of the client's location, in degrees.
-// The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative values indicate
-// western longitudes and positive values indicate eastern longitudes. re (required): The radius, in meters, which
-// specifies the horizontal accuracy of the coordinates. Pass the value returned by the device's location service.
-// Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation, and 18,000m for reverse IP lookup. ts
-// (optional): The UTC UNIX timestamp of when the client was at the location. (The UNIX timestamp is the number of
-// seconds since January 1, 1970.) head (optional): The client's relative heading or direction of travel. Specify the
-// direction of travel as degrees from 0 through 360, counting clockwise relative to true north. Specify this key only
-// if the sp key is nonzero. sp (optional): The horizontal velocity (speed), in meters per second, that the client
-// device is traveling. alt (optional): The altitude of the client device, in meters. are (optional): The radius, in
-// meters, that specifies the vertical accuracy of the coordinates. Specify this key only if you specify the alt key.
-// Although many of the keys are optional, the more information that you provide, the more accurate the location
-// results are. Although optional, you are encouraged to always specify the user's geographical location. Providing the
-// location is especially important if the client's IP address does not accurately reflect the user's physical location
-// (for example, if the client uses VPN). For optimal results, you should include this header and the X-MSEdge-ClientIP
-// header, but at a minimum, you should include this header. countryCode is a 2-character country code of the country
-// where the results come from. This API supports only the United States market. If you specify this query parameter,
-// it must be set to us. If you set this parameter, you must also specify the Accept-Language header. Bing uses the
-// first supported language it finds from the languages list, and combine that language with the country code that you
-// specify to determine the market to return results for. If the languages list does not include a supported language,
-// Bing finds the closest language and market that supports the request, or it may use an aggregated or default market
-// for the results instead of a specified one. You should use this query parameter and the Accept-Language query
-// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query parameters.
-// This parameter and the mkt query parameter are mutually exclusive—do not specify both. count is the number of videos
-// to return in the response. The actual number delivered may be less than requested. The default is 35. The maximum is
-// 105. You may use this parameter along with the offset parameter to page results. For example, if your user interface
-// presents 20 videos per page, set count to 20 and offset to 0 to get the first page of results. For each subsequent
-// page, increment offset by 20 (for example, 0, 20, 40). Use this parameter only with the Video Search API. Do not
-// specify this parameter when calling the Trending Videos API or the Web Search API. freshness is filter videos by the
-// date and time that Bing discovered the video. The following are the possible filter values. Day: Return videos
-// discovered within the last 24 hours. Week: Return videos discovered within the last 7 days. Month: Return videos
-// discovered within the last 30 days. ID is an ID that uniquely identifies a video. The
-// [Video](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#video) object's
-// videoId field contains the ID that you set this parameter to. You use this parameter to ensure that the specified
-// video is the first video in the list of videos that Bing returns. length is filter videos by the following lengths:
-// Short: Return videos that are less than 5 minutes. Medium: Return videos that are between 5 and 20 minutes,
-// inclusive. Long: Return videos that are longer than 20 minutes. All: Do not filter by length.Specifying this value
-// is the same as not specifying the videoLength parameter. market is the market where the results come from.
-// Typically, mkt is the country where the user is making the request from. However, it could be a different country if
-// the user is not located in a country where Bing delivers results. The market must be in the form <language
-// code>-<country code>. For example, en-US. The string is case insensitive. For a list of possible market values, see
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameters. A user interface string is a string that's used as a label in a user interface. There are
+// few user interface strings in the JSON response objects. Any links to Bing.com properties in the response
+// objects apply the specified language.
+// userAgent - the user agent originating the request. Bing uses the user agent to provide mobile users with an
+// optimized experience. Although optional, you are encouraged to always specify this header. The user-agent
+// should be the same string that any commonly used browser sends. For information about user agents, see [RFC
+// 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
+// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0;
+// ARM; Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build /
+// GINGERBREAD) AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla /
+// 5.0 (iPhone; CPU iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142
+// iPhone4; 1 BingWeb / 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch;
+// rv:11.0) like Gecko. iPad: Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML,
+// like Gecko) Version / 7.0 Mobile / 11A465 Safari / 9537.53
+// clientID - bing uses this header to provide users with consistent behavior across Bing API calls. Bing often
+// flights new features and improvements, and it uses the client ID as a key for assigning traffic on different
+// flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign the
+// user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an
+// inconsistent user experience. For example, if the second request has a different flight assignment than the
+// first, the experience may be unexpected. Also, Bing can use the client ID to tailor web results to that
+// client ID’s search history, providing a richer experience for the user. Bing also uses this header to help
+// improve result rankings by analyzing the activity generated by a client ID. The relevance improvements help
+// with better quality of results delivered by Bing APIs and in turn enables higher click-through rates for the
+// API consumer. IMPORTANT: Although optional, you should consider this header required. Persisting the client
+// ID across multiple requests for the same end user and device combination enables 1) the API consumer to
+// receive a consistent user experience, and 2) higher click-through rates via better quality of results from
+// the Bing APIs. Each user that uses your application on the device must have a unique, Bing generated client
+// ID. If you do not include this header in the request, Bing generates an ID and returns it in the
+// X-MSEdge-ClientID response header. The only time that you should NOT include this header in a request is the
+// first time the user uses your app on that device. Use the client ID for each Bing API request that your app
+// makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
+// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other
+// apps such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses
+// your app on that device, get the client ID that you persisted. Bing responses may or may not include this
+// header. If the response includes this header, capture the client ID and use it for all subsequent Bing
+// requests for the user on that device. If you include the X-MSEdge-ClientID, you must not include cookies in
+// the request.
+// clientIP - the IPv4 or IPv6 address of the client device. The IP address is used to discover the user's
+// location. Bing uses the location information to determine safe search behavior. Although optional, you are
+// encouraged to always specify this header and the X-Search-Location header. Do not obfuscate the address (for
+// example, by changing the last octet to 0). Obfuscating the address results in the location not being
+// anywhere near the device's actual location, which may result in Bing serving erroneous results.
+// location - a semicolon-delimited list of key/value pairs that describe the client's geographical location.
+// Bing uses the location information to determine safe search behavior and to return relevant local content.
+// Specify the key/value pair as <key>:<value>. The following are the keys that you use to specify the user's
+// location. lat (required): The latitude of the client's location, in degrees. The latitude must be greater
+// than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
+// positive values indicate northern latitudes. long (required): The longitude of the client's location, in
+// degrees. The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative
+// values indicate western longitudes and positive values indicate eastern longitudes. re (required): The
+// radius, in meters, which specifies the horizontal accuracy of the coordinates. Pass the value returned by
+// the device's location service. Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation,
+// and 18,000m for reverse IP lookup. ts (optional): The UTC UNIX timestamp of when the client was at the
+// location. (The UNIX timestamp is the number of seconds since January 1, 1970.) head (optional): The client's
+// relative heading or direction of travel. Specify the direction of travel as degrees from 0 through 360,
+// counting clockwise relative to true north. Specify this key only if the sp key is nonzero. sp (optional):
+// The horizontal velocity (speed), in meters per second, that the client device is traveling. alt (optional):
+// The altitude of the client device, in meters. are (optional): The radius, in meters, that specifies the
+// vertical accuracy of the coordinates. Specify this key only if you specify the alt key. Although many of the
+// keys are optional, the more information that you provide, the more accurate the location results are.
+// Although optional, you are encouraged to always specify the user's geographical location. Providing the
+// location is especially important if the client's IP address does not accurately reflect the user's physical
+// location (for example, if the client uses VPN). For optimal results, you should include this header and the
+// X-MSEdge-ClientIP header, but at a minimum, you should include this header.
+// countryCode - a 2-character country code of the country where the results come from. This API supports only
+// the United States market. If you specify this query parameter, it must be set to us. If you set this
+// parameter, you must also specify the Accept-Language header. Bing uses the first supported language it finds
+// from the languages list, and combine that language with the country code that you specify to determine the
+// market to return results for. If the languages list does not include a supported language, Bing finds the
+// closest language and market that supports the request, or it may use an aggregated or default market for the
+// results instead of a specified one. You should use this query parameter and the Accept-Language query
+// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query
+// parameters. This parameter and the mkt query parameter are mutually exclusive—do not specify both.
+// count - the number of videos to return in the response. The actual number delivered may be less than
+// requested. The default is 35. The maximum is 105. You may use this parameter along with the offset parameter
+// to page results. For example, if your user interface presents 20 videos per page, set count to 20 and offset
+// to 0 to get the first page of results. For each subsequent page, increment offset by 20 (for example, 0, 20,
+// 40). Use this parameter only with the Video Search API. Do not specify this parameter when calling the
+// Trending Videos API or the Web Search API.
+// freshness - filter videos by the date and time that Bing discovered the video. The following are the
+// possible filter values. Day: Return videos discovered within the last 24 hours. Week: Return videos
+// discovered within the last 7 days. Month: Return videos discovered within the last 30 days.
+// ID - an ID that uniquely identifies a video. The
+// [Video](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#video)
+// object's videoId field contains the ID that you set this parameter to. You use this parameter to ensure that
+// the specified video is the first video in the list of videos that Bing returns.
+// length - filter videos by the following lengths: Short: Return videos that are less than 5 minutes. Medium:
+// Return videos that are between 5 and 20 minutes, inclusive. Long: Return videos that are longer than 20
+// minutes. All: Do not filter by length.Specifying this value is the same as not specifying the videoLength
+// parameter.
+// market - the market where the results come from. Typically, mkt is the country where the user is making the
+// request from. However, it could be a different country if the user is not located in a country where Bing
+// delivers results. The market must be in the form <language code>-<country code>. For example, en-US. The
+// string is case insensitive. For a list of possible market values, see [Market
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes).
+// NOTE: If known, you are encouraged to always specify the market. Specifying the market helps Bing route the
+// request and return an appropriate and optimal response. If you specify a market that is not listed in
 // [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes). NOTE:
-// If known, you are encouraged to always specify the market. Specifying the market helps Bing route the request and
-// return an appropriate and optimal response. If you specify a market that is not listed in [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes), Bing
-// uses a best fit market code based on an internal mapping that is subject to change. This parameter and the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter are
-// mutually exclusive—do not specify both. offset is the zero-based offset that indicates the number of videos to skip
-// before returning videos. The default is 0. The offset should be less than
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes),
+// Bing uses a best fit market code based on an internal mapping that is subject to change. This parameter and
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter are mutually exclusive—do not specify both.
+// offset - the zero-based offset that indicates the number of videos to skip before returning videos. The
+// default is 0. The offset should be less than
 // ([totalEstimatedMatches](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#videos-totalmatches)
-// - count). Use this parameter along with the count parameter to page results. For example, if your user interface
-// displays 20 videos per page, set count to 20 and offset to 0 to get the first page of results. For each subsequent
-// page, increment offset by 20 (for example, 0, 20, 40). It is possible for multiple pages to include some overlap in
-// results. To prevent duplicates, see
+// - count). Use this parameter along with the count parameter to page results. For example, if your user
+// interface displays 20 videos per page, set count to 20 and offset to 0 to get the first page of results. For
+// each subsequent page, increment offset by 20 (for example, 0, 20, 40). It is possible for multiple pages to
+// include some overlap in results. To prevent duplicates, see
 // [nextOffset](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#videos-nextoffset).
-// Use this parameter only with the Video Search API. pricing is filter videos by the following pricing options: Free:
-// Return videos that are free to view. Paid: Return videos that require a subscription or payment to view. All: Do not
-// filter by pricing.Specifying this value is the same as not specifying the pricing parameter. resolution is filter
-// videos by the following resolutions: SD480p: Return videos with a 480p or higher resolution. HD720p: Return videos
-// with a 720p or higher resolution. HD1080p: Return videos with a 1080p or higher resolution. All: Do not filter by
-// resolution.Specifying this value is the same as not specifying the resolution parameter. safeSearch is filter videos
-// for adult content. The following are the possible filter values. Off: If the request is through the Video Search
-// API, the response includes adult videos and the thumbnail images of the videos are clear (non-fuzzy). If the request
-// is through the Web Search API, the response includes adult videos but the thumbnail images of the videos are
-// pixelated (fuzzy). Moderate: If the request is through the Video Search API, the response does not include videos
-// with adult content. If the request is through the Web Search API, the response may include videos with adult content
-// but the thumbnail images of the videos are pixelated (fuzzy). Strict: Does not return videos with adult content. The
-// default is Moderate. If the request comes from a market that Bing's adult policy requires that safeSearch is set to
-// Strict, Bing ignores the safeSearch value and uses Strict. If you use the site: query operator, there is the chance
-// that the response may contain adult content regardless of what the safeSearch query parameter is set to. Use site:
-// only if you are aware of the content on the site and your scenario supports the possibility of adult content.
-// setLang is the language to use for user interface strings. Specify the language using the ISO 639-1 2-letter
-// language code. For example, the language code for English is EN. The default is EN (English). Although optional, you
-// should always specify the language. Typically, you set setLang to the same language specified by mkt unless the user
-// wants the user interface strings displayed in a different language. This parameter and the
+// Use this parameter only with the Video Search API.
+// pricing - filter videos by the following pricing options: Free: Return videos that are free to view. Paid:
+// Return videos that require a subscription or payment to view. All: Do not filter by pricing.Specifying this
+// value is the same as not specifying the pricing parameter.
+// resolution - filter videos by the following resolutions: SD480p: Return videos with a 480p or higher
+// resolution. HD720p: Return videos with a 720p or higher resolution. HD1080p: Return videos with a 1080p or
+// higher resolution. All: Do not filter by resolution.Specifying this value is the same as not specifying the
+// resolution parameter.
+// safeSearch - filter videos for adult content. The following are the possible filter values. Off: If the
+// request is through the Video Search API, the response includes adult videos and the thumbnail images of the
+// videos are clear (non-fuzzy). If the request is through the Web Search API, the response includes adult
+// videos but the thumbnail images of the videos are pixelated (fuzzy). Moderate: If the request is through the
+// Video Search API, the response does not include videos with adult content. If the request is through the Web
+// Search API, the response may include videos with adult content but the thumbnail images of the videos are
+// pixelated (fuzzy). Strict: Does not return videos with adult content. The default is Moderate. If the
+// request comes from a market that Bing's adult policy requires that safeSearch is set to Strict, Bing ignores
+// the safeSearch value and uses Strict. If you use the site: query operator, there is the chance that the
+// response may contain adult content regardless of what the safeSearch query parameter is set to. Use site:
+// only if you are aware of the content on the site and your scenario supports the possibility of adult
+// content.
+// setLang - the language to use for user interface strings. Specify the language using the ISO 639-1 2-letter
+// language code. For example, the language code for English is EN. The default is EN (English). Although
+// optional, you should always specify the language. Typically, you set setLang to the same language specified
+// by mkt unless the user wants the user interface strings displayed in a different language. This parameter
+// and the
 // [Accept-Language](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#acceptlanguage)
-// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a label in a
-// user interface. There are few user interface strings in the JSON response objects. Also, any links to Bing.com
-// properties in the response objects apply the specified language. textDecorations is a Boolean value that determines
-// whether display strings contain decoration markers such as hit highlighting characters. If true, the strings may
-// include markers. The default is false. To specify whether to use Unicode characters or HTML tags as the markers, see
-// the [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
+// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a
+// label in a user interface. There are few user interface strings in the JSON response objects. Also, any
+// links to Bing.com properties in the response objects apply the specified language.
+// textDecorations - a Boolean value that determines whether display strings contain decoration markers such as
+// hit highlighting characters. If true, the strings may include markers. The default is false. To specify
+// whether to use Unicode characters or HTML tags as the markers, see the
+// [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
 // query parameter. For information about hit highlighting, see [Hit
-// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting). textFormat is
-// the type of markers to use for text decorations (see the textDecorations query parameter). Possible values are
-// Raw—Use Unicode characters to mark content that needs special formatting. The Unicode characters are in the range
-// E000 through E019. For example, Bing uses E000 and E001 to mark the beginning and end of query terms for hit
-// highlighting. HTML—Use HTML tags to mark content that needs special formatting. For example, use <b> tags to
-// highlight query terms in display strings. The default is Raw. For display strings that contain escapable HTML
-// characters such as <, >, and &, if textFormat is set to HTML, Bing escapes the characters as appropriate (for
-// example, < is escaped to &lt;).
-func (client VideosClient) Search(ctx context.Context, xBingApisSDK string, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, count *int32, freshness Freshness, ID string, length VideoLength, market string, offset *int32, pricing VideoPricing, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result Videos, err error) {
-	req, err := client.SearchPreparer(ctx, xBingApisSDK, query, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, count, freshness, ID, length, market, offset, pricing, resolution, safeSearch, setLang, textDecorations, textFormat)
+// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting).
+// textFormat - the type of markers to use for text decorations (see the textDecorations query parameter).
+// Possible values are Raw—Use Unicode characters to mark content that needs special formatting. The Unicode
+// characters are in the range E000 through E019. For example, Bing uses E000 and E001 to mark the beginning
+// and end of query terms for hit highlighting. HTML—Use HTML tags to mark content that needs special
+// formatting. For example, use <b> tags to highlight query terms in display strings. The default is Raw. For
+// display strings that contain escapable HTML characters such as <, >, and &, if textFormat is set to HTML,
+// Bing escapes the characters as appropriate (for example, < is escaped to &lt;).
+func (client VideosClient) Search(ctx context.Context, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, count *int32, freshness Freshness, ID string, length VideoLength, market string, offset *int32, pricing VideoPricing, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result Videos, err error) {
+	req, err := client.SearchPreparer(ctx, query, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, count, freshness, ID, length, market, offset, pricing, resolution, safeSearch, setLang, textDecorations, textFormat)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "videosearch.VideosClient", "Search", nil, "Failure preparing request")
 		return
@@ -462,7 +497,7 @@ func (client VideosClient) Search(ctx context.Context, xBingApisSDK string, quer
 }
 
 // SearchPreparer prepares the Search request.
-func (client VideosClient) SearchPreparer(ctx context.Context, xBingApisSDK string, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, count *int32, freshness Freshness, ID string, length VideoLength, market string, offset *int32, pricing VideoPricing, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
+func (client VideosClient) SearchPreparer(ctx context.Context, query string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, count *int32, freshness Freshness, ID string, length VideoLength, market string, offset *int32, pricing VideoPricing, resolution VideoResolution, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"q": autorest.Encode("query", query),
 	}
@@ -511,7 +546,7 @@ func (client VideosClient) SearchPreparer(ctx context.Context, xBingApisSDK stri
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/videos/search"),
 		autorest.WithQueryParameters(queryParameters),
-		autorest.WithHeader("X-BingApis-SDK", autorest.String(xBingApisSDK)))
+		autorest.WithHeader("X-BingApis-SDK", "true"))
 	if len(acceptLanguage) > 0 {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("Accept-Language", autorest.String(acceptLanguage)))
@@ -556,129 +591,141 @@ func (client VideosClient) SearchResponder(resp *http.Response) (result Videos, 
 }
 
 // Trending sends the trending request.
-//
-// xBingApisSDK is activate swagger compliance acceptLanguage is a comma-delimited list of one or more languages to use
-// for user interface strings. The list is in decreasing order of preference. For additional information, including
-// expected format, see [RFC2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). This header and the
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameter are mutually exclusive; do not specify both. If you set this header, you must also specify the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter. To
-// determine the market to return results for, Bing uses the first supported language it finds from the list and
-// combines it with the cc parameter value. If the list does not include a supported language, Bing finds the closest
-// language and market that supports the request or it uses an aggregated or default market for the results. To
-// determine the market that Bing used, see the BingAPIs-Market header. Use this header and the cc query parameter only
-// if you specify multiple languages. Otherwise, use the
+// Parameters:
+// acceptLanguage - a comma-delimited list of one or more languages to use for user interface strings. The list
+// is in decreasing order of preference. For additional information, including expected format, see
+// [RFC2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). This header and the
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameter are mutually exclusive; do not specify both. If you set this header, you must also specify
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter. To determine the market to return results for, Bing uses the first supported language it finds
+// from the list and combines it with the cc parameter value. If the list does not include a supported
+// language, Bing finds the closest language and market that supports the request or it uses an aggregated or
+// default market for the results. To determine the market that Bing used, see the BingAPIs-Market header. Use
+// this header and the cc query parameter only if you specify multiple languages. Otherwise, use the
 // [mkt](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#mkt) and
-// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang) query
-// parameters. A user interface string is a string that's used as a label in a user interface. There are few user
-// interface strings in the JSON response objects. Any links to Bing.com properties in the response objects apply the
-// specified language. userAgent is the user agent originating the request. Bing uses the user agent to provide mobile
-// users with an optimized experience. Although optional, you are encouraged to always specify this header. The
-// user-agent should be the same string that any commonly used browser sends. For information about user agents, see
-// [RFC 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
-// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0; ARM;
-// Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build / GINGERBREAD)
-// AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla / 5.0 (iPhone; CPU
-// iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142 iPhone4; 1 BingWeb /
-// 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch; rv:11.0) like Gecko. iPad:
-// Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML, like Gecko) Version / 7.0 Mobile /
-// 11A465 Safari / 9537.53 clientID is bing uses this header to provide users with consistent behavior across Bing API
-// calls. Bing often flights new features and improvements, and it uses the client ID as a key for assigning traffic on
-// different flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign
-// the user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an inconsistent
-// user experience. For example, if the second request has a different flight assignment than the first, the experience
-// may be unexpected. Also, Bing can use the client ID to tailor web results to that client ID’s search history,
-// providing a richer experience for the user. Bing also uses this header to help improve result rankings by analyzing
-// the activity generated by a client ID. The relevance improvements help with better quality of results delivered by
-// Bing APIs and in turn enables higher click-through rates for the API consumer. IMPORTANT: Although optional, you
-// should consider this header required. Persisting the client ID across multiple requests for the same end user and
-// device combination enables 1) the API consumer to receive a consistent user experience, and 2) higher click-through
-// rates via better quality of results from the Bing APIs. Each user that uses your application on the device must have
-// a unique, Bing generated client ID. If you do not include this header in the request, Bing generates an ID and
-// returns it in the X-MSEdge-ClientID response header. The only time that you should NOT include this header in a
-// request is the first time the user uses your app on that device. Use the client ID for each Bing API request that
-// your app makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
-// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other apps
-// such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses your app on
-// that device, get the client ID that you persisted. Bing responses may or may not include this header. If the
-// response includes this header, capture the client ID and use it for all subsequent Bing requests for the user on
-// that device. If you include the X-MSEdge-ClientID, you must not include cookies in the request. clientIP is the IPv4
-// or IPv6 address of the client device. The IP address is used to discover the user's location. Bing uses the location
-// information to determine safe search behavior. Although optional, you are encouraged to always specify this header
-// and the X-Search-Location header. Do not obfuscate the address (for example, by changing the last octet to 0).
-// Obfuscating the address results in the location not being anywhere near the device's actual location, which may
-// result in Bing serving erroneous results. location is a semicolon-delimited list of key/value pairs that describe
-// the client's geographical location. Bing uses the location information to determine safe search behavior and to
-// return relevant local content. Specify the key/value pair as <key>:<value>. The following are the keys that you use
-// to specify the user's location. lat (required): The latitude of the client's location, in degrees. The latitude must
-// be greater than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
-// positive values indicate northern latitudes. long (required): The longitude of the client's location, in degrees.
-// The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative values indicate
-// western longitudes and positive values indicate eastern longitudes. re (required): The radius, in meters, which
-// specifies the horizontal accuracy of the coordinates. Pass the value returned by the device's location service.
-// Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation, and 18,000m for reverse IP lookup. ts
-// (optional): The UTC UNIX timestamp of when the client was at the location. (The UNIX timestamp is the number of
-// seconds since January 1, 1970.) head (optional): The client's relative heading or direction of travel. Specify the
-// direction of travel as degrees from 0 through 360, counting clockwise relative to true north. Specify this key only
-// if the sp key is nonzero. sp (optional): The horizontal velocity (speed), in meters per second, that the client
-// device is traveling. alt (optional): The altitude of the client device, in meters. are (optional): The radius, in
-// meters, that specifies the vertical accuracy of the coordinates. Specify this key only if you specify the alt key.
-// Although many of the keys are optional, the more information that you provide, the more accurate the location
-// results are. Although optional, you are encouraged to always specify the user's geographical location. Providing the
-// location is especially important if the client's IP address does not accurately reflect the user's physical location
-// (for example, if the client uses VPN). For optimal results, you should include this header and the X-MSEdge-ClientIP
-// header, but at a minimum, you should include this header. countryCode is a 2-character country code of the country
-// where the results come from. This API supports only the United States market. If you specify this query parameter,
-// it must be set to us. If you set this parameter, you must also specify the Accept-Language header. Bing uses the
-// first supported language it finds from the languages list, and combine that language with the country code that you
-// specify to determine the market to return results for. If the languages list does not include a supported language,
-// Bing finds the closest language and market that supports the request, or it may use an aggregated or default market
-// for the results instead of a specified one. You should use this query parameter and the Accept-Language query
-// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query parameters.
-// This parameter and the mkt query parameter are mutually exclusive—do not specify both. market is the market where
-// the results come from. Typically, mkt is the country where the user is making the request from. However, it could be
-// a different country if the user is not located in a country where Bing delivers results. The market must be in the
-// form <language code>-<country code>. For example, en-US. The string is case insensitive. For a list of possible
-// market values, see [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes). NOTE:
-// If known, you are encouraged to always specify the market. Specifying the market helps Bing route the request and
-// return an appropriate and optimal response. If you specify a market that is not listed in [Market
-// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes), Bing
-// uses a best fit market code based on an internal mapping that is subject to change. This parameter and the
-// [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query parameter are
-// mutually exclusive—do not specify both. safeSearch is filter videos for adult content. The following are the
-// possible filter values. Off: If the request is through the Video Search API, the response includes adult videos and
-// the thumbnail images of the videos are clear (non-fuzzy). If the request is through the Web Search API, the response
-// includes adult videos but the thumbnail images of the videos are pixelated (fuzzy). Moderate: If the request is
-// through the Video Search API, the response does not include videos with adult content. If the request is through the
-// Web Search API, the response may include videos with adult content but the thumbnail images of the videos are
-// pixelated (fuzzy). Strict: Does not return videos with adult content. The default is Moderate. If the request comes
-// from a market that Bing's adult policy requires that safeSearch is set to Strict, Bing ignores the safeSearch value
-// and uses Strict. If you use the site: query operator, there is the chance that the response may contain adult
-// content regardless of what the safeSearch query parameter is set to. Use site: only if you are aware of the content
-// on the site and your scenario supports the possibility of adult content. setLang is the language to use for user
-// interface strings. Specify the language using the ISO 639-1 2-letter language code. For example, the language code
-// for English is EN. The default is EN (English). Although optional, you should always specify the language.
-// Typically, you set setLang to the same language specified by mkt unless the user wants the user interface strings
-// displayed in a different language. This parameter and the
+// [setLang](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#setlang)
+// query parameters. A user interface string is a string that's used as a label in a user interface. There are
+// few user interface strings in the JSON response objects. Any links to Bing.com properties in the response
+// objects apply the specified language.
+// userAgent - the user agent originating the request. Bing uses the user agent to provide mobile users with an
+// optimized experience. Although optional, you are encouraged to always specify this header. The user-agent
+// should be the same string that any commonly used browser sends. For information about user agents, see [RFC
+// 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html). The following are examples of user-agent
+// strings. Windows Phone: Mozilla/5.0 (compatible; MSIE 10.0; Windows Phone 8.0; Trident/6.0; IEMobile/10.0;
+// ARM; Touch; NOKIA; Lumia 822). Android: Mozilla / 5.0 (Linux; U; Android 2.3.5; en - us; SCH - I500 Build /
+// GINGERBREAD) AppleWebKit / 533.1 (KHTML; like Gecko) Version / 4.0 Mobile Safari / 533.1. iPhone: Mozilla /
+// 5.0 (iPhone; CPU iPhone OS 6_1 like Mac OS X) AppleWebKit / 536.26 (KHTML; like Gecko) Mobile / 10B142
+// iPhone4; 1 BingWeb / 3.03.1428.20120423. PC: Mozilla / 5.0 (Windows NT 6.3; WOW64; Trident / 7.0; Touch;
+// rv:11.0) like Gecko. iPad: Mozilla / 5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit / 537.51.1 (KHTML,
+// like Gecko) Version / 7.0 Mobile / 11A465 Safari / 9537.53
+// clientID - bing uses this header to provide users with consistent behavior across Bing API calls. Bing often
+// flights new features and improvements, and it uses the client ID as a key for assigning traffic on different
+// flights. If you do not use the same client ID for a user across multiple requests, then Bing may assign the
+// user to multiple conflicting flights. Being assigned to multiple conflicting flights can lead to an
+// inconsistent user experience. For example, if the second request has a different flight assignment than the
+// first, the experience may be unexpected. Also, Bing can use the client ID to tailor web results to that
+// client ID’s search history, providing a richer experience for the user. Bing also uses this header to help
+// improve result rankings by analyzing the activity generated by a client ID. The relevance improvements help
+// with better quality of results delivered by Bing APIs and in turn enables higher click-through rates for the
+// API consumer. IMPORTANT: Although optional, you should consider this header required. Persisting the client
+// ID across multiple requests for the same end user and device combination enables 1) the API consumer to
+// receive a consistent user experience, and 2) higher click-through rates via better quality of results from
+// the Bing APIs. Each user that uses your application on the device must have a unique, Bing generated client
+// ID. If you do not include this header in the request, Bing generates an ID and returns it in the
+// X-MSEdge-ClientID response header. The only time that you should NOT include this header in a request is the
+// first time the user uses your app on that device. Use the client ID for each Bing API request that your app
+// makes for this user on the device. Persist the client ID. To persist the ID in a browser app, use a
+// persistent HTTP cookie to ensure the ID is used across all sessions. Do not use a session cookie. For other
+// apps such as mobile apps, use the device's persistent storage to persist the ID. The next time the user uses
+// your app on that device, get the client ID that you persisted. Bing responses may or may not include this
+// header. If the response includes this header, capture the client ID and use it for all subsequent Bing
+// requests for the user on that device. If you include the X-MSEdge-ClientID, you must not include cookies in
+// the request.
+// clientIP - the IPv4 or IPv6 address of the client device. The IP address is used to discover the user's
+// location. Bing uses the location information to determine safe search behavior. Although optional, you are
+// encouraged to always specify this header and the X-Search-Location header. Do not obfuscate the address (for
+// example, by changing the last octet to 0). Obfuscating the address results in the location not being
+// anywhere near the device's actual location, which may result in Bing serving erroneous results.
+// location - a semicolon-delimited list of key/value pairs that describe the client's geographical location.
+// Bing uses the location information to determine safe search behavior and to return relevant local content.
+// Specify the key/value pair as <key>:<value>. The following are the keys that you use to specify the user's
+// location. lat (required): The latitude of the client's location, in degrees. The latitude must be greater
+// than or equal to -90.0 and less than or equal to +90.0. Negative values indicate southern latitudes and
+// positive values indicate northern latitudes. long (required): The longitude of the client's location, in
+// degrees. The longitude must be greater than or equal to -180.0 and less than or equal to +180.0. Negative
+// values indicate western longitudes and positive values indicate eastern longitudes. re (required): The
+// radius, in meters, which specifies the horizontal accuracy of the coordinates. Pass the value returned by
+// the device's location service. Typical values might be 22m for GPS/Wi-Fi, 380m for cell tower triangulation,
+// and 18,000m for reverse IP lookup. ts (optional): The UTC UNIX timestamp of when the client was at the
+// location. (The UNIX timestamp is the number of seconds since January 1, 1970.) head (optional): The client's
+// relative heading or direction of travel. Specify the direction of travel as degrees from 0 through 360,
+// counting clockwise relative to true north. Specify this key only if the sp key is nonzero. sp (optional):
+// The horizontal velocity (speed), in meters per second, that the client device is traveling. alt (optional):
+// The altitude of the client device, in meters. are (optional): The radius, in meters, that specifies the
+// vertical accuracy of the coordinates. Specify this key only if you specify the alt key. Although many of the
+// keys are optional, the more information that you provide, the more accurate the location results are.
+// Although optional, you are encouraged to always specify the user's geographical location. Providing the
+// location is especially important if the client's IP address does not accurately reflect the user's physical
+// location (for example, if the client uses VPN). For optimal results, you should include this header and the
+// X-MSEdge-ClientIP header, but at a minimum, you should include this header.
+// countryCode - a 2-character country code of the country where the results come from. This API supports only
+// the United States market. If you specify this query parameter, it must be set to us. If you set this
+// parameter, you must also specify the Accept-Language header. Bing uses the first supported language it finds
+// from the languages list, and combine that language with the country code that you specify to determine the
+// market to return results for. If the languages list does not include a supported language, Bing finds the
+// closest language and market that supports the request, or it may use an aggregated or default market for the
+// results instead of a specified one. You should use this query parameter and the Accept-Language query
+// parameter only if you specify multiple languages; otherwise, you should use the mkt and setLang query
+// parameters. This parameter and the mkt query parameter are mutually exclusive—do not specify both.
+// market - the market where the results come from. Typically, mkt is the country where the user is making the
+// request from. However, it could be a different country if the user is not located in a country where Bing
+// delivers results. The market must be in the form <language code>-<country code>. For example, en-US. The
+// string is case insensitive. For a list of possible market values, see [Market
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes).
+// NOTE: If known, you are encouraged to always specify the market. Specifying the market helps Bing route the
+// request and return an appropriate and optimal response. If you specify a market that is not listed in
+// [Market
+// Codes](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#market-codes),
+// Bing uses a best fit market code based on an internal mapping that is subject to change. This parameter and
+// the [cc](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#cc) query
+// parameter are mutually exclusive—do not specify both.
+// safeSearch - filter videos for adult content. The following are the possible filter values. Off: If the
+// request is through the Video Search API, the response includes adult videos and the thumbnail images of the
+// videos are clear (non-fuzzy). If the request is through the Web Search API, the response includes adult
+// videos but the thumbnail images of the videos are pixelated (fuzzy). Moderate: If the request is through the
+// Video Search API, the response does not include videos with adult content. If the request is through the Web
+// Search API, the response may include videos with adult content but the thumbnail images of the videos are
+// pixelated (fuzzy). Strict: Does not return videos with adult content. The default is Moderate. If the
+// request comes from a market that Bing's adult policy requires that safeSearch is set to Strict, Bing ignores
+// the safeSearch value and uses Strict. If you use the site: query operator, there is the chance that the
+// response may contain adult content regardless of what the safeSearch query parameter is set to. Use site:
+// only if you are aware of the content on the site and your scenario supports the possibility of adult
+// content.
+// setLang - the language to use for user interface strings. Specify the language using the ISO 639-1 2-letter
+// language code. For example, the language code for English is EN. The default is EN (English). Although
+// optional, you should always specify the language. Typically, you set setLang to the same language specified
+// by mkt unless the user wants the user interface strings displayed in a different language. This parameter
+// and the
 // [Accept-Language](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#acceptlanguage)
-// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a label in a
-// user interface. There are few user interface strings in the JSON response objects. Also, any links to Bing.com
-// properties in the response objects apply the specified language. textDecorations is a Boolean value that determines
-// whether display strings contain decoration markers such as hit highlighting characters. If true, the strings may
-// include markers. The default is false. To specify whether to use Unicode characters or HTML tags as the markers, see
-// the [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
+// header are mutually exclusive; do not specify both. A user interface string is a string that's used as a
+// label in a user interface. There are few user interface strings in the JSON response objects. Also, any
+// links to Bing.com properties in the response objects apply the specified language.
+// textDecorations - a Boolean value that determines whether display strings contain decoration markers such as
+// hit highlighting characters. If true, the strings may include markers. The default is false. To specify
+// whether to use Unicode characters or HTML tags as the markers, see the
+// [textFormat](https://docs.microsoft.com/en-us/rest/api/cognitiveservices/bing-video-api-v7-reference#textformat)
 // query parameter. For information about hit highlighting, see [Hit
-// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting). textFormat is
-// the type of markers to use for text decorations (see the textDecorations query parameter). Possible values are
-// Raw—Use Unicode characters to mark content that needs special formatting. The Unicode characters are in the range
-// E000 through E019. For example, Bing uses E000 and E001 to mark the beginning and end of query terms for hit
-// highlighting. HTML—Use HTML tags to mark content that needs special formatting. For example, use <b> tags to
-// highlight query terms in display strings. The default is Raw. For display strings that contain escapable HTML
-// characters such as <, >, and &, if textFormat is set to HTML, Bing escapes the characters as appropriate (for
-// example, < is escaped to &lt;).
-func (client VideosClient) Trending(ctx context.Context, xBingApisSDK string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, market string, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result TrendingVideos, err error) {
-	req, err := client.TrendingPreparer(ctx, xBingApisSDK, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, market, safeSearch, setLang, textDecorations, textFormat)
+// Highlighting](https://docs.microsoft.com/azure/cognitive-services/bing-news-search/hit-highlighting).
+// textFormat - the type of markers to use for text decorations (see the textDecorations query parameter).
+// Possible values are Raw—Use Unicode characters to mark content that needs special formatting. The Unicode
+// characters are in the range E000 through E019. For example, Bing uses E000 and E001 to mark the beginning
+// and end of query terms for hit highlighting. HTML—Use HTML tags to mark content that needs special
+// formatting. For example, use <b> tags to highlight query terms in display strings. The default is Raw. For
+// display strings that contain escapable HTML characters such as <, >, and &, if textFormat is set to HTML,
+// Bing escapes the characters as appropriate (for example, < is escaped to &lt;).
+func (client VideosClient) Trending(ctx context.Context, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, market string, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (result TrendingVideos, err error) {
+	req, err := client.TrendingPreparer(ctx, acceptLanguage, userAgent, clientID, clientIP, location, countryCode, market, safeSearch, setLang, textDecorations, textFormat)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "videosearch.VideosClient", "Trending", nil, "Failure preparing request")
 		return
@@ -700,7 +747,7 @@ func (client VideosClient) Trending(ctx context.Context, xBingApisSDK string, ac
 }
 
 // TrendingPreparer prepares the Trending request.
-func (client VideosClient) TrendingPreparer(ctx context.Context, xBingApisSDK string, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, market string, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
+func (client VideosClient) TrendingPreparer(ctx context.Context, acceptLanguage string, userAgent string, clientID string, clientIP string, location string, countryCode string, market string, safeSearch SafeSearch, setLang string, textDecorations *bool, textFormat TextFormat) (*http.Request, error) {
 	queryParameters := map[string]interface{}{}
 	if len(countryCode) > 0 {
 		queryParameters["cc"] = autorest.Encode("query", countryCode)
@@ -726,7 +773,7 @@ func (client VideosClient) TrendingPreparer(ctx context.Context, xBingApisSDK st
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/videos/trending"),
 		autorest.WithQueryParameters(queryParameters),
-		autorest.WithHeader("X-BingApis-SDK", autorest.String(xBingApisSDK)))
+		autorest.WithHeader("X-BingApis-SDK", "true"))
 	if len(acceptLanguage) > 0 {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("Accept-Language", autorest.String(acceptLanguage)))

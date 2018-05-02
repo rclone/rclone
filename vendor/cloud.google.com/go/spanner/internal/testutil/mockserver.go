@@ -18,10 +18,10 @@ package testutil
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -34,6 +34,7 @@ import (
 	sppb "google.golang.org/genproto/googleapis/spanner/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -75,6 +76,10 @@ type MockCloudSpanner struct {
 	msgs   chan MockCtlMsg
 	readTs time.Time
 	next   int
+
+	mu          sync.Mutex
+	nextSession int
+	sessions    map[string]*sppb.Session
 }
 
 // Addr returns the listening address of mock server.
@@ -102,26 +107,31 @@ func (m *MockCloudSpanner) Done() {
 
 // CreateSession is a placeholder for SpannerServer.CreateSession.
 func (m *MockCloudSpanner) CreateSession(c context.Context, r *sppb.CreateSessionRequest) (*sppb.Session, error) {
-	m.t.Fatalf("CreateSession is unimplemented")
-	return nil, errors.New("Unimplemented")
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	name := fmt.Sprintf("session-%d", m.nextSession)
+	m.nextSession++
+	s := &sppb.Session{Name: name}
+	m.sessions[name] = s
+	return s, nil
 }
 
 // GetSession is a placeholder for SpannerServer.GetSession.
 func (m *MockCloudSpanner) GetSession(c context.Context, r *sppb.GetSessionRequest) (*sppb.Session, error) {
-	m.t.Fatalf("GetSession is unimplemented")
-	return nil, errors.New("Unimplemented")
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if s, ok := m.sessions[r.Name]; ok {
+		return s, nil
+	}
+	return nil, status.Errorf(codes.NotFound, "not found")
 }
 
 // DeleteSession is a placeholder for SpannerServer.DeleteSession.
 func (m *MockCloudSpanner) DeleteSession(c context.Context, r *sppb.DeleteSessionRequest) (*empty.Empty, error) {
-	m.t.Fatalf("DeleteSession is unimplemented")
-	return nil, errors.New("Unimplemented")
-}
-
-// ExecuteSql is a placeholder for SpannerServer.ExecuteSql.
-func (m *MockCloudSpanner) ExecuteSql(c context.Context, r *sppb.ExecuteSqlRequest) (*sppb.ResultSet, error) {
-	m.t.Fatalf("ExecuteSql is unimplemented")
-	return nil, errors.New("Unimplemented")
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.sessions, r.Name)
+	return &empty.Empty{}, nil
 }
 
 // EncodeResumeToken return mock resume token encoding for an uint64 integer.
@@ -144,7 +154,7 @@ func DecodeResumeToken(t []byte) (uint64, error) {
 func (m *MockCloudSpanner) ExecuteStreamingSql(r *sppb.ExecuteSqlRequest, s sppb.Spanner_ExecuteStreamingSqlServer) error {
 	switch r.Sql {
 	case "SELECT * from t_unavailable":
-		return grpc.Errorf(codes.Unavailable, "mock table unavailable")
+		return status.Errorf(codes.Unavailable, "mock table unavailable")
 	case "SELECT t.key key, t.value value FROM t_mock t":
 		if r.ResumeToken != nil {
 			s, err := DecodeResumeToken(r.ResumeToken)
@@ -192,34 +202,9 @@ func (m *MockCloudSpanner) ExecuteStreamingSql(r *sppb.ExecuteSqlRequest, s sppb
 	}
 }
 
-// Read is a placeholder for SpannerServer.Read.
-func (m *MockCloudSpanner) Read(c context.Context, r *sppb.ReadRequest) (*sppb.ResultSet, error) {
-	m.t.Fatalf("Read is unimplemented")
-	return nil, errors.New("Unimplemented")
-}
-
 // StreamingRead is a placeholder for SpannerServer.StreamingRead.
 func (m *MockCloudSpanner) StreamingRead(r *sppb.ReadRequest, s sppb.Spanner_StreamingReadServer) error {
-	m.t.Fatalf("StreamingRead is unimplemented")
-	return errors.New("Unimplemented")
-}
-
-// BeginTransaction is a placeholder for SpannerServer.BeginTransaction.
-func (m *MockCloudSpanner) BeginTransaction(c context.Context, r *sppb.BeginTransactionRequest) (*sppb.Transaction, error) {
-	m.t.Fatalf("BeginTransaction is unimplemented")
-	return nil, errors.New("Unimplemented")
-}
-
-// Commit is a placeholder for SpannerServer.Commit.
-func (m *MockCloudSpanner) Commit(c context.Context, r *sppb.CommitRequest) (*sppb.CommitResponse, error) {
-	m.t.Fatalf("Commit is unimplemented")
-	return nil, errors.New("Unimplemented")
-}
-
-// Rollback is a placeholder for SpannerServer.Rollback.
-func (m *MockCloudSpanner) Rollback(c context.Context, r *sppb.RollbackRequest) (*empty.Empty, error) {
-	m.t.Fatalf("Rollback is unimplemented")
-	return nil, errors.New("Unimplemented")
+	return s.Send(&sppb.PartialResultSet{})
 }
 
 // Serve runs a MockCloudSpanner listening on a random localhost address.
@@ -249,9 +234,10 @@ func (m *MockCloudSpanner) Stop() {
 // NewMockCloudSpanner creates a new MockCloudSpanner instance.
 func NewMockCloudSpanner(t *testing.T, ts time.Time) *MockCloudSpanner {
 	mcs := &MockCloudSpanner{
-		t:      t,
-		msgs:   make(chan MockCtlMsg, 1000),
-		readTs: ts,
+		t:        t,
+		msgs:     make(chan MockCtlMsg, 1000),
+		readTs:   ts,
+		sessions: map[string]*sppb.Session{},
 	}
 	return mcs
 }

@@ -41,9 +41,9 @@ func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) Locatio
 }
 
 // CheckNameAvailability checks whether the Batch account name is available in the specified region.
-//
-// locationName is the desired region for the name check. parameters is properties needed to check the availability
-// of a name.
+// Parameters:
+// locationName - the desired region for the name check.
+// parameters - properties needed to check the availability of a name.
 func (client LocationClient) CheckNameAvailability(ctx context.Context, locationName string, parameters CheckNameAvailabilityParameters) (result CheckNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -86,7 +86,7 @@ func (client LocationClient) CheckNameAvailabilityPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Batch/locations/{locationName}/checkNameAvailability", pathParameters),
@@ -116,8 +116,8 @@ func (client LocationClient) CheckNameAvailabilityResponder(resp *http.Response)
 }
 
 // GetQuotas gets the Batch service quotas for the specified subscription at the given location.
-//
-// locationName is the region for which to retrieve Batch service quotas.
+// Parameters:
+// locationName - the region for which to retrieve Batch service quotas.
 func (client LocationClient) GetQuotas(ctx context.Context, locationName string) (result LocationQuota, err error) {
 	req, err := client.GetQuotasPreparer(ctx, locationName)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Package abusiveexperiencereport provides access to the Google Abusive Experience Report API.
+// Package abusiveexperiencereport provides access to the Abusive Experience Report API.
 //
 // See https://developers.google.com/abusive-experience-report/
 //
@@ -97,6 +97,7 @@ type ViolatingSitesService struct {
 }
 
 // SiteSummaryResponse: Response message for GetSiteSummary.
+// Do not confuse with same message in google.ads.experiencereport.v1
 type SiteSummaryResponse struct {
 	// AbusiveStatus: The status of the site reviewed for the abusive
 	// experiences.

@@ -14,7 +14,7 @@ const opCreateProtection = "CreateProtection"
 
 // CreateProtectionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProtection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -121,7 +121,7 @@ const opCreateSubscription = "CreateSubscription"
 
 // CreateSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -204,7 +204,7 @@ const opDeleteProtection = "DeleteProtection"
 
 // DeleteProtectionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProtection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -291,7 +291,7 @@ const opDeleteSubscription = "DeleteSubscription"
 
 // DeleteSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -380,7 +380,7 @@ const opDescribeAttack = "DescribeAttack"
 
 // DescribeAttackRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAttack operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -463,7 +463,7 @@ const opDescribeProtection = "DescribeProtection"
 
 // DescribeProtectionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProtection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -546,7 +546,7 @@ const opDescribeSubscription = "DescribeSubscription"
 
 // DescribeSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -629,7 +629,7 @@ const opGetSubscriptionState = "GetSubscriptionState"
 
 // GetSubscriptionStateRequest generates a "aws/request.Request" representing the
 // client's request for the GetSubscriptionState operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -709,7 +709,7 @@ const opListAttacks = "ListAttacks"
 
 // ListAttacksRequest generates a "aws/request.Request" representing the
 // client's request for the ListAttacks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -797,7 +797,7 @@ const opListProtections = "ListProtections"
 
 // ListProtectionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProtections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

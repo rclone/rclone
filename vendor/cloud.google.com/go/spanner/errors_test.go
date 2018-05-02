@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestToSpannerError(t *testing.T) {
@@ -33,7 +33,7 @@ func TestToSpannerError(t *testing.T) {
 		{errors.New("wha?"), codes.Unknown},
 		{context.Canceled, codes.Canceled},
 		{context.DeadlineExceeded, codes.DeadlineExceeded},
-		{grpc.Errorf(codes.ResourceExhausted, "so tired"), codes.ResourceExhausted},
+		{status.Errorf(codes.ResourceExhausted, "so tired"), codes.ResourceExhausted},
 		{spannerErrorf(codes.InvalidArgument, "bad"), codes.InvalidArgument},
 	} {
 		err := toSpannerError(test.err)

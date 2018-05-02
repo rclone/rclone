@@ -96,7 +96,7 @@ func (client ComputeNodeClient) AddUserPreparer(ctx context.Context, poolID stri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/nodes/{nodeId}/users", pathParameters),
@@ -279,7 +279,7 @@ func (client ComputeNodeClient) DisableSchedulingPreparer(ctx context.Context, p
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/nodes/{nodeId}/disablescheduling", pathParameters),
@@ -879,7 +879,7 @@ func (client ComputeNodeClient) RebootPreparer(ctx context.Context, poolID strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/nodes/{nodeId}/reboot", pathParameters),
@@ -975,7 +975,7 @@ func (client ComputeNodeClient) ReimagePreparer(ctx context.Context, poolID stri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/nodes/{nodeId}/reimage", pathParameters),
@@ -1073,7 +1073,7 @@ func (client ComputeNodeClient) UpdateUserPreparer(ctx context.Context, poolID s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/pools/{poolId}/nodes/{nodeId}/users/{userName}", pathParameters),

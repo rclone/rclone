@@ -774,7 +774,9 @@ func (m *Mega) NewDownload(src *Node) (*Download, error) {
 	}
 
 	mac_enc := cipher.NewCBCEncrypter(aes_block, zero_iv)
+	m.FS.mutex.Lock()
 	t := bytes_to_a32(src.meta.iv)
+	m.FS.mutex.Unlock()
 	iv := a32_to_bytes([]uint32{t[0], t[1], t[0], t[1]})
 
 	d := &Download{

@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostPropertyType enumerates the values for cost property type.
 type CostPropertyType string
 
@@ -38,6 +39,13 @@ const (
 	Unavailable CostPropertyType = "Unavailable"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleCostPropertyTypeValues returns an array of possible values for the CostPropertyType const type.
+func PossibleCostPropertyTypeValues() []CostPropertyType {
+	return []CostPropertyType{Projected, Reported, Unavailable}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImageOsType enumerates the values for custom image os type.
 type CustomImageOsType string
 
@@ -50,6 +58,13 @@ const (
 	Windows CustomImageOsType = "Windows"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleCustomImageOsTypeValues returns an array of possible values for the CustomImageOsType const type.
+func PossibleCustomImageOsTypeValues() []CustomImageOsType {
+	return []CustomImageOsType{Linux, None, Windows}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EnableStatus enumerates the values for enable status.
 type EnableStatus string
 
@@ -60,6 +75,13 @@ const (
 	Enabled EnableStatus = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleEnableStatusValues returns an array of possible values for the EnableStatus const type.
+func PossibleEnableStatusValues() []EnableStatus {
+	return []EnableStatus{Disabled, Enabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabStorageType enumerates the values for lab storage type.
 type LabStorageType string
 
@@ -70,6 +92,13 @@ const (
 	Standard LabStorageType = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleLabStorageTypeValues returns an array of possible values for the LabStorageType const type.
+func PossibleLabStorageTypeValues() []LabStorageType {
+	return []LabStorageType{Premium, Standard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LinuxOsState enumerates the values for linux os state.
 type LinuxOsState string
 
@@ -82,6 +111,13 @@ const (
 	NonDeprovisioned LinuxOsState = "NonDeprovisioned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleLinuxOsStateValues returns an array of possible values for the LinuxOsState const type.
+func PossibleLinuxOsStateValues() []LinuxOsState {
+	return []LinuxOsState{DeprovisionApplied, DeprovisionRequested, NonDeprovisioned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyEvaluatorType enumerates the values for policy evaluator type.
 type PolicyEvaluatorType string
 
@@ -92,6 +128,13 @@ const (
 	MaxValuePolicy PolicyEvaluatorType = "MaxValuePolicy"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossiblePolicyEvaluatorTypeValues returns an array of possible values for the PolicyEvaluatorType const type.
+func PossiblePolicyEvaluatorTypeValues() []PolicyEvaluatorType {
+	return []PolicyEvaluatorType{AllowedValuesPolicy, MaxValuePolicy}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyFactName enumerates the values for policy fact name.
 type PolicyFactName string
 
@@ -108,6 +151,13 @@ const (
 	PolicyFactNameUserOwnedLabVMCountInSubnet PolicyFactName = "UserOwnedLabVmCountInSubnet"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossiblePolicyFactNameValues returns an array of possible values for the PolicyFactName const type.
+func PossiblePolicyFactNameValues() []PolicyFactName {
+	return []PolicyFactName{PolicyFactNameGalleryImage, PolicyFactNameLabVMCount, PolicyFactNameLabVMSize, PolicyFactNameUserOwnedLabVMCount, PolicyFactNameUserOwnedLabVMCountInSubnet}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyStatus enumerates the values for policy status.
 type PolicyStatus string
 
@@ -118,6 +168,13 @@ const (
 	PolicyStatusEnabled PolicyStatus = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossiblePolicyStatusValues returns an array of possible values for the PolicyStatus const type.
+func PossiblePolicyStatusValues() []PolicyStatus {
+	return []PolicyStatus{PolicyStatusDisabled, PolicyStatusEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // SourceControlType enumerates the values for source control type.
 type SourceControlType string
 
@@ -128,6 +185,13 @@ const (
 	VsoGit SourceControlType = "VsoGit"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleSourceControlTypeValues returns an array of possible values for the SourceControlType const type.
+func PossibleSourceControlTypeValues() []SourceControlType {
+	return []SourceControlType{GitHub, VsoGit}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // SubscriptionNotificationState enumerates the values for subscription notification state.
 type SubscriptionNotificationState string
 
@@ -146,6 +210,13 @@ const (
 	Warned SubscriptionNotificationState = "Warned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleSubscriptionNotificationStateValues returns an array of possible values for the SubscriptionNotificationState const type.
+func PossibleSubscriptionNotificationStateValues() []SubscriptionNotificationState {
+	return []SubscriptionNotificationState{Deleted, NotDefined, Registered, Suspended, Unregistered, Warned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // TaskType enumerates the values for task type.
 type TaskType string
 
@@ -158,6 +229,13 @@ const (
 	LabVmsStartupTask TaskType = "LabVmsStartupTask"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleTaskTypeValues returns an array of possible values for the TaskType const type.
+func PossibleTaskTypeValues() []TaskType {
+	return []TaskType{LabBillingTask, LabVmsShutdownTask, LabVmsStartupTask}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UsagePermissionType enumerates the values for usage permission type.
 type UsagePermissionType string
 
@@ -170,6 +248,13 @@ const (
 	Deny UsagePermissionType = "Deny"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleUsagePermissionTypeValues returns an array of possible values for the UsagePermissionType const type.
+func PossibleUsagePermissionTypeValues() []UsagePermissionType {
+	return []UsagePermissionType{Allow, Default, Deny}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // WindowsOsState enumerates the values for windows os state.
 type WindowsOsState string
 
@@ -182,12 +267,20 @@ const (
 	SysprepRequested WindowsOsState = "SysprepRequested"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
+// PossibleWindowsOsStateValues returns an array of possible values for the WindowsOsState const type.
+func PossibleWindowsOsStateValues() []WindowsOsState {
+	return []WindowsOsState{NonSysprepped, SysprepApplied, SysprepRequested}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ApplyArtifactsRequest request body for applying artifacts to a virtual machine.
 type ApplyArtifactsRequest struct {
 	// Artifacts - The list of artifacts to apply.
 	Artifacts *[]ArtifactInstallProperties `json:"artifacts,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArmTemplateInfo information about a generated ARM template.
 type ArmTemplateInfo struct {
 	autorest.Response `json:"-"`
@@ -197,6 +290,7 @@ type ArmTemplateInfo struct {
 	Parameters interface{} `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Artifact an artifact.
 type Artifact struct {
 	autorest.Response `json:"-"`
@@ -214,6 +308,7 @@ type Artifact struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Artifact.
 func (a Artifact) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -238,6 +333,7 @@ func (a Artifact) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Artifact struct.
 func (a *Artifact) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -307,6 +403,7 @@ func (a *Artifact) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactDeploymentStatusProperties properties of an artifact deployment.
 type ArtifactDeploymentStatusProperties struct {
 	// DeploymentStatus - The deployment status of the artifact.
@@ -317,6 +414,7 @@ type ArtifactDeploymentStatusProperties struct {
 	TotalArtifacts *int32 `json:"totalArtifacts,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactInstallProperties properties of an artifact.
 type ArtifactInstallProperties struct {
 	// ArtifactID - The artifact's identifier.
@@ -325,6 +423,7 @@ type ArtifactInstallProperties struct {
 	Parameters *[]ArtifactParameterProperties `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactParameterProperties properties of an artifact parameter.
 type ArtifactParameterProperties struct {
 	// Name - The name of the artifact parameter.
@@ -333,6 +432,7 @@ type ArtifactParameterProperties struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactProperties properties of an artifact.
 type ArtifactProperties struct {
 	// Title - The title of the artifact.
@@ -349,6 +449,7 @@ type ArtifactProperties struct {
 	Parameters interface{} `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactSource properties of an artifact source.
 type ArtifactSource struct {
 	autorest.Response `json:"-"`
@@ -366,6 +467,7 @@ type ArtifactSource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for ArtifactSource.
 func (as ArtifactSource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -390,6 +492,7 @@ func (as ArtifactSource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for ArtifactSource struct.
 func (as *ArtifactSource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -459,6 +562,7 @@ func (as *ArtifactSource) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactSourceProperties properties of an artifact source.
 type ArtifactSourceProperties struct {
 	// DisplayName - The display name of the artifact source.
@@ -479,11 +583,13 @@ type ArtifactSourceProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CloudError ...
 type CloudError struct {
 	Error *CloudErrorBody `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CloudErrorBody ...
 type CloudErrorBody struct {
 	Code    *string           `json:"code,omitempty"`
@@ -492,6 +598,7 @@ type CloudErrorBody struct {
 	Details *[]CloudErrorBody `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Cost a cost item.
 type Cost struct {
 	autorest.Response `json:"-"`
@@ -509,6 +616,7 @@ type Cost struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Cost.
 func (c Cost) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -533,6 +641,7 @@ func (c Cost) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Cost struct.
 func (c *Cost) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -602,6 +711,7 @@ func (c *Cost) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostInsight ...
 type CostInsight struct {
 	autorest.Response `json:"-"`
@@ -619,6 +729,7 @@ type CostInsight struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for CostInsight.
 func (ci CostInsight) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -643,6 +754,7 @@ func (ci CostInsight) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for CostInsight struct.
 func (ci *CostInsight) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -712,6 +824,7 @@ func (ci *CostInsight) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostInsightProperties ...
 type CostInsightProperties struct {
 	CurrencyCode *string             `json:"currencyCode,omitempty"`
@@ -720,6 +833,7 @@ type CostInsightProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostInsightRefreshDataFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type CostInsightRefreshDataFuture struct {
@@ -727,6 +841,7 @@ type CostInsightRefreshDataFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CostInsightRefreshDataFuture) Result(client CostInsightClient) (ar autorest.Response, err error) {
@@ -769,6 +884,7 @@ func (future CostInsightRefreshDataFuture) Result(client CostInsightClient) (ar 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostPerDayProperties the per-day properties of a cost item.
 type CostPerDayProperties struct {
 	// Date - The date of the cost item.
@@ -779,6 +895,7 @@ type CostPerDayProperties struct {
 	CostType CostPropertyType `json:"costType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostProperties properties of a cost item.
 type CostProperties struct {
 	// CurrencyCode - The currency code of the cost.
@@ -787,12 +904,14 @@ type CostProperties struct {
 	Costs *[]CostPerDayProperties `json:"costs,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CostRefreshDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CostRefreshDataFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CostRefreshDataFuture) Result(client CostClient) (ar autorest.Response, err error) {
@@ -835,6 +954,7 @@ func (future CostRefreshDataFuture) Result(client CostClient) (ar autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImage a custom image.
 type CustomImage struct {
 	autorest.Response `json:"-"`
@@ -852,6 +972,7 @@ type CustomImage struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for CustomImage.
 func (ci CustomImage) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -876,6 +997,7 @@ func (ci CustomImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for CustomImage struct.
 func (ci *CustomImage) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -945,6 +1067,7 @@ func (ci *CustomImage) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImageCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type CustomImageCreateOrUpdateResourceFuture struct {
@@ -952,6 +1075,7 @@ type CustomImageCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageClient) (ci CustomImage, err error) {
@@ -994,6 +1118,7 @@ func (future CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageC
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImageDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type CustomImageDeleteResourceFuture struct {
@@ -1001,6 +1126,7 @@ type CustomImageDeleteResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CustomImageDeleteResourceFuture) Result(client CustomImageClient) (ar autorest.Response, err error) {
@@ -1043,6 +1169,7 @@ func (future CustomImageDeleteResourceFuture) Result(client CustomImageClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImageProperties properties of a custom image.
 type CustomImageProperties struct {
 	VM *CustomImagePropertiesFromVM `json:"vm,omitempty"`
@@ -1060,6 +1187,7 @@ type CustomImageProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImagePropertiesCustom properties for creating a custom image from a VHD.
 type CustomImagePropertiesCustom struct {
 	// ImageName - The image name.
@@ -1068,6 +1196,7 @@ type CustomImagePropertiesCustom struct {
 	SysPrep *bool `json:"sysPrep,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImagePropertiesFromVM properties for creating a custom image from a virtual machine.
 type CustomImagePropertiesFromVM struct {
 	// SourceVMID - The source vm identifier.
@@ -1080,11 +1209,13 @@ type CustomImagePropertiesFromVM struct {
 	LinuxOsInfo *LinuxOsInfo `json:"linuxOsInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DayDetails properties of a daily schedule.
 type DayDetails struct {
 	Time *string `json:"time,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesProperties properties for evaluating a policy set.
 type EvaluatePoliciesProperties struct {
 	// FactName - The fact name.
@@ -1095,12 +1226,14 @@ type EvaluatePoliciesProperties struct {
 	ValueOffset *string `json:"valueOffset,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesRequest request body for evaluating a policy set.
 type EvaluatePoliciesRequest struct {
 	// Policies - Policies to evaluate.
 	Policies *[]EvaluatePoliciesProperties `json:"policies,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesResponse response body for evaluating a policy set.
 type EvaluatePoliciesResponse struct {
 	autorest.Response `json:"-"`
@@ -1108,6 +1241,7 @@ type EvaluatePoliciesResponse struct {
 	Results *[]PolicySetResult `json:"results,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Formula a formula.
 type Formula struct {
 	autorest.Response `json:"-"`
@@ -1125,6 +1259,7 @@ type Formula struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Formula.
 func (f Formula) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1149,6 +1284,7 @@ func (f Formula) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Formula struct.
 func (f *Formula) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1218,6 +1354,7 @@ func (f *Formula) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // FormulaCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type FormulaCreateOrUpdateResourceFuture struct {
@@ -1225,6 +1362,7 @@ type FormulaCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FormulaCreateOrUpdateResourceFuture) Result(client FormulaClient) (f Formula, err error) {
@@ -1267,6 +1405,7 @@ func (future FormulaCreateOrUpdateResourceFuture) Result(client FormulaClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // FormulaProperties properties of a formula.
 type FormulaProperties struct {
 	// Description - The description of the formula.
@@ -1285,12 +1424,14 @@ type FormulaProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // FormulaPropertiesFromVM information about a VM from which a formula is to be created.
 type FormulaPropertiesFromVM struct {
 	// LabVMID - The identifier of the VM from which a formula is to be created.
 	LabVMID *string `json:"labVmId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GalleryImage a gallery image.
 type GalleryImage struct {
 	// GalleryImageProperties - The properties of the resource.
@@ -1307,6 +1448,7 @@ type GalleryImage struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for GalleryImage.
 func (gi GalleryImage) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1331,6 +1473,7 @@ func (gi GalleryImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for GalleryImage struct.
 func (gi *GalleryImage) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1400,6 +1543,7 @@ func (gi *GalleryImage) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GalleryImageProperties properties of a gallery image.
 type GalleryImageProperties struct {
 	// Author - The author of the gallery image.
@@ -1416,6 +1560,7 @@ type GalleryImageProperties struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GalleryImageReference the reference information for an Azure Marketplace image.
 type GalleryImageReference struct {
 	// Offer - The offer of the gallery image.
@@ -1430,6 +1575,7 @@ type GalleryImageReference struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GenerateArmTemplateRequest parameters for generating an ARM template for deploying artifacts.
 type GenerateArmTemplateRequest struct {
 	// VirtualMachineName - The resource name of the virtual machine.
@@ -1440,12 +1586,14 @@ type GenerateArmTemplateRequest struct {
 	Location *string `json:"location,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GenerateUploadURIParameter properties for generating an upload URI.
 type GenerateUploadURIParameter struct {
 	// BlobName - The blob name of the upload URI.
 	BlobName *string `json:"blobName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GenerateUploadURIResponse reponse body for generating an upload URI.
 type GenerateUploadURIResponse struct {
 	autorest.Response `json:"-"`
@@ -1453,12 +1601,14 @@ type GenerateUploadURIResponse struct {
 	UploadURI *string `json:"uploadUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // HourDetails properties of an hourly schedule.
 type HourDetails struct {
 	// Minute - Minutes of the hour the schedule will run.
 	Minute *int32 `json:"minute,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Lab a lab.
 type Lab struct {
 	autorest.Response `json:"-"`
@@ -1476,6 +1626,7 @@ type Lab struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Lab.
 func (l Lab) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1500,6 +1651,7 @@ func (l Lab) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Lab struct.
 func (l *Lab) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1569,12 +1721,14 @@ func (l *Lab) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabCreateEnvironmentFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LabCreateEnvironmentFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.Response, err error) {
@@ -1617,6 +1771,7 @@ func (future LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type LabCreateOrUpdateResourceFuture struct {
@@ -1624,6 +1779,7 @@ type LabCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, err error) {
@@ -1666,12 +1822,14 @@ func (future LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LabDeleteResourceFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future LabDeleteResourceFuture) Result(client LabClient) (ar autorest.Response, err error) {
@@ -1714,6 +1872,7 @@ func (future LabDeleteResourceFuture) Result(client LabClient) (ar autorest.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabProperties properties of a lab.
 type LabProperties struct {
 	// DefaultStorageAccount - The lab's default storage account.
@@ -1734,12 +1893,14 @@ type LabProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabVhd properties of a VHD in the lab.
 type LabVhd struct {
 	// ID - The absolute URI of the VHD.
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabVirtualMachine a virtual machine.
 type LabVirtualMachine struct {
 	autorest.Response `json:"-"`
@@ -1757,6 +1918,7 @@ type LabVirtualMachine struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for LabVirtualMachine.
 func (lvm LabVirtualMachine) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1781,6 +1943,7 @@ func (lvm LabVirtualMachine) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for LabVirtualMachine struct.
 func (lvm *LabVirtualMachine) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1850,6 +2013,7 @@ func (lvm *LabVirtualMachine) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LabVirtualMachineProperties properties of a virtual machine.
 type LabVirtualMachineProperties struct {
 	// Notes - The notes of the virtual machine.
@@ -1894,18 +2058,21 @@ type LabVirtualMachineProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // LinuxOsInfo information about a Linux OS.
 type LinuxOsInfo struct {
 	// LinuxOsState - The state of the Linux OS. Possible values include: 'NonDeprovisioned', 'DeprovisionRequested', 'DeprovisionApplied'
 	LinuxOsState LinuxOsState `json:"linuxOsState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ParameterInfo ...
 type ParameterInfo struct {
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Policy a Policy.
 type Policy struct {
 	autorest.Response `json:"-"`
@@ -1923,6 +2090,7 @@ type Policy struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Policy.
 func (p Policy) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1947,6 +2115,7 @@ func (p Policy) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Policy struct.
 func (p *Policy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2016,6 +2185,7 @@ func (p *Policy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyProperties properties of a Policy.
 type PolicyProperties struct {
 	// Description - The description of the policy.
@@ -2034,6 +2204,7 @@ type PolicyProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicySetResult result of a policy set evaluation.
 type PolicySetResult struct {
 	// HasError - A value indicating whether this policy set evaluation has discovered violations.
@@ -2042,6 +2213,7 @@ type PolicySetResult struct {
 	PolicyViolations *[]PolicyViolation `json:"policyViolations,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyViolation policy violation.
 type PolicyViolation struct {
 	// Code - The code of the policy violation.
@@ -2050,6 +2222,7 @@ type PolicyViolation struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifact the response of a list operation.
 type ResponseWithContinuationArtifact struct {
 	autorest.Response `json:"-"`
@@ -2059,12 +2232,14 @@ type ResponseWithContinuationArtifact struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifactIterator provides access to a complete listing of Artifact values.
 type ResponseWithContinuationArtifactIterator struct {
 	i    int
 	page ResponseWithContinuationArtifactPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationArtifactIterator) Next() error {
@@ -2081,16 +2256,19 @@ func (iter *ResponseWithContinuationArtifactIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationArtifactIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationArtifactIterator) Response() ResponseWithContinuationArtifact {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationArtifactIterator) Value() Artifact {
@@ -2100,6 +2278,7 @@ func (iter ResponseWithContinuationArtifactIterator) Value() Artifact {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcA ResponseWithContinuationArtifact) IsEmpty() bool {
 	return rwcA.Value == nil || len(*rwcA.Value) == 0
@@ -2117,12 +2296,14 @@ func (rwcA ResponseWithContinuationArtifact) responseWithContinuationArtifactPre
 		autorest.WithBaseURL(to.String(rwcA.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifactPage contains a page of Artifact values.
 type ResponseWithContinuationArtifactPage struct {
 	fn   func(ResponseWithContinuationArtifact) (ResponseWithContinuationArtifact, error)
 	rwca ResponseWithContinuationArtifact
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationArtifactPage) Next() error {
@@ -2134,16 +2315,19 @@ func (page *ResponseWithContinuationArtifactPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationArtifactPage) NotDone() bool {
 	return !page.rwca.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationArtifactPage) Response() ResponseWithContinuationArtifact {
 	return page.rwca
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationArtifactPage) Values() []Artifact {
 	if page.rwca.IsEmpty() {
@@ -2152,6 +2336,7 @@ func (page ResponseWithContinuationArtifactPage) Values() []Artifact {
 	return *page.rwca.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifactSource the response of a list operation.
 type ResponseWithContinuationArtifactSource struct {
 	autorest.Response `json:"-"`
@@ -2161,12 +2346,14 @@ type ResponseWithContinuationArtifactSource struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifactSourceIterator provides access to a complete listing of ArtifactSource values.
 type ResponseWithContinuationArtifactSourceIterator struct {
 	i    int
 	page ResponseWithContinuationArtifactSourcePage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationArtifactSourceIterator) Next() error {
@@ -2183,16 +2370,19 @@ func (iter *ResponseWithContinuationArtifactSourceIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationArtifactSourceIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationArtifactSourceIterator) Response() ResponseWithContinuationArtifactSource {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationArtifactSourceIterator) Value() ArtifactSource {
@@ -2202,6 +2392,7 @@ func (iter ResponseWithContinuationArtifactSourceIterator) Value() ArtifactSourc
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcAs ResponseWithContinuationArtifactSource) IsEmpty() bool {
 	return rwcAs.Value == nil || len(*rwcAs.Value) == 0
@@ -2219,12 +2410,14 @@ func (rwcAs ResponseWithContinuationArtifactSource) responseWithContinuationArti
 		autorest.WithBaseURL(to.String(rwcAs.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationArtifactSourcePage contains a page of ArtifactSource values.
 type ResponseWithContinuationArtifactSourcePage struct {
 	fn    func(ResponseWithContinuationArtifactSource) (ResponseWithContinuationArtifactSource, error)
 	rwcas ResponseWithContinuationArtifactSource
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationArtifactSourcePage) Next() error {
@@ -2236,16 +2429,19 @@ func (page *ResponseWithContinuationArtifactSourcePage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationArtifactSourcePage) NotDone() bool {
 	return !page.rwcas.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationArtifactSourcePage) Response() ResponseWithContinuationArtifactSource {
 	return page.rwcas
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationArtifactSourcePage) Values() []ArtifactSource {
 	if page.rwcas.IsEmpty() {
@@ -2254,6 +2450,7 @@ func (page ResponseWithContinuationArtifactSourcePage) Values() []ArtifactSource
 	return *page.rwcas.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCost the response of a list operation.
 type ResponseWithContinuationCost struct {
 	autorest.Response `json:"-"`
@@ -2263,6 +2460,7 @@ type ResponseWithContinuationCost struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCostInsight the response of a list operation.
 type ResponseWithContinuationCostInsight struct {
 	autorest.Response `json:"-"`
@@ -2272,12 +2470,14 @@ type ResponseWithContinuationCostInsight struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCostInsightIterator provides access to a complete listing of CostInsight values.
 type ResponseWithContinuationCostInsightIterator struct {
 	i    int
 	page ResponseWithContinuationCostInsightPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationCostInsightIterator) Next() error {
@@ -2294,16 +2494,19 @@ func (iter *ResponseWithContinuationCostInsightIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationCostInsightIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationCostInsightIterator) Response() ResponseWithContinuationCostInsight {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationCostInsightIterator) Value() CostInsight {
@@ -2313,6 +2516,7 @@ func (iter ResponseWithContinuationCostInsightIterator) Value() CostInsight {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcCi ResponseWithContinuationCostInsight) IsEmpty() bool {
 	return rwcCi.Value == nil || len(*rwcCi.Value) == 0
@@ -2330,12 +2534,14 @@ func (rwcCi ResponseWithContinuationCostInsight) responseWithContinuationCostIns
 		autorest.WithBaseURL(to.String(rwcCi.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCostInsightPage contains a page of CostInsight values.
 type ResponseWithContinuationCostInsightPage struct {
 	fn    func(ResponseWithContinuationCostInsight) (ResponseWithContinuationCostInsight, error)
 	rwcci ResponseWithContinuationCostInsight
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationCostInsightPage) Next() error {
@@ -2347,16 +2553,19 @@ func (page *ResponseWithContinuationCostInsightPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationCostInsightPage) NotDone() bool {
 	return !page.rwcci.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationCostInsightPage) Response() ResponseWithContinuationCostInsight {
 	return page.rwcci
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationCostInsightPage) Values() []CostInsight {
 	if page.rwcci.IsEmpty() {
@@ -2365,12 +2574,14 @@ func (page ResponseWithContinuationCostInsightPage) Values() []CostInsight {
 	return *page.rwcci.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCostIterator provides access to a complete listing of Cost values.
 type ResponseWithContinuationCostIterator struct {
 	i    int
 	page ResponseWithContinuationCostPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationCostIterator) Next() error {
@@ -2387,16 +2598,19 @@ func (iter *ResponseWithContinuationCostIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationCostIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationCostIterator) Response() ResponseWithContinuationCost {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationCostIterator) Value() Cost {
@@ -2406,6 +2620,7 @@ func (iter ResponseWithContinuationCostIterator) Value() Cost {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcC ResponseWithContinuationCost) IsEmpty() bool {
 	return rwcC.Value == nil || len(*rwcC.Value) == 0
@@ -2423,12 +2638,14 @@ func (rwcC ResponseWithContinuationCost) responseWithContinuationCostPreparer() 
 		autorest.WithBaseURL(to.String(rwcC.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCostPage contains a page of Cost values.
 type ResponseWithContinuationCostPage struct {
 	fn   func(ResponseWithContinuationCost) (ResponseWithContinuationCost, error)
 	rwcc ResponseWithContinuationCost
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationCostPage) Next() error {
@@ -2440,16 +2657,19 @@ func (page *ResponseWithContinuationCostPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationCostPage) NotDone() bool {
 	return !page.rwcc.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationCostPage) Response() ResponseWithContinuationCost {
 	return page.rwcc
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationCostPage) Values() []Cost {
 	if page.rwcc.IsEmpty() {
@@ -2458,6 +2678,7 @@ func (page ResponseWithContinuationCostPage) Values() []Cost {
 	return *page.rwcc.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCustomImage the response of a list operation.
 type ResponseWithContinuationCustomImage struct {
 	autorest.Response `json:"-"`
@@ -2467,12 +2688,14 @@ type ResponseWithContinuationCustomImage struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCustomImageIterator provides access to a complete listing of CustomImage values.
 type ResponseWithContinuationCustomImageIterator struct {
 	i    int
 	page ResponseWithContinuationCustomImagePage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationCustomImageIterator) Next() error {
@@ -2489,16 +2712,19 @@ func (iter *ResponseWithContinuationCustomImageIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationCustomImageIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationCustomImageIterator) Response() ResponseWithContinuationCustomImage {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationCustomImageIterator) Value() CustomImage {
@@ -2508,6 +2734,7 @@ func (iter ResponseWithContinuationCustomImageIterator) Value() CustomImage {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcCi ResponseWithContinuationCustomImage) IsEmpty() bool {
 	return rwcCi.Value == nil || len(*rwcCi.Value) == 0
@@ -2525,12 +2752,14 @@ func (rwcCi ResponseWithContinuationCustomImage) responseWithContinuationCustomI
 		autorest.WithBaseURL(to.String(rwcCi.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationCustomImagePage contains a page of CustomImage values.
 type ResponseWithContinuationCustomImagePage struct {
 	fn    func(ResponseWithContinuationCustomImage) (ResponseWithContinuationCustomImage, error)
 	rwcci ResponseWithContinuationCustomImage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationCustomImagePage) Next() error {
@@ -2542,16 +2771,19 @@ func (page *ResponseWithContinuationCustomImagePage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationCustomImagePage) NotDone() bool {
 	return !page.rwcci.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationCustomImagePage) Response() ResponseWithContinuationCustomImage {
 	return page.rwcci
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationCustomImagePage) Values() []CustomImage {
 	if page.rwcci.IsEmpty() {
@@ -2560,6 +2792,7 @@ func (page ResponseWithContinuationCustomImagePage) Values() []CustomImage {
 	return *page.rwcci.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationFormula the response of a list operation.
 type ResponseWithContinuationFormula struct {
 	autorest.Response `json:"-"`
@@ -2569,12 +2802,14 @@ type ResponseWithContinuationFormula struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationFormulaIterator provides access to a complete listing of Formula values.
 type ResponseWithContinuationFormulaIterator struct {
 	i    int
 	page ResponseWithContinuationFormulaPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationFormulaIterator) Next() error {
@@ -2591,16 +2826,19 @@ func (iter *ResponseWithContinuationFormulaIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationFormulaIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationFormulaIterator) Response() ResponseWithContinuationFormula {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationFormulaIterator) Value() Formula {
@@ -2610,6 +2848,7 @@ func (iter ResponseWithContinuationFormulaIterator) Value() Formula {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcF ResponseWithContinuationFormula) IsEmpty() bool {
 	return rwcF.Value == nil || len(*rwcF.Value) == 0
@@ -2627,12 +2866,14 @@ func (rwcF ResponseWithContinuationFormula) responseWithContinuationFormulaPrepa
 		autorest.WithBaseURL(to.String(rwcF.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationFormulaPage contains a page of Formula values.
 type ResponseWithContinuationFormulaPage struct {
 	fn   func(ResponseWithContinuationFormula) (ResponseWithContinuationFormula, error)
 	rwcf ResponseWithContinuationFormula
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationFormulaPage) Next() error {
@@ -2644,16 +2885,19 @@ func (page *ResponseWithContinuationFormulaPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationFormulaPage) NotDone() bool {
 	return !page.rwcf.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationFormulaPage) Response() ResponseWithContinuationFormula {
 	return page.rwcf
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationFormulaPage) Values() []Formula {
 	if page.rwcf.IsEmpty() {
@@ -2662,6 +2906,7 @@ func (page ResponseWithContinuationFormulaPage) Values() []Formula {
 	return *page.rwcf.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationGalleryImage the response of a list operation.
 type ResponseWithContinuationGalleryImage struct {
 	autorest.Response `json:"-"`
@@ -2671,12 +2916,14 @@ type ResponseWithContinuationGalleryImage struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationGalleryImageIterator provides access to a complete listing of GalleryImage values.
 type ResponseWithContinuationGalleryImageIterator struct {
 	i    int
 	page ResponseWithContinuationGalleryImagePage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationGalleryImageIterator) Next() error {
@@ -2693,16 +2940,19 @@ func (iter *ResponseWithContinuationGalleryImageIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationGalleryImageIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationGalleryImageIterator) Response() ResponseWithContinuationGalleryImage {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationGalleryImageIterator) Value() GalleryImage {
@@ -2712,6 +2962,7 @@ func (iter ResponseWithContinuationGalleryImageIterator) Value() GalleryImage {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcGi ResponseWithContinuationGalleryImage) IsEmpty() bool {
 	return rwcGi.Value == nil || len(*rwcGi.Value) == 0
@@ -2729,12 +2980,14 @@ func (rwcGi ResponseWithContinuationGalleryImage) responseWithContinuationGaller
 		autorest.WithBaseURL(to.String(rwcGi.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationGalleryImagePage contains a page of GalleryImage values.
 type ResponseWithContinuationGalleryImagePage struct {
 	fn    func(ResponseWithContinuationGalleryImage) (ResponseWithContinuationGalleryImage, error)
 	rwcgi ResponseWithContinuationGalleryImage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationGalleryImagePage) Next() error {
@@ -2746,16 +2999,19 @@ func (page *ResponseWithContinuationGalleryImagePage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationGalleryImagePage) NotDone() bool {
 	return !page.rwcgi.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationGalleryImagePage) Response() ResponseWithContinuationGalleryImage {
 	return page.rwcgi
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationGalleryImagePage) Values() []GalleryImage {
 	if page.rwcgi.IsEmpty() {
@@ -2764,6 +3020,7 @@ func (page ResponseWithContinuationGalleryImagePage) Values() []GalleryImage {
 	return *page.rwcgi.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLab the response of a list operation.
 type ResponseWithContinuationLab struct {
 	autorest.Response `json:"-"`
@@ -2773,12 +3030,14 @@ type ResponseWithContinuationLab struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabIterator provides access to a complete listing of Lab values.
 type ResponseWithContinuationLabIterator struct {
 	i    int
 	page ResponseWithContinuationLabPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationLabIterator) Next() error {
@@ -2795,16 +3054,19 @@ func (iter *ResponseWithContinuationLabIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationLabIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationLabIterator) Response() ResponseWithContinuationLab {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationLabIterator) Value() Lab {
@@ -2814,6 +3076,7 @@ func (iter ResponseWithContinuationLabIterator) Value() Lab {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcL ResponseWithContinuationLab) IsEmpty() bool {
 	return rwcL.Value == nil || len(*rwcL.Value) == 0
@@ -2831,12 +3094,14 @@ func (rwcL ResponseWithContinuationLab) responseWithContinuationLabPreparer() (*
 		autorest.WithBaseURL(to.String(rwcL.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabPage contains a page of Lab values.
 type ResponseWithContinuationLabPage struct {
 	fn   func(ResponseWithContinuationLab) (ResponseWithContinuationLab, error)
 	rwcl ResponseWithContinuationLab
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationLabPage) Next() error {
@@ -2848,16 +3113,19 @@ func (page *ResponseWithContinuationLabPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationLabPage) NotDone() bool {
 	return !page.rwcl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationLabPage) Response() ResponseWithContinuationLab {
 	return page.rwcl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationLabPage) Values() []Lab {
 	if page.rwcl.IsEmpty() {
@@ -2866,6 +3134,7 @@ func (page ResponseWithContinuationLabPage) Values() []Lab {
 	return *page.rwcl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVhd the response of a list operation.
 type ResponseWithContinuationLabVhd struct {
 	autorest.Response `json:"-"`
@@ -2875,12 +3144,14 @@ type ResponseWithContinuationLabVhd struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVhdIterator provides access to a complete listing of LabVhd values.
 type ResponseWithContinuationLabVhdIterator struct {
 	i    int
 	page ResponseWithContinuationLabVhdPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationLabVhdIterator) Next() error {
@@ -2897,16 +3168,19 @@ func (iter *ResponseWithContinuationLabVhdIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationLabVhdIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationLabVhdIterator) Response() ResponseWithContinuationLabVhd {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationLabVhdIterator) Value() LabVhd {
@@ -2916,6 +3190,7 @@ func (iter ResponseWithContinuationLabVhdIterator) Value() LabVhd {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcLv ResponseWithContinuationLabVhd) IsEmpty() bool {
 	return rwcLv.Value == nil || len(*rwcLv.Value) == 0
@@ -2933,12 +3208,14 @@ func (rwcLv ResponseWithContinuationLabVhd) responseWithContinuationLabVhdPrepar
 		autorest.WithBaseURL(to.String(rwcLv.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVhdPage contains a page of LabVhd values.
 type ResponseWithContinuationLabVhdPage struct {
 	fn    func(ResponseWithContinuationLabVhd) (ResponseWithContinuationLabVhd, error)
 	rwclv ResponseWithContinuationLabVhd
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationLabVhdPage) Next() error {
@@ -2950,16 +3227,19 @@ func (page *ResponseWithContinuationLabVhdPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationLabVhdPage) NotDone() bool {
 	return !page.rwclv.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationLabVhdPage) Response() ResponseWithContinuationLabVhd {
 	return page.rwclv
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationLabVhdPage) Values() []LabVhd {
 	if page.rwclv.IsEmpty() {
@@ -2968,6 +3248,7 @@ func (page ResponseWithContinuationLabVhdPage) Values() []LabVhd {
 	return *page.rwclv.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVirtualMachine the response of a list operation.
 type ResponseWithContinuationLabVirtualMachine struct {
 	autorest.Response `json:"-"`
@@ -2977,6 +3258,7 @@ type ResponseWithContinuationLabVirtualMachine struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVirtualMachineIterator provides access to a complete listing of LabVirtualMachine
 // values.
 type ResponseWithContinuationLabVirtualMachineIterator struct {
@@ -2984,6 +3266,7 @@ type ResponseWithContinuationLabVirtualMachineIterator struct {
 	page ResponseWithContinuationLabVirtualMachinePage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationLabVirtualMachineIterator) Next() error {
@@ -3000,16 +3283,19 @@ func (iter *ResponseWithContinuationLabVirtualMachineIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationLabVirtualMachineIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationLabVirtualMachineIterator) Response() ResponseWithContinuationLabVirtualMachine {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationLabVirtualMachineIterator) Value() LabVirtualMachine {
@@ -3019,6 +3305,7 @@ func (iter ResponseWithContinuationLabVirtualMachineIterator) Value() LabVirtual
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcLvm ResponseWithContinuationLabVirtualMachine) IsEmpty() bool {
 	return rwcLvm.Value == nil || len(*rwcLvm.Value) == 0
@@ -3036,12 +3323,14 @@ func (rwcLvm ResponseWithContinuationLabVirtualMachine) responseWithContinuation
 		autorest.WithBaseURL(to.String(rwcLvm.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationLabVirtualMachinePage contains a page of LabVirtualMachine values.
 type ResponseWithContinuationLabVirtualMachinePage struct {
 	fn     func(ResponseWithContinuationLabVirtualMachine) (ResponseWithContinuationLabVirtualMachine, error)
 	rwclvm ResponseWithContinuationLabVirtualMachine
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationLabVirtualMachinePage) Next() error {
@@ -3053,16 +3342,19 @@ func (page *ResponseWithContinuationLabVirtualMachinePage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationLabVirtualMachinePage) NotDone() bool {
 	return !page.rwclvm.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationLabVirtualMachinePage) Response() ResponseWithContinuationLabVirtualMachine {
 	return page.rwclvm
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationLabVirtualMachinePage) Values() []LabVirtualMachine {
 	if page.rwclvm.IsEmpty() {
@@ -3071,6 +3363,7 @@ func (page ResponseWithContinuationLabVirtualMachinePage) Values() []LabVirtualM
 	return *page.rwclvm.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationPolicy the response of a list operation.
 type ResponseWithContinuationPolicy struct {
 	autorest.Response `json:"-"`
@@ -3080,12 +3373,14 @@ type ResponseWithContinuationPolicy struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationPolicyIterator provides access to a complete listing of Policy values.
 type ResponseWithContinuationPolicyIterator struct {
 	i    int
 	page ResponseWithContinuationPolicyPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationPolicyIterator) Next() error {
@@ -3102,16 +3397,19 @@ func (iter *ResponseWithContinuationPolicyIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationPolicyIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationPolicyIterator) Response() ResponseWithContinuationPolicy {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationPolicyIterator) Value() Policy {
@@ -3121,6 +3419,7 @@ func (iter ResponseWithContinuationPolicyIterator) Value() Policy {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcP ResponseWithContinuationPolicy) IsEmpty() bool {
 	return rwcP.Value == nil || len(*rwcP.Value) == 0
@@ -3138,12 +3437,14 @@ func (rwcP ResponseWithContinuationPolicy) responseWithContinuationPolicyPrepare
 		autorest.WithBaseURL(to.String(rwcP.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationPolicyPage contains a page of Policy values.
 type ResponseWithContinuationPolicyPage struct {
 	fn   func(ResponseWithContinuationPolicy) (ResponseWithContinuationPolicy, error)
 	rwcp ResponseWithContinuationPolicy
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationPolicyPage) Next() error {
@@ -3155,16 +3456,19 @@ func (page *ResponseWithContinuationPolicyPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationPolicyPage) NotDone() bool {
 	return !page.rwcp.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationPolicyPage) Response() ResponseWithContinuationPolicy {
 	return page.rwcp
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationPolicyPage) Values() []Policy {
 	if page.rwcp.IsEmpty() {
@@ -3173,6 +3477,7 @@ func (page ResponseWithContinuationPolicyPage) Values() []Policy {
 	return *page.rwcp.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationSchedule the response of a list operation.
 type ResponseWithContinuationSchedule struct {
 	autorest.Response `json:"-"`
@@ -3182,12 +3487,14 @@ type ResponseWithContinuationSchedule struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationScheduleIterator provides access to a complete listing of Schedule values.
 type ResponseWithContinuationScheduleIterator struct {
 	i    int
 	page ResponseWithContinuationSchedulePage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationScheduleIterator) Next() error {
@@ -3204,16 +3511,19 @@ func (iter *ResponseWithContinuationScheduleIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationScheduleIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationScheduleIterator) Response() ResponseWithContinuationSchedule {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationScheduleIterator) Value() Schedule {
@@ -3223,6 +3533,7 @@ func (iter ResponseWithContinuationScheduleIterator) Value() Schedule {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcS ResponseWithContinuationSchedule) IsEmpty() bool {
 	return rwcS.Value == nil || len(*rwcS.Value) == 0
@@ -3240,12 +3551,14 @@ func (rwcS ResponseWithContinuationSchedule) responseWithContinuationSchedulePre
 		autorest.WithBaseURL(to.String(rwcS.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationSchedulePage contains a page of Schedule values.
 type ResponseWithContinuationSchedulePage struct {
 	fn   func(ResponseWithContinuationSchedule) (ResponseWithContinuationSchedule, error)
 	rwcs ResponseWithContinuationSchedule
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationSchedulePage) Next() error {
@@ -3257,16 +3570,19 @@ func (page *ResponseWithContinuationSchedulePage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationSchedulePage) NotDone() bool {
 	return !page.rwcs.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationSchedulePage) Response() ResponseWithContinuationSchedule {
 	return page.rwcs
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationSchedulePage) Values() []Schedule {
 	if page.rwcs.IsEmpty() {
@@ -3275,6 +3591,7 @@ func (page ResponseWithContinuationSchedulePage) Values() []Schedule {
 	return *page.rwcs.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationVirtualNetwork the response of a list operation.
 type ResponseWithContinuationVirtualNetwork struct {
 	autorest.Response `json:"-"`
@@ -3284,12 +3601,14 @@ type ResponseWithContinuationVirtualNetwork struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationVirtualNetworkIterator provides access to a complete listing of VirtualNetwork values.
 type ResponseWithContinuationVirtualNetworkIterator struct {
 	i    int
 	page ResponseWithContinuationVirtualNetworkPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ResponseWithContinuationVirtualNetworkIterator) Next() error {
@@ -3306,16 +3625,19 @@ func (iter *ResponseWithContinuationVirtualNetworkIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ResponseWithContinuationVirtualNetworkIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (iter ResponseWithContinuationVirtualNetworkIterator) Response() ResponseWithContinuationVirtualNetwork {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ResponseWithContinuationVirtualNetworkIterator) Value() VirtualNetwork {
@@ -3325,6 +3647,7 @@ func (iter ResponseWithContinuationVirtualNetworkIterator) Value() VirtualNetwor
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rwcVn ResponseWithContinuationVirtualNetwork) IsEmpty() bool {
 	return rwcVn.Value == nil || len(*rwcVn.Value) == 0
@@ -3342,12 +3665,14 @@ func (rwcVn ResponseWithContinuationVirtualNetwork) responseWithContinuationVirt
 		autorest.WithBaseURL(to.String(rwcVn.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ResponseWithContinuationVirtualNetworkPage contains a page of VirtualNetwork values.
 type ResponseWithContinuationVirtualNetworkPage struct {
 	fn    func(ResponseWithContinuationVirtualNetwork) (ResponseWithContinuationVirtualNetwork, error)
 	rwcvn ResponseWithContinuationVirtualNetwork
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ResponseWithContinuationVirtualNetworkPage) Next() error {
@@ -3359,16 +3684,19 @@ func (page *ResponseWithContinuationVirtualNetworkPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ResponseWithContinuationVirtualNetworkPage) NotDone() bool {
 	return !page.rwcvn.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Response returns the raw server response from the last page request.
 func (page ResponseWithContinuationVirtualNetworkPage) Response() ResponseWithContinuationVirtualNetwork {
 	return page.rwcvn
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ResponseWithContinuationVirtualNetworkPage) Values() []VirtualNetwork {
 	if page.rwcvn.IsEmpty() {
@@ -3377,6 +3705,7 @@ func (page ResponseWithContinuationVirtualNetworkPage) Values() []VirtualNetwork
 	return *page.rwcvn.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Schedule a schedule.
 type Schedule struct {
 	autorest.Response `json:"-"`
@@ -3394,6 +3723,7 @@ type Schedule struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for Schedule.
 func (s Schedule) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3418,6 +3748,7 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for Schedule struct.
 func (s *Schedule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3487,6 +3818,7 @@ func (s *Schedule) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ScheduleCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ScheduleCreateOrUpdateResourceFuture struct {
@@ -3494,6 +3826,7 @@ type ScheduleCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient) (s Schedule, err error) {
@@ -3536,6 +3869,7 @@ func (future ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ScheduleDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ScheduleDeleteResourceFuture struct {
@@ -3543,6 +3877,7 @@ type ScheduleDeleteResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ScheduleDeleteResourceFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
@@ -3585,12 +3920,14 @@ func (future ScheduleDeleteResourceFuture) Result(client ScheduleClient) (ar aut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ScheduleExecuteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ScheduleExecuteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ScheduleExecuteFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
@@ -3633,6 +3970,7 @@ func (future ScheduleExecuteFuture) Result(client ScheduleClient) (ar autorest.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ScheduleProperties properties of a schedule.
 type ScheduleProperties struct {
 	// Status - The status of the schedule. Possible values include: 'Enabled', 'Disabled'
@@ -3651,6 +3989,7 @@ type ScheduleProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Subnet ...
 type Subnet struct {
 	ResourceID    *string `json:"resourceId,omitempty"`
@@ -3659,6 +3998,7 @@ type Subnet struct {
 	AllowPublicIP UsagePermissionType `json:"allowPublicIp,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // SubnetOverride property overrides on a subnet of a virtual network.
 type SubnetOverride struct {
 	// ResourceID - The resource identifier of the subnet.
@@ -3671,6 +4011,7 @@ type SubnetOverride struct {
 	UsePublicIPAddressPermission UsagePermissionType `json:"usePublicIpAddressPermission,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // SubscriptionNotification ...
 type SubscriptionNotification struct {
 	RegistrationDate *string `json:"registrationDate,omitempty"`
@@ -3679,11 +4020,13 @@ type SubscriptionNotification struct {
 	Properties *SubscriptionNotificationProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // SubscriptionNotificationProperties ...
 type SubscriptionNotificationProperties struct {
 	TenantID *string `json:"tenantId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineApplyArtifactsFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type VirtualMachineApplyArtifactsFuture struct {
@@ -3691,6 +4034,7 @@ type VirtualMachineApplyArtifactsFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
@@ -3733,6 +4077,7 @@ func (future VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type VirtualMachineCreateOrUpdateResourceFuture struct {
@@ -3740,6 +4085,7 @@ type VirtualMachineCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMachineClient) (lvm LabVirtualMachine, err error) {
@@ -3782,6 +4128,7 @@ func (future VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type VirtualMachineDeleteResourceFuture struct {
@@ -3789,6 +4136,7 @@ type VirtualMachineDeleteResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualMachineDeleteResourceFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
@@ -3831,12 +4179,14 @@ func (future VirtualMachineDeleteResourceFuture) Result(client VirtualMachineCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineStartFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VirtualMachineStartFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualMachineStartFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
@@ -3879,12 +4229,14 @@ func (future VirtualMachineStartFuture) Result(client VirtualMachineClient) (ar 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualMachineStopFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VirtualMachineStopFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualMachineStopFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
@@ -3927,6 +4279,7 @@ func (future VirtualMachineStopFuture) Result(client VirtualMachineClient) (ar a
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualNetwork a virtual network.
 type VirtualNetwork struct {
 	autorest.Response `json:"-"`
@@ -3944,6 +4297,7 @@ type VirtualNetwork struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // MarshalJSON is the custom marshaler for VirtualNetwork.
 func (vn VirtualNetwork) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3968,6 +4322,7 @@ func (vn VirtualNetwork) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // UnmarshalJSON is the custom unmarshaler for VirtualNetwork struct.
 func (vn *VirtualNetwork) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4037,6 +4392,7 @@ func (vn *VirtualNetwork) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualNetworkCreateOrUpdateResourceFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type VirtualNetworkCreateOrUpdateResourceFuture struct {
@@ -4044,6 +4400,7 @@ type VirtualNetworkCreateOrUpdateResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNetworkClient) (vn VirtualNetwork, err error) {
@@ -4086,6 +4443,7 @@ func (future VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualNetworkDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type VirtualNetworkDeleteResourceFuture struct {
@@ -4093,6 +4451,7 @@ type VirtualNetworkDeleteResourceFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualNetworkDeleteResourceFuture) Result(client VirtualNetworkClient) (ar autorest.Response, err error) {
@@ -4135,6 +4494,7 @@ func (future VirtualNetworkDeleteResourceFuture) Result(client VirtualNetworkCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VirtualNetworkProperties properties of a virtual network.
 type VirtualNetworkProperties struct {
 	// AllowedSubnets - The allowed subnets of the virtual network.
@@ -4149,6 +4509,7 @@ type VirtualNetworkProperties struct {
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // VMCostProperties ...
 type VMCostProperties struct {
 	Name              *string  `json:"name,omitempty"`
@@ -4156,6 +4517,7 @@ type VMCostProperties struct {
 	Cost              *float64 `json:"cost,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // WeekDetails properties of a weekly schedule.
 type WeekDetails struct {
 	// Weekdays - The days of the week.
@@ -4164,6 +4526,7 @@ type WeekDetails struct {
 	Time *string `json:"time,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // WindowsOsInfo information about a Windows OS.
 type WindowsOsInfo struct {
 	// WindowsOsState - The state of the Windows OS. Possible values include: 'NonSysprepped', 'SysprepRequested', 'SysprepApplied'

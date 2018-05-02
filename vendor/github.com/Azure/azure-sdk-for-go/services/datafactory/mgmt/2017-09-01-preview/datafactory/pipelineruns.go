@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // PipelineRunsClient is the the Azure Data Factory V2 management API provides a RESTful set of web services that
 // interact with Azure Data Factory V2 services.
 type PipelineRunsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewPipelineRunsClient creates an instance of the PipelineRunsClient client.
 func NewPipelineRunsClient(subscriptionID string) PipelineRunsClient {
 	return NewPipelineRunsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewPipelineRunsClientWithBaseURI creates an instance of the PipelineRunsClient client.
 func NewPipelineRunsClientWithBaseURI(baseURI string, subscriptionID string) PipelineRunsClient {
 	return PipelineRunsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Get get a pipeline run by its run ID.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
@@ -79,6 +83,7 @@ func (client PipelineRunsClient) Get(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetPreparer prepares the Get request.
 func (client PipelineRunsClient) GetPreparer(ctx context.Context, resourceGroupName string, factoryName string, runID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -101,6 +106,7 @@ func (client PipelineRunsClient) GetPreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PipelineRunsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -108,6 +114,7 @@ func (client PipelineRunsClient) GetSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client PipelineRunsClient) GetResponder(resp *http.Response) (result PipelineRun, err error) {
@@ -121,6 +128,7 @@ func (client PipelineRunsClient) GetResponder(resp *http.Response) (result Pipel
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // QueryByFactory query pipeline runs in the factory based on input filter conditions.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. filterParameters is parameters to
@@ -162,6 +170,7 @@ func (client PipelineRunsClient) QueryByFactory(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // QueryByFactoryPreparer prepares the QueryByFactory request.
 func (client PipelineRunsClient) QueryByFactoryPreparer(ctx context.Context, resourceGroupName string, factoryName string, filterParameters PipelineRunFilterParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -176,7 +185,7 @@ func (client PipelineRunsClient) QueryByFactoryPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelineruns", pathParameters),
@@ -185,6 +194,7 @@ func (client PipelineRunsClient) QueryByFactoryPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // QueryByFactorySender sends the QueryByFactory request. The method will close the
 // http.Response Body if it receives an error.
 func (client PipelineRunsClient) QueryByFactorySender(req *http.Request) (*http.Response, error) {
@@ -192,6 +202,7 @@ func (client PipelineRunsClient) QueryByFactorySender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // QueryByFactoryResponder handles the response to the QueryByFactory request. The method always
 // closes the http.Response Body.
 func (client PipelineRunsClient) QueryByFactoryResponder(resp *http.Response) (result PipelineRunQueryResponse, err error) {

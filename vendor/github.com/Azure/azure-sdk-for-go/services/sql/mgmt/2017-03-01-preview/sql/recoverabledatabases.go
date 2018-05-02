@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecoverableDatabasesClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type RecoverableDatabasesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRecoverableDatabasesClient creates an instance of the RecoverableDatabasesClient client.
 func NewRecoverableDatabasesClient(subscriptionID string) RecoverableDatabasesClient {
 	return NewRecoverableDatabasesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRecoverableDatabasesClientWithBaseURI creates an instance of the RecoverableDatabasesClient client.
 func NewRecoverableDatabasesClientWithBaseURI(baseURI string, subscriptionID string) RecoverableDatabasesClient {
 	return RecoverableDatabasesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a recoverable database, which is a resource representing a database's geo backup
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -68,6 +72,7 @@ func (client RecoverableDatabasesClient) Get(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client RecoverableDatabasesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,6 +95,7 @@ func (client RecoverableDatabasesClient) GetPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecoverableDatabasesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client RecoverableDatabasesClient) GetSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RecoverableDatabasesClient) GetResponder(resp *http.Response) (result RecoverableDatabase, err error) {
@@ -110,6 +117,7 @@ func (client RecoverableDatabasesClient) GetResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServer gets a list of recoverable databases
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -136,6 +144,7 @@ func (client RecoverableDatabasesClient) ListByServer(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerPreparer prepares the ListByServer request.
 func (client RecoverableDatabasesClient) ListByServerPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -157,6 +166,7 @@ func (client RecoverableDatabasesClient) ListByServerPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecoverableDatabasesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
@@ -164,6 +174,7 @@ func (client RecoverableDatabasesClient) ListByServerSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerResponder handles the response to the ListByServer request. The method always
 // closes the http.Response Body.
 func (client RecoverableDatabasesClient) ListByServerResponder(resp *http.Response) (result RecoverableDatabaseListResult, err error) {

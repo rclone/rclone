@@ -41,10 +41,11 @@ func NewConnectionMonitorsClientWithBaseURI(baseURI string, subscriptionID strin
 }
 
 // CreateOrUpdate create or update a connection monitor.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name of the connection monitor. parameters is
-// parameters that define the operation to create a connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name of the connection monitor.
+// parameters - parameters that define the operation to create a connection monitor.
 func (client ConnectionMonitorsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string, parameters ConnectionMonitor) (result ConnectionMonitorsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -86,7 +87,7 @@ func (client ConnectionMonitorsClient) CreateOrUpdatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectionMonitors/{connectionMonitorName}", pathParameters),
@@ -124,9 +125,10 @@ func (client ConnectionMonitorsClient) CreateOrUpdateResponder(resp *http.Respon
 }
 
 // Delete deletes the specified connection monitor.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name of the connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name of the connection monitor.
 func (client ConnectionMonitorsClient) Delete(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string) (result ConnectionMonitorsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, networkWatcherName, connectionMonitorName)
 	if err != nil {
@@ -193,9 +195,10 @@ func (client ConnectionMonitorsClient) DeleteResponder(resp *http.Response) (res
 }
 
 // Get gets a connection monitor by name.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name of the connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name of the connection monitor.
 func (client ConnectionMonitorsClient) Get(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string) (result ConnectionMonitorResult, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, networkWatcherName, connectionMonitorName)
 	if err != nil {
@@ -261,9 +264,9 @@ func (client ConnectionMonitorsClient) GetResponder(resp *http.Response) (result
 }
 
 // List lists all connection monitors for the specified Network Watcher.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
 func (client ConnectionMonitorsClient) List(ctx context.Context, resourceGroupName string, networkWatcherName string) (result ConnectionMonitorListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, networkWatcherName)
 	if err != nil {
@@ -328,9 +331,10 @@ func (client ConnectionMonitorsClient) ListResponder(resp *http.Response) (resul
 }
 
 // Query query a snapshot of the most recent connection states.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name given to the connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name given to the connection monitor.
 func (client ConnectionMonitorsClient) Query(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string) (result ConnectionMonitorsQueryFuture, err error) {
 	req, err := client.QueryPreparer(ctx, resourceGroupName, networkWatcherName, connectionMonitorName)
 	if err != nil {
@@ -398,9 +402,10 @@ func (client ConnectionMonitorsClient) QueryResponder(resp *http.Response) (resu
 }
 
 // Start starts the specified connection monitor.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name of the connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name of the connection monitor.
 func (client ConnectionMonitorsClient) Start(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string) (result ConnectionMonitorsStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, networkWatcherName, connectionMonitorName)
 	if err != nil {
@@ -467,9 +472,10 @@ func (client ConnectionMonitorsClient) StartResponder(resp *http.Response) (resu
 }
 
 // Stop stops the specified connection monitor.
-//
-// resourceGroupName is the name of the resource group containing Network Watcher. networkWatcherName is the name
-// of the Network Watcher resource. connectionMonitorName is the name of the connection monitor.
+// Parameters:
+// resourceGroupName - the name of the resource group containing Network Watcher.
+// networkWatcherName - the name of the Network Watcher resource.
+// connectionMonitorName - the name of the connection monitor.
 func (client ConnectionMonitorsClient) Stop(ctx context.Context, resourceGroupName string, networkWatcherName string, connectionMonitorName string) (result ConnectionMonitorsStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, resourceGroupName, networkWatcherName, connectionMonitorName)
 	if err != nil {

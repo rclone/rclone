@@ -1365,13 +1365,14 @@
         "ThingArn" : {
           "shape" : "__string"
         }
-      }
+      },
+      "required" : [ ]
     },
     "CoreDefinitionVersion" : {
       "type" : "structure",
       "members" : {
         "Cores" : {
-          "shape" : "ListOfCore"
+          "shape" : "__listOfCore"
         }
       }
     },
@@ -1431,7 +1432,7 @@
           "locationName" : "CoreDefinitionId"
         },
         "Cores" : {
-          "shape" : "ListOfCore"
+          "shape" : "__listOfCore"
         }
       },
       "required" : [ "CoreDefinitionId" ]
@@ -1545,7 +1546,7 @@
           "locationName" : "DeviceDefinitionId"
         },
         "Devices" : {
-          "shape" : "ListOfDevice"
+          "shape" : "__listOfDevice"
         }
       },
       "required" : [ "DeviceDefinitionId" ]
@@ -1623,7 +1624,7 @@
           "locationName" : "FunctionDefinitionId"
         },
         "Functions" : {
-          "shape" : "ListOfFunction"
+          "shape" : "__listOfFunction"
         }
       },
       "required" : [ "FunctionDefinitionId" ]
@@ -1818,7 +1819,7 @@
           "locationName" : "LoggerDefinitionId"
         },
         "Loggers" : {
-          "shape" : "ListOfLogger"
+          "shape" : "__listOfLogger"
         }
       },
       "required" : [ "LoggerDefinitionId" ]
@@ -1896,7 +1897,7 @@
           "locationName" : "ResourceDefinitionId"
         },
         "Resources" : {
-          "shape" : "ListOfResource"
+          "shape" : "__listOfResource"
         }
       },
       "required" : [ "ResourceDefinitionId" ]
@@ -1914,7 +1915,7 @@
           "shape" : "__string"
         },
         "Version" : {
-            "shape" : "__string"
+          "shape" : "__string"
         }
       }
     },
@@ -1922,9 +1923,9 @@
       "type" : "structure",
       "members" : {
         "AmznClientToken" : {
-            "shape" : "__string",
-            "location" : "header",
-            "locationName" : "X-Amzn-Client-Token"
+          "shape" : "__string",
+          "location" : "header",
+          "locationName" : "X-Amzn-Client-Token"
         },
         "S3UrlSignerRole" : {
           "shape" : "S3UrlSignerRole"
@@ -2013,7 +2014,7 @@
           "locationName" : "SubscriptionDefinitionId"
         },
         "Subscriptions" : {
-          "shape" : "ListOfSubscription"
+          "shape" : "__listOfSubscription"
         }
       },
       "required" : [ "SubscriptionDefinitionId" ]
@@ -2211,13 +2212,14 @@
         "ThingArn" : {
           "shape" : "__string"
         }
-      }
+      },
+      "required" : [ ]
     },
     "DeviceDefinitionVersion" : {
       "type" : "structure",
       "members" : {
         "Devices" : {
-          "shape" : "ListOfDevice"
+          "shape" : "__listOfDevice"
         }
       }
     },
@@ -2256,6 +2258,10 @@
       "type" : "structure",
       "members" : { }
     },
+    "EncodingType" : {
+      "type" : "string",
+      "enum" : [ "binary", "json" ]
+    },
     "ErrorDetail" : {
       "type" : "structure",
       "members" : {
@@ -2285,11 +2291,15 @@
         "Id" : {
           "shape" : "__string"
         }
-      }
+      },
+      "required" : [ ]
     },
     "FunctionConfiguration" : {
       "type" : "structure",
       "members" : {
+        "EncodingType" : {
+          "shape" : "EncodingType"
+        },
         "Environment" : {
           "shape" : "FunctionConfigurationEnvironment"
         },
@@ -2317,10 +2327,10 @@
           "shape" : "__boolean"
         },
         "ResourceAccessPolicies" : {
-          "shape" : "ListOfResourceAccessPolicy"
+          "shape" : "__listOfResourceAccessPolicy"
         },
         "Variables" : {
-          "shape" : "MapOf__string"
+          "shape" : "__mapOf__string"
         }
       }
     },
@@ -2328,7 +2338,7 @@
       "type" : "structure",
       "members" : {
         "Functions" : {
-          "shape" : "ListOfFunction"
+          "shape" : "__listOfFunction"
         }
       }
     },
@@ -2380,7 +2390,7 @@
       "type" : "structure",
       "members" : {
         "ConnectivityInfo" : {
-          "shape" : "ListOfConnectivityInfo"
+          "shape" : "__listOfConnectivityInfo"
         },
         "Message" : {
           "shape" : "__string",
@@ -3133,7 +3143,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3156,7 +3166,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3167,7 +3177,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3234,7 +3244,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3257,7 +3267,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3292,7 +3302,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3315,7 +3325,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3337,7 +3347,7 @@
       "type" : "structure",
       "members" : {
         "GroupCertificateAuthorities" : {
-          "shape" : "ListOfGroupCertificateAuthorityProperties"
+          "shape" : "__listOfGroupCertificateAuthorityProperties"
         }
       }
     },
@@ -3369,7 +3379,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3392,7 +3402,7 @@
       "type" : "structure",
       "members" : {
         "Groups" : {
-          "shape" : "ListOfGroupInformation"
+          "shape" : "__listOfGroupInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3427,7 +3437,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3450,83 +3460,11 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
         }
-      }
-    },
-    "ListOfConnectivityInfo" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ConnectivityInfo"
-      }
-    },
-    "ListOfCore" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Core"
-      }
-    },
-    "ListOfDefinitionInformation" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "DefinitionInformation"
-      }
-    },
-    "ListOfDevice" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Device"
-      }
-    },
-    "ListOfFunction" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Function"
-      }
-    },
-    "ListOfGroupCertificateAuthorityProperties" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "GroupCertificateAuthorityProperties"
-      }
-    },
-    "ListOfGroupInformation" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "GroupInformation"
-      }
-    },
-    "ListOfLogger" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Logger"
-      }
-    },
-    "ListOfResource" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Resource"
-      }
-    },
-    "ListOfResourceAccessPolicy" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ResourceAccessPolicy"
-      }
-    },
-    "ListOfSubscription" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "Subscription"
-      }
-    },
-    "ListOfVersionInformation" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "VersionInformation"
       }
     },
     "ListResourceDefinitionVersionsRequest" : {
@@ -3557,7 +3495,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3580,7 +3518,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3615,7 +3553,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3638,7 +3576,7 @@
       "type" : "structure",
       "members" : {
         "Definitions" : {
-          "shape" : "ListOfDefinitionInformation"
+          "shape" : "__listOfDefinitionInformation"
         },
         "NextToken" : {
           "shape" : "__string"
@@ -3652,7 +3590,7 @@
           "shape" : "__string"
         },
         "Versions" : {
-          "shape" : "ListOfVersionInformation"
+          "shape" : "__listOfVersionInformation"
         }
       }
     },
@@ -3699,7 +3637,8 @@
         "Type" : {
           "shape" : "LoggerType"
         }
-      }
+      },
+      "required" : [ ]
     },
     "LoggerComponent" : {
       "type" : "string",
@@ -3709,7 +3648,7 @@
       "type" : "structure",
       "members" : {
         "Loggers" : {
-          "shape" : "ListOfLogger"
+          "shape" : "__listOfLogger"
         }
       }
     },
@@ -3720,15 +3659,6 @@
     "LoggerType" : {
       "type" : "string",
       "enum" : [ "FileSystem", "AWSCloudWatch" ]
-    },
-    "MapOf__string" : {
-      "type" : "map",
-      "key" : {
-        "shape" : "__string"
-      },
-      "value" : {
-        "shape" : "__string"
-      }
     },
     "Permission" : {
       "type" : "string",
@@ -3776,7 +3706,8 @@
         "ResourceDataContainer" : {
           "shape" : "ResourceDataContainer"
         }
-      }
+      },
+      "required" : [ ]
     },
     "ResourceAccessPolicy" : {
       "type" : "structure",
@@ -3787,7 +3718,8 @@
         "ResourceId" : {
           "shape" : "__string"
         }
-      }
+      },
+      "required" : [ ]
     },
     "ResourceDataContainer" : {
       "type" : "structure",
@@ -3797,6 +3729,12 @@
         },
         "LocalVolumeResourceData" : {
           "shape" : "LocalVolumeResourceData"
+        },
+        "S3MachineLearningModelResourceData" : {
+          "shape" : "S3MachineLearningModelResourceData"
+        },
+        "SageMakerMachineLearningModelResourceData" : {
+          "shape" : "SageMakerMachineLearningModelResourceData"
         }
       }
     },
@@ -3804,12 +3742,34 @@
       "type" : "structure",
       "members" : {
         "Resources" : {
-          "shape" : "ListOfResource"
+          "shape" : "__listOfResource"
+        }
+      }
+    },
+    "S3MachineLearningModelResourceData" : {
+      "type" : "structure",
+      "members" : {
+        "DestinationPath" : {
+          "shape" : "__string"
+        },
+        "S3Uri" : {
+          "shape" : "__string"
         }
       }
     },
     "S3UrlSignerRole" : {
       "type" : "string"
+    },
+    "SageMakerMachineLearningModelResourceData" : {
+      "type" : "structure",
+      "members" : {
+        "DestinationPath" : {
+          "shape" : "__string"
+        },
+        "SageMakerJobArn" : {
+          "shape" : "__string"
+        }
+      }
     },
     "SoftwareToUpdate" : {
       "type" : "string",
@@ -3830,13 +3790,14 @@
         "Target" : {
           "shape" : "__string"
         }
-      }
+      },
+      "required" : [ ]
     },
     "SubscriptionDefinitionVersion" : {
       "type" : "structure",
       "members" : {
         "Subscriptions" : {
-          "shape" : "ListOfSubscription"
+          "shape" : "__listOfSubscription"
         }
       }
     },
@@ -3848,7 +3809,7 @@
       "type" : "structure",
       "members" : {
         "ConnectivityInfo" : {
-          "shape" : "ListOfConnectivityInfo"
+          "shape" : "__listOfConnectivityInfo"
         },
         "ThingName" : {
           "shape" : "__string",
@@ -4063,6 +4024,90 @@
     },
     "__integer" : {
       "type" : "integer"
+    },
+    "__listOfConnectivityInfo" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ConnectivityInfo"
+      }
+    },
+    "__listOfCore" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Core"
+      }
+    },
+    "__listOfDefinitionInformation" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "DefinitionInformation"
+      }
+    },
+    "__listOfDevice" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Device"
+      }
+    },
+    "__listOfFunction" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Function"
+      }
+    },
+    "__listOfGroupCertificateAuthorityProperties" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "GroupCertificateAuthorityProperties"
+      }
+    },
+    "__listOfGroupInformation" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "GroupInformation"
+      }
+    },
+    "__listOfLogger" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Logger"
+      }
+    },
+    "__listOfResource" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Resource"
+      }
+    },
+    "__listOfResourceAccessPolicy" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ResourceAccessPolicy"
+      }
+    },
+    "__listOfSubscription" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Subscription"
+      }
+    },
+    "__listOfVersionInformation" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "VersionInformation"
+      }
+    },
+    "__long" : {
+      "type" : "long"
+    },
+    "__mapOf__string" : {
+      "type" : "map",
+      "key" : {
+        "shape" : "__string"
+      },
+      "value" : {
+        "shape" : "__string"
+      }
     },
     "__string" : {
       "type" : "string"

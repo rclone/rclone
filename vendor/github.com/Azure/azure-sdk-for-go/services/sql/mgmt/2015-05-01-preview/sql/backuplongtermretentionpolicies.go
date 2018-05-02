@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // BackupLongTermRetentionPoliciesClient is the the Azure SQL Database management API provides a RESTful set of web
 // services that interact with Azure SQL Database services to manage your databases. The API enables you to create,
 // retrieve, update, and delete databases.
@@ -32,17 +33,20 @@ type BackupLongTermRetentionPoliciesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewBackupLongTermRetentionPoliciesClient creates an instance of the BackupLongTermRetentionPoliciesClient client.
 func NewBackupLongTermRetentionPoliciesClient(subscriptionID string) BackupLongTermRetentionPoliciesClient {
 	return NewBackupLongTermRetentionPoliciesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewBackupLongTermRetentionPoliciesClientWithBaseURI creates an instance of the BackupLongTermRetentionPoliciesClient
 // client.
 func NewBackupLongTermRetentionPoliciesClientWithBaseURI(baseURI string, subscriptionID string) BackupLongTermRetentionPoliciesClient {
 	return BackupLongTermRetentionPoliciesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // CreateOrUpdate creates or updates a database backup long term retention policy
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -71,6 +75,7 @@ func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdate(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters BackupLongTermRetentionPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -87,7 +92,7 @@ func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdatePreparer(ctx c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/backupLongTermRetentionPolicies/{backupLongTermRetentionPolicyName}", pathParameters),
@@ -96,6 +101,7 @@ func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdatePreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdateSender(req *http.Request) (future BackupLongTermRetentionPoliciesCreateOrUpdateFuture, err error) {
@@ -111,6 +117,7 @@ func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdateSender(req *ht
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdateResponder(resp *http.Response) (result BackupLongTermRetentionPolicy, err error) {
@@ -124,6 +131,7 @@ func (client BackupLongTermRetentionPoliciesClient) CreateOrUpdateResponder(resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // Get returns a database backup long term retention policy
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -151,6 +159,7 @@ func (client BackupLongTermRetentionPoliciesClient) Get(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client BackupLongTermRetentionPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -174,6 +183,7 @@ func (client BackupLongTermRetentionPoliciesClient) GetPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupLongTermRetentionPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -181,6 +191,7 @@ func (client BackupLongTermRetentionPoliciesClient) GetSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client BackupLongTermRetentionPoliciesClient) GetResponder(resp *http.Response) (result BackupLongTermRetentionPolicy, err error) {
@@ -194,6 +205,7 @@ func (client BackupLongTermRetentionPoliciesClient) GetResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabase returns a database backup long term retention policy
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -221,6 +233,7 @@ func (client BackupLongTermRetentionPoliciesClient) ListByDatabase(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client BackupLongTermRetentionPoliciesClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -243,6 +256,7 @@ func (client BackupLongTermRetentionPoliciesClient) ListByDatabasePreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupLongTermRetentionPoliciesClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -250,6 +264,7 @@ func (client BackupLongTermRetentionPoliciesClient) ListByDatabaseSender(req *ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client BackupLongTermRetentionPoliciesClient) ListByDatabaseResponder(resp *http.Response) (result BackupLongTermRetentionPolicyListResult, err error) {

@@ -38,6 +38,11 @@ const (
 	Send AccessRights = "Send"
 )
 
+// PossibleAccessRightsValues returns an array of possible values for the AccessRights const type.
+func PossibleAccessRightsValues() []AccessRights {
+	return []AccessRights{Listen, Manage, Send}
+}
+
 // NamespaceType enumerates the values for namespace type.
 type NamespaceType string
 
@@ -47,6 +52,11 @@ const (
 	// NotificationHub ...
 	NotificationHub NamespaceType = "NotificationHub"
 )
+
+// PossibleNamespaceTypeValues returns an array of possible values for the NamespaceType const type.
+func PossibleNamespaceTypeValues() []NamespaceType {
+	return []NamespaceType{Messaging, NotificationHub}
+}
 
 // AdmCredential description of a NotificationHub AdmCredential.
 type AdmCredential struct {

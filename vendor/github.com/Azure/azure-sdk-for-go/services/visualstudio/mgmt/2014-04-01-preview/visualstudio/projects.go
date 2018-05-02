@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // ProjectsClient is the use these APIs to manage Visual Studio Team Services resources through the Azure Resource
 // Manager. All task operations conform to the HTTP/1.1 protocol specification and each operation returns an
 // x-ms-request-id header that can be used to obtain information about the request. You must make sure that requests
@@ -33,16 +34,19 @@ type ProjectsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // NewProjectsClient creates an instance of the ProjectsClient client.
 func NewProjectsClient(subscriptionID string) ProjectsClient {
 	return NewProjectsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // NewProjectsClientWithBaseURI creates an instance of the ProjectsClient client.
 func NewProjectsClientWithBaseURI(baseURI string, subscriptionID string) ProjectsClient {
 	return ProjectsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // Create creates a Team Services project in the collection with the specified name. 'VersionControlOption' and
 // 'ProcessTemplateId' must be specified in the resource properties. Valid values for VersionControlOption: Git, Tfvc.
 // Valid values for ProcessTemplateId: 6B724908-EF14-45CF-84F8-768B5384DA45, ADCC42AB-9882-485E-A3ED-7678F01F66BC,
@@ -67,6 +71,7 @@ func (client ProjectsClient) Create(ctx context.Context, body ProjectResource, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // CreatePreparer prepares the Create request.
 func (client ProjectsClient) CreatePreparer(ctx context.Context, body ProjectResource, resourceGroupName string, rootResourceName string, resourceName string, validating string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -85,7 +90,7 @@ func (client ProjectsClient) CreatePreparer(ctx context.Context, body ProjectRes
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.visualstudio/account/{rootResourceName}/project/{resourceName}", pathParameters),
@@ -94,6 +99,7 @@ func (client ProjectsClient) CreatePreparer(ctx context.Context, body ProjectRes
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) CreateSender(req *http.Request) (future ProjectsCreateFuture, err error) {
@@ -109,6 +115,7 @@ func (client ProjectsClient) CreateSender(req *http.Request) (future ProjectsCre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) CreateResponder(resp *http.Response) (result ProjectResource, err error) {
@@ -122,6 +129,7 @@ func (client ProjectsClient) CreateResponder(resp *http.Response) (result Projec
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // Get gets the details of a Team Services project resource.
 //
 // resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the
@@ -148,6 +156,7 @@ func (client ProjectsClient) Get(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetPreparer prepares the Get request.
 func (client ProjectsClient) GetPreparer(ctx context.Context, resourceGroupName string, rootResourceName string, resourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -170,6 +179,7 @@ func (client ProjectsClient) GetPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -177,6 +187,7 @@ func (client ProjectsClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) GetResponder(resp *http.Response) (result ProjectResource, err error) {
@@ -190,6 +201,7 @@ func (client ProjectsClient) GetResponder(resp *http.Response) (result ProjectRe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetJobStatus gets the status of the project resource creation job.
 //
 // resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the
@@ -218,6 +230,7 @@ func (client ProjectsClient) GetJobStatus(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetJobStatusPreparer prepares the GetJobStatus request.
 func (client ProjectsClient) GetJobStatusPreparer(ctx context.Context, resourceGroupName string, rootResourceName string, resourceName string, subContainerName string, operation string, jobID *uuid.UUID) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -245,6 +258,7 @@ func (client ProjectsClient) GetJobStatusPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetJobStatusSender sends the GetJobStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) GetJobStatusSender(req *http.Request) (*http.Response, error) {
@@ -252,6 +266,7 @@ func (client ProjectsClient) GetJobStatusSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // GetJobStatusResponder handles the response to the GetJobStatus request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) GetJobStatusResponder(resp *http.Response) (result ProjectResource, err error) {
@@ -265,6 +280,7 @@ func (client ProjectsClient) GetJobStatusResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // ListByResourceGroup gets all Visual Studio Team Services project resources created in the specified Team Services
 // account.
 //
@@ -292,6 +308,7 @@ func (client ProjectsClient) ListByResourceGroup(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client ProjectsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, rootResourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -313,6 +330,7 @@ func (client ProjectsClient) ListByResourceGroupPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -320,6 +338,7 @@ func (client ProjectsClient) ListByResourceGroupSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) ListByResourceGroupResponder(resp *http.Response) (result ProjectResourceListResult, err error) {
@@ -333,6 +352,7 @@ func (client ProjectsClient) ListByResourceGroupResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // Update updates the tags of the specified Team Services project.
 //
 // resourceGroupName is name of the resource group within the Azure subscription. body is the request data.
@@ -359,6 +379,7 @@ func (client ProjectsClient) Update(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // UpdatePreparer prepares the Update request.
 func (client ProjectsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, body ProjectResource, rootResourceName string, resourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -374,7 +395,7 @@ func (client ProjectsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.visualstudio/account/{rootResourceName}/project/{resourceName}", pathParameters),
@@ -383,6 +404,7 @@ func (client ProjectsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -390,6 +412,7 @@ func (client ProjectsClient) UpdateSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/visualstudio/mgmt/2014-04-01-preview/visualstudio instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) UpdateResponder(resp *http.Response) (result ProjectResource, err error) {

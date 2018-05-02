@@ -15,7 +15,7 @@
   "description": "Lets Android application developers access their Google Play accounts.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/android-publisher",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/JHo8f1I6kYzk10q6NwBbUC9DMxw\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/e3MuT7-T4mkaaCQS_qVwD7HvOQ8\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/android-16.png",
     "x32": "https://www.google.com/images/icons/product/android-32.png"
@@ -60,12 +60,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -1519,9 +1519,9 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\", \"rollout\" or \"internal\".",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
+                  "pattern": "(alpha|beta|production|rollout|internal)",
                   "required": true,
                   "type": "string"
                 }
@@ -1556,9 +1556,9 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\", \"rollout\" or \"internal\".",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
+                  "pattern": "(alpha|beta|production|rollout|internal)",
                   "required": true,
                   "type": "string"
                 }
@@ -1596,9 +1596,9 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\", \"rollout\" or \"internal\".",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
+                  "pattern": "(alpha|beta|production|rollout|internal)",
                   "required": true,
                   "type": "string"
                 }
@@ -1641,9 +1641,8 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify.",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
                   "required": true,
                   "type": "string"
                 }
@@ -1709,9 +1708,8 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify.",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
                   "required": true,
                   "type": "string"
                 }
@@ -1750,9 +1748,8 @@
                   "type": "string"
                 },
                 "track": {
-                  "description": "The track to read or modify. Acceptable values are: \"alpha\", \"beta\", \"production\" or \"rollout\".",
+                  "description": "The track to read or modify.",
                   "location": "path",
-                  "pattern": "(alpha|beta|production|rollout)",
                   "required": true,
                   "type": "string"
                 }
@@ -1768,49 +1765,6 @@
                 "https://www.googleapis.com/auth/androidpublisher"
               ]
             }
-          }
-        }
-      }
-    },
-    "entitlements": {
-      "methods": {
-        "list": {
-          "description": "Lists the user's current inapp item or subscription entitlements",
-          "httpMethod": "GET",
-          "id": "androidpublisher.entitlements.list",
-          "parameterOrder": [
-            "packageName"
-          ],
-          "parameters": {
-            "maxResults": {
-              "format": "uint32",
-              "location": "query",
-              "type": "integer"
-            },
-            "packageName": {
-              "description": "The package name of the application the inapp product was sold in (for example, 'com.some.thing').",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "productId": {
-              "description": "The product id of the inapp product (for example, 'sku1'). This can be used to restrict the result set.",
-              "location": "query",
-              "type": "string"
-            },
-            "startIndex": {
-              "format": "uint32",
-              "location": "query",
-              "type": "integer"
-            },
-            "token": {
-              "location": "query",
-              "type": "string"
-            }
-          },
-          "path": "{packageName}/entitlements",
-          "response": {
-            "$ref": "EntitlementsListResponse"
           }
         }
       }
@@ -2411,7 +2365,7 @@
       }
     }
   },
-  "revision": "20180211",
+  "revision": "20180501",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Apk": {
@@ -2648,48 +2602,6 @@
           "description": "Screen width in pixels",
           "format": "int32",
           "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "Entitlement": {
-      "description": "An Entitlement resource indicates a user's current entitlement to an inapp item or subscription.",
-      "id": "Entitlement",
-      "properties": {
-        "kind": {
-          "default": "androidpublisher#entitlement",
-          "description": "This kind represents an entitlement object in the androidpublisher service.",
-          "type": "string"
-        },
-        "productId": {
-          "description": "The SKU of the product.",
-          "type": "string"
-        },
-        "productType": {
-          "description": "The type of the inapp product. Possible values are:  \n- In-app item: \"inapp\" \n- Subscription: \"subs\"",
-          "type": "string"
-        },
-        "token": {
-          "description": "The token which can be verified using the subscriptions or products API.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "EntitlementsListResponse": {
-      "id": "EntitlementsListResponse",
-      "properties": {
-        "pageInfo": {
-          "$ref": "PageInfo"
-        },
-        "resources": {
-          "items": {
-            "$ref": "Entitlement"
-          },
-          "type": "array"
-        },
-        "tokenPagination": {
-          "$ref": "TokenPagination"
         }
       },
       "type": "object"
@@ -3199,6 +3111,22 @@
       },
       "type": "object"
     },
+    "SubscriptionCancelSurveyResult": {
+      "description": "Information provided by the user when they complete the subscription cancellation flow (cancellation reason survey).",
+      "id": "SubscriptionCancelSurveyResult",
+      "properties": {
+        "cancelSurveyReason": {
+          "description": "The cancellation reason the user chose in the survey. Possible values are:  \n- Other \n- I don't use this service enough \n- Technical issues \n- Cost-related reasons \n- I found a better app",
+          "format": "int32",
+          "type": "integer"
+        },
+        "userInputCancelReason": {
+          "description": "The customized input cancel reason from the user. Only present when cancelReason is 0.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "SubscriptionDeferralInfo": {
       "description": "A SubscriptionDeferralInfo contains the data needed to defer a subscription purchase to a future expiry time.",
       "id": "SubscriptionDeferralInfo",
@@ -3229,6 +3157,10 @@
           "format": "int32",
           "type": "integer"
         },
+        "cancelSurveyResult": {
+          "$ref": "SubscriptionCancelSurveyResult",
+          "description": "Information provided by the user when they complete the subscription cancellation flow (cancellation reason survey)."
+        },
         "countryCode": {
           "description": "ISO 3166-1 alpha-2 billing country/region code of the user at the time the subscription was granted.",
           "type": "string"
@@ -3237,9 +3169,21 @@
           "description": "A developer-specified string that contains supplemental information about an order.",
           "type": "string"
         },
+        "emailAddress": {
+          "description": "The email address of the user when the subscription was purchased. Only present for purchases made with 'Subscribe with Google'.",
+          "type": "string"
+        },
         "expiryTimeMillis": {
           "description": "Time at which the subscription will expire, in milliseconds since the Epoch.",
           "format": "int64",
+          "type": "string"
+        },
+        "familyName": {
+          "description": "The family name of the user when the subscription was purchased. Only present for purchases made with 'Subscribe with Google'.",
+          "type": "string"
+        },
+        "givenName": {
+          "description": "The given name of the user when the subscription was purchased. Only present for purchases made with 'Subscribe with Google'.",
           "type": "string"
         },
         "kind": {
@@ -3267,6 +3211,14 @@
         },
         "priceCurrencyCode": {
           "description": "ISO 4217 currency code for the subscription price. For example, if the price is specified in British pounds sterling, price_currency_code is \"GBP\".",
+          "type": "string"
+        },
+        "profileId": {
+          "description": "The profile id of the user when the subscription was purchased. Only present for purchases made with 'Subscribe with Google'.",
+          "type": "string"
+        },
+        "profileName": {
+          "description": "The profile name of the user when the subscription was purchased. Only present for purchases made with 'Subscribe with Google'.",
           "type": "string"
         },
         "purchaseType": {
@@ -3356,7 +3308,7 @@
       "id": "Track",
       "properties": {
         "track": {
-          "description": "Identifier for this track. One of \"alpha\", \"beta\", \"production\" or \"rollout\".",
+          "description": "Identifier for this track. One of \"alpha\", \"beta\", \"production\", \"rollout\" or \"internal\".",
           "type": "string"
         },
         "userFraction": {

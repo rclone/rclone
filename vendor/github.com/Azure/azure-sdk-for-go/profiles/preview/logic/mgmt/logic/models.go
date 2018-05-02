@@ -22,54 +22,15 @@ package logic
 import original "github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic"
 
 type AgreementsClient = original.AgreementsClient
-
-func NewAgreementsClient(subscriptionID string) AgreementsClient {
-	return original.NewAgreementsClient(subscriptionID)
-}
-func NewAgreementsClientWithBaseURI(baseURI string, subscriptionID string) AgreementsClient {
-	return original.NewAgreementsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type CertificatesClient = original.CertificatesClient
-
-func NewCertificatesClient(subscriptionID string) CertificatesClient {
-	return original.NewCertificatesClient(subscriptionID)
-}
-func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) CertificatesClient {
-	return original.NewCertificatesClientWithBaseURI(baseURI, subscriptionID)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type IntegrationAccountsClient = original.IntegrationAccountsClient
-
-func NewIntegrationAccountsClient(subscriptionID string) IntegrationAccountsClient {
-	return original.NewIntegrationAccountsClient(subscriptionID)
-}
-func NewIntegrationAccountsClientWithBaseURI(baseURI string, subscriptionID string) IntegrationAccountsClient {
-	return original.NewIntegrationAccountsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type MapsClient = original.MapsClient
-
-func NewMapsClient(subscriptionID string) MapsClient {
-	return original.NewMapsClient(subscriptionID)
-}
-func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient {
-	return original.NewMapsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AgreementType = original.AgreementType
 
 const (
@@ -529,25 +490,138 @@ type X12SecuritySettings = original.X12SecuritySettings
 type X12ValidationOverride = original.X12ValidationOverride
 type X12ValidationSettings = original.X12ValidationSettings
 type PartnersClient = original.PartnersClient
+type SchemasClient = original.SchemasClient
+type SessionsClient = original.SessionsClient
+type WorkflowRunActionsClient = original.WorkflowRunActionsClient
+type WorkflowRunsClient = original.WorkflowRunsClient
+type WorkflowsClient = original.WorkflowsClient
+type WorkflowTriggerHistoriesClient = original.WorkflowTriggerHistoriesClient
+type WorkflowTriggersClient = original.WorkflowTriggersClient
+type WorkflowVersionsClient = original.WorkflowVersionsClient
 
+func NewAgreementsClient(subscriptionID string) AgreementsClient {
+	return original.NewAgreementsClient(subscriptionID)
+}
+func NewAgreementsClientWithBaseURI(baseURI string, subscriptionID string) AgreementsClient {
+	return original.NewAgreementsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewCertificatesClient(subscriptionID string) CertificatesClient {
+	return original.NewCertificatesClient(subscriptionID)
+}
+func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) CertificatesClient {
+	return original.NewCertificatesClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewIntegrationAccountsClient(subscriptionID string) IntegrationAccountsClient {
+	return original.NewIntegrationAccountsClient(subscriptionID)
+}
+func NewIntegrationAccountsClientWithBaseURI(baseURI string, subscriptionID string) IntegrationAccountsClient {
+	return original.NewIntegrationAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewMapsClient(subscriptionID string) MapsClient {
+	return original.NewMapsClient(subscriptionID)
+}
+func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient {
+	return original.NewMapsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAgreementTypeValues() []AgreementType {
+	return original.PossibleAgreementTypeValues()
+}
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return original.PossibleDayOfWeekValues()
+}
+func PossibleDaysOfWeekValues() []DaysOfWeek {
+	return original.PossibleDaysOfWeekValues()
+}
+func PossibleEdifactCharacterSetValues() []EdifactCharacterSet {
+	return original.PossibleEdifactCharacterSetValues()
+}
+func PossibleEdifactDecimalIndicatorValues() []EdifactDecimalIndicator {
+	return original.PossibleEdifactDecimalIndicatorValues()
+}
+func PossibleEncryptionAlgorithmValues() []EncryptionAlgorithm {
+	return original.PossibleEncryptionAlgorithmValues()
+}
+func PossibleHashingAlgorithmValues() []HashingAlgorithm {
+	return original.PossibleHashingAlgorithmValues()
+}
+func PossibleIntegrationAccountSkuNameValues() []IntegrationAccountSkuName {
+	return original.PossibleIntegrationAccountSkuNameValues()
+}
+func PossibleKeyTypeValues() []KeyType {
+	return original.PossibleKeyTypeValues()
+}
+func PossibleMapTypeValues() []MapType {
+	return original.PossibleMapTypeValues()
+}
+func PossibleMessageFilterTypeValues() []MessageFilterType {
+	return original.PossibleMessageFilterTypeValues()
+}
+func PossibleParameterTypeValues() []ParameterType {
+	return original.PossibleParameterTypeValues()
+}
+func PossiblePartnerTypeValues() []PartnerType {
+	return original.PossiblePartnerTypeValues()
+}
+func PossibleRecurrenceFrequencyValues() []RecurrenceFrequency {
+	return original.PossibleRecurrenceFrequencyValues()
+}
+func PossibleSchemaTypeValues() []SchemaType {
+	return original.PossibleSchemaTypeValues()
+}
+func PossibleSegmentTerminatorSuffixValues() []SegmentTerminatorSuffix {
+	return original.PossibleSegmentTerminatorSuffixValues()
+}
+func PossibleSigningAlgorithmValues() []SigningAlgorithm {
+	return original.PossibleSigningAlgorithmValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleTrailingSeparatorPolicyValues() []TrailingSeparatorPolicy {
+	return original.PossibleTrailingSeparatorPolicyValues()
+}
+func PossibleUsageIndicatorValues() []UsageIndicator {
+	return original.PossibleUsageIndicatorValues()
+}
+func PossibleWorkflowProvisioningStateValues() []WorkflowProvisioningState {
+	return original.PossibleWorkflowProvisioningStateValues()
+}
+func PossibleWorkflowStateValues() []WorkflowState {
+	return original.PossibleWorkflowStateValues()
+}
+func PossibleWorkflowStatusValues() []WorkflowStatus {
+	return original.PossibleWorkflowStatusValues()
+}
+func PossibleWorkflowTriggerProvisioningStateValues() []WorkflowTriggerProvisioningState {
+	return original.PossibleWorkflowTriggerProvisioningStateValues()
+}
+func PossibleX12CharacterSetValues() []X12CharacterSet {
+	return original.PossibleX12CharacterSetValues()
+}
+func PossibleX12DateFormatValues() []X12DateFormat {
+	return original.PossibleX12DateFormatValues()
+}
+func PossibleX12TimeFormatValues() []X12TimeFormat {
+	return original.PossibleX12TimeFormatValues()
+}
 func NewPartnersClient(subscriptionID string) PartnersClient {
 	return original.NewPartnersClient(subscriptionID)
 }
 func NewPartnersClientWithBaseURI(baseURI string, subscriptionID string) PartnersClient {
 	return original.NewPartnersClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SchemasClient = original.SchemasClient
-
 func NewSchemasClient(subscriptionID string) SchemasClient {
 	return original.NewSchemasClient(subscriptionID)
 }
 func NewSchemasClientWithBaseURI(baseURI string, subscriptionID string) SchemasClient {
 	return original.NewSchemasClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SessionsClient = original.SessionsClient
-
 func NewSessionsClient(subscriptionID string) SessionsClient {
 	return original.NewSessionsClient(subscriptionID)
 }
@@ -560,54 +634,36 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type WorkflowRunActionsClient = original.WorkflowRunActionsClient
-
 func NewWorkflowRunActionsClient(subscriptionID string) WorkflowRunActionsClient {
 	return original.NewWorkflowRunActionsClient(subscriptionID)
 }
 func NewWorkflowRunActionsClientWithBaseURI(baseURI string, subscriptionID string) WorkflowRunActionsClient {
 	return original.NewWorkflowRunActionsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type WorkflowRunsClient = original.WorkflowRunsClient
-
 func NewWorkflowRunsClient(subscriptionID string) WorkflowRunsClient {
 	return original.NewWorkflowRunsClient(subscriptionID)
 }
 func NewWorkflowRunsClientWithBaseURI(baseURI string, subscriptionID string) WorkflowRunsClient {
 	return original.NewWorkflowRunsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type WorkflowsClient = original.WorkflowsClient
-
 func NewWorkflowsClient(subscriptionID string) WorkflowsClient {
 	return original.NewWorkflowsClient(subscriptionID)
 }
 func NewWorkflowsClientWithBaseURI(baseURI string, subscriptionID string) WorkflowsClient {
 	return original.NewWorkflowsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type WorkflowTriggerHistoriesClient = original.WorkflowTriggerHistoriesClient
-
 func NewWorkflowTriggerHistoriesClient(subscriptionID string) WorkflowTriggerHistoriesClient {
 	return original.NewWorkflowTriggerHistoriesClient(subscriptionID)
 }
 func NewWorkflowTriggerHistoriesClientWithBaseURI(baseURI string, subscriptionID string) WorkflowTriggerHistoriesClient {
 	return original.NewWorkflowTriggerHistoriesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type WorkflowTriggersClient = original.WorkflowTriggersClient
-
 func NewWorkflowTriggersClient(subscriptionID string) WorkflowTriggersClient {
 	return original.NewWorkflowTriggersClient(subscriptionID)
 }
 func NewWorkflowTriggersClientWithBaseURI(baseURI string, subscriptionID string) WorkflowTriggersClient {
 	return original.NewWorkflowTriggersClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type WorkflowVersionsClient = original.WorkflowVersionsClient
-
 func NewWorkflowVersionsClient(subscriptionID string) WorkflowVersionsClient {
 	return original.NewWorkflowVersionsClient(subscriptionID)
 }

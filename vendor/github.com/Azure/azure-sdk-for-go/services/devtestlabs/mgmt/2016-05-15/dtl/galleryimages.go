@@ -40,11 +40,13 @@ func NewGalleryImagesClientWithBaseURI(baseURI string, subscriptionID string) Ga
 }
 
 // List list gallery images in a given lab.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
-// $expand query. Example: 'properties($select=author)' filter is the filter to apply to the operation. top is the
-// maximum number of resources to return from the operation. orderby is the ordering expression for the results,
-// using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// expand - specify the $expand query. Example: 'properties($select=author)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client GalleryImagesClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationGalleryImagePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

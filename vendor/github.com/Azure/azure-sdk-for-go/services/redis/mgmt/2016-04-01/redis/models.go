@@ -49,6 +49,11 @@ const (
 	Weekend DayOfWeek = "Weekend"
 )
 
+// PossibleDayOfWeekValues returns an array of possible values for the DayOfWeek const type.
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return []DayOfWeek{Everyday, Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday, Weekend}
+}
+
 // KeyType enumerates the values for key type.
 type KeyType string
 
@@ -58,6 +63,11 @@ const (
 	// Secondary ...
 	Secondary KeyType = "Secondary"
 )
+
+// PossibleKeyTypeValues returns an array of possible values for the KeyType const type.
+func PossibleKeyTypeValues() []KeyType {
+	return []KeyType{Primary, Secondary}
+}
 
 // RebootType enumerates the values for reboot type.
 type RebootType string
@@ -71,6 +81,11 @@ const (
 	SecondaryNode RebootType = "SecondaryNode"
 )
 
+// PossibleRebootTypeValues returns an array of possible values for the RebootType const type.
+func PossibleRebootTypeValues() []RebootType {
+	return []RebootType{AllNodes, PrimaryNode, SecondaryNode}
+}
+
 // SkuFamily enumerates the values for sku family.
 type SkuFamily string
 
@@ -80,6 +95,11 @@ const (
 	// P ...
 	P SkuFamily = "P"
 )
+
+// PossibleSkuFamilyValues returns an array of possible values for the SkuFamily const type.
+func PossibleSkuFamilyValues() []SkuFamily {
+	return []SkuFamily{C, P}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -92,6 +112,11 @@ const (
 	// Standard ...
 	Standard SkuName = "Standard"
 )
+
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Basic, Premium, Standard}
+}
 
 // AccessKeys redis cache access keys.
 type AccessKeys struct {
@@ -422,6 +447,24 @@ type FirewallRule struct {
 	Type *string `json:"type,omitempty"`
 	// FirewallRuleProperties - redis cache firewall rule properties
 	*FirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
@@ -886,6 +929,27 @@ type PatchSchedule struct {
 	Location *string `json:"location,omitempty"`
 	// ScheduleEntries - List of patch schedules for a Redis cache.
 	*ScheduleEntries `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PatchSchedule.
+func (ps PatchSchedule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ps.ID != nil {
+		objectMap["id"] = ps.ID
+	}
+	if ps.Name != nil {
+		objectMap["name"] = ps.Name
+	}
+	if ps.Type != nil {
+		objectMap["type"] = ps.Type
+	}
+	if ps.Location != nil {
+		objectMap["location"] = ps.Location
+	}
+	if ps.ScheduleEntries != nil {
+		objectMap["properties"] = ps.ScheduleEntries
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for PatchSchedule struct.

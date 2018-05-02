@@ -42,8 +42,9 @@ func NewTenantConfigurationSyncStateClientWithBaseURI(baseURI string, subscripti
 }
 
 // Get gets the status of the most recent synchronization between the configuration database and the Git repository.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantConfigurationSyncStateClient) Get(ctx context.Context, resourceGroupName string, serviceName string) (result TenantConfigurationSyncStateContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

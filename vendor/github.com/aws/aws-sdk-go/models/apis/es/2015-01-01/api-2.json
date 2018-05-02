@@ -5,6 +5,7 @@
     "endpointPrefix":"es",
     "protocol":"rest-json",
     "serviceFullName":"Amazon Elasticsearch Service",
+    "serviceId":"Elasticsearch Service",
     "signatureVersion":"v4",
     "uid":"es-2015-01-01"
   },
@@ -277,6 +278,26 @@
     },
     "Boolean":{"type":"boolean"},
     "CloudWatchLogsLogGroupArn":{"type":"string"},
+    "CognitoOptions":{
+      "type":"structure",
+      "members":{
+        "Enabled":{"shape":"Boolean"},
+        "UserPoolId":{"shape":"UserPoolId"},
+        "IdentityPoolId":{"shape":"IdentityPoolId"},
+        "RoleArn":{"shape":"RoleArn"}
+      }
+    },
+    "CognitoOptionsStatus":{
+      "type":"structure",
+      "required":[
+        "Options",
+        "Status"
+      ],
+      "members":{
+        "Options":{"shape":"CognitoOptions"},
+        "Status":{"shape":"OptionStatus"}
+      }
+    },
     "CreateElasticsearchDomainRequest":{
       "type":"structure",
       "required":["DomainName"],
@@ -288,6 +309,7 @@
         "AccessPolicies":{"shape":"PolicyDocument"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
         "VPCOptions":{"shape":"VPCOptions"},
+        "CognitoOptions":{"shape":"CognitoOptions"},
         "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptions"},
         "AdvancedOptions":{"shape":"AdvancedOptions"},
         "LogPublishingOptions":{"shape":"LogPublishingOptions"}
@@ -524,6 +546,7 @@
         "AccessPolicies":{"shape":"AccessPoliciesStatus"},
         "SnapshotOptions":{"shape":"SnapshotOptionsStatus"},
         "VPCOptions":{"shape":"VPCDerivedInfoStatus"},
+        "CognitoOptions":{"shape":"CognitoOptionsStatus"},
         "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptionsStatus"},
         "AdvancedOptions":{"shape":"AdvancedOptionsStatus"},
         "LogPublishingOptions":{"shape":"LogPublishingOptionsStatus"}
@@ -552,6 +575,7 @@
         "AccessPolicies":{"shape":"PolicyDocument"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
         "VPCOptions":{"shape":"VPCDerivedInfo"},
+        "CognitoOptions":{"shape":"CognitoOptions"},
         "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptions"},
         "AdvancedOptions":{"shape":"AdvancedOptions"},
         "LogPublishingOptions":{"shape":"LogPublishingOptions"}
@@ -605,6 +629,12 @@
       "value":{"shape":"ServiceUrl"}
     },
     "ErrorMessage":{"type":"string"},
+    "IdentityPoolId":{
+      "type":"string",
+      "max":55,
+      "min":1,
+      "pattern":"[\\w-]+:[0-9a-f-]+"
+    },
     "InstanceCountLimits":{
       "type":"structure",
       "members":{
@@ -825,6 +855,11 @@
       "error":{"httpStatusCode":409},
       "exception":true
     },
+    "RoleArn":{
+      "type":"string",
+      "max":2048,
+      "min":20
+    },
     "ServiceUrl":{"type":"string"},
     "SnapshotOptions":{
       "type":"structure",
@@ -915,6 +950,7 @@
         "EBSOptions":{"shape":"EBSOptions"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
         "VPCOptions":{"shape":"VPCOptions"},
+        "CognitoOptions":{"shape":"CognitoOptions"},
         "AdvancedOptions":{"shape":"AdvancedOptions"},
         "AccessPolicies":{"shape":"PolicyDocument"},
         "LogPublishingOptions":{"shape":"LogPublishingOptions"}
@@ -928,6 +964,12 @@
       }
     },
     "UpdateTimestamp":{"type":"timestamp"},
+    "UserPoolId":{
+      "type":"string",
+      "max":55,
+      "min":1,
+      "pattern":"[\\w-]+_[0-9a-zA-Z]+"
+    },
     "VPCDerivedInfo":{
       "type":"structure",
       "members":{

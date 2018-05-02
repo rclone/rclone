@@ -41,9 +41,10 @@ func NewReservationsDetailsClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // ListByReservationOrder lists the reservations details for provided date range.
-//
-// reservationOrderID is order Id of the reservation filter is filter reservation details by date range. The
-// properties/UsageDate for start date and end date. The filter supports 'le' and  'ge'
+// Parameters:
+// reservationOrderID - order Id of the reservation
+// filter - filter reservation details by date range. The properties/UsageDate for start date and end date. The
+// filter supports 'le' and  'ge'
 func (client ReservationsDetailsClient) ListByReservationOrder(ctx context.Context, reservationOrderID string, filter string) (result ReservationDetailsListResultPage, err error) {
 	result.fn = client.listByReservationOrderNextResults
 	req, err := client.ListByReservationOrderPreparer(ctx, reservationOrderID, filter)
@@ -135,10 +136,11 @@ func (client ReservationsDetailsClient) ListByReservationOrderComplete(ctx conte
 }
 
 // ListByReservationOrderAndReservation lists the reservations details for provided date range.
-//
-// reservationOrderID is order Id of the reservation reservationID is id of the reservation filter is filter
-// reservation details by date range. The properties/UsageDate for start date and end date. The filter supports
-// 'le' and  'ge'
+// Parameters:
+// reservationOrderID - order Id of the reservation
+// reservationID - id of the reservation
+// filter - filter reservation details by date range. The properties/UsageDate for start date and end date. The
+// filter supports 'le' and  'ge'
 func (client ReservationsDetailsClient) ListByReservationOrderAndReservation(ctx context.Context, reservationOrderID string, reservationID string, filter string) (result ReservationDetailsListResultPage, err error) {
 	result.fn = client.listByReservationOrderAndReservationNextResults
 	req, err := client.ListByReservationOrderAndReservationPreparer(ctx, reservationOrderID, reservationID, filter)

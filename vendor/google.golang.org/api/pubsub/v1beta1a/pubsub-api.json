@@ -467,7 +467,7 @@
       }
     }
   },
-  "revision": "20180129",
+  "revision": "20180402",
   "rootUrl": "https://pubsub.googleapis.com/",
   "schemas": {
     "AcknowledgeRequest": {
@@ -802,6 +802,6 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Pub/Sub API",
+  "title": "Cloud Pub/Sub API",
   "version": "v1beta1a"
 }

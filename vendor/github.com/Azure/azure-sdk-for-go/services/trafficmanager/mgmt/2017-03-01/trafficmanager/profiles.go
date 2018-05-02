@@ -40,8 +40,9 @@ func NewProfilesClientWithBaseURI(baseURI string, subscriptionID string) Profile
 }
 
 // CheckTrafficManagerRelativeDNSNameAvailability checks the availability of a Traffic Manager Relative DNS name.
-//
-// parameters is the Traffic Manager name parameters supplied to the CheckTrafficManagerNameAvailability operation.
+// Parameters:
+// parameters - the Traffic Manager name parameters supplied to the CheckTrafficManagerNameAvailability
+// operation.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailability(ctx context.Context, parameters CheckTrafficManagerRelativeDNSNameAvailabilityParameters) (result NameAvailability, err error) {
 	req, err := client.CheckTrafficManagerRelativeDNSNameAvailabilityPreparer(ctx, parameters)
 	if err != nil {
@@ -72,7 +73,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPrepa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Network/checkTrafficManagerNameAvailability"),
@@ -102,10 +103,10 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityRespo
 }
 
 // CreateOrUpdate create or update a Traffic Manager profile.
-//
-// resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
-// name of the Traffic Manager profile. parameters is the Traffic Manager profile parameters supplied to the
-// CreateOrUpdate operation.
+// Parameters:
+// resourceGroupName - the name of the resource group containing the Traffic Manager profile.
+// profileName - the name of the Traffic Manager profile.
+// parameters - the Traffic Manager profile parameters supplied to the CreateOrUpdate operation.
 func (client ProfilesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, profileName string, parameters Profile) (result Profile, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, profileName, parameters)
 	if err != nil {
@@ -142,7 +143,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}", pathParameters),
@@ -172,9 +173,9 @@ func (client ProfilesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes a Traffic Manager profile.
-//
-// resourceGroupName is the name of the resource group containing the Traffic Manager profile to be deleted.
-// profileName is the name of the Traffic Manager profile to be deleted.
+// Parameters:
+// resourceGroupName - the name of the resource group containing the Traffic Manager profile to be deleted.
+// profileName - the name of the Traffic Manager profile to be deleted.
 func (client ProfilesClient) Delete(ctx context.Context, resourceGroupName string, profileName string) (result DeleteOperationResult, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, profileName)
 	if err != nil {
@@ -239,9 +240,9 @@ func (client ProfilesClient) DeleteResponder(resp *http.Response) (result Delete
 }
 
 // Get gets a Traffic Manager profile.
-//
-// resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
-// name of the Traffic Manager profile.
+// Parameters:
+// resourceGroupName - the name of the resource group containing the Traffic Manager profile.
+// profileName - the name of the Traffic Manager profile.
 func (client ProfilesClient) Get(ctx context.Context, resourceGroupName string, profileName string) (result Profile, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, profileName)
 	if err != nil {
@@ -368,8 +369,8 @@ func (client ProfilesClient) ListAllResponder(resp *http.Response) (result Profi
 }
 
 // ListAllInResourceGroup lists all Traffic Manager profiles within a resource group.
-//
-// resourceGroupName is the name of the resource group containing the Traffic Manager profiles to be listed.
+// Parameters:
+// resourceGroupName - the name of the resource group containing the Traffic Manager profiles to be listed.
 func (client ProfilesClient) ListAllInResourceGroup(ctx context.Context, resourceGroupName string) (result ProfileListResult, err error) {
 	req, err := client.ListAllInResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -433,10 +434,10 @@ func (client ProfilesClient) ListAllInResourceGroupResponder(resp *http.Response
 }
 
 // Update update a Traffic Manager profile.
-//
-// resourceGroupName is the name of the resource group containing the Traffic Manager profile. profileName is the
-// name of the Traffic Manager profile. parameters is the Traffic Manager profile parameters supplied to the Update
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group containing the Traffic Manager profile.
+// profileName - the name of the Traffic Manager profile.
+// parameters - the Traffic Manager profile parameters supplied to the Update operation.
 func (client ProfilesClient) Update(ctx context.Context, resourceGroupName string, profileName string, parameters Profile) (result Profile, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, profileName, parameters)
 	if err != nil {
@@ -473,7 +474,7 @@ func (client ProfilesClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}", pathParameters),

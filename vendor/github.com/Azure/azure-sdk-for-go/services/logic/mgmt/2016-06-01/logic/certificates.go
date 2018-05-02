@@ -41,9 +41,11 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 }
 
 // CreateOrUpdate creates or updates an integration account certificate.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// certificateName is the integration account certificate name. certificate is the integration account certificate.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// certificateName - the integration account certificate name.
+// certificate - the integration account certificate.
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, certificateName string, certificate IntegrationAccountCertificate) (result IntegrationAccountCertificate, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificate,
@@ -92,7 +94,7 @@ func (client CertificatesClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/certificates/{certificateName}", pathParameters),
@@ -122,9 +124,10 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete deletes an integration account certificate.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// certificateName is the integration account certificate name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// certificateName - the integration account certificate name.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, certificateName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, certificateName)
 	if err != nil {
@@ -189,9 +192,10 @@ func (client CertificatesClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get gets an integration account certificate.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// certificateName is the integration account certificate name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// certificateName - the integration account certificate name.
 func (client CertificatesClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, certificateName string) (result IntegrationAccountCertificate, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, certificateName)
 	if err != nil {
@@ -257,9 +261,10 @@ func (client CertificatesClient) GetResponder(resp *http.Response) (result Integ
 }
 
 // ListByIntegrationAccounts gets a list of integration account certificates.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. top is the
-// number of items to be included in the result.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// top - the number of items to be included in the result.
 func (client CertificatesClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32) (result IntegrationAccountCertificateListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top)

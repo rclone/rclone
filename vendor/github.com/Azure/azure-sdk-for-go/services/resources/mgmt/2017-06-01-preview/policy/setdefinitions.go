@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinitionsClient is the to manage and control access to your resources, you can define customized policies and
 // assign them at a scope.
 type SetDefinitionsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NewSetDefinitionsClient creates an instance of the SetDefinitionsClient client.
 func NewSetDefinitionsClient(subscriptionID string) SetDefinitionsClient {
 	return NewSetDefinitionsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NewSetDefinitionsClientWithBaseURI creates an instance of the SetDefinitionsClient client.
 func NewSetDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) SetDefinitionsClient {
 	return SetDefinitionsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdate creates or updates a policy set definition.
 //
 // policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set
@@ -74,6 +78,7 @@ func (client SetDefinitionsClient) CreateOrUpdate(ctx context.Context, policySet
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client SetDefinitionsClient) CreateOrUpdatePreparer(ctx context.Context, policySetDefinitionName string, parameters SetDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -87,7 +92,7 @@ func (client SetDefinitionsClient) CreateOrUpdatePreparer(ctx context.Context, p
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/policySetDefinitions/{policySetDefinitionName}", pathParameters),
@@ -96,6 +101,7 @@ func (client SetDefinitionsClient) CreateOrUpdatePreparer(ctx context.Context, p
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -103,6 +109,7 @@ func (client SetDefinitionsClient) CreateOrUpdateSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) CreateOrUpdateResponder(resp *http.Response) (result SetDefinition, err error) {
@@ -116,6 +123,7 @@ func (client SetDefinitionsClient) CreateOrUpdateResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateAtManagementGroup creates or updates a policy set definition at management group level.
 //
 // policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set
@@ -149,6 +157,7 @@ func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroup(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateAtManagementGroupPreparer prepares the CreateOrUpdateAtManagementGroup request.
 func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupPreparer(ctx context.Context, policySetDefinitionName string, parameters SetDefinition, managementGroupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -162,7 +171,7 @@ func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupPreparer(ctx c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/providers/Microsoft.Management/managementgroups/{managementGroupId}/providers/Microsoft.Authorization/policySetDefinitions/{policySetDefinitionName}", pathParameters),
@@ -171,6 +180,7 @@ func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateAtManagementGroupSender sends the CreateOrUpdateAtManagementGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupSender(req *http.Request) (*http.Response, error) {
@@ -178,6 +188,7 @@ func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupSender(req *ht
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // CreateOrUpdateAtManagementGroupResponder handles the response to the CreateOrUpdateAtManagementGroup request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupResponder(resp *http.Response) (result SetDefinition, err error) {
@@ -191,6 +202,7 @@ func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroupResponder(resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Delete deletes a policy set definition.
 //
 // policySetDefinitionName is the name of the policy set definition to delete.
@@ -216,6 +228,7 @@ func (client SetDefinitionsClient) Delete(ctx context.Context, policySetDefiniti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeletePreparer prepares the Delete request.
 func (client SetDefinitionsClient) DeletePreparer(ctx context.Context, policySetDefinitionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -236,6 +249,7 @@ func (client SetDefinitionsClient) DeletePreparer(ctx context.Context, policySet
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -243,6 +257,7 @@ func (client SetDefinitionsClient) DeleteSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -255,6 +270,7 @@ func (client SetDefinitionsClient) DeleteResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteAtManagementGroup deletes a policy set definition at management group level.
 //
 // policySetDefinitionName is the name of the policy set definition to delete. managementGroupID is the ID of the
@@ -281,6 +297,7 @@ func (client SetDefinitionsClient) DeleteAtManagementGroup(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteAtManagementGroupPreparer prepares the DeleteAtManagementGroup request.
 func (client SetDefinitionsClient) DeleteAtManagementGroupPreparer(ctx context.Context, policySetDefinitionName string, managementGroupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -301,6 +318,7 @@ func (client SetDefinitionsClient) DeleteAtManagementGroupPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteAtManagementGroupSender sends the DeleteAtManagementGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) DeleteAtManagementGroupSender(req *http.Request) (*http.Response, error) {
@@ -308,6 +326,7 @@ func (client SetDefinitionsClient) DeleteAtManagementGroupSender(req *http.Reque
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DeleteAtManagementGroupResponder handles the response to the DeleteAtManagementGroup request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) DeleteAtManagementGroupResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -320,6 +339,7 @@ func (client SetDefinitionsClient) DeleteAtManagementGroupResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Get gets the policy set definition.
 //
 // policySetDefinitionName is the name of the policy set definition to get.
@@ -345,6 +365,7 @@ func (client SetDefinitionsClient) Get(ctx context.Context, policySetDefinitionN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetPreparer prepares the Get request.
 func (client SetDefinitionsClient) GetPreparer(ctx context.Context, policySetDefinitionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -365,6 +386,7 @@ func (client SetDefinitionsClient) GetPreparer(ctx context.Context, policySetDef
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -372,6 +394,7 @@ func (client SetDefinitionsClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) GetResponder(resp *http.Response) (result SetDefinition, err error) {
@@ -385,6 +408,7 @@ func (client SetDefinitionsClient) GetResponder(resp *http.Response) (result Set
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetAtManagementGroup gets the policy set definition at management group level.
 //
 // policySetDefinitionName is the name of the policy set definition to get. managementGroupID is the ID of the
@@ -411,6 +435,7 @@ func (client SetDefinitionsClient) GetAtManagementGroup(ctx context.Context, pol
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetAtManagementGroupPreparer prepares the GetAtManagementGroup request.
 func (client SetDefinitionsClient) GetAtManagementGroupPreparer(ctx context.Context, policySetDefinitionName string, managementGroupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -431,6 +456,7 @@ func (client SetDefinitionsClient) GetAtManagementGroupPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetAtManagementGroupSender sends the GetAtManagementGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) GetAtManagementGroupSender(req *http.Request) (*http.Response, error) {
@@ -438,6 +464,7 @@ func (client SetDefinitionsClient) GetAtManagementGroupSender(req *http.Request)
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetAtManagementGroupResponder handles the response to the GetAtManagementGroup request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) GetAtManagementGroupResponder(resp *http.Response) (result SetDefinition, err error) {
@@ -451,6 +478,7 @@ func (client SetDefinitionsClient) GetAtManagementGroupResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetBuiltIn gets the built in policy set definition.
 //
 // policySetDefinitionName is the name of the policy set definition to get.
@@ -476,6 +504,7 @@ func (client SetDefinitionsClient) GetBuiltIn(ctx context.Context, policySetDefi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetBuiltInPreparer prepares the GetBuiltIn request.
 func (client SetDefinitionsClient) GetBuiltInPreparer(ctx context.Context, policySetDefinitionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -495,6 +524,7 @@ func (client SetDefinitionsClient) GetBuiltInPreparer(ctx context.Context, polic
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetBuiltInSender sends the GetBuiltIn request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) GetBuiltInSender(req *http.Request) (*http.Response, error) {
@@ -502,6 +532,7 @@ func (client SetDefinitionsClient) GetBuiltInSender(req *http.Request) (*http.Re
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // GetBuiltInResponder handles the response to the GetBuiltIn request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) GetBuiltInResponder(resp *http.Response) (result SetDefinition, err error) {
@@ -515,6 +546,7 @@ func (client SetDefinitionsClient) GetBuiltInResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // List gets all the policy set definitions for a subscription.
 func (client SetDefinitionsClient) List(ctx context.Context) (result SetDefinitionListResultPage, err error) {
 	result.fn = client.listNextResults
@@ -539,6 +571,7 @@ func (client SetDefinitionsClient) List(ctx context.Context) (result SetDefiniti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListPreparer prepares the List request.
 func (client SetDefinitionsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -558,6 +591,7 @@ func (client SetDefinitionsClient) ListPreparer(ctx context.Context) (*http.Requ
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -565,6 +599,7 @@ func (client SetDefinitionsClient) ListSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) ListResponder(resp *http.Response) (result SetDefinitionListResult, err error) {
@@ -599,12 +634,14 @@ func (client SetDefinitionsClient) listNextResults(lastResults SetDefinitionList
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SetDefinitionsClient) ListComplete(ctx context.Context) (result SetDefinitionListResultIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListBuiltIn gets all the built in policy set definitions.
 func (client SetDefinitionsClient) ListBuiltIn(ctx context.Context) (result SetDefinitionListResultPage, err error) {
 	result.fn = client.listBuiltInNextResults
@@ -629,6 +666,7 @@ func (client SetDefinitionsClient) ListBuiltIn(ctx context.Context) (result SetD
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListBuiltInPreparer prepares the ListBuiltIn request.
 func (client SetDefinitionsClient) ListBuiltInPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2017-06-01-preview"
@@ -644,6 +682,7 @@ func (client SetDefinitionsClient) ListBuiltInPreparer(ctx context.Context) (*ht
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListBuiltInSender sends the ListBuiltIn request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) ListBuiltInSender(req *http.Request) (*http.Response, error) {
@@ -651,6 +690,7 @@ func (client SetDefinitionsClient) ListBuiltInSender(req *http.Request) (*http.R
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListBuiltInResponder handles the response to the ListBuiltIn request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) ListBuiltInResponder(resp *http.Response) (result SetDefinitionListResult, err error) {
@@ -685,12 +725,14 @@ func (client SetDefinitionsClient) listBuiltInNextResults(lastResults SetDefinit
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListBuiltInComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SetDefinitionsClient) ListBuiltInComplete(ctx context.Context) (result SetDefinitionListResultIterator, err error) {
 	result.page, err = client.ListBuiltIn(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListByManagementGroup gets all the policy set definitions for a subscription at management group.
 //
 // managementGroupID is the ID of the management group.
@@ -717,6 +759,7 @@ func (client SetDefinitionsClient) ListByManagementGroup(ctx context.Context, ma
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListByManagementGroupPreparer prepares the ListByManagementGroup request.
 func (client SetDefinitionsClient) ListByManagementGroupPreparer(ctx context.Context, managementGroupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -736,6 +779,7 @@ func (client SetDefinitionsClient) ListByManagementGroupPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListByManagementGroupSender sends the ListByManagementGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SetDefinitionsClient) ListByManagementGroupSender(req *http.Request) (*http.Response, error) {
@@ -743,6 +787,7 @@ func (client SetDefinitionsClient) ListByManagementGroupSender(req *http.Request
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListByManagementGroupResponder handles the response to the ListByManagementGroup request. The method always
 // closes the http.Response Body.
 func (client SetDefinitionsClient) ListByManagementGroupResponder(resp *http.Response) (result SetDefinitionListResult, err error) {
@@ -777,6 +822,7 @@ func (client SetDefinitionsClient) listByManagementGroupNextResults(lastResults 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ListByManagementGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SetDefinitionsClient) ListByManagementGroupComplete(ctx context.Context, managementGroupID string) (result SetDefinitionListResultIterator, err error) {
 	result.page, err = client.ListByManagementGroup(ctx, managementGroupID)

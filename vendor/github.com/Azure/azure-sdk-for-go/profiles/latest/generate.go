@@ -14,4 +14,4 @@
 
 package latest
 
-//go:generate go run ../../tools/profileBuilder/main.go list --clear-output --name latest --input ./stableApis.txt
+//go:generate go run ../../tools/profileBuilder/main.go list --clear-output --name latest --input ./stableApis.txt --verbose

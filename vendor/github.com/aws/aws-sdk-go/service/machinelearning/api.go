@@ -15,7 +15,7 @@ const opAddTags = "AddTags"
 
 // AddTagsRequest generates a "aws/request.Request" representing the
 // client's request for the AddTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -104,7 +104,7 @@ const opCreateBatchPrediction = "CreateBatchPrediction"
 
 // CreateBatchPredictionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateBatchPrediction operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -202,7 +202,7 @@ const opCreateDataSourceFromRDS = "CreateDataSourceFromRDS"
 
 // CreateDataSourceFromRDSRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDataSourceFromRDS operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -300,7 +300,7 @@ const opCreateDataSourceFromRedshift = "CreateDataSourceFromRedshift"
 
 // CreateDataSourceFromRedshiftRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDataSourceFromRedshift operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -417,7 +417,7 @@ const opCreateDataSourceFromS3 = "CreateDataSourceFromS3"
 
 // CreateDataSourceFromS3Request generates a "aws/request.Request" representing the
 // client's request for the CreateDataSourceFromS3 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -529,7 +529,7 @@ const opCreateEvaluation = "CreateEvaluation"
 
 // CreateEvaluationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEvaluation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -629,7 +629,7 @@ const opCreateMLModel = "CreateMLModel"
 
 // CreateMLModelRequest generates a "aws/request.Request" representing the
 // client's request for the CreateMLModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -730,7 +730,7 @@ const opCreateRealtimeEndpoint = "CreateRealtimeEndpoint"
 
 // CreateRealtimeEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRealtimeEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -815,7 +815,7 @@ const opDeleteBatchPrediction = "DeleteBatchPrediction"
 
 // DeleteBatchPredictionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteBatchPrediction operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -903,7 +903,7 @@ const opDeleteDataSource = "DeleteDataSource"
 
 // DeleteDataSourceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDataSource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -991,7 +991,7 @@ const opDeleteEvaluation = "DeleteEvaluation"
 
 // DeleteEvaluationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEvaluation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1079,7 +1079,7 @@ const opDeleteMLModel = "DeleteMLModel"
 
 // DeleteMLModelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMLModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1167,7 +1167,7 @@ const opDeleteRealtimeEndpoint = "DeleteRealtimeEndpoint"
 
 // DeleteRealtimeEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRealtimeEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1250,7 +1250,7 @@ const opDeleteTags = "DeleteTags"
 
 // DeleteTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1338,7 +1338,7 @@ const opDescribeBatchPredictions = "DescribeBatchPredictions"
 
 // DescribeBatchPredictionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBatchPredictions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1475,7 +1475,7 @@ const opDescribeDataSources = "DescribeDataSources"
 
 // DescribeDataSourcesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDataSources operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1611,7 +1611,7 @@ const opDescribeEvaluations = "DescribeEvaluations"
 
 // DescribeEvaluationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEvaluations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1748,7 +1748,7 @@ const opDescribeMLModels = "DescribeMLModels"
 
 // DescribeMLModelsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMLModels operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1884,7 +1884,7 @@ const opDescribeTags = "DescribeTags"
 
 // DescribeTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1967,7 +1967,7 @@ const opGetBatchPrediction = "GetBatchPrediction"
 
 // GetBatchPredictionRequest generates a "aws/request.Request" representing the
 // client's request for the GetBatchPrediction operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2051,7 +2051,7 @@ const opGetDataSource = "GetDataSource"
 
 // GetDataSourceRequest generates a "aws/request.Request" representing the
 // client's request for the GetDataSource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2139,7 +2139,7 @@ const opGetEvaluation = "GetEvaluation"
 
 // GetEvaluationRequest generates a "aws/request.Request" representing the
 // client's request for the GetEvaluation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2223,7 +2223,7 @@ const opGetMLModel = "GetMLModel"
 
 // GetMLModelRequest generates a "aws/request.Request" representing the
 // client's request for the GetMLModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2309,7 +2309,7 @@ const opPredict = "Predict"
 
 // PredictRequest generates a "aws/request.Request" representing the
 // client's request for the Predict operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2402,7 +2402,7 @@ const opUpdateBatchPrediction = "UpdateBatchPrediction"
 
 // UpdateBatchPredictionRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateBatchPrediction operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2488,7 +2488,7 @@ const opUpdateDataSource = "UpdateDataSource"
 
 // UpdateDataSourceRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDataSource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2574,7 +2574,7 @@ const opUpdateEvaluation = "UpdateEvaluation"
 
 // UpdateEvaluationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEvaluation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2660,7 +2660,7 @@ const opUpdateMLModel = "UpdateMLModel"
 
 // UpdateMLModelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMLModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

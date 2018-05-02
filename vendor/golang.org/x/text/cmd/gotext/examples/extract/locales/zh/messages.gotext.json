@@ -2,16 +2,16 @@
     "language": "zh",
     "messages": [
         {
-            "id": "Hello world!",
+"id": "Hello world!\n",
             "key": "Hello world!\n",
-            "message": "Hello world!",
+            "message": "Hello world!\n",
             "translation": "",
             "position": "golang.org/x/text/cmd/gotext/examples/extract/main.go:27:10"
         },
         {
-            "id": "Hello {City}!",
+            "id": "Hello {City}!\n",
             "key": "Hello %s!\n",
-            "message": "Hello {City}!",
+            "message": "Hello {City}!\n",
             "translation": "",
             "placeholders": [
                 {
@@ -26,9 +26,9 @@
             "position": "golang.org/x/text/cmd/gotext/examples/extract/main.go:31:10"
         },
         {
-            "id": "Hello {Town}!",
+            "id": "Hello {Town}!\n",
             "key": "Hello %s!\n",
-            "message": "Hello {Town}!",
+            "message": "Hello {Town}!\n",
             "translation": "",
             "placeholders": [
                 {
@@ -44,9 +44,9 @@
             "position": "golang.org/x/text/cmd/gotext/examples/extract/main.go:35:10"
         },
         {
-            "id": "{Person} is visiting {Place}!",
+            "id": "{Person} is visiting {Place}!\n",
             "key": "%s is visiting %s!\n",
-            "message": "{Person} is visiting {Place}!",
+            "message": "{Person} is visiting {Place}!\n",
             "translation": "",
             "placeholders": [
                 {
@@ -71,9 +71,9 @@
             "position": "golang.org/x/text/cmd/gotext/examples/extract/main.go:40:10"
         },
         {
-            "id": "{Person} is visiting {Place}!",
+            "id": "{Person} is visiting {Place}!\n",
             "key": "%[1]s is visiting %[3]s!\n",
-            "message": "{Person} is visiting {Place}!",
+            "message": "{Person} is visiting {Place}!\n",
             "translation": "",
             "comment": "Person visiting a place.",
             "placeholders": [

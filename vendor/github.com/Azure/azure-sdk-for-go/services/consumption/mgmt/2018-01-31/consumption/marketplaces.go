@@ -43,13 +43,14 @@ func NewMarketplacesClientWithBaseURI(baseURI string, subscriptionID string) Mar
 
 // List lists the marketplaces for a scope by subscriptionId. Marketplaces are available via this API only for May 1,
 // 2014 or later.
-//
-// filter is may be used to filter marketplaces by properties/usageEnd (Utc time), properties/usageStart (Utc
+// Parameters:
+// filter - may be used to filter marketplaces by properties/usageEnd (Utc time), properties/usageStart (Utc
 // time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',
-// 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'. top is may be used to
-// limit the number of results to the most recent N marketplaces. skiptoken is skiptoken is only used if a previous
-// operation returned a partial result. If a previous response contains a nextLink element, the value of the
-// nextLink element will include a skiptoken parameter that specifies a starting point to use for subsequent calls.
+// 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'.
+// top - may be used to limit the number of results to the most recent N marketplaces.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
 func (client MarketplacesClient) List(ctx context.Context, filter string, top *int32, skiptoken string) (result MarketplacesListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -159,14 +160,15 @@ func (client MarketplacesClient) ListComplete(ctx context.Context, filter string
 
 // ListByBillingPeriod lists the marketplaces for a scope by billing period and subscripotionId. Marketplaces are
 // available via this API only for May 1, 2014 or later.
-//
-// billingPeriodName is billing Period Name. filter is may be used to filter marketplaces by properties/usageEnd
-// (Utc time), properties/usageStart (Utc time), properties/resourceGroup, properties/instanceName or
-// properties/instanceId. The filter supports 'eq', 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently
-// support 'ne', 'or', or 'not'. top is may be used to limit the number of results to the most recent N
-// marketplaces. skiptoken is skiptoken is only used if a previous operation returned a partial result. If a
-// previous response contains a nextLink element, the value of the nextLink element will include a skiptoken
-// parameter that specifies a starting point to use for subsequent calls.
+// Parameters:
+// billingPeriodName - billing Period Name.
+// filter - may be used to filter marketplaces by properties/usageEnd (Utc time), properties/usageStart (Utc
+// time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',
+// 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'.
+// top - may be used to limit the number of results to the most recent N marketplaces.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
 func (client MarketplacesClient) ListByBillingPeriod(ctx context.Context, billingPeriodName string, filter string, top *int32, skiptoken string) (result MarketplacesListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,

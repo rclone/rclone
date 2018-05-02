@@ -22,14 +22,6 @@ package computervision
 import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/v1.0/computervision"
 
 type BaseClient = original.BaseClient
-
-func New(azureRegion AzureRegions) BaseClient {
-	return original.New(azureRegion)
-}
-func NewWithoutDefaults(azureRegion AzureRegions) BaseClient {
-	return original.NewWithoutDefaults(azureRegion)
-}
-
 type AzureRegions = original.AzureRegions
 
 const (
@@ -177,6 +169,39 @@ type TagResult = original.TagResult
 type TextOperationResult = original.TextOperationResult
 type Word = original.Word
 
+func New(azureRegion AzureRegions) BaseClient {
+	return original.New(azureRegion)
+}
+func NewWithoutDefaults(azureRegion AzureRegions) BaseClient {
+	return original.NewWithoutDefaults(azureRegion)
+}
+func PossibleAzureRegionsValues() []AzureRegions {
+	return original.PossibleAzureRegionsValues()
+}
+func PossibleDetailsValues() []Details {
+	return original.PossibleDetailsValues()
+}
+func PossibleDomainModelsValues() []DomainModels {
+	return original.PossibleDomainModelsValues()
+}
+func PossibleErrorCodesValues() []ErrorCodes {
+	return original.PossibleErrorCodesValues()
+}
+func PossibleGenderValues() []Gender {
+	return original.PossibleGenderValues()
+}
+func PossibleLanguage1Values() []Language1 {
+	return original.PossibleLanguage1Values()
+}
+func PossibleOcrLanguagesValues() []OcrLanguages {
+	return original.PossibleOcrLanguagesValues()
+}
+func PossibleTextOperationStatusCodesValues() []TextOperationStatusCodes {
+	return original.PossibleTextOperationStatusCodesValues()
+}
+func PossibleVisualFeatureTypesValues() []VisualFeatureTypes {
+	return original.PossibleVisualFeatureTypesValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

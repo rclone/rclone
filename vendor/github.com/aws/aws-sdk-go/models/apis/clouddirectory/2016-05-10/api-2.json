@@ -92,7 +92,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"NotPolicyException"}
       ]
@@ -114,6 +113,7 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
+        {"shape":"InvalidAttachmentException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"LinkNameAlreadyInUseException"},
         {"shape":"IndexedAttributeMissingException"},
@@ -199,7 +199,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryAlreadyExistsException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"}
       ]
     },
@@ -265,7 +264,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"FacetValidationException"},
         {"shape":"LinkNameAlreadyInUseException"},
@@ -456,7 +454,8 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"ResourceNotFoundException"}
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"NotNodeException"}
       ]
     },
     "DetachPolicy":{
@@ -476,7 +475,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"NotPolicyException"}
       ]
@@ -596,6 +594,27 @@
         {"shape":"AccessDeniedException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"FacetNotFoundException"}
+      ]
+    },
+    "GetObjectAttributes":{
+      "name":"GetObjectAttributes",
+      "http":{
+        "method":"POST",
+        "requestUri":"/amazonclouddirectory/2017-01-11/object/attributes/get",
+        "responseCode":200
+      },
+      "input":{"shape":"GetObjectAttributesRequest"},
+      "output":{"shape":"GetObjectAttributesResponse"},
+      "errors":[
+        {"shape":"InternalServiceException"},
+        {"shape":"InvalidArnException"},
+        {"shape":"RetryableConflictException"},
+        {"shape":"ValidationException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"DirectoryNotEnabledException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"FacetValidationException"}
       ]
     },
     "GetObjectInformation":{
@@ -814,10 +833,12 @@
         {"shape":"InternalServiceException"},
         {"shape":"InvalidArnException"},
         {"shape":"RetryableConflictException"},
+        {"shape":"FacetValidationException"},
         {"shape":"ValidationException"},
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
+        {"shape":"InvalidNextTokenException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"NotIndexException"}
       ]
@@ -839,7 +860,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"FacetValidationException"}
@@ -862,7 +882,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"NotNodeException"}
@@ -906,7 +925,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"CannotListParentOfRootException"}
@@ -972,7 +990,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"NotPolicyException"}
@@ -1076,7 +1093,6 @@
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
         {"shape":"DirectoryNotEnabledException"},
-        {"shape":"InvalidArnException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"ResourceNotFoundException"}
       ]
@@ -1396,6 +1412,7 @@
     "AttachPolicyRequest":{
       "type":"structure",
       "required":[
+        "DirectoryArn",
         "PolicyReference",
         "ObjectReference"
       ],
@@ -1636,10 +1653,7 @@
       "type":"structure",
       "required":[
         "SchemaFacet",
-        "ObjectAttributeList",
-        "ParentReference",
-        "LinkName",
-        "BatchReferenceName"
+        "ObjectAttributeList"
       ],
       "members":{
         "SchemaFacet":{"shape":"SchemaFacetList"},
@@ -1688,8 +1702,7 @@
       "type":"structure",
       "required":[
         "ParentReference",
-        "LinkName",
-        "BatchReferenceName"
+        "LinkName"
       ],
       "members":{
         "ParentReference":{"shape":"ObjectReference"},
@@ -1729,6 +1742,25 @@
     "BatchDetachTypedLinkResponse":{
       "type":"structure",
       "members":{
+      }
+    },
+    "BatchGetObjectAttributes":{
+      "type":"structure",
+      "required":[
+        "ObjectReference",
+        "SchemaFacet",
+        "AttributeNames"
+      ],
+      "members":{
+        "ObjectReference":{"shape":"ObjectReference"},
+        "SchemaFacet":{"shape":"SchemaFacet"},
+        "AttributeNames":{"shape":"AttributeNameList"}
+      }
+    },
+    "BatchGetObjectAttributesResponse":{
+      "type":"structure",
+      "members":{
+        "Attributes":{"shape":"AttributeKeyAndValueList"}
       }
     },
     "BatchGetObjectInformation":{
@@ -1945,6 +1977,7 @@
         "ListAttachedIndices":{"shape":"BatchListAttachedIndices"},
         "ListObjectParentPaths":{"shape":"BatchListObjectParentPaths"},
         "GetObjectInformation":{"shape":"BatchGetObjectInformation"},
+        "GetObjectAttributes":{"shape":"BatchGetObjectAttributes"},
         "ListObjectPolicies":{"shape":"BatchListObjectPolicies"},
         "ListPolicyAttachments":{"shape":"BatchListPolicyAttachments"},
         "LookupPolicy":{"shape":"BatchLookupPolicy"},
@@ -2000,6 +2033,7 @@
         "ListObjectAttributes":{"shape":"BatchListObjectAttributesResponse"},
         "ListObjectChildren":{"shape":"BatchListObjectChildrenResponse"},
         "GetObjectInformation":{"shape":"BatchGetObjectInformationResponse"},
+        "GetObjectAttributes":{"shape":"BatchGetObjectAttributesResponse"},
         "ListAttachedIndices":{"shape":"BatchListAttachedIndicesResponse"},
         "ListObjectParentPaths":{"shape":"BatchListObjectParentPathsResponse"},
         "ListObjectPolicies":{"shape":"BatchListObjectPoliciesResponse"},
@@ -2067,6 +2101,7 @@
         "AccessDeniedException",
         "InvalidAttachmentException",
         "NotIndexException",
+        "NotNodeException",
         "IndexedAttributeMissingException",
         "ObjectAlreadyDetachedException",
         "NotPolicyException",
@@ -2727,6 +2762,36 @@
       "type":"structure",
       "members":{
         "Facet":{"shape":"Facet"}
+      }
+    },
+    "GetObjectAttributesRequest":{
+      "type":"structure",
+      "required":[
+        "DirectoryArn",
+        "ObjectReference",
+        "SchemaFacet",
+        "AttributeNames"
+      ],
+      "members":{
+        "DirectoryArn":{
+          "shape":"Arn",
+          "location":"header",
+          "locationName":"x-amz-data-partition"
+        },
+        "ObjectReference":{"shape":"ObjectReference"},
+        "ConsistencyLevel":{
+          "shape":"ConsistencyLevel",
+          "location":"header",
+          "locationName":"x-amz-consistency-level"
+        },
+        "SchemaFacet":{"shape":"SchemaFacet"},
+        "AttributeNames":{"shape":"AttributeNameList"}
+      }
+    },
+    "GetObjectAttributesResponse":{
+      "type":"structure",
+      "members":{
+        "Attributes":{"shape":"AttributeKeyAndValueList"}
       }
     },
     "GetObjectInformationRequest":{

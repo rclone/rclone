@@ -120,7 +120,7 @@
         "locations": {
           "methods": {
             "get": {
-              "description": "Get information about a location.",
+              "description": "Gets information about a location.",
               "flatPath": "v2beta2/projects/{projectsId}/locations/{locationsId}",
               "httpMethod": "GET",
               "id": "cloudtasks.projects.locations.get",
@@ -766,7 +766,7 @@
                       ]
                     },
                     "run": {
-                      "description": "Forces a task to run now.\n\nThis command is meant to be used for manual debugging. For\nexample, RunTask can be used to retry a failed\ntask after a fix has been made or to manually force a task to be\ndispatched now.\n\nWhen this method is called, Cloud Tasks will dispatch the task to its\ntarget, even if the queue is PAUSED.\n\nThe dispatched task is returned. That is, the task that is returned\ncontains the status after the task is dispatched but\nbefore the task is received by its target.\n\nIf Cloud Tasks receives a successful response from the task's\nhandler, then the task will be deleted; otherwise the task's\nschedule_time will be reset to the time that\nRunTask was called plus the retry delay specified\nin the queue and task's RetryConfig.\n\nRunTask returns\nNOT_FOUND when it is called on a\ntask that has already succeeded or permanently\nfailed. FAILED_PRECONDITION\nis returned when RunTask is called on task\nthat is dispatched or already running.\n\nRunTask cannot be called on\npull tasks.",
+                      "description": "Forces a task to run now.\n\nWhen this method is called, Cloud Tasks will dispatch the task, even if\nthe task is already running, the queue has reached its RateLimits or\nis PAUSED.\n\nThis command is meant to be used for manual debugging. For\nexample, RunTask can be used to retry a failed\ntask after a fix has been made or to manually force a task to be\ndispatched now.\n\nThe dispatched task is returned. That is, the task that is returned\ncontains the status after the task is dispatched but\nbefore the task is received by its target.\n\nIf Cloud Tasks receives a successful response from the task's\ntarget, then the task will be deleted; otherwise the task's\nschedule_time will be reset to the time that\nRunTask was called plus the retry delay specified\nin the queue's RetryConfig.\n\nRunTask returns\nNOT_FOUND when it is called on a\ntask that has already succeeded or permanently failed.\n\nRunTask cannot be called on a\npull task.",
                       "flatPath": "v2beta2/projects/{projectsId}/locations/{locationsId}/queues/{queuesId}/tasks/{tasksId}:run",
                       "httpMethod": "POST",
                       "id": "cloudtasks.projects.locations.queues.tasks.run",
@@ -802,7 +802,7 @@
       }
     }
   },
-  "revision": "20180302",
+  "revision": "20180503",
   "rootUrl": "https://cloudtasks.googleapis.com/",
   "schemas": {
     "AcknowledgeTaskRequest": {
@@ -929,7 +929,7 @@
       "id": "Binding",
       "properties": {
         "members": {
-          "description": "Specifies the identities requesting access for a Cloud Platform resource.\n`members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is\n   on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone\n   who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google\n   account. For example, `alice@gmail.com` or `joe@example.com`.\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service\n   account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group.\n   For example, `admins@example.com`.\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the\n   users of that domain. For example, `google.com` or `example.com`.\n\n",
+          "description": "Specifies the identities requesting access for a Cloud Platform resource.\n`members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is\n   on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone\n   who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google\n   account. For example, `alice@gmail.com` .\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service\n   account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group.\n   For example, `admins@example.com`.\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the\n   users of that domain. For example, `google.com` or `example.com`.\n\n",
           "items": {
             "type": "string"
           },
@@ -1010,7 +1010,7 @@
       "id": "LeaseTasksRequest",
       "properties": {
         "filter": {
-          "description": "`filter` can be used to specify a subset of tasks to lease.\n\nWhen `filter` is set to `tag=\u003cmy-tag\u003e` then the\nresponse will contain only tasks whose\ntag is equal to `\u003cmy-tag\u003e`. `\u003cmy-tag\u003e` must be\nless than 500 characters.\n\nWhen `filter` is set to `tag_function=oldest_tag()`, only tasks which have\nthe same tag as the task with the oldest schedule_time will be returned.\n\nGrammar Syntax:\n\n* `filter = \"tag=\" tag | \"tag_function=\" function`\n\n* `tag = string`\n\n* `function = \"oldest_tag()\"`\n\nThe `oldest_tag()` function returns tasks which have the same tag as the\noldest task (ordered by schedule time).\n\nSDK compatibility: Although the SDK allows tags to be either\nstring or\n[bytes](/appengine/docs/standard/java/javadoc/com/google/appengine/api/taskqueue/TaskOptions.html#tag-byte:A-),\nonly UTF-8 encoded tags can be used in Cloud Tasks. Tag which\naren't UTF-8 encoded can't be used in the\nfilter and the task's\ntag will be displayed as empty in Cloud Tasks.",
+          "description": "`filter` can be used to specify a subset of tasks to lease.\n\nWhen `filter` is set to `tag=\u003cmy-tag\u003e` then the\nresponse will contain only tasks whose\ntag is equal to `\u003cmy-tag\u003e`. `\u003cmy-tag\u003e` must be\nless than 500 characters.\n\nWhen `filter` is set to `tag_function=oldest_tag()`, only tasks which have\nthe same tag as the task with the oldest\nschedule_time will be returned.\n\nGrammar Syntax:\n\n* `filter = \"tag=\" tag | \"tag_function=\" function`\n\n* `tag = string`\n\n* `function = \"oldest_tag()\"`\n\nThe `oldest_tag()` function returns tasks which have the same tag as the\noldest task (ordered by schedule time).\n\nSDK compatibility: Although the SDK allows tags to be either\nstring or\n[bytes](/appengine/docs/standard/java/javadoc/com/google/appengine/api/taskqueue/TaskOptions.html#tag-byte:A-),\nonly UTF-8 encoded tags can be used in Cloud Tasks. Tag which\naren't UTF-8 encoded can't be used in the\nfilter and the task's\ntag will be displayed as empty in Cloud Tasks.",
           "type": "string"
         },
         "leaseDuration": {
@@ -1149,7 +1149,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "Defines an Identity and Access Management (IAM) policy. It is used to\nspecify access control policies for Cloud Platform resources.\n\n\nA `Policy` consists of a list of `bindings`. A `Binding` binds a list of\n`members` to a `role`, where the members can be user accounts, Google groups,\nGoogle domains, and service accounts. A `role` is a named list of permissions\ndefined by IAM.\n\n**Example**\n\n    {\n      \"bindings\": [\n        {\n          \"role\": \"roles/owner\",\n          \"members\": [\n            \"user:mike@example.com\",\n            \"group:admins@example.com\",\n            \"domain:google.com\",\n            \"serviceAccount:my-other-app@appspot.gserviceaccount.com\",\n          ]\n        },\n        {\n          \"role\": \"roles/viewer\",\n          \"members\": [\"user:sean@example.com\"]\n        }\n      ]\n    }\n\nFor a description of IAM and its features, see the\n[IAM developer's guide](https://cloud.google.com/iam/docs).",
+      "description": "Defines an Identity and Access Management (IAM) policy. It is used to\nspecify access control policies for Cloud Platform resources.\n\n\nA `Policy` consists of a list of `bindings`. A `binding` binds a list of\n`members` to a `role`, where the members can be user accounts, Google groups,\nGoogle domains, and service accounts. A `role` is a named list of permissions\ndefined by IAM.\n\n**JSON Example**\n\n    {\n      \"bindings\": [\n        {\n          \"role\": \"roles/owner\",\n          \"members\": [\n            \"user:mike@example.com\",\n            \"group:admins@example.com\",\n            \"domain:google.com\",\n            \"serviceAccount:my-other-app@appspot.gserviceaccount.com\"\n          ]\n        },\n        {\n          \"role\": \"roles/viewer\",\n          \"members\": [\"user:sean@example.com\"]\n        }\n      ]\n    }\n\n**YAML Example**\n\n    bindings:\n    - members:\n      - user:mike@example.com\n      - group:admins@example.com\n      - domain:google.com\n      - serviceAccount:my-other-app@appspot.gserviceaccount.com\n      role: roles/owner\n    - members:\n      - user:sean@example.com\n      role: roles/viewer\n\n\nFor a description of IAM and its features, see the\n[IAM developer's guide](https://cloud.google.com/iam/docs).",
       "id": "Policy",
       "properties": {
         "bindings": {
@@ -1249,7 +1249,7 @@
       "type": "object"
     },
     "RateLimits": {
-      "description": "Rate limits.\n\nThis message determines the maximum rate that tasks can be dispatched by a\nqueue, regardless of whether the dispatch is a first task attempt or a retry.",
+      "description": "Rate limits.\n\nThis message determines the maximum rate that tasks can be dispatched by a\nqueue, regardless of whether the dispatch is a first task attempt or a retry.\n\nNote: The debugging command, RunTask, will run a task\neven if the queue has reached its RateLimits.",
       "id": "RateLimits",
       "properties": {
         "maxBurstSize": {
@@ -1258,7 +1258,7 @@
           "type": "integer"
         },
         "maxConcurrentTasks": {
-          "description": "The maximum number of concurrent tasks that Cloud Tasks allows\nto be dispatched for this queue. After this threshold has been\nreached, Cloud Tasks stops dispatching tasks until the number of\nconcurrent requests decreases.\n\nIf unspecified when the queue is created, Cloud Tasks will pick the\ndefault.\n\n\nThe maximum allowed value is 5,000. -1 indicates no limit.\n\nThis field is output only for\n[pull queues](google.cloud.tasks.v2beta2.PullTarget).\n\n\nThis field has the same meaning as\n[max_concurrent_requests in queue.yaml/xml](/appengine/docs/standard/python/config/queueref#max_concurrent_requests).",
+          "description": "The maximum number of concurrent tasks that Cloud Tasks allows\nto be dispatched for this queue. After this threshold has been\nreached, Cloud Tasks stops dispatching tasks until the number of\nconcurrent requests decreases.\n\nIf unspecified when the queue is created, Cloud Tasks will pick the\ndefault.\n\n\nThe maximum allowed value is 5,000.\n\nThis field is output only for\n[pull queues](google.cloud.tasks.v2beta2.PullTarget) and always -1, which\nindicates no limit. No other queue types can have `max_concurrent_tasks`\nset to -1.\n\n\nThis field has the same meaning as\n[max_concurrent_requests in queue.yaml/xml](/appengine/docs/standard/python/config/queueref#max_concurrent_requests).",
           "format": "int32",
           "type": "integer"
         },

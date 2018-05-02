@@ -40,8 +40,9 @@ func NewServiceGroupMembersClientWithBaseURI(baseURI string, timeout *int32) Ser
 }
 
 // Get get service group members
-//
-// applicationName is the name of the application serviceName is the name of the service
+// Parameters:
+// applicationName - the name of the application
+// serviceName - the name of the service
 func (client ServiceGroupMembersClient) Get(ctx context.Context, applicationName string, serviceName string) (result ServiceGroupMember, err error) {
 	req, err := client.GetPreparer(ctx, applicationName, serviceName)
 	if err != nil {

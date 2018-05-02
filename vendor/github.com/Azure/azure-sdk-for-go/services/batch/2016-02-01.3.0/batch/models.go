@@ -37,6 +37,11 @@ const (
 	Stopping AllocationState = "stopping"
 )
 
+// PossibleAllocationStateValues returns an array of possible values for the AllocationState const type.
+func PossibleAllocationStateValues() []AllocationState {
+	return []AllocationState{Resizing, Steady, Stopping}
+}
+
 // CertificateFormat enumerates the values for certificate format.
 type CertificateFormat string
 
@@ -48,6 +53,11 @@ const (
 	// Unmapped ...
 	Unmapped CertificateFormat = "unmapped"
 )
+
+// PossibleCertificateFormatValues returns an array of possible values for the CertificateFormat const type.
+func PossibleCertificateFormatValues() []CertificateFormat {
+	return []CertificateFormat{Cer, Pfx, Unmapped}
+}
 
 // CertificateState enumerates the values for certificate state.
 type CertificateState string
@@ -61,6 +71,11 @@ const (
 	Deleting CertificateState = "deleting"
 )
 
+// PossibleCertificateStateValues returns an array of possible values for the CertificateState const type.
+func PossibleCertificateStateValues() []CertificateState {
+	return []CertificateState{Active, Deletefailed, Deleting}
+}
+
 // CertificateStoreLocation enumerates the values for certificate store location.
 type CertificateStoreLocation string
 
@@ -72,6 +87,11 @@ const (
 	// CertificateStoreLocationUnmapped ...
 	CertificateStoreLocationUnmapped CertificateStoreLocation = "unmapped"
 )
+
+// PossibleCertificateStoreLocationValues returns an array of possible values for the CertificateStoreLocation const type.
+func PossibleCertificateStoreLocationValues() []CertificateStoreLocation {
+	return []CertificateStoreLocation{CertificateStoreLocationCurrentuser, CertificateStoreLocationLocalmachine, CertificateStoreLocationUnmapped}
+}
 
 // CertificateVisibility enumerates the values for certificate visibility.
 type CertificateVisibility string
@@ -87,6 +107,11 @@ const (
 	CertificateVisibilityUnmapped CertificateVisibility = "unmapped"
 )
 
+// PossibleCertificateVisibilityValues returns an array of possible values for the CertificateVisibility const type.
+func PossibleCertificateVisibilityValues() []CertificateVisibility {
+	return []CertificateVisibility{CertificateVisibilityRemoteuser, CertificateVisibilityStarttask, CertificateVisibilityTask, CertificateVisibilityUnmapped}
+}
+
 // ComputeNodeDeallocationOption enumerates the values for compute node deallocation option.
 type ComputeNodeDeallocationOption string
 
@@ -101,6 +126,11 @@ const (
 	Terminate ComputeNodeDeallocationOption = "terminate"
 )
 
+// PossibleComputeNodeDeallocationOptionValues returns an array of possible values for the ComputeNodeDeallocationOption const type.
+func PossibleComputeNodeDeallocationOptionValues() []ComputeNodeDeallocationOption {
+	return []ComputeNodeDeallocationOption{Requeue, Retaineddata, Taskcompletion, Terminate}
+}
+
 // ComputeNodeFillType enumerates the values for compute node fill type.
 type ComputeNodeFillType string
 
@@ -112,6 +142,11 @@ const (
 	// ComputeNodeFillTypeUnmapped ...
 	ComputeNodeFillTypeUnmapped ComputeNodeFillType = "unmapped"
 )
+
+// PossibleComputeNodeFillTypeValues returns an array of possible values for the ComputeNodeFillType const type.
+func PossibleComputeNodeFillTypeValues() []ComputeNodeFillType {
+	return []ComputeNodeFillType{ComputeNodeFillTypePack, ComputeNodeFillTypeSpread, ComputeNodeFillTypeUnmapped}
+}
 
 // ComputeNodeRebootOption enumerates the values for compute node reboot option.
 type ComputeNodeRebootOption string
@@ -127,6 +162,11 @@ const (
 	ComputeNodeRebootOptionTerminate ComputeNodeRebootOption = "terminate"
 )
 
+// PossibleComputeNodeRebootOptionValues returns an array of possible values for the ComputeNodeRebootOption const type.
+func PossibleComputeNodeRebootOptionValues() []ComputeNodeRebootOption {
+	return []ComputeNodeRebootOption{ComputeNodeRebootOptionRequeue, ComputeNodeRebootOptionRetaineddata, ComputeNodeRebootOptionTaskcompletion, ComputeNodeRebootOptionTerminate}
+}
+
 // ComputeNodeReimageOption enumerates the values for compute node reimage option.
 type ComputeNodeReimageOption string
 
@@ -140,6 +180,11 @@ const (
 	// ComputeNodeReimageOptionTerminate ...
 	ComputeNodeReimageOptionTerminate ComputeNodeReimageOption = "terminate"
 )
+
+// PossibleComputeNodeReimageOptionValues returns an array of possible values for the ComputeNodeReimageOption const type.
+func PossibleComputeNodeReimageOptionValues() []ComputeNodeReimageOption {
+	return []ComputeNodeReimageOption{ComputeNodeReimageOptionRequeue, ComputeNodeReimageOptionRetaineddata, ComputeNodeReimageOptionTaskcompletion, ComputeNodeReimageOptionTerminate}
+}
 
 // ComputeNodeState enumerates the values for compute node state.
 type ComputeNodeState string
@@ -171,6 +216,11 @@ const (
 	Waitingforstarttask ComputeNodeState = "waitingforstarttask"
 )
 
+// PossibleComputeNodeStateValues returns an array of possible values for the ComputeNodeState const type.
+func PossibleComputeNodeStateValues() []ComputeNodeState {
+	return []ComputeNodeState{Creating, Idle, Leavingpool, Offline, Rebooting, Reimaging, Running, Starting, Starttaskfailed, Unknown, Unusable, Waitingforstarttask}
+}
+
 // DisableComputeNodeSchedulingOption enumerates the values for disable compute node scheduling option.
 type DisableComputeNodeSchedulingOption string
 
@@ -182,6 +232,11 @@ const (
 	// DisableComputeNodeSchedulingOptionTerminate ...
 	DisableComputeNodeSchedulingOptionTerminate DisableComputeNodeSchedulingOption = "terminate"
 )
+
+// PossibleDisableComputeNodeSchedulingOptionValues returns an array of possible values for the DisableComputeNodeSchedulingOption const type.
+func PossibleDisableComputeNodeSchedulingOptionValues() []DisableComputeNodeSchedulingOption {
+	return []DisableComputeNodeSchedulingOption{DisableComputeNodeSchedulingOptionRequeue, DisableComputeNodeSchedulingOptionTaskcompletion, DisableComputeNodeSchedulingOptionTerminate}
+}
 
 // DisableJobOption enumerates the values for disable job option.
 type DisableJobOption string
@@ -195,6 +250,11 @@ const (
 	DisableJobOptionWait DisableJobOption = "wait"
 )
 
+// PossibleDisableJobOptionValues returns an array of possible values for the DisableJobOption const type.
+func PossibleDisableJobOptionValues() []DisableJobOption {
+	return []DisableJobOption{DisableJobOptionRequeue, DisableJobOptionTerminate, DisableJobOptionWait}
+}
+
 // JobPreparationTaskState enumerates the values for job preparation task state.
 type JobPreparationTaskState string
 
@@ -205,6 +265,11 @@ const (
 	JobPreparationTaskStateRunning JobPreparationTaskState = "running"
 )
 
+// PossibleJobPreparationTaskStateValues returns an array of possible values for the JobPreparationTaskState const type.
+func PossibleJobPreparationTaskStateValues() []JobPreparationTaskState {
+	return []JobPreparationTaskState{JobPreparationTaskStateCompleted, JobPreparationTaskStateRunning}
+}
+
 // JobReleaseTaskState enumerates the values for job release task state.
 type JobReleaseTaskState string
 
@@ -214,6 +279,11 @@ const (
 	// JobReleaseTaskStateRunning ...
 	JobReleaseTaskStateRunning JobReleaseTaskState = "running"
 )
+
+// PossibleJobReleaseTaskStateValues returns an array of possible values for the JobReleaseTaskState const type.
+func PossibleJobReleaseTaskStateValues() []JobReleaseTaskState {
+	return []JobReleaseTaskState{JobReleaseTaskStateCompleted, JobReleaseTaskStateRunning}
+}
 
 // JobScheduleState enumerates the values for job schedule state.
 type JobScheduleState string
@@ -230,6 +300,11 @@ const (
 	// JobScheduleStateTerminating ...
 	JobScheduleStateTerminating JobScheduleState = "terminating"
 )
+
+// PossibleJobScheduleStateValues returns an array of possible values for the JobScheduleState const type.
+func PossibleJobScheduleStateValues() []JobScheduleState {
+	return []JobScheduleState{JobScheduleStateActive, JobScheduleStateCompleted, JobScheduleStateDeleting, JobScheduleStateDisabled, JobScheduleStateTerminating}
+}
 
 // JobState enumerates the values for job state.
 type JobState string
@@ -251,6 +326,11 @@ const (
 	JobStateTerminating JobState = "terminating"
 )
 
+// PossibleJobStateValues returns an array of possible values for the JobState const type.
+func PossibleJobStateValues() []JobState {
+	return []JobState{JobStateActive, JobStateCompleted, JobStateDeleting, JobStateDisabled, JobStateDisabling, JobStateEnabling, JobStateTerminating}
+}
+
 // OSType enumerates the values for os type.
 type OSType string
 
@@ -262,6 +342,11 @@ const (
 	// OSTypeWindows ...
 	OSTypeWindows OSType = "windows"
 )
+
+// PossibleOSTypeValues returns an array of possible values for the OSType const type.
+func PossibleOSTypeValues() []OSType {
+	return []OSType{OSTypeLinux, OSTypeUnmapped, OSTypeWindows}
+}
 
 // PoolLifetimeOption enumerates the values for pool lifetime option.
 type PoolLifetimeOption string
@@ -275,6 +360,11 @@ const (
 	PoolLifetimeOptionUnmapped PoolLifetimeOption = "unmapped"
 )
 
+// PossiblePoolLifetimeOptionValues returns an array of possible values for the PoolLifetimeOption const type.
+func PossiblePoolLifetimeOptionValues() []PoolLifetimeOption {
+	return []PoolLifetimeOption{PoolLifetimeOptionJob, PoolLifetimeOptionJobschedule, PoolLifetimeOptionUnmapped}
+}
+
 // PoolState enumerates the values for pool state.
 type PoolState string
 
@@ -286,6 +376,11 @@ const (
 	// PoolStateUpgrading ...
 	PoolStateUpgrading PoolState = "upgrading"
 )
+
+// PossiblePoolStateValues returns an array of possible values for the PoolState const type.
+func PossiblePoolStateValues() []PoolState {
+	return []PoolState{PoolStateActive, PoolStateDeleting, PoolStateUpgrading}
+}
 
 // SchedulingErrorCategory enumerates the values for scheduling error category.
 type SchedulingErrorCategory string
@@ -299,6 +394,11 @@ const (
 	SchedulingErrorCategoryUsererror SchedulingErrorCategory = "usererror"
 )
 
+// PossibleSchedulingErrorCategoryValues returns an array of possible values for the SchedulingErrorCategory const type.
+func PossibleSchedulingErrorCategoryValues() []SchedulingErrorCategory {
+	return []SchedulingErrorCategory{SchedulingErrorCategoryServererror, SchedulingErrorCategoryUnmapped, SchedulingErrorCategoryUsererror}
+}
+
 // SchedulingState enumerates the values for scheduling state.
 type SchedulingState string
 
@@ -309,6 +409,11 @@ const (
 	Enabled SchedulingState = "enabled"
 )
 
+// PossibleSchedulingStateValues returns an array of possible values for the SchedulingState const type.
+func PossibleSchedulingStateValues() []SchedulingState {
+	return []SchedulingState{Disabled, Enabled}
+}
+
 // StartTaskState enumerates the values for start task state.
 type StartTaskState string
 
@@ -318,6 +423,11 @@ const (
 	// StartTaskStateRunning ...
 	StartTaskStateRunning StartTaskState = "running"
 )
+
+// PossibleStartTaskStateValues returns an array of possible values for the StartTaskState const type.
+func PossibleStartTaskStateValues() []StartTaskState {
+	return []StartTaskState{StartTaskStateCompleted, StartTaskStateRunning}
+}
 
 // TaskAddStatus enumerates the values for task add status.
 type TaskAddStatus string
@@ -333,6 +443,11 @@ const (
 	TaskAddStatusUnmapped TaskAddStatus = "unmapped"
 )
 
+// PossibleTaskAddStatusValues returns an array of possible values for the TaskAddStatus const type.
+func PossibleTaskAddStatusValues() []TaskAddStatus {
+	return []TaskAddStatus{TaskAddStatusClienterror, TaskAddStatusServererror, TaskAddStatusSuccess, TaskAddStatusUnmapped}
+}
+
 // TaskState enumerates the values for task state.
 type TaskState string
 
@@ -346,6 +461,11 @@ const (
 	// TaskStateRunning ...
 	TaskStateRunning TaskState = "running"
 )
+
+// PossibleTaskStateValues returns an array of possible values for the TaskState const type.
+func PossibleTaskStateValues() []TaskState {
+	return []TaskState{TaskStateActive, TaskStateCompleted, TaskStatePreparing, TaskStateRunning}
+}
 
 // AccountListNodeAgentSkusResult response to an AccountOperation.ListNodeAgentSkus request.
 type AccountListNodeAgentSkusResult struct {

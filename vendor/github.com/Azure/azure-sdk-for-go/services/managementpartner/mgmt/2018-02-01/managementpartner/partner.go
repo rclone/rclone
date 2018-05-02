@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // PartnerClient is the this API describe ACE Provisioning ManagementPartner
 type PartnerClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // NewPartnerClient creates an instance of the PartnerClient client.
 func NewPartnerClient() PartnerClient {
 	return NewPartnerClientWithBaseURI(DefaultBaseURI)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // NewPartnerClientWithBaseURI creates an instance of the PartnerClient client.
 func NewPartnerClientWithBaseURI(baseURI string) PartnerClient {
 	return PartnerClient{NewWithBaseURI(baseURI)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // Create create a management partner for the objectId and tenantId.
 //
 // partnerID is id of the Partner
@@ -64,6 +68,7 @@ func (client PartnerClient) Create(ctx context.Context, partnerID string) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // CreatePreparer prepares the Create request.
 func (client PartnerClient) CreatePreparer(ctx context.Context, partnerID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -83,6 +88,7 @@ func (client PartnerClient) CreatePreparer(ctx context.Context, partnerID string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client PartnerClient) CreateSender(req *http.Request) (*http.Response, error) {
@@ -90,6 +96,7 @@ func (client PartnerClient) CreateSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client PartnerClient) CreateResponder(resp *http.Response) (result PartnerResponse, err error) {
@@ -103,6 +110,7 @@ func (client PartnerClient) CreateResponder(resp *http.Response) (result Partner
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // Delete delete the management partner for the objectId and tenantId.
 //
 // partnerID is id of the Partner
@@ -128,6 +136,7 @@ func (client PartnerClient) Delete(ctx context.Context, partnerID string) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // DeletePreparer prepares the Delete request.
 func (client PartnerClient) DeletePreparer(ctx context.Context, partnerID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -147,6 +156,7 @@ func (client PartnerClient) DeletePreparer(ctx context.Context, partnerID string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client PartnerClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -154,6 +164,7 @@ func (client PartnerClient) DeleteSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client PartnerClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -166,6 +177,7 @@ func (client PartnerClient) DeleteResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // Get get the management partner using the partnerId, objectId and tenantId.
 //
 // partnerID is id of the Partner
@@ -191,6 +203,7 @@ func (client PartnerClient) Get(ctx context.Context, partnerID string) (result P
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // GetPreparer prepares the Get request.
 func (client PartnerClient) GetPreparer(ctx context.Context, partnerID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -210,6 +223,7 @@ func (client PartnerClient) GetPreparer(ctx context.Context, partnerID string) (
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PartnerClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -217,6 +231,7 @@ func (client PartnerClient) GetSender(req *http.Request) (*http.Response, error)
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client PartnerClient) GetResponder(resp *http.Response) (result PartnerResponse, err error) {
@@ -230,6 +245,7 @@ func (client PartnerClient) GetResponder(resp *http.Response) (result PartnerRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // Update update the management partner for the objectId and tenantId.
 //
 // partnerID is id of the Partner
@@ -255,6 +271,7 @@ func (client PartnerClient) Update(ctx context.Context, partnerID string) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // UpdatePreparer prepares the Update request.
 func (client PartnerClient) UpdatePreparer(ctx context.Context, partnerID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -274,6 +291,7 @@ func (client PartnerClient) UpdatePreparer(ctx context.Context, partnerID string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client PartnerClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -281,6 +299,7 @@ func (client PartnerClient) UpdateSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client PartnerClient) UpdateResponder(resp *http.Response) (result PartnerResponse, err error) {

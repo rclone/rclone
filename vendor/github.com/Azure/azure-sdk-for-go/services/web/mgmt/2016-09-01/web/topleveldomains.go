@@ -40,8 +40,8 @@ func NewTopLevelDomainsClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // Get get details of a top-level domain.
-//
-// name is name of the top-level domain.
+// Parameters:
+// name - name of the top-level domain.
 func (client TopLevelDomainsClient) Get(ctx context.Context, name string) (result TopLevelDomain, err error) {
 	req, err := client.GetPreparer(ctx, name)
 	if err != nil {
@@ -195,8 +195,9 @@ func (client TopLevelDomainsClient) ListComplete(ctx context.Context) (result To
 }
 
 // ListAgreements gets all legal agreements that user needs to accept before purchasing a domain.
-//
-// name is name of the top-level domain. agreementOption is domain agreement options.
+// Parameters:
+// name - name of the top-level domain.
+// agreementOption - domain agreement options.
 func (client TopLevelDomainsClient) ListAgreements(ctx context.Context, name string, agreementOption TopLevelDomainAgreementOption) (result TldLegalAgreementCollectionPage, err error) {
 	result.fn = client.listAgreementsNextResults
 	req, err := client.ListAgreementsPreparer(ctx, name, agreementOption)
@@ -233,7 +234,7 @@ func (client TopLevelDomainsClient) ListAgreementsPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}/listAgreements", pathParameters),

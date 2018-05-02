@@ -37,12 +37,14 @@ import (
 	"io/ioutil"
 	"math"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
 
 	proto3pb "github.com/golang/protobuf/proto/proto3_proto"
-	pb "github.com/golang/protobuf/proto/testdata"
+	pb "github.com/golang/protobuf/proto/test_proto"
+	anypb "github.com/golang/protobuf/ptypes/any"
 )
 
 // textMessage implements the methods that allow it to marshal and unmarshal
@@ -151,12 +153,12 @@ SomeGroup {
 }
 /* 2 unknown bytes */
 13: 4
-[testdata.Ext.more]: <
+[test_proto.Ext.more]: <
   data: "Big gobs for big rats"
 >
-[testdata.greeting]: "adg"
-[testdata.greeting]: "easy"
-[testdata.greeting]: "cow"
+[test_proto.greeting]: "adg"
+[test_proto.greeting]: "easy"
+[test_proto.greeting]: "cow"
 /* 13 unknown bytes */
 201: "\t3G skiing"
 /* 3 unknown bytes */
@@ -470,5 +472,47 @@ func TestProto3Text(t *testing.T) {
 		if got != test.want {
 			t.Errorf("\n got %s\nwant %s", got, test.want)
 		}
+	}
+}
+
+func TestRacyMarshal(t *testing.T) {
+	// This test should be run with the race detector.
+
+	any := &pb.MyMessage{Count: proto.Int32(47), Name: proto.String("David")}
+	proto.SetExtension(any, pb.E_Ext_Text, proto.String("bar"))
+	b, err := proto.Marshal(any)
+	if err != nil {
+		panic(err)
+	}
+	m := &proto3pb.Message{
+		Name:        "David",
+		ResultCount: 47,
+		Anything:    &anypb.Any{TypeUrl: "type.googleapis.com/" + proto.MessageName(any), Value: b},
+	}
+
+	wantText := proto.MarshalTextString(m)
+	wantBytes, err := proto.Marshal(m)
+	if err != nil {
+		t.Fatalf("proto.Marshal error: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	wg.Add(20)
+	for i := 0; i < 10; i++ {
+		go func() {
+			defer wg.Done()
+			got := proto.MarshalTextString(m)
+			if got != wantText {
+				t.Errorf("proto.MarshalTextString = %q, want %q", got, wantText)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			got, err := proto.Marshal(m)
+			if !bytes.Equal(got, wantBytes) || err != nil {
+				t.Errorf("proto.Marshal = (%x, %v), want (%x, nil)", got, err, wantBytes)
+			}
+		}()
 	}
 }

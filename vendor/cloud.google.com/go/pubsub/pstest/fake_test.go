@@ -200,6 +200,98 @@ func TestStreamingPull(t *testing.T) {
 	}
 }
 
+func TestAck(t *testing.T) {
+	// Ack each message as it arrives. Make sure we don't see dups.
+	minAckDeadlineSecs = 1
+	pclient, sclient, _ := newFake(t)
+	top := mustCreateTopic(t, pclient, &pb.Topic{Name: "projects/P/topics/T"})
+	sub := mustCreateSubscription(t, sclient, &pb.Subscription{
+		Name:               "projects/P/subscriptions/S",
+		Topic:              top.Name,
+		AckDeadlineSeconds: 1,
+	})
+
+	_ = publish(t, pclient, top, []*pb.PubsubMessage{
+		{Data: []byte("d1")},
+		{Data: []byte("d2")},
+		{Data: []byte("d3")},
+	})
+
+	got := map[string]bool{}
+	spc := mustStartPull(t, sclient, sub)
+	time.AfterFunc(time.Duration(3*minAckDeadlineSecs)*time.Second, func() {
+		if err := spc.CloseSend(); err != nil {
+			t.Errorf("CloseSend: %v", err)
+		}
+	})
+
+	for {
+		res, err := spc.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := &pb.StreamingPullRequest{}
+		for _, m := range res.ReceivedMessages {
+			if got[m.Message.MessageId] {
+				t.Fatal("duplicate message")
+			}
+			got[m.Message.MessageId] = true
+			req.AckIds = append(req.AckIds, m.AckId)
+		}
+		if err := spc.Send(req); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestAckDeadline(t *testing.T) {
+	// Messages should be resent after they expire.
+	pclient, sclient, _ := newFake(t)
+	minAckDeadlineSecs = 2
+	top := mustCreateTopic(t, pclient, &pb.Topic{Name: "projects/P/topics/T"})
+	sub := mustCreateSubscription(t, sclient, &pb.Subscription{
+		Name:               "projects/P/subscriptions/S",
+		Topic:              top.Name,
+		AckDeadlineSeconds: minAckDeadlineSecs,
+	})
+
+	_ = publish(t, pclient, top, []*pb.PubsubMessage{
+		{Data: []byte("d1")},
+		{Data: []byte("d2")},
+		{Data: []byte("d3")},
+	})
+
+	got := map[string]int{}
+	spc := mustStartPull(t, sclient, sub)
+	// In 5 seconds the ack deadline will expire twice, so we should see each message
+	// exactly three times.
+	time.AfterFunc(5*time.Second, func() {
+		if err := spc.CloseSend(); err != nil {
+			t.Errorf("CloseSend: %v", err)
+		}
+	})
+	for {
+		res, err := spc.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range res.ReceivedMessages {
+			got[m.Message.MessageId]++
+		}
+	}
+	for id, n := range got {
+		if n != 3 {
+			t.Errorf("message %s: saw %d times, want 3", id, n)
+		}
+	}
+}
+
 func TestMultiSubs(t *testing.T) {
 	// Each subscription gets every message.
 	pclient, sclient, _ := newFake(t)
@@ -309,9 +401,9 @@ func pullN(t *testing.T, n int, sc pb.SubscriberClient, sub *pb.Subscription) ma
 	if err := spc.CloseSend(); err != nil {
 		t.Fatal(err)
 	}
-	_, err := spc.Recv()
+	res, err := spc.Recv()
 	if err != io.EOF {
-		t.Fatal(err)
+		t.Fatalf("Recv returned <%v> instead of EOF; res = %v", err, res)
 	}
 	return got
 }

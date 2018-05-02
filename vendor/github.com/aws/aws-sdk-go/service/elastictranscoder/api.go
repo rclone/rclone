@@ -14,7 +14,7 @@ const opCancelJob = "CancelJob"
 
 // CancelJobRequest generates a "aws/request.Request" representing the
 // client's request for the CancelJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -112,7 +112,7 @@ const opCreateJob = "CreateJob"
 
 // CreateJobRequest generates a "aws/request.Request" representing the
 // client's request for the CreateJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -212,7 +212,7 @@ const opCreatePipeline = "CreatePipeline"
 
 // CreatePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -306,7 +306,7 @@ const opCreatePreset = "CreatePreset"
 
 // CreatePresetRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePreset operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -409,7 +409,7 @@ const opDeletePipeline = "DeletePipeline"
 
 // DeletePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -507,7 +507,7 @@ const opDeletePreset = "DeletePreset"
 
 // DeletePresetRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePreset operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -599,7 +599,7 @@ const opListJobsByPipeline = "ListJobsByPipeline"
 
 // ListJobsByPipelineRequest generates a "aws/request.Request" representing the
 // client's request for the ListJobsByPipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -749,7 +749,7 @@ const opListJobsByStatus = "ListJobsByStatus"
 
 // ListJobsByStatusRequest generates a "aws/request.Request" representing the
 // client's request for the ListJobsByStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -897,7 +897,7 @@ const opListPipelines = "ListPipelines"
 
 // ListPipelinesRequest generates a "aws/request.Request" representing the
 // client's request for the ListPipelines operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1039,7 +1039,7 @@ const opListPresets = "ListPresets"
 
 // ListPresetsRequest generates a "aws/request.Request" representing the
 // client's request for the ListPresets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1181,7 +1181,7 @@ const opReadJob = "ReadJob"
 
 // ReadJobRequest generates a "aws/request.Request" representing the
 // client's request for the ReadJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1271,7 +1271,7 @@ const opReadPipeline = "ReadPipeline"
 
 // ReadPipelineRequest generates a "aws/request.Request" representing the
 // client's request for the ReadPipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1361,7 +1361,7 @@ const opReadPreset = "ReadPreset"
 
 // ReadPresetRequest generates a "aws/request.Request" representing the
 // client's request for the ReadPreset operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1451,7 +1451,7 @@ const opTestRole = "TestRole"
 
 // TestRoleRequest generates a "aws/request.Request" representing the
 // client's request for the TestRole operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1550,7 +1550,7 @@ const opUpdatePipeline = "UpdatePipeline"
 
 // UpdatePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1649,7 +1649,7 @@ const opUpdatePipelineNotifications = "UpdatePipelineNotifications"
 
 // UpdatePipelineNotificationsRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePipelineNotifications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1747,7 +1747,7 @@ const opUpdatePipelineStatus = "UpdatePipelineStatus"
 
 // UpdatePipelineStatusRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePipelineStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

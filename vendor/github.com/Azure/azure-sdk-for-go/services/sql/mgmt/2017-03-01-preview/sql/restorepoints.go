@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePointsClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -32,16 +33,19 @@ type RestorePointsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRestorePointsClient creates an instance of the RestorePointsClient client.
 func NewRestorePointsClient(subscriptionID string) RestorePointsClient {
 	return NewRestorePointsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewRestorePointsClientWithBaseURI creates an instance of the RestorePointsClient client.
 func NewRestorePointsClientWithBaseURI(baseURI string, subscriptionID string) RestorePointsClient {
 	return RestorePointsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Create creates a restore point for a data warehouse.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -69,6 +73,7 @@ func (client RestorePointsClient) Create(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreatePreparer prepares the Create request.
 func (client RestorePointsClient) CreatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters CreateDatabaseRestorePointDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -84,7 +89,7 @@ func (client RestorePointsClient) CreatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints", pathParameters),
@@ -93,6 +98,7 @@ func (client RestorePointsClient) CreatePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client RestorePointsClient) CreateSender(req *http.Request) (future RestorePointsCreateFuture, err error) {
@@ -108,6 +114,7 @@ func (client RestorePointsClient) CreateSender(req *http.Request) (future Restor
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client RestorePointsClient) CreateResponder(resp *http.Response) (result RestorePoint, err error) {
@@ -121,6 +128,80 @@ func (client RestorePointsClient) CreateResponder(resp *http.Response) (result R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// Delete deletes a restore point.
+//
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database. restorePointName is the name of the restore point.
+func (client RestorePointsClient) Delete(ctx context.Context, resourceGroupName string, serverName string, databaseName string, restorePointName string) (result autorest.Response, err error) {
+	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, databaseName, restorePointName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.RestorePointsClient", "Delete", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.DeleteSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "sql.RestorePointsClient", "Delete", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.RestorePointsClient", "Delete", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// DeletePreparer prepares the Delete request.
+func (client RestorePointsClient) DeletePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, restorePointName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"databaseName":      autorest.Encode("path", databaseName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"restorePointName":  autorest.Encode("path", restorePointName),
+		"serverName":        autorest.Encode("path", serverName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-03-01-preview"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsDelete(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints/{restorePointName}", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// DeleteSender sends the Delete request. The method will close the
+// http.Response Body if it receives an error.
+func (client RestorePointsClient) DeleteSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// DeleteResponder handles the response to the Delete request. The method always
+// closes the http.Response Body.
+func (client RestorePointsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+	result.Response = resp
+	return
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a restore point.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -148,6 +229,7 @@ func (client RestorePointsClient) Get(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client RestorePointsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, restorePointName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -171,6 +253,7 @@ func (client RestorePointsClient) GetPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RestorePointsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -178,6 +261,7 @@ func (client RestorePointsClient) GetSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RestorePointsClient) GetResponder(resp *http.Response) (result RestorePoint, err error) {
@@ -191,7 +275,8 @@ func (client RestorePointsClient) GetResponder(resp *http.Response) (result Rest
 	return
 }
 
-// ListByDatabase gets a collection of restore points that belongs to the database.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// ListByDatabase gets a list of database restore points.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
 // the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
@@ -218,6 +303,7 @@ func (client RestorePointsClient) ListByDatabase(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client RestorePointsClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -240,6 +326,7 @@ func (client RestorePointsClient) ListByDatabasePreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client RestorePointsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -247,6 +334,7 @@ func (client RestorePointsClient) ListByDatabaseSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client RestorePointsClient) ListByDatabaseResponder(resp *http.Response) (result RestorePointListResult, err error) {

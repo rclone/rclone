@@ -42,8 +42,9 @@ func NewNetworkStatusClientWithBaseURI(baseURI string, subscriptionID string) Ne
 
 // GetByService gets the Connectivity Status to the external resources on which the Api Management service depends from
 // inside the Cloud Service. This also returns the DNS Servers as visible to the CloudService.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client NetworkStatusClient) GetByService(ctx context.Context, resourceGroupName string, serviceName string) (result NetworkStatusContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

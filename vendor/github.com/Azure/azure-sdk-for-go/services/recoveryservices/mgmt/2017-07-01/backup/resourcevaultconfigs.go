@@ -40,9 +40,9 @@ func NewResourceVaultConfigsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Get fetches resource vault config.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
 func (client ResourceVaultConfigsClient) Get(ctx context.Context, vaultName string, resourceGroupName string) (result ResourceVaultConfigResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName)
 	if err != nil {
@@ -107,9 +107,10 @@ func (client ResourceVaultConfigsClient) GetResponder(resp *http.Response) (resu
 }
 
 // Update updates vault security config.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. parameters is resource config request
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// parameters - resource config request
 func (client ResourceVaultConfigsClient) Update(ctx context.Context, vaultName string, resourceGroupName string, parameters ResourceVaultConfigResource) (result ResourceVaultConfigResource, err error) {
 	req, err := client.UpdatePreparer(ctx, vaultName, resourceGroupName, parameters)
 	if err != nil {
@@ -146,7 +147,7 @@ func (client ResourceVaultConfigsClient) UpdatePreparer(ctx context.Context, vau
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupconfig/vaultconfig", pathParameters),

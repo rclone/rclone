@@ -41,11 +41,13 @@ func NewProtectedItemsGroupClientWithBaseURI(baseURI string, subscriptionID stri
 
 // CreateOrUpdate enables backup of an item or to modifies the backup policy information of an already backed up item.
 // This is an asynchronous operation. To know the status of the operation, call the GetItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backup item. containerName
-// is container name associated with the backup item. protectedItemName is item name to be backed up. parameters is
-// resource backed up item
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backup item.
+// containerName - container name associated with the backup item.
+// protectedItemName - item name to be backed up.
+// parameters - resource backed up item
 func (client ProtectedItemsGroupClient) CreateOrUpdate(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, parameters ProtectedItemResource) (result autorest.Response, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, parameters)
 	if err != nil {
@@ -85,7 +87,7 @@ func (client ProtectedItemsGroupClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}", pathParameters),
@@ -115,11 +117,12 @@ func (client ProtectedItemsGroupClient) CreateOrUpdateResponder(resp *http.Respo
 
 // Delete used to disable backup of an item within a container. This is an asynchronous operation. To know the status
 // of the request, call the GetItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backed up item.
-// containerName is container name associated with the backed up item. protectedItemName is backed up item to be
-// deleted.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backed up item.
+// containerName - container name associated with the backed up item.
+// protectedItemName - backed up item to be deleted.
 func (client ProtectedItemsGroupClient) Delete(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName)
 	if err != nil {
@@ -187,11 +190,13 @@ func (client ProtectedItemsGroupClient) DeleteResponder(resp *http.Response) (re
 
 // Get provides the details of the backed up item. This is an asynchronous operation. To know the status of the
 // operation, call the GetItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backed up item.
-// containerName is container name associated with the backed up item. protectedItemName is backed up item name
-// whose details are to be fetched. filter is oData filter options.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backed up item.
+// containerName - container name associated with the backed up item.
+// protectedItemName - backed up item name whose details are to be fetched.
+// filter - oData filter options.
 func (client ProtectedItemsGroupClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, filter string) (result ProtectedItemResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, filter)
 	if err != nil {

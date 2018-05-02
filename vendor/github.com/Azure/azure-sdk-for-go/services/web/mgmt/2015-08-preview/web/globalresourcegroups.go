@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GlobalResourceGroupsClient is the webSite Management Client
 type GlobalResourceGroupsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewGlobalResourceGroupsClient creates an instance of the GlobalResourceGroupsClient client.
 func NewGlobalResourceGroupsClient(subscriptionID string) GlobalResourceGroupsClient {
 	return NewGlobalResourceGroupsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewGlobalResourceGroupsClientWithBaseURI creates an instance of the GlobalResourceGroupsClient client.
 func NewGlobalResourceGroupsClientWithBaseURI(baseURI string, subscriptionID string) GlobalResourceGroupsClient {
 	return GlobalResourceGroupsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // MoveResources sends the move resources request.
 //
 func (client GlobalResourceGroupsClient) MoveResources(ctx context.Context, resourceGroupName string, moveResourceEnvelope CsmMoveResourceEnvelope) (result autorest.Response, err error) {
@@ -63,6 +67,7 @@ func (client GlobalResourceGroupsClient) MoveResources(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // MoveResourcesPreparer prepares the MoveResources request.
 func (client GlobalResourceGroupsClient) MoveResourcesPreparer(ctx context.Context, resourceGroupName string, moveResourceEnvelope CsmMoveResourceEnvelope) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -76,7 +81,7 @@ func (client GlobalResourceGroupsClient) MoveResourcesPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/moveResources", pathParameters),
@@ -85,6 +90,7 @@ func (client GlobalResourceGroupsClient) MoveResourcesPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // MoveResourcesSender sends the MoveResources request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalResourceGroupsClient) MoveResourcesSender(req *http.Request) (*http.Response, error) {
@@ -92,6 +98,7 @@ func (client GlobalResourceGroupsClient) MoveResourcesSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // MoveResourcesResponder handles the response to the MoveResources request. The method always
 // closes the http.Response Body.
 func (client GlobalResourceGroupsClient) MoveResourcesResponder(resp *http.Response) (result autorest.Response, err error) {

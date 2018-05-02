@@ -36,6 +36,11 @@ const (
 	Secondary AccountKeyType = "Secondary"
 )
 
+// PossibleAccountKeyTypeValues returns an array of possible values for the AccountKeyType const type.
+func PossibleAccountKeyTypeValues() []AccountKeyType {
+	return []AccountKeyType{Primary, Secondary}
+}
+
 // PackageState enumerates the values for package state.
 type PackageState string
 
@@ -47,6 +52,11 @@ const (
 	// Unmapped ...
 	Unmapped PackageState = "unmapped"
 )
+
+// PossiblePackageStateValues returns an array of possible values for the PackageState const type.
+func PossiblePackageStateValues() []PackageState {
+	return []PackageState{Active, Pending, Unmapped}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -65,6 +75,11 @@ const (
 	// Succeeded ...
 	Succeeded ProvisioningState = "Succeeded"
 )
+
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Cancelled, Creating, Deleting, Failed, Invalid, Succeeded}
+}
 
 // Account contains information about an Azure Batch account.
 type Account struct {

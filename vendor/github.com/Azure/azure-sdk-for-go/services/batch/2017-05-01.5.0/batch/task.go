@@ -43,13 +43,16 @@ func NewTaskClientWithBaseURI(baseURI string) TaskClient {
 }
 
 // Add sends the add request.
-//
-// jobID is the ID of the job to which the task is to be added. task is the task to be added. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// jobID - the ID of the job to which the task is to be added.
+// task - the task to be added.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client TaskClient) Add(ctx context.Context, jobID string, task TaskAddParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: task,
@@ -100,7 +103,7 @@ func (client TaskClient) AddPreparer(ctx context.Context, jobID string, task Tas
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/tasks", pathParameters),
@@ -149,13 +152,16 @@ func (client TaskClient) AddResponder(resp *http.Response) (result autorest.Resp
 // should re-issue the request. Note that it is up to the user to correctly handle failures when re-issuing a request.
 // For example, you should use the same task ids during a retry so that if the prior operation succeeded, the retry
 // will not create extra tasks unexpectedly.
-//
-// jobID is the ID of the job to which the task collection is to be added. taskCollection is the tasks to be added.
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30
-// seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such
-// as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should
-// return the client-request-id in the response. ocpDate is the time the request was issued. Client libraries
-// typically set this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// jobID - the ID of the job to which the task collection is to be added.
+// taskCollection - the tasks to be added.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client TaskClient) AddCollection(ctx context.Context, jobID string, taskCollection TaskAddCollectionParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result TaskAddCollectionResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: taskCollection,
@@ -202,7 +208,7 @@ func (client TaskClient) AddCollectionPreparer(ctx context.Context, jobID string
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/addtaskcollection", pathParameters),
@@ -249,21 +255,27 @@ func (client TaskClient) AddCollectionResponder(resp *http.Response) (result Tas
 // Delete when a task is deleted, all of the files in its directory on the compute node where it ran are also deleted
 // (regardless of the retention time). For multi-instance tasks, the delete task operation applies synchronously to the
 // primary task; subtasks and their files are then deleted asynchronously in the background.
-//
-// jobID is the ID of the job from which to delete the task. taskID is the ID of the task to delete. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// jobID - the ID of the job from which to delete the task.
+// taskID - the ID of the task to delete.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client TaskClient) Delete(ctx context.Context, jobID string, taskID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, jobID, taskID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -363,22 +375,29 @@ func (client TaskClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get for multi-instance tasks, information such as affinityId, executionInfo and nodeInfo refer to the primary task.
 // Use the list subtasks API to retrieve information about subtasks.
-//
-// jobID is the ID of the job that contains the task. taskID is the ID of the task to get information about.
-// selectParameter is an OData $select clause. expand is an OData $expand clause. timeout is the maximum time that
-// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// jobID - the ID of the job that contains the task.
+// taskID - the ID of the task to get information about.
+// selectParameter - an OData $select clause.
+// expand - an OData $expand clause.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client TaskClient) Get(ctx context.Context, jobID string, taskID string, selectParameter string, expand string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result CloudTask, err error) {
 	req, err := client.GetPreparer(ctx, jobID, taskID, selectParameter, expand, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -485,15 +504,19 @@ func (client TaskClient) GetResponder(resp *http.Response) (result CloudTask, er
 
 // List for multi-instance tasks, information such as affinityId, executionInfo and nodeInfo refer to the primary task.
 // Use the list subtasks API to retrieve information about subtasks.
-//
-// jobID is the ID of the job. filter is an OData $filter clause. selectParameter is an OData $select clause.
-// expand is an OData $expand clause. maxResults is the maximum number of items to return in the response. A
-// maximum of 1000 tasks can be returned. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
-// time the request was issued. Client libraries typically set this to the current system clock time; set it
-// explicitly if you are calling the REST API directly.
+// Parameters:
+// jobID - the ID of the job.
+// filter - an OData $filter clause.
+// selectParameter - an OData $select clause.
+// expand - an OData $expand clause.
+// maxResults - the maximum number of items to return in the response. A maximum of 1000 tasks can be returned.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client TaskClient) List(ctx context.Context, jobID string, filter string, selectParameter string, expand string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result CloudTaskListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -627,13 +650,17 @@ func (client TaskClient) ListComplete(ctx context.Context, jobID string, filter 
 }
 
 // ListSubtasks if the task is not a multi-instance task then this returns an empty collection.
-//
-// jobID is the ID of the job. taskID is the ID of the task. selectParameter is an OData $select clause. timeout is
-// the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// Parameters:
+// jobID - the ID of the job.
+// taskID - the ID of the task.
+// selectParameter - an OData $select clause.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
 func (client TaskClient) ListSubtasks(ctx context.Context, jobID string, taskID string, selectParameter string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result CloudTaskListSubtasksResult, err error) {
 	req, err := client.ListSubtasksPreparer(ctx, jobID, taskID, selectParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
@@ -724,21 +751,27 @@ func (client TaskClient) ListSubtasksResponder(resp *http.Response) (result Clou
 // longer available after reactivation. This will fail for tasks that are not completed or that previously completed
 // successfully (with an exit code of 0). Additionally, this will fail if the job has completed (or is terminating or
 // deleting).
-//
-// jobID is the ID of the job containing the task. taskID is the ID of the task to reactivate. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// jobID - the ID of the job containing the task.
+// taskID - the ID of the task to reactivate.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client TaskClient) Reactivate(ctx context.Context, jobID string, taskID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ReactivatePreparer(ctx, jobID, taskID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -839,21 +872,27 @@ func (client TaskClient) ReactivateResponder(resp *http.Response) (result autore
 // Terminate when the task has been terminated, it moves to the completed state. For multi-instance tasks, the
 // terminate task operation applies synchronously to the primary task; subtasks are then terminated asynchronously in
 // the background.
-//
-// jobID is the ID of the job containing the task. taskID is the ID of the task to terminate. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only
-// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
-// an ETag value associated with the version of the resource known to the client. The operation will be performed
-// only if the resource's current ETag on the service does not match the value specified by the client.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// Parameters:
+// jobID - the ID of the job containing the task.
+// taskID - the ID of the task to terminate.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
 // operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client TaskClient) Terminate(ctx context.Context, jobID string, taskID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.TerminatePreparer(ctx, jobID, taskID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -952,22 +991,28 @@ func (client TaskClient) TerminateResponder(resp *http.Response) (result autores
 }
 
 // Update updates the properties of the specified task.
-//
-// jobID is the ID of the job containing the task. taskID is the ID of the task to update. taskUpdateParameter is
-// the parameters for the request. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
-// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
-// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
-// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
-// calling the REST API directly. ifMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service exactly matches the
-// value specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to
-// the client. The operation will be performed only if the resource's current ETag on the service does not match
-// the value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the
-// resource known to the client. The operation will be performed only if the resource on the service has been
-// modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the
-// resource known to the client. The operation will be performed only if the resource on the service has not been
-// modified since the specified time.
+// Parameters:
+// jobID - the ID of the job containing the task.
+// taskID - the ID of the task to update.
+// taskUpdateParameter - the parameters for the request.
+// timeout - the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds.
+// clientRequestID - the caller-generated request identity, in the form of a GUID with no decoration such as
+// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID - whether the server should return the client-request-id in the response.
+// ocpDate - the time the request was issued. Client libraries typically set this to the current system clock
+// time; set it explicitly if you are calling the REST API directly.
+// ifMatch - an ETag value associated with the version of the resource known to the client. The operation will
+// be performed only if the resource's current ETag on the service exactly matches the value specified by the
+// client.
+// ifNoneMatch - an ETag value associated with the version of the resource known to the client. The operation
+// will be performed only if the resource's current ETag on the service does not match the value specified by
+// the client.
+// ifModifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince - a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified
+// time.
 func (client TaskClient) Update(ctx context.Context, jobID string, taskID string, taskUpdateParameter TaskUpdateParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.UpdatePreparer(ctx, jobID, taskID, taskUpdateParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
@@ -1008,7 +1053,7 @@ func (client TaskClient) UpdatePreparer(ctx context.Context, jobID string, taskI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/tasks/{taskId}", pathParameters),

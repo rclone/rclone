@@ -18,6 +18,7 @@ package spanner
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"sync/atomic"
 	"time"
@@ -33,7 +34,7 @@ import (
 )
 
 const (
-	prodAddr = "spanner.googleapis.com:443"
+	endpoint = "spanner.googleapis.com:443"
 
 	// resourcePrefixHeader is the name of the metadata header used to indicate
 	// the resource being operated on.
@@ -111,7 +112,7 @@ func NewClient(ctx context.Context, database string, opts ...option.ClientOption
 
 // NewClientWithConfig creates a client to a database. A valid database name has the
 // form projects/PROJECT_ID/instances/INSTANCE_ID/databases/DATABASE_ID.
-func NewClientWithConfig(ctx context.Context, database string, config ClientConfig, opts ...option.ClientOption) (_ *Client, err error) {
+func NewClientWithConfig(ctx context.Context, database string, config ClientConfig, opts ...option.ClientOption) (c *Client, err error) {
 	ctx = traceStartSpan(ctx, "cloud.google.com/go/spanner.NewClient")
 	defer func() { traceEndSpan(ctx, err) }()
 
@@ -119,14 +120,14 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 	if err := validDatabaseName(database); err != nil {
 		return nil, err
 	}
-	c := &Client{
+	c = &Client{
 		database: database,
 		md: metadata.Pairs(
 			resourcePrefixHeader, database,
 			xGoogHeaderKey, xGoogHeaderVal),
 	}
 	allOpts := []option.ClientOption{
-		option.WithEndpoint(prodAddr),
+		option.WithEndpoint(endpoint),
 		option.WithScopes(Scope),
 		option.WithGRPCDialOption(
 			grpc.WithDefaultCallOptions(
@@ -135,7 +136,6 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 			),
 		),
 	}
-	allOpts = append(allOpts, openCensusOptions()...)
 	allOpts = append(allOpts, opts...)
 	// Prepare gRPC channels.
 	if config.NumChannels == 0 {
@@ -214,6 +214,112 @@ func (c *Client) ReadOnlyTransaction() *ReadOnlyTransaction {
 		singleUse:       false,
 		sp:              c.idleSessions,
 		txReadyOrClosed: make(chan struct{}),
+	}
+	t.txReadOnly.txReadEnv = t
+	return t
+}
+
+// BatchReadOnlyTransaction returns a BatchReadOnlyTransaction that can be used
+// for partitioned reads or queries from a snapshot of the database. This is
+// useful in batch processing pipelines where one wants to divide the work of
+// reading from the database across multiple machines.
+//
+// Note: This transaction does not use the underlying session pool but creates a
+// new session each time, and the session is reused across clients.
+//
+// You should call Close() after the txn is no longer needed on local
+// client, and call Cleanup() when the txn is finished for all clients, to free
+// the session.
+func (c *Client) BatchReadOnlyTransaction(ctx context.Context, tb TimestampBound) (*BatchReadOnlyTransaction, error) {
+	var (
+		tx  transactionID
+		rts time.Time
+		s   *session
+		sh  *sessionHandle
+		err error
+	)
+	defer func() {
+		if err != nil && sh != nil {
+			e := runRetryable(ctx, func(ctx context.Context) error {
+				_, e := s.client.DeleteSession(ctx, &sppb.DeleteSessionRequest{Name: s.getID()})
+				return e
+			})
+			if e != nil {
+				log.Printf("Failed to delete session %v. Error: %v", s.getID(), e)
+			}
+		}
+	}()
+	// create session
+	sc := c.rrNext()
+	err = runRetryable(ctx, func(ctx context.Context) error {
+		sid, e := sc.CreateSession(ctx, &sppb.CreateSessionRequest{Database: c.database})
+		if e != nil {
+			return e
+		}
+		// If no error, construct the new session.
+		s = &session{valid: true, client: sc, id: sid.Name, createTime: time.Now(), md: c.md}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	sh = &sessionHandle{session: s}
+	// begin transaction
+	err = runRetryable(contextWithOutgoingMetadata(ctx, sh.getMetadata()), func(ctx context.Context) error {
+		res, e := sh.getClient().BeginTransaction(ctx, &sppb.BeginTransactionRequest{
+			Session: sh.getID(),
+			Options: &sppb.TransactionOptions{
+				Mode: &sppb.TransactionOptions_ReadOnly_{
+					ReadOnly: buildTransactionOptionsReadOnly(tb, true),
+				},
+			},
+		})
+		if e != nil {
+			return e
+		}
+		tx = res.Id
+		if res.ReadTimestamp != nil {
+			rts = time.Unix(res.ReadTimestamp.Seconds, int64(res.ReadTimestamp.Nanos))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	t := &BatchReadOnlyTransaction{
+		ReadOnlyTransaction: ReadOnlyTransaction{
+			tx:              tx,
+			txReadyOrClosed: make(chan struct{}),
+			state:           txActive,
+			sh:              sh,
+			rts:             rts,
+		},
+		ID: BatchReadOnlyTransactionID{
+			tid: tx,
+			sid: sh.getID(),
+			rts: rts,
+		},
+	}
+	t.txReadOnly.txReadEnv = t
+	return t, nil
+}
+
+// BatchReadOnlyTransactionFromID reconstruct a BatchReadOnlyTransaction from BatchReadOnlyTransactionID
+func (c *Client) BatchReadOnlyTransactionFromID(tid BatchReadOnlyTransactionID) *BatchReadOnlyTransaction {
+	sc := c.rrNext()
+	s := &session{valid: true, client: sc, id: tid.sid, createTime: time.Now(), md: c.md}
+	sh := &sessionHandle{session: s}
+
+	t := &BatchReadOnlyTransaction{
+		ReadOnlyTransaction: ReadOnlyTransaction{
+			tx:              tid.tid,
+			txReadyOrClosed: make(chan struct{}),
+			state:           txActive,
+			sh:              sh,
+			rts:             tid.rts,
+		},
+		ID: tid,
 	}
 	t.txReadOnly.txReadEnv = t
 	return t

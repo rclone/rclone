@@ -164,11 +164,11 @@
       }
     }
   },
-  "revision": "20180129",
+  "revision": "20180419",
   "rootUrl": "https://abusiveexperiencereport.googleapis.com/",
   "schemas": {
     "SiteSummaryResponse": {
-      "description": "Response message for GetSiteSummary.",
+      "description": "Response message for GetSiteSummary.\nDo not confuse with same message in google.ads.experiencereport.v1",
       "id": "SiteSummaryResponse",
       "properties": {
         "abusiveStatus": {
@@ -244,7 +244,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Abusive Experience Report API",
+  "title": "Abusive Experience Report API",
   "version": "v1",
   "version_module": true
 }

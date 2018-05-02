@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // KeyType enumerates the values for key type.
 type KeyType string
 
@@ -32,6 +33,13 @@ const (
 	Secondary KeyType = "secondary"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
+// PossibleKeyTypeValues returns an array of possible values for the KeyType const type.
+func PossibleKeyTypeValues() []KeyType {
+	return []KeyType{Primary, Secondary}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccount an Azure resource which represents access to a suite of Location Based Services REST APIs.
 type BasedServicesAccount struct {
 	autorest.Response `json:"-"`
@@ -49,6 +57,7 @@ type BasedServicesAccount struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // MarshalJSON is the custom marshaler for BasedServicesAccount.
 func (bsa BasedServicesAccount) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -73,6 +82,7 @@ func (bsa BasedServicesAccount) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccountCreateParameters parameters used to create a new Location Based Services Account.
 type BasedServicesAccountCreateParameters struct {
 	// LocationProperty - The location of the resource.
@@ -83,6 +93,7 @@ type BasedServicesAccountCreateParameters struct {
 	Sku *Sku `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // MarshalJSON is the custom marshaler for BasedServicesAccountCreateParameters.
 func (bsacp BasedServicesAccountCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -98,6 +109,7 @@ func (bsacp BasedServicesAccountCreateParameters) MarshalJSON() ([]byte, error) 
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccountKeys the set of keys which can be used to access the Location Based Services REST APIs. Two
 // keys are provided for key rotation without interruption.
 type BasedServicesAccountKeys struct {
@@ -110,6 +122,7 @@ type BasedServicesAccountKeys struct {
 	SecondaryKey *string `json:"secondaryKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccounts a list of Location Based Services Accounts.
 type BasedServicesAccounts struct {
 	autorest.Response `json:"-"`
@@ -117,6 +130,7 @@ type BasedServicesAccounts struct {
 	Value *[]BasedServicesAccount `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccountsMoveRequest the description of what resources to move between resource groups.
 type BasedServicesAccountsMoveRequest struct {
 	// TargetResourceGroup - The name of the destination resource group.
@@ -125,6 +139,7 @@ type BasedServicesAccountsMoveRequest struct {
 	ResourceIds *[]string `json:"resourceIds,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesAccountUpdateParameters parameters used to update an existing Location Based Services Account.
 type BasedServicesAccountUpdateParameters struct {
 	// Tags - Gets or sets a list of key value pairs that describe the resource. These tags can be used in viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key no greater than 128 characters and value no greater than 256 characters.
@@ -133,6 +148,7 @@ type BasedServicesAccountUpdateParameters struct {
 	Sku *Sku `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // MarshalJSON is the custom marshaler for BasedServicesAccountUpdateParameters.
 func (bsaup BasedServicesAccountUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -145,12 +161,14 @@ func (bsaup BasedServicesAccountUpdateParameters) MarshalJSON() ([]byte, error) 
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesKeySpecification whether the operation refers to the primary or secondary key.
 type BasedServicesKeySpecification struct {
 	// KeyType - Whether the operation refers to the primary or secondary key. Possible values include: 'Primary', 'Secondary'
 	KeyType KeyType `json:"keyType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesOperations the set of operations available for Location Based Services.
 type BasedServicesOperations struct {
 	autorest.Response `json:"-"`
@@ -158,6 +176,7 @@ type BasedServicesOperations struct {
 	Value *[]BasedServicesOperationsValueItem `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesOperationsValueItem ...
 type BasedServicesOperationsValueItem struct {
 	// Name - Operation name: {provider}/{resource}/{operation}.
@@ -168,6 +187,7 @@ type BasedServicesOperationsValueItem struct {
 	Origin *string `json:"origin,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // BasedServicesOperationsValueItemDisplay the human-readable description of the operation.
 type BasedServicesOperationsValueItemDisplay struct {
 	// Provider - Service provider: Microsoft Location Based Services.
@@ -180,6 +200,7 @@ type BasedServicesOperationsValueItemDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // Error this object is returned when an error occurs in the Location Based Service API
 type Error struct {
 	// Code - Error code.
@@ -192,6 +213,7 @@ type Error struct {
 	Details *[]ErrorDetailsItem `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // ErrorDetailsItem ...
 type ErrorDetailsItem struct {
 	// Code - Error code.
@@ -202,6 +224,7 @@ type ErrorDetailsItem struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // Resource an Azure resource
 type Resource struct {
 	// ID - The fully qualified Location Based Services Account resource identifier.
@@ -212,6 +235,7 @@ type Resource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/location/mgmt/2017-01-01-preview/location instead.
 // Sku the SKU of the Location Based Services Account.
 type Sku struct {
 	// Name - The name of the SKU, in standard format (such as S0).

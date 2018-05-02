@@ -23,35 +23,12 @@ import original "github.com/Azure/azure-sdk-for-go/services/visualstudio/mgmt/20
 
 type AccountsClient = original.AccountsClient
 
-func NewAccountsClient(subscriptionID string) AccountsClient {
-	return original.NewAccountsClient(subscriptionID)
-}
-func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
-	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type ExtensionsClient = original.ExtensionsClient
-
-func NewExtensionsClient(subscriptionID string) ExtensionsClient {
-	return original.NewExtensionsClient(subscriptionID)
-}
-func NewExtensionsClientWithBaseURI(baseURI string, subscriptionID string) ExtensionsClient {
-	return original.NewExtensionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccountResource = original.AccountResource
 type AccountResourceListResult = original.AccountResourceListResult
 type AccountResourceRequest = original.AccountResourceRequest
@@ -69,16 +46,32 @@ type ProjectResourceListResult = original.ProjectResourceListResult
 type ProjectsCreateFuture = original.ProjectsCreateFuture
 type Resource = original.Resource
 type OperationsClient = original.OperationsClient
+type ProjectsClient = original.ProjectsClient
 
+func NewAccountsClient(subscriptionID string) AccountsClient {
+	return original.NewAccountsClient(subscriptionID)
+}
+func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
+	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewExtensionsClient(subscriptionID string) ExtensionsClient {
+	return original.NewExtensionsClient(subscriptionID)
+}
+func NewExtensionsClientWithBaseURI(baseURI string, subscriptionID string) ExtensionsClient {
+	return original.NewExtensionsClientWithBaseURI(baseURI, subscriptionID)
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProjectsClient = original.ProjectsClient
-
 func NewProjectsClient(subscriptionID string) ProjectsClient {
 	return original.NewProjectsClient(subscriptionID)
 }

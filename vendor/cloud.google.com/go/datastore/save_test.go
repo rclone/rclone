@@ -270,3 +270,16 @@ func TestSavePointers(t *testing.T) {
 		}
 	}
 }
+
+func TestSaveEmptySlice(t *testing.T) {
+	// Zero-length slice fields are not saved.
+	for _, slice := range [][]string{nil, {}} {
+		got, err := SaveStruct(&struct{ S []string }{S: slice})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 0 {
+			t.Errorf("%#v: got %d properties, wanted zero", slice, len(got))
+		}
+	}
+}

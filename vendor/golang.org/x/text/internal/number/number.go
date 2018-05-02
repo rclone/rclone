@@ -100,8 +100,12 @@ func InfoFromLangID(compactIndex int, numberSystem string) Info {
 
 // InfoFromTag returns a Info for the given language tag.
 func InfoFromTag(t language.Tag) Info {
-	index, _ := language.CompactIndex(t)
-	return InfoFromLangID(index, t.TypeForKey("nu"))
+	for {
+		if index, ok := language.CompactIndex(t); ok {
+			return InfoFromLangID(index, t.TypeForKey("nu"))
+		}
+		t = t.Parent()
+	}
 }
 
 // IsDecimal reports if the numbering system can convert decimal to native
@@ -144,6 +148,9 @@ func (n Info) Symbol(t SymbolType) string {
 }
 
 func formatForLang(t language.Tag, index []byte) *Pattern {
-	x, _ := language.CompactIndex(t)
-	return &formats[index[x]]
+	for ; ; t = t.Parent() {
+		if x, ok := language.CompactIndex(t); ok {
+			return &formats[index[x]]
+		}
+	}
 }

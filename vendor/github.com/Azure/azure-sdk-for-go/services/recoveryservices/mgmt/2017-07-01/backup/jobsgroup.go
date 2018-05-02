@@ -40,9 +40,10 @@ func NewJobsGroupClientWithBaseURI(baseURI string, subscriptionID string) JobsGr
 }
 
 // Export triggers export of jobs specified by filters and returns an OperationID to track.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. filter is oData filter options.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// filter - oData filter options.
 func (client JobsGroupClient) Export(ctx context.Context, vaultName string, resourceGroupName string, filter string) (result autorest.Response, err error) {
 	req, err := client.ExportPreparer(ctx, vaultName, resourceGroupName, filter)
 	if err != nil {

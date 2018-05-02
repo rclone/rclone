@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // IotDpsResourceClient is the API for using the Azure IoT Hub Device Provisioning Service features.
 type IotDpsResourceClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewIotDpsResourceClient creates an instance of the IotDpsResourceClient client.
 func NewIotDpsResourceClient(subscriptionID string) IotDpsResourceClient {
 	return NewIotDpsResourceClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewIotDpsResourceClientWithBaseURI creates an instance of the IotDpsResourceClient client.
 func NewIotDpsResourceClientWithBaseURI(baseURI string, subscriptionID string) IotDpsResourceClient {
 	return IotDpsResourceClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CheckNameAvailability check if a provisioning service name is available.
 //
 // arguments is set the name parameter in the OperationInputs structure to the name of the provisioning service to
@@ -72,6 +76,7 @@ func (client IotDpsResourceClient) CheckNameAvailability(ctx context.Context, ar
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
 func (client IotDpsResourceClient) CheckNameAvailabilityPreparer(ctx context.Context, arguments OperationInputs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -84,7 +89,7 @@ func (client IotDpsResourceClient) CheckNameAvailabilityPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Devices/checkProvisioningServiceNameAvailability", pathParameters),
@@ -93,6 +98,7 @@ func (client IotDpsResourceClient) CheckNameAvailabilityPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
@@ -100,6 +106,7 @@ func (client IotDpsResourceClient) CheckNameAvailabilitySender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) CheckNameAvailabilityResponder(resp *http.Response) (result NameAvailabilityInfo, err error) {
@@ -113,6 +120,7 @@ func (client IotDpsResourceClient) CheckNameAvailabilityResponder(resp *http.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdate create or update the metadata of the provisioning service. The usual pattern to modify a property is
 // to retrieve the provisioning service metadata and security metadata, and then combine them with the modified values
 // in a new body to update the provisioning service.
@@ -142,6 +150,7 @@ func (client IotDpsResourceClient) CreateOrUpdate(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client IotDpsResourceClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, provisioningServiceName string, iotDpsDescription ProvisioningServiceDescription) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -156,7 +165,7 @@ func (client IotDpsResourceClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}", pathParameters),
@@ -165,6 +174,7 @@ func (client IotDpsResourceClient) CreateOrUpdatePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) CreateOrUpdateSender(req *http.Request) (future IotDpsResourceCreateOrUpdateFuture, err error) {
@@ -180,6 +190,7 @@ func (client IotDpsResourceClient) CreateOrUpdateSender(req *http.Request) (futu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) CreateOrUpdateResponder(resp *http.Response) (result ProvisioningServiceDescription, err error) {
@@ -193,6 +204,7 @@ func (client IotDpsResourceClient) CreateOrUpdateResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Delete sends the delete request.
 //
 // provisioningServiceName is name of provisioning service to delete. resourceGroupName is resource group
@@ -213,6 +225,7 @@ func (client IotDpsResourceClient) Delete(ctx context.Context, provisioningServi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeletePreparer prepares the Delete request.
 func (client IotDpsResourceClient) DeletePreparer(ctx context.Context, provisioningServiceName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -234,6 +247,7 @@ func (client IotDpsResourceClient) DeletePreparer(ctx context.Context, provision
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) DeleteSender(req *http.Request) (future IotDpsResourceDeleteFuture, err error) {
@@ -249,6 +263,7 @@ func (client IotDpsResourceClient) DeleteSender(req *http.Request) (future IotDp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -261,6 +276,7 @@ func (client IotDpsResourceClient) DeleteResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Get get the non-security related metadata of the provisioning service.
 //
 // provisioningServiceName is name of the provisioning service to retrieve. resourceGroupName is resource group
@@ -287,6 +303,7 @@ func (client IotDpsResourceClient) Get(ctx context.Context, provisioningServiceN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetPreparer prepares the Get request.
 func (client IotDpsResourceClient) GetPreparer(ctx context.Context, provisioningServiceName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -308,6 +325,7 @@ func (client IotDpsResourceClient) GetPreparer(ctx context.Context, provisioning
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -315,6 +333,7 @@ func (client IotDpsResourceClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) GetResponder(resp *http.Response) (result ProvisioningServiceDescription, err error) {
@@ -328,6 +347,7 @@ func (client IotDpsResourceClient) GetResponder(resp *http.Response) (result Pro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetKeysForKeyName get a shared access policy by name from a provisioning service.
 //
 // provisioningServiceName is name of the provisioning service. keyName is logical key name to get key-values for.
@@ -354,6 +374,7 @@ func (client IotDpsResourceClient) GetKeysForKeyName(ctx context.Context, provis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetKeysForKeyNamePreparer prepares the GetKeysForKeyName request.
 func (client IotDpsResourceClient) GetKeysForKeyNamePreparer(ctx context.Context, provisioningServiceName string, keyName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -376,6 +397,7 @@ func (client IotDpsResourceClient) GetKeysForKeyNamePreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetKeysForKeyNameSender sends the GetKeysForKeyName request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) GetKeysForKeyNameSender(req *http.Request) (*http.Response, error) {
@@ -383,6 +405,7 @@ func (client IotDpsResourceClient) GetKeysForKeyNameSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetKeysForKeyNameResponder handles the response to the GetKeysForKeyName request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) GetKeysForKeyNameResponder(resp *http.Response) (result SharedAccessSignatureAuthorizationRuleAccessRightsDescription, err error) {
@@ -396,6 +419,7 @@ func (client IotDpsResourceClient) GetKeysForKeyNameResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetOperationResult gets the status of a long running operation, such as create, update or delete a provisioning
 // service.
 //
@@ -425,6 +449,7 @@ func (client IotDpsResourceClient) GetOperationResult(ctx context.Context, opera
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetOperationResultPreparer prepares the GetOperationResult request.
 func (client IotDpsResourceClient) GetOperationResultPreparer(ctx context.Context, operationID string, resourceGroupName string, provisioningServiceName string, asyncinfo string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -448,6 +473,7 @@ func (client IotDpsResourceClient) GetOperationResultPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetOperationResultSender sends the GetOperationResult request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) GetOperationResultSender(req *http.Request) (*http.Response, error) {
@@ -455,6 +481,7 @@ func (client IotDpsResourceClient) GetOperationResultSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetOperationResultResponder handles the response to the GetOperationResult request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) GetOperationResultResponder(resp *http.Response) (result AsyncOperationResult, err error) {
@@ -468,6 +495,7 @@ func (client IotDpsResourceClient) GetOperationResultResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListByResourceGroup get a list of all provisioning services in the given resource group.
 //
 // resourceGroupName is resource group identifier.
@@ -494,6 +522,7 @@ func (client IotDpsResourceClient) ListByResourceGroup(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client IotDpsResourceClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -514,6 +543,7 @@ func (client IotDpsResourceClient) ListByResourceGroupPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -521,6 +551,7 @@ func (client IotDpsResourceClient) ListByResourceGroupSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) ListByResourceGroupResponder(resp *http.Response) (result ProvisioningServiceDescriptionListResult, err error) {
@@ -555,12 +586,14 @@ func (client IotDpsResourceClient) listByResourceGroupNextResults(lastResults Pr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IotDpsResourceClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result ProvisioningServiceDescriptionListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListBySubscription get all the provisioning services in a subscription.
 func (client IotDpsResourceClient) ListBySubscription(ctx context.Context) (result ProvisioningServiceDescriptionListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
@@ -585,6 +618,7 @@ func (client IotDpsResourceClient) ListBySubscription(ctx context.Context) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client IotDpsResourceClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -604,6 +638,7 @@ func (client IotDpsResourceClient) ListBySubscriptionPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -611,6 +646,7 @@ func (client IotDpsResourceClient) ListBySubscriptionSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) ListBySubscriptionResponder(resp *http.Response) (result ProvisioningServiceDescriptionListResult, err error) {
@@ -645,12 +681,14 @@ func (client IotDpsResourceClient) listBySubscriptionNextResults(lastResults Pro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IotDpsResourceClient) ListBySubscriptionComplete(ctx context.Context) (result ProvisioningServiceDescriptionListResultIterator, err error) {
 	result.page, err = client.ListBySubscription(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListKeys get the security metadata for a provisioning service.
 //
 // provisioningServiceName is the provisioning service name to get the shared access keys for. resourceGroupName is
@@ -678,6 +716,7 @@ func (client IotDpsResourceClient) ListKeys(ctx context.Context, provisioningSer
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListKeysPreparer prepares the ListKeys request.
 func (client IotDpsResourceClient) ListKeysPreparer(ctx context.Context, provisioningServiceName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -699,6 +738,7 @@ func (client IotDpsResourceClient) ListKeysPreparer(ctx context.Context, provisi
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) ListKeysSender(req *http.Request) (*http.Response, error) {
@@ -706,6 +746,7 @@ func (client IotDpsResourceClient) ListKeysSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) ListKeysResponder(resp *http.Response) (result SharedAccessSignatureAuthorizationRuleListResult, err error) {
@@ -740,12 +781,14 @@ func (client IotDpsResourceClient) listKeysNextResults(lastResults SharedAccessS
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListKeysComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IotDpsResourceClient) ListKeysComplete(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result SharedAccessSignatureAuthorizationRuleListResultIterator, err error) {
 	result.page, err = client.ListKeys(ctx, provisioningServiceName, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListValidSkus get the list of valid SKUs for a provisioning service.
 //
 // provisioningServiceName is name of provisioning service. resourceGroupName is name of resource group.
@@ -772,6 +815,7 @@ func (client IotDpsResourceClient) ListValidSkus(ctx context.Context, provisioni
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListValidSkusPreparer prepares the ListValidSkus request.
 func (client IotDpsResourceClient) ListValidSkusPreparer(ctx context.Context, provisioningServiceName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -793,6 +837,7 @@ func (client IotDpsResourceClient) ListValidSkusPreparer(ctx context.Context, pr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListValidSkusSender sends the ListValidSkus request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotDpsResourceClient) ListValidSkusSender(req *http.Request) (*http.Response, error) {
@@ -800,6 +845,7 @@ func (client IotDpsResourceClient) ListValidSkusSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListValidSkusResponder handles the response to the ListValidSkus request. The method always
 // closes the http.Response Body.
 func (client IotDpsResourceClient) ListValidSkusResponder(resp *http.Response) (result IotDpsSkuDefinitionListResult, err error) {
@@ -834,6 +880,7 @@ func (client IotDpsResourceClient) listValidSkusNextResults(lastResults IotDpsSk
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // ListValidSkusComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IotDpsResourceClient) ListValidSkusComplete(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result IotDpsSkuDefinitionListResultIterator, err error) {
 	result.page, err = client.ListValidSkus(ctx, provisioningServiceName, resourceGroupName)

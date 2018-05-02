@@ -8,13 +8,13 @@
     "BatchDeleteTable": "<p>Deletes multiple tables at once.</p>",
     "BatchDeleteTableVersion": "<p>Deletes a specified batch of versions of a table.</p>",
     "BatchGetPartition": "<p>Retrieves partitions in a batch request.</p>",
-    "BatchStopJobRun": "<p>Stops one or more job runs for a specified Job.</p>",
+    "BatchStopJobRun": "<p>Stops one or more job runs for a specified job definition.</p>",
     "CreateClassifier": "<p>Creates a classifier in the user's account. This may be a <code>GrokClassifier</code>, an <code>XMLClassifier</code>, or abbrev <code>JsonClassifier</code>, depending on which field of the request is present.</p>",
     "CreateConnection": "<p>Creates a connection definition in the Data Catalog.</p>",
     "CreateCrawler": "<p>Creates a new crawler with specified targets, role, configuration, and optional schedule. At least one crawl target must be specified, in either the <i>s3Targets</i> or the <i>jdbcTargets</i> field.</p>",
     "CreateDatabase": "<p>Creates a new database in a Data Catalog.</p>",
     "CreateDevEndpoint": "<p>Creates a new DevEndpoint.</p>",
-    "CreateJob": "<p>Creates a new job.</p>",
+    "CreateJob": "<p>Creates a new job definition.</p>",
     "CreatePartition": "<p>Creates a new partition.</p>",
     "CreateScript": "<p>Transforms a directed acyclic graph (DAG) into code.</p>",
     "CreateTable": "<p>Creates a new table definition in the Data Catalog.</p>",
@@ -25,7 +25,7 @@
     "DeleteCrawler": "<p>Removes a specified crawler from the Data Catalog, unless the crawler state is <code>RUNNING</code>.</p>",
     "DeleteDatabase": "<p>Removes a specified Database from a Data Catalog.</p>",
     "DeleteDevEndpoint": "<p>Deletes a specified DevEndpoint.</p>",
-    "DeleteJob": "<p>Deletes a specified job. If the job is not found, no exception is thrown.</p>",
+    "DeleteJob": "<p>Deletes a specified job definition. If the job definition is not found, no exception is thrown.</p>",
     "DeletePartition": "<p>Deletes a specified partition.</p>",
     "DeleteTable": "<p>Removes a table definition from the Data Catalog.</p>",
     "DeleteTableVersion": "<p>Deletes a specified version of a table.</p>",
@@ -46,8 +46,8 @@
     "GetDevEndpoints": "<p>Retrieves all the DevEndpoints in this AWS account.</p>",
     "GetJob": "<p>Retrieves an existing job definition.</p>",
     "GetJobRun": "<p>Retrieves the metadata for a given job run.</p>",
-    "GetJobRuns": "<p>Retrieves metadata for all runs of a given job.</p>",
-    "GetJobs": "<p>Retrieves all current jobs.</p>",
+    "GetJobRuns": "<p>Retrieves metadata for all runs of a given job definition.</p>",
+    "GetJobs": "<p>Retrieves all current job definitions.</p>",
     "GetMapping": "<p>Creates mappings.</p>",
     "GetPartition": "<p>Retrieves information about a specified partition.</p>",
     "GetPartitions": "<p>Retrieves information about the partitions in a table.</p>",
@@ -64,7 +64,7 @@
     "ResetJobBookmark": "<p>Resets a bookmark entry.</p>",
     "StartCrawler": "<p>Starts a crawl using the specified crawler, regardless of what is scheduled. If the crawler is already running, does nothing.</p>",
     "StartCrawlerSchedule": "<p>Changes the schedule state of the specified crawler to <code>SCHEDULED</code>, unless the crawler is already running or the schedule state is already <code>SCHEDULED</code>.</p>",
-    "StartJobRun": "<p>Runs a job.</p>",
+    "StartJobRun": "<p>Starts a job run using a job definition.</p>",
     "StartTrigger": "<p>Starts an existing trigger. See <a href=\"http://docs.aws.amazon.com/glue/latest/dg/trigger-job.html\">Triggering Jobs</a> for information about how different types of trigger are started.</p>",
     "StopCrawler": "<p>If the specified crawler is running, stops the crawl.</p>",
     "StopCrawlerSchedule": "<p>Sets the schedule state of the specified crawler to <code>NOT_SCHEDULED</code>, but does not stop the crawler if it is already running.</p>",
@@ -198,7 +198,7 @@
       }
     },
     "BatchStopJobRunError": {
-      "base": "<p>Records an error that occurred when attempting to stop a specified JobRun.</p>",
+      "base": "<p>Records an error that occurred when attempting to stop a specified job run.</p>",
       "refs": {
         "BatchStopJobRunErrorList$member": null
       }
@@ -212,7 +212,7 @@
     "BatchStopJobRunJobRunIdList": {
       "base": null,
       "refs": {
-        "BatchStopJobRunRequest$JobRunIds": "<p>A list of the JobRunIds that should be stopped for that Job.</p>"
+        "BatchStopJobRunRequest$JobRunIds": "<p>A list of the JobRunIds that should be stopped for that job definition.</p>"
       }
     },
     "BatchStopJobRunRequest": {
@@ -256,6 +256,7 @@
     "BooleanValue": {
       "base": null,
       "refs": {
+        "CreateTriggerRequest$StartOnCreation": "<p>Set to true to start SCHEDULED and CONDITIONAL triggers when created. True not supported for ON_DEMAND triggers.</p>",
         "GetJobRunRequest$PredecessorsIncluded": "<p>True if a list of predecessor runs should be returned.</p>",
         "UpdateDevEndpointRequest$UpdateEtlLibraries": "<p>True if the list of custom libraries to be loaded in the development endpoint needs to be updated, or False otherwise.</p>"
       }
@@ -914,13 +915,13 @@
         "ConnectionInput$Description": "<p>Description of the connection.</p>",
         "Crawler$Description": "<p>A description of the crawler.</p>",
         "CreateCrawlerRequest$Description": "<p>A description of the new crawler.</p>",
-        "CreateJobRequest$Description": "<p>Description of the job.</p>",
+        "CreateJobRequest$Description": "<p>Description of the job being defined.</p>",
         "CreateTriggerRequest$Description": "<p>A description of the new trigger.</p>",
         "Database$Description": "<p>Description of the database.</p>",
         "DatabaseInput$Description": "<p>Description of the database</p>",
         "ErrorDetail$ErrorMessage": "<p>A message describing the error.</p>",
-        "Job$Description": "<p>Description of this job.</p>",
-        "JobUpdate$Description": "<p>Description of the job.</p>",
+        "Job$Description": "<p>Description of the job being defined.</p>",
+        "JobUpdate$Description": "<p>Description of the job being defined.</p>",
         "LastCrawlInfo$ErrorMessage": "<p>If an error occurred, the error information about the last crawl.</p>",
         "Table$Description": "<p>Description of the table.</p>",
         "TableInput$Description": "<p>Description of the table.</p>",
@@ -1011,12 +1012,12 @@
     "GenericMap": {
       "base": null,
       "refs": {
-        "Action$Arguments": "<p>Arguments to be passed to the job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
-        "CreateJobRequest$DefaultArguments": "<p>The default arguments for this job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
-        "Job$DefaultArguments": "<p>The default arguments for this job, specified as name-value pairs.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
-        "JobRun$Arguments": "<p>The job arguments associated with this run. These override equivalent default arguments set for the job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
-        "JobUpdate$DefaultArguments": "<p>The default arguments for this job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
-        "StartJobRunRequest$Arguments": "<p>The job arguments specifically for this run. They override the equivalent default arguments set for the job itself.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>"
+        "Action$Arguments": "<p>Arguments to be passed to the job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
+        "CreateJobRequest$DefaultArguments": "<p>The default arguments for this job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
+        "Job$DefaultArguments": "<p>The default arguments for this job, specified as name-value pairs.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
+        "JobRun$Arguments": "<p>The job arguments associated with this run. These override equivalent default arguments set for the job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
+        "JobUpdate$DefaultArguments": "<p>The default arguments for this job.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>",
+        "StartJobRunRequest$Arguments": "<p>The job arguments specifically for this run. They override the equivalent default arguments set for in the job definition itself.</p> <p>You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS Glue itself consumes.</p> <p>For information about how to specify and consume your own Job arguments, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html\">Calling AWS Glue APIs in Python</a> topic in the developer guide.</p> <p>For information about the key-value pairs that AWS Glue consumes to set up your job, see the <a href=\"http://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html\">Special Parameters Used by AWS Glue</a> topic in the developer guide.</p>"
       }
     },
     "GenericString": {
@@ -1041,7 +1042,8 @@
         "DevEndpoint$EndpointName": "<p>The name of the DevEndpoint.</p>",
         "DevEndpoint$SubnetId": "<p>The subnet ID for this DevEndpoint.</p>",
         "DevEndpoint$YarnEndpointAddress": "<p>The YARN endpoint address used by this DevEndpoint.</p>",
-        "DevEndpoint$PublicAddress": "<p>The public address used by this DevEndpoint.</p>",
+        "DevEndpoint$PrivateAddress": "<p>The private address used by this DevEndpoint.</p>",
+        "DevEndpoint$PublicAddress": "<p>The public VPC address used by this DevEndpoint.</p>",
         "DevEndpoint$Status": "<p>The current status of this DevEndpoint.</p>",
         "DevEndpoint$AvailabilityZone": "<p>The AWS availability zone where this DevEndpoint is located.</p>",
         "DevEndpoint$VpcId": "<p>The ID of the virtual private cloud (VPC) used by this DevEndpoint.</p>",
@@ -1060,7 +1062,7 @@
         "GetJobRunsRequest$NextToken": "<p>A continuation token, if this is a continuation call.</p>",
         "GetJobRunsResponse$NextToken": "<p>A continuation token, if not all reequested job runs have been returned.</p>",
         "GetJobsRequest$NextToken": "<p>A continuation token, if this is a continuation call.</p>",
-        "GetJobsResponse$NextToken": "<p>A continuation token, if not all jobs have yet been returned.</p>",
+        "GetJobsResponse$NextToken": "<p>A continuation token, if not all job definitions have yet been returned.</p>",
         "GetTriggersRequest$NextToken": "<p>A continuation token, if this is a continuation call.</p>",
         "GetTriggersResponse$NextToken": "<p>A continuation token, if not all the requested triggers have yet been returned.</p>",
         "JobCommand$Name": "<p>The name of the job command: this must be <code>glueetl</code>.</p>",
@@ -1390,9 +1392,9 @@
     "IdString": {
       "base": null,
       "refs": {
-        "BatchStopJobRunError$JobRunId": "<p>The JobRunId of the JobRun in question.</p>",
+        "BatchStopJobRunError$JobRunId": "<p>The JobRunId of the job run in question.</p>",
         "BatchStopJobRunJobRunIdList$member": null,
-        "BatchStopJobRunSuccessfulSubmission$JobRunId": "<p>The JobRunId of the JobRun in question.</p>",
+        "BatchStopJobRunSuccessfulSubmission$JobRunId": "<p>The JobRunId of the job run that was stopped.</p>",
         "GetJobRunRequest$RunId": "<p>The ID of the job run.</p>",
         "JobRun$Id": "<p>The ID of this job run.</p>",
         "JobRun$PreviousRunId": "<p>The ID of the previous run of this job. For example, the JobRunId specified in the StartJobRun action.</p>",
@@ -1439,11 +1441,12 @@
         "CreateJobRequest$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) to allocate to this Job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
         "DevEndpoint$ZeppelinRemoteSparkInterpreterPort": "<p>The Apache Zeppelin port for the remote Apache Spark interpreter.</p>",
         "DevEndpoint$NumberOfNodes": "<p>The number of AWS Glue Data Processing Units (DPUs) allocated to this DevEndpoint.</p>",
-        "Job$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) allocated to this Job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
+        "Job$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) allocated to runs of this job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
         "JobBookmarkEntry$Version": "<p>Version of the job.</p>",
         "JobBookmarkEntry$Run": "<p>The run ID number.</p>",
         "JobBookmarkEntry$Attempt": "<p>The attempt ID number.</p>",
         "JobRun$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) allocated to this JobRun. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
+        "JobRun$ExecutionTime": "<p>The amount of time (in seconds) that the job run consumed resources.</p>",
         "JobUpdate$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) to allocate to this Job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
         "StartJobRunRequest$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) to allocate to this JobRun. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>"
       }
@@ -1471,7 +1474,7 @@
       }
     },
     "Job": {
-      "base": "<p>Specifies a job.</p>",
+      "base": "<p>Specifies a job definition.</p>",
       "refs": {
         "GetJobResponse$Job": "<p>The requested job definition.</p>",
         "JobList$member": null
@@ -1484,7 +1487,7 @@
       }
     },
     "JobCommand": {
-      "base": "<p>Specifies code that executes a job.</p>",
+      "base": "<p>Specifies code executed when a job is run.</p>",
       "refs": {
         "CreateJobRequest$Command": "<p>The JobCommand that executes this job.</p>",
         "Job$Command": "<p>The JobCommand that executes this job.</p>",
@@ -1494,7 +1497,7 @@
     "JobList": {
       "base": null,
       "refs": {
-        "GetJobsResponse$Jobs": "<p>A list of jobs.</p>"
+        "GetJobsResponse$Jobs": "<p>A list of job definitions.</p>"
       }
     },
     "JobName": {
@@ -1520,14 +1523,14 @@
     "JobRunState": {
       "base": null,
       "refs": {
-        "Condition$State": "<p>The condition state. Currently, the values supported are SUCCEEDED, STOPPED and FAILED.</p>",
+        "Condition$State": "<p>The condition state. Currently, the values supported are SUCCEEDED, STOPPED, TIMEOUT and FAILED.</p>",
         "JobRun$JobRunState": "<p>The current state of the job run.</p>"
       }
     },
     "JobUpdate": {
-      "base": "<p>Specifies information used to update an existing job. Note that the previous job definition will be completely overwritten by this information.</p>",
+      "base": "<p>Specifies information used to update an existing job definition. Note that the previous job definition will be completely overwritten by this information.</p>",
       "refs": {
-        "UpdateJobRequest$JobUpdate": "<p>Specifies the values with which to update the job.</p>"
+        "UpdateJobRequest$JobUpdate": "<p>Specifies the values with which to update the job definition.</p>"
       }
     },
     "JsonClassifier": {
@@ -1609,7 +1612,7 @@
     "Logical": {
       "base": null,
       "refs": {
-        "Predicate$Logical": "<p>Currently \"OR\" is not supported.</p>"
+        "Predicate$Logical": "<p>Optional field if only one condition is listed. If multiple conditions are listed, then this field is required.</p>"
       }
     },
     "LogicalOperator": {
@@ -1642,14 +1645,14 @@
     "MaxConcurrentRuns": {
       "base": null,
       "refs": {
-        "ExecutionProperty$MaxConcurrentRuns": "<p>The maximum number of concurrent runs allowed for a job. The default is 1. An error is returned when this threshold is reached. The maximum value you can specify is controlled by a service limit.</p>"
+        "ExecutionProperty$MaxConcurrentRuns": "<p>The maximum number of concurrent runs allowed for the job. The default is 1. An error is returned when this threshold is reached. The maximum value you can specify is controlled by a service limit.</p>"
       }
     },
     "MaxRetries": {
       "base": null,
       "refs": {
         "CreateJobRequest$MaxRetries": "<p>The maximum number of times to retry this job if it fails.</p>",
-        "Job$MaxRetries": "<p>The maximum number of times to retry this job if it fails.</p>",
+        "Job$MaxRetries": "<p>The maximum number of times to retry this job after a JobRun fails.</p>",
         "JobUpdate$MaxRetries": "<p>The maximum number of times to retry this job if it fails.</p>"
       }
     },
@@ -1703,9 +1706,9 @@
         "BatchDeleteTableVersionRequest$TableName": "<p>The name of the table. For Hive compatibility, this name is entirely lowercase.</p>",
         "BatchGetPartitionRequest$DatabaseName": "<p>The name of the catalog database where the partitions reside.</p>",
         "BatchGetPartitionRequest$TableName": "<p>The name of the partitions' table.</p>",
-        "BatchStopJobRunError$JobName": "<p>The name of the Job in question.</p>",
-        "BatchStopJobRunRequest$JobName": "<p>The name of the Job in question.</p>",
-        "BatchStopJobRunSuccessfulSubmission$JobName": "<p>The Name of the Job in question.</p>",
+        "BatchStopJobRunError$JobName": "<p>The name of the job definition used in the job run in question.</p>",
+        "BatchStopJobRunRequest$JobName": "<p>The name of the job definition for which to stop job runs.</p>",
+        "BatchStopJobRunSuccessfulSubmission$JobName": "<p>The name of the job definition used in the job run that was stopped.</p>",
         "CatalogEntry$DatabaseName": "<p>The database in which the table metadata resides.</p>",
         "CatalogEntry$TableName": "<p>The name of the table in question.</p>",
         "CatalogImportStatus$ImportedBy": "<p>The name of the person who initiated the migration.</p>",
@@ -1720,8 +1723,8 @@
         "CrawlerNameList$member": null,
         "CreateCrawlerRequest$Name": "<p>Name of the new crawler.</p>",
         "CreateGrokClassifierRequest$Name": "<p>The name of the new classifier.</p>",
-        "CreateJobRequest$Name": "<p>The name you assign to this job. It must be unique in your account.</p>",
-        "CreateJobResponse$Name": "<p>The unique name that was provided.</p>",
+        "CreateJobRequest$Name": "<p>The name you assign to this job definition. It must be unique in your account.</p>",
+        "CreateJobResponse$Name": "<p>The unique name that was provided for this job definition.</p>",
         "CreateJsonClassifierRequest$Name": "<p>The name of the classifier.</p>",
         "CreatePartitionRequest$DatabaseName": "<p>The name of the metadata database in which the partition is to be created.</p>",
         "CreatePartitionRequest$TableName": "<p>The name of the metadata table in which the partition is to be created.</p>",
@@ -1737,8 +1740,8 @@
         "DeleteConnectionRequest$ConnectionName": "<p>The name of the connection to delete.</p>",
         "DeleteCrawlerRequest$Name": "<p>Name of the crawler to remove.</p>",
         "DeleteDatabaseRequest$Name": "<p>The name of the Database to delete. For Hive compatibility, this must be all lowercase.</p>",
-        "DeleteJobRequest$JobName": "<p>The name of the job to delete.</p>",
-        "DeleteJobResponse$JobName": "<p>The name of the job that was deleted.</p>",
+        "DeleteJobRequest$JobName": "<p>The name of the job definition to delete.</p>",
+        "DeleteJobResponse$JobName": "<p>The name of the job definition that was deleted.</p>",
         "DeletePartitionRequest$DatabaseName": "<p>The name of the catalog database in which the table in question resides.</p>",
         "DeletePartitionRequest$TableName": "<p>The name of the table where the partition to be deleted is located.</p>",
         "DeleteTableRequest$DatabaseName": "<p>The name of the catalog database in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
@@ -1755,9 +1758,9 @@
         "GetConnectionRequest$Name": "<p>The name of the connection definition to retrieve.</p>",
         "GetCrawlerRequest$Name": "<p>Name of the crawler to retrieve metadata for.</p>",
         "GetDatabaseRequest$Name": "<p>The name of the database to retrieve. For Hive compatibility, this should be all lowercase.</p>",
-        "GetJobRequest$JobName": "<p>The name of the job to retrieve.</p>",
-        "GetJobRunRequest$JobName": "<p>Name of the job being run.</p>",
-        "GetJobRunsRequest$JobName": "<p>The name of the job for which to retrieve all job runs.</p>",
+        "GetJobRequest$JobName": "<p>The name of the job definition to retrieve.</p>",
+        "GetJobRunRequest$JobName": "<p>Name of the job definition being run.</p>",
+        "GetJobRunsRequest$JobName": "<p>The name of the job definition for which to retrieve all job runs.</p>",
         "GetPartitionRequest$DatabaseName": "<p>The name of the catalog database where the partition resides.</p>",
         "GetPartitionRequest$TableName": "<p>The name of the partition's table.</p>",
         "GetPartitionsRequest$DatabaseName": "<p>The name of the catalog database where the partitions reside.</p>",
@@ -1776,9 +1779,9 @@
         "GetUserDefinedFunctionsRequest$DatabaseName": "<p>The name of the catalog database where the functions are located.</p>",
         "GetUserDefinedFunctionsRequest$Pattern": "<p>An optional function-name pattern string that filters the function definitions returned.</p>",
         "GrokClassifier$Name": "<p>The name of the classifier.</p>",
-        "Job$Name": "<p>The name you assign to this job.</p>",
+        "Job$Name": "<p>The name you assign to this job definition.</p>",
         "JobRun$TriggerName": "<p>The name of the trigger that started this job run.</p>",
-        "JobRun$JobName": "<p>The name of the job being run.</p>",
+        "JobRun$JobName": "<p>The name of the job definition being used in this run.</p>",
         "JsonClassifier$Name": "<p>The name of the classifier.</p>",
         "MatchCriteria$member": null,
         "NameStringList$member": null,
@@ -1787,13 +1790,13 @@
         "Partition$TableName": "<p>The name of the table in question.</p>",
         "PhysicalConnectionRequirements$SubnetId": "<p>The subnet ID used by the connection.</p>",
         "PhysicalConnectionRequirements$AvailabilityZone": "<p>The connection's availability zone. This field is deprecated and has no effect.</p>",
-        "Predecessor$JobName": "<p>The name of the predecessor job.</p>",
+        "Predecessor$JobName": "<p>The name of the job definition used by the predecessor job run.</p>",
         "SecurityGroupIdList$member": null,
         "SerDeInfo$Name": "<p>Name of the SerDe.</p>",
         "SerDeInfo$SerializationLibrary": "<p>Usually the class that implements the SerDe. An example is: <code>org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe</code>.</p>",
         "StartCrawlerRequest$Name": "<p>Name of the crawler to start.</p>",
         "StartCrawlerScheduleRequest$CrawlerName": "<p>Name of the crawler to schedule.</p>",
-        "StartJobRunRequest$JobName": "<p>The name of the job to start.</p>",
+        "StartJobRunRequest$JobName": "<p>The name of the job definition to use.</p>",
         "StartTriggerRequest$Name": "<p>The name of the trigger to start.</p>",
         "StartTriggerResponse$Name": "<p>The name of the trigger that was started.</p>",
         "StopCrawlerRequest$Name": "<p>Name of the crawler to stop.</p>",
@@ -1816,7 +1819,7 @@
         "UpdateDatabaseRequest$Name": "<p>The name of the database to update in the catalog. For Hive compatibility, this is folded to lowercase.</p>",
         "UpdateGrokClassifierRequest$Name": "<p>The name of the <code>GrokClassifier</code>.</p>",
         "UpdateJobRequest$JobName": "<p>Name of the job definition to update.</p>",
-        "UpdateJobResponse$JobName": "<p>Returns the name of the updated job.</p>",
+        "UpdateJobResponse$JobName": "<p>Returns the name of the updated job definition.</p>",
         "UpdateJsonClassifierRequest$Name": "<p>The name of the classifier.</p>",
         "UpdatePartitionRequest$DatabaseName": "<p>The name of the catalog database in which the table in question resides.</p>",
         "UpdatePartitionRequest$TableName": "<p>The name of the table where the partition to be updated is located.</p>",
@@ -2084,9 +2087,9 @@
     "RoleString": {
       "base": null,
       "refs": {
-        "CreateJobRequest$Role": "<p>The name of the IAM role associated with this job.</p>",
-        "Job$Role": "<p>The name of the IAM role associated with this job.</p>",
-        "JobUpdate$Role": "<p>The name of the IAM role associated with this job (required).</p>"
+        "CreateJobRequest$Role": "<p>The name or ARN of the IAM role associated with this job.</p>",
+        "Job$Role": "<p>The name or ARN of the IAM role associated with this job.</p>",
+        "JobUpdate$Role": "<p>The name or ARN of the IAM role associated with this job (required).</p>"
       }
     },
     "RowTag": {
@@ -2350,6 +2353,17 @@
         "BatchDeleteTableVersionResponse$Errors": "<p>A list of errors encountered while trying to delete the specified table versions.</p>"
       }
     },
+    "Timeout": {
+      "base": null,
+      "refs": {
+        "Action$Timeout": "<p>The job run timeout in minutes. It overrides the timeout value of the job.</p>",
+        "CreateJobRequest$Timeout": "<p>The job timeout in minutes. The default is 2880 minutes (48 hours).</p>",
+        "Job$Timeout": "<p>The job timeout in minutes.</p>",
+        "JobRun$Timeout": "<p>The job run timeout in minutes.</p>",
+        "JobUpdate$Timeout": "<p>The job timeout in minutes. The default is 2880 minutes (48 hours).</p>",
+        "StartJobRunRequest$Timeout": "<p>The job run timeout in minutes. It overrides the timeout value of the job.</p>"
+      }
+    },
     "Timestamp": {
       "base": null,
       "refs": {
@@ -2386,8 +2400,8 @@
         "CreateDevEndpointResponse$CreatedTimestamp": "<p>The point in time at which this DevEndpoint was created.</p>",
         "DevEndpoint$CreatedTimestamp": "<p>The point in time at which this DevEndpoint was created.</p>",
         "DevEndpoint$LastModifiedTimestamp": "<p>The point in time at which this DevEndpoint was last modified.</p>",
-        "Job$CreatedOn": "<p>The time and date that this job specification was created.</p>",
-        "Job$LastModifiedOn": "<p>The last point in time when this job specification was modified.</p>",
+        "Job$CreatedOn": "<p>The time and date that this job definition was created.</p>",
+        "Job$LastModifiedOn": "<p>The last point in time when this job definition was modified.</p>",
         "JobRun$StartedOn": "<p>The date and time at which this job run was started.</p>",
         "JobRun$LastModifiedOn": "<p>The last time this job run was modified.</p>",
         "JobRun$CompletedOn": "<p>The date and time this job run completed.</p>"

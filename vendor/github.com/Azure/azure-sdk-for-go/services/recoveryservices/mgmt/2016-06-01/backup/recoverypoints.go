@@ -41,11 +41,13 @@ func NewRecoveryPointsClientWithBaseURI(baseURI string, subscriptionID string) R
 
 // Get provides the backup data for the RecoveryPointID. This is an asynchronous operation. To learn the status of the
 // operation, call the GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with backup item.
-// containerName is the container name associated with backup item. protectedItemName is the name of the backup
-// item used in this GET operation. recoveryPointID is the RecoveryPointID associated with this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with backup item.
+// containerName - the container name associated with backup item.
+// protectedItemName - the name of the backup item used in this GET operation.
+// recoveryPointID - the RecoveryPointID associated with this GET operation.
 func (client RecoveryPointsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string) (result RecoveryPointResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID)
 	if err != nil {
@@ -114,12 +116,13 @@ func (client RecoveryPointsClient) GetResponder(resp *http.Response) (result Rec
 }
 
 // List lists the recovery points, or backup copies, for the specified backup item.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup item.
-// containerName is the container name associated with the backup item. protectedItemName is the name of backup
-// item used in this GET operation. filter is startDate eq {yyyy-mm-dd hh:mm:ss PM} and endDate { yyyy-mm-dd
-// hh:mm:ss PM}.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup item.
+// containerName - the container name associated with the backup item.
+// protectedItemName - the name of backup item used in this GET operation.
+// filter - startDate eq {yyyy-mm-dd hh:mm:ss PM} and endDate { yyyy-mm-dd hh:mm:ss PM}.
 func (client RecoveryPointsClient) List(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, filter string) (result RecoveryPointResourceList, err error) {
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, filter)
 	if err != nil {

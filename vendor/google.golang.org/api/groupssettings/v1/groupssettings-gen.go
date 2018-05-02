@@ -166,7 +166,8 @@ type Groups struct {
 	SpamModerationLevel string `json:"spamModerationLevel,omitempty"`
 
 	// WhoCanAdd: Permissions to add members. Possible values are:
-	// ALL_MANAGERS_CAN_ADD ALL_MEMBERS_CAN_ADD NONE_CAN_ADD
+	// ALL_MANAGERS_CAN_ADD ALL_OWNERS_CAN_ADD ALL_MEMBERS_CAN_ADD
+	// NONE_CAN_ADD
 	WhoCanAdd string `json:"whoCanAdd,omitempty"`
 
 	// WhoCanContactOwner: Permission to contact owner of the group via web
@@ -175,7 +176,8 @@ type Groups struct {
 	WhoCanContactOwner string `json:"whoCanContactOwner,omitempty"`
 
 	// WhoCanInvite: Permissions to invite members. Possible values are:
-	// ALL_MEMBERS_CAN_INVITE ALL_MANAGERS_CAN_INVITE NONE_CAN_INVITE
+	// ALL_MEMBERS_CAN_INVITE ALL_MANAGERS_CAN_INVITE ALL_OWNERS_CAN_INVITE
+	// NONE_CAN_INVITE
 	WhoCanInvite string `json:"whoCanInvite,omitempty"`
 
 	// WhoCanJoin: Permissions to join the group. Possible values are:
@@ -184,7 +186,8 @@ type Groups struct {
 	WhoCanJoin string `json:"whoCanJoin,omitempty"`
 
 	// WhoCanLeaveGroup: Permission to leave the group. Possible values are:
-	// ALL_MANAGERS_CAN_LEAVE ALL_MEMBERS_CAN_LEAVE NONE_CAN_LEAVE
+	// ALL_MANAGERS_CAN_LEAVE ALL_OWNERS_CAN_LEAVE ALL_MEMBERS_CAN_LEAVE
+	// NONE_CAN_LEAVE
 	WhoCanLeaveGroup string `json:"whoCanLeaveGroup,omitempty"`
 
 	// WhoCanPostMessage: Permissions to post messages to the group.
@@ -195,7 +198,7 @@ type Groups struct {
 
 	// WhoCanViewGroup: Permissions to view group. Possible values are:
 	// ANYONE_CAN_VIEW ALL_IN_DOMAIN_CAN_VIEW ALL_MEMBERS_CAN_VIEW
-	// ALL_MANAGERS_CAN_VIEW
+	// ALL_MANAGERS_CAN_VIEW ALL_OWNERS_CAN_VIEW
 	WhoCanViewGroup string `json:"whoCanViewGroup,omitempty"`
 
 	// WhoCanViewMembership: Permissions to view membership. Possible values

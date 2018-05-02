@@ -187,7 +187,8 @@
         {"shape":"InvalidAutoScalingGroupException"},
         {"shape":"ThrottlingException"},
         {"shape":"InvalidUpdateOutdatedInstancesOnlyValueException"},
-        {"shape":"InvalidIgnoreApplicationStopFailuresValueException"}
+        {"shape":"InvalidIgnoreApplicationStopFailuresValueException"},
+        {"shape":"InvalidGitHubAccountTokenException"}
       ]
     },
     "CreateDeploymentConfig":{
@@ -1876,6 +1877,12 @@
       "exception":true
     },
     "InvalidFileExistsBehaviorException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidGitHubAccountTokenException":{
       "type":"structure",
       "members":{
       },

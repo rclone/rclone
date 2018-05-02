@@ -43,9 +43,11 @@ func NewViewsClientWithBaseURI(baseURI string, subscriptionID string) ViewsClien
 }
 
 // CreateOrUpdate creates a view or updates an exisiting view in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. viewName is the name of the
-// view. parameters is parameters supplied to the CreateOrUpdate View operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// viewName - the name of the view.
+// parameters - parameters supplied to the CreateOrUpdate View operation.
 func (client ViewsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, viewName string, parameters ViewResourceFormat) (result ViewResourceFormat, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: viewName,
@@ -93,7 +95,7 @@ func (client ViewsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/views/{viewName}", pathParameters),
@@ -123,9 +125,11 @@ func (client ViewsClient) CreateOrUpdateResponder(resp *http.Response) (result V
 }
 
 // Delete deletes a view in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. viewName is the name of the
-// view. userID is the user ID. Use * to retreive hub level view.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// viewName - the name of the view.
+// userID - the user ID. Use * to retreive hub level view.
 func (client ViewsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, viewName string, userID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, viewName, userID)
 	if err != nil {
@@ -191,9 +195,11 @@ func (client ViewsClient) DeleteResponder(resp *http.Response) (result autorest.
 }
 
 // Get gets a view in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. viewName is the name of the
-// view. userID is the user ID. Use * to retreive hub level view.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// viewName - the name of the view.
+// userID - the user ID. Use * to retreive hub level view.
 func (client ViewsClient) Get(ctx context.Context, resourceGroupName string, hubName string, viewName string, userID string) (result ViewResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, viewName, userID)
 	if err != nil {
@@ -260,9 +266,10 @@ func (client ViewsClient) GetResponder(resp *http.Response) (result ViewResource
 }
 
 // ListByHub gets all available views for given user in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. userID is the user ID. Use
-// * to retreive hub level views.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// userID - the user ID. Use * to retreive hub level views.
 func (client ViewsClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string, userID string) (result ViewListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName, userID)

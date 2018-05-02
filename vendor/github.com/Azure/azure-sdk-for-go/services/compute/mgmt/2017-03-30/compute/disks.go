@@ -41,11 +41,12 @@ func NewDisksClientWithBaseURI(baseURI string, subscriptionID string) DisksClien
 }
 
 // CreateOrUpdate creates or updates a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters. disk is disk object supplied in the body of the Put disk
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
+// disk - disk object supplied in the body of the Put disk operation.
 func (client DisksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, diskName string, disk Disk) (result DisksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: disk,
@@ -97,7 +98,7 @@ func (client DisksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}", pathParameters),
@@ -135,10 +136,11 @@ func (client DisksClient) CreateOrUpdateResponder(resp *http.Response) (result D
 }
 
 // Delete deletes a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
 func (client DisksClient) Delete(ctx context.Context, resourceGroupName string, diskName string) (result DisksDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, diskName)
 	if err != nil {
@@ -205,10 +207,11 @@ func (client DisksClient) DeleteResponder(resp *http.Response) (result Operation
 }
 
 // Get gets information about a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
 func (client DisksClient) Get(ctx context.Context, resourceGroupName string, diskName string) (result Disk, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, diskName)
 	if err != nil {
@@ -273,11 +276,12 @@ func (client DisksClient) GetResponder(resp *http.Response) (result Disk, err er
 }
 
 // GrantAccess grants access to a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters. grantAccessData is access data object supplied in the body
-// of the get disk access operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
+// grantAccessData - access data object supplied in the body of the get disk access operation.
 func (client DisksClient) GrantAccess(ctx context.Context, resourceGroupName string, diskName string, grantAccessData GrantAccessData) (result DisksGrantAccessFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: grantAccessData,
@@ -314,7 +318,7 @@ func (client DisksClient) GrantAccessPreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}/beginGetAccess", pathParameters),
@@ -442,8 +446,8 @@ func (client DisksClient) ListComplete(ctx context.Context) (result DiskListIter
 }
 
 // ListByResourceGroup lists all the disks under a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client DisksClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result DiskListPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -535,10 +539,11 @@ func (client DisksClient) ListByResourceGroupComplete(ctx context.Context, resou
 }
 
 // RevokeAccess revokes access to a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
 func (client DisksClient) RevokeAccess(ctx context.Context, resourceGroupName string, diskName string) (result DisksRevokeAccessFuture, err error) {
 	req, err := client.RevokeAccessPreparer(ctx, resourceGroupName, diskName)
 	if err != nil {
@@ -605,11 +610,12 @@ func (client DisksClient) RevokeAccessResponder(resp *http.Response) (result Ope
 }
 
 // Update updates (patches) a disk.
-//
-// resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
-// created. The name can't be changed after the disk is created. Supported characters for the name are a-z, A-Z,
-// 0-9 and _. The maximum name length is 80 characters. disk is disk object supplied in the body of the Patch disk
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// diskName - the name of the managed disk that is being created. The name can't be changed after the disk is
+// created. Supported characters for the name are a-z, A-Z, 0-9 and _. The maximum name length is 80
+// characters.
+// disk - disk object supplied in the body of the Patch disk operation.
 func (client DisksClient) Update(ctx context.Context, resourceGroupName string, diskName string, disk DiskUpdate) (result DisksUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, diskName, disk)
 	if err != nil {
@@ -640,7 +646,7 @@ func (client DisksClient) UpdatePreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}", pathParameters),

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ClassicMobileServicesClient is the webSite Management Client
 type ClassicMobileServicesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewClassicMobileServicesClient creates an instance of the ClassicMobileServicesClient client.
 func NewClassicMobileServicesClient(subscriptionID string) ClassicMobileServicesClient {
 	return NewClassicMobileServicesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewClassicMobileServicesClientWithBaseURI creates an instance of the ClassicMobileServicesClient client.
 func NewClassicMobileServicesClientWithBaseURI(baseURI string, subscriptionID string) ClassicMobileServicesClient {
 	return ClassicMobileServicesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteClassicMobileService sends the delete classic mobile service request.
 //
 // resourceGroupName is name of resource group name is name of mobile service
@@ -64,6 +68,7 @@ func (client ClassicMobileServicesClient) DeleteClassicMobileService(ctx context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteClassicMobileServicePreparer prepares the DeleteClassicMobileService request.
 func (client ClassicMobileServicesClient) DeleteClassicMobileServicePreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -85,6 +90,7 @@ func (client ClassicMobileServicesClient) DeleteClassicMobileServicePreparer(ctx
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteClassicMobileServiceSender sends the DeleteClassicMobileService request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClassicMobileServicesClient) DeleteClassicMobileServiceSender(req *http.Request) (*http.Response, error) {
@@ -92,6 +98,7 @@ func (client ClassicMobileServicesClient) DeleteClassicMobileServiceSender(req *
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteClassicMobileServiceResponder handles the response to the DeleteClassicMobileService request. The method always
 // closes the http.Response Body.
 func (client ClassicMobileServicesClient) DeleteClassicMobileServiceResponder(resp *http.Response) (result SetObject, err error) {
@@ -105,6 +112,7 @@ func (client ClassicMobileServicesClient) DeleteClassicMobileServiceResponder(re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileService sends the get classic mobile service request.
 //
 // resourceGroupName is name of resource group name is name of mobile service
@@ -130,6 +138,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileService(ctx context.Co
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServicePreparer prepares the GetClassicMobileService request.
 func (client ClassicMobileServicesClient) GetClassicMobileServicePreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -151,6 +160,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServicePreparer(ctx co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServiceSender sends the GetClassicMobileService request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClassicMobileServicesClient) GetClassicMobileServiceSender(req *http.Request) (*http.Response, error) {
@@ -158,6 +168,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServiceSender(req *htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServiceResponder handles the response to the GetClassicMobileService request. The method always
 // closes the http.Response Body.
 func (client ClassicMobileServicesClient) GetClassicMobileServiceResponder(resp *http.Response) (result ClassicMobileService, err error) {
@@ -171,6 +182,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServiceResponder(resp 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServices sends the get classic mobile services request.
 //
 // resourceGroupName is name of resource group
@@ -197,6 +209,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServices(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServicesPreparer prepares the GetClassicMobileServices request.
 func (client ClassicMobileServicesClient) GetClassicMobileServicesPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -217,6 +230,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServicesPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServicesSender sends the GetClassicMobileServices request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClassicMobileServicesClient) GetClassicMobileServicesSender(req *http.Request) (*http.Response, error) {
@@ -224,6 +238,7 @@ func (client ClassicMobileServicesClient) GetClassicMobileServicesSender(req *ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServicesResponder handles the response to the GetClassicMobileServices request. The method always
 // closes the http.Response Body.
 func (client ClassicMobileServicesClient) GetClassicMobileServicesResponder(resp *http.Response) (result ClassicMobileServiceCollection, err error) {
@@ -258,6 +273,7 @@ func (client ClassicMobileServicesClient) getClassicMobileServicesNextResults(la
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetClassicMobileServicesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ClassicMobileServicesClient) GetClassicMobileServicesComplete(ctx context.Context, resourceGroupName string) (result ClassicMobileServiceCollectionIterator, err error) {
 	result.page, err = client.GetClassicMobileServices(ctx, resourceGroupName)

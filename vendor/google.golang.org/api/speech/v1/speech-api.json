@@ -185,7 +185,7 @@
       }
     }
   },
-  "revision": "20180312",
+  "revision": "20180420",
   "rootUrl": "https://speech.googleapis.com/",
   "schemas": {
     "LongRunningRecognizeRequest": {
@@ -334,7 +334,7 @@
       "id": "RecognizeResponse",
       "properties": {
         "results": {
-          "description": "*Output-only* Sequential list of transcription results corresponding to\nsequential portions of audio.",
+          "description": "Output only. Sequential list of transcription results corresponding to\nsequential portions of audio.",
           "items": {
             "$ref": "SpeechRecognitionResult"
           },
@@ -362,16 +362,16 @@
       "id": "SpeechRecognitionAlternative",
       "properties": {
         "confidence": {
-          "description": "*Output-only* The confidence estimate between 0.0 and 1.0. A higher number\nindicates an estimated greater likelihood that the recognized words are\ncorrect. This field is set only for the top alternative of a non-streaming\nresult or, of a streaming result where `is_final=true`.\nThis field is not guaranteed to be accurate and users should not rely on it\nto be always provided.\nThe default of 0.0 is a sentinel value indicating `confidence` was not set.",
+          "description": "Output only. The confidence estimate between 0.0 and 1.0. A higher number\nindicates an estimated greater likelihood that the recognized words are\ncorrect. This field is set only for the top alternative of a non-streaming\nresult or, of a streaming result where `is_final=true`.\nThis field is not guaranteed to be accurate and users should not rely on it\nto be always provided.\nThe default of 0.0 is a sentinel value indicating `confidence` was not set.",
           "format": "float",
           "type": "number"
         },
         "transcript": {
-          "description": "*Output-only* Transcript text representing the words that the user spoke.",
+          "description": "Output only. Transcript text representing the words that the user spoke.",
           "type": "string"
         },
         "words": {
-          "description": "*Output-only* A list of word-specific information for each recognized word.",
+          "description": "Output only. A list of word-specific information for each recognized word.\nNote: When enable_speaker_diarization is true, you will see all the words\nfrom the beginning of the audio.",
           "items": {
             "$ref": "WordInfo"
           },
@@ -385,7 +385,7 @@
       "id": "SpeechRecognitionResult",
       "properties": {
         "alternatives": {
-          "description": "*Output-only* May contain one or more recognition hypotheses (up to the\nmaximum specified in `max_alternatives`).\nThese alternatives are ordered in terms of accuracy, with the top (first)\nalternative being the most probable, as ranked by the recognizer.",
+          "description": "Output only. May contain one or more recognition hypotheses (up to the\nmaximum specified in `max_alternatives`).\nThese alternatives are ordered in terms of accuracy, with the top (first)\nalternative being the most probable, as ranked by the recognizer.",
           "items": {
             "$ref": "SpeechRecognitionAlternative"
           },
@@ -426,17 +426,22 @@
       "id": "WordInfo",
       "properties": {
         "endTime": {
-          "description": "*Output-only* Time offset relative to the beginning of the audio,\nand corresponding to the end of the spoken word.\nThis field is only set if `enable_word_time_offsets=true` and only\nin the top hypothesis.\nThis is an experimental feature and the accuracy of the time offset can\nvary.",
+          "description": "Output only. Time offset relative to the beginning of the audio,\nand corresponding to the end of the spoken word.\nThis field is only set if `enable_word_time_offsets=true` and only\nin the top hypothesis.\nThis is an experimental feature and the accuracy of the time offset can\nvary.",
           "format": "google-duration",
           "type": "string"
         },
+        "speakerTag": {
+          "description": "Output only. A distinct integer value is assigned for every speaker within\nthe audio. This field specifies which one of those speakers was detected to\nhave spoken this word. Value ranges from '1' to diarization_speaker_count.\nspeaker_tag is set if enable_speaker_diarization = 'true' and only in the\ntop alternative.",
+          "format": "int32",
+          "type": "integer"
+        },
         "startTime": {
-          "description": "*Output-only* Time offset relative to the beginning of the audio,\nand corresponding to the start of the spoken word.\nThis field is only set if `enable_word_time_offsets=true` and only\nin the top hypothesis.\nThis is an experimental feature and the accuracy of the time offset can\nvary.",
+          "description": "Output only. Time offset relative to the beginning of the audio,\nand corresponding to the start of the spoken word.\nThis field is only set if `enable_word_time_offsets=true` and only\nin the top hypothesis.\nThis is an experimental feature and the accuracy of the time offset can\nvary.",
           "format": "google-duration",
           "type": "string"
         },
         "word": {
-          "description": "*Output-only* The word corresponding to this set of information.",
+          "description": "Output only. The word corresponding to this set of information.",
           "type": "string"
         }
       },

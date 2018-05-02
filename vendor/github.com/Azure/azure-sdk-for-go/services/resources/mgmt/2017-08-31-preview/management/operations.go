@@ -1,4 +1,4 @@
-package management
+package managementgroups
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // OperationsClient is the the Azure Management Groups API enables consolidation of multiple
 // subscriptions/resources into an organizational hierarchy and centrally
 // manage access control, policies, alerting and reporting for those resources.
@@ -32,40 +33,44 @@ type OperationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NewOperationsClient creates an instance of the OperationsClient client.
 func NewOperationsClient(groupID uuid.UUID) OperationsClient {
 	return NewOperationsClientWithBaseURI(DefaultBaseURI, groupID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NewOperationsClientWithBaseURI creates an instance of the OperationsClient client.
 func NewOperationsClientWithBaseURI(baseURI string, groupID uuid.UUID) OperationsClient {
 	return OperationsClient{NewWithBaseURI(baseURI, groupID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // List lists all of the available management REST API operations.
 func (client OperationsClient) List(ctx context.Context) (result OperationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "management.OperationsClient", "List", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "List", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.olr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "management.OperationsClient", "List", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "List", resp, "Failure sending request")
 		return
 	}
 
 	result.olr, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "management.OperationsClient", "List", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "List", resp, "Failure responding to request")
 	}
 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ListPreparer prepares the List request.
 func (client OperationsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2017-08-31-preview"
@@ -81,6 +86,7 @@ func (client OperationsClient) ListPreparer(ctx context.Context) (*http.Request,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -88,6 +94,7 @@ func (client OperationsClient) ListSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client OperationsClient) ListResponder(resp *http.Response) (result OperationListResult, err error) {
@@ -105,7 +112,7 @@ func (client OperationsClient) ListResponder(resp *http.Response) (result Operat
 func (client OperationsClient) listNextResults(lastResults OperationListResult) (result OperationListResult, err error) {
 	req, err := lastResults.operationListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "management.OperationsClient", "listNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "listNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -113,15 +120,16 @@ func (client OperationsClient) listNextResults(lastResults OperationListResult) 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "management.OperationsClient", "listNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "listNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "management.OperationsClient", "listNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "managementgroups.OperationsClient", "listNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client OperationsClient) ListComplete(ctx context.Context) (result OperationListResultIterator, err error) {
 	result.page, err = client.List(ctx)

@@ -41,11 +41,13 @@ func NewBackupsClientWithBaseURI(baseURI string, subscriptionID string) BackupsC
 
 // Trigger triggers backup for specified backed up item. This is an asynchronous operation. To know the status of the
 // operation, call GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backup item. containerName
-// is container name associated with the backup item. protectedItemName is backup item for which backup needs to be
-// triggered. parameters is resource backup request
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backup item.
+// containerName - container name associated with the backup item.
+// protectedItemName - backup item for which backup needs to be triggered.
+// parameters - resource backup request
 func (client BackupsClient) Trigger(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, parameters RequestResource) (result autorest.Response, err error) {
 	req, err := client.TriggerPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, parameters)
 	if err != nil {
@@ -85,7 +87,7 @@ func (client BackupsClient) TriggerPreparer(ctx context.Context, vaultName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/backup", pathParameters),

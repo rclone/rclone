@@ -34,6 +34,11 @@ const (
 	Succeeded ProvisioningState = "succeeded"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Failed, Provisioning, Succeeded}
+}
+
 // ServiceStatus enumerates the values for service status.
 type ServiceStatus string
 
@@ -52,6 +57,11 @@ const (
 	ServiceStatusRunning ServiceStatus = "running"
 )
 
+// PossibleServiceStatusValues returns an array of possible values for the ServiceStatus const type.
+func PossibleServiceStatusValues() []ServiceStatus {
+	return []ServiceStatus{ServiceStatusDegraded, ServiceStatusDeleting, ServiceStatusDisabled, ServiceStatusError, ServiceStatusProvisioning, ServiceStatusRunning}
+}
+
 // SkuType enumerates the values for sku type.
 type SkuType string
 
@@ -63,6 +73,11 @@ const (
 	// Standard2 ...
 	Standard2 SkuType = "standard2"
 )
+
+// PossibleSkuTypeValues returns an array of possible values for the SkuType const type.
+func PossibleSkuTypeValues() []SkuType {
+	return []SkuType{Free, Standard, Standard2}
+}
 
 // AdminKeyResult response containing the primary and secondary API keys for a given Azure Search service.
 type AdminKeyResult struct {

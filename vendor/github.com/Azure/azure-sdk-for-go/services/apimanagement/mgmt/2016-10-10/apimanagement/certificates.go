@@ -41,11 +41,14 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 }
 
 // CreateOrUpdate creates or updates the certificate being used for authentication with the backend.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// certificateID is identifier of the certificate entity. Must be unique in the current API Management service
-// instance. parameters is create parameters. ifMatch is the entity state (Etag) version of the certificate to
-// update. A value of "*" can be used for If-Match to unconditionally apply the operation..
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// certificateID - identifier of the certificate entity. Must be unique in the current API Management service
+// instance.
+// parameters - create parameters.
+// ifMatch - the entity state (Etag) version of the certificate to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation..
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, certificateID string, parameters CertificateCreateOrUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -98,7 +101,7 @@ func (client CertificatesClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/certificates/{certificateId}", pathParameters),
@@ -131,11 +134,13 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete deletes specific certificate.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// certificateID is identifier of the certificate entity. Must be unique in the current API Management service
-// instance. ifMatch is the entity state (Etag) version of the certificate to delete. A value of "*" can be used
-// for If-Match to unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// certificateID - identifier of the certificate entity. Must be unique in the current API Management service
+// instance.
+// ifMatch - the entity state (Etag) version of the certificate to delete. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, certificateID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -213,9 +218,10 @@ func (client CertificatesClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get gets the details of the certificate specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// certificateID is identifier of the certificate entity. Must be unique in the current API Management service
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// certificateID - identifier of the certificate entity. Must be unique in the current API Management service
 // instance.
 func (client CertificatesClient) Get(ctx context.Context, resourceGroupName string, serviceName string, certificateID string) (result CertificateContract, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -294,15 +300,17 @@ func (client CertificatesClient) GetResponder(resp *http.Response) (result Certi
 }
 
 // ListByService lists a collection of all certificates in the specified service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field          | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field          | Supported operators    | Supported functions                         |
 // |----------------|------------------------|---------------------------------------------|
 // | id             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | subject        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | thumbprint     | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | expirationDate | ge, le, eq, ne, gt, lt | N/A                                         | top is number of
-// records to return. skip is number of records to skip.
+// | expirationDate | ge, le, eq, ne, gt, lt | N/A                                         |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client CertificatesClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result CertificateCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

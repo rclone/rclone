@@ -29,6 +29,7 @@ const (
 	DefaultBaseURI = "https://management.azure.com"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // BaseClient is the base client for Consumption.
 type BaseClient struct {
 	autorest.Client
@@ -37,11 +38,13 @@ type BaseClient struct {
 	Name           string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // New creates an instance of the BaseClient client.
 func New(subscriptionID string, name string) BaseClient {
 	return NewWithBaseURI(DefaultBaseURI, subscriptionID, name)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // NewWithBaseURI creates an instance of the BaseClient client.
 func NewWithBaseURI(baseURI string, subscriptionID string, name string) BaseClient {
 	return BaseClient{

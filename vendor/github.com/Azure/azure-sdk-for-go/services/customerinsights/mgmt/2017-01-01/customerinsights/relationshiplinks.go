@@ -43,10 +43,11 @@ func NewRelationshipLinksClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate creates a relationship link or updates an existing relationship link within a hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipLinkName is the
-// name of the relationship link. parameters is parameters supplied to the CreateOrUpdate relationship link
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// relationshipLinkName - the name of the relationship link.
+// parameters - parameters supplied to the CreateOrUpdate relationship link operation.
 func (client RelationshipLinksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, relationshipLinkName string, parameters RelationshipLinkResourceFormat) (result RelationshipLinksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: relationshipLinkName,
@@ -93,7 +94,7 @@ func (client RelationshipLinksClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/relationshipLinks/{relationshipLinkName}", pathParameters),
@@ -131,9 +132,10 @@ func (client RelationshipLinksClient) CreateOrUpdateResponder(resp *http.Respons
 }
 
 // Delete deletes a relationship link within a hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipLinkName is the
-// name of the relationship.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// relationshipLinkName - the name of the relationship.
 func (client RelationshipLinksClient) Delete(ctx context.Context, resourceGroupName string, hubName string, relationshipLinkName string) (result RelationshipLinksDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, relationshipLinkName)
 	if err != nil {
@@ -200,9 +202,10 @@ func (client RelationshipLinksClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get gets information about the specified relationship Link.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipLinkName is the
-// name of the relationship link.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// relationshipLinkName - the name of the relationship link.
 func (client RelationshipLinksClient) Get(ctx context.Context, resourceGroupName string, hubName string, relationshipLinkName string) (result RelationshipLinkResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, relationshipLinkName)
 	if err != nil {
@@ -268,8 +271,9 @@ func (client RelationshipLinksClient) GetResponder(resp *http.Response) (result 
 }
 
 // ListByHub gets all relationship links in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client RelationshipLinksClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result RelationshipLinkListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)

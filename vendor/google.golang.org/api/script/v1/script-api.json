@@ -42,7 +42,7 @@
   "baseUrl": "https://script.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "Script",
-  "description": "An API for managing and executing Google Apps Script projects.",
+  "description": "An API for managing and executing Google Apps Script projects. \u003caside class=\"note\"\u003e\u003cb\u003eNote\u003c/b\u003e: In order to use this API in your apps, you must \u003ca href=\"/apps-script/api/how-tos/enable#using_the_apps_script_api_in_your_app\"\u003e enable it for use\u003c/a\u003e. To allow other apps to manage your scripts, you must \u003ca href=\"/apps-script/api/how-tos/enable#granting_third-party_applications_access_to_your_script_projects\"\u003e grant them access\u003c/a\u003e.\u003c/aside\u003e\n",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/apps-script/api/",
   "fullyEncodeReservedExpansion": true,
@@ -182,7 +182,7 @@
               "type": "string"
             },
             "userProcessFilter.projectName": {
-              "description": "Optional field used to limit returned processes to those originating from\nprojects with a specific project name.",
+              "description": "Optional field used to limit returned processes to those originating from\nprojects with project names containing a specific string.",
               "location": "query",
               "type": "string"
             },
@@ -753,7 +753,7 @@
       }
     }
   },
-  "revision": "20180305",
+  "revision": "20180501",
   "rootUrl": "https://script.googleapis.com/",
   "schemas": {
     "Content": {
@@ -1513,7 +1513,7 @@
       "id": "Status",
       "properties": {
         "code": {
-          "description": "The status code. For this API, this value either: \u003cul\u003e \u003cli\u003e 3, indicating an `INVALID_ARGUMENT` error, or\u003c/li\u003e \u003cli\u003e 1, indicating a `CANCELLED` execution.\u003c/li\u003e \u003c/ul\u003e",
+          "description": "The status code. For this API, this value either: \u003cul\u003e \u003cli\u003e 10, indicating a `SCRIPT_TIMEOUT` error,\u003c/li\u003e \u003cli\u003e 3, indicating an `INVALID_ARGUMENT` error, or\u003c/li\u003e \u003cli\u003e 1, indicating a `CANCELLED` execution.\u003c/li\u003e \u003c/ul\u003e",
           "format": "int32",
           "type": "integer"
         },
@@ -1573,6 +1573,6 @@
     }
   },
   "servicePath": "",
-  "title": "Google Apps Script API",
+  "title": "Apps Script API",
   "version": "v1"
 }

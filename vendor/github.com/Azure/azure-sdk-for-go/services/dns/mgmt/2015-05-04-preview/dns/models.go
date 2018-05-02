@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordType enumerates the values for record type.
 type RecordType string
 
@@ -48,24 +49,34 @@ const (
 	TXT RecordType = "TXT"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
+// PossibleRecordTypeValues returns an array of possible values for the RecordType const type.
+func PossibleRecordTypeValues() []RecordType {
+	return []RecordType{A, AAAA, CNAME, MX, NS, PTR, SOA, SRV, TXT}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // AaaaRecord an AAAA record.
 type AaaaRecord struct {
 	// Ipv6Address - Gets or sets the IPv6 address of this AAAA record in string notation.
 	Ipv6Address *string `json:"ipv6Address,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // ARecord an A record.
 type ARecord struct {
 	// Ipv4Address - Gets or sets the IPv4 address of this A record in string notation.
 	Ipv4Address *string `json:"ipv4Address,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // CnameRecord a CNAME record.
 type CnameRecord struct {
 	// Cname - Gets or sets the canonical name for this record without a terminating dot.
 	Cname *string `json:"cname,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // MxRecord an MX record.
 type MxRecord struct {
 	// Preference - Gets or sets the preference metric for this record.
@@ -74,18 +85,21 @@ type MxRecord struct {
 	Exchange *string `json:"exchange,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // NsRecord an NS record.
 type NsRecord struct {
 	// Nsdname - Gets or sets the name server name for this record, without a terminating dot.
 	Nsdname *string `json:"nsdname,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // PtrRecord a PTR record.
 type PtrRecord struct {
 	// Ptrdname - Gets or sets the PTR target domain name for this record without a terminating dot.
 	Ptrdname *string `json:"ptrdname,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordSet describes a DNS RecordSet (a set of DNS records with the same name and type).
 type RecordSet struct {
 	autorest.Response `json:"-"`
@@ -105,6 +119,7 @@ type RecordSet struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // MarshalJSON is the custom marshaler for RecordSet.
 func (rs RecordSet) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -132,6 +147,7 @@ func (rs RecordSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordSetListResult the response to a RecordSet List operation.
 type RecordSetListResult struct {
 	autorest.Response `json:"-"`
@@ -141,12 +157,14 @@ type RecordSetListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordSetListResultIterator provides access to a complete listing of RecordSet values.
 type RecordSetListResultIterator struct {
 	i    int
 	page RecordSetListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *RecordSetListResultIterator) Next() error {
@@ -163,16 +181,19 @@ func (iter *RecordSetListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter RecordSetListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Response returns the raw server response from the last page request.
 func (iter RecordSetListResultIterator) Response() RecordSetListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter RecordSetListResultIterator) Value() RecordSet {
@@ -182,6 +203,7 @@ func (iter RecordSetListResultIterator) Value() RecordSet {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rslr RecordSetListResult) IsEmpty() bool {
 	return rslr.Value == nil || len(*rslr.Value) == 0
@@ -199,12 +221,14 @@ func (rslr RecordSetListResult) recordSetListResultPreparer() (*http.Request, er
 		autorest.WithBaseURL(to.String(rslr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordSetListResultPage contains a page of RecordSet values.
 type RecordSetListResultPage struct {
 	fn   func(RecordSetListResult) (RecordSetListResult, error)
 	rslr RecordSetListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *RecordSetListResultPage) Next() error {
@@ -216,16 +240,19 @@ func (page *RecordSetListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page RecordSetListResultPage) NotDone() bool {
 	return !page.rslr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Response returns the raw server response from the last page request.
 func (page RecordSetListResultPage) Response() RecordSetListResult {
 	return page.rslr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page RecordSetListResultPage) Values() []RecordSet {
 	if page.rslr.IsEmpty() {
@@ -234,6 +261,7 @@ func (page RecordSetListResultPage) Values() []RecordSet {
 	return *page.rslr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // RecordSetProperties represents the properties of the records in the RecordSet.
 type RecordSetProperties struct {
 	// TTL - Gets or sets the TTL of the records in the RecordSet.
@@ -258,6 +286,7 @@ type RecordSetProperties struct {
 	SOARecord *SoaRecord `json:"SOARecord,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Resource ...
 type Resource struct {
 	// ID - Resource Id
@@ -272,6 +301,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -293,6 +323,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // SoaRecord an SOA record.
 type SoaRecord struct {
 	// Host - Gets or sets the domain name of the authoritative name server, without a temrinating dot.
@@ -311,6 +342,7 @@ type SoaRecord struct {
 	MinimumTTL *int64 `json:"minimumTTL,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // SrvRecord an SRV record.
 type SrvRecord struct {
 	// Priority - Gets or sets the priority metric for this record.
@@ -323,18 +355,21 @@ type SrvRecord struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // SubResource ...
 type SubResource struct {
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // TxtRecord a TXT record.
 type TxtRecord struct {
 	// Value - Gets or sets the text value of this record.
 	Value *[]string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Zone describes a DNS zone.
 type Zone struct {
 	autorest.Response `json:"-"`
@@ -354,6 +389,7 @@ type Zone struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // MarshalJSON is the custom marshaler for Zone.
 func (z Zone) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -381,6 +417,7 @@ func (z Zone) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // ZoneListResult the response to a Zone List or ListAll operation.
 type ZoneListResult struct {
 	autorest.Response `json:"-"`
@@ -390,12 +427,14 @@ type ZoneListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // ZoneListResultIterator provides access to a complete listing of Zone values.
 type ZoneListResultIterator struct {
 	i    int
 	page ZoneListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ZoneListResultIterator) Next() error {
@@ -412,16 +451,19 @@ func (iter *ZoneListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ZoneListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Response returns the raw server response from the last page request.
 func (iter ZoneListResultIterator) Response() ZoneListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ZoneListResultIterator) Value() Zone {
@@ -431,6 +473,7 @@ func (iter ZoneListResultIterator) Value() Zone {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (zlr ZoneListResult) IsEmpty() bool {
 	return zlr.Value == nil || len(*zlr.Value) == 0
@@ -448,12 +491,14 @@ func (zlr ZoneListResult) zoneListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(zlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // ZoneListResultPage contains a page of Zone values.
 type ZoneListResultPage struct {
 	fn  func(ZoneListResult) (ZoneListResult, error)
 	zlr ZoneListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ZoneListResultPage) Next() error {
@@ -465,16 +510,19 @@ func (page *ZoneListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ZoneListResultPage) NotDone() bool {
 	return !page.zlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Response returns the raw server response from the last page request.
 func (page ZoneListResultPage) Response() ZoneListResult {
 	return page.zlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ZoneListResultPage) Values() []Zone {
 	if page.zlr.IsEmpty() {
@@ -483,6 +531,7 @@ func (page ZoneListResultPage) Values() []Zone {
 	return *page.zlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2015-05-04-preview/dns instead.
 // ZoneProperties represents the properties of the zone.
 type ZoneProperties struct {
 	// MaxNumberOfRecordSets - Gets or sets the maximum number of record sets that can be created in this zone.

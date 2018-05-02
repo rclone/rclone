@@ -36,6 +36,11 @@ const (
 	Incremental DeploymentMode = "Incremental"
 )
 
+// PossibleDeploymentModeValues returns an array of possible values for the DeploymentMode const type.
+func PossibleDeploymentModeValues() []DeploymentMode {
+	return []DeploymentMode{Complete, Incremental}
+}
+
 // ResourceIdentityType enumerates the values for resource identity type.
 type ResourceIdentityType string
 
@@ -43,6 +48,11 @@ const (
 	// SystemAssigned ...
 	SystemAssigned ResourceIdentityType = "SystemAssigned"
 )
+
+// PossibleResourceIdentityTypeValues returns an array of possible values for the ResourceIdentityType const type.
+func PossibleResourceIdentityTypeValues() []ResourceIdentityType {
+	return []ResourceIdentityType{SystemAssigned}
+}
 
 // AliasPathType the type of the paths for alias.
 type AliasPathType struct {
@@ -1350,7 +1360,7 @@ type ProviderOperationDisplayProperties struct {
 	Provider *string `json:"provider,omitempty"`
 	// Resource - Operation resource.
 	Resource *string `json:"resource,omitempty"`
-	// Operation - Operation.
+	// Operation - The operation name.
 	Operation *string `json:"operation,omitempty"`
 	// Description - Operation description.
 	Description *string `json:"description,omitempty"`
@@ -1391,7 +1401,7 @@ func (prt ProviderResourceType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// Resource resource.
+// Resource basic set of the resource properties.
 type Resource struct {
 	// ID - Resource ID
 	ID *string `json:"id,omitempty"`

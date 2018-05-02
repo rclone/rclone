@@ -30,8 +30,8 @@ import (
 	emptypb "github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type fakeServer struct {
@@ -158,7 +158,7 @@ var defaultMessageRetentionDuration = ptypes.DurationProto(maxMessageRetentionDu
 func checkMRD(pmrd *durpb.Duration) error {
 	mrd, err := ptypes.Duration(pmrd)
 	if err != nil || mrd < minMessageRetentionDuration || mrd > maxMessageRetentionDuration {
-		return grpc.Errorf(codes.InvalidArgument, "bad message_retention_duration %+v", pmrd)
+		return status.Errorf(codes.InvalidArgument, "bad message_retention_duration %+v", pmrd)
 	}
 	return nil
 }
@@ -166,14 +166,14 @@ func checkMRD(pmrd *durpb.Duration) error {
 func checkAckDeadline(ads int32) error {
 	if ads < 10 || ads > 600 {
 		// PubSub service returns Unknown.
-		return grpc.Errorf(codes.Unknown, "bad ack_deadline_seconds: %d", ads)
+		return status.Errorf(codes.Unknown, "bad ack_deadline_seconds: %d", ads)
 	}
 	return nil
 }
 
 func (s *fakeServer) CreateSubscription(ctx context.Context, sub *pb.Subscription) (*pb.Subscription, error) {
 	if s.subs[sub.Name] != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "subscription %q", sub.Name)
+		return nil, status.Errorf(codes.AlreadyExists, "subscription %q", sub.Name)
 	}
 	sub2 := proto.Clone(sub).(*pb.Subscription)
 	if err := checkAckDeadline(sub.AckDeadlineSeconds); err != nil {
@@ -196,13 +196,13 @@ func (s *fakeServer) GetSubscription(ctx context.Context, req *pb.GetSubscriptio
 	if sub := s.subs[req.Subscription]; sub != nil {
 		return sub, nil
 	}
-	return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription)
+	return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription)
 }
 
 func (s *fakeServer) UpdateSubscription(ctx context.Context, req *pb.UpdateSubscriptionRequest) (*pb.Subscription, error) {
 	sub := s.subs[req.Subscription.Name]
 	if sub == nil {
-		return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription.Name)
+		return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription.Name)
 	}
 	for _, path := range req.UpdateMask.Paths {
 		switch path {
@@ -227,7 +227,7 @@ func (s *fakeServer) UpdateSubscription(ctx context.Context, req *pb.UpdateSubsc
 
 			// TODO(jba): labels
 		default:
-			return nil, grpc.Errorf(codes.InvalidArgument, "unknown field name %q", path)
+			return nil, status.Errorf(codes.InvalidArgument, "unknown field name %q", path)
 		}
 	}
 	return sub, nil
@@ -235,7 +235,7 @@ func (s *fakeServer) UpdateSubscription(ctx context.Context, req *pb.UpdateSubsc
 
 func (s *fakeServer) DeleteSubscription(_ context.Context, req *pb.DeleteSubscriptionRequest) (*emptypb.Empty, error) {
 	if s.subs[req.Subscription] == nil {
-		return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription)
+		return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription)
 	}
 	delete(s.subs, req.Subscription)
 	return &emptypb.Empty{}, nil
@@ -243,7 +243,7 @@ func (s *fakeServer) DeleteSubscription(_ context.Context, req *pb.DeleteSubscri
 
 func (s *fakeServer) CreateTopic(_ context.Context, t *pb.Topic) (*pb.Topic, error) {
 	if s.topics[t.Name] != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "topic %q", t.Name)
+		return nil, status.Errorf(codes.AlreadyExists, "topic %q", t.Name)
 	}
 	t2 := proto.Clone(t).(*pb.Topic)
 	s.topics[t.Name] = t2
@@ -254,12 +254,12 @@ func (s *fakeServer) GetTopic(_ context.Context, req *pb.GetTopicRequest) (*pb.T
 	if t := s.topics[req.Topic]; t != nil {
 		return t, nil
 	}
-	return nil, grpc.Errorf(codes.NotFound, "topic %q", req.Topic)
+	return nil, status.Errorf(codes.NotFound, "topic %q", req.Topic)
 }
 
 func (s *fakeServer) DeleteTopic(_ context.Context, req *pb.DeleteTopicRequest) (*emptypb.Empty, error) {
 	if s.topics[req.Topic] == nil {
-		return nil, grpc.Errorf(codes.NotFound, "topic %q", req.Topic)
+		return nil, status.Errorf(codes.NotFound, "topic %q", req.Topic)
 	}
 	delete(s.topics, req.Topic)
 	return &emptypb.Empty{}, nil

@@ -42,10 +42,12 @@ func NewExpressRouteCircuitAuthorizationsClientWithBaseURI(baseURI string, subsc
 }
 
 // CreateOrUpdate the Put Authorization operation creates/updates an authorization in thespecified ExpressRouteCircuits
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
-// authorizationName is the name of the authorization. authorizationParameters is parameters supplied to the
-// create/update ExpressRouteCircuitAuthorization operation
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the express route circuit.
+// authorizationName - the name of the authorization.
+// authorizationParameters - parameters supplied to the create/update ExpressRouteCircuitAuthorization
+// operation
 func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string, authorizationParameters ExpressRouteCircuitAuthorization) (result ExpressRouteCircuitAuthorizationsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, circuitName, authorizationName, authorizationParameters)
 	if err != nil {
@@ -77,7 +79,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdatePreparer(ctx
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}", pathParameters),
@@ -116,9 +118,10 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdateResponder(re
 
 // Delete the delete authorization operation deletes the specified authorization from the specified
 // ExpressRouteCircuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
-// authorizationName is the name of the authorization.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the express route circuit.
+// authorizationName - the name of the authorization.
 func (client ExpressRouteCircuitAuthorizationsClient) Delete(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string) (result ExpressRouteCircuitAuthorizationsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, circuitName, authorizationName)
 	if err != nil {
@@ -185,9 +188,10 @@ func (client ExpressRouteCircuitAuthorizationsClient) DeleteResponder(resp *http
 }
 
 // Get the GET authorization operation retrieves the specified authorization from the specified ExpressRouteCircuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
-// authorizationName is the name of the authorization.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the express route circuit.
+// authorizationName - the name of the authorization.
 func (client ExpressRouteCircuitAuthorizationsClient) Get(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string) (result ExpressRouteCircuitAuthorization, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, circuitName, authorizationName)
 	if err != nil {
@@ -253,8 +257,9 @@ func (client ExpressRouteCircuitAuthorizationsClient) GetResponder(resp *http.Re
 }
 
 // List the List authorization operation retrieves all the authorizations in an ExpressRouteCircuit.
-//
-// resourceGroupName is the name of the resource group. circuitName is the name of the curcuit.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// circuitName - the name of the curcuit.
 func (client ExpressRouteCircuitAuthorizationsClient) List(ctx context.Context, resourceGroupName string, circuitName string) (result AuthorizationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, circuitName)

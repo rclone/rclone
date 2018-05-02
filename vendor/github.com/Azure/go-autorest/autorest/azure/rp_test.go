@@ -15,7 +15,9 @@
 package azure
 
 import (
+	"context"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -122,5 +124,46 @@ func TestDoRetrySkipRegistration(t *testing.T) {
 
 	if r.StatusCode != http.StatusConflict {
 		t.Fatalf("azure: Sender#DoRetryWithRegistration -- Got: StatusCode %v; Want: StatusCode 409 Conflict", r.StatusCode)
+	}
+}
+
+func TestDoRetryWithRegistration_CanBeCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	delay := 5 * time.Second
+
+	client := mocks.NewSender()
+	client.AppendAndRepeatResponse(mocks.NewResponseWithStatus("Internal server error", http.StatusInternalServerError), 5)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	start := time.Now()
+	end := time.Now()
+	var err error
+
+	go func() {
+		req := mocks.NewRequestForURL("https://lol/subscriptions/rofl")
+		req = req.WithContext(ctx)
+		req.Body = mocks.NewBody("lolol")
+		_, err = autorest.SendWithSender(client, req,
+			DoRetryWithRegistration(autorest.Client{
+				PollingDelay:    time.Second,
+				PollingDuration: delay,
+				RetryAttempts:   5,
+				RetryDuration:   time.Second,
+				Sender:          client,
+				SkipResourceProviderRegistration: true,
+			}),
+		)
+		end = time.Now()
+		wg.Done()
+	}()
+	cancel()
+	wg.Wait()
+	time.Sleep(5 * time.Millisecond)
+	if err == nil {
+		t.Fatalf("azure: DoRetryWithRegistration didn't cancel")
+	}
+	if end.Sub(start) >= delay {
+		t.Fatalf("azure: DoRetryWithRegistration failed to cancel")
 	}
 }

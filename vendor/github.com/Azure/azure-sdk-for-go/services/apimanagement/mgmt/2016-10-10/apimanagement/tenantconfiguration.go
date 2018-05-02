@@ -42,9 +42,10 @@ func NewTenantConfigurationClientWithBaseURI(baseURI string, subscriptionID stri
 
 // Deploy this operation applies changes from the specified Git branch to the configuration database. This is a long
 // running operation and could take several minutes to complete.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is deploy Configuration parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - deploy Configuration parameters.
 func (client TenantConfigurationClient) Deploy(ctx context.Context, resourceGroupName string, serviceName string, parameters DeployConfigurationParameters) (result TenantConfigurationDeployFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -85,7 +86,7 @@ func (client TenantConfigurationClient) DeployPreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/tenant/configuration/deploy", pathParameters),
@@ -124,9 +125,10 @@ func (client TenantConfigurationClient) DeployResponder(resp *http.Response) (re
 
 // Save this operation creates a commit with the current configuration snapshot to the specified branch in the
 // repository. This is a long running operation and could take several minutes to complete.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is save Configuration parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - save Configuration parameters.
 func (client TenantConfigurationClient) Save(ctx context.Context, resourceGroupName string, serviceName string, parameters SaveConfigurationParameter) (result TenantConfigurationSaveFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -167,7 +169,7 @@ func (client TenantConfigurationClient) SavePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/tenant/configuration/save", pathParameters),
@@ -206,9 +208,10 @@ func (client TenantConfigurationClient) SaveResponder(resp *http.Response) (resu
 
 // Validate this operation validates the changes in the specified Git branch. This is a long running operation and
 // could take several minutes to complete.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is validate Configuration parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - validate Configuration parameters.
 func (client TenantConfigurationClient) Validate(ctx context.Context, resourceGroupName string, serviceName string, parameters DeployConfigurationParameters) (result TenantConfigurationValidateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -249,7 +252,7 @@ func (client TenantConfigurationClient) ValidatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/tenant/configuration/validate", pathParameters),

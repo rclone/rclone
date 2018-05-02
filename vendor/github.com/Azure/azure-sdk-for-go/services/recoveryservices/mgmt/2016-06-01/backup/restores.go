@@ -41,12 +41,14 @@ func NewRestoresClientWithBaseURI(baseURI string, subscriptionID string) Restore
 
 // Trigger restores the specified backup data. This is an asynchronous operation. To know the status of this API call,
 // use GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup items.
-// containerName is the container name associated with the backup items. protectedItemName is the backup item to be
-// restored. recoveryPointID is the recovery point ID for the backup data to be restored. resourceRestoreRequest is
-// the resource restore request.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup items.
+// containerName - the container name associated with the backup items.
+// protectedItemName - the backup item to be restored.
+// recoveryPointID - the recovery point ID for the backup data to be restored.
+// resourceRestoreRequest - the resource restore request.
 func (client RestoresClient) Trigger(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string, resourceRestoreRequest RestoreRequestResource) (result autorest.Response, err error) {
 	req, err := client.TriggerPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID, resourceRestoreRequest)
 	if err != nil {
@@ -87,7 +89,7 @@ func (client RestoresClient) TriggerPreparer(ctx context.Context, vaultName stri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/restore", pathParameters),

@@ -40,9 +40,10 @@ func NewPartitionHealthsClientWithBaseURI(baseURI string, timeout *int32) Partit
 }
 
 // Get get partition healths
-//
-// partitionID is the id of the partition eventsHealthStateFilter is the filter of the events health state
-// replicasHealthStateFilter is the filter of the replicas health state
+// Parameters:
+// partitionID - the id of the partition
+// eventsHealthStateFilter - the filter of the events health state
+// replicasHealthStateFilter - the filter of the replicas health state
 func (client PartitionHealthsClient) Get(ctx context.Context, partitionID string, eventsHealthStateFilter string, replicasHealthStateFilter string) (result PartitionHealth, err error) {
 	req, err := client.GetPreparer(ctx, partitionID, eventsHealthStateFilter, replicasHealthStateFilter)
 	if err != nil {
@@ -114,8 +115,9 @@ func (client PartitionHealthsClient) GetResponder(resp *http.Response) (result P
 }
 
 // Send send partition health
-//
-// partitionID is the id of the partition partitionHealthReport is the report of the partition health
+// Parameters:
+// partitionID - the id of the partition
+// partitionHealthReport - the report of the partition health
 func (client PartitionHealthsClient) Send(ctx context.Context, partitionID string, partitionHealthReport PartitionHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, partitionID, partitionHealthReport)
 	if err != nil {
@@ -153,7 +155,7 @@ func (client PartitionHealthsClient) SendPreparer(ctx context.Context, partition
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Partitions/{partitionId}/$/ReportHealth", pathParameters),

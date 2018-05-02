@@ -19,10 +19,8 @@ package builder
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -239,20 +237,10 @@ func (b *BaseBuilder) setupHeaders(httpRequest *http.Request) error {
 	if b.parsedHeaders != nil {
 
 		for headerKey, headerValue := range *b.parsedHeaders {
-			if headerKey == "X-QS-Fetch-Source" {
-				// header X-QS-Fetch-Source is a URL to fetch.
-				// We should first parse this URL.
-				requestURL, err := url.Parse(headerValue)
-				if err != nil {
-					return fmt.Errorf("invalid HTTP header value: %s", headerValue)
-				}
-				headerValue = requestURL.String()
-			} else {
-				for _, r := range headerValue {
-					if r > unicode.MaxASCII {
-						headerValue = utils.URLQueryEscape(headerValue)
-						break
-					}
+			for _, r := range headerValue {
+				if r > unicode.MaxASCII {
+					headerValue = utils.URLQueryEscape(headerValue)
+					break
 				}
 			}
 

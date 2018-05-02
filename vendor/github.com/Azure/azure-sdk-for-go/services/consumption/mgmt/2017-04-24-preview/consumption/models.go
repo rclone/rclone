@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ErrorDetails the details of the error.
 type ErrorDetails struct {
 	// Code - Error code.
@@ -36,6 +37,7 @@ type ErrorDetails struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ErrorResponse error response indicates that the service is not able to process the incoming request. The reason
 // is provided in the error message.
 type ErrorResponse struct {
@@ -43,6 +45,7 @@ type ErrorResponse struct {
 	Error *ErrorDetails `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // MeterDetails the properties of the meter detail.
 type MeterDetails struct {
 	// MeterName - The name of the meter, within the given meter category
@@ -61,6 +64,7 @@ type MeterDetails struct {
 	PretaxStandardRate *decimal.Decimal `json:"pretaxStandardRate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Operation a Consumption REST API operation.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}.
@@ -69,6 +73,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // OperationDisplay the object that represents the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft.Consumption.
@@ -79,6 +84,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // OperationListResult result of listing consumption operations. It contains a list of operations and a URL link to
 // get the next set of results.
 type OperationListResult struct {
@@ -89,12 +95,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -111,16 +119,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -130,6 +141,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -147,12 +159,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -164,16 +178,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -182,6 +199,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Resource the Resource model definition.
 type Resource struct {
 	// ID - Resource Id.
@@ -194,6 +212,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -212,6 +231,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetail an usage detail resource.
 type UsageDetail struct {
 	*UsageDetailProperties `json:"properties,omitempty"`
@@ -225,6 +245,7 @@ type UsageDetail struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // MarshalJSON is the custom marshaler for UsageDetail.
 func (ud UsageDetail) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -246,6 +267,7 @@ func (ud UsageDetail) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UnmarshalJSON is the custom unmarshaler for UsageDetail struct.
 func (ud *UsageDetail) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -306,6 +328,7 @@ func (ud *UsageDetail) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetailProperties the properties of the usage detail.
 type UsageDetailProperties struct {
 	// BillingPeriodID - The id of the billing period resource that the usage belongs to.
@@ -340,6 +363,7 @@ type UsageDetailProperties struct {
 	AdditionalProperties map[string]*string `json:"additionalProperties"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // MarshalJSON is the custom marshaler for UsageDetailProperties.
 func (UDP UsageDetailProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -391,6 +415,7 @@ func (UDP UsageDetailProperties) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetailsListResult result of listing usage details. It contains a list of available usage details in reverse
 // chronological order by billing period.
 type UsageDetailsListResult struct {
@@ -401,12 +426,14 @@ type UsageDetailsListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetailsListResultIterator provides access to a complete listing of UsageDetail values.
 type UsageDetailsListResultIterator struct {
 	i    int
 	page UsageDetailsListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *UsageDetailsListResultIterator) Next() error {
@@ -423,16 +450,19 @@ func (iter *UsageDetailsListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter UsageDetailsListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Response returns the raw server response from the last page request.
 func (iter UsageDetailsListResultIterator) Response() UsageDetailsListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter UsageDetailsListResultIterator) Value() UsageDetail {
@@ -442,6 +472,7 @@ func (iter UsageDetailsListResultIterator) Value() UsageDetail {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (udlr UsageDetailsListResult) IsEmpty() bool {
 	return udlr.Value == nil || len(*udlr.Value) == 0
@@ -459,12 +490,14 @@ func (udlr UsageDetailsListResult) usageDetailsListResultPreparer() (*http.Reque
 		autorest.WithBaseURL(to.String(udlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetailsListResultPage contains a page of UsageDetail values.
 type UsageDetailsListResultPage struct {
 	fn   func(UsageDetailsListResult) (UsageDetailsListResult, error)
 	udlr UsageDetailsListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *UsageDetailsListResultPage) Next() error {
@@ -476,16 +509,19 @@ func (page *UsageDetailsListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page UsageDetailsListResultPage) NotDone() bool {
 	return !page.udlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Response returns the raw server response from the last page request.
 func (page UsageDetailsListResultPage) Response() UsageDetailsListResult {
 	return page.udlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page UsageDetailsListResultPage) Values() []UsageDetail {
 	if page.udlr.IsEmpty() {

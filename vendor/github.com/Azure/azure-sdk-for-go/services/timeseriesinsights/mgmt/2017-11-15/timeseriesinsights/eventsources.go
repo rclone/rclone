@@ -41,10 +41,12 @@ func NewEventSourcesClientWithBaseURI(baseURI string, subscriptionID string) Eve
 }
 
 // CreateOrUpdate create or update an event source under the specified environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. eventSourceName is name of the event source.
-// parameters is parameters for creating an event source resource.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// eventSourceName - name of the event source.
+// parameters - parameters for creating an event source resource.
 func (client EventSourcesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, environmentName string, eventSourceName string, parameters BasicEventSourceCreateOrUpdateParameters) (result EventSourceResourceModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: eventSourceName,
@@ -90,7 +92,7 @@ func (client EventSourcesClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/eventSources/{eventSourceName}", pathParameters),
@@ -121,10 +123,12 @@ func (client EventSourcesClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Delete deletes the event source with the specified name in the specified subscription, resource group, and
 // environment
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. eventSourceName is the name of the Time Series
-// Insights event source associated with the specified environment.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// eventSourceName - the name of the Time Series Insights event source associated with the specified
+// environment.
 func (client EventSourcesClient) Delete(ctx context.Context, resourceGroupName string, environmentName string, eventSourceName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, environmentName, eventSourceName)
 	if err != nil {
@@ -189,10 +193,12 @@ func (client EventSourcesClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get gets the event source with the specified name in the specified environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. eventSourceName is the name of the Time Series
-// Insights event source associated with the specified environment.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// eventSourceName - the name of the Time Series Insights event source associated with the specified
+// environment.
 func (client EventSourcesClient) Get(ctx context.Context, resourceGroupName string, environmentName string, eventSourceName string) (result EventSourceResourceModel, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, environmentName, eventSourceName)
 	if err != nil {
@@ -259,9 +265,10 @@ func (client EventSourcesClient) GetResponder(resp *http.Response) (result Event
 
 // ListByEnvironment lists all the available event sources associated with the subscription and within the specified
 // resource group and environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
 func (client EventSourcesClient) ListByEnvironment(ctx context.Context, resourceGroupName string, environmentName string) (result EventSourceListResponse, err error) {
 	req, err := client.ListByEnvironmentPreparer(ctx, resourceGroupName, environmentName)
 	if err != nil {
@@ -327,11 +334,13 @@ func (client EventSourcesClient) ListByEnvironmentResponder(resp *http.Response)
 
 // Update updates the event source with the specified name in the specified subscription, resource group, and
 // environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. eventSourceName is the name of the Time Series
-// Insights event source associated with the specified environment. eventSourceUpdateParameters is request object
-// that contains the updated information for the event source.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// eventSourceName - the name of the Time Series Insights event source associated with the specified
+// environment.
+// eventSourceUpdateParameters - request object that contains the updated information for the event source.
 func (client EventSourcesClient) Update(ctx context.Context, resourceGroupName string, environmentName string, eventSourceName string, eventSourceUpdateParameters EventSourceUpdateParameters) (result EventSourceResourceModel, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, environmentName, eventSourceName, eventSourceUpdateParameters)
 	if err != nil {
@@ -369,7 +378,7 @@ func (client EventSourcesClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/eventSources/{eventSourceName}", pathParameters),

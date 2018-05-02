@@ -2,23 +2,23 @@
     "language": "en-US",
     "messages": [
         {
-            "id": "Hello world!",
+"id": "Hello world!\n",
             "key": "Hello world!\n",
-            "message": "Hello world!",
-            "translation":  "Hello world!",
+            "message": "Hello world!\n",
+            "translation":  "Hello world!\n",
             "position": "golang.org/x/text/cmd/gotext/examples/extract/main.go:27:10"
         },
         {
-            "id": "Hello {City}!",
+            "id": "Hello {City}!\n",
             "key": "Hello %s!\n",
-            "message": "Hello {City}!",
-            "translation": "Hello {City}n"
+            "message": "Hello {City}!\n",
+            "translation": "Hello {City}!\n"
         },
         {
-            "id": "Hello {Town}!",
+            "id": "Hello {Town}!\n",
             "key": "Hello %s!\n",
-            "message": "Hello {Town}!",
-            "translation": "Hello {Town}!",
+            "message": "Hello {Town}!\n",
+            "translation": "Hello {Town}!\n",
             "placeholders": [
                 {
                     "id": "Town",
@@ -32,16 +32,16 @@
             ]
         },
         {
-            "id": "{Person} is visiting {Place}!",
+            "id": "{Person} is visiting {Place}!\n",
             "key": "%s is visiting %s!\n",
-            "message": "{Person} is visiting {Place}!",
+            "message": "{Person} is visiting {Place}!\n",
             "translation": "{Person} is visiting {Place}!\n"
         },
         {
-            "id": "{Person} is visiting {Place}!",
+            "id": "{Person} is visiting {Place}!\n",
             "key": "%[1]s is visiting %[3]s!\n",
-            "message": "{Person} is visiting {Place}!",
-            "translation": "{Person} is visiting {Place}!",
+            "message": "{Person} is visiting {Place}!\n",
+            "translation": "{Person} is visiting {Place}!\n",
             "comment": "Person visiting a place."
         },
         {
@@ -60,9 +60,9 @@
             }
         },
         {
-            "id": "Use the following code for your discount: {ReferralCode}",
+            "id": "Use the following code for your discount: {ReferralCode}\n",
             "key": "Use the following code for your discount: %d\n",
-            "message": "Use the following code for your discount: {ReferralCode}",
+            "message": "Use the following code for your discount: {ReferralCode}\n",
             "translation": ""
         },
         {

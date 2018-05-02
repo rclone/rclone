@@ -32,6 +32,11 @@ const (
 	AnswerTypePlaces AnswerType = "Places"
 )
 
+// PossibleAnswerTypeValues returns an array of possible values for the AnswerType const type.
+func PossibleAnswerTypeValues() []AnswerType {
+	return []AnswerType{AnswerTypeEntities, AnswerTypePlaces}
+}
+
 // EntityQueryScenario enumerates the values for entity query scenario.
 type EntityQueryScenario string
 
@@ -48,6 +53,11 @@ const (
 	ListWithPivot EntityQueryScenario = "ListWithPivot"
 )
 
+// PossibleEntityQueryScenarioValues returns an array of possible values for the EntityQueryScenario const type.
+func PossibleEntityQueryScenarioValues() []EntityQueryScenario {
+	return []EntityQueryScenario{Disambiguation, DominantEntity, DominantEntityWithDisambiguation, List, ListWithPivot}
+}
+
 // EntityScenario enumerates the values for entity scenario.
 type EntityScenario string
 
@@ -59,6 +69,11 @@ const (
 	// EntityScenarioListItem ...
 	EntityScenarioListItem EntityScenario = "ListItem"
 )
+
+// PossibleEntityScenarioValues returns an array of possible values for the EntityScenario const type.
+func PossibleEntityScenarioValues() []EntityScenario {
+	return []EntityScenario{EntityScenarioDisambiguationItem, EntityScenarioDominantEntity, EntityScenarioListItem}
+}
 
 // EntityType enumerates the values for entity type.
 type EntityType string
@@ -164,6 +179,11 @@ const (
 	EntityTypeVideoGame EntityType = "VideoGame"
 )
 
+// PossibleEntityTypeValues returns an array of possible values for the EntityType const type.
+func PossibleEntityTypeValues() []EntityType {
+	return []EntityType{EntityTypeActor, EntityTypeAnimal, EntityTypeArtist, EntityTypeAttorney, EntityTypeAttraction, EntityTypeBook, EntityTypeCar, EntityTypeCity, EntityTypeCollegeOrUniversity, EntityTypeComposition, EntityTypeContinent, EntityTypeCountry, EntityTypeDrug, EntityTypeEvent, EntityTypeFood, EntityTypeGeneric, EntityTypeHotel, EntityTypeHouse, EntityTypeLocalBusiness, EntityTypeLocality, EntityTypeMedia, EntityTypeMinorRegion, EntityTypeMovie, EntityTypeMusicAlbum, EntityTypeMusicGroup, EntityTypeMusicRecording, EntityTypeNeighborhood, EntityTypeOrganization, EntityTypeOther, EntityTypePerson, EntityTypePlace, EntityTypePointOfInterest, EntityTypePostalCode, EntityTypeProduct, EntityTypeRadioStation, EntityTypeRegion, EntityTypeRestaurant, EntityTypeSchool, EntityTypeSpeciality, EntityTypeSportsTeam, EntityTypeState, EntityTypeStreetAddress, EntityTypeSubRegion, EntityTypeTelevisionSeason, EntityTypeTelevisionShow, EntityTypeTheaterPlay, EntityTypeTouristAttraction, EntityTypeTravel, EntityTypeVideoGame}
+}
+
 // ErrorCode enumerates the values for error code.
 type ErrorCode string
 
@@ -181,6 +201,11 @@ const (
 	// ServerError ...
 	ServerError ErrorCode = "ServerError"
 )
+
+// PossibleErrorCodeValues returns an array of possible values for the ErrorCode const type.
+func PossibleErrorCodeValues() []ErrorCode {
+	return []ErrorCode{InsufficientAuthorization, InvalidAuthorization, InvalidRequest, None, RateLimitExceeded, ServerError}
+}
 
 // ErrorSubCode enumerates the values for error sub code.
 type ErrorSubCode string
@@ -210,6 +235,11 @@ const (
 	UnexpectedError ErrorSubCode = "UnexpectedError"
 )
 
+// PossibleErrorSubCodeValues returns an array of possible values for the ErrorSubCode const type.
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return []ErrorSubCode{AuthorizationDisabled, AuthorizationExpired, AuthorizationMissing, AuthorizationRedundancy, Blocked, HTTPNotAllowed, NotImplemented, ParameterInvalidValue, ParameterMissing, ResourceError, UnexpectedError}
+}
+
 // ResponseFormat enumerates the values for response format.
 type ResponseFormat string
 
@@ -219,6 +249,11 @@ const (
 	// JSONLd ...
 	JSONLd ResponseFormat = "JsonLd"
 )
+
+// PossibleResponseFormatValues returns an array of possible values for the ResponseFormat const type.
+func PossibleResponseFormatValues() []ResponseFormat {
+	return []ResponseFormat{JSON, JSONLd}
+}
 
 // SafeSearch enumerates the values for safe search.
 type SafeSearch string
@@ -231,6 +266,11 @@ const (
 	// Strict ...
 	Strict SafeSearch = "Strict"
 )
+
+// PossibleSafeSearchValues returns an array of possible values for the SafeSearch const type.
+func PossibleSafeSearchValues() []SafeSearch {
+	return []SafeSearch{Moderate, Off, Strict}
+}
 
 // Type enumerates the values for type.
 type Type string
@@ -249,6 +289,11 @@ const (
 	// TypeContractualRulesTextAttribution ...
 	TypeContractualRulesTextAttribution Type = "ContractualRules/TextAttribution"
 )
+
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeContractualRulesAttribution, TypeContractualRulesContractualRule, TypeContractualRulesLicenseAttribution, TypeContractualRulesLinkAttribution, TypeContractualRulesMediaAttribution, TypeContractualRulesTextAttribution}
+}
 
 // TypeBasicResponseBase enumerates the values for type basic response base.
 type TypeBasicResponseBase string
@@ -314,16 +359,19 @@ const (
 	TypeTouristAttraction TypeBasicResponseBase = "TouristAttraction"
 )
 
+// PossibleTypeBasicResponseBaseValues returns an array of possible values for the TypeBasicResponseBase const type.
+func PossibleTypeBasicResponseBaseValues() []TypeBasicResponseBase {
+	return []TypeBasicResponseBase{TypeAirport, TypeAnswer, TypeCivicStructure, TypeCreativeWork, TypeEntertainmentBusiness, TypeEntities, TypeErrorResponse, TypeFoodEstablishment, TypeHotel, TypeIdentifiable, TypeImageObject, TypeIntangible, TypeLicense, TypeLocalBusiness, TypeLodgingBusiness, TypeMediaObject, TypeMovieTheater, TypeOrganization, TypePlace, TypePlaces, TypePostalAddress, TypeResponse, TypeResponseBase, TypeRestaurant, TypeSearchResponse, TypeSearchResultsAnswer, TypeStructuredValue, TypeThing, TypeTouristAttraction}
+}
+
 // Airport ...
 type Airport struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	IataCode *string `json:"iataCode,omitempty"`
+	IcaoCode *string `json:"icaoCode,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -335,23 +383,63 @@ type Airport struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	IataCode  *string `json:"iataCode,omitempty"`
-	IcaoCode  *string `json:"icaoCode,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Airport.
 func (a Airport) MarshalJSON() ([]byte, error) {
 	a.Type = TypeAirport
-	type Alias Airport
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(a),
-	})
+	objectMap := make(map[string]interface{})
+	if a.IataCode != nil {
+		objectMap["iataCode"] = a.IataCode
+	}
+	if a.IcaoCode != nil {
+		objectMap["icaoCode"] = a.IcaoCode
+	}
+	if a.Address != nil {
+		objectMap["address"] = a.Address
+	}
+	if a.Telephone != nil {
+		objectMap["telephone"] = a.Telephone
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.URL != nil {
+		objectMap["url"] = a.URL
+	}
+	if a.Image != nil {
+		objectMap["image"] = a.Image
+	}
+	if a.Description != nil {
+		objectMap["description"] = a.Description
+	}
+	if a.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = a.EntityPresentationInfo
+	}
+	if a.BingID != nil {
+		objectMap["bingId"] = a.BingID
+	}
+	if a.ContractualRules != nil {
+		objectMap["contractualRules"] = a.ContractualRules
+	}
+	if a.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = a.WebSearchURL
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Type != "" {
+		objectMap["_type"] = a.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Airport.
@@ -586,151 +674,140 @@ func (a *Airport) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["iataCode"]
-	if v != nil {
-		var iataCode string
-		err = json.Unmarshal(*m["iataCode"], &iataCode)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "iataCode":
+			if v != nil {
+				var iataCode string
+				err = json.Unmarshal(*v, &iataCode)
+				if err != nil {
+					return err
+				}
+				a.IataCode = &iataCode
+			}
+		case "icaoCode":
+			if v != nil {
+				var icaoCode string
+				err = json.Unmarshal(*v, &icaoCode)
+				if err != nil {
+					return err
+				}
+				a.IcaoCode = &icaoCode
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				a.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				a.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				a.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				a.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				a.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				a.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				a.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				a.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				a.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = typeVar
+			}
 		}
-		a.IataCode = &iataCode
-	}
-
-	v = m["icaoCode"]
-	if v != nil {
-		var icaoCode string
-		err = json.Unmarshal(*m["icaoCode"], &icaoCode)
-		if err != nil {
-			return err
-		}
-		a.IcaoCode = &icaoCode
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		a.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		a.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		a.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		a.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		a.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		a.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		a.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		a.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		a.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		a.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		a.Type = _type
 	}
 
 	return nil
 }
 
-// BasicAnswer
+// BasicAnswer ...
 type BasicAnswer interface {
 	AsEntities() (*Entities, bool)
 	AsPlaces() (*Places, bool)
@@ -739,16 +816,16 @@ type BasicAnswer interface {
 	AsAnswer() (*Answer, bool)
 }
 
-// Answer
+// Answer ...
 type Answer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
 	// ContractualRules - A list of rules that you must adhere to if you display the item.
 	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicAnswer(body []byte) (BasicAnswer, error) {
@@ -799,12 +876,20 @@ func unmarshalBasicAnswerArray(body []byte) ([]BasicAnswer, error) {
 // MarshalJSON is the custom marshaler for Answer.
 func (a Answer) MarshalJSON() ([]byte, error) {
 	a.Type = TypeAnswer
-	type Alias Answer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(a),
-	})
+	objectMap := make(map[string]interface{})
+	if a.ContractualRules != nil {
+		objectMap["contractualRules"] = a.ContractualRules
+	}
+	if a.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = a.WebSearchURL
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Type != "" {
+		objectMap["_type"] = a.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Answer.
@@ -1039,66 +1124,61 @@ func (a *Answer) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				a.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				a.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = typeVar
+			}
 		}
-		a.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		a.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		a.Type = _type
 	}
 
 	return nil
 }
 
-// BasicCivicStructure
+// BasicCivicStructure ...
 type BasicCivicStructure interface {
 	AsAirport() (*Airport, bool)
 	AsCivicStructure() (*CivicStructure, bool)
 }
 
-// CivicStructure
+// CivicStructure ...
 type CivicStructure struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -1110,10 +1190,14 @@ type CivicStructure struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicCivicStructure(body []byte) (BasicCivicStructure, error) {
@@ -1156,12 +1240,44 @@ func unmarshalBasicCivicStructureArray(body []byte) ([]BasicCivicStructure, erro
 // MarshalJSON is the custom marshaler for CivicStructure.
 func (cs CivicStructure) MarshalJSON() ([]byte, error) {
 	cs.Type = TypeCivicStructure
-	type Alias CivicStructure
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cs),
-	})
+	objectMap := make(map[string]interface{})
+	if cs.Address != nil {
+		objectMap["address"] = cs.Address
+	}
+	if cs.Telephone != nil {
+		objectMap["telephone"] = cs.Telephone
+	}
+	if cs.Name != nil {
+		objectMap["name"] = cs.Name
+	}
+	if cs.URL != nil {
+		objectMap["url"] = cs.URL
+	}
+	if cs.Image != nil {
+		objectMap["image"] = cs.Image
+	}
+	if cs.Description != nil {
+		objectMap["description"] = cs.Description
+	}
+	if cs.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = cs.EntityPresentationInfo
+	}
+	if cs.BingID != nil {
+		objectMap["bingId"] = cs.BingID
+	}
+	if cs.ContractualRules != nil {
+		objectMap["contractualRules"] = cs.ContractualRules
+	}
+	if cs.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = cs.WebSearchURL
+	}
+	if cs.ID != nil {
+		objectMap["id"] = cs.ID
+	}
+	if cs.Type != "" {
+		objectMap["_type"] = cs.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for CivicStructure.
@@ -1396,131 +1512,122 @@ func (cs *CivicStructure) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				cs.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				cs.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cs.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				cs.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				cs.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				cs.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				cs.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				cs.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				cs.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				cs.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cs.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cs.Type = typeVar
+			}
 		}
-		cs.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		cs.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cs.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		cs.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		cs.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		cs.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		cs.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		cs.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		cs.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		cs.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cs.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		cs.Type = _type
 	}
 
 	return nil
 }
 
-// BasicContractualRulesAttribution
+// BasicContractualRulesAttribution ...
 type BasicContractualRulesAttribution interface {
 	AsContractualRulesLicenseAttribution() (*ContractualRulesLicenseAttribution, bool)
 	AsContractualRulesLinkAttribution() (*ContractualRulesLinkAttribution, bool)
@@ -1529,14 +1636,14 @@ type BasicContractualRulesAttribution interface {
 	AsContractualRulesAttribution() (*ContractualRulesAttribution, bool)
 }
 
-// ContractualRulesAttribution
+// ContractualRulesAttribution ...
 type ContractualRulesAttribution struct {
+	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
+	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 	// TargetPropertyName - The name of the field that the rule applies to.
 	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
 	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
 	Type Type `json:"_type,omitempty"`
-	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
-	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 }
 
 func unmarshalBasicContractualRulesAttribution(body []byte) (BasicContractualRulesAttribution, error) {
@@ -1591,12 +1698,17 @@ func unmarshalBasicContractualRulesAttributionArray(body []byte) ([]BasicContrac
 // MarshalJSON is the custom marshaler for ContractualRulesAttribution.
 func (cra ContractualRulesAttribution) MarshalJSON() ([]byte, error) {
 	cra.Type = TypeContractualRulesAttribution
-	type Alias ContractualRulesAttribution
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cra),
-	})
+	objectMap := make(map[string]interface{})
+	if cra.MustBeCloseToContent != nil {
+		objectMap["mustBeCloseToContent"] = cra.MustBeCloseToContent
+	}
+	if cra.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = cra.TargetPropertyName
+	}
+	if cra.Type != "" {
+		objectMap["_type"] = cra.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesAttribution.
@@ -1639,7 +1751,7 @@ func (cra ContractualRulesAttribution) AsBasicContractualRulesContractualRule() 
 	return &cra, true
 }
 
-// BasicContractualRulesContractualRule
+// BasicContractualRulesContractualRule ...
 type BasicContractualRulesContractualRule interface {
 	AsContractualRulesAttribution() (*ContractualRulesAttribution, bool)
 	AsBasicContractualRulesAttribution() (BasicContractualRulesAttribution, bool)
@@ -1650,7 +1762,7 @@ type BasicContractualRulesContractualRule interface {
 	AsContractualRulesContractualRule() (*ContractualRulesContractualRule, bool)
 }
 
-// ContractualRulesContractualRule
+// ContractualRulesContractualRule ...
 type ContractualRulesContractualRule struct {
 	// TargetPropertyName - The name of the field that the rule applies to.
 	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
@@ -1714,12 +1826,14 @@ func unmarshalBasicContractualRulesContractualRuleArray(body []byte) ([]BasicCon
 // MarshalJSON is the custom marshaler for ContractualRulesContractualRule.
 func (crcr ContractualRulesContractualRule) MarshalJSON() ([]byte, error) {
 	crcr.Type = TypeContractualRulesContractualRule
-	type Alias ContractualRulesContractualRule
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(crcr),
-	})
+	objectMap := make(map[string]interface{})
+	if crcr.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = crcr.TargetPropertyName
+	}
+	if crcr.Type != "" {
+		objectMap["_type"] = crcr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesContractualRule.
@@ -1764,27 +1878,38 @@ func (crcr ContractualRulesContractualRule) AsBasicContractualRulesContractualRu
 
 // ContractualRulesLicenseAttribution defines a contractual rule for license attribution.
 type ContractualRulesLicenseAttribution struct {
-	// TargetPropertyName - The name of the field that the rule applies to.
-	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
-	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
-	Type Type `json:"_type,omitempty"`
-	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
-	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 	// License - The license under which the content may be used.
 	License *License `json:"license,omitempty"`
 	// LicenseNotice - The license to display next to the targeted field.
 	LicenseNotice *string `json:"licenseNotice,omitempty"`
+	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
+	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
+	// TargetPropertyName - The name of the field that the rule applies to.
+	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
+	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
+	Type Type `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ContractualRulesLicenseAttribution.
 func (crla ContractualRulesLicenseAttribution) MarshalJSON() ([]byte, error) {
 	crla.Type = TypeContractualRulesLicenseAttribution
-	type Alias ContractualRulesLicenseAttribution
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(crla),
-	})
+	objectMap := make(map[string]interface{})
+	if crla.License != nil {
+		objectMap["license"] = crla.License
+	}
+	if crla.LicenseNotice != nil {
+		objectMap["licenseNotice"] = crla.LicenseNotice
+	}
+	if crla.MustBeCloseToContent != nil {
+		objectMap["mustBeCloseToContent"] = crla.MustBeCloseToContent
+	}
+	if crla.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = crla.TargetPropertyName
+	}
+	if crla.Type != "" {
+		objectMap["_type"] = crla.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesLicenseAttribution.
@@ -1829,29 +1954,43 @@ func (crla ContractualRulesLicenseAttribution) AsBasicContractualRulesContractua
 
 // ContractualRulesLinkAttribution defines a contractual rule for link attribution.
 type ContractualRulesLinkAttribution struct {
-	// TargetPropertyName - The name of the field that the rule applies to.
-	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
-	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
-	Type Type `json:"_type,omitempty"`
-	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
-	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 	// Text - The attribution text.
 	Text *string `json:"text,omitempty"`
 	// URL - The URL to the provider's website. Use text and URL to create the hyperlink.
 	URL *string `json:"url,omitempty"`
 	// OptionalForListDisplay - Indicates whether this provider's attribution is optional.
 	OptionalForListDisplay *bool `json:"optionalForListDisplay,omitempty"`
+	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
+	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
+	// TargetPropertyName - The name of the field that the rule applies to.
+	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
+	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
+	Type Type `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ContractualRulesLinkAttribution.
 func (crla ContractualRulesLinkAttribution) MarshalJSON() ([]byte, error) {
 	crla.Type = TypeContractualRulesLinkAttribution
-	type Alias ContractualRulesLinkAttribution
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(crla),
-	})
+	objectMap := make(map[string]interface{})
+	if crla.Text != nil {
+		objectMap["text"] = crla.Text
+	}
+	if crla.URL != nil {
+		objectMap["url"] = crla.URL
+	}
+	if crla.OptionalForListDisplay != nil {
+		objectMap["optionalForListDisplay"] = crla.OptionalForListDisplay
+	}
+	if crla.MustBeCloseToContent != nil {
+		objectMap["mustBeCloseToContent"] = crla.MustBeCloseToContent
+	}
+	if crla.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = crla.TargetPropertyName
+	}
+	if crla.Type != "" {
+		objectMap["_type"] = crla.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesLinkAttribution.
@@ -1896,25 +2035,33 @@ func (crla ContractualRulesLinkAttribution) AsBasicContractualRulesContractualRu
 
 // ContractualRulesMediaAttribution defines a contractual rule for media attribution.
 type ContractualRulesMediaAttribution struct {
+	// URL - The URL that you use to create of hyperlink of the media content. For example, if the target is an image, you would use the URL to make the image clickable.
+	URL *string `json:"url,omitempty"`
+	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
+	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 	// TargetPropertyName - The name of the field that the rule applies to.
 	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
 	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
 	Type Type `json:"_type,omitempty"`
-	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
-	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
-	// URL - The URL that you use to create of hyperlink of the media content. For example, if the target is an image, you would use the URL to make the image clickable.
-	URL *string `json:"url,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ContractualRulesMediaAttribution.
 func (crma ContractualRulesMediaAttribution) MarshalJSON() ([]byte, error) {
 	crma.Type = TypeContractualRulesMediaAttribution
-	type Alias ContractualRulesMediaAttribution
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(crma),
-	})
+	objectMap := make(map[string]interface{})
+	if crma.URL != nil {
+		objectMap["url"] = crma.URL
+	}
+	if crma.MustBeCloseToContent != nil {
+		objectMap["mustBeCloseToContent"] = crma.MustBeCloseToContent
+	}
+	if crma.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = crma.TargetPropertyName
+	}
+	if crma.Type != "" {
+		objectMap["_type"] = crma.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesMediaAttribution.
@@ -1959,27 +2106,38 @@ func (crma ContractualRulesMediaAttribution) AsBasicContractualRulesContractualR
 
 // ContractualRulesTextAttribution defines a contractual rule for text attribution.
 type ContractualRulesTextAttribution struct {
-	// TargetPropertyName - The name of the field that the rule applies to.
-	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
-	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
-	Type Type `json:"_type,omitempty"`
-	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
-	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
 	// Text - The attribution text. Text attribution applies to the entity as a whole and should be displayed immediately following the entity presentation. If there are multiple text or link attribution rules that do not specify a target, you should concatenate them and display them using a "Data from:" label.
 	Text *string `json:"text,omitempty"`
 	// OptionalForListDisplay - Indicates whether this provider's attribution is optional.
 	OptionalForListDisplay *bool `json:"optionalForListDisplay,omitempty"`
+	// MustBeCloseToContent - A Boolean value that determines whether the contents of the rule must be placed in close proximity to the field that the rule applies to. If true, the contents must be placed in close proximity. If false, or this field does not exist, the contents may be placed at the caller's discretion.
+	MustBeCloseToContent *bool `json:"mustBeCloseToContent,omitempty"`
+	// TargetPropertyName - The name of the field that the rule applies to.
+	TargetPropertyName *string `json:"targetPropertyName,omitempty"`
+	// Type - Possible values include: 'TypeContractualRulesContractualRule', 'TypeContractualRulesAttribution', 'TypeContractualRulesLicenseAttribution', 'TypeContractualRulesLinkAttribution', 'TypeContractualRulesMediaAttribution', 'TypeContractualRulesTextAttribution'
+	Type Type `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ContractualRulesTextAttribution.
 func (crta ContractualRulesTextAttribution) MarshalJSON() ([]byte, error) {
 	crta.Type = TypeContractualRulesTextAttribution
-	type Alias ContractualRulesTextAttribution
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(crta),
-	})
+	objectMap := make(map[string]interface{})
+	if crta.Text != nil {
+		objectMap["text"] = crta.Text
+	}
+	if crta.OptionalForListDisplay != nil {
+		objectMap["optionalForListDisplay"] = crta.OptionalForListDisplay
+	}
+	if crta.MustBeCloseToContent != nil {
+		objectMap["mustBeCloseToContent"] = crta.MustBeCloseToContent
+	}
+	if crta.TargetPropertyName != nil {
+		objectMap["targetPropertyName"] = crta.TargetPropertyName
+	}
+	if crta.Type != "" {
+		objectMap["_type"] = crta.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsContractualRulesAttribution is the BasicContractualRulesContractualRule implementation for ContractualRulesTextAttribution.
@@ -2022,7 +2180,7 @@ func (crta ContractualRulesTextAttribution) AsBasicContractualRulesContractualRu
 	return &crta, true
 }
 
-// BasicCreativeWork
+// BasicCreativeWork ...
 type BasicCreativeWork interface {
 	AsImageObject() (*ImageObject, bool)
 	AsMediaObject() (*MediaObject, bool)
@@ -2031,16 +2189,13 @@ type BasicCreativeWork interface {
 	AsCreativeWork() (*CreativeWork, bool)
 }
 
-// CreativeWork
+// CreativeWork ...
 type CreativeWork struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	Text     *string       `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -2052,11 +2207,14 @@ type CreativeWork struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	Text     *string       `json:"text,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicCreativeWork(body []byte) (BasicCreativeWork, error) {
@@ -2107,12 +2265,47 @@ func unmarshalBasicCreativeWorkArray(body []byte) ([]BasicCreativeWork, error) {
 // MarshalJSON is the custom marshaler for CreativeWork.
 func (cw CreativeWork) MarshalJSON() ([]byte, error) {
 	cw.Type = TypeCreativeWork
-	type Alias CreativeWork
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cw),
-	})
+	objectMap := make(map[string]interface{})
+	if cw.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = cw.ThumbnailURL
+	}
+	if cw.Provider != nil {
+		objectMap["provider"] = cw.Provider
+	}
+	if cw.Text != nil {
+		objectMap["text"] = cw.Text
+	}
+	if cw.Name != nil {
+		objectMap["name"] = cw.Name
+	}
+	if cw.URL != nil {
+		objectMap["url"] = cw.URL
+	}
+	if cw.Image != nil {
+		objectMap["image"] = cw.Image
+	}
+	if cw.Description != nil {
+		objectMap["description"] = cw.Description
+	}
+	if cw.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = cw.EntityPresentationInfo
+	}
+	if cw.BingID != nil {
+		objectMap["bingId"] = cw.BingID
+	}
+	if cw.ContractualRules != nil {
+		objectMap["contractualRules"] = cw.ContractualRules
+	}
+	if cw.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = cw.WebSearchURL
+	}
+	if cw.ID != nil {
+		objectMap["id"] = cw.ID
+	}
+	if cw.Type != "" {
+		objectMap["_type"] = cw.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for CreativeWork.
@@ -2347,155 +2540,146 @@ func (cw *CreativeWork) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				cw.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				cw.Provider = &provider
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				cw.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cw.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				cw.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				cw.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				cw.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				cw.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				cw.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				cw.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				cw.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cw.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cw.Type = typeVar
+			}
 		}
-		cw.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		cw.Provider = &provider
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		cw.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cw.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		cw.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		cw.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		cw.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		cw.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		cw.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		cw.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		cw.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cw.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		cw.Type = _type
 	}
 
 	return nil
 }
 
-// BasicEntertainmentBusiness
+// BasicEntertainmentBusiness ...
 type BasicEntertainmentBusiness interface {
 	AsMovieTheater() (*MovieTheater, bool)
 	AsEntertainmentBusiness() (*EntertainmentBusiness, bool)
 }
 
-// EntertainmentBusiness
+// EntertainmentBusiness ...
 type EntertainmentBusiness struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -2507,15 +2691,14 @@ type EntertainmentBusiness struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicEntertainmentBusiness(body []byte) (BasicEntertainmentBusiness, error) {
@@ -2558,12 +2741,56 @@ func unmarshalBasicEntertainmentBusinessArray(body []byte) ([]BasicEntertainment
 // MarshalJSON is the custom marshaler for EntertainmentBusiness.
 func (eb EntertainmentBusiness) MarshalJSON() ([]byte, error) {
 	eb.Type = TypeEntertainmentBusiness
-	type Alias EntertainmentBusiness
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(eb),
-	})
+	objectMap := make(map[string]interface{})
+	if eb.PriceRange != nil {
+		objectMap["priceRange"] = eb.PriceRange
+	}
+	if eb.Panoramas != nil {
+		objectMap["panoramas"] = eb.Panoramas
+	}
+	if eb.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = eb.IsPermanentlyClosed
+	}
+	if eb.TagLine != nil {
+		objectMap["tagLine"] = eb.TagLine
+	}
+	if eb.Address != nil {
+		objectMap["address"] = eb.Address
+	}
+	if eb.Telephone != nil {
+		objectMap["telephone"] = eb.Telephone
+	}
+	if eb.Name != nil {
+		objectMap["name"] = eb.Name
+	}
+	if eb.URL != nil {
+		objectMap["url"] = eb.URL
+	}
+	if eb.Image != nil {
+		objectMap["image"] = eb.Image
+	}
+	if eb.Description != nil {
+		objectMap["description"] = eb.Description
+	}
+	if eb.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = eb.EntityPresentationInfo
+	}
+	if eb.BingID != nil {
+		objectMap["bingId"] = eb.BingID
+	}
+	if eb.ContractualRules != nil {
+		objectMap["contractualRules"] = eb.ContractualRules
+	}
+	if eb.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = eb.WebSearchURL
+	}
+	if eb.ID != nil {
+		objectMap["id"] = eb.ID
+	}
+	if eb.Type != "" {
+		objectMap["_type"] = eb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for EntertainmentBusiness.
@@ -2798,165 +3025,152 @@ func (eb *EntertainmentBusiness) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				eb.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				eb.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				eb.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				eb.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				eb.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				eb.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				eb.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				eb.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				eb.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				eb.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				eb.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				eb.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				eb.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				eb.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				eb.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				eb.Type = typeVar
+			}
 		}
-		eb.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		eb.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		eb.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		eb.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		eb.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		eb.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		eb.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		eb.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		eb.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		eb.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		eb.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		eb.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		eb.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		eb.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		eb.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		eb.Type = _type
 	}
 
 	return nil
@@ -2964,30 +3178,47 @@ func (eb *EntertainmentBusiness) UnmarshalJSON(body []byte) error {
 
 // Entities defines an entity answer.
 type Entities struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string       `json:"webSearchUrl,omitempty"`
-	QueryContext *QueryContext `json:"queryContext,omitempty"`
 	// QueryScenario - The supported query scenario. This field is set to DominantEntity or DisambiguationItem. The field is set to DominantEntity if Bing determines that only a single entity satisfies the request. For example, a book, movie, person, or attraction. If multiple entities could satisfy the request, the field is set to DisambiguationItem. For example, if the request uses the generic title of a movie franchise, the entity's type would likely be DisambiguationItem. But, if the request specifies a specific title from the franchise, the entity's type would likely be DominantEntity. Possible values include: 'DominantEntity', 'DominantEntityWithDisambiguation', 'Disambiguation', 'List', 'ListWithPivot'
 	QueryScenario EntityQueryScenario `json:"queryScenario,omitempty"`
 	// Value - A list of entities.
-	Value *[]BasicThing `json:"value,omitempty"`
+	Value        *[]BasicThing `json:"value,omitempty"`
+	QueryContext *QueryContext `json:"queryContext,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Entities.
 func (e Entities) MarshalJSON() ([]byte, error) {
 	e.Type = TypeEntities
-	type Alias Entities
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(e),
-	})
+	objectMap := make(map[string]interface{})
+	if e.QueryScenario != "" {
+		objectMap["queryScenario"] = e.QueryScenario
+	}
+	if e.Value != nil {
+		objectMap["value"] = e.Value
+	}
+	if e.QueryContext != nil {
+		objectMap["queryContext"] = e.QueryContext
+	}
+	if e.ContractualRules != nil {
+		objectMap["contractualRules"] = e.ContractualRules
+	}
+	if e.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = e.WebSearchURL
+	}
+	if e.ID != nil {
+		objectMap["id"] = e.ID
+	}
+	if e.Type != "" {
+		objectMap["_type"] = e.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Entities.
@@ -3222,74 +3453,70 @@ func (e *Entities) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["queryScenario"]
-	if v != nil {
-		var queryScenario EntityQueryScenario
-		err = json.Unmarshal(*m["queryScenario"], &queryScenario)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "queryScenario":
+			if v != nil {
+				var queryScenario EntityQueryScenario
+				err = json.Unmarshal(*v, &queryScenario)
+				if err != nil {
+					return err
+				}
+				e.QueryScenario = queryScenario
+			}
+		case "value":
+			if v != nil {
+				value, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				e.Value = &value
+			}
+		case "queryContext":
+			if v != nil {
+				var queryContext QueryContext
+				err = json.Unmarshal(*v, &queryContext)
+				if err != nil {
+					return err
+				}
+				e.QueryContext = &queryContext
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				e.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				e.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				e.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				e.Type = typeVar
+			}
 		}
-		e.QueryScenario = queryScenario
-	}
-
-	v = m["value"]
-	if v != nil {
-		value, err := unmarshalBasicThingArray(*m["value"])
-		if err != nil {
-			return err
-		}
-		e.Value = &value
-	}
-
-	v = m["queryContext"]
-	if v != nil {
-		var queryContext QueryContext
-		err = json.Unmarshal(*m["queryContext"], &queryContext)
-		if err != nil {
-			return err
-		}
-		e.QueryContext = &queryContext
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		e.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		e.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		e.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		e.Type = _type
 	}
 
 	return nil
@@ -3323,27 +3550,38 @@ type Error struct {
 
 // ErrorResponse the top-level response that represents a failed request.
 type ErrorResponse struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	// Errors - A list of errors that describe the reasons why the request failed.
+	Errors *[]Error `json:"errors,omitempty"`
 	// ContractualRules - A list of rules that you must adhere to if you display the item.
 	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Errors - A list of errors that describe the reasons why the request failed.
-	Errors *[]Error `json:"errors,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ErrorResponse.
 func (er ErrorResponse) MarshalJSON() ([]byte, error) {
 	er.Type = TypeErrorResponse
-	type Alias ErrorResponse
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(er),
-	})
+	objectMap := make(map[string]interface{})
+	if er.Errors != nil {
+		objectMap["errors"] = er.Errors
+	}
+	if er.ContractualRules != nil {
+		objectMap["contractualRules"] = er.ContractualRules
+	}
+	if er.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = er.WebSearchURL
+	}
+	if er.ID != nil {
+		objectMap["id"] = er.ID
+	}
+	if er.Type != "" {
+		objectMap["_type"] = er.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for ErrorResponse.
@@ -3578,76 +3816,75 @@ func (er *ErrorResponse) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["errors"]
-	if v != nil {
-		var errorsVar []Error
-		err = json.Unmarshal(*m["errors"], &errorsVar)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "errors":
+			if v != nil {
+				var errorsVar []Error
+				err = json.Unmarshal(*v, &errorsVar)
+				if err != nil {
+					return err
+				}
+				er.Errors = &errorsVar
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				er.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				er.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				er.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				er.Type = typeVar
+			}
 		}
-		er.Errors = &errorsVar
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		er.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		er.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		er.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		er.Type = _type
 	}
 
 	return nil
 }
 
-// BasicFoodEstablishment
+// BasicFoodEstablishment ...
 type BasicFoodEstablishment interface {
 	AsRestaurant() (*Restaurant, bool)
 	AsFoodEstablishment() (*FoodEstablishment, bool)
 }
 
-// FoodEstablishment
+// FoodEstablishment ...
 type FoodEstablishment struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -3659,15 +3896,14 @@ type FoodEstablishment struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicFoodEstablishment(body []byte) (BasicFoodEstablishment, error) {
@@ -3710,12 +3946,56 @@ func unmarshalBasicFoodEstablishmentArray(body []byte) ([]BasicFoodEstablishment
 // MarshalJSON is the custom marshaler for FoodEstablishment.
 func (fe FoodEstablishment) MarshalJSON() ([]byte, error) {
 	fe.Type = TypeFoodEstablishment
-	type Alias FoodEstablishment
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(fe),
-	})
+	objectMap := make(map[string]interface{})
+	if fe.PriceRange != nil {
+		objectMap["priceRange"] = fe.PriceRange
+	}
+	if fe.Panoramas != nil {
+		objectMap["panoramas"] = fe.Panoramas
+	}
+	if fe.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = fe.IsPermanentlyClosed
+	}
+	if fe.TagLine != nil {
+		objectMap["tagLine"] = fe.TagLine
+	}
+	if fe.Address != nil {
+		objectMap["address"] = fe.Address
+	}
+	if fe.Telephone != nil {
+		objectMap["telephone"] = fe.Telephone
+	}
+	if fe.Name != nil {
+		objectMap["name"] = fe.Name
+	}
+	if fe.URL != nil {
+		objectMap["url"] = fe.URL
+	}
+	if fe.Image != nil {
+		objectMap["image"] = fe.Image
+	}
+	if fe.Description != nil {
+		objectMap["description"] = fe.Description
+	}
+	if fe.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = fe.EntityPresentationInfo
+	}
+	if fe.BingID != nil {
+		objectMap["bingId"] = fe.BingID
+	}
+	if fe.ContractualRules != nil {
+		objectMap["contractualRules"] = fe.ContractualRules
+	}
+	if fe.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = fe.WebSearchURL
+	}
+	if fe.ID != nil {
+		objectMap["id"] = fe.ID
+	}
+	if fe.Type != "" {
+		objectMap["_type"] = fe.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for FoodEstablishment.
@@ -3950,165 +4230,152 @@ func (fe *FoodEstablishment) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				fe.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				fe.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				fe.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				fe.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				fe.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				fe.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				fe.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				fe.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				fe.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				fe.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				fe.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				fe.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				fe.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				fe.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				fe.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				fe.Type = typeVar
+			}
 		}
-		fe.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		fe.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		fe.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		fe.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		fe.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		fe.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		fe.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		fe.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		fe.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		fe.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		fe.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		fe.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		fe.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		fe.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		fe.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		fe.Type = _type
 	}
 
 	return nil
@@ -4116,14 +4383,17 @@ func (fe *FoodEstablishment) UnmarshalJSON(body []byte) error {
 
 // Hotel ...
 type Hotel struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	HotelClass *string   `json:"hotelClass,omitempty"`
+	Amenities  *[]string `json:"amenities,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -4135,28 +4405,75 @@ type Hotel struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
-	HotelClass          *string        `json:"hotelClass,omitempty"`
-	Amenities           *[]string      `json:"amenities,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Hotel.
 func (h Hotel) MarshalJSON() ([]byte, error) {
 	h.Type = TypeHotel
-	type Alias Hotel
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(h),
-	})
+	objectMap := make(map[string]interface{})
+	if h.HotelClass != nil {
+		objectMap["hotelClass"] = h.HotelClass
+	}
+	if h.Amenities != nil {
+		objectMap["amenities"] = h.Amenities
+	}
+	if h.PriceRange != nil {
+		objectMap["priceRange"] = h.PriceRange
+	}
+	if h.Panoramas != nil {
+		objectMap["panoramas"] = h.Panoramas
+	}
+	if h.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = h.IsPermanentlyClosed
+	}
+	if h.TagLine != nil {
+		objectMap["tagLine"] = h.TagLine
+	}
+	if h.Address != nil {
+		objectMap["address"] = h.Address
+	}
+	if h.Telephone != nil {
+		objectMap["telephone"] = h.Telephone
+	}
+	if h.Name != nil {
+		objectMap["name"] = h.Name
+	}
+	if h.URL != nil {
+		objectMap["url"] = h.URL
+	}
+	if h.Image != nil {
+		objectMap["image"] = h.Image
+	}
+	if h.Description != nil {
+		objectMap["description"] = h.Description
+	}
+	if h.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = h.EntityPresentationInfo
+	}
+	if h.BingID != nil {
+		objectMap["bingId"] = h.BingID
+	}
+	if h.ContractualRules != nil {
+		objectMap["contractualRules"] = h.ContractualRules
+	}
+	if h.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = h.WebSearchURL
+	}
+	if h.ID != nil {
+		objectMap["id"] = h.ID
+	}
+	if h.Type != "" {
+		objectMap["_type"] = h.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Hotel.
@@ -4391,185 +4708,170 @@ func (h *Hotel) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["hotelClass"]
-	if v != nil {
-		var hotelClass string
-		err = json.Unmarshal(*m["hotelClass"], &hotelClass)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "hotelClass":
+			if v != nil {
+				var hotelClass string
+				err = json.Unmarshal(*v, &hotelClass)
+				if err != nil {
+					return err
+				}
+				h.HotelClass = &hotelClass
+			}
+		case "amenities":
+			if v != nil {
+				var amenities []string
+				err = json.Unmarshal(*v, &amenities)
+				if err != nil {
+					return err
+				}
+				h.Amenities = &amenities
+			}
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				h.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				h.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				h.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				h.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				h.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				h.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				h.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				h.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				h.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				h.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				h.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				h.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				h.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				h.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				h.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				h.Type = typeVar
+			}
 		}
-		h.HotelClass = &hotelClass
-	}
-
-	v = m["amenities"]
-	if v != nil {
-		var amenities []string
-		err = json.Unmarshal(*m["amenities"], &amenities)
-		if err != nil {
-			return err
-		}
-		h.Amenities = &amenities
-	}
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
-		}
-		h.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		h.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		h.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		h.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		h.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		h.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		h.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		h.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		h.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		h.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		h.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		h.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		h.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		h.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		h.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		h.Type = _type
 	}
 
 	return nil
@@ -4623,10 +4925,10 @@ type BasicIdentifiable interface {
 
 // Identifiable defines the identity of a resource.
 type Identifiable struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
 	// ID - A String identifier.
 	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicIdentifiable(body []byte) (BasicIdentifiable, error) {
@@ -4773,12 +5075,14 @@ func unmarshalBasicIdentifiableArray(body []byte) ([]BasicIdentifiable, error) {
 // MarshalJSON is the custom marshaler for Identifiable.
 func (i Identifiable) MarshalJSON() ([]byte, error) {
 	i.Type = TypeIdentifiable
-	type Alias Identifiable
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i),
-	})
+	objectMap := make(map[string]interface{})
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != "" {
+		objectMap["_type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Identifiable.
@@ -5008,14 +5312,21 @@ func (i Identifiable) AsBasicResponseBase() (BasicResponseBase, bool) {
 
 // ImageObject defines an image
 type ImageObject struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Thumbnail - The URL to a thumbnail of the image
+	Thumbnail *ImageObject `json:"thumbnail,omitempty"`
+	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
+	ContentURL *string `json:"contentUrl,omitempty"`
+	// HostPageURL - URL of the page that hosts the media object.
+	HostPageURL *string `json:"hostPageUrl,omitempty"`
+	// Width - The width of the source media object, in pixels.
+	Width *int32 `json:"width,omitempty"`
+	// Height - The height of the source media object, in pixels.
+	Height *int32 `json:"height,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	Text     *string       `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5027,32 +5338,75 @@ type ImageObject struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	Text     *string       `json:"text,omitempty"`
-	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
-	ContentURL *string `json:"contentUrl,omitempty"`
-	// HostPageURL - URL of the page that hosts the media object.
-	HostPageURL *string `json:"hostPageUrl,omitempty"`
-	// Width - The width of the source media object, in pixels.
-	Width *int32 `json:"width,omitempty"`
-	// Height - The height of the source media object, in pixels.
-	Height *int32 `json:"height,omitempty"`
-	// Thumbnail - The URL to a thumbnail of the image
-	Thumbnail *ImageObject `json:"thumbnail,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ImageObject.
 func (ioVar ImageObject) MarshalJSON() ([]byte, error) {
 	ioVar.Type = TypeImageObject
-	type Alias ImageObject
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ioVar),
-	})
+	objectMap := make(map[string]interface{})
+	if ioVar.Thumbnail != nil {
+		objectMap["thumbnail"] = ioVar.Thumbnail
+	}
+	if ioVar.ContentURL != nil {
+		objectMap["contentUrl"] = ioVar.ContentURL
+	}
+	if ioVar.HostPageURL != nil {
+		objectMap["hostPageUrl"] = ioVar.HostPageURL
+	}
+	if ioVar.Width != nil {
+		objectMap["width"] = ioVar.Width
+	}
+	if ioVar.Height != nil {
+		objectMap["height"] = ioVar.Height
+	}
+	if ioVar.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = ioVar.ThumbnailURL
+	}
+	if ioVar.Provider != nil {
+		objectMap["provider"] = ioVar.Provider
+	}
+	if ioVar.Text != nil {
+		objectMap["text"] = ioVar.Text
+	}
+	if ioVar.Name != nil {
+		objectMap["name"] = ioVar.Name
+	}
+	if ioVar.URL != nil {
+		objectMap["url"] = ioVar.URL
+	}
+	if ioVar.Image != nil {
+		objectMap["image"] = ioVar.Image
+	}
+	if ioVar.Description != nil {
+		objectMap["description"] = ioVar.Description
+	}
+	if ioVar.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = ioVar.EntityPresentationInfo
+	}
+	if ioVar.BingID != nil {
+		objectMap["bingId"] = ioVar.BingID
+	}
+	if ioVar.ContractualRules != nil {
+		objectMap["contractualRules"] = ioVar.ContractualRules
+	}
+	if ioVar.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ioVar.WebSearchURL
+	}
+	if ioVar.ID != nil {
+		objectMap["id"] = ioVar.ID
+	}
+	if ioVar.Type != "" {
+		objectMap["_type"] = ioVar.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for ImageObject.
@@ -5287,190 +5641,175 @@ func (ioVar *ImageObject) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnail"]
-	if v != nil {
-		var thumbnail ImageObject
-		err = json.Unmarshal(*m["thumbnail"], &thumbnail)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnail":
+			if v != nil {
+				var thumbnail ImageObject
+				err = json.Unmarshal(*v, &thumbnail)
+				if err != nil {
+					return err
+				}
+				ioVar.Thumbnail = &thumbnail
+			}
+		case "contentUrl":
+			if v != nil {
+				var contentURL string
+				err = json.Unmarshal(*v, &contentURL)
+				if err != nil {
+					return err
+				}
+				ioVar.ContentURL = &contentURL
+			}
+		case "hostPageUrl":
+			if v != nil {
+				var hostPageURL string
+				err = json.Unmarshal(*v, &hostPageURL)
+				if err != nil {
+					return err
+				}
+				ioVar.HostPageURL = &hostPageURL
+			}
+		case "width":
+			if v != nil {
+				var width int32
+				err = json.Unmarshal(*v, &width)
+				if err != nil {
+					return err
+				}
+				ioVar.Width = &width
+			}
+		case "height":
+			if v != nil {
+				var height int32
+				err = json.Unmarshal(*v, &height)
+				if err != nil {
+					return err
+				}
+				ioVar.Height = &height
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				ioVar.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				ioVar.Provider = &provider
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ioVar.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				ioVar.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				ioVar.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				ioVar.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				ioVar.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				ioVar.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				ioVar.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ioVar.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ioVar.Type = typeVar
+			}
 		}
-		ioVar.Thumbnail = &thumbnail
-	}
-
-	v = m["contentUrl"]
-	if v != nil {
-		var contentURL string
-		err = json.Unmarshal(*m["contentUrl"], &contentURL)
-		if err != nil {
-			return err
-		}
-		ioVar.ContentURL = &contentURL
-	}
-
-	v = m["hostPageUrl"]
-	if v != nil {
-		var hostPageURL string
-		err = json.Unmarshal(*m["hostPageUrl"], &hostPageURL)
-		if err != nil {
-			return err
-		}
-		ioVar.HostPageURL = &hostPageURL
-	}
-
-	v = m["width"]
-	if v != nil {
-		var width int32
-		err = json.Unmarshal(*m["width"], &width)
-		if err != nil {
-			return err
-		}
-		ioVar.Width = &width
-	}
-
-	v = m["height"]
-	if v != nil {
-		var height int32
-		err = json.Unmarshal(*m["height"], &height)
-		if err != nil {
-			return err
-		}
-		ioVar.Height = &height
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		ioVar.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		ioVar.Provider = &provider
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		ioVar.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ioVar.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		ioVar.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		ioVar.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		ioVar.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		ioVar.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		ioVar.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		ioVar.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		ioVar.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ioVar.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		ioVar.Type = _type
 	}
 
 	return nil
 }
 
-// BasicIntangible
+// BasicIntangible ...
 type BasicIntangible interface {
 	AsPostalAddress() (*PostalAddress, bool)
 	AsStructuredValue() (*StructuredValue, bool)
@@ -5478,16 +5817,8 @@ type BasicIntangible interface {
 	AsIntangible() (*Intangible, bool)
 }
 
-// Intangible
+// Intangible ...
 type Intangible struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5499,6 +5830,14 @@ type Intangible struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicIntangible(body []byte) (BasicIntangible, error) {
@@ -5545,12 +5884,38 @@ func unmarshalBasicIntangibleArray(body []byte) ([]BasicIntangible, error) {
 // MarshalJSON is the custom marshaler for Intangible.
 func (i Intangible) MarshalJSON() ([]byte, error) {
 	i.Type = TypeIntangible
-	type Alias Intangible
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i),
-	})
+	objectMap := make(map[string]interface{})
+	if i.Name != nil {
+		objectMap["name"] = i.Name
+	}
+	if i.URL != nil {
+		objectMap["url"] = i.URL
+	}
+	if i.Image != nil {
+		objectMap["image"] = i.Image
+	}
+	if i.Description != nil {
+		objectMap["description"] = i.Description
+	}
+	if i.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = i.EntityPresentationInfo
+	}
+	if i.BingID != nil {
+		objectMap["bingId"] = i.BingID
+	}
+	if i.ContractualRules != nil {
+		objectMap["contractualRules"] = i.ContractualRules
+	}
+	if i.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = i.WebSearchURL
+	}
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != "" {
+		objectMap["_type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Intangible.
@@ -5785,105 +6150,98 @@ func (i *Intangible) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				i.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				i.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				i.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				i.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				i.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				i.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				i.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				i.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				i.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				i.Type = typeVar
+			}
 		}
-		i.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		i.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		i.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		i.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		i.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		i.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		i.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		i.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		i.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		i.Type = _type
 	}
 
 	return nil
@@ -5891,14 +6249,11 @@ func (i *Intangible) UnmarshalJSON(body []byte) error {
 
 // License defines the license under which the text or photo may be used.
 type License struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	Text     *string       `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -5910,22 +6265,60 @@ type License struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	Text     *string       `json:"text,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for License.
 func (l License) MarshalJSON() ([]byte, error) {
 	l.Type = TypeLicense
-	type Alias License
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(l),
-	})
+	objectMap := make(map[string]interface{})
+	if l.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = l.ThumbnailURL
+	}
+	if l.Provider != nil {
+		objectMap["provider"] = l.Provider
+	}
+	if l.Text != nil {
+		objectMap["text"] = l.Text
+	}
+	if l.Name != nil {
+		objectMap["name"] = l.Name
+	}
+	if l.URL != nil {
+		objectMap["url"] = l.URL
+	}
+	if l.Image != nil {
+		objectMap["image"] = l.Image
+	}
+	if l.Description != nil {
+		objectMap["description"] = l.Description
+	}
+	if l.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = l.EntityPresentationInfo
+	}
+	if l.BingID != nil {
+		objectMap["bingId"] = l.BingID
+	}
+	if l.ContractualRules != nil {
+		objectMap["contractualRules"] = l.ContractualRules
+	}
+	if l.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = l.WebSearchURL
+	}
+	if l.ID != nil {
+		objectMap["id"] = l.ID
+	}
+	if l.Type != "" {
+		objectMap["_type"] = l.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for License.
@@ -6160,140 +6553,130 @@ func (l *License) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				l.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				l.Provider = &provider
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				l.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				l.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				l.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				l.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				l.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				l.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				l.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				l.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				l.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				l.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				l.Type = typeVar
+			}
 		}
-		l.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		l.Provider = &provider
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		l.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		l.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		l.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		l.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		l.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		l.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		l.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		l.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		l.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		l.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		l.Type = _type
 	}
 
 	return nil
 }
 
-// BasicLocalBusiness
+// BasicLocalBusiness ...
 type BasicLocalBusiness interface {
 	AsMovieTheater() (*MovieTheater, bool)
 	AsEntertainmentBusiness() (*EntertainmentBusiness, bool)
@@ -6307,16 +6690,17 @@ type BasicLocalBusiness interface {
 	AsLocalBusiness() (*LocalBusiness, bool)
 }
 
-// LocalBusiness
+// LocalBusiness ...
 type LocalBusiness struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -6328,15 +6712,14 @@ type LocalBusiness struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicLocalBusiness(body []byte) (BasicLocalBusiness, error) {
@@ -6399,12 +6782,56 @@ func unmarshalBasicLocalBusinessArray(body []byte) ([]BasicLocalBusiness, error)
 // MarshalJSON is the custom marshaler for LocalBusiness.
 func (lb LocalBusiness) MarshalJSON() ([]byte, error) {
 	lb.Type = TypeLocalBusiness
-	type Alias LocalBusiness
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(lb),
-	})
+	objectMap := make(map[string]interface{})
+	if lb.PriceRange != nil {
+		objectMap["priceRange"] = lb.PriceRange
+	}
+	if lb.Panoramas != nil {
+		objectMap["panoramas"] = lb.Panoramas
+	}
+	if lb.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = lb.IsPermanentlyClosed
+	}
+	if lb.TagLine != nil {
+		objectMap["tagLine"] = lb.TagLine
+	}
+	if lb.Address != nil {
+		objectMap["address"] = lb.Address
+	}
+	if lb.Telephone != nil {
+		objectMap["telephone"] = lb.Telephone
+	}
+	if lb.Name != nil {
+		objectMap["name"] = lb.Name
+	}
+	if lb.URL != nil {
+		objectMap["url"] = lb.URL
+	}
+	if lb.Image != nil {
+		objectMap["image"] = lb.Image
+	}
+	if lb.Description != nil {
+		objectMap["description"] = lb.Description
+	}
+	if lb.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = lb.EntityPresentationInfo
+	}
+	if lb.BingID != nil {
+		objectMap["bingId"] = lb.BingID
+	}
+	if lb.ContractualRules != nil {
+		objectMap["contractualRules"] = lb.ContractualRules
+	}
+	if lb.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = lb.WebSearchURL
+	}
+	if lb.ID != nil {
+		objectMap["id"] = lb.ID
+	}
+	if lb.Type != "" {
+		objectMap["_type"] = lb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for LocalBusiness.
@@ -6639,186 +7066,174 @@ func (lb *LocalBusiness) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				lb.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				lb.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				lb.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				lb.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				lb.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				lb.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				lb.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				lb.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				lb.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				lb.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				lb.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				lb.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				lb.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				lb.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				lb.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				lb.Type = typeVar
+			}
 		}
-		lb.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		lb.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		lb.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		lb.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		lb.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		lb.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		lb.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		lb.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		lb.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		lb.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		lb.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		lb.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		lb.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		lb.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		lb.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		lb.Type = _type
 	}
 
 	return nil
 }
 
-// BasicLodgingBusiness
+// BasicLodgingBusiness ...
 type BasicLodgingBusiness interface {
 	AsHotel() (*Hotel, bool)
 	AsLodgingBusiness() (*LodgingBusiness, bool)
 }
 
-// LodgingBusiness
+// LodgingBusiness ...
 type LodgingBusiness struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -6830,15 +7245,14 @@ type LodgingBusiness struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicLodgingBusiness(body []byte) (BasicLodgingBusiness, error) {
@@ -6881,12 +7295,56 @@ func unmarshalBasicLodgingBusinessArray(body []byte) ([]BasicLodgingBusiness, er
 // MarshalJSON is the custom marshaler for LodgingBusiness.
 func (lb LodgingBusiness) MarshalJSON() ([]byte, error) {
 	lb.Type = TypeLodgingBusiness
-	type Alias LodgingBusiness
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(lb),
-	})
+	objectMap := make(map[string]interface{})
+	if lb.PriceRange != nil {
+		objectMap["priceRange"] = lb.PriceRange
+	}
+	if lb.Panoramas != nil {
+		objectMap["panoramas"] = lb.Panoramas
+	}
+	if lb.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = lb.IsPermanentlyClosed
+	}
+	if lb.TagLine != nil {
+		objectMap["tagLine"] = lb.TagLine
+	}
+	if lb.Address != nil {
+		objectMap["address"] = lb.Address
+	}
+	if lb.Telephone != nil {
+		objectMap["telephone"] = lb.Telephone
+	}
+	if lb.Name != nil {
+		objectMap["name"] = lb.Name
+	}
+	if lb.URL != nil {
+		objectMap["url"] = lb.URL
+	}
+	if lb.Image != nil {
+		objectMap["image"] = lb.Image
+	}
+	if lb.Description != nil {
+		objectMap["description"] = lb.Description
+	}
+	if lb.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = lb.EntityPresentationInfo
+	}
+	if lb.BingID != nil {
+		objectMap["bingId"] = lb.BingID
+	}
+	if lb.ContractualRules != nil {
+		objectMap["contractualRules"] = lb.ContractualRules
+	}
+	if lb.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = lb.WebSearchURL
+	}
+	if lb.ID != nil {
+		objectMap["id"] = lb.ID
+	}
+	if lb.Type != "" {
+		objectMap["_type"] = lb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for LodgingBusiness.
@@ -7121,186 +7579,178 @@ func (lb *LodgingBusiness) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				lb.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				lb.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				lb.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				lb.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				lb.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				lb.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				lb.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				lb.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				lb.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				lb.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				lb.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				lb.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				lb.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				lb.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				lb.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				lb.Type = typeVar
+			}
 		}
-		lb.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		lb.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		lb.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		lb.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		lb.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		lb.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		lb.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		lb.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		lb.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		lb.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		lb.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		lb.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		lb.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		lb.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		lb.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		lb.Type = _type
 	}
 
 	return nil
 }
 
-// BasicMediaObject
+// BasicMediaObject ...
 type BasicMediaObject interface {
 	AsImageObject() (*ImageObject, bool)
 	AsMediaObject() (*MediaObject, bool)
 }
 
-// MediaObject
+// MediaObject ...
 type MediaObject struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
+	ContentURL *string `json:"contentUrl,omitempty"`
+	// HostPageURL - URL of the page that hosts the media object.
+	HostPageURL *string `json:"hostPageUrl,omitempty"`
+	// Width - The width of the source media object, in pixels.
+	Width *int32 `json:"width,omitempty"`
+	// Height - The height of the source media object, in pixels.
+	Height *int32 `json:"height,omitempty"`
+	// ThumbnailURL - The URL to a thumbnail of the item.
+	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
+	// Provider - The source of the creative work.
+	Provider *[]BasicThing `json:"provider,omitempty"`
+	Text     *string       `json:"text,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -7312,19 +7762,14 @@ type MediaObject struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// ThumbnailURL - The URL to a thumbnail of the item.
-	ThumbnailURL *string `json:"thumbnailUrl,omitempty"`
-	// Provider - The source of the creative work.
-	Provider *[]BasicThing `json:"provider,omitempty"`
-	Text     *string       `json:"text,omitempty"`
-	// ContentURL - Original URL to retrieve the source (file) for the media object (e.g the source URL for the image).
-	ContentURL *string `json:"contentUrl,omitempty"`
-	// HostPageURL - URL of the page that hosts the media object.
-	HostPageURL *string `json:"hostPageUrl,omitempty"`
-	// Width - The width of the source media object, in pixels.
-	Width *int32 `json:"width,omitempty"`
-	// Height - The height of the source media object, in pixels.
-	Height *int32 `json:"height,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicMediaObject(body []byte) (BasicMediaObject, error) {
@@ -7367,12 +7812,59 @@ func unmarshalBasicMediaObjectArray(body []byte) ([]BasicMediaObject, error) {
 // MarshalJSON is the custom marshaler for MediaObject.
 func (mo MediaObject) MarshalJSON() ([]byte, error) {
 	mo.Type = TypeMediaObject
-	type Alias MediaObject
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mo),
-	})
+	objectMap := make(map[string]interface{})
+	if mo.ContentURL != nil {
+		objectMap["contentUrl"] = mo.ContentURL
+	}
+	if mo.HostPageURL != nil {
+		objectMap["hostPageUrl"] = mo.HostPageURL
+	}
+	if mo.Width != nil {
+		objectMap["width"] = mo.Width
+	}
+	if mo.Height != nil {
+		objectMap["height"] = mo.Height
+	}
+	if mo.ThumbnailURL != nil {
+		objectMap["thumbnailUrl"] = mo.ThumbnailURL
+	}
+	if mo.Provider != nil {
+		objectMap["provider"] = mo.Provider
+	}
+	if mo.Text != nil {
+		objectMap["text"] = mo.Text
+	}
+	if mo.Name != nil {
+		objectMap["name"] = mo.Name
+	}
+	if mo.URL != nil {
+		objectMap["url"] = mo.URL
+	}
+	if mo.Image != nil {
+		objectMap["image"] = mo.Image
+	}
+	if mo.Description != nil {
+		objectMap["description"] = mo.Description
+	}
+	if mo.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = mo.EntityPresentationInfo
+	}
+	if mo.BingID != nil {
+		objectMap["bingId"] = mo.BingID
+	}
+	if mo.ContractualRules != nil {
+		objectMap["contractualRules"] = mo.ContractualRules
+	}
+	if mo.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = mo.WebSearchURL
+	}
+	if mo.ID != nil {
+		objectMap["id"] = mo.ID
+	}
+	if mo.Type != "" {
+		objectMap["_type"] = mo.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for MediaObject.
@@ -7607,174 +8099,160 @@ func (mo *MediaObject) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["contentUrl"]
-	if v != nil {
-		var contentURL string
-		err = json.Unmarshal(*m["contentUrl"], &contentURL)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "contentUrl":
+			if v != nil {
+				var contentURL string
+				err = json.Unmarshal(*v, &contentURL)
+				if err != nil {
+					return err
+				}
+				mo.ContentURL = &contentURL
+			}
+		case "hostPageUrl":
+			if v != nil {
+				var hostPageURL string
+				err = json.Unmarshal(*v, &hostPageURL)
+				if err != nil {
+					return err
+				}
+				mo.HostPageURL = &hostPageURL
+			}
+		case "width":
+			if v != nil {
+				var width int32
+				err = json.Unmarshal(*v, &width)
+				if err != nil {
+					return err
+				}
+				mo.Width = &width
+			}
+		case "height":
+			if v != nil {
+				var height int32
+				err = json.Unmarshal(*v, &height)
+				if err != nil {
+					return err
+				}
+				mo.Height = &height
+			}
+		case "thumbnailUrl":
+			if v != nil {
+				var thumbnailURL string
+				err = json.Unmarshal(*v, &thumbnailURL)
+				if err != nil {
+					return err
+				}
+				mo.ThumbnailURL = &thumbnailURL
+			}
+		case "provider":
+			if v != nil {
+				provider, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				mo.Provider = &provider
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				mo.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mo.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				mo.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				mo.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				mo.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				mo.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				mo.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				mo.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				mo.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mo.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mo.Type = typeVar
+			}
 		}
-		mo.ContentURL = &contentURL
-	}
-
-	v = m["hostPageUrl"]
-	if v != nil {
-		var hostPageURL string
-		err = json.Unmarshal(*m["hostPageUrl"], &hostPageURL)
-		if err != nil {
-			return err
-		}
-		mo.HostPageURL = &hostPageURL
-	}
-
-	v = m["width"]
-	if v != nil {
-		var width int32
-		err = json.Unmarshal(*m["width"], &width)
-		if err != nil {
-			return err
-		}
-		mo.Width = &width
-	}
-
-	v = m["height"]
-	if v != nil {
-		var height int32
-		err = json.Unmarshal(*m["height"], &height)
-		if err != nil {
-			return err
-		}
-		mo.Height = &height
-	}
-
-	v = m["thumbnailUrl"]
-	if v != nil {
-		var thumbnailURL string
-		err = json.Unmarshal(*m["thumbnailUrl"], &thumbnailURL)
-		if err != nil {
-			return err
-		}
-		mo.ThumbnailURL = &thumbnailURL
-	}
-
-	v = m["provider"]
-	if v != nil {
-		provider, err := unmarshalBasicThingArray(*m["provider"])
-		if err != nil {
-			return err
-		}
-		mo.Provider = &provider
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		mo.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mo.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		mo.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		mo.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		mo.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		mo.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		mo.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		mo.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		mo.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mo.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		mo.Type = _type
 	}
 
 	return nil
@@ -7782,14 +8260,16 @@ func (mo *MediaObject) UnmarshalJSON(body []byte) error {
 
 // MovieTheater ...
 type MovieTheater struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	ScreenCount *int32 `json:"screenCount,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -7801,27 +8281,72 @@ type MovieTheater struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
-	ScreenCount         *int32         `json:"screenCount,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for MovieTheater.
 func (mt MovieTheater) MarshalJSON() ([]byte, error) {
 	mt.Type = TypeMovieTheater
-	type Alias MovieTheater
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mt),
-	})
+	objectMap := make(map[string]interface{})
+	if mt.ScreenCount != nil {
+		objectMap["screenCount"] = mt.ScreenCount
+	}
+	if mt.PriceRange != nil {
+		objectMap["priceRange"] = mt.PriceRange
+	}
+	if mt.Panoramas != nil {
+		objectMap["panoramas"] = mt.Panoramas
+	}
+	if mt.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = mt.IsPermanentlyClosed
+	}
+	if mt.TagLine != nil {
+		objectMap["tagLine"] = mt.TagLine
+	}
+	if mt.Address != nil {
+		objectMap["address"] = mt.Address
+	}
+	if mt.Telephone != nil {
+		objectMap["telephone"] = mt.Telephone
+	}
+	if mt.Name != nil {
+		objectMap["name"] = mt.Name
+	}
+	if mt.URL != nil {
+		objectMap["url"] = mt.URL
+	}
+	if mt.Image != nil {
+		objectMap["image"] = mt.Image
+	}
+	if mt.Description != nil {
+		objectMap["description"] = mt.Description
+	}
+	if mt.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = mt.EntityPresentationInfo
+	}
+	if mt.BingID != nil {
+		objectMap["bingId"] = mt.BingID
+	}
+	if mt.ContractualRules != nil {
+		objectMap["contractualRules"] = mt.ContractualRules
+	}
+	if mt.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = mt.WebSearchURL
+	}
+	if mt.ID != nil {
+		objectMap["id"] = mt.ID
+	}
+	if mt.Type != "" {
+		objectMap["_type"] = mt.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for MovieTheater.
@@ -8056,175 +8581,161 @@ func (mt *MovieTheater) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["screenCount"]
-	if v != nil {
-		var screenCount int32
-		err = json.Unmarshal(*m["screenCount"], &screenCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "screenCount":
+			if v != nil {
+				var screenCount int32
+				err = json.Unmarshal(*v, &screenCount)
+				if err != nil {
+					return err
+				}
+				mt.ScreenCount = &screenCount
+			}
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				mt.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				mt.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				mt.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				mt.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				mt.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				mt.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mt.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				mt.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				mt.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				mt.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				mt.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				mt.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				mt.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				mt.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mt.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mt.Type = typeVar
+			}
 		}
-		mt.ScreenCount = &screenCount
-	}
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
-		}
-		mt.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		mt.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		mt.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		mt.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		mt.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		mt.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mt.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		mt.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		mt.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		mt.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		mt.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		mt.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		mt.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		mt.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mt.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		mt.Type = _type
 	}
 
 	return nil
@@ -8232,14 +8743,6 @@ func (mt *MovieTheater) UnmarshalJSON(body []byte) error {
 
 // Organization defines an organization.
 type Organization struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -8251,17 +8754,51 @@ type Organization struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Organization.
 func (o Organization) MarshalJSON() ([]byte, error) {
 	o.Type = TypeOrganization
-	type Alias Organization
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(o),
-	})
+	objectMap := make(map[string]interface{})
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.URL != nil {
+		objectMap["url"] = o.URL
+	}
+	if o.Image != nil {
+		objectMap["image"] = o.Image
+	}
+	if o.Description != nil {
+		objectMap["description"] = o.Description
+	}
+	if o.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = o.EntityPresentationInfo
+	}
+	if o.BingID != nil {
+		objectMap["bingId"] = o.BingID
+	}
+	if o.ContractualRules != nil {
+		objectMap["contractualRules"] = o.ContractualRules
+	}
+	if o.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = o.WebSearchURL
+	}
+	if o.ID != nil {
+		objectMap["id"] = o.ID
+	}
+	if o.Type != "" {
+		objectMap["_type"] = o.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Organization.
@@ -8496,105 +9033,98 @@ func (o *Organization) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				o.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				o.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				o.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				o.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				o.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				o.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				o.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				o.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				o.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				o.Type = typeVar
+			}
 		}
-		o.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		o.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		o.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		o.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		o.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		o.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		o.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		o.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		o.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		o.Type = _type
 	}
 
 	return nil
@@ -8622,14 +9152,10 @@ type BasicPlace interface {
 
 // Place defines information about a local entity, such as a restaurant or hotel.
 type Place struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -8641,10 +9167,14 @@ type Place struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicPlace(body []byte) (BasicPlace, error) {
@@ -8723,12 +9253,44 @@ func unmarshalBasicPlaceArray(body []byte) ([]BasicPlace, error) {
 // MarshalJSON is the custom marshaler for Place.
 func (p Place) MarshalJSON() ([]byte, error) {
 	p.Type = TypePlace
-	type Alias Place
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.Address != nil {
+		objectMap["address"] = p.Address
+	}
+	if p.Telephone != nil {
+		objectMap["telephone"] = p.Telephone
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	if p.URL != nil {
+		objectMap["url"] = p.URL
+	}
+	if p.Image != nil {
+		objectMap["image"] = p.Image
+	}
+	if p.Description != nil {
+		objectMap["description"] = p.Description
+	}
+	if p.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = p.EntityPresentationInfo
+	}
+	if p.BingID != nil {
+		objectMap["bingId"] = p.BingID
+	}
+	if p.ContractualRules != nil {
+		objectMap["contractualRules"] = p.ContractualRules
+	}
+	if p.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = p.WebSearchURL
+	}
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Type != "" {
+		objectMap["_type"] = p.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Place.
@@ -8963,125 +9525,116 @@ func (p *Place) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				p.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				p.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				p.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				p.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				p.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				p.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				p.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				p.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				p.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				p.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = typeVar
+			}
 		}
-		p.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		p.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		p.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		p.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		p.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		p.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		p.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		p.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		p.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		p.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		p.Type = _type
 	}
 
 	return nil
@@ -9089,28 +9642,42 @@ func (p *Place) UnmarshalJSON(body []byte) error {
 
 // Places defines a local entity answer.
 type Places struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	// Value - A list of local entities, such as restaurants or hotels.
+	Value        *[]BasicThing `json:"value,omitempty"`
+	QueryContext *QueryContext `json:"queryContext,omitempty"`
 	// ContractualRules - A list of rules that you must adhere to if you display the item.
 	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string       `json:"webSearchUrl,omitempty"`
-	QueryContext *QueryContext `json:"queryContext,omitempty"`
-	// Value - A list of local entities, such as restaurants or hotels.
-	Value *[]BasicThing `json:"value,omitempty"`
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Places.
 func (p Places) MarshalJSON() ([]byte, error) {
 	p.Type = TypePlaces
-	type Alias Places
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.Value != nil {
+		objectMap["value"] = p.Value
+	}
+	if p.QueryContext != nil {
+		objectMap["queryContext"] = p.QueryContext
+	}
+	if p.ContractualRules != nil {
+		objectMap["contractualRules"] = p.ContractualRules
+	}
+	if p.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = p.WebSearchURL
+	}
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Type != "" {
+		objectMap["_type"] = p.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Places.
@@ -9345,64 +9912,61 @@ func (p *Places) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["value"]
-	if v != nil {
-		value, err := unmarshalBasicThingArray(*m["value"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "value":
+			if v != nil {
+				value, err := unmarshalBasicThingArray(*v)
+				if err != nil {
+					return err
+				}
+				p.Value = &value
+			}
+		case "queryContext":
+			if v != nil {
+				var queryContext QueryContext
+				err = json.Unmarshal(*v, &queryContext)
+				if err != nil {
+					return err
+				}
+				p.QueryContext = &queryContext
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				p.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				p.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = typeVar
+			}
 		}
-		p.Value = &value
-	}
-
-	v = m["queryContext"]
-	if v != nil {
-		var queryContext QueryContext
-		err = json.Unmarshal(*m["queryContext"], &queryContext)
-		if err != nil {
-			return err
-		}
-		p.QueryContext = &queryContext
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		p.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		p.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		p.Type = _type
 	}
 
 	return nil
@@ -9410,25 +9974,6 @@ func (p *Places) UnmarshalJSON(body []byte) error {
 
 // PostalAddress defines a postal address.
 type PostalAddress struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
-	// Name - The name of the thing represented by this object.
-	Name *string `json:"name,omitempty"`
-	// URL - The URL to get more information about the thing represented by this object.
-	URL   *string      `json:"url,omitempty"`
-	Image *ImageObject `json:"image,omitempty"`
-	// Description - A short description of the item.
-	Description *string `json:"description,omitempty"`
-	// EntityPresentationInfo - Additional information about the entity such as hints that you can use to determine the entity's type. To determine the entity's type, use the entityScenario and entityTypeHint fields.
-	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
-	// BingID - An ID that uniquely identifies this item.
-	BingID        *string `json:"bingId,omitempty"`
 	StreetAddress *string `json:"streetAddress,omitempty"`
 	// AddressLocality - The city where the street address is located. For example, Seattle.
 	AddressLocality  *string `json:"addressLocality,omitempty"`
@@ -9448,17 +9993,95 @@ type PostalAddress struct {
 	AddressRegionAbbreviation *string `json:"addressRegionAbbreviation,omitempty"`
 	// Text - The complete address. For example, 2100 Westlake Ave N, Bellevue, WA 98052.
 	Text *string `json:"text,omitempty"`
+	// Name - The name of the thing represented by this object.
+	Name *string `json:"name,omitempty"`
+	// URL - The URL to get more information about the thing represented by this object.
+	URL   *string      `json:"url,omitempty"`
+	Image *ImageObject `json:"image,omitempty"`
+	// Description - A short description of the item.
+	Description *string `json:"description,omitempty"`
+	// EntityPresentationInfo - Additional information about the entity such as hints that you can use to determine the entity's type. To determine the entity's type, use the entityScenario and entityTypeHint fields.
+	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
+	// BingID - An ID that uniquely identifies this item.
+	BingID *string `json:"bingId,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PostalAddress.
 func (pa PostalAddress) MarshalJSON() ([]byte, error) {
 	pa.Type = TypePostalAddress
-	type Alias PostalAddress
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pa),
-	})
+	objectMap := make(map[string]interface{})
+	if pa.StreetAddress != nil {
+		objectMap["streetAddress"] = pa.StreetAddress
+	}
+	if pa.AddressLocality != nil {
+		objectMap["addressLocality"] = pa.AddressLocality
+	}
+	if pa.AddressSubregion != nil {
+		objectMap["addressSubregion"] = pa.AddressSubregion
+	}
+	if pa.AddressRegion != nil {
+		objectMap["addressRegion"] = pa.AddressRegion
+	}
+	if pa.PostalCode != nil {
+		objectMap["postalCode"] = pa.PostalCode
+	}
+	if pa.PostOfficeBoxNumber != nil {
+		objectMap["postOfficeBoxNumber"] = pa.PostOfficeBoxNumber
+	}
+	if pa.AddressCountry != nil {
+		objectMap["addressCountry"] = pa.AddressCountry
+	}
+	if pa.CountryIso != nil {
+		objectMap["countryIso"] = pa.CountryIso
+	}
+	if pa.Neighborhood != nil {
+		objectMap["neighborhood"] = pa.Neighborhood
+	}
+	if pa.AddressRegionAbbreviation != nil {
+		objectMap["addressRegionAbbreviation"] = pa.AddressRegionAbbreviation
+	}
+	if pa.Text != nil {
+		objectMap["text"] = pa.Text
+	}
+	if pa.Name != nil {
+		objectMap["name"] = pa.Name
+	}
+	if pa.URL != nil {
+		objectMap["url"] = pa.URL
+	}
+	if pa.Image != nil {
+		objectMap["image"] = pa.Image
+	}
+	if pa.Description != nil {
+		objectMap["description"] = pa.Description
+	}
+	if pa.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = pa.EntityPresentationInfo
+	}
+	if pa.BingID != nil {
+		objectMap["bingId"] = pa.BingID
+	}
+	if pa.ContractualRules != nil {
+		objectMap["contractualRules"] = pa.ContractualRules
+	}
+	if pa.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = pa.WebSearchURL
+	}
+	if pa.ID != nil {
+		objectMap["id"] = pa.ID
+	}
+	if pa.Type != "" {
+		objectMap["_type"] = pa.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for PostalAddress.
@@ -9693,215 +10316,197 @@ func (pa *PostalAddress) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["streetAddress"]
-	if v != nil {
-		var streetAddress string
-		err = json.Unmarshal(*m["streetAddress"], &streetAddress)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "streetAddress":
+			if v != nil {
+				var streetAddress string
+				err = json.Unmarshal(*v, &streetAddress)
+				if err != nil {
+					return err
+				}
+				pa.StreetAddress = &streetAddress
+			}
+		case "addressLocality":
+			if v != nil {
+				var addressLocality string
+				err = json.Unmarshal(*v, &addressLocality)
+				if err != nil {
+					return err
+				}
+				pa.AddressLocality = &addressLocality
+			}
+		case "addressSubregion":
+			if v != nil {
+				var addressSubregion string
+				err = json.Unmarshal(*v, &addressSubregion)
+				if err != nil {
+					return err
+				}
+				pa.AddressSubregion = &addressSubregion
+			}
+		case "addressRegion":
+			if v != nil {
+				var addressRegion string
+				err = json.Unmarshal(*v, &addressRegion)
+				if err != nil {
+					return err
+				}
+				pa.AddressRegion = &addressRegion
+			}
+		case "postalCode":
+			if v != nil {
+				var postalCode string
+				err = json.Unmarshal(*v, &postalCode)
+				if err != nil {
+					return err
+				}
+				pa.PostalCode = &postalCode
+			}
+		case "postOfficeBoxNumber":
+			if v != nil {
+				var postOfficeBoxNumber string
+				err = json.Unmarshal(*v, &postOfficeBoxNumber)
+				if err != nil {
+					return err
+				}
+				pa.PostOfficeBoxNumber = &postOfficeBoxNumber
+			}
+		case "addressCountry":
+			if v != nil {
+				var addressCountry string
+				err = json.Unmarshal(*v, &addressCountry)
+				if err != nil {
+					return err
+				}
+				pa.AddressCountry = &addressCountry
+			}
+		case "countryIso":
+			if v != nil {
+				var countryIso string
+				err = json.Unmarshal(*v, &countryIso)
+				if err != nil {
+					return err
+				}
+				pa.CountryIso = &countryIso
+			}
+		case "neighborhood":
+			if v != nil {
+				var neighborhood string
+				err = json.Unmarshal(*v, &neighborhood)
+				if err != nil {
+					return err
+				}
+				pa.Neighborhood = &neighborhood
+			}
+		case "addressRegionAbbreviation":
+			if v != nil {
+				var addressRegionAbbreviation string
+				err = json.Unmarshal(*v, &addressRegionAbbreviation)
+				if err != nil {
+					return err
+				}
+				pa.AddressRegionAbbreviation = &addressRegionAbbreviation
+			}
+		case "text":
+			if v != nil {
+				var textVar string
+				err = json.Unmarshal(*v, &textVar)
+				if err != nil {
+					return err
+				}
+				pa.Text = &textVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				pa.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				pa.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				pa.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				pa.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				pa.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				pa.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				pa.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				pa.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				pa.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				pa.Type = typeVar
+			}
 		}
-		pa.StreetAddress = &streetAddress
-	}
-
-	v = m["addressLocality"]
-	if v != nil {
-		var addressLocality string
-		err = json.Unmarshal(*m["addressLocality"], &addressLocality)
-		if err != nil {
-			return err
-		}
-		pa.AddressLocality = &addressLocality
-	}
-
-	v = m["addressSubregion"]
-	if v != nil {
-		var addressSubregion string
-		err = json.Unmarshal(*m["addressSubregion"], &addressSubregion)
-		if err != nil {
-			return err
-		}
-		pa.AddressSubregion = &addressSubregion
-	}
-
-	v = m["addressRegion"]
-	if v != nil {
-		var addressRegion string
-		err = json.Unmarshal(*m["addressRegion"], &addressRegion)
-		if err != nil {
-			return err
-		}
-		pa.AddressRegion = &addressRegion
-	}
-
-	v = m["postalCode"]
-	if v != nil {
-		var postalCode string
-		err = json.Unmarshal(*m["postalCode"], &postalCode)
-		if err != nil {
-			return err
-		}
-		pa.PostalCode = &postalCode
-	}
-
-	v = m["postOfficeBoxNumber"]
-	if v != nil {
-		var postOfficeBoxNumber string
-		err = json.Unmarshal(*m["postOfficeBoxNumber"], &postOfficeBoxNumber)
-		if err != nil {
-			return err
-		}
-		pa.PostOfficeBoxNumber = &postOfficeBoxNumber
-	}
-
-	v = m["addressCountry"]
-	if v != nil {
-		var addressCountry string
-		err = json.Unmarshal(*m["addressCountry"], &addressCountry)
-		if err != nil {
-			return err
-		}
-		pa.AddressCountry = &addressCountry
-	}
-
-	v = m["countryIso"]
-	if v != nil {
-		var countryIso string
-		err = json.Unmarshal(*m["countryIso"], &countryIso)
-		if err != nil {
-			return err
-		}
-		pa.CountryIso = &countryIso
-	}
-
-	v = m["neighborhood"]
-	if v != nil {
-		var neighborhood string
-		err = json.Unmarshal(*m["neighborhood"], &neighborhood)
-		if err != nil {
-			return err
-		}
-		pa.Neighborhood = &neighborhood
-	}
-
-	v = m["addressRegionAbbreviation"]
-	if v != nil {
-		var addressRegionAbbreviation string
-		err = json.Unmarshal(*m["addressRegionAbbreviation"], &addressRegionAbbreviation)
-		if err != nil {
-			return err
-		}
-		pa.AddressRegionAbbreviation = &addressRegionAbbreviation
-	}
-
-	v = m["text"]
-	if v != nil {
-		var textVar string
-		err = json.Unmarshal(*m["text"], &textVar)
-		if err != nil {
-			return err
-		}
-		pa.Text = &textVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		pa.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		pa.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		pa.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		pa.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		pa.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		pa.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		pa.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		pa.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		pa.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		pa.Type = _type
 	}
 
 	return nil
@@ -9966,16 +10571,17 @@ type BasicResponse interface {
 	AsResponse() (*Response, bool)
 }
 
-// Response defines a response. All schemas that could be returned at the root of a response should inherit from this
+// Response defines a response. All schemas that could be returned at the root of a response should inherit from
+// this
 type Response struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
 	// ContractualRules - A list of rules that you must adhere to if you display the item.
 	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
 	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicResponse(body []byte) (BasicResponse, error) {
@@ -10118,12 +10724,20 @@ func unmarshalBasicResponseArray(body []byte) ([]BasicResponse, error) {
 // MarshalJSON is the custom marshaler for Response.
 func (r Response) MarshalJSON() ([]byte, error) {
 	r.Type = TypeResponse
-	type Alias Response
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	if r.ContractualRules != nil {
+		objectMap["contractualRules"] = r.ContractualRules
+	}
+	if r.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = r.WebSearchURL
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Type != "" {
+		objectMap["_type"] = r.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Response.
@@ -10358,51 +10972,50 @@ func (r *Response) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				r.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				r.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				r.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				r.Type = typeVar
+			}
 		}
-		r.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		r.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		r.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		r.Type = _type
 	}
 
 	return nil
 }
 
-// BasicResponseBase
+// BasicResponseBase ...
 type BasicResponseBase interface {
 	AsImageObject() (*ImageObject, bool)
 	AsThing() (*Thing, bool)
@@ -10450,7 +11063,7 @@ type BasicResponseBase interface {
 	AsResponseBase() (*ResponseBase, bool)
 }
 
-// ResponseBase
+// ResponseBase ...
 type ResponseBase struct {
 	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
 	Type TypeBasicResponseBase `json:"_type,omitempty"`
@@ -10604,12 +11217,11 @@ func unmarshalBasicResponseBaseArray(body []byte) ([]BasicResponseBase, error) {
 // MarshalJSON is the custom marshaler for ResponseBase.
 func (rb ResponseBase) MarshalJSON() ([]byte, error) {
 	rb.Type = TypeResponseBase
-	type Alias ResponseBase
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rb),
-	})
+	objectMap := make(map[string]interface{})
+	if rb.Type != "" {
+		objectMap["_type"] = rb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for ResponseBase.
@@ -10839,14 +11451,19 @@ func (rb ResponseBase) AsBasicResponseBase() (BasicResponseBase, bool) {
 
 // Restaurant ...
 type Restaurant struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	AcceptsReservations *bool     `json:"acceptsReservations,omitempty"`
+	ReservationURL      *string   `json:"reservationUrl,omitempty"`
+	ServesCuisine       *[]string `json:"servesCuisine,omitempty"`
+	MenuURL             *string   `json:"menuUrl,omitempty"`
+	// PriceRange - $$.
+	PriceRange          *string        `json:"priceRange,omitempty"`
+	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
+	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
+	TagLine             *string        `json:"tagLine,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -10858,30 +11475,81 @@ type Restaurant struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
-	// PriceRange - $$.
-	PriceRange          *string        `json:"priceRange,omitempty"`
-	Panoramas           *[]ImageObject `json:"panoramas,omitempty"`
-	IsPermanentlyClosed *bool          `json:"isPermanentlyClosed,omitempty"`
-	TagLine             *string        `json:"tagLine,omitempty"`
-	AcceptsReservations *bool          `json:"acceptsReservations,omitempty"`
-	ReservationURL      *string        `json:"reservationUrl,omitempty"`
-	ServesCuisine       *[]string      `json:"servesCuisine,omitempty"`
-	MenuURL             *string        `json:"menuUrl,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Restaurant.
 func (r Restaurant) MarshalJSON() ([]byte, error) {
 	r.Type = TypeRestaurant
-	type Alias Restaurant
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	if r.AcceptsReservations != nil {
+		objectMap["acceptsReservations"] = r.AcceptsReservations
+	}
+	if r.ReservationURL != nil {
+		objectMap["reservationUrl"] = r.ReservationURL
+	}
+	if r.ServesCuisine != nil {
+		objectMap["servesCuisine"] = r.ServesCuisine
+	}
+	if r.MenuURL != nil {
+		objectMap["menuUrl"] = r.MenuURL
+	}
+	if r.PriceRange != nil {
+		objectMap["priceRange"] = r.PriceRange
+	}
+	if r.Panoramas != nil {
+		objectMap["panoramas"] = r.Panoramas
+	}
+	if r.IsPermanentlyClosed != nil {
+		objectMap["isPermanentlyClosed"] = r.IsPermanentlyClosed
+	}
+	if r.TagLine != nil {
+		objectMap["tagLine"] = r.TagLine
+	}
+	if r.Address != nil {
+		objectMap["address"] = r.Address
+	}
+	if r.Telephone != nil {
+		objectMap["telephone"] = r.Telephone
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.URL != nil {
+		objectMap["url"] = r.URL
+	}
+	if r.Image != nil {
+		objectMap["image"] = r.Image
+	}
+	if r.Description != nil {
+		objectMap["description"] = r.Description
+	}
+	if r.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = r.EntityPresentationInfo
+	}
+	if r.BingID != nil {
+		objectMap["bingId"] = r.BingID
+	}
+	if r.ContractualRules != nil {
+		objectMap["contractualRules"] = r.ContractualRules
+	}
+	if r.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = r.WebSearchURL
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Type != "" {
+		objectMap["_type"] = r.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Restaurant.
@@ -11116,205 +11784,188 @@ func (r *Restaurant) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["acceptsReservations"]
-	if v != nil {
-		var acceptsReservations bool
-		err = json.Unmarshal(*m["acceptsReservations"], &acceptsReservations)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "acceptsReservations":
+			if v != nil {
+				var acceptsReservations bool
+				err = json.Unmarshal(*v, &acceptsReservations)
+				if err != nil {
+					return err
+				}
+				r.AcceptsReservations = &acceptsReservations
+			}
+		case "reservationUrl":
+			if v != nil {
+				var reservationURL string
+				err = json.Unmarshal(*v, &reservationURL)
+				if err != nil {
+					return err
+				}
+				r.ReservationURL = &reservationURL
+			}
+		case "servesCuisine":
+			if v != nil {
+				var servesCuisine []string
+				err = json.Unmarshal(*v, &servesCuisine)
+				if err != nil {
+					return err
+				}
+				r.ServesCuisine = &servesCuisine
+			}
+		case "menuUrl":
+			if v != nil {
+				var menuURL string
+				err = json.Unmarshal(*v, &menuURL)
+				if err != nil {
+					return err
+				}
+				r.MenuURL = &menuURL
+			}
+		case "priceRange":
+			if v != nil {
+				var priceRange string
+				err = json.Unmarshal(*v, &priceRange)
+				if err != nil {
+					return err
+				}
+				r.PriceRange = &priceRange
+			}
+		case "panoramas":
+			if v != nil {
+				var panoramas []ImageObject
+				err = json.Unmarshal(*v, &panoramas)
+				if err != nil {
+					return err
+				}
+				r.Panoramas = &panoramas
+			}
+		case "isPermanentlyClosed":
+			if v != nil {
+				var isPermanentlyClosed bool
+				err = json.Unmarshal(*v, &isPermanentlyClosed)
+				if err != nil {
+					return err
+				}
+				r.IsPermanentlyClosed = &isPermanentlyClosed
+			}
+		case "tagLine":
+			if v != nil {
+				var tagLine string
+				err = json.Unmarshal(*v, &tagLine)
+				if err != nil {
+					return err
+				}
+				r.TagLine = &tagLine
+			}
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				r.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				r.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				r.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				r.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				r.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				r.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				r.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				r.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				r.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				r.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				r.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				r.Type = typeVar
+			}
 		}
-		r.AcceptsReservations = &acceptsReservations
-	}
-
-	v = m["reservationUrl"]
-	if v != nil {
-		var reservationURL string
-		err = json.Unmarshal(*m["reservationUrl"], &reservationURL)
-		if err != nil {
-			return err
-		}
-		r.ReservationURL = &reservationURL
-	}
-
-	v = m["servesCuisine"]
-	if v != nil {
-		var servesCuisine []string
-		err = json.Unmarshal(*m["servesCuisine"], &servesCuisine)
-		if err != nil {
-			return err
-		}
-		r.ServesCuisine = &servesCuisine
-	}
-
-	v = m["menuUrl"]
-	if v != nil {
-		var menuURL string
-		err = json.Unmarshal(*m["menuUrl"], &menuURL)
-		if err != nil {
-			return err
-		}
-		r.MenuURL = &menuURL
-	}
-
-	v = m["priceRange"]
-	if v != nil {
-		var priceRange string
-		err = json.Unmarshal(*m["priceRange"], &priceRange)
-		if err != nil {
-			return err
-		}
-		r.PriceRange = &priceRange
-	}
-
-	v = m["panoramas"]
-	if v != nil {
-		var panoramas []ImageObject
-		err = json.Unmarshal(*m["panoramas"], &panoramas)
-		if err != nil {
-			return err
-		}
-		r.Panoramas = &panoramas
-	}
-
-	v = m["isPermanentlyClosed"]
-	if v != nil {
-		var isPermanentlyClosed bool
-		err = json.Unmarshal(*m["isPermanentlyClosed"], &isPermanentlyClosed)
-		if err != nil {
-			return err
-		}
-		r.IsPermanentlyClosed = &isPermanentlyClosed
-	}
-
-	v = m["tagLine"]
-	if v != nil {
-		var tagLine string
-		err = json.Unmarshal(*m["tagLine"], &tagLine)
-		if err != nil {
-			return err
-		}
-		r.TagLine = &tagLine
-	}
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
-		}
-		r.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		r.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		r.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		r.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		r.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		r.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		r.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		r.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		r.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		r.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		r.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		r.Type = _type
 	}
 
 	return nil
@@ -11323,31 +11974,48 @@ func (r *Restaurant) UnmarshalJSON(body []byte) error {
 // SearchResponse defines the top-level object that the response includes when the request succeeds.
 type SearchResponse struct {
 	autorest.Response `json:"-"`
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// QueryContext - An object that contains the query string that Bing used for the request. This object contains the query string as entered by the user. It may also contain an altered query string that Bing used for the query if the query string contained a spelling mistake.
 	QueryContext *QueryContext `json:"queryContext,omitempty"`
 	// Entities - A list of entities that are relevant to the search query.
 	Entities *Entities `json:"entities,omitempty"`
 	// Places - A list of local entities such as restaurants or hotels that are relevant to the query.
 	Places *Places `json:"places,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SearchResponse.
 func (sr SearchResponse) MarshalJSON() ([]byte, error) {
 	sr.Type = TypeSearchResponse
-	type Alias SearchResponse
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sr),
-	})
+	objectMap := make(map[string]interface{})
+	if sr.QueryContext != nil {
+		objectMap["queryContext"] = sr.QueryContext
+	}
+	if sr.Entities != nil {
+		objectMap["entities"] = sr.Entities
+	}
+	if sr.Places != nil {
+		objectMap["places"] = sr.Places
+	}
+	if sr.ContractualRules != nil {
+		objectMap["contractualRules"] = sr.ContractualRules
+	}
+	if sr.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = sr.WebSearchURL
+	}
+	if sr.ID != nil {
+		objectMap["id"] = sr.ID
+	}
+	if sr.Type != "" {
+		objectMap["_type"] = sr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for SearchResponse.
@@ -11582,98 +12250,94 @@ func (sr *SearchResponse) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["queryContext"]
-	if v != nil {
-		var queryContext QueryContext
-		err = json.Unmarshal(*m["queryContext"], &queryContext)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "queryContext":
+			if v != nil {
+				var queryContext QueryContext
+				err = json.Unmarshal(*v, &queryContext)
+				if err != nil {
+					return err
+				}
+				sr.QueryContext = &queryContext
+			}
+		case "entities":
+			if v != nil {
+				var entities Entities
+				err = json.Unmarshal(*v, &entities)
+				if err != nil {
+					return err
+				}
+				sr.Entities = &entities
+			}
+		case "places":
+			if v != nil {
+				var places Places
+				err = json.Unmarshal(*v, &places)
+				if err != nil {
+					return err
+				}
+				sr.Places = &places
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				sr.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				sr.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sr.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sr.Type = typeVar
+			}
 		}
-		sr.QueryContext = &queryContext
-	}
-
-	v = m["entities"]
-	if v != nil {
-		var entities Entities
-		err = json.Unmarshal(*m["entities"], &entities)
-		if err != nil {
-			return err
-		}
-		sr.Entities = &entities
-	}
-
-	v = m["places"]
-	if v != nil {
-		var places Places
-		err = json.Unmarshal(*m["places"], &places)
-		if err != nil {
-			return err
-		}
-		sr.Places = &places
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		sr.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		sr.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		sr.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		sr.Type = _type
 	}
 
 	return nil
 }
 
-// BasicSearchResultsAnswer
+// BasicSearchResultsAnswer ...
 type BasicSearchResultsAnswer interface {
 	AsEntities() (*Entities, bool)
 	AsPlaces() (*Places, bool)
 	AsSearchResultsAnswer() (*SearchResultsAnswer, bool)
 }
 
-// SearchResultsAnswer
+// SearchResultsAnswer ...
 type SearchResultsAnswer struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
+	QueryContext *QueryContext `json:"queryContext,omitempty"`
 	// ContractualRules - A list of rules that you must adhere to if you display the item.
 	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
 	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string       `json:"webSearchUrl,omitempty"`
-	QueryContext *QueryContext `json:"queryContext,omitempty"`
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicSearchResultsAnswer(body []byte) (BasicSearchResultsAnswer, error) {
@@ -11720,12 +12384,23 @@ func unmarshalBasicSearchResultsAnswerArray(body []byte) ([]BasicSearchResultsAn
 // MarshalJSON is the custom marshaler for SearchResultsAnswer.
 func (sra SearchResultsAnswer) MarshalJSON() ([]byte, error) {
 	sra.Type = TypeSearchResultsAnswer
-	type Alias SearchResultsAnswer
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sra),
-	})
+	objectMap := make(map[string]interface{})
+	if sra.QueryContext != nil {
+		objectMap["queryContext"] = sra.QueryContext
+	}
+	if sra.ContractualRules != nil {
+		objectMap["contractualRules"] = sra.ContractualRules
+	}
+	if sra.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = sra.WebSearchURL
+	}
+	if sra.ID != nil {
+		objectMap["id"] = sra.ID
+	}
+	if sra.Type != "" {
+		objectMap["_type"] = sra.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for SearchResultsAnswer.
@@ -11960,76 +12635,66 @@ func (sra *SearchResultsAnswer) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["queryContext"]
-	if v != nil {
-		var queryContext QueryContext
-		err = json.Unmarshal(*m["queryContext"], &queryContext)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "queryContext":
+			if v != nil {
+				var queryContext QueryContext
+				err = json.Unmarshal(*v, &queryContext)
+				if err != nil {
+					return err
+				}
+				sra.QueryContext = &queryContext
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				sra.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				sra.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sra.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sra.Type = typeVar
+			}
 		}
-		sra.QueryContext = &queryContext
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		sra.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		sra.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		sra.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		sra.Type = _type
 	}
 
 	return nil
 }
 
-// BasicStructuredValue
+// BasicStructuredValue ...
 type BasicStructuredValue interface {
 	AsPostalAddress() (*PostalAddress, bool)
 	AsStructuredValue() (*StructuredValue, bool)
 }
 
-// StructuredValue
+// StructuredValue ...
 type StructuredValue struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -12041,6 +12706,14 @@ type StructuredValue struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicStructuredValue(body []byte) (BasicStructuredValue, error) {
@@ -12083,12 +12756,38 @@ func unmarshalBasicStructuredValueArray(body []byte) ([]BasicStructuredValue, er
 // MarshalJSON is the custom marshaler for StructuredValue.
 func (sv StructuredValue) MarshalJSON() ([]byte, error) {
 	sv.Type = TypeStructuredValue
-	type Alias StructuredValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sv),
-	})
+	objectMap := make(map[string]interface{})
+	if sv.Name != nil {
+		objectMap["name"] = sv.Name
+	}
+	if sv.URL != nil {
+		objectMap["url"] = sv.URL
+	}
+	if sv.Image != nil {
+		objectMap["image"] = sv.Image
+	}
+	if sv.Description != nil {
+		objectMap["description"] = sv.Description
+	}
+	if sv.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = sv.EntityPresentationInfo
+	}
+	if sv.BingID != nil {
+		objectMap["bingId"] = sv.BingID
+	}
+	if sv.ContractualRules != nil {
+		objectMap["contractualRules"] = sv.ContractualRules
+	}
+	if sv.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = sv.WebSearchURL
+	}
+	if sv.ID != nil {
+		objectMap["id"] = sv.ID
+	}
+	if sv.Type != "" {
+		objectMap["_type"] = sv.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for StructuredValue.
@@ -12323,111 +13022,104 @@ func (sv *StructuredValue) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				sv.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				sv.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				sv.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				sv.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				sv.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				sv.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				sv.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				sv.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sv.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sv.Type = typeVar
+			}
 		}
-		sv.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		sv.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		sv.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		sv.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		sv.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		sv.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		sv.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		sv.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		sv.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		sv.Type = _type
 	}
 
 	return nil
 }
 
-// BasicThing
+// BasicThing ...
 type BasicThing interface {
 	AsImageObject() (*ImageObject, bool)
 	AsPostalAddress() (*PostalAddress, bool)
@@ -12461,16 +13153,8 @@ type BasicThing interface {
 	AsThing() (*Thing, bool)
 }
 
-// Thing
+// Thing ...
 type Thing struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -12482,6 +13166,14 @@ type Thing struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 func unmarshalBasicThing(body []byte) (BasicThing, error) {
@@ -12596,12 +13288,38 @@ func unmarshalBasicThingArray(body []byte) ([]BasicThing, error) {
 // MarshalJSON is the custom marshaler for Thing.
 func (t Thing) MarshalJSON() ([]byte, error) {
 	t.Type = TypeThing
-	type Alias Thing
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(t),
-	})
+	objectMap := make(map[string]interface{})
+	if t.Name != nil {
+		objectMap["name"] = t.Name
+	}
+	if t.URL != nil {
+		objectMap["url"] = t.URL
+	}
+	if t.Image != nil {
+		objectMap["image"] = t.Image
+	}
+	if t.Description != nil {
+		objectMap["description"] = t.Description
+	}
+	if t.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = t.EntityPresentationInfo
+	}
+	if t.BingID != nil {
+		objectMap["bingId"] = t.BingID
+	}
+	if t.ContractualRules != nil {
+		objectMap["contractualRules"] = t.ContractualRules
+	}
+	if t.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = t.WebSearchURL
+	}
+	if t.ID != nil {
+		objectMap["id"] = t.ID
+	}
+	if t.Type != "" {
+		objectMap["_type"] = t.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for Thing.
@@ -12836,105 +13554,98 @@ func (t *Thing) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				t.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				t.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				t.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				t.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				t.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				t.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				t.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				t.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				t.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				t.Type = typeVar
+			}
 		}
-		t.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		t.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		t.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		t.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		t.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		t.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		t.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		t.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		t.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		t.Type = _type
 	}
 
 	return nil
@@ -12942,14 +13653,10 @@ func (t *Thing) UnmarshalJSON(body []byte) error {
 
 // TouristAttraction ...
 type TouristAttraction struct {
-	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
-	Type TypeBasicResponseBase `json:"_type,omitempty"`
-	// ID - A String identifier.
-	ID *string `json:"id,omitempty"`
-	// ContractualRules - A list of rules that you must adhere to if you display the item.
-	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
-	// WebSearchURL - The URL To Bing's search result for this item.
-	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// Address - The postal address of where the entity is located
+	Address *PostalAddress `json:"address,omitempty"`
+	// Telephone - The entity's telephone number
+	Telephone *string `json:"telephone,omitempty"`
 	// Name - The name of the thing represented by this object.
 	Name *string `json:"name,omitempty"`
 	// URL - The URL to get more information about the thing represented by this object.
@@ -12961,21 +13668,57 @@ type TouristAttraction struct {
 	EntityPresentationInfo *EntitiesEntityPresentationInfo `json:"entityPresentationInfo,omitempty"`
 	// BingID - An ID that uniquely identifies this item.
 	BingID *string `json:"bingId,omitempty"`
-	// Address - The postal address of where the entity is located
-	Address *PostalAddress `json:"address,omitempty"`
-	// Telephone - The entity's telephone number
-	Telephone *string `json:"telephone,omitempty"`
+	// ContractualRules - A list of rules that you must adhere to if you display the item.
+	ContractualRules *[]BasicContractualRulesContractualRule `json:"contractualRules,omitempty"`
+	// WebSearchURL - The URL To Bing's search result for this item.
+	WebSearchURL *string `json:"webSearchUrl,omitempty"`
+	// ID - A String identifier.
+	ID *string `json:"id,omitempty"`
+	// Type - Possible values include: 'TypeResponseBase', 'TypeImageObject', 'TypeThing', 'TypeEntities', 'TypePlaces', 'TypeSearchResponse', 'TypeResponse', 'TypeSearchResultsAnswer', 'TypeIdentifiable', 'TypeAnswer', 'TypeErrorResponse', 'TypePostalAddress', 'TypePlace', 'TypeOrganization', 'TypeCreativeWork', 'TypeIntangible', 'TypeMovieTheater', 'TypeMediaObject', 'TypeCivicStructure', 'TypeLocalBusiness', 'TypeTouristAttraction', 'TypeAirport', 'TypeLicense', 'TypeStructuredValue', 'TypeEntertainmentBusiness', 'TypeFoodEstablishment', 'TypeLodgingBusiness', 'TypeRestaurant', 'TypeHotel'
+	Type TypeBasicResponseBase `json:"_type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for TouristAttraction.
 func (ta TouristAttraction) MarshalJSON() ([]byte, error) {
 	ta.Type = TypeTouristAttraction
-	type Alias TouristAttraction
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ta),
-	})
+	objectMap := make(map[string]interface{})
+	if ta.Address != nil {
+		objectMap["address"] = ta.Address
+	}
+	if ta.Telephone != nil {
+		objectMap["telephone"] = ta.Telephone
+	}
+	if ta.Name != nil {
+		objectMap["name"] = ta.Name
+	}
+	if ta.URL != nil {
+		objectMap["url"] = ta.URL
+	}
+	if ta.Image != nil {
+		objectMap["image"] = ta.Image
+	}
+	if ta.Description != nil {
+		objectMap["description"] = ta.Description
+	}
+	if ta.EntityPresentationInfo != nil {
+		objectMap["entityPresentationInfo"] = ta.EntityPresentationInfo
+	}
+	if ta.BingID != nil {
+		objectMap["bingId"] = ta.BingID
+	}
+	if ta.ContractualRules != nil {
+		objectMap["contractualRules"] = ta.ContractualRules
+	}
+	if ta.WebSearchURL != nil {
+		objectMap["webSearchUrl"] = ta.WebSearchURL
+	}
+	if ta.ID != nil {
+		objectMap["id"] = ta.ID
+	}
+	if ta.Type != "" {
+		objectMap["_type"] = ta.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsImageObject is the BasicResponseBase implementation for TouristAttraction.
@@ -13210,125 +13953,116 @@ func (ta *TouristAttraction) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["address"]
-	if v != nil {
-		var address PostalAddress
-		err = json.Unmarshal(*m["address"], &address)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "address":
+			if v != nil {
+				var address PostalAddress
+				err = json.Unmarshal(*v, &address)
+				if err != nil {
+					return err
+				}
+				ta.Address = &address
+			}
+		case "telephone":
+			if v != nil {
+				var telephone string
+				err = json.Unmarshal(*v, &telephone)
+				if err != nil {
+					return err
+				}
+				ta.Telephone = &telephone
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ta.Name = &name
+			}
+		case "url":
+			if v != nil {
+				var URL string
+				err = json.Unmarshal(*v, &URL)
+				if err != nil {
+					return err
+				}
+				ta.URL = &URL
+			}
+		case "image":
+			if v != nil {
+				var imageVar ImageObject
+				err = json.Unmarshal(*v, &imageVar)
+				if err != nil {
+					return err
+				}
+				ta.Image = &imageVar
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				ta.Description = &description
+			}
+		case "entityPresentationInfo":
+			if v != nil {
+				var entityPresentationInfo EntitiesEntityPresentationInfo
+				err = json.Unmarshal(*v, &entityPresentationInfo)
+				if err != nil {
+					return err
+				}
+				ta.EntityPresentationInfo = &entityPresentationInfo
+			}
+		case "bingId":
+			if v != nil {
+				var bingID string
+				err = json.Unmarshal(*v, &bingID)
+				if err != nil {
+					return err
+				}
+				ta.BingID = &bingID
+			}
+		case "contractualRules":
+			if v != nil {
+				contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*v)
+				if err != nil {
+					return err
+				}
+				ta.ContractualRules = &contractualRules
+			}
+		case "webSearchUrl":
+			if v != nil {
+				var webSearchURL string
+				err = json.Unmarshal(*v, &webSearchURL)
+				if err != nil {
+					return err
+				}
+				ta.WebSearchURL = &webSearchURL
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ta.ID = &ID
+			}
+		case "_type":
+			if v != nil {
+				var typeVar TypeBasicResponseBase
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ta.Type = typeVar
+			}
 		}
-		ta.Address = &address
-	}
-
-	v = m["telephone"]
-	if v != nil {
-		var telephone string
-		err = json.Unmarshal(*m["telephone"], &telephone)
-		if err != nil {
-			return err
-		}
-		ta.Telephone = &telephone
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ta.Name = &name
-	}
-
-	v = m["url"]
-	if v != nil {
-		var URLVar string
-		err = json.Unmarshal(*m["url"], &URLVar)
-		if err != nil {
-			return err
-		}
-		ta.URL = &URLVar
-	}
-
-	v = m["image"]
-	if v != nil {
-		var imageVar ImageObject
-		err = json.Unmarshal(*m["image"], &imageVar)
-		if err != nil {
-			return err
-		}
-		ta.Image = &imageVar
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		ta.Description = &description
-	}
-
-	v = m["entityPresentationInfo"]
-	if v != nil {
-		var entityPresentationInfo EntitiesEntityPresentationInfo
-		err = json.Unmarshal(*m["entityPresentationInfo"], &entityPresentationInfo)
-		if err != nil {
-			return err
-		}
-		ta.EntityPresentationInfo = &entityPresentationInfo
-	}
-
-	v = m["bingId"]
-	if v != nil {
-		var bingID string
-		err = json.Unmarshal(*m["bingId"], &bingID)
-		if err != nil {
-			return err
-		}
-		ta.BingID = &bingID
-	}
-
-	v = m["contractualRules"]
-	if v != nil {
-		contractualRules, err := unmarshalBasicContractualRulesContractualRuleArray(*m["contractualRules"])
-		if err != nil {
-			return err
-		}
-		ta.ContractualRules = &contractualRules
-	}
-
-	v = m["webSearchUrl"]
-	if v != nil {
-		var webSearchURL string
-		err = json.Unmarshal(*m["webSearchUrl"], &webSearchURL)
-		if err != nil {
-			return err
-		}
-		ta.WebSearchURL = &webSearchURL
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ta.ID = &ID
-	}
-
-	v = m["_type"]
-	if v != nil {
-		var _type TypeBasicResponseBase
-		err = json.Unmarshal(*m["_type"], &_type)
-		if err != nil {
-			return err
-		}
-		ta.Type = _type
 	}
 
 	return nil

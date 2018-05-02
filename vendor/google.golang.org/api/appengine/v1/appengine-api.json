@@ -851,7 +851,7 @@
         "locations": {
           "methods": {
             "get": {
-              "description": "Get information about a location.",
+              "description": "Gets information about a location.",
               "flatPath": "v1/apps/{appsId}/locations/{locationsId}",
               "httpMethod": "GET",
               "id": "appengine.apps.locations.get",
@@ -1583,7 +1583,7 @@
       }
     }
   },
-  "revision": "20180307",
+  "revision": "20180320",
   "rootUrl": "https://appengine.googleapis.com/",
   "schemas": {
     "ApiConfigHandler": {
@@ -1923,6 +1923,22 @@
       },
       "type": "object"
     },
+    "CloudBuildOptions": {
+      "description": "Options for the build operations performed as a part of the version deployment. Only applicable for App Engine flexible environment when creating a version using source code directly.",
+      "id": "CloudBuildOptions",
+      "properties": {
+        "appYamlPath": {
+          "description": "Path to the yaml file used in deployment, used to determine runtime configuration details.Required for flexible environment builds.See https://cloud.google.com/appengine/docs/standard/python/config/appref for more details.",
+          "type": "string"
+        },
+        "cloudBuildTimeout": {
+          "description": "The Cloud Build timeout used as part of any dependent builds performed by version creation. Defaults to 10 minutes.",
+          "format": "google-duration",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ContainerInfo": {
       "description": "Docker image that is used to create a container and start a VM instance for the version that you deploy. Only applicable for instances running in the App Engine flexible environment.",
       "id": "ContainerInfo",
@@ -1947,6 +1963,17 @@
           "description": "Target CPU utilization ratio to maintain when scaling. Must be between 0 and 1.",
           "format": "double",
           "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "CreateVersionMetadataV1": {
+      "description": "Metadata for the given google.longrunning.Operation during a google.appengine.v1.CreateVersionRequest.",
+      "id": "CreateVersionMetadataV1",
+      "properties": {
+        "cloudBuildId": {
+          "description": "The Cloud Build ID if one was created as part of the version create. @OutputOnly",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1988,6 +2015,10 @@
       "description": "Code and application artifacts used to deploy a version to App Engine.",
       "id": "Deployment",
       "properties": {
+        "cloudBuildOptions": {
+          "$ref": "CloudBuildOptions",
+          "description": "Options for any Google Cloud Container Builder builds created as a part of this deployment.Note that this is orthogonal to the build parameter, where the deployment depends on an already existing cloud build. These options will only be used if a new build is created, such as when deploying to the App Engine flexible environment using files or zip."
+        },
         "container": {
           "$ref": "ContainerInfo",
           "description": "The Docker image for the container that runs the version. Only applicable for instances running in the App Engine flexible environment."
@@ -2066,7 +2097,7 @@
       "type": "object"
     },
     "EndpointsApiService": {
-      "description": "Cloud Endpoints (https://cloud.google.com/endpoints) configuration. The Endpoints API Service provides tooling for serving Open API and gRPC endpoints via an NGINX proxy.The fields here refer to the name and configuration id of a \"service\" resource in the Service Management API (https://cloud.google.com/service-management/overview).",
+      "description": "Cloud Endpoints (https://cloud.google.com/endpoints) configuration. The Endpoints API Service provides tooling for serving Open API and gRPC endpoints via an NGINX proxy. Only valid for App Engine Flexible environment deployments.The fields here refer to the name and configuration id of a \"service\" resource in the Service Management API (https://cloud.google.com/service-management/overview).",
       "id": "EndpointsApiService",
       "properties": {
         "configId": {
@@ -2730,6 +2761,9 @@
       "description": "Metadata for the given google.longrunning.Operation.",
       "id": "OperationMetadataV1",
       "properties": {
+        "createVersionMetadata": {
+          "$ref": "CreateVersionMetadataV1"
+        },
         "endTime": {
           "description": "Time that this operation completed.@OutputOnly",
           "format": "google-datetime",

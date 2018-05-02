@@ -422,6 +422,7 @@
         "NextToken":{"shape":"NextToken"}
       }
     },
+    "MessageGroupId":{"type":"string"},
     "NextToken":{
       "type":"string",
       "max":2048,
@@ -677,6 +678,12 @@
       "type":"string",
       "max":256
     },
+    "SqsParameters":{
+      "type":"structure",
+      "members":{
+        "MessageGroupId":{"shape":"MessageGroupId"}
+      }
+    },
     "StatementId":{
       "type":"string",
       "max":64,
@@ -700,7 +707,8 @@
         "KinesisParameters":{"shape":"KinesisParameters"},
         "RunCommandParameters":{"shape":"RunCommandParameters"},
         "EcsParameters":{"shape":"EcsParameters"},
-        "BatchParameters":{"shape":"BatchParameters"}
+        "BatchParameters":{"shape":"BatchParameters"},
+        "SqsParameters":{"shape":"SqsParameters"}
       }
     },
     "TargetArn":{

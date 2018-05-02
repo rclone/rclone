@@ -14,7 +14,7 @@
   "description": "Searches for books and manages your Google Books library.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/books/docs/v1/getting_started",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/grKqkiLaDaBaqW7ezJtDaKmrU78\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/STz5vHgSfP0S_hHO6ctVIowLT3s\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/ebooks-16.png",
     "x32": "https://www.google.com/images/icons/product/ebooks-32.png"
@@ -59,12 +59,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -2480,7 +2480,7 @@
       }
     }
   },
-  "revision": "20171127",
+  "revision": "20180409",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Annotation": {

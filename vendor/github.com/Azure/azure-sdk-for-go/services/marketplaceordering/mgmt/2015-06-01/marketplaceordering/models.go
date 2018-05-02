@@ -58,6 +58,24 @@ type AgreementTerms struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for AgreementTerms.
+func (at AgreementTerms) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if at.AgreementProperties != nil {
+		objectMap["properties"] = at.AgreementProperties
+	}
+	if at.ID != nil {
+		objectMap["id"] = at.ID
+	}
+	if at.Name != nil {
+		objectMap["name"] = at.Name
+	}
+	if at.Type != nil {
+		objectMap["type"] = at.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for AgreementTerms struct.
 func (at *AgreementTerms) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage

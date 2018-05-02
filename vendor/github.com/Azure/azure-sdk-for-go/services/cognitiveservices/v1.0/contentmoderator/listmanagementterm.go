@@ -50,8 +50,10 @@ func NewListManagementTermClient(baseURL AzureRegionBaseURL) ListManagementTermC
 }
 
 // AddTerm add a term to the term list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list. term is term to be deleted language is language of the terms.
+// Parameters:
+// listID - list Id of the image list.
+// term - term to be deleted
+// language - language of the terms.
 func (client ListManagementTermClient) AddTerm(ctx context.Context, listID string, term string, language string) (result SetObject, err error) {
 	req, err := client.AddTermPreparer(ctx, listID, term, language)
 	if err != nil {
@@ -118,8 +120,9 @@ func (client ListManagementTermClient) AddTermResponder(resp *http.Response) (re
 }
 
 // DeleteAllTerms deletes all terms from the list with list Id equal to the list Id passed.
-//
-// listID is list Id of the image list. language is language of the terms.
+// Parameters:
+// listID - list Id of the image list.
+// language - language of the terms.
 func (client ListManagementTermClient) DeleteAllTerms(ctx context.Context, listID string, language string) (result String, err error) {
 	req, err := client.DeleteAllTermsPreparer(ctx, listID, language)
 	if err != nil {
@@ -185,8 +188,10 @@ func (client ListManagementTermClient) DeleteAllTermsResponder(resp *http.Respon
 }
 
 // DeleteTerm deletes a term from the list with list Id equal to the list Id passed.
-//
-// listID is list Id of the image list. term is term to be deleted language is language of the terms.
+// Parameters:
+// listID - list Id of the image list.
+// term - term to be deleted
+// language - language of the terms.
 func (client ListManagementTermClient) DeleteTerm(ctx context.Context, listID string, term string, language string) (result String, err error) {
 	req, err := client.DeleteTermPreparer(ctx, listID, term, language)
 	if err != nil {
@@ -253,9 +258,11 @@ func (client ListManagementTermClient) DeleteTermResponder(resp *http.Response) 
 }
 
 // GetAllTerms gets all terms from the list with list Id equal to the list Id passed.
-//
-// listID is list Id of the image list. language is language of the terms. offset is the pagination start index.
-// limit is the max limit.
+// Parameters:
+// listID - list Id of the image list.
+// language - language of the terms.
+// offset - the pagination start index.
+// limit - the max limit.
 func (client ListManagementTermClient) GetAllTerms(ctx context.Context, listID string, language string, offset *int32, limit *int32) (result Terms, err error) {
 	req, err := client.GetAllTermsPreparer(ctx, listID, language, offset, limit)
 	if err != nil {

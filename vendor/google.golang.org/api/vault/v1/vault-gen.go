@@ -1,4 +1,4 @@
-// Package vault provides access to the Google Vault API.
+// Package vault provides access to the G Suite Vault API.
 //
 // See https://developers.google.com/vault
 //

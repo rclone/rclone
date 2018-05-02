@@ -26,16 +26,19 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RecurrenceClient is the creates an Azure Data Lake Analytics job client.
 type RecurrenceClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NewRecurrenceClient creates an instance of the RecurrenceClient client.
 func NewRecurrenceClient() RecurrenceClient {
 	return RecurrenceClient{New()}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Get gets the recurrence information for the specified recurrence ID.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. recurrenceIdentity is
@@ -64,6 +67,7 @@ func (client RecurrenceClient) Get(ctx context.Context, accountName string, recu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetPreparer prepares the Get request.
 func (client RecurrenceClient) GetPreparer(ctx context.Context, accountName string, recurrenceIdentity uuid.UUID, startDateTime *date.Time, endDateTime *date.Time) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -94,6 +98,7 @@ func (client RecurrenceClient) GetPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecurrenceClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -101,6 +106,7 @@ func (client RecurrenceClient) GetSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RecurrenceClient) GetResponder(resp *http.Response) (result RecurrenceInformation, err error) {
@@ -114,6 +120,7 @@ func (client RecurrenceClient) GetResponder(resp *http.Response) (result Recurre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // List lists all recurrences.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start
@@ -143,6 +150,7 @@ func (client RecurrenceClient) List(ctx context.Context, accountName string, sta
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListPreparer prepares the List request.
 func (client RecurrenceClient) ListPreparer(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -169,6 +177,7 @@ func (client RecurrenceClient) ListPreparer(ctx context.Context, accountName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecurrenceClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -176,6 +185,7 @@ func (client RecurrenceClient) ListSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client RecurrenceClient) ListResponder(resp *http.Response) (result RecurrenceInformationListResult, err error) {
@@ -210,6 +220,7 @@ func (client RecurrenceClient) listNextResults(lastResults RecurrenceInformation
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RecurrenceClient) ListComplete(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (result RecurrenceInformationListResultIterator, err error) {
 	result.page, err = client.List(ctx, accountName, startDateTime, endDateTime)

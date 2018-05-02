@@ -192,7 +192,7 @@ For Cloud Spanner columns that may contain NULL, use one of the NullXXX types,
 like NullString:
 
     var ns spanner.NullString
-    if err =: row.Column(0, &ns); err != nil {
+    if err := row.Column(0, &ns); err != nil {
         // TODO: Handle error.
     }
     if ns.Valid {

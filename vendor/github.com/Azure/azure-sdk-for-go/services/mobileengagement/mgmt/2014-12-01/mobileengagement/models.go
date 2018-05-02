@@ -41,6 +41,11 @@ const (
 	LT AudienceOperators = "LT"
 )
 
+// PossibleAudienceOperatorsValues returns an array of possible values for the AudienceOperators const type.
+func PossibleAudienceOperatorsValues() []AudienceOperators {
+	return []AudienceOperators{EQ, GE, GT, LE, LT}
+}
+
 // CampaignFeedbacks enumerates the values for campaign feedbacks.
 type CampaignFeedbacks string
 
@@ -55,6 +60,11 @@ const (
 	Replied CampaignFeedbacks = "replied"
 )
 
+// PossibleCampaignFeedbacksValues returns an array of possible values for the CampaignFeedbacks const type.
+func PossibleCampaignFeedbacksValues() []CampaignFeedbacks {
+	return []CampaignFeedbacks{Actioned, Exited, Pushed, Replied}
+}
+
 // CampaignKinds enumerates the values for campaign kinds.
 type CampaignKinds string
 
@@ -68,6 +78,11 @@ const (
 	// Polls ...
 	Polls CampaignKinds = "polls"
 )
+
+// PossibleCampaignKindsValues returns an array of possible values for the CampaignKinds const type.
+func PossibleCampaignKindsValues() []CampaignKinds {
+	return []CampaignKinds{Announcements, DataPushes, NativePushes, Polls}
+}
 
 // CampaignStates enumerates the values for campaign states.
 type CampaignStates string
@@ -85,6 +100,11 @@ const (
 	Scheduled CampaignStates = "scheduled"
 )
 
+// PossibleCampaignStatesValues returns an array of possible values for the CampaignStates const type.
+func PossibleCampaignStatesValues() []CampaignStates {
+	return []CampaignStates{Draft, Finished, InProgress, Queued, Scheduled}
+}
+
 // CampaignType enumerates the values for campaign type.
 type CampaignType string
 
@@ -98,6 +118,11 @@ const (
 	// Poll ...
 	Poll CampaignType = "Poll"
 )
+
+// PossibleCampaignTypeValues returns an array of possible values for the CampaignType const type.
+func PossibleCampaignTypeValues() []CampaignType {
+	return []CampaignType{Announcement, DataPush, NativePush, Poll}
+}
 
 // CampaignTypes enumerates the values for campaign types.
 type CampaignTypes string
@@ -113,6 +138,11 @@ const (
 	Textplain CampaignTypes = "text/plain"
 )
 
+// PossibleCampaignTypesValues returns an array of possible values for the CampaignTypes const type.
+func PossibleCampaignTypesValues() []CampaignTypes {
+	return []CampaignTypes{OnlyNotif, Textbase64, Texthtml, Textplain}
+}
+
 // DeliveryTimes enumerates the values for delivery times.
 type DeliveryTimes string
 
@@ -125,6 +155,11 @@ const (
 	Session DeliveryTimes = "session"
 )
 
+// PossibleDeliveryTimesValues returns an array of possible values for the DeliveryTimes const type.
+func PossibleDeliveryTimesValues() []DeliveryTimes {
+	return []DeliveryTimes{Any, Background, Session}
+}
+
 // ExportFormat enumerates the values for export format.
 type ExportFormat string
 
@@ -134,6 +169,11 @@ const (
 	// JSONBlob ...
 	JSONBlob ExportFormat = "JsonBlob"
 )
+
+// PossibleExportFormatValues returns an array of possible values for the ExportFormat const type.
+func PossibleExportFormatValues() []ExportFormat {
+	return []ExportFormat{CsvBlob, JSONBlob}
+}
 
 // ExportState enumerates the values for export state.
 type ExportState string
@@ -148,6 +188,11 @@ const (
 	// ExportStateSucceeded ...
 	ExportStateSucceeded ExportState = "Succeeded"
 )
+
+// PossibleExportStateValues returns an array of possible values for the ExportState const type.
+func PossibleExportStateValues() []ExportState {
+	return []ExportState{ExportStateFailed, ExportStateQueued, ExportStateStarted, ExportStateSucceeded}
+}
 
 // ExportType enumerates the values for export type.
 type ExportType string
@@ -173,6 +218,11 @@ const (
 	ExportTypeToken ExportType = "Token"
 )
 
+// PossibleExportTypeValues returns an array of possible values for the ExportType const type.
+func PossibleExportTypeValues() []ExportType {
+	return []ExportType{ExportTypeActivity, ExportTypeCrash, ExportTypeError, ExportTypeEvent, ExportTypeJob, ExportTypePush, ExportTypeSession, ExportTypeTag, ExportTypeToken}
+}
+
 // JobStates enumerates the values for job states.
 type JobStates string
 
@@ -187,6 +237,11 @@ const (
 	JobStatesSucceeded JobStates = "Succeeded"
 )
 
+// PossibleJobStatesValues returns an array of possible values for the JobStates const type.
+func PossibleJobStatesValues() []JobStates {
+	return []JobStates{JobStatesFailed, JobStatesQueued, JobStatesStarted, JobStatesSucceeded}
+}
+
 // NotificationTypes enumerates the values for notification types.
 type NotificationTypes string
 
@@ -197,6 +252,11 @@ const (
 	System NotificationTypes = "system"
 )
 
+// PossibleNotificationTypesValues returns an array of possible values for the NotificationTypes const type.
+func PossibleNotificationTypesValues() []NotificationTypes {
+	return []NotificationTypes{Popup, System}
+}
+
 // ProvisioningStates enumerates the values for provisioning states.
 type ProvisioningStates string
 
@@ -206,6 +266,11 @@ const (
 	// Succeeded ...
 	Succeeded ProvisioningStates = "Succeeded"
 )
+
+// PossibleProvisioningStatesValues returns an array of possible values for the ProvisioningStates const type.
+func PossibleProvisioningStatesValues() []ProvisioningStates {
+	return []ProvisioningStates{Creating, Succeeded}
+}
 
 // PushModes enumerates the values for push modes.
 type PushModes string
@@ -218,6 +283,11 @@ const (
 	// RealTime ...
 	RealTime PushModes = "real-time"
 )
+
+// PossiblePushModesValues returns an array of possible values for the PushModes const type.
+func PossiblePushModesValues() []PushModes {
+	return []PushModes{Manual, OneShot, RealTime}
+}
 
 // Type enumerates the values for type.
 type Type string
@@ -267,6 +337,11 @@ const (
 	TypeStringTag Type = "string-tag"
 )
 
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeAnnouncementFeedback, TypeApplicationVersion, TypeBooleanTag, TypeCarrierCountry, TypeCarrierName, TypeCriterion, TypeDatapushFeedback, TypeDateTag, TypeDeviceManufacturer, TypeDeviceModel, TypeFirmwareVersion, TypeGeoFencing, TypeIntegerTag, TypeLanguage, TypeLocation, TypeNetworkType, TypePollAnswerFeedback, TypePollFeedback, TypeScreenSize, TypeSegment, TypeStringTag}
+}
+
 // TypeBasicFilter enumerates the values for type basic filter.
 type TypeBasicFilter string
 
@@ -291,6 +366,11 @@ const (
 	TypePushQuota TypeBasicFilter = "push-quota"
 )
 
+// PossibleTypeBasicFilterValues returns an array of possible values for the TypeBasicFilter const type.
+func PossibleTypeBasicFilterValues() []TypeBasicFilter {
+	return []TypeBasicFilter{TypeAppInfo, TypeEngageActiveUsers, TypeEngageIdleUsers, TypeEngageNewUsers, TypeEngageOldUsers, TypeEngageSubset, TypeFilter, TypeNativePushEnabled, TypePushQuota}
+}
+
 // AnnouncementFeedbackCriterion used to target devices who received an announcement.
 type AnnouncementFeedbackCriterion struct {
 	// ContentID - The unique identifier of the announcement.
@@ -308,8 +388,12 @@ func (afc AnnouncementFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	if afc.ContentID != nil {
 		objectMap["content-id"] = afc.ContentID
 	}
-	objectMap["action"] = afc.Action
-	objectMap["type"] = afc.Type
+	if afc.Action != "" {
+		objectMap["action"] = afc.Action
+	}
+	if afc.Type != "" {
+		objectMap["type"] = afc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -786,7 +870,9 @@ func (aif AppInfoFilter) MarshalJSON() ([]byte, error) {
 	if aif.AppInfo != nil {
 		objectMap["appInfo"] = aif.AppInfo
 	}
-	objectMap["type"] = aif.Type
+	if aif.Type != "" {
+		objectMap["type"] = aif.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -855,7 +941,9 @@ func (avc ApplicationVersionCriterion) MarshalJSON() ([]byte, error) {
 	if avc.Name != nil {
 		objectMap["name"] = avc.Name
 	}
-	objectMap["type"] = avc.Type
+	if avc.Type != "" {
+		objectMap["type"] = avc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1101,7 +1189,9 @@ func (btc BooleanTagCriterion) MarshalJSON() ([]byte, error) {
 	if btc.Value != nil {
 		objectMap["value"] = btc.Value
 	}
-	objectMap["type"] = btc.Type
+	if btc.Type != "" {
+		objectMap["type"] = btc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1291,9 +1381,15 @@ func (c Campaign) MarshalJSON() ([]byte, error) {
 	if c.Category != nil {
 		objectMap["category"] = c.Category
 	}
-	objectMap["pushMode"] = c.PushMode
-	objectMap["type"] = c.Type
-	objectMap["deliveryTime"] = c.DeliveryTime
+	if c.PushMode != "" {
+		objectMap["pushMode"] = c.PushMode
+	}
+	if c.Type != "" {
+		objectMap["type"] = c.Type
+	}
+	if c.DeliveryTime != "" {
+		objectMap["deliveryTime"] = c.DeliveryTime
+	}
 	if c.DeliveryActivities != nil {
 		objectMap["deliveryActivities"] = c.DeliveryActivities
 	}
@@ -1306,7 +1402,9 @@ func (c Campaign) MarshalJSON() ([]byte, error) {
 	if c.Timezone != nil {
 		objectMap["timezone"] = c.Timezone
 	}
-	objectMap["notificationType"] = c.NotificationType
+	if c.NotificationType != "" {
+		objectMap["notificationType"] = c.NotificationType
+	}
 	if c.NotificationIcon != nil {
 		objectMap["notificationIcon"] = c.NotificationIcon
 	}
@@ -1566,7 +1664,9 @@ func (cr CampaignResult) MarshalJSON() ([]byte, error) {
 	if cr.ID != nil {
 		objectMap["id"] = cr.ID
 	}
-	objectMap["state"] = cr.State
+	if cr.State != "" {
+		objectMap["state"] = cr.State
+	}
 	if cr.ActivatedDate != nil {
 		objectMap["activatedDate"] = cr.ActivatedDate
 	}
@@ -1582,9 +1682,15 @@ func (cr CampaignResult) MarshalJSON() ([]byte, error) {
 	if cr.Category != nil {
 		objectMap["category"] = cr.Category
 	}
-	objectMap["pushMode"] = cr.PushMode
-	objectMap["type"] = cr.Type
-	objectMap["deliveryTime"] = cr.DeliveryTime
+	if cr.PushMode != "" {
+		objectMap["pushMode"] = cr.PushMode
+	}
+	if cr.Type != "" {
+		objectMap["type"] = cr.Type
+	}
+	if cr.DeliveryTime != "" {
+		objectMap["deliveryTime"] = cr.DeliveryTime
+	}
 	if cr.DeliveryActivities != nil {
 		objectMap["deliveryActivities"] = cr.DeliveryActivities
 	}
@@ -1597,7 +1703,9 @@ func (cr CampaignResult) MarshalJSON() ([]byte, error) {
 	if cr.Timezone != nil {
 		objectMap["timezone"] = cr.Timezone
 	}
-	objectMap["notificationType"] = cr.NotificationType
+	if cr.NotificationType != "" {
+		objectMap["notificationType"] = cr.NotificationType
+	}
 	if cr.NotificationIcon != nil {
 		objectMap["notificationIcon"] = cr.NotificationIcon
 	}
@@ -1896,7 +2004,9 @@ func (ccc CarrierCountryCriterion) MarshalJSON() ([]byte, error) {
 	if ccc.Name != nil {
 		objectMap["name"] = ccc.Name
 	}
-	objectMap["type"] = ccc.Type
+	if ccc.Type != "" {
+		objectMap["type"] = ccc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2025,7 +2135,9 @@ func (cnc CarrierNameCriterion) MarshalJSON() ([]byte, error) {
 	if cnc.Name != nil {
 		objectMap["name"] = cnc.Name
 	}
-	objectMap["type"] = cnc.Type
+	if cnc.Type != "" {
+		objectMap["type"] = cnc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2287,7 +2399,9 @@ func unmarshalBasicCriterionArray(body []byte) ([]BasicCriterion, error) {
 func (c Criterion) MarshalJSON() ([]byte, error) {
 	c.Type = TypeCriterion
 	objectMap := make(map[string]interface{})
-	objectMap["type"] = c.Type
+	if c.Type != "" {
+		objectMap["type"] = c.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2419,8 +2533,12 @@ func (dfc DatapushFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	if dfc.ContentID != nil {
 		objectMap["content-id"] = dfc.ContentID
 	}
-	objectMap["action"] = dfc.Action
-	objectMap["type"] = dfc.Type
+	if dfc.Action != "" {
+		objectMap["action"] = dfc.Action
+	}
+	if dfc.Type != "" {
+		objectMap["type"] = dfc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2569,8 +2687,12 @@ func (dtc DateTagCriterion) MarshalJSON() ([]byte, error) {
 	if dtc.Value != nil {
 		objectMap["value"] = dtc.Value
 	}
-	objectMap["op"] = dtc.Op
-	objectMap["type"] = dtc.Type
+	if dtc.Op != "" {
+		objectMap["op"] = dtc.Op
+	}
+	if dtc.Type != "" {
+		objectMap["type"] = dtc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2777,7 +2899,9 @@ func (dmc DeviceManufacturerCriterion) MarshalJSON() ([]byte, error) {
 	if dmc.Name != nil {
 		objectMap["name"] = dmc.Name
 	}
-	objectMap["type"] = dmc.Type
+	if dmc.Type != "" {
+		objectMap["type"] = dmc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2920,7 +3044,9 @@ func (dmc DeviceModelCriterion) MarshalJSON() ([]byte, error) {
 	if dmc.Name != nil {
 		objectMap["name"] = dmc.Name
 	}
-	objectMap["type"] = dmc.Type
+	if dmc.Type != "" {
+		objectMap["type"] = dmc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3203,7 +3329,9 @@ func (eauf EngageActiveUsersFilter) MarshalJSON() ([]byte, error) {
 	if eauf.Threshold != nil {
 		objectMap["threshold"] = eauf.Threshold
 	}
-	objectMap["type"] = eauf.Type
+	if eauf.Type != "" {
+		objectMap["type"] = eauf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3272,7 +3400,9 @@ func (eiuf EngageIdleUsersFilter) MarshalJSON() ([]byte, error) {
 	if eiuf.Threshold != nil {
 		objectMap["threshold"] = eiuf.Threshold
 	}
-	objectMap["type"] = eiuf.Type
+	if eiuf.Type != "" {
+		objectMap["type"] = eiuf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3341,7 +3471,9 @@ func (enuf EngageNewUsersFilter) MarshalJSON() ([]byte, error) {
 	if enuf.Threshold != nil {
 		objectMap["threshold"] = enuf.Threshold
 	}
-	objectMap["type"] = enuf.Type
+	if enuf.Type != "" {
+		objectMap["type"] = enuf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3410,7 +3542,9 @@ func (eouf EngageOldUsersFilter) MarshalJSON() ([]byte, error) {
 	if eouf.Threshold != nil {
 		objectMap["threshold"] = eouf.Threshold
 	}
-	objectMap["type"] = eouf.Type
+	if eouf.Type != "" {
+		objectMap["type"] = eouf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3479,7 +3613,9 @@ func (esf EngageSubsetFilter) MarshalJSON() ([]byte, error) {
 	if esf.Max != nil {
 		objectMap["max"] = esf.Max
 	}
-	objectMap["type"] = esf.Type
+	if esf.Type != "" {
+		objectMap["type"] = esf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3784,7 +3920,9 @@ func unmarshalBasicFilterArray(body []byte) ([]BasicFilter, error) {
 func (f Filter) MarshalJSON() ([]byte, error) {
 	f.Type = TypeFilter
 	objectMap := make(map[string]interface{})
-	objectMap["type"] = f.Type
+	if f.Type != "" {
+		objectMap["type"] = f.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3853,7 +3991,9 @@ func (fvc FirmwareVersionCriterion) MarshalJSON() ([]byte, error) {
 	if fvc.Name != nil {
 		objectMap["name"] = fvc.Name
 	}
-	objectMap["type"] = fvc.Type
+	if fvc.Type != "" {
+		objectMap["type"] = fvc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3999,7 +4139,9 @@ func (gfc GeoFencingCriterion) MarshalJSON() ([]byte, error) {
 	if gfc.Expiration != nil {
 		objectMap["expiration"] = gfc.Expiration
 	}
-	objectMap["type"] = gfc.Type
+	if gfc.Type != "" {
+		objectMap["type"] = gfc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4262,8 +4404,12 @@ func (itc IntegerTagCriterion) MarshalJSON() ([]byte, error) {
 	if itc.Value != nil {
 		objectMap["value"] = itc.Value
 	}
-	objectMap["op"] = itc.Op
-	objectMap["type"] = itc.Type
+	if itc.Op != "" {
+		objectMap["op"] = itc.Op
+	}
+	if itc.Type != "" {
+		objectMap["type"] = itc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4392,7 +4538,9 @@ func (lc LanguageCriterion) MarshalJSON() ([]byte, error) {
 	if lc.Name != nil {
 		objectMap["name"] = lc.Name
 	}
-	objectMap["type"] = lc.Type
+	if lc.Type != "" {
+		objectMap["type"] = lc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4531,7 +4679,9 @@ func (lc LocationCriterion) MarshalJSON() ([]byte, error) {
 	if lc.Locality != nil {
 		objectMap["locality"] = lc.Locality
 	}
-	objectMap["type"] = lc.Type
+	if lc.Type != "" {
+		objectMap["type"] = lc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4655,7 +4805,9 @@ type NativePushEnabledFilter struct {
 func (npef NativePushEnabledFilter) MarshalJSON() ([]byte, error) {
 	npef.Type = TypeNativePushEnabled
 	objectMap := make(map[string]interface{})
-	objectMap["type"] = npef.Type
+	if npef.Type != "" {
+		objectMap["type"] = npef.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4724,7 +4876,9 @@ func (ntc NetworkTypeCriterion) MarshalJSON() ([]byte, error) {
 	if ntc.Name != nil {
 		objectMap["name"] = ntc.Name
 	}
-	objectMap["type"] = ntc.Type
+	if ntc.Type != "" {
+		objectMap["type"] = ntc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4884,7 +5038,9 @@ func (pafc PollAnswerFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	if pafc.ChoiceID != nil {
 		objectMap["choice-id"] = pafc.ChoiceID
 	}
-	objectMap["type"] = pafc.Type
+	if pafc.Type != "" {
+		objectMap["type"] = pafc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5015,8 +5171,12 @@ func (pfc PollFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	if pfc.ContentID != nil {
 		objectMap["content-id"] = pfc.ContentID
 	}
-	objectMap["action"] = pfc.Action
-	objectMap["type"] = pfc.Type
+	if pfc.Action != "" {
+		objectMap["action"] = pfc.Action
+	}
+	if pfc.Type != "" {
+		objectMap["type"] = pfc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5212,7 +5372,9 @@ type PushQuotaFilter struct {
 func (pqf PushQuotaFilter) MarshalJSON() ([]byte, error) {
 	pqf.Type = TypePushQuota
 	objectMap := make(map[string]interface{})
-	objectMap["type"] = pqf.Type
+	if pqf.Type != "" {
+		objectMap["type"] = pqf.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5316,7 +5478,9 @@ func (ssc ScreenSizeCriterion) MarshalJSON() ([]byte, error) {
 	if ssc.Name != nil {
 		objectMap["name"] = ssc.Name
 	}
-	objectMap["type"] = ssc.Type
+	if ssc.Type != "" {
+		objectMap["type"] = ssc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5450,7 +5614,9 @@ func (sc SegmentCriterion) MarshalJSON() ([]byte, error) {
 	if sc.Exclude != nil {
 		objectMap["exclude"] = sc.Exclude
 	}
-	objectMap["type"] = sc.Type
+	if sc.Type != "" {
+		objectMap["type"] = sc.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5584,7 +5750,9 @@ func (stc StringTagCriterion) MarshalJSON() ([]byte, error) {
 	if stc.Value != nil {
 		objectMap["value"] = stc.Value
 	}
-	objectMap["type"] = stc.Type
+	if stc.Type != "" {
+		objectMap["type"] = stc.Type
+	}
 	return json.Marshal(objectMap)
 }
 

@@ -29,6 +29,7 @@ const (
 	DefaultBaseURI = "https://management.azure.com"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // BaseClient is the base client for Storage.
 type BaseClient struct {
 	autorest.Client
@@ -36,11 +37,13 @@ type BaseClient struct {
 	SubscriptionID string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // New creates an instance of the BaseClient client.
 func New(subscriptionID string) BaseClient {
 	return NewWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NewWithBaseURI creates an instance of the BaseClient client.
 func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return BaseClient{

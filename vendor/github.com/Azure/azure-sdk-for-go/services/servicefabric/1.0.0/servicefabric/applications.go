@@ -40,8 +40,8 @@ func NewApplicationsClientWithBaseURI(baseURI string, timeout *int32) Applicatio
 }
 
 // Create create applications
-//
-// applicationDescription is the description of the application
+// Parameters:
+// applicationDescription - the description of the application
 func (client ApplicationsClient) Create(ctx context.Context, applicationDescription ApplicationDescription) (result String, err error) {
 	req, err := client.CreatePreparer(ctx, applicationDescription)
 	if err != nil {
@@ -75,7 +75,7 @@ func (client ApplicationsClient) CreatePreparer(ctx context.Context, application
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/Applications/$/Create"),
@@ -105,8 +105,8 @@ func (client ApplicationsClient) CreateResponder(resp *http.Response) (result St
 }
 
 // Get get applications
-//
-// applicationName is the name of the application
+// Parameters:
+// applicationName - the name of the application
 func (client ApplicationsClient) Get(ctx context.Context, applicationName string) (result Application, err error) {
 	req, err := client.GetPreparer(ctx, applicationName)
 	if err != nil {
@@ -172,8 +172,8 @@ func (client ApplicationsClient) GetResponder(resp *http.Response) (result Appli
 }
 
 // List list applications
-//
-// continuationToken is the token of the continuation
+// Parameters:
+// continuationToken - the token of the continuation
 func (client ApplicationsClient) List(ctx context.Context, continuationToken string) (result ApplicationList, err error) {
 	req, err := client.ListPreparer(ctx, continuationToken)
 	if err != nil {
@@ -238,8 +238,9 @@ func (client ApplicationsClient) ListResponder(resp *http.Response) (result Appl
 }
 
 // Remove remove applications
-//
-// applicationName is the name of the application forceRemove is the force remove flag to skip services check
+// Parameters:
+// applicationName - the name of the application
+// forceRemove - the force remove flag to skip services check
 func (client ApplicationsClient) Remove(ctx context.Context, applicationName string, forceRemove *bool) (result String, err error) {
 	req, err := client.RemovePreparer(ctx, applicationName, forceRemove)
 	if err != nil {

@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"ACM",
     "serviceFullName":"AWS Certificate Manager",
+    "serviceId":"ACM",
     "signatureVersion":"v4",
     "targetPrefix":"CertificateManager",
     "uid":"acm-2015-12-08"
@@ -49,6 +50,20 @@
       "output":{"shape":"DescribeCertificateResponse"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidArnException"}
+      ]
+    },
+    "ExportCertificate":{
+      "name":"ExportCertificate",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ExportCertificateRequest"},
+      "output":{"shape":"ExportCertificateResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"RequestInProgressException"},
         {"shape":"InvalidArnException"}
       ]
     },
@@ -124,7 +139,8 @@
       "output":{"shape":"RequestCertificateResponse"},
       "errors":[
         {"shape":"LimitExceededException"},
-        {"shape":"InvalidDomainValidationOptionsException"}
+        {"shape":"InvalidDomainValidationOptionsException"},
+        {"shape":"InvalidArnException"}
       ]
     },
     "ResendValidationEmail":{
@@ -139,6 +155,20 @@
         {"shape":"InvalidStateException"},
         {"shape":"InvalidArnException"},
         {"shape":"InvalidDomainValidationOptionsException"}
+      ]
+    },
+    "UpdateCertificateOptions":{
+      "name":"UpdateCertificateOptions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateCertificateOptionsRequest"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InvalidStateException"},
+        {"shape":"InvalidArnException"}
       ]
     }
   },
@@ -207,7 +237,16 @@
         "Type":{"shape":"CertificateType"},
         "RenewalSummary":{"shape":"RenewalSummary"},
         "KeyUsages":{"shape":"KeyUsageList"},
-        "ExtendedKeyUsages":{"shape":"ExtendedKeyUsageList"}
+        "ExtendedKeyUsages":{"shape":"ExtendedKeyUsageList"},
+        "CertificateAuthorityArn":{"shape":"Arn"},
+        "RenewalEligibility":{"shape":"RenewalEligibility"},
+        "Options":{"shape":"CertificateOptions"}
+      }
+    },
+    "CertificateOptions":{
+      "type":"structure",
+      "members":{
+        "CertificateTransparencyLoggingPreference":{"shape":"CertificateTransparencyLoggingPreference"}
       }
     },
     "CertificateStatus":{
@@ -237,11 +276,19 @@
       "type":"list",
       "member":{"shape":"CertificateSummary"}
     },
+    "CertificateTransparencyLoggingPreference":{
+      "type":"string",
+      "enum":[
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
     "CertificateType":{
       "type":"string",
       "enum":[
         "IMPORTED",
-        "AMAZON_ISSUED"
+        "AMAZON_ISSUED",
+        "PRIVATE"
       ]
     },
     "DeleteCertificateRequest":{
@@ -319,6 +366,25 @@
       "max":100,
       "min":1
     },
+    "ExportCertificateRequest":{
+      "type":"structure",
+      "required":[
+        "CertificateArn",
+        "Passphrase"
+      ],
+      "members":{
+        "CertificateArn":{"shape":"Arn"},
+        "Passphrase":{"shape":"PassphraseBlob"}
+      }
+    },
+    "ExportCertificateResponse":{
+      "type":"structure",
+      "members":{
+        "Certificate":{"shape":"CertificateBody"},
+        "CertificateChain":{"shape":"CertificateChain"},
+        "PrivateKey":{"shape":"PrivateKey"}
+      }
+    },
     "ExtendedKeyUsage":{
       "type":"structure",
       "members":{
@@ -359,6 +425,12 @@
         "DOMAIN_NOT_ALLOWED",
         "INVALID_PUBLIC_DOMAIN",
         "CAA_ERROR",
+        "PCA_LIMIT_EXCEEDED",
+        "PCA_INVALID_ARN",
+        "PCA_INVALID_STATE",
+        "PCA_REQUEST_FAILED",
+        "PCA_RESOURCE_NOT_FOUND",
+        "PCA_INVALID_ARGS",
         "OTHER"
       ]
     },
@@ -533,6 +605,19 @@
       "min":1,
       "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u00FF]*"
     },
+    "PassphraseBlob":{
+      "type":"blob",
+      "max":128,
+      "min":4,
+      "sensitive":true
+    },
+    "PrivateKey":{
+      "type":"string",
+      "max":524288,
+      "min":1,
+      "pattern":"-{5}BEGIN PRIVATE KEY-{5}\\u000D?\\u000A([A-Za-z0-9/+]{64}\\u000D?\\u000A)*[A-Za-z0-9/+]{1,64}={0,2}\\u000D?\\u000A-{5}END PRIVATE KEY-{5}(\\u000D?\\u000A)?",
+      "sensitive":true
+    },
     "PrivateKeyBlob":{
       "type":"blob",
       "max":524288,
@@ -553,6 +638,13 @@
         "CertificateArn":{"shape":"Arn"},
         "Tags":{"shape":"TagList"}
       }
+    },
+    "RenewalEligibility":{
+      "type":"string",
+      "enum":[
+        "ELIGIBLE",
+        "INELIGIBLE"
+      ]
     },
     "RenewalStatus":{
       "type":"string",
@@ -582,7 +674,9 @@
         "ValidationMethod":{"shape":"ValidationMethod"},
         "SubjectAlternativeNames":{"shape":"DomainList"},
         "IdempotencyToken":{"shape":"IdempotencyToken"},
-        "DomainValidationOptions":{"shape":"DomainValidationOptionList"}
+        "DomainValidationOptions":{"shape":"DomainValidationOptionList"},
+        "Options":{"shape":"CertificateOptions"},
+        "CertificateAuthorityArn":{"shape":"Arn"}
       }
     },
     "RequestCertificateResponse":{
@@ -687,6 +781,17 @@
         "message":{"shape":"String"}
       },
       "exception":true
+    },
+    "UpdateCertificateOptionsRequest":{
+      "type":"structure",
+      "required":[
+        "CertificateArn",
+        "Options"
+      ],
+      "members":{
+        "CertificateArn":{"shape":"Arn"},
+        "Options":{"shape":"CertificateOptions"}
+      }
     },
     "ValidationEmailList":{
       "type":"list",

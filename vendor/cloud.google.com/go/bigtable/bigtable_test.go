@@ -1063,3 +1063,101 @@ func clearTimestamps(r Row) {
 		}
 	}
 }
+
+func TestSampleRowKeys(t *testing.T) {
+	start := time.Now()
+	lastCheckpoint := start
+	checkpoint := func(s string) {
+		n := time.Now()
+		t.Logf("[%s] %v since start, %v since last checkpoint", s, n.Sub(start), n.Sub(lastCheckpoint))
+		lastCheckpoint = n
+	}
+	ctx := context.Background()
+	client, adminClient, table, err := doSetup(ctx)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer client.Close()
+	defer adminClient.Close()
+	tbl := client.Open(table)
+	// Delete the table at the end of the test.
+	// Do this even before creating the table so that if this is running
+	// against production and CreateTable fails there's a chance of cleaning it up.
+	defer adminClient.DeleteTable(ctx, table)
+
+	// Insert some data.
+	initialData := map[string][]string{
+		"wmckinley11":   {"tjefferson11"},
+		"gwashington77": {"jadams77"},
+		"tjefferson0":   {"gwashington0", "jadams0"},
+	}
+
+	for row, ss := range initialData {
+		mut := NewMutation()
+		for _, name := range ss {
+			mut.Set("follows", name, 0, []byte("1"))
+		}
+		if err := tbl.Apply(ctx, row, mut); err != nil {
+			t.Errorf("Mutating row %q: %v", row, err)
+		}
+	}
+	checkpoint("inserted initial data")
+	sampleKeys, err := tbl.SampleRowKeys(context.Background())
+	if err != nil {
+		t.Errorf("%s: %v", "SampleRowKeys:", err)
+	}
+	if len(sampleKeys) == 0 {
+		t.Error("SampleRowKeys length 0")
+	}
+	checkpoint("tested SampleRowKeys.")
+}
+
+func doSetup(ctx context.Context) (*Client, *AdminClient, string, error) {
+	start := time.Now()
+	lastCheckpoint := start
+	checkpoint := func(s string) {
+		n := time.Now()
+		fmt.Printf("[%s] %v since start, %v since last checkpoint", s, n.Sub(start), n.Sub(lastCheckpoint))
+		lastCheckpoint = n
+	}
+
+	testEnv, err := NewIntegrationEnv()
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("IntegrationEnv: %v", err)
+	}
+
+	var timeout time.Duration
+	if testEnv.Config().UseProd {
+		timeout = 10 * time.Minute
+		fmt.Printf("Running test against production")
+	} else {
+		timeout = 1 * time.Minute
+		fmt.Printf("bttest.Server running on %s", testEnv.Config().AdminEndpoint)
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	client, err := testEnv.NewClient()
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("Client: %v", err)
+	}
+	checkpoint("dialed Client")
+
+	adminClient, err := testEnv.NewAdminClient()
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("AdminClient: %v", err)
+	}
+	checkpoint("dialed AdminClient")
+
+	table := testEnv.Config().Table
+	if err := adminClient.CreateTable(ctx, table); err != nil {
+		return nil, nil, "", fmt.Errorf("Creating table: %v", err)
+	}
+	checkpoint("created table")
+	if err := adminClient.CreateColumnFamily(ctx, table, "follows"); err != nil {
+		return nil, nil, "", fmt.Errorf("Creating column family: %v", err)
+	}
+	checkpoint(`created "follows" column family`)
+
+	return client, adminClient, table, nil
+}

@@ -220,7 +220,7 @@
       }
     }
   },
-  "revision": "20180108",
+  "revision": "20180416",
   "rootUrl": "https://runtimeconfig.googleapis.com/",
   "schemas": {
     "CancelOperationRequest": {
@@ -317,7 +317,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Runtime Configuration API",
+  "title": "Cloud Runtime Configuration API",
   "version": "v1",
   "version_module": true
 }

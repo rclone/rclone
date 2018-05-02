@@ -345,6 +345,12 @@ const (
 	// "DISALLOW", "OVERWRITE", and "RETAIN".
 	ErrCodeInvalidFileExistsBehaviorException = "InvalidFileExistsBehaviorException"
 
+	// ErrCodeInvalidGitHubAccountTokenException for service response error code
+	// "InvalidGitHubAccountTokenException".
+	//
+	// The GitHub token is not valid.
+	ErrCodeInvalidGitHubAccountTokenException = "InvalidGitHubAccountTokenException"
+
 	// ErrCodeInvalidGitHubAccountTokenNameException for service response error code
 	// "InvalidGitHubAccountTokenNameException".
 	//

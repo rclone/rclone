@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestRandomizedDelays(t *testing.T) {
@@ -43,7 +43,7 @@ func TestRandomizedDelays(t *testing.T) {
 		}
 		invokeTime = time.Now()
 		// Workaround for `go vet`: https://github.com/grpc/grpc-go/issues/90
-		errf := grpc.Errorf
+		errf := status.Errorf
 		return errf(codes.Unavailable, "")
 	}, settings...)
 }

@@ -41,8 +41,8 @@ func NewNamespacesClientWithBaseURI(baseURI string, subscriptionID string) Names
 }
 
 // CheckNameAvailabilityMethod check the specified namespace name availability.
-//
-// parameters is parameters to check availability of the specified namespace name.
+// Parameters:
+// parameters - parameters to check availability of the specified namespace name.
 func (client NamespacesClient) CheckNameAvailabilityMethod(ctx context.Context, parameters CheckNameAvailability) (result CheckNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -83,7 +83,7 @@ func (client NamespacesClient) CheckNameAvailabilityMethodPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Relay/checkNameAvailability", pathParameters),
@@ -113,9 +113,10 @@ func (client NamespacesClient) CheckNameAvailabilityMethodResponder(resp *http.R
 }
 
 // CreateOrUpdate create Azure Relay namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name parameters is parameters supplied to create a namespace resource.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// parameters - parameters supplied to create a namespace resource.
 func (client NamespacesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, parameters Namespace) (result NamespacesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -159,7 +160,7 @@ func (client NamespacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}", pathParameters),
@@ -197,9 +198,11 @@ func (client NamespacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 }
 
 // CreateOrUpdateAuthorizationRule creates or updates an authorization rule for a namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name authorizationRuleName is the authorization rule name. parameters is the authorization rule parameters.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// authorizationRuleName - the authorization rule name.
+// parameters - the authorization rule parameters.
 func (client NamespacesClient) CreateOrUpdateAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string, parameters AuthorizationRule) (result AuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -254,7 +257,7 @@ func (client NamespacesClient) CreateOrUpdateAuthorizationRulePreparer(ctx conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}/authorizationRules/{authorizationRuleName}", pathParameters),
@@ -284,9 +287,9 @@ func (client NamespacesClient) CreateOrUpdateAuthorizationRuleResponder(resp *ht
 }
 
 // Delete deletes an existing namespace. This operation also removes all associated resources under the namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
 func (client NamespacesClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string) (result NamespacesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -362,9 +365,10 @@ func (client NamespacesClient) DeleteResponder(resp *http.Response) (result auto
 }
 
 // DeleteAuthorizationRule deletes a namespace authorization rule.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// authorizationRuleName - the authorization rule name.
 func (client NamespacesClient) DeleteAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -441,9 +445,9 @@ func (client NamespacesClient) DeleteAuthorizationRuleResponder(resp *http.Respo
 }
 
 // Get returns the description for the specified namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
 func (client NamespacesClient) Get(ctx context.Context, resourceGroupName string, namespaceName string) (result Namespace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -518,9 +522,10 @@ func (client NamespacesClient) GetResponder(resp *http.Response) (result Namespa
 }
 
 // GetAuthorizationRule authorization rule for a namespace by name.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// authorizationRuleName - the authorization rule name.
 func (client NamespacesClient) GetAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result AuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -688,9 +693,9 @@ func (client NamespacesClient) ListComplete(ctx context.Context) (result Namespa
 }
 
 // ListAuthorizationRules authorization rules for a namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
 func (client NamespacesClient) ListAuthorizationRules(ctx context.Context, resourceGroupName string, namespaceName string) (result AuthorizationRuleListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -793,8 +798,8 @@ func (client NamespacesClient) ListAuthorizationRulesComplete(ctx context.Contex
 }
 
 // ListByResourceGroup lists all the available namespaces within the ResourceGroup.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
 func (client NamespacesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result NamespaceListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -893,9 +898,10 @@ func (client NamespacesClient) ListByResourceGroupComplete(ctx context.Context, 
 }
 
 // ListKeys primary and secondary connection strings to the namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name authorizationRuleName is the authorization rule name.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// authorizationRuleName - the authorization rule name.
 func (client NamespacesClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -973,10 +979,11 @@ func (client NamespacesClient) ListKeysResponder(resp *http.Response) (result Ac
 }
 
 // RegenerateKeys regenerates the primary or secondary connection strings to the namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name authorizationRuleName is the authorization rule name. parameters is parameters supplied to regenerate
-// authorization rule.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// authorizationRuleName - the authorization rule name.
+// parameters - parameters supplied to regenerate authorization rule.
 func (client NamespacesClient) RegenerateKeys(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string, parameters RegenerateAccessKeyParameters) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1026,7 +1033,7 @@ func (client NamespacesClient) RegenerateKeysPreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}/authorizationRules/{authorizationRuleName}/regenerateKeys", pathParameters),
@@ -1057,9 +1064,10 @@ func (client NamespacesClient) RegenerateKeysResponder(resp *http.Response) (res
 
 // Update creates or updates a namespace. Once created, this namespace's resource manifest is immutable. This operation
 // is idempotent.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name parameters is parameters for updating a namespace resource.
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
+// parameters - parameters for updating a namespace resource.
 func (client NamespacesClient) Update(ctx context.Context, resourceGroupName string, namespaceName string, parameters UpdateParameters) (result Namespace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1106,7 +1114,7 @@ func (client NamespacesClient) UpdatePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Relay/namespaces/{namespaceName}", pathParameters),

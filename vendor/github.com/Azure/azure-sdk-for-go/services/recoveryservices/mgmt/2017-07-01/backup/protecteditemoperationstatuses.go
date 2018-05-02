@@ -43,11 +43,13 @@ func NewProtectedItemOperationStatusesClientWithBaseURI(baseURI string, subscrip
 // Get fetches the status of an operation such as triggering a backup, restore. The status can be in progress,
 // completed or failed. You can refer to the OperationStatus enum for all the possible states of the operation. Some
 // operations create jobs. This method returns the list of jobs associated with the operation.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backup item. containerName
-// is container name associated with the backup item. protectedItemName is backup item name whose details are to be
-// fetched. operationID is operationID represents the operation whose status needs to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backup item.
+// containerName - container name associated with the backup item.
+// protectedItemName - backup item name whose details are to be fetched.
+// operationID - operationID represents the operation whose status needs to be fetched.
 func (client ProtectedItemOperationStatusesClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, operationID string) (result OperationStatus, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, operationID)
 	if err != nil {

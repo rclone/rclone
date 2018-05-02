@@ -40,9 +40,9 @@ func NewReplicationUsagesClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // List fetches the replication usages of the vault.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
 func (client ReplicationUsagesClient) List(ctx context.Context, resourceGroupName string, vaultName string) (result ReplicationUsageList, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {

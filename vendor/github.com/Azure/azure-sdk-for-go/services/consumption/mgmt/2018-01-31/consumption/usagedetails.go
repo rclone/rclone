@@ -43,15 +43,16 @@ func NewUsageDetailsClientWithBaseURI(baseURI string, subscriptionID string) Usa
 
 // List lists the usage details for a scope by billing period. Usage details are available via this API only for May 1,
 // 2014 or later.
-//
-// expand is may be used to expand the properties/additionalProperties or properties/meterDetails within a list of
-// usage details. By default, these fields are not included when listing usage details. filter is may be used to
-// filter usageDetails by properties/usageEnd (Utc time), properties/usageStart (Utc time),
-// properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq', 'lt',
-// 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'. skiptoken is skiptoken is only
-// used if a previous operation returned a partial result. If a previous response contains a nextLink element, the
-// value of the nextLink element will include a skiptoken parameter that specifies a starting point to use for
-// subsequent calls. top is may be used to limit the number of results to the most recent N usageDetails.
+// Parameters:
+// expand - may be used to expand the properties/additionalProperties or properties/meterDetails within a list
+// of usage details. By default, these fields are not included when listing usage details.
+// filter - may be used to filter usageDetails by properties/usageEnd (Utc time), properties/usageStart (Utc
+// time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',
+// 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
+// top - may be used to limit the number of results to the most recent N usageDetails.
 func (client UsageDetailsClient) List(ctx context.Context, expand string, filter string, skiptoken string, top *int32) (result UsageDetailsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -164,16 +165,17 @@ func (client UsageDetailsClient) ListComplete(ctx context.Context, expand string
 
 // ListByBillingPeriod lists the usage details for a scope by billing period. Usage details are available via this API
 // only for May 1, 2014 or later.
-//
-// billingPeriodName is billing Period Name. expand is may be used to expand the properties/additionalProperties or
-// properties/meterDetails within a list of usage details. By default, these fields are not included when listing
-// usage details. filter is may be used to filter usageDetails by properties/usageEnd (Utc time),
-// properties/usageStart (Utc time), properties/resourceGroup, properties/instanceName or properties/instanceId.
-// The filter supports 'eq', 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'.
-// skiptoken is skiptoken is only used if a previous operation returned a partial result. If a previous response
-// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that specifies
-// a starting point to use for subsequent calls. top is may be used to limit the number of results to the most
-// recent N usageDetails.
+// Parameters:
+// billingPeriodName - billing Period Name.
+// expand - may be used to expand the properties/additionalProperties or properties/meterDetails within a list
+// of usage details. By default, these fields are not included when listing usage details.
+// filter - may be used to filter usageDetails by properties/usageEnd (Utc time), properties/usageStart (Utc
+// time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',
+// 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'.
+// skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
+// contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
+// specifies a starting point to use for subsequent calls.
+// top - may be used to limit the number of results to the most recent N usageDetails.
 func (client UsageDetailsClient) ListByBillingPeriod(ctx context.Context, billingPeriodName string, expand string, filter string, skiptoken string, top *int32) (result UsageDetailsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,

@@ -40,9 +40,10 @@ func NewExportJobsOperationResultsClientWithBaseURI(baseURI string, subscription
 }
 
 // Get gets the result of the operation triggered by the ExportJob API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. operationID is the ID associated with the export job.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// operationID - the ID associated with the export job.
 func (client ExportJobsOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, operationID string) (result OperationResultInfoBaseResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, operationID)
 	if err != nil {

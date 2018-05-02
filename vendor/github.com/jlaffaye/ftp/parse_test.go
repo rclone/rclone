@@ -84,7 +84,7 @@ var listTestsFail = []unsupportedLine{
 
 func TestParseValidListLine(t *testing.T) {
 	for _, lt := range listTests {
-		entry, err := parseListLine(lt.line, now)
+		entry, err := parseListLine(lt.line, now, time.UTC)
 		if err != nil {
 			t.Errorf("parseListLine(%v) returned err = %v", lt.line, err)
 			continue
@@ -106,7 +106,7 @@ func TestParseValidListLine(t *testing.T) {
 
 func TestParseUnsupportedListLine(t *testing.T) {
 	for _, lt := range listTestsFail {
-		_, err := parseListLine(lt.line, now)
+		_, err := parseListLine(lt.line, now, time.UTC)
 		if err == nil {
 			t.Errorf("parseListLine(%v) expected to fail", lt.line)
 		}
@@ -136,7 +136,7 @@ func TestSettime(t *testing.T) {
 
 	for _, test := range tests {
 		entry := &Entry{}
-		entry.setTime(strings.Fields(test.line), now)
+		entry.setTime(strings.Fields(test.line), now, time.UTC)
 
 		if !entry.Time.Equal(test.expected) {
 			t.Errorf("setTime(%v).Time = %v, want %v", test.line, entry.Time, test.expected)

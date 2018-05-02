@@ -61,6 +61,11 @@ const (
 	Update CertificatePermissions = "update"
 )
 
+// PossibleCertificatePermissionsValues returns an array of possible values for the CertificatePermissions const type.
+func PossibleCertificatePermissionsValues() []CertificatePermissions {
+	return []CertificatePermissions{All, Create, Delete, Deleteissuers, Get, Getissuers, Import, List, Listissuers, Managecontacts, Manageissuers, Purge, Recover, Setissuers, Update}
+}
+
 // KeyPermissions enumerates the values for key permissions.
 type KeyPermissions string
 
@@ -101,6 +106,11 @@ const (
 	KeyPermissionsWrapKey KeyPermissions = "wrapKey"
 )
 
+// PossibleKeyPermissionsValues returns an array of possible values for the KeyPermissions const type.
+func PossibleKeyPermissionsValues() []KeyPermissions {
+	return []KeyPermissions{KeyPermissionsAll, KeyPermissionsBackup, KeyPermissionsCreate, KeyPermissionsDecrypt, KeyPermissionsDelete, KeyPermissionsEncrypt, KeyPermissionsGet, KeyPermissionsImport, KeyPermissionsList, KeyPermissionsPurge, KeyPermissionsRecover, KeyPermissionsRestore, KeyPermissionsSign, KeyPermissionsUnwrapKey, KeyPermissionsUpdate, KeyPermissionsVerify, KeyPermissionsWrapKey}
+}
+
 // SecretPermissions enumerates the values for secret permissions.
 type SecretPermissions string
 
@@ -125,6 +135,11 @@ const (
 	SecretPermissionsSet SecretPermissions = "set"
 )
 
+// PossibleSecretPermissionsValues returns an array of possible values for the SecretPermissions const type.
+func PossibleSecretPermissionsValues() []SecretPermissions {
+	return []SecretPermissions{SecretPermissionsAll, SecretPermissionsBackup, SecretPermissionsDelete, SecretPermissionsGet, SecretPermissionsList, SecretPermissionsPurge, SecretPermissionsRecover, SecretPermissionsRestore, SecretPermissionsSet}
+}
+
 // SkuName enumerates the values for sku name.
 type SkuName string
 
@@ -134,6 +149,11 @@ const (
 	// Standard ...
 	Standard SkuName = "standard"
 )
+
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Premium, Standard}
+}
 
 // AccessPolicyEntry an identity that have access to the key vault. All identities in the array must use the same
 // tenant ID as the key vault's tenant ID.

@@ -41,8 +41,9 @@ func NewTenantAccessGitClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // Get gets the Git access configuration for the tenant.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessGitClient) Get(ctx context.Context, resourceGroupName string, serviceName string) (result AccessInformationContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -116,8 +117,9 @@ func (client TenantAccessGitClient) GetResponder(resp *http.Response) (result Ac
 }
 
 // RegeneratePrimaryKey regenerate primary access key for GIT.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessGitClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -190,8 +192,9 @@ func (client TenantAccessGitClient) RegeneratePrimaryKeyResponder(resp *http.Res
 }
 
 // RegenerateSecondaryKey regenerate secondary access key for GIT.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessGitClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

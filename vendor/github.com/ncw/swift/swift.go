@@ -1843,14 +1843,16 @@ type BulkDeleteResult struct {
 func (c *Connection) doBulkDelete(objects []string) (result BulkDeleteResult, err error) {
 	var buffer bytes.Buffer
 	for _, s := range objects {
-		buffer.WriteString(url.QueryEscape(s) + "\n")
+		u := url.URL{Path: s}
+		buffer.WriteString(u.String() + "\n")
 	}
 	resp, headers, err := c.storage(RequestOpts{
 		Operation:  "DELETE",
 		Parameters: url.Values{"bulk-delete": []string{"1"}},
 		Headers: Headers{
-			"Accept":       "application/json",
-			"Content-Type": "text/plain",
+			"Accept":         "application/json",
+			"Content-Type":   "text/plain",
+			"Content-Length": strconv.Itoa(buffer.Len()),
 		},
 		ErrorMap: ContainerErrorMap,
 		Body:     &buffer,

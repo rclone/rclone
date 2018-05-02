@@ -24,22 +24,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ExpressRouteServiceProvidersClient is the network Client
 type ExpressRouteServiceProvidersClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewExpressRouteServiceProvidersClient creates an instance of the ExpressRouteServiceProvidersClient client.
 func NewExpressRouteServiceProvidersClient(subscriptionID string) ExpressRouteServiceProvidersClient {
 	return NewExpressRouteServiceProvidersClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewExpressRouteServiceProvidersClientWithBaseURI creates an instance of the ExpressRouteServiceProvidersClient
 // client.
 func NewExpressRouteServiceProvidersClientWithBaseURI(baseURI string, subscriptionID string) ExpressRouteServiceProvidersClient {
 	return ExpressRouteServiceProvidersClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // List the List ExpressRouteServiceProvider opertion retrieves all the available ExpressRouteServiceProviders.
 func (client ExpressRouteServiceProvidersClient) List(ctx context.Context) (result ExpressRouteServiceProviderListResultPage, err error) {
 	result.fn = client.listNextResults
@@ -64,6 +68,7 @@ func (client ExpressRouteServiceProvidersClient) List(ctx context.Context) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListPreparer prepares the List request.
 func (client ExpressRouteServiceProvidersClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -83,6 +88,7 @@ func (client ExpressRouteServiceProvidersClient) ListPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExpressRouteServiceProvidersClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -90,6 +96,7 @@ func (client ExpressRouteServiceProvidersClient) ListSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ExpressRouteServiceProvidersClient) ListResponder(resp *http.Response) (result ExpressRouteServiceProviderListResult, err error) {
@@ -124,6 +131,7 @@ func (client ExpressRouteServiceProvidersClient) listNextResults(lastResults Exp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ExpressRouteServiceProvidersClient) ListComplete(ctx context.Context) (result ExpressRouteServiceProviderListResultIterator, err error) {
 	result.page, err = client.List(ctx)

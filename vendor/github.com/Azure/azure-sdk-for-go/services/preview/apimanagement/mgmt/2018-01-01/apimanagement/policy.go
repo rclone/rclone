@@ -41,9 +41,10 @@ func NewPolicyClientWithBaseURI(baseURI string, subscriptionID string) PolicyCli
 }
 
 // CreateOrUpdate creates or updates the global policy configuration of the Api Management service.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is the policy contents to apply.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - the policy contents to apply.
 func (client PolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, parameters PolicyContract) (result PolicyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -122,9 +123,10 @@ func (client PolicyClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete deletes the global policy configuration of the Api Management Service.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// ifMatch is eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
 // request or it should be * for unconditional update.
 func (client PolicyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -199,8 +201,9 @@ func (client PolicyClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // Get get the Global policy definition of the Api Management service.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client PolicyClient) Get(ctx context.Context, resourceGroupName string, serviceName string) (result PolicyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -274,8 +277,9 @@ func (client PolicyClient) GetResponder(resp *http.Response) (result PolicyContr
 }
 
 // GetEntityTag gets the entity state (Etag) version of the Global policy definition in the Api Management service.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client PolicyClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -348,9 +352,10 @@ func (client PolicyClient) GetEntityTagResponder(resp *http.Response) (result au
 }
 
 // ListByService lists all the Global Policy definitions of the Api Management service.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// scope is policy scope.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// scope - policy scope.
 func (client PolicyClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, scope PolicyScopeContract) (result PolicyCollection, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

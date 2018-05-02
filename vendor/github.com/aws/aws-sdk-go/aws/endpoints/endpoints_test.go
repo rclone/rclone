@@ -65,6 +65,10 @@ func TestEnumRegionServices(t *testing.T) {
 		t.Errorf("expect %q region ID, got %q", e, a)
 	}
 
+	if a, e := r.Description(), "region description"; a != e {
+		t.Errorf("expect %q region Description, got %q", e, a)
+	}
+
 	ss := r.Services()
 	if a, e := len(ss), 1; a != e {
 		t.Errorf("expect %d services for us-east-1, got %d", e, a)
@@ -290,6 +294,9 @@ func TestRegionsForService(t *testing.T) {
 		}
 		if _, ok := expect[id]; !ok {
 			t.Errorf("expect %s region to be found", id)
+		}
+		if a, e := r.Description(), expect[id].desc; a != e {
+			t.Errorf("expect %q region Description, got %q", e, a)
 		}
 	}
 }

@@ -245,8 +245,17 @@ func (c *curvePoint) Mul(a *curvePoint, scalar *big.Int, pool *bnPool) *curvePoi
 	return c
 }
 
+// MakeAffine converts c to affine form and returns c. If c is ∞, then it sets
+// c to 0 : 1 : 0.
 func (c *curvePoint) MakeAffine(pool *bnPool) *curvePoint {
 	if words := c.z.Bits(); len(words) == 1 && words[0] == 1 {
+		return c
+	}
+	if c.IsInfinity() {
+		c.x.SetInt64(0)
+		c.y.SetInt64(1)
+		c.z.SetInt64(0)
+		c.t.SetInt64(0)
 		return c
 	}
 

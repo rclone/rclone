@@ -3,6 +3,8 @@
 package guardduty
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -12,7 +14,7 @@ const opAcceptInvitation = "AcceptInvitation"
 
 // AcceptInvitationRequest generates a "aws/request.Request" representing the
 // client's request for the AcceptInvitation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -94,7 +96,7 @@ const opArchiveFindings = "ArchiveFindings"
 
 // ArchiveFindingsRequest generates a "aws/request.Request" representing the
 // client's request for the ArchiveFindings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -176,7 +178,7 @@ const opCreateDetector = "CreateDetector"
 
 // CreateDetectorRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDetector operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -256,11 +258,93 @@ func (c *GuardDuty) CreateDetectorWithContext(ctx aws.Context, input *CreateDete
 	return out, req.Send()
 }
 
+const opCreateFilter = "CreateFilter"
+
+// CreateFilterRequest generates a "aws/request.Request" representing the
+// client's request for the CreateFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateFilter for more information on using the CreateFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateFilterRequest method.
+//    req, resp := client.CreateFilterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/CreateFilter
+func (c *GuardDuty) CreateFilterRequest(input *CreateFilterInput) (req *request.Request, output *CreateFilterOutput) {
+	op := &request.Operation{
+		Name:       opCreateFilter,
+		HTTPMethod: "POST",
+		HTTPPath:   "/detector/{detectorId}/filter",
+	}
+
+	if input == nil {
+		input = &CreateFilterInput{}
+	}
+
+	output = &CreateFilterOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateFilter API operation for Amazon GuardDuty.
+//
+// Creates a filter using the specified finding criteria.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation CreateFilter for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Error response object.
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//   Error response object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/CreateFilter
+func (c *GuardDuty) CreateFilter(input *CreateFilterInput) (*CreateFilterOutput, error) {
+	req, out := c.CreateFilterRequest(input)
+	return out, req.Send()
+}
+
+// CreateFilterWithContext is the same as CreateFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) CreateFilterWithContext(ctx aws.Context, input *CreateFilterInput, opts ...request.Option) (*CreateFilterOutput, error) {
+	req, out := c.CreateFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateIPSet = "CreateIPSet"
 
 // CreateIPSetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateIPSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -343,7 +427,7 @@ const opCreateMembers = "CreateMembers"
 
 // CreateMembersRequest generates a "aws/request.Request" representing the
 // client's request for the CreateMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -427,7 +511,7 @@ const opCreateSampleFindings = "CreateSampleFindings"
 
 // CreateSampleFindingsRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSampleFindings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -511,7 +595,7 @@ const opCreateThreatIntelSet = "CreateThreatIntelSet"
 
 // CreateThreatIntelSetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateThreatIntelSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -594,7 +678,7 @@ const opDeclineInvitations = "DeclineInvitations"
 
 // DeclineInvitationsRequest generates a "aws/request.Request" representing the
 // client's request for the DeclineInvitations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -677,7 +761,7 @@ const opDeleteDetector = "DeleteDetector"
 
 // DeleteDetectorRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDetector operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -755,11 +839,93 @@ func (c *GuardDuty) DeleteDetectorWithContext(ctx aws.Context, input *DeleteDete
 	return out, req.Send()
 }
 
+const opDeleteFilter = "DeleteFilter"
+
+// DeleteFilterRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteFilter for more information on using the DeleteFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteFilterRequest method.
+//    req, resp := client.DeleteFilterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/DeleteFilter
+func (c *GuardDuty) DeleteFilterRequest(input *DeleteFilterInput) (req *request.Request, output *DeleteFilterOutput) {
+	op := &request.Operation{
+		Name:       opDeleteFilter,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/detector/{detectorId}/filter/{filterName}",
+	}
+
+	if input == nil {
+		input = &DeleteFilterInput{}
+	}
+
+	output = &DeleteFilterOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteFilter API operation for Amazon GuardDuty.
+//
+// Deletes the filter specified by the filter name.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation DeleteFilter for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Error response object.
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//   Error response object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/DeleteFilter
+func (c *GuardDuty) DeleteFilter(input *DeleteFilterInput) (*DeleteFilterOutput, error) {
+	req, out := c.DeleteFilterRequest(input)
+	return out, req.Send()
+}
+
+// DeleteFilterWithContext is the same as DeleteFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) DeleteFilterWithContext(ctx aws.Context, input *DeleteFilterInput, opts ...request.Option) (*DeleteFilterOutput, error) {
+	req, out := c.DeleteFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteIPSet = "DeleteIPSet"
 
 // DeleteIPSetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteIPSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -841,7 +1007,7 @@ const opDeleteInvitations = "DeleteInvitations"
 
 // DeleteInvitationsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteInvitations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -924,7 +1090,7 @@ const opDeleteMembers = "DeleteMembers"
 
 // DeleteMembersRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1007,7 +1173,7 @@ const opDeleteThreatIntelSet = "DeleteThreatIntelSet"
 
 // DeleteThreatIntelSetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteThreatIntelSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1089,7 +1255,7 @@ const opDisassociateFromMasterAccount = "DisassociateFromMasterAccount"
 
 // DisassociateFromMasterAccountRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateFromMasterAccount operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1171,7 +1337,7 @@ const opDisassociateMembers = "DisassociateMembers"
 
 // DisassociateMembersRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1254,7 +1420,7 @@ const opGetDetector = "GetDetector"
 
 // GetDetectorRequest generates a "aws/request.Request" representing the
 // client's request for the GetDetector operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1332,11 +1498,93 @@ func (c *GuardDuty) GetDetectorWithContext(ctx aws.Context, input *GetDetectorIn
 	return out, req.Send()
 }
 
+const opGetFilter = "GetFilter"
+
+// GetFilterRequest generates a "aws/request.Request" representing the
+// client's request for the GetFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetFilter for more information on using the GetFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetFilterRequest method.
+//    req, resp := client.GetFilterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/GetFilter
+func (c *GuardDuty) GetFilterRequest(input *GetFilterInput) (req *request.Request, output *GetFilterOutput) {
+	op := &request.Operation{
+		Name:       opGetFilter,
+		HTTPMethod: "GET",
+		HTTPPath:   "/detector/{detectorId}/filter/{filterName}",
+	}
+
+	if input == nil {
+		input = &GetFilterInput{}
+	}
+
+	output = &GetFilterOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetFilter API operation for Amazon GuardDuty.
+//
+// Returns the details of the filter specified by the filter name.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation GetFilter for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Error response object.
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//   Error response object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/GetFilter
+func (c *GuardDuty) GetFilter(input *GetFilterInput) (*GetFilterOutput, error) {
+	req, out := c.GetFilterRequest(input)
+	return out, req.Send()
+}
+
+// GetFilterWithContext is the same as GetFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) GetFilterWithContext(ctx aws.Context, input *GetFilterInput, opts ...request.Option) (*GetFilterOutput, error) {
+	req, out := c.GetFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetFindings = "GetFindings"
 
 // GetFindingsRequest generates a "aws/request.Request" representing the
 // client's request for the GetFindings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1418,7 +1666,7 @@ const opGetFindingsStatistics = "GetFindingsStatistics"
 
 // GetFindingsStatisticsRequest generates a "aws/request.Request" representing the
 // client's request for the GetFindingsStatistics operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1500,7 +1748,7 @@ const opGetIPSet = "GetIPSet"
 
 // GetIPSetRequest generates a "aws/request.Request" representing the
 // client's request for the GetIPSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1582,7 +1830,7 @@ const opGetInvitationsCount = "GetInvitationsCount"
 
 // GetInvitationsCountRequest generates a "aws/request.Request" representing the
 // client's request for the GetInvitationsCount operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1665,7 +1913,7 @@ const opGetMasterAccount = "GetMasterAccount"
 
 // GetMasterAccountRequest generates a "aws/request.Request" representing the
 // client's request for the GetMasterAccount operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1748,7 +1996,7 @@ const opGetMembers = "GetMembers"
 
 // GetMembersRequest generates a "aws/request.Request" representing the
 // client's request for the GetMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1831,7 +2079,7 @@ const opGetThreatIntelSet = "GetThreatIntelSet"
 
 // GetThreatIntelSetRequest generates a "aws/request.Request" representing the
 // client's request for the GetThreatIntelSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1913,7 +2161,7 @@ const opInviteMembers = "InviteMembers"
 
 // InviteMembersRequest generates a "aws/request.Request" representing the
 // client's request for the InviteMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1998,7 +2246,7 @@ const opListDetectors = "ListDetectors"
 
 // ListDetectorsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDetectors operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2132,11 +2380,149 @@ func (c *GuardDuty) ListDetectorsPagesWithContext(ctx aws.Context, input *ListDe
 	return p.Err()
 }
 
+const opListFilters = "ListFilters"
+
+// ListFiltersRequest generates a "aws/request.Request" representing the
+// client's request for the ListFilters operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListFilters for more information on using the ListFilters
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListFiltersRequest method.
+//    req, resp := client.ListFiltersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/ListFilters
+func (c *GuardDuty) ListFiltersRequest(input *ListFiltersInput) (req *request.Request, output *ListFiltersOutput) {
+	op := &request.Operation{
+		Name:       opListFilters,
+		HTTPMethod: "GET",
+		HTTPPath:   "/detector/{detectorId}/filter",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListFiltersInput{}
+	}
+
+	output = &ListFiltersOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListFilters API operation for Amazon GuardDuty.
+//
+// Returns a paginated list of the current filters.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation ListFilters for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Error response object.
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//   Error response object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/ListFilters
+func (c *GuardDuty) ListFilters(input *ListFiltersInput) (*ListFiltersOutput, error) {
+	req, out := c.ListFiltersRequest(input)
+	return out, req.Send()
+}
+
+// ListFiltersWithContext is the same as ListFilters with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListFilters for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) ListFiltersWithContext(ctx aws.Context, input *ListFiltersInput, opts ...request.Option) (*ListFiltersOutput, error) {
+	req, out := c.ListFiltersRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListFiltersPages iterates over the pages of a ListFilters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListFilters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListFilters operation.
+//    pageNum := 0
+//    err := client.ListFiltersPages(params,
+//        func(page *ListFiltersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *GuardDuty) ListFiltersPages(input *ListFiltersInput, fn func(*ListFiltersOutput, bool) bool) error {
+	return c.ListFiltersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListFiltersPagesWithContext same as ListFiltersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) ListFiltersPagesWithContext(ctx aws.Context, input *ListFiltersInput, fn func(*ListFiltersOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListFiltersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListFiltersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListFiltersOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListFindings = "ListFindings"
 
 // ListFindingsRequest generates a "aws/request.Request" representing the
 // client's request for the ListFindings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2274,7 +2660,7 @@ const opListIPSets = "ListIPSets"
 
 // ListIPSetsRequest generates a "aws/request.Request" representing the
 // client's request for the ListIPSets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2412,7 +2798,7 @@ const opListInvitations = "ListInvitations"
 
 // ListInvitationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListInvitations operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2551,7 +2937,7 @@ const opListMembers = "ListMembers"
 
 // ListMembersRequest generates a "aws/request.Request" representing the
 // client's request for the ListMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2690,7 +3076,7 @@ const opListThreatIntelSets = "ListThreatIntelSets"
 
 // ListThreatIntelSetsRequest generates a "aws/request.Request" representing the
 // client's request for the ListThreatIntelSets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2829,7 +3215,7 @@ const opStartMonitoringMembers = "StartMonitoringMembers"
 
 // StartMonitoringMembersRequest generates a "aws/request.Request" representing the
 // client's request for the StartMonitoringMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2913,7 +3299,7 @@ const opStopMonitoringMembers = "StopMonitoringMembers"
 
 // StopMonitoringMembersRequest generates a "aws/request.Request" representing the
 // client's request for the StopMonitoringMembers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2955,7 +3341,7 @@ func (c *GuardDuty) StopMonitoringMembersRequest(input *StopMonitoringMembersInp
 //
 // Disables GuardDuty from monitoring findings of the member accounts specified
 // by the account IDs. After running this command, a master GuardDuty account
-// can run StartMonitoringMembers to re-enable GuardDuty to monitor these members'
+// can run StartMonitoringMembers to re-enable GuardDuty to monitor these members’
 // findings.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2998,7 +3384,7 @@ const opUnarchiveFindings = "UnarchiveFindings"
 
 // UnarchiveFindingsRequest generates a "aws/request.Request" representing the
 // client's request for the UnarchiveFindings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3080,7 +3466,7 @@ const opUpdateDetector = "UpdateDetector"
 
 // UpdateDetectorRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDetector operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3158,11 +3544,93 @@ func (c *GuardDuty) UpdateDetectorWithContext(ctx aws.Context, input *UpdateDete
 	return out, req.Send()
 }
 
+const opUpdateFilter = "UpdateFilter"
+
+// UpdateFilterRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateFilter for more information on using the UpdateFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateFilterRequest method.
+//    req, resp := client.UpdateFilterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/UpdateFilter
+func (c *GuardDuty) UpdateFilterRequest(input *UpdateFilterInput) (req *request.Request, output *UpdateFilterOutput) {
+	op := &request.Operation{
+		Name:       opUpdateFilter,
+		HTTPMethod: "POST",
+		HTTPPath:   "/detector/{detectorId}/filter/{filterName}",
+	}
+
+	if input == nil {
+		input = &UpdateFilterInput{}
+	}
+
+	output = &UpdateFilterOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateFilter API operation for Amazon GuardDuty.
+//
+// Updates the filter specified by the filter name.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation UpdateFilter for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Error response object.
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//   Error response object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/UpdateFilter
+func (c *GuardDuty) UpdateFilter(input *UpdateFilterInput) (*UpdateFilterOutput, error) {
+	req, out := c.UpdateFilterRequest(input)
+	return out, req.Send()
+}
+
+// UpdateFilterWithContext is the same as UpdateFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) UpdateFilterWithContext(ctx aws.Context, input *UpdateFilterInput, opts ...request.Option) (*UpdateFilterOutput, error) {
+	req, out := c.UpdateFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateFindingsFeedback = "UpdateFindingsFeedback"
 
 // UpdateFindingsFeedbackRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateFindingsFeedback operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3244,7 +3712,7 @@ const opUpdateIPSet = "UpdateIPSet"
 
 // UpdateIPSetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateIPSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3326,7 +3794,7 @@ const opUpdateThreatIntelSet = "UpdateThreatIntelSet"
 
 // UpdateThreatIntelSetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateThreatIntelSet operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3530,10 +3998,14 @@ type AccountDetail struct {
 	_ struct{} `type:"structure"`
 
 	// Member account ID.
-	AccountId *string `locationName:"accountId" type:"string"`
+	//
+	// AccountId is a required field
+	AccountId *string `locationName:"accountId" type:"string" required:"true"`
 
 	// Member account's email address.
-	Email *string `locationName:"email" type:"string"`
+	//
+	// Email is a required field
+	Email *string `locationName:"email" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -3544,6 +4016,22 @@ func (s AccountDetail) String() string {
 // GoString returns the string representation
 func (s AccountDetail) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AccountDetail) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AccountDetail"}
+	if s.AccountId == nil {
+		invalidParams.Add(request.NewErrParamRequired("AccountId"))
+	}
+	if s.Email == nil {
+		invalidParams.Add(request.NewErrParamRequired("Email"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAccountId sets the AccountId field's value.
@@ -3919,6 +4407,123 @@ func (s *CreateDetectorOutput) SetDetectorId(v string) *CreateDetectorOutput {
 	return s
 }
 
+// CreateFilter request object.
+type CreateFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the action that is to be applied to the findings that match the
+	// filter.
+	Action *string `locationName:"action" type:"string" enum:"FilterAction"`
+
+	// The idempotency token for the create request.
+	ClientToken *string `locationName:"clientToken" type:"string" idempotencyToken:"true"`
+
+	// The description of the filter.
+	Description *string `locationName:"description" type:"string"`
+
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
+
+	// Represents the criteria to be used in the filter for querying findings.
+	FindingCriteria *FindingCriteria `locationName:"findingCriteria" type:"structure"`
+
+	// The name of the filter.
+	Name *string `locationName:"name" type:"string"`
+
+	// Specifies the position of the filter in the list of current filters. Also
+	// specifies the order in which this filter is applied to the findings.
+	Rank *int64 `locationName:"rank" type:"integer"`
+}
+
+// String returns the string representation
+func (s CreateFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateFilterInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAction sets the Action field's value.
+func (s *CreateFilterInput) SetAction(v string) *CreateFilterInput {
+	s.Action = &v
+	return s
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateFilterInput) SetClientToken(v string) *CreateFilterInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateFilterInput) SetDescription(v string) *CreateFilterInput {
+	s.Description = &v
+	return s
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *CreateFilterInput) SetDetectorId(v string) *CreateFilterInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFindingCriteria sets the FindingCriteria field's value.
+func (s *CreateFilterInput) SetFindingCriteria(v *FindingCriteria) *CreateFilterInput {
+	s.FindingCriteria = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateFilterInput) SetName(v string) *CreateFilterInput {
+	s.Name = &v
+	return s
+}
+
+// SetRank sets the Rank field's value.
+func (s *CreateFilterInput) SetRank(v int64) *CreateFilterInput {
+	s.Rank = &v
+	return s
+}
+
+// CreateFilter response object.
+type CreateFilterOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the successfully created filter.
+	Name *string `locationName:"name" type:"string"`
+}
+
+// String returns the string representation
+func (s CreateFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateFilterOutput) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *CreateFilterOutput) SetName(v string) *CreateFilterOutput {
+	s.Name = &v
+	return s
+}
+
 // Create IP Set Request
 type CreateIPSetInput struct {
 	_ struct{} `type:"structure"`
@@ -4046,6 +4651,16 @@ func (s *CreateMembersInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateMembersInput"}
 	if s.DetectorId == nil {
 		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.AccountDetails != nil {
+		for i, v := range s.AccountDetails {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AccountDetails", i), err.(request.ErrInvalidParams))
+			}
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -4347,6 +4962,68 @@ func (s DeleteDetectorOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteDetectorOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
+
+	// FilterName is a required field
+	FilterName *string `location:"uri" locationName:"filterName" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteFilterInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.FilterName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FilterName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *DeleteFilterInput) SetDetectorId(v string) *DeleteFilterInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFilterName sets the FilterName field's value.
+func (s *DeleteFilterInput) SetFilterName(v string) *DeleteFilterInput {
+	s.FilterName = &v
+	return s
+}
+
+type DeleteFilterOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteFilterOutput) GoString() string {
 	return s.String()
 }
 
@@ -4762,51 +5439,71 @@ type Finding struct {
 
 	// AWS account ID where the activity occurred that prompted GuardDuty to generate
 	// a finding.
-	AccountId *string `locationName:"accountId" type:"string"`
+	//
+	// AccountId is a required field
+	AccountId *string `locationName:"accountId" type:"string" required:"true"`
 
 	// The ARN of a finding described by the action.
-	Arn *string `locationName:"arn" type:"string"`
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" type:"string" required:"true"`
 
 	// The confidence level of a finding.
 	Confidence *float64 `locationName:"confidence" type:"double"`
 
 	// The time stamp at which a finding was generated.
-	CreatedAt *string `locationName:"createdAt" type:"string"`
+	//
+	// CreatedAt is a required field
+	CreatedAt *string `locationName:"createdAt" type:"string" required:"true"`
 
 	// The description of a finding.
 	Description *string `locationName:"description" type:"string"`
 
 	// The identifier that corresponds to a finding described by the action.
-	Id *string `locationName:"id" type:"string"`
+	//
+	// Id is a required field
+	Id *string `locationName:"id" type:"string" required:"true"`
 
 	// The AWS resource partition.
 	Partition *string `locationName:"partition" type:"string"`
 
 	// The AWS region where the activity occurred that prompted GuardDuty to generate
 	// a finding.
-	Region *string `locationName:"region" type:"string"`
+	//
+	// Region is a required field
+	Region *string `locationName:"region" type:"string" required:"true"`
 
 	// The AWS resource associated with the activity that prompted GuardDuty to
 	// generate a finding.
-	Resource *Resource `locationName:"resource" type:"structure"`
+	//
+	// Resource is a required field
+	Resource *Resource `locationName:"resource" type:"structure" required:"true"`
 
 	// Findings' schema version.
-	SchemaVersion *string `locationName:"schemaVersion" type:"string"`
+	//
+	// SchemaVersion is a required field
+	SchemaVersion *string `locationName:"schemaVersion" type:"string" required:"true"`
 
 	// Additional information assigned to the generated finding by GuardDuty.
 	Service *Service `locationName:"service" type:"structure"`
 
 	// The severity of a finding.
-	Severity *float64 `locationName:"severity" type:"double"`
+	//
+	// Severity is a required field
+	Severity *float64 `locationName:"severity" type:"double" required:"true"`
 
 	// The title of a finding.
 	Title *string `locationName:"title" type:"string"`
 
 	// The type of a finding described by the action.
-	Type *string `locationName:"type" type:"string"`
+	//
+	// Type is a required field
+	Type *string `locationName:"type" type:"string" required:"true"`
 
 	// The time stamp at which a finding was last updated.
-	UpdatedAt *string `locationName:"updatedAt" type:"string"`
+	//
+	// UpdatedAt is a required field
+	UpdatedAt *string `locationName:"updatedAt" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -5075,6 +5772,116 @@ func (s *GetDetectorOutput) SetStatus(v string) *GetDetectorOutput {
 // SetUpdatedAt sets the UpdatedAt field's value.
 func (s *GetDetectorOutput) SetUpdatedAt(v string) *GetDetectorOutput {
 	s.UpdatedAt = &v
+	return s
+}
+
+type GetFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
+
+	// FilterName is a required field
+	FilterName *string `location:"uri" locationName:"filterName" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetFilterInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.FilterName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FilterName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *GetFilterInput) SetDetectorId(v string) *GetFilterInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFilterName sets the FilterName field's value.
+func (s *GetFilterInput) SetFilterName(v string) *GetFilterInput {
+	s.FilterName = &v
+	return s
+}
+
+// GetFilter response object.
+type GetFilterOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the action that is to be applied to the findings that match the
+	// filter.
+	Action *string `locationName:"action" type:"string" enum:"FilterAction"`
+
+	// The description of the filter.
+	Description *string `locationName:"description" type:"string"`
+
+	// Represents the criteria to be used in the filter for querying findings.
+	FindingCriteria *FindingCriteria `locationName:"findingCriteria" type:"structure"`
+
+	// The name of the filter.
+	Name *string `locationName:"name" type:"string"`
+
+	// Specifies the position of the filter in the list of current filters. Also
+	// specifies the order in which this filter is applied to the findings.
+	Rank *int64 `locationName:"rank" type:"integer"`
+}
+
+// String returns the string representation
+func (s GetFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetFilterOutput) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *GetFilterOutput) SetAction(v string) *GetFilterOutput {
+	s.Action = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *GetFilterOutput) SetDescription(v string) *GetFilterOutput {
+	s.Description = &v
+	return s
+}
+
+// SetFindingCriteria sets the FindingCriteria field's value.
+func (s *GetFilterOutput) SetFindingCriteria(v *FindingCriteria) *GetFilterOutput {
+	s.FindingCriteria = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *GetFilterOutput) SetName(v string) *GetFilterOutput {
+	s.Name = &v
+	return s
+}
+
+// SetRank sets the Rank field's value.
+func (s *GetFilterOutput) SetRank(v int64) *GetFilterOutput {
+	s.Rank = &v
 	return s
 }
 
@@ -5659,6 +6466,9 @@ type InstanceDetails struct {
 	// The profile information of the EC2 instance.
 	IamInstanceProfile *IamInstanceProfile `locationName:"iamInstanceProfile" type:"structure"`
 
+	// The image description of the EC2 instance.
+	ImageDescription *string `locationName:"imageDescription" type:"string"`
+
 	// The image ID of the EC2 instance.
 	ImageId *string `locationName:"imageId" type:"string"`
 
@@ -5706,6 +6516,12 @@ func (s *InstanceDetails) SetAvailabilityZone(v string) *InstanceDetails {
 // SetIamInstanceProfile sets the IamInstanceProfile field's value.
 func (s *InstanceDetails) SetIamInstanceProfile(v *IamInstanceProfile) *InstanceDetails {
 	s.IamInstanceProfile = v
+	return s
+}
+
+// SetImageDescription sets the ImageDescription field's value.
+func (s *InstanceDetails) SetImageDescription(v string) *InstanceDetails {
+	s.ImageDescription = &v
 	return s
 }
 
@@ -5825,7 +6641,11 @@ type InviteMembersInput struct {
 	// DetectorId is a required field
 	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
 
-	// The invitation message that you want to send to the accounts that you're
+	// A boolean value that specifies whether you want to disable email notification
+	// to the accounts that you’re inviting to GuardDuty as members.
+	DisableEmailNotification *bool `locationName:"disableEmailNotification" type:"boolean"`
+
+	// The invitation message that you want to send to the accounts that you’re
 	// inviting to GuardDuty as members.
 	Message *string `locationName:"message" type:"string"`
 }
@@ -5862,6 +6682,12 @@ func (s *InviteMembersInput) SetAccountIds(v []*string) *InviteMembersInput {
 // SetDetectorId sets the DetectorId field's value.
 func (s *InviteMembersInput) SetDetectorId(v string) *InviteMembersInput {
 	s.DetectorId = &v
+	return s
+}
+
+// SetDisableEmailNotification sets the DisableEmailNotification field's value.
+func (s *InviteMembersInput) SetDisableEmailNotification(v bool) *InviteMembersInput {
+	s.DisableEmailNotification = &v
 	return s
 }
 
@@ -5973,6 +6799,99 @@ func (s *ListDetectorsOutput) SetDetectorIds(v []*string) *ListDetectorsOutput {
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListDetectorsOutput) SetNextToken(v string) *ListDetectorsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListFiltersInput struct {
+	_ struct{} `type:"structure"`
+
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
+
+	// You can use this parameter to indicate the maximum number of items that you
+	// want in the response.
+	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
+
+	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s ListFiltersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListFiltersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListFiltersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListFiltersInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *ListFiltersInput) SetDetectorId(v string) *ListFiltersInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListFiltersInput) SetMaxResults(v int64) *ListFiltersInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListFiltersInput) SetNextToken(v string) *ListFiltersInput {
+	s.NextToken = &v
+	return s
+}
+
+// ListFilters response object.
+type ListFiltersOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of filter names
+	FilterNames []*string `locationName:"filterNames" type:"list"`
+
+	// You can use this parameter when paginating results. Set the value of this
+	// parameter to null on your first call to the list action. For subsequent calls
+	// to the action fill nextToken in the request with the value of NextToken from
+	// the previous response to continue listing data.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s ListFiltersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListFiltersOutput) GoString() string {
+	return s.String()
+}
+
+// SetFilterNames sets the FilterNames field's value.
+func (s *ListFiltersOutput) SetFilterNames(v []*string) *ListFiltersOutput {
+	s.FilterNames = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListFiltersOutput) SetNextToken(v string) *ListFiltersOutput {
 	s.NextToken = &v
 	return s
 }
@@ -6550,25 +7469,35 @@ type Member struct {
 	_ struct{} `type:"structure"`
 
 	// AWS account ID.
-	AccountId *string `locationName:"accountId" type:"string"`
+	//
+	// AccountId is a required field
+	AccountId *string `locationName:"accountId" type:"string" required:"true"`
 
 	// The unique identifier for a detector.
 	DetectorId *string `locationName:"detectorId" type:"string"`
 
 	// Member account's email address.
-	Email *string `locationName:"email" type:"string"`
+	//
+	// Email is a required field
+	Email *string `locationName:"email" type:"string" required:"true"`
 
 	// Timestamp at which the invitation was sent
 	InvitedAt *string `locationName:"invitedAt" type:"string"`
 
 	// The master account ID.
-	MasterId *string `locationName:"masterId" type:"string"`
+	//
+	// MasterId is a required field
+	MasterId *string `locationName:"masterId" type:"string" required:"true"`
 
 	// The status of the relationship between the member and the master.
-	RelationshipStatus *string `locationName:"relationshipStatus" type:"string"`
+	//
+	// RelationshipStatus is a required field
+	RelationshipStatus *string `locationName:"relationshipStatus" type:"string" required:"true"`
 
 	// The first time a resource was created. The format will be ISO-8601.
-	UpdatedAt *string `locationName:"updatedAt" type:"string"`
+	//
+	// UpdatedAt is a required field
+	UpdatedAt *string `locationName:"updatedAt" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -6699,6 +7628,9 @@ type NetworkInterface struct {
 	// A list of EC2 instance IPv6 address information.
 	Ipv6Addresses []*string `locationName:"ipv6Addresses" type:"list"`
 
+	// The ID of the network interface
+	NetworkInterfaceId *string `locationName:"networkInterfaceId" type:"string"`
+
 	// Private DNS name of the EC2 instance.
 	PrivateDnsName *string `locationName:"privateDnsName" type:"string"`
 
@@ -6737,6 +7669,12 @@ func (s NetworkInterface) GoString() string {
 // SetIpv6Addresses sets the Ipv6Addresses field's value.
 func (s *NetworkInterface) SetIpv6Addresses(v []*string) *NetworkInterface {
 	s.Ipv6Addresses = v
+	return s
+}
+
+// SetNetworkInterfaceId sets the NetworkInterfaceId field's value.
+func (s *NetworkInterface) SetNetworkInterfaceId(v string) *NetworkInterface {
+	s.NetworkInterfaceId = &v
 	return s
 }
 
@@ -7517,10 +8455,14 @@ type UnprocessedAccount struct {
 	_ struct{} `type:"structure"`
 
 	// AWS Account ID.
-	AccountId *string `locationName:"accountId" type:"string"`
+	//
+	// AccountId is a required field
+	AccountId *string `locationName:"accountId" type:"string" required:"true"`
 
 	// A reason why the account hasn't been processed.
-	Result *string `locationName:"result" type:"string"`
+	//
+	// Result is a required field
+	Result *string `locationName:"result" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -7604,6 +8546,117 @@ func (s UpdateDetectorOutput) String() string {
 // GoString returns the string representation
 func (s UpdateDetectorOutput) GoString() string {
 	return s.String()
+}
+
+// UpdateFilter request object.
+type UpdateFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the action that is to be applied to the findings that match the
+	// filter.
+	Action *string `locationName:"action" type:"string" enum:"FilterAction"`
+
+	// The description of the filter.
+	Description *string `locationName:"description" type:"string"`
+
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" type:"string" required:"true"`
+
+	// FilterName is a required field
+	FilterName *string `location:"uri" locationName:"filterName" type:"string" required:"true"`
+
+	// Represents the criteria to be used in the filter for querying findings.
+	FindingCriteria *FindingCriteria `locationName:"findingCriteria" type:"structure"`
+
+	// Specifies the position of the filter in the list of current filters. Also
+	// specifies the order in which this filter is applied to the findings.
+	Rank *int64 `locationName:"rank" type:"integer"`
+}
+
+// String returns the string representation
+func (s UpdateFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateFilterInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.FilterName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FilterName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAction sets the Action field's value.
+func (s *UpdateFilterInput) SetAction(v string) *UpdateFilterInput {
+	s.Action = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateFilterInput) SetDescription(v string) *UpdateFilterInput {
+	s.Description = &v
+	return s
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *UpdateFilterInput) SetDetectorId(v string) *UpdateFilterInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFilterName sets the FilterName field's value.
+func (s *UpdateFilterInput) SetFilterName(v string) *UpdateFilterInput {
+	s.FilterName = &v
+	return s
+}
+
+// SetFindingCriteria sets the FindingCriteria field's value.
+func (s *UpdateFilterInput) SetFindingCriteria(v *FindingCriteria) *UpdateFilterInput {
+	s.FindingCriteria = v
+	return s
+}
+
+// SetRank sets the Rank field's value.
+func (s *UpdateFilterInput) SetRank(v int64) *UpdateFilterInput {
+	s.Rank = &v
+	return s
+}
+
+// UpdateFilter response object.
+type UpdateFilterOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the filter.
+	Name *string `locationName:"name" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateFilterOutput) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateFilterOutput) SetName(v string) *UpdateFilterOutput {
+	s.Name = &v
+	return s
 }
 
 // Update findings feedback body
@@ -7882,6 +8935,15 @@ const (
 
 	// FeedbackNotUseful is a Feedback enum value
 	FeedbackNotUseful = "NOT_USEFUL"
+)
+
+// The action associated with a filter.
+const (
+	// FilterActionNoop is a FilterAction enum value
+	FilterActionNoop = "NOOP"
+
+	// FilterActionArchive is a FilterAction enum value
+	FilterActionArchive = "ARCHIVE"
 )
 
 // The types of finding statistics.

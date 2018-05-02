@@ -41,8 +41,8 @@ func NewGroupsClientWithBaseURI(baseURI string, subscriptionID string) GroupsCli
 }
 
 // CheckExistence checks whether resource group exists.
-//
-// resourceGroupName is the name of the resource group to check. The name is case insensitive.
+// Parameters:
+// resourceGroupName - the name of the resource group to check. The name is case insensitive.
 func (client GroupsClient) CheckExistence(ctx context.Context, resourceGroupName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -113,9 +113,9 @@ func (client GroupsClient) CheckExistenceResponder(resp *http.Response) (result 
 }
 
 // CreateOrUpdate create a resource group.
-//
-// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied
-// to the create or update resource group service operation.
+// Parameters:
+// resourceGroupName - the name of the resource group to be created or updated.
+// parameters - parameters supplied to the create or update resource group service operation.
 func (client GroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, parameters Group) (result Group, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -161,7 +161,7 @@ func (client GroupsClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", pathParameters),
@@ -191,8 +191,8 @@ func (client GroupsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete delete resource group.
-//
-// resourceGroupName is the name of the resource group to be deleted. The name is case insensitive.
+// Parameters:
+// resourceGroupName - the name of the resource group to be deleted. The name is case insensitive.
 func (client GroupsClient) Delete(ctx context.Context, resourceGroupName string) (result GroupsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -265,9 +265,9 @@ func (client GroupsClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // ExportTemplate captures the specified resource group as a template.
-//
-// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied
-// to the export template resource group operation.
+// Parameters:
+// resourceGroupName - the name of the resource group to be created or updated.
+// parameters - parameters supplied to the export template resource group operation.
 func (client GroupsClient) ExportTemplate(ctx context.Context, resourceGroupName string, parameters ExportTemplateRequest) (result GroupExportResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -311,7 +311,7 @@ func (client GroupsClient) ExportTemplatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/exportTemplate", pathParameters),
@@ -341,8 +341,8 @@ func (client GroupsClient) ExportTemplateResponder(resp *http.Response) (result 
 }
 
 // Get get a resource group.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
 func (client GroupsClient) Get(ctx context.Context, resourceGroupName string) (result Group, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -414,9 +414,9 @@ func (client GroupsClient) GetResponder(resp *http.Response) (result Group, err 
 }
 
 // List gets a collection of resource groups.
-//
-// filter is the filter to apply on the operation. top is query parameters. If null is passed returns all resource
-// groups.
+// Parameters:
+// filter - the filter to apply on the operation.
+// top - query parameters. If null is passed returns all resource groups.
 func (client GroupsClient) List(ctx context.Context, filter string, top *int32) (result GroupListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, top)
@@ -513,10 +513,11 @@ func (client GroupsClient) ListComplete(ctx context.Context, filter string, top 
 }
 
 // ListResources get all of the resources under a subscription.
-//
-// resourceGroupName is query parameters. If null is passed returns all resource groups. filter is the filter to
-// apply on the operation. expand is the $expand query parameter top is query parameters. If null is passed returns
-// all resource groups.
+// Parameters:
+// resourceGroupName - query parameters. If null is passed returns all resource groups.
+// filter - the filter to apply on the operation.
+// expand - the $expand query parameter
+// top - query parameters. If null is passed returns all resource groups.
 func (client GroupsClient) ListResources(ctx context.Context, resourceGroupName string, filter string, expand string, top *int32) (result ListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -627,9 +628,9 @@ func (client GroupsClient) ListResourcesComplete(ctx context.Context, resourceGr
 // Patch resource groups can be updated through a simple PATCH operation to a group address. The format of the request
 // is the same as that for creating a resource groups, though if a field is unspecified current value will be carried
 // over.
-//
-// resourceGroupName is the name of the resource group to be created or updated. The name is case insensitive.
-// parameters is parameters supplied to the update state resource group service operation.
+// Parameters:
+// resourceGroupName - the name of the resource group to be created or updated. The name is case insensitive.
+// parameters - parameters supplied to the update state resource group service operation.
 func (client GroupsClient) Patch(ctx context.Context, resourceGroupName string, parameters Group) (result Group, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -673,7 +674,7 @@ func (client GroupsClient) PatchPreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", pathParameters),

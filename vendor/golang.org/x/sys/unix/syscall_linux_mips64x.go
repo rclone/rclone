@@ -9,6 +9,7 @@ package unix
 
 //sys	Dup2(oldfd int, newfd int) (err error)
 //sys	EpollWait(epfd int, events []EpollEvent, msec int) (n int, err error)
+//sys	Fadvise(fd int, offset int64, length int64, advice int) (err error) = SYS_FADVISE64
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fstatat(dirfd int, path string, stat *Stat_t, flags int) (err error) = SYS_NEWFSTATAT
 //sys	Fstatfs(fd int, buf *Statfs_t) (err error)

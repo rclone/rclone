@@ -20,6 +20,14 @@ func mustNewName(name string) Name {
 	return n
 }
 
+func mustEDNS0ResourceHeader(l int, extrc RCode, do bool) ResourceHeader {
+	h := ResourceHeader{Class: ClassINET}
+	if err := h.SetEDNS0(l, extrc, do); err != nil {
+		panic(err)
+	}
+	return h
+}
+
 func (m *Message) String() string {
 	s := fmt.Sprintf("Message: %#v\n", &m.Header)
 	if len(m.Questions) > 0 {
@@ -65,7 +73,7 @@ func TestQuestionPackUnpack(t *testing.T) {
 	}
 	buf, err := want.pack(make([]byte, 1, 50), map[string]int{}, 1)
 	if err != nil {
-		t.Fatal("Packing failed:", err)
+		t.Fatal("Question.pack() =", err)
 	}
 	var p Parser
 	p.msg = buf
@@ -74,13 +82,13 @@ func TestQuestionPackUnpack(t *testing.T) {
 	p.off = 1
 	got, err := p.Question()
 	if err != nil {
-		t.Fatalf("Unpacking failed: %v\n%s", err, string(buf[1:]))
+		t.Fatalf("Parser{%q}.Question() = %v", string(buf[1:]), err)
 	}
 	if p.off != len(buf) {
-		t.Errorf("Unpacked different amount than packed: got n = %d, want = %d", p.off, len(buf))
+		t.Errorf("unpacked different amount than packed: got = %d, want = %d", p.off, len(buf))
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Got = %+v, want = %+v", got, want)
+		t.Errorf("got from Parser.Question() = %+v, want = %+v", got, want)
 	}
 }
 
@@ -100,11 +108,11 @@ func TestName(t *testing.T) {
 	for _, test := range tests {
 		n, err := NewName(test)
 		if err != nil {
-			t.Errorf("Creating name for %q: %v", test, err)
+			t.Errorf("NewName(%q) = %v", test, err)
 			continue
 		}
 		if ns := n.String(); ns != test {
-			t.Errorf("Got %#v.String() = %q, want = %q", n, ns, test)
+			t.Errorf("got %#v.String() = %q, want = %q", n, ns, test)
 			continue
 		}
 	}
@@ -132,7 +140,7 @@ func TestNamePackUnpack(t *testing.T) {
 		want := mustNewName(test.want)
 		buf, err := in.pack(make([]byte, 0, 30), map[string]int{}, 0)
 		if err != test.err {
-			t.Errorf("Packing of %q: got err = %v, want err = %v", test.in, err, test.err)
+			t.Errorf("got %q.pack() = %v, want = %v", test.in, err, test.err)
 			continue
 		}
 		if test.err != nil {
@@ -141,19 +149,19 @@ func TestNamePackUnpack(t *testing.T) {
 		var got Name
 		n, err := got.unpack(buf, 0)
 		if err != nil {
-			t.Errorf("Unpacking for %q failed: %v", test.in, err)
+			t.Errorf("%q.unpack() = %v", test.in, err)
 			continue
 		}
 		if n != len(buf) {
 			t.Errorf(
-				"Unpacked different amount than packed for %q: got n = %d, want = %d",
+				"unpacked different amount than packed for %q: got = %d, want = %d",
 				test.in,
 				n,
 				len(buf),
 			)
 		}
 		if got != want {
-			t.Errorf("Unpacking packing of %q: got = %#v, want = %#v", test.in, got, want)
+			t.Errorf("unpacking packing of %q: got = %#v, want = %#v", test.in, got, want)
 		}
 	}
 }
@@ -163,20 +171,20 @@ func TestIncompressibleName(t *testing.T) {
 	compression := map[string]int{}
 	buf, err := name.pack(make([]byte, 0, 100), compression, 0)
 	if err != nil {
-		t.Fatal("First packing failed:", err)
+		t.Fatal("first Name.pack() =", err)
 	}
 	buf, err = name.pack(buf, compression, 0)
 	if err != nil {
-		t.Fatal("Second packing failed:", err)
+		t.Fatal("second Name.pack() =", err)
 	}
 	var n1 Name
 	off, err := n1.unpackCompressed(buf, 0, false /* allowCompression */)
 	if err != nil {
-		t.Fatal("Unpacking incompressible name without pointers failed:", err)
+		t.Fatal("unpacking incompressible name without pointers failed:", err)
 	}
 	var n2 Name
 	if _, err := n2.unpackCompressed(buf, off, false /* allowCompression */); err != errCompressedSRV {
-		t.Errorf("Unpacking compressed incompressible name with pointers: got err = %v, want = %v", err, errCompressedSRV)
+		t.Errorf("unpacking compressed incompressible name with pointers: got %v, want = %v", err, errCompressedSRV)
 	}
 }
 
@@ -199,7 +207,7 @@ func TestHeaderUnpackError(t *testing.T) {
 	for _, want := range wants {
 		n, err := h.unpack(buf, 0)
 		if n != 0 || !checkErrorPrefix(err, want) {
-			t.Errorf("got h.unpack([%d]byte, 0) = %d, %v, want = 0, %s", len(buf), n, err, want)
+			t.Errorf("got header.unpack([%d]byte, 0) = %d, %v, want = 0, %s", len(buf), n, err, want)
 		}
 		buf = append(buf, 0, 0)
 	}
@@ -211,7 +219,7 @@ func TestParserStart(t *testing.T) {
 	for i := 0; i <= 1; i++ {
 		_, err := p.Start([]byte{})
 		if !checkErrorPrefix(err, want) {
-			t.Errorf("got p.Start(nil) = _, %v, want = _, %s", err, want)
+			t.Errorf("got Parser.Start(nil) = _, %v, want = _, %s", err, want)
 		}
 	}
 }
@@ -234,7 +242,7 @@ func TestResourceNotStarted(t *testing.T) {
 
 	for _, test := range tests {
 		if err := test.fn(&Parser{}); err != ErrNotStarted {
-			t.Errorf("got _, %v = p.%s(), want = _, %v", err, test.name, ErrNotStarted)
+			t.Errorf("got Parser.%s() = _ , %v, want = _, %v", test.name, err, ErrNotStarted)
 		}
 	}
 }
@@ -258,15 +266,15 @@ func TestDNSPackUnpack(t *testing.T) {
 	for i, want := range wants {
 		b, err := want.Pack()
 		if err != nil {
-			t.Fatalf("%d: packing failed: %v", i, err)
+			t.Fatalf("%d: Message.Pack() = %v", i, err)
 		}
 		var got Message
 		err = got.Unpack(b)
 		if err != nil {
-			t.Fatalf("%d: unpacking failed: %v", i, err)
+			t.Fatalf("%d: Message.Unapck() = %v", i, err)
 		}
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("%d: got = %+v, want = %+v", i, &got, &want)
+			t.Errorf("%d: Message.Pack/Unpack() roundtrip: got = %+v, want = %+v", i, &got, &want)
 		}
 	}
 }
@@ -291,16 +299,16 @@ func TestDNSAppendPackUnpack(t *testing.T) {
 		b := make([]byte, 2, 514)
 		b, err := want.AppendPack(b)
 		if err != nil {
-			t.Fatalf("%d: packing failed: %v", i, err)
+			t.Fatalf("%d: Message.AppendPack() = %v", i, err)
 		}
 		b = b[2:]
 		var got Message
 		err = got.Unpack(b)
 		if err != nil {
-			t.Fatalf("%d: unpacking failed: %v", i, err)
+			t.Fatalf("%d: Message.Unapck() = %v", i, err)
 		}
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("%d: got = %+v, want = %+v", i, &got, &want)
+			t.Errorf("%d: Message.AppendPack/Unpack() roundtrip: got = %+v, want = %+v", i, &got, &want)
 		}
 	}
 }
@@ -309,11 +317,11 @@ func TestSkipAll(t *testing.T) {
 	msg := largeTestMsg()
 	buf, err := msg.Pack()
 	if err != nil {
-		t.Fatal("Packing large test message:", err)
+		t.Fatal("Message.Pack() =", err)
 	}
 	var p Parser
 	if _, err := p.Start(buf); err != nil {
-		t.Fatal(err)
+		t.Fatal("Parser.Start(non-nil) =", err)
 	}
 
 	tests := []struct {
@@ -328,7 +336,7 @@ func TestSkipAll(t *testing.T) {
 	for _, test := range tests {
 		for i := 1; i <= 3; i++ {
 			if err := test.f(); err != nil {
-				t.Errorf("Call #%d to %s(): %v", i, test.name, err)
+				t.Errorf("%d: Parser.%s() = %v", i, test.name, err)
 			}
 		}
 	}
@@ -339,11 +347,11 @@ func TestSkipEach(t *testing.T) {
 
 	buf, err := msg.Pack()
 	if err != nil {
-		t.Fatal("Packing test message:", err)
+		t.Fatal("Message.Pack() =", err)
 	}
 	var p Parser
 	if _, err := p.Start(buf); err != nil {
-		t.Fatal(err)
+		t.Fatal("Parser.Start(non-nil) =", err)
 	}
 
 	tests := []struct {
@@ -357,10 +365,10 @@ func TestSkipEach(t *testing.T) {
 	}
 	for _, test := range tests {
 		if err := test.f(); err != nil {
-			t.Errorf("First call: got %s() = %v, want = %v", test.name, err, nil)
+			t.Errorf("first Parser.%s() = %v, want = nil", test.name, err)
 		}
 		if err := test.f(); err != ErrSectionDone {
-			t.Errorf("Second call: got %s() = %v, want = %v", test.name, err, ErrSectionDone)
+			t.Errorf("second Parser.%s() = %v, want = %v", test.name, err, ErrSectionDone)
 		}
 	}
 }
@@ -370,11 +378,11 @@ func TestSkipAfterRead(t *testing.T) {
 
 	buf, err := msg.Pack()
 	if err != nil {
-		t.Fatal("Packing test message:", err)
+		t.Fatal("Message.Pack() =", err)
 	}
 	var p Parser
 	if _, err := p.Start(buf); err != nil {
-		t.Fatal(err)
+		t.Fatal("Parser.Srart(non-nil) =", err)
 	}
 
 	tests := []struct {
@@ -389,10 +397,10 @@ func TestSkipAfterRead(t *testing.T) {
 	}
 	for _, test := range tests {
 		if err := test.read(); err != nil {
-			t.Errorf("Got %s() = _, %v, want = _, %v", test.name, err, nil)
+			t.Errorf("got Parser.%s() = _, %v, want = _, nil", test.name, err)
 		}
 		if err := test.skip(); err != ErrSectionDone {
-			t.Errorf("Got Skip%s() = %v, want = %v", test.name, err, ErrSectionDone)
+			t.Errorf("got Parser.Skip%s() = %v, want = %v", test.name, err, ErrSectionDone)
 		}
 	}
 }
@@ -411,7 +419,7 @@ func TestSkipNotStarted(t *testing.T) {
 	}
 	for _, test := range tests {
 		if err := test.f(); err != ErrNotStarted {
-			t.Errorf("Got %s() = %v, want = %v", test.name, err, ErrNotStarted)
+			t.Errorf("got Parser.%s() = %v, want = %v", test.name, err, ErrNotStarted)
 		}
 	}
 }
@@ -455,7 +463,7 @@ func TestTooManyRecords(t *testing.T) {
 
 	for _, test := range tests {
 		if _, got := test.msg.Pack(); got != test.want {
-			t.Errorf("Packing %d %s: got = %v, want = %v", recs, test.name, got, test.want)
+			t.Errorf("got Message.Pack() for %d %s = %v, want = %v", recs, test.name, got, test.want)
 		}
 	}
 }
@@ -479,30 +487,30 @@ func TestVeryLongTxt(t *testing.T) {
 	}
 	buf, err := want.pack(make([]byte, 0, 8000), map[string]int{}, 0)
 	if err != nil {
-		t.Fatal("Packing failed:", err)
+		t.Fatal("Resource.pack() =", err)
 	}
 	var got Resource
 	off, err := got.Header.unpack(buf, 0)
 	if err != nil {
-		t.Fatal("Unpacking ResourceHeader failed:", err)
+		t.Fatal("ResourceHeader.unpack() =", err)
 	}
 	body, n, err := unpackResourceBody(buf, off, got.Header)
 	if err != nil {
-		t.Fatal("Unpacking failed:", err)
+		t.Fatal("unpackResourceBody() =", err)
 	}
 	got.Body = body
 	if n != len(buf) {
-		t.Errorf("Unpacked different amount than packed: got n = %d, want = %d", n, len(buf))
+		t.Errorf("unpacked different amount than packed: got = %d, want = %d", n, len(buf))
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Got = %#v, want = %#v", got, want)
+		t.Errorf("Resource.pack/unpack() roundtrip: got = %#v, want = %#v", got, want)
 	}
 }
 
 func TestTooLongTxt(t *testing.T) {
 	rb := TXTResource{[]string{strings.Repeat(".", 256)}}
 	if _, err := rb.pack(make([]byte, 0, 8000), map[string]int{}, 0); err != errStringTooLong {
-		t.Errorf("Packing TXTRecord with 256 character string: got err = %v, want = %v", err, errStringTooLong)
+		t.Errorf("packing TXTResource with 256 character string: got err = %v, want = %v", err, errStringTooLong)
 	}
 }
 
@@ -516,13 +524,13 @@ func TestStartAppends(t *testing.T) {
 
 	buf, err := b.Finish()
 	if err != nil {
-		t.Fatal("Building failed:", err)
+		t.Fatal("Builder.Finish() =", err)
 	}
 	if got, want := len(buf), headerLen+2; got != want {
-		t.Errorf("Got len(buf} = %d, want = %d", got, want)
+		t.Errorf("got len(buf) = %d, want = %d", got, want)
 	}
 	if string(buf[:2]) != string(wantBuf) {
-		t.Errorf("Original data not preserved, got = %v, want = %v", buf[:2], wantBuf)
+		t.Errorf("original data not preserved, got = %#v, want = %#v", buf[:2], wantBuf)
 	}
 }
 
@@ -549,7 +557,7 @@ func TestStartError(t *testing.T) {
 	for _, env := range envs {
 		for _, test := range tests {
 			if got := test.fn(env.fn()); got != env.want {
-				t.Errorf("got Builder{%s}.Start%s = %v, want = %v", env.name, test.name, got, env.want)
+				t.Errorf("got Builder{%s}.Start%s() = %v, want = %v", env.name, test.name, got, env.want)
 			}
 		}
 	}
@@ -569,6 +577,7 @@ func TestBuilderResourceError(t *testing.T) {
 		{"SRVResource", func(b *Builder) error { return b.SRVResource(ResourceHeader{}, SRVResource{}) }},
 		{"AResource", func(b *Builder) error { return b.AResource(ResourceHeader{}, AResource{}) }},
 		{"AAAAResource", func(b *Builder) error { return b.AAAAResource(ResourceHeader{}, AAAAResource{}) }},
+		{"OPTResource", func(b *Builder) error { return b.OPTResource(ResourceHeader{}, OPTResource{}) }},
 	}
 
 	envs := []struct {
@@ -585,7 +594,7 @@ func TestBuilderResourceError(t *testing.T) {
 	for _, env := range envs {
 		for _, test := range tests {
 			if got := test.fn(env.fn()); got != env.want {
-				t.Errorf("got Builder{%s}.%s = %v, want = %v", env.name, test.name, got, env.want)
+				t.Errorf("got Builder{%s}.%s() = %v, want = %v", env.name, test.name, got, env.want)
 			}
 		}
 	}
@@ -595,7 +604,7 @@ func TestFinishError(t *testing.T) {
 	var b Builder
 	want := ErrNotStarted
 	if _, got := b.Finish(); got != want {
-		t.Errorf("got Builder{}.Finish() = %v, want = %v", got, want)
+		t.Errorf("got Builder.Finish() = %v, want = %v", got, want)
 	}
 }
 
@@ -603,89 +612,96 @@ func TestBuilder(t *testing.T) {
 	msg := largeTestMsg()
 	want, err := msg.Pack()
 	if err != nil {
-		t.Fatal("Packing without builder:", err)
+		t.Fatal("Message.Pack() =", err)
 	}
 
 	b := NewBuilder(nil, msg.Header)
 	b.EnableCompression()
 
 	if err := b.StartQuestions(); err != nil {
-		t.Fatal("b.StartQuestions():", err)
+		t.Fatal("Builder.StartQuestions() =", err)
 	}
 	for _, q := range msg.Questions {
 		if err := b.Question(q); err != nil {
-			t.Fatalf("b.Question(%#v): %v", q, err)
+			t.Fatalf("Builder.Question(%#v) = %v", q, err)
 		}
 	}
 
 	if err := b.StartAnswers(); err != nil {
-		t.Fatal("b.StartAnswers():", err)
+		t.Fatal("Builder.StartAnswers() =", err)
 	}
 	for _, a := range msg.Answers {
 		switch a.Header.Type {
 		case TypeA:
 			if err := b.AResource(a.Header, *a.Body.(*AResource)); err != nil {
-				t.Fatalf("b.AResource(%#v): %v", a, err)
+				t.Fatalf("Builder.AResource(%#v) = %v", a, err)
 			}
 		case TypeNS:
 			if err := b.NSResource(a.Header, *a.Body.(*NSResource)); err != nil {
-				t.Fatalf("b.NSResource(%#v): %v", a, err)
+				t.Fatalf("Builder.NSResource(%#v) = %v", a, err)
 			}
 		case TypeCNAME:
 			if err := b.CNAMEResource(a.Header, *a.Body.(*CNAMEResource)); err != nil {
-				t.Fatalf("b.CNAMEResource(%#v): %v", a, err)
+				t.Fatalf("Builder.CNAMEResource(%#v) = %v", a, err)
 			}
 		case TypeSOA:
 			if err := b.SOAResource(a.Header, *a.Body.(*SOAResource)); err != nil {
-				t.Fatalf("b.SOAResource(%#v): %v", a, err)
+				t.Fatalf("Builder.SOAResource(%#v) = %v", a, err)
 			}
 		case TypePTR:
 			if err := b.PTRResource(a.Header, *a.Body.(*PTRResource)); err != nil {
-				t.Fatalf("b.PTRResource(%#v): %v", a, err)
+				t.Fatalf("Builder.PTRResource(%#v) = %v", a, err)
 			}
 		case TypeMX:
 			if err := b.MXResource(a.Header, *a.Body.(*MXResource)); err != nil {
-				t.Fatalf("b.MXResource(%#v): %v", a, err)
+				t.Fatalf("Builder.MXResource(%#v) = %v", a, err)
 			}
 		case TypeTXT:
 			if err := b.TXTResource(a.Header, *a.Body.(*TXTResource)); err != nil {
-				t.Fatalf("b.TXTResource(%#v): %v", a, err)
+				t.Fatalf("Builder.TXTResource(%#v) = %v", a, err)
 			}
 		case TypeAAAA:
 			if err := b.AAAAResource(a.Header, *a.Body.(*AAAAResource)); err != nil {
-				t.Fatalf("b.AAAAResource(%#v): %v", a, err)
+				t.Fatalf("Builder.AAAAResource(%#v) = %v", a, err)
 			}
 		case TypeSRV:
 			if err := b.SRVResource(a.Header, *a.Body.(*SRVResource)); err != nil {
-				t.Fatalf("b.SRVResource(%#v): %v", a, err)
+				t.Fatalf("Builder.SRVResource(%#v) = %v", a, err)
 			}
 		}
 	}
 
 	if err := b.StartAuthorities(); err != nil {
-		t.Fatal("b.StartAuthorities():", err)
+		t.Fatal("Builder.StartAuthorities() =", err)
 	}
 	for _, a := range msg.Authorities {
 		if err := b.NSResource(a.Header, *a.Body.(*NSResource)); err != nil {
-			t.Fatalf("b.NSResource(%#v): %v", a, err)
+			t.Fatalf("Builder.NSResource(%#v) = %v", a, err)
 		}
 	}
 
 	if err := b.StartAdditionals(); err != nil {
-		t.Fatal("b.StartAdditionals():", err)
+		t.Fatal("Builder.StartAdditionals() =", err)
 	}
 	for _, a := range msg.Additionals {
-		if err := b.TXTResource(a.Header, *a.Body.(*TXTResource)); err != nil {
-			t.Fatalf("b.TXTResource(%#v): %v", a, err)
+		switch a.Body.(type) {
+		case *TXTResource:
+			if err := b.TXTResource(a.Header, *a.Body.(*TXTResource)); err != nil {
+				t.Fatalf("Builder.TXTResource(%#v) = %v", a, err)
+			}
+		case *OPTResource:
+			if err := b.OPTResource(a.Header, *a.Body.(*OPTResource)); err != nil {
+				t.Fatalf("Builder.OPTResource(%#v) = %v", a, err)
+			}
 		}
 	}
 
 	got, err := b.Finish()
 	if err != nil {
-		t.Fatal("b.Finish():", err)
+		t.Fatal("Builder.Finish() =", err)
 	}
 	if !bytes.Equal(got, want) {
-		t.Fatalf("Got from Builder: %#v\nwant = %#v", got, want)
+		t.Fatalf("got from Builder.Finish() = %#v\nwant = %#v", got, want)
 	}
 }
 
@@ -740,7 +756,146 @@ func TestResourcePack(t *testing.T) {
 	} {
 		_, err := tt.m.Pack()
 		if !reflect.DeepEqual(err, tt.err) {
-			t.Errorf("got %v for %v; want %v", err, tt.m, tt.err)
+			t.Errorf("got Message{%v}.Pack() = %v, want %v", tt.m, err, tt.err)
+		}
+	}
+}
+
+func TestOptionPackUnpack(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		w        []byte // wire format of m.Additionals
+		m        Message
+		dnssecOK bool
+		extRCode RCode
+	}{
+		{
+			name: "without EDNS(0) options",
+			w: []byte{
+				0x00, 0x00, 0x29, 0x10, 0x00, 0xfe, 0x00, 0x80,
+				0x00, 0x00, 0x00,
+			},
+			m: Message{
+				Header: Header{RCode: RCodeFormatError},
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeA,
+						Class: ClassINET,
+					},
+				},
+				Additionals: []Resource{
+					{
+						mustEDNS0ResourceHeader(4096, 0xfe0|RCodeFormatError, true),
+						&OPTResource{},
+					},
+				},
+			},
+			dnssecOK: true,
+			extRCode: 0xfe0 | RCodeFormatError,
+		},
+		{
+			name: "with EDNS(0) options",
+			w: []byte{
+				0x00, 0x00, 0x29, 0x10, 0x00, 0xff, 0x00, 0x00,
+				0x00, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x02, 0x00,
+				0x00, 0x00, 0x0b, 0x00, 0x02, 0x12, 0x34,
+			},
+			m: Message{
+				Header: Header{RCode: RCodeServerFailure},
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Additionals: []Resource{
+					{
+						mustEDNS0ResourceHeader(4096, 0xff0|RCodeServerFailure, false),
+						&OPTResource{
+							Options: []Option{
+								{
+									Code: 12, // see RFC 7828
+									Data: []byte{0x00, 0x00},
+								},
+								{
+									Code: 11, // see RFC 7830
+									Data: []byte{0x12, 0x34},
+								},
+							},
+						},
+					},
+				},
+			},
+			dnssecOK: false,
+			extRCode: 0xff0 | RCodeServerFailure,
+		},
+		{
+			// Containing multiple OPT resources in a
+			// message is invalid, but it's necessary for
+			// protocol conformance testing.
+			name: "with multiple OPT resources",
+			w: []byte{
+				0x00, 0x00, 0x29, 0x10, 0x00, 0xff, 0x00, 0x00,
+				0x00, 0x00, 0x06, 0x00, 0x0b, 0x00, 0x02, 0x12,
+				0x34, 0x00, 0x00, 0x29, 0x10, 0x00, 0xff, 0x00,
+				0x00, 0x00, 0x00, 0x06, 0x00, 0x0c, 0x00, 0x02,
+				0x00, 0x00,
+			},
+			m: Message{
+				Header: Header{RCode: RCodeNameError},
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Additionals: []Resource{
+					{
+						mustEDNS0ResourceHeader(4096, 0xff0|RCodeNameError, false),
+						&OPTResource{
+							Options: []Option{
+								{
+									Code: 11, // see RFC 7830
+									Data: []byte{0x12, 0x34},
+								},
+							},
+						},
+					},
+					{
+						mustEDNS0ResourceHeader(4096, 0xff0|RCodeNameError, false),
+						&OPTResource{
+							Options: []Option{
+								{
+									Code: 12, // see RFC 7828
+									Data: []byte{0x00, 0x00},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		w, err := tt.m.Pack()
+		if err != nil {
+			t.Errorf("Message.Pack() for %s = %v", tt.name, err)
+			continue
+		}
+		if !bytes.Equal(w[len(w)-len(tt.w):], tt.w) {
+			t.Errorf("got Message.Pack() for %s = %#v, want %#v", tt.name, w[len(w)-len(tt.w):], tt.w)
+			continue
+		}
+		var m Message
+		if err := m.Unpack(w); err != nil {
+			t.Errorf("Message.Unpack() for %s = %v", tt.name, err)
+			continue
+		}
+		if !reflect.DeepEqual(m.Additionals, tt.m.Additionals) {
+			t.Errorf("got Message.Pack/Unpack() roundtrip for %s = %+v, want %+v", tt.name, m, tt.m)
+			continue
 		}
 	}
 }
@@ -790,7 +945,7 @@ func benchmarkParsingSetup() ([]byte, error) {
 
 	buf, err := msg.Pack()
 	if err != nil {
-		return nil, fmt.Errorf("msg.Pack(): %v", err)
+		return nil, fmt.Errorf("Message.Pack() = %v", err)
 	}
 	return buf, nil
 }
@@ -798,7 +953,7 @@ func benchmarkParsingSetup() ([]byte, error) {
 func benchmarkParsing(tb testing.TB, buf []byte) {
 	var p Parser
 	if _, err := p.Start(buf); err != nil {
-		tb.Fatal("p.Start(buf):", err)
+		tb.Fatal("Parser.Start(non-nil) =", err)
 	}
 
 	for {
@@ -807,7 +962,7 @@ func benchmarkParsing(tb testing.TB, buf []byte) {
 			break
 		}
 		if err != nil {
-			tb.Fatal("p.Question():", err)
+			tb.Fatal("Parser.Question() =", err)
 		}
 	}
 
@@ -817,28 +972,32 @@ func benchmarkParsing(tb testing.TB, buf []byte) {
 			break
 		}
 		if err != nil {
-			panic(err)
+			tb.Fatal("Parser.AnswerHeader() =", err)
 		}
 
 		switch h.Type {
 		case TypeA:
 			if _, err := p.AResource(); err != nil {
-				tb.Fatal("p.AResource():", err)
+				tb.Fatal("Parser.AResource() =", err)
 			}
 		case TypeAAAA:
 			if _, err := p.AAAAResource(); err != nil {
-				tb.Fatal("p.AAAAResource():", err)
+				tb.Fatal("Parser.AAAAResource() =", err)
 			}
 		case TypeCNAME:
 			if _, err := p.CNAMEResource(); err != nil {
-				tb.Fatal("p.CNAMEResource():", err)
+				tb.Fatal("Parser.CNAMEResource() =", err)
 			}
 		case TypeNS:
 			if _, err := p.NSResource(); err != nil {
-				tb.Fatal("p.NSResource():", err)
+				tb.Fatal("Parser.NSResource() =", err)
+			}
+		case TypeOPT:
+			if _, err := p.OPTResource(); err != nil {
+				tb.Fatal("Parser.OPTResource() =", err)
 			}
 		default:
-			tb.Fatalf("unknown type: %T", h)
+			tb.Fatalf("got unknown type: %T", h)
 		}
 	}
 }
@@ -862,7 +1021,7 @@ func TestParsingAllocs(t *testing.T) {
 	}
 
 	if allocs := testing.AllocsPerRun(100, func() { benchmarkParsing(t, buf) }); allocs > 0.5 {
-		t.Errorf("Allocations during parsing: got = %f, want ~0", allocs)
+		t.Errorf("allocations during parsing: got = %f, want ~0", allocs)
 	}
 }
 
@@ -876,7 +1035,7 @@ func benchmarkBuilding(tb testing.TB, name Name, buf []byte) {
 	bld := NewBuilder(buf, Header{Response: true, Authoritative: true})
 
 	if err := bld.StartQuestions(); err != nil {
-		tb.Fatal("bld.StartQuestions():", err)
+		tb.Fatal("Builder.StartQuestions() =", err)
 	}
 	q := Question{
 		Name:  name,
@@ -884,7 +1043,7 @@ func benchmarkBuilding(tb testing.TB, name Name, buf []byte) {
 		Class: ClassINET,
 	}
 	if err := bld.Question(q); err != nil {
-		tb.Fatalf("bld.Question(%+v): %v", q, err)
+		tb.Fatalf("Builder.Question(%+v) = %v", q, err)
 	}
 
 	hdr := ResourceHeader{
@@ -892,31 +1051,40 @@ func benchmarkBuilding(tb testing.TB, name Name, buf []byte) {
 		Class: ClassINET,
 	}
 	if err := bld.StartAnswers(); err != nil {
-		tb.Fatal("bld.StartQuestions():", err)
+		tb.Fatal("Builder.StartQuestions() =", err)
 	}
 
 	ar := AResource{[4]byte{}}
 	if err := bld.AResource(hdr, ar); err != nil {
-		tb.Fatalf("bld.AResource(%+v, %+v): %v", hdr, ar, err)
+		tb.Fatalf("Builder.AResource(%+v, %+v) = %v", hdr, ar, err)
 	}
 
 	aaar := AAAAResource{[16]byte{}}
 	if err := bld.AAAAResource(hdr, aaar); err != nil {
-		tb.Fatalf("bld.AAAAResource(%+v, %+v): %v", hdr, aaar, err)
+		tb.Fatalf("Builder.AAAAResource(%+v, %+v) = %v", hdr, aaar, err)
 	}
 
 	cnr := CNAMEResource{name}
 	if err := bld.CNAMEResource(hdr, cnr); err != nil {
-		tb.Fatalf("bld.CNAMEResource(%+v, %+v): %v", hdr, cnr, err)
+		tb.Fatalf("Builder.CNAMEResource(%+v, %+v) = %v", hdr, cnr, err)
 	}
 
 	nsr := NSResource{name}
 	if err := bld.NSResource(hdr, nsr); err != nil {
-		tb.Fatalf("bld.NSResource(%+v, %+v): %v", hdr, nsr, err)
+		tb.Fatalf("Builder.NSResource(%+v, %+v) = %v", hdr, nsr, err)
+	}
+
+	extrc := 0xfe0 | RCodeNotImplemented
+	if err := (&hdr).SetEDNS0(4096, extrc, true); err != nil {
+		tb.Fatalf("ResourceHeader.SetEDNS0(4096, %#x, true) = %v", extrc, err)
+	}
+	optr := OPTResource{}
+	if err := bld.OPTResource(hdr, optr); err != nil {
+		tb.Fatalf("Builder.OPTResource(%+v, %+v) = %v", hdr, optr, err)
 	}
 
 	if _, err := bld.Finish(); err != nil {
-		tb.Fatal("bld.Finish():", err)
+		tb.Fatal("Builder.Finish() =", err)
 	}
 }
 
@@ -931,7 +1099,7 @@ func BenchmarkBuilding(b *testing.B) {
 func TestBuildingAllocs(t *testing.T) {
 	name, buf := benchmarkBuildingSetup()
 	if allocs := testing.AllocsPerRun(100, func() { benchmarkBuilding(t, name, buf) }); allocs > 0.5 {
-		t.Errorf("Allocations during building: got = %f, want ~0", allocs)
+		t.Errorf("allocations during building: got = %f, want ~0", allocs)
 	}
 }
 
@@ -986,7 +1154,7 @@ func BenchmarkPack(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		if _, err := msg.Pack(); err != nil {
-			b.Fatal(err)
+			b.Fatal("Message.Pack() =", err)
 		}
 	}
 }
@@ -999,7 +1167,7 @@ func BenchmarkAppendPack(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		if _, err := msg.AppendPack(buf[:0]); err != nil {
-			b.Fatal(err)
+			b.Fatal("Message.AppendPack() = ", err)
 		}
 	}
 }
@@ -1131,6 +1299,17 @@ func largeTestMsg() Message {
 					Class: ClassINET,
 				},
 				&TXTResource{[]string{"Hamster Huey and the Gooey Kablooie"}},
+			},
+			{
+				mustEDNS0ResourceHeader(4096, 0xfe0|RCodeSuccess, false),
+				&OPTResource{
+					Options: []Option{
+						{
+							Code: 10, // see RFC 7873
+							Data: []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef},
+						},
+					},
+				},
 			},
 		},
 	}

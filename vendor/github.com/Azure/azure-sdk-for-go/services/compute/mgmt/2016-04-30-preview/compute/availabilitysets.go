@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // AvailabilitySetsClient is the compute Client
 type AvailabilitySetsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewAvailabilitySetsClient creates an instance of the AvailabilitySetsClient client.
 func NewAvailabilitySetsClient(subscriptionID string) AvailabilitySetsClient {
 	return NewAvailabilitySetsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewAvailabilitySetsClientWithBaseURI creates an instance of the AvailabilitySetsClient client.
 func NewAvailabilitySetsClientWithBaseURI(baseURI string, subscriptionID string) AvailabilitySetsClient {
 	return AvailabilitySetsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdate create or update an availability set.
 //
 // resourceGroupName is the name of the resource group. name is the name of the availability set. parameters is
@@ -65,6 +69,7 @@ func (client AvailabilitySetsClient) CreateOrUpdate(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client AvailabilitySetsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, name string, parameters AvailabilitySet) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -79,7 +84,7 @@ func (client AvailabilitySetsClient) CreateOrUpdatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}", pathParameters),
@@ -88,6 +93,7 @@ func (client AvailabilitySetsClient) CreateOrUpdatePreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilitySetsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client AvailabilitySetsClient) CreateOrUpdateSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client AvailabilitySetsClient) CreateOrUpdateResponder(resp *http.Response) (result AvailabilitySet, err error) {
@@ -108,6 +115,7 @@ func (client AvailabilitySetsClient) CreateOrUpdateResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Delete delete an availability set.
 //
 // resourceGroupName is the name of the resource group. availabilitySetName is the name of the availability set.
@@ -133,6 +141,7 @@ func (client AvailabilitySetsClient) Delete(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeletePreparer prepares the Delete request.
 func (client AvailabilitySetsClient) DeletePreparer(ctx context.Context, resourceGroupName string, availabilitySetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -154,6 +163,7 @@ func (client AvailabilitySetsClient) DeletePreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilitySetsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -161,6 +171,7 @@ func (client AvailabilitySetsClient) DeleteSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client AvailabilitySetsClient) DeleteResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -174,6 +185,7 @@ func (client AvailabilitySetsClient) DeleteResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Get retrieves information about an availability set.
 //
 // resourceGroupName is the name of the resource group. availabilitySetName is the name of the availability set.
@@ -199,6 +211,7 @@ func (client AvailabilitySetsClient) Get(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client AvailabilitySetsClient) GetPreparer(ctx context.Context, resourceGroupName string, availabilitySetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -220,6 +233,7 @@ func (client AvailabilitySetsClient) GetPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilitySetsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -227,6 +241,7 @@ func (client AvailabilitySetsClient) GetSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client AvailabilitySetsClient) GetResponder(resp *http.Response) (result AvailabilitySet, err error) {
@@ -240,6 +255,7 @@ func (client AvailabilitySetsClient) GetResponder(resp *http.Response) (result A
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List lists all availability sets in a resource group.
 //
 // resourceGroupName is the name of the resource group.
@@ -265,6 +281,7 @@ func (client AvailabilitySetsClient) List(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client AvailabilitySetsClient) ListPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -285,6 +302,7 @@ func (client AvailabilitySetsClient) ListPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilitySetsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -292,6 +310,7 @@ func (client AvailabilitySetsClient) ListSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client AvailabilitySetsClient) ListResponder(resp *http.Response) (result AvailabilitySetListResult, err error) {
@@ -305,6 +324,7 @@ func (client AvailabilitySetsClient) ListResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAvailableSizes lists all available virtual machine sizes that can be used to create a new virtual machine in an
 // existing availability set.
 //
@@ -331,6 +351,7 @@ func (client AvailabilitySetsClient) ListAvailableSizes(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAvailableSizesPreparer prepares the ListAvailableSizes request.
 func (client AvailabilitySetsClient) ListAvailableSizesPreparer(ctx context.Context, resourceGroupName string, availabilitySetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -352,6 +373,7 @@ func (client AvailabilitySetsClient) ListAvailableSizesPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAvailableSizesSender sends the ListAvailableSizes request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilitySetsClient) ListAvailableSizesSender(req *http.Request) (*http.Response, error) {
@@ -359,6 +381,7 @@ func (client AvailabilitySetsClient) ListAvailableSizesSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAvailableSizesResponder handles the response to the ListAvailableSizes request. The method always
 // closes the http.Response Body.
 func (client AvailabilitySetsClient) ListAvailableSizesResponder(resp *http.Response) (result VirtualMachineSizeListResult, err error) {

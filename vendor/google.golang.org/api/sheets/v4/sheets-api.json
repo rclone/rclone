@@ -819,7 +819,7 @@
       }
     }
   },
-  "revision": "20180313",
+  "revision": "20180405",
   "rootUrl": "https://sheets.googleapis.com/",
   "schemas": {
     "AddBandingRequest": {
@@ -1175,6 +1175,10 @@
       "description": "A single series of data in a chart.\nFor example, if charting stock prices over time, multiple series may exist,\none for the \"Open Price\", \"High Price\", \"Low Price\" and \"Close Price\".",
       "id": "BasicChartSeries",
       "properties": {
+        "color": {
+          "$ref": "Color",
+          "description": "The color for elements (i.e. bars, lines, points) associated with this\nseries.  If empty, a default color will be used."
+        },
         "lineStyle": {
           "$ref": "LineStyle",
           "description": "The line style of this series. Valid only if the\nchartType is AREA,\nLINE, or SCATTER.\nCOMBO charts are also supported if the\nseries chart type is\nAREA or LINE."
@@ -1830,7 +1834,7 @@
             "The cell's value must be outside the dates of the two condition values.\nSupported by data validation.\nRequires exactly two ConditionValues.",
             "The cell's value must be a date.\nSupported by data validation.\nRequires no ConditionValues.",
             "The cell's value must be listed in the grid in condition value's range.\nSupported by data validation.\nRequires a single ConditionValue,\nand the value must be a valid range in A1 notation.",
-            "The cell's value must in the list of condition values.\nSupported by data validation.\nSupports any number of condition values,\none per item in the list.\nFormulas are not supported in the values.",
+            "The cell's value must be in the list of condition values.\nSupported by data validation.\nSupports any number of condition values,\none per item in the list.\nFormulas are not supported in the values.",
             "The cell's value must be empty.\nSupported by conditional formatting and filters.\nRequires no ConditionValues.",
             "The cell's value must not be empty.\nSupported by conditional formatting and filters.\nRequires no ConditionValues.",
             "The condition's formula must evaluate to true.\nSupported by data validation, conditional formatting and filters.\nRequires a single ConditionValue."
@@ -2239,7 +2243,7 @@
       "id": "ChartSourceRange",
       "properties": {
         "sources": {
-          "description": "The ranges of data for a series or domain.\nExactly one dimension must have a length of 1,\nand all sources in the list must have the same dimension\nwith length 1.\nThe domain (if it exists) \u0026 all series must have the same number\nof source ranges. If using more than one source range, then the source\nrange at a given offset must be contiguous across the domain and series.\n\nFor example, these are valid configurations:\n\n    domain sources: A1:A5\n    series1 sources: B1:B5\n    series2 sources: D6:D10\n\n    domain sources: A1:A5, C10:C12\n    series1 sources: B1:B5, D10:D12\n    series2 sources: C1:C5, E10:E12",
+          "description": "The ranges of data for a series or domain.\nExactly one dimension must have a length of 1,\nand all sources in the list must have the same dimension\nwith length 1.\nThe domain (if it exists) \u0026 all series must have the same number\nof source ranges. If using more than one source range, then the source\nrange at a given offset must be in order and contiguous across the domain\nand series.\n\nFor example, these are valid configurations:\n\n    domain sources: A1:A5\n    series1 sources: B1:B5\n    series2 sources: D6:D10\n\n    domain sources: A1:A5, C10:C12\n    series1 sources: B1:B5, D10:D12\n    series2 sources: C1:C5, E10:E12",
           "items": {
             "$ref": "GridRange"
           },
@@ -2432,7 +2436,7 @@
           "type": "string"
         },
         "userEnteredValue": {
-          "description": "A value the condition is based on.\nThe value will be parsed as if the user typed into a cell.\nFormulas are supported (and must begin with an `=`).",
+          "description": "A value the condition is based on.\nThe value will be parsed as if the user typed into a cell.\nFormulas are supported (and must begin with an `=` or a '+').",
           "type": "string"
         }
       },
@@ -3564,17 +3568,17 @@
       "id": "HistogramRule",
       "properties": {
         "end": {
-          "description": "Optional. The maximum value at which items will be placed into buckets\nof constant size. Values above end will be lumped into a single bucket.",
+          "description": "The maximum value at which items will be placed into buckets\nof constant size. Values above end will be lumped into a single bucket.\nThis field is optional.",
           "format": "double",
           "type": "number"
         },
         "interval": {
-          "description": "Required. The size of the buckets that will be created. Must be positive.",
+          "description": "The size of the buckets that will be created. Must be positive.",
           "format": "double",
           "type": "number"
         },
         "start": {
-          "description": "Optional. The minimum value at which items will be placed into buckets\nof constant size. Values below start will be lumped into a single bucket.",
+          "description": "The minimum value at which items will be placed into buckets\nof constant size. Values below start will be lumped into a single bucket.\nThis field is optional.",
           "format": "double",
           "type": "number"
         }
@@ -5697,7 +5701,7 @@
           "type": "string"
         },
         "subtotalIndex": {
-          "description": "The 0-based index of a data point within the series. If\ndata_is_subtotal is true, the data point at this index is the\nsubtotal. Otherwise, the subtotal appears after the data point with\nthis index. A series can have multiple subtotals at arbitrary indices,\nbut subtotals do not affect the indices of the data points. For\nexample, if a series has 3 data points, their indices will always be 0,\n1, and 2, regardless of how many subtotals exist on the series or what\ndata points they are associated with.",
+          "description": "The 0-based index of a data point within the series. If\ndata_is_subtotal is true, the data point at this index is the\nsubtotal. Otherwise, the subtotal appears after the data point with\nthis index. A series can have multiple subtotals at arbitrary indices,\nbut subtotals do not affect the indices of the data points. For\nexample, if a series has three data points, their indices will always\nbe 0, 1, and 2, regardless of how many subtotals exist on the series or\nwhat data points they are associated with.",
           "format": "int32",
           "type": "integer"
         }

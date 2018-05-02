@@ -27,10 +27,10 @@
       },
       "errors": [
         {
-          "shape": "BadRequestException"
+          "shape": "UnprocessableEntityException"
         },
         {
-          "shape": "UnprocessableEntityException"
+          "shape": "BadRequestException"
         },
         {
           "shape": "InternalServerErrorException"
@@ -545,10 +545,10 @@
       },
       "errors": [
         {
-          "shape": "BadRequestException"
+          "shape": "UnprocessableEntityException"
         },
         {
-          "shape": "UnprocessableEntityException"
+          "shape": "BadRequestException"
         },
         {
           "shape": "InternalServerErrorException"
@@ -558,6 +558,80 @@
         },
         {
           "shape": "BadGatewayException"
+        },
+        {
+          "shape": "GatewayTimeoutException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "UpdateInput": {
+      "name": "UpdateInput",
+      "http": {
+        "method": "PUT",
+        "requestUri": "/prod/inputs/{inputId}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "UpdateInputRequest"
+      },
+      "output": {
+        "shape": "UpdateInputResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "BadGatewayException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "GatewayTimeoutException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "UpdateInputSecurityGroup": {
+      "name": "UpdateInputSecurityGroup",
+      "http": {
+        "method": "PUT",
+        "requestUri": "/prod/inputSecurityGroups/{inputSecurityGroupId}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "UpdateInputSecurityGroupRequest"
+      },
+      "output": {
+        "shape": "UpdateInputSecurityGroupResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "BadGatewayException"
+        },
+        {
+          "shape": "NotFoundException"
         },
         {
           "shape": "GatewayTimeoutException"
@@ -1047,6 +1121,13 @@
         "VISUAL_IMPAIRED_COMMENTARY"
       ]
     },
+    "AuthenticationScheme": {
+      "type": "string",
+      "enum": [
+        "AKAMAI",
+        "COMMON"
+      ]
+    },
     "AvailBlanking": {
       "type": "structure",
       "members": {
@@ -1331,6 +1412,10 @@
         "EmbeddedPlusScte20DestinationSettings": {
           "shape": "EmbeddedPlusScte20DestinationSettings",
           "locationName": "embeddedPlusScte20DestinationSettings"
+        },
+        "RtmpCaptionInfoDestinationSettings": {
+          "shape": "RtmpCaptionInfoDestinationSettings",
+          "locationName": "rtmpCaptionInfoDestinationSettings"
         },
         "Scte20PlusEmbeddedDestinationSettings": {
           "shape": "Scte20PlusEmbeddedDestinationSettings",
@@ -2010,6 +2095,14 @@
         "Id": {
           "shape": "__string",
           "locationName": "id"
+        },
+        "Inputs": {
+          "shape": "__listOf__string",
+          "locationName": "inputs"
+        },
+        "State": {
+          "shape": "InputSecurityGroupState",
+          "locationName": "state"
         },
         "WhitelistRules": {
           "shape": "__listOfInputWhitelistRule",
@@ -3612,11 +3705,28 @@
           "shape": "__string",
           "locationName": "id"
         },
+        "Inputs": {
+          "shape": "__listOf__string",
+          "locationName": "inputs"
+        },
+        "State": {
+          "shape": "InputSecurityGroupState",
+          "locationName": "state"
+        },
         "WhitelistRules": {
           "shape": "__listOfInputWhitelistRule",
           "locationName": "whitelistRules"
         }
       }
+    },
+    "InputSecurityGroupState": {
+      "type": "string",
+      "enum": [
+        "IDLE",
+        "IN_USE",
+        "UPDATING",
+        "DELETED"
+      ]
     },
     "InputSecurityGroupWhitelistRequest": {
       "type": "structure",
@@ -4324,6 +4434,10 @@
           "shape": "M3u8TimedMetadataBehavior",
           "locationName": "timedMetadataBehavior"
         },
+        "TimedMetadataPid": {
+          "shape": "__string",
+          "locationName": "timedMetadataPid"
+        },
         "TransportStreamId": {
           "shape": "__integerMin0Max65535",
           "locationName": "transportStreamId"
@@ -4544,6 +4658,10 @@
           "shape": "__string",
           "locationName": "passwordParam"
         },
+        "StreamName": {
+          "shape": "__string",
+          "locationName": "streamName"
+        },
         "Url": {
           "shape": "__string",
           "locationName": "url"
@@ -4590,6 +4708,10 @@
           "shape": "MsSmoothGroupSettings",
           "locationName": "msSmoothGroupSettings"
         },
+        "RtmpGroupSettings": {
+          "shape": "RtmpGroupSettings",
+          "locationName": "rtmpGroupSettings"
+        },
         "UdpGroupSettings": {
           "shape": "UdpGroupSettings",
           "locationName": "udpGroupSettings"
@@ -4619,6 +4741,10 @@
         "MsSmoothOutputSettings": {
           "shape": "MsSmoothOutputSettings",
           "locationName": "msSmoothOutputSettings"
+        },
+        "RtmpOutputSettings": {
+          "shape": "RtmpOutputSettings",
+          "locationName": "rtmpOutputSettings"
         },
         "UdpOutputSettings": {
           "shape": "UdpOutputSettings",
@@ -4668,6 +4794,82 @@
           "locationName": "message"
         }
       }
+    },
+    "RtmpCacheFullBehavior": {
+      "type": "string",
+      "enum": [
+        "DISCONNECT_IMMEDIATELY",
+        "WAIT_FOR_SERVER"
+      ]
+    },
+    "RtmpCaptionData": {
+      "type": "string",
+      "enum": [
+        "ALL",
+        "FIELD1_608",
+        "FIELD1_AND_FIELD2_608"
+      ]
+    },
+    "RtmpCaptionInfoDestinationSettings": {
+      "type": "structure",
+      "members": {
+      }
+    },
+    "RtmpGroupSettings": {
+      "type": "structure",
+      "members": {
+        "AuthenticationScheme": {
+          "shape": "AuthenticationScheme",
+          "locationName": "authenticationScheme"
+        },
+        "CacheFullBehavior": {
+          "shape": "RtmpCacheFullBehavior",
+          "locationName": "cacheFullBehavior"
+        },
+        "CacheLength": {
+          "shape": "__integerMin30",
+          "locationName": "cacheLength"
+        },
+        "CaptionData": {
+          "shape": "RtmpCaptionData",
+          "locationName": "captionData"
+        },
+        "RestartDelay": {
+          "shape": "__integerMin0",
+          "locationName": "restartDelay"
+        }
+      }
+    },
+    "RtmpOutputCertificateMode": {
+      "type": "string",
+      "enum": [
+        "SELF_SIGNED",
+        "VERIFY_AUTHENTICITY"
+      ]
+    },
+    "RtmpOutputSettings": {
+      "type": "structure",
+      "members": {
+        "CertificateMode": {
+          "shape": "RtmpOutputCertificateMode",
+          "locationName": "certificateMode"
+        },
+        "ConnectionRetryInterval": {
+          "shape": "__integerMin1",
+          "locationName": "connectionRetryInterval"
+        },
+        "Destination": {
+          "shape": "OutputLocationRef",
+          "locationName": "destination"
+        },
+        "NumRetries": {
+          "shape": "__integerMin0",
+          "locationName": "numRetries"
+        }
+      },
+      "required": [
+        "Destination"
+      ]
     },
     "Scte20Convert608To708": {
       "type": "string",
@@ -5142,6 +5344,10 @@
           "shape": "EncoderSettings",
           "locationName": "encoderSettings"
         },
+        "InputAttachments": {
+          "shape": "__listOfInputAttachment",
+          "locationName": "inputAttachments"
+        },
         "InputSpecification": {
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
@@ -5171,6 +5377,10 @@
         "EncoderSettings": {
           "shape": "EncoderSettings",
           "locationName": "encoderSettings"
+        },
+        "InputAttachments": {
+          "shape": "__listOfInputAttachment",
+          "locationName": "inputAttachments"
         },
         "InputSpecification": {
           "shape": "InputSpecification",
@@ -5204,6 +5414,109 @@
         "Channel": {
           "shape": "Channel",
           "locationName": "channel"
+        }
+      }
+    },
+    "UpdateInput": {
+      "type": "structure",
+      "members": {
+        "Destinations": {
+          "shape": "__listOfInputDestinationRequest",
+          "locationName": "destinations"
+        },
+        "InputSecurityGroups": {
+          "shape": "__listOf__string",
+          "locationName": "inputSecurityGroups"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Sources": {
+          "shape": "__listOfInputSourceRequest",
+          "locationName": "sources"
+        }
+      }
+    },
+    "UpdateInputRequest": {
+      "type": "structure",
+      "members": {
+        "Destinations": {
+          "shape": "__listOfInputDestinationRequest",
+          "locationName": "destinations"
+        },
+        "InputId": {
+          "shape": "__string",
+          "location": "uri",
+          "locationName": "inputId"
+        },
+        "InputSecurityGroups": {
+          "shape": "__listOf__string",
+          "locationName": "inputSecurityGroups"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Sources": {
+          "shape": "__listOfInputSourceRequest",
+          "locationName": "sources"
+        }
+      },
+      "required": [
+        "InputId"
+      ]
+    },
+    "UpdateInputResponse": {
+      "type": "structure",
+      "members": {
+        "Input": {
+          "shape": "Input",
+          "locationName": "input"
+        }
+      }
+    },
+    "UpdateInputResultModel": {
+      "type": "structure",
+      "members": {
+        "Input": {
+          "shape": "Input",
+          "locationName": "input"
+        }
+      }
+    },
+    "UpdateInputSecurityGroupRequest": {
+      "type": "structure",
+      "members": {
+        "InputSecurityGroupId": {
+          "shape": "__string",
+          "location": "uri",
+          "locationName": "inputSecurityGroupId"
+        },
+        "WhitelistRules": {
+          "shape": "__listOfInputWhitelistRuleCidr",
+          "locationName": "whitelistRules"
+        }
+      },
+      "required": [
+        "InputSecurityGroupId"
+      ]
+    },
+    "UpdateInputSecurityGroupResponse": {
+      "type": "structure",
+      "members": {
+        "SecurityGroup": {
+          "shape": "InputSecurityGroup",
+          "locationName": "securityGroup"
+        }
+      }
+    },
+    "UpdateInputSecurityGroupResultModel": {
+      "type": "structure",
+      "members": {
+        "SecurityGroup": {
+          "shape": "InputSecurityGroup",
+          "locationName": "securityGroup"
         }
       }
     },
@@ -5521,6 +5834,10 @@
     "__integerMin3": {
       "type": "integer",
       "min": 3
+    },
+    "__integerMin30": {
+      "type": "integer",
+      "min": 30
     },
     "__integerMin4Max20": {
       "type": "integer",

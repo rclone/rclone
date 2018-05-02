@@ -42,11 +42,13 @@ func NewProtectedItemsClientWithBaseURI(baseURI string, subscriptionID string) P
 // CreateOrUpdate this operation enables an item to be backed up, or modifies the existing backup policy information
 // for an item that has been backed up. This is an asynchronous operation. To learn the status of the operation, call
 // the GetItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup item.
-// containerName is the container name associated with the backup item. protectedItemName is the name of the backup
-// item. resourceProtectedItem is the resource backup item.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup item.
+// containerName - the container name associated with the backup item.
+// protectedItemName - the name of the backup item.
+// resourceProtectedItem - the resource backup item.
 func (client ProtectedItemsClient) CreateOrUpdate(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, resourceProtectedItem ProtectedItemResource) (result autorest.Response, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, resourceProtectedItem)
 	if err != nil {
@@ -86,7 +88,7 @@ func (client ProtectedItemsClient) CreateOrUpdatePreparer(ctx context.Context, v
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}", pathParameters),
@@ -116,11 +118,12 @@ func (client ProtectedItemsClient) CreateOrUpdateResponder(resp *http.Response) 
 
 // Delete used to disable the backup job for an item within a container. This is an asynchronous operation. To learn
 // the status of the request, call the GetItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup item.
-// containerName is the container name associated with the backup item. protectedItemName is the backup item to be
-// deleted.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup item.
+// containerName - the container name associated with the backup item.
+// protectedItemName - the backup item to be deleted.
 func (client ProtectedItemsClient) Delete(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName)
 	if err != nil {
@@ -188,12 +191,14 @@ func (client ProtectedItemsClient) DeleteResponder(resp *http.Response) (result 
 
 // Get provides the details of the backup item. This is an asynchronous operation. To know the status of the operation,
 // call the GetItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup item.
-// containerName is the container name associated with the backup item. protectedItemName is the backup item name
-// used in this GET operation. filter is expand eq {extendedinfo}. This filter enables you to choose (or filter)
-// specific items in the list of backup items.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup item.
+// containerName - the container name associated with the backup item.
+// protectedItemName - the backup item name used in this GET operation.
+// filter - expand eq {extendedinfo}. This filter enables you to choose (or filter) specific items in the list
+// of backup items.
 func (client ProtectedItemsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, filter string) (result ProtectedItemResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, filter)
 	if err != nil {
@@ -264,12 +269,14 @@ func (client ProtectedItemsClient) GetResponder(resp *http.Response) (result Pro
 }
 
 // List provides a pageable list of all items in a subscription, that can be protected.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is itemType eq { VM , FileFolder , AzureSqlDb , SQLDB ,
-// Exchange , Sharepoint , DPMUnknown } and providerType eq { AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }
-// and policyName eq {policyname} and containerName eq {containername} and backupManagementType eq { AzureIaasVM,
-// MAB, DPM, AzureBackupServer, AzureSql }. skipToken is the Skip Token filter.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - itemType eq { VM , FileFolder , AzureSqlDb , SQLDB , Exchange , Sharepoint , DPMUnknown } and
+// providerType eq { AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql } and policyName eq {policyname} and
+// containerName eq {containername} and backupManagementType eq { AzureIaasVM, MAB, DPM, AzureBackupServer,
+// AzureSql }.
+// skipToken - the Skip Token filter.
 func (client ProtectedItemsClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result ProtectedItemResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

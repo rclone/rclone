@@ -23,17 +23,21 @@ func TestMarshalAndParseMultipartMessage(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		switch proto {
-		case iana.ProtocolICMP:
-			if b[5] != 32 {
-				return fmt.Errorf("got %d; want 32", b[5])
-			}
-		case iana.ProtocolIPv6ICMP:
-			if b[4] != 16 {
-				return fmt.Errorf("got %d; want 16", b[4])
-			}
+		switch tm.Type {
+		case ipv4.ICMPTypeExtendedEchoRequest, ipv6.ICMPTypeExtendedEchoRequest:
 		default:
-			return fmt.Errorf("unknown protocol: %d", proto)
+			switch proto {
+			case iana.ProtocolICMP:
+				if b[5] != 32 {
+					return fmt.Errorf("got %d; want 32", b[5])
+				}
+			case iana.ProtocolIPv6ICMP:
+				if b[4] != 16 {
+					return fmt.Errorf("got %d; want 16", b[4])
+				}
+			default:
+				return fmt.Errorf("unknown protocol: %d", proto)
+			}
 		}
 		m, err := icmp.ParseMessage(proto, b)
 		if err != nil {
@@ -43,6 +47,11 @@ func TestMarshalAndParseMultipartMessage(t *testing.T) {
 			return fmt.Errorf("got %v; want %v", m, &tm)
 		}
 		switch m.Type {
+		case ipv4.ICMPTypeExtendedEchoRequest, ipv6.ICMPTypeExtendedEchoRequest:
+			got, want := m.Body.(*icmp.ExtendedEchoRequest), tm.Body.(*icmp.ExtendedEchoRequest)
+			if !reflect.DeepEqual(got.Extensions, want.Extensions) {
+				return errors.New(dumpExtensions(got.Extensions, want.Extensions))
+			}
 		case ipv4.ICMPTypeDestinationUnreachable:
 			got, want := m.Body.(*icmp.DstUnreach), tm.Body.(*icmp.DstUnreach)
 			if !reflect.DeepEqual(got.Extensions, want.Extensions) {
@@ -200,6 +209,51 @@ func TestMarshalAndParseMultipartMessage(t *testing.T) {
 					},
 				},
 			},
+			{
+				Type: ipv4.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2, Local: true,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  1,
+							Name:  "en101",
+						},
+					},
+				},
+			},
+			{
+				Type: ipv4.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2, Local: true,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  2,
+							Index: 911,
+						},
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  1,
+							Name:  "en101",
+						},
+					},
+				},
+			},
+			{
+				Type: ipv4.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  3,
+							AFI:   iana.AddrFamily48bitMAC,
+							Addr:  []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab},
+						},
+					},
+				},
+			},
 		} {
 			if err := fn(t, iana.ProtocolICMP, tm); err != nil {
 				t.Errorf("#%d: %v", i, err)
@@ -287,6 +341,51 @@ func TestMarshalAndParseMultipartMessage(t *testing.T) {
 					},
 				},
 			},
+			{
+				Type: ipv6.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2, Local: true,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  1,
+							Name:  "en101",
+						},
+					},
+				},
+			},
+			{
+				Type: ipv6.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2, Local: true,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  1,
+							Name:  "en101",
+						},
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  2,
+							Index: 911,
+						},
+					},
+				},
+			},
+			{
+				Type: ipv6.ICMPTypeExtendedEchoRequest, Code: 0,
+				Body: &icmp.ExtendedEchoRequest{
+					ID: 1, Seq: 2,
+					Extensions: []icmp.Extension{
+						&icmp.InterfaceIdent{
+							Class: 3,
+							Type:  3,
+							AFI:   iana.AddrFamilyIPv4,
+							Addr:  []byte{192, 0, 2, 1},
+						},
+					},
+				},
+			},
 		} {
 			if err := fn(t, iana.ProtocolIPv6ICMP, tm); err != nil {
 				t.Errorf("#%d: %v", i, err)
@@ -308,6 +407,11 @@ func dumpExtensions(gotExts, wantExts []icmp.Extension) string {
 			want := wantExts[i].(*icmp.InterfaceInfo)
 			if !reflect.DeepEqual(got, want) {
 				s += fmt.Sprintf("#%d: got %#v, %#v, %#v; want %#v, %#v, %#v\n", i, got, got.Interface, got.Addr, want, want.Interface, want.Addr)
+			}
+		case *icmp.InterfaceIdent:
+			want := wantExts[i].(*icmp.InterfaceIdent)
+			if !reflect.DeepEqual(got, want) {
+				s += fmt.Sprintf("#%d: got %#v; want %#v\n", i, got, want)
 			}
 		}
 	}
@@ -434,6 +538,34 @@ func TestMultipartMessageBodyLen(t *testing.T) {
 				},
 			},
 			4 + 4 + 4 + 0 + 136, // [length, unused], extension header, object header, object payload and original datagram
+		},
+
+		{
+			iana.ProtocolICMP,
+			&icmp.ExtendedEchoRequest{},
+			4, // [id, seq, l-bit]
+		},
+		{
+			iana.ProtocolICMP,
+			&icmp.ExtendedEchoRequest{
+				Extensions: []icmp.Extension{
+					&icmp.InterfaceIdent{},
+				},
+			},
+			4 + 4 + 4, // [id, seq, l-bit], extension header, object header
+		},
+		{
+			iana.ProtocolIPv6ICMP,
+			&icmp.ExtendedEchoRequest{
+				Extensions: []icmp.Extension{
+					&icmp.InterfaceIdent{
+						Type: 3,
+						AFI:  iana.AddrFamilyNSAP,
+						Addr: []byte{0x49, 0x00, 0x01, 0xaa, 0xaa, 0xbb, 0xbb, 0xcc, 0xcc, 0x00},
+					},
+				},
+			},
+			4 + 4 + 4 + 16, // [id, seq, l-bit], extension header, object header, object payload
 		},
 	} {
 		if out := tt.in.Len(tt.proto); out != tt.out {

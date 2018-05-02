@@ -46,6 +46,11 @@ const (
 	Wednesday DayOfWeek = "Wednesday"
 )
 
+// PossibleDayOfWeekValues returns an array of possible values for the DayOfWeek const type.
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return []DayOfWeek{Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday}
+}
+
 // JobActionType enumerates the values for job action type.
 type JobActionType string
 
@@ -62,6 +67,11 @@ const (
 	StorageQueue JobActionType = "StorageQueue"
 )
 
+// PossibleJobActionTypeValues returns an array of possible values for the JobActionType const type.
+func PossibleJobActionTypeValues() []JobActionType {
+	return []JobActionType{HTTP, HTTPS, ServiceBusQueue, ServiceBusTopic, StorageQueue}
+}
+
 // JobCollectionState enumerates the values for job collection state.
 type JobCollectionState string
 
@@ -76,6 +86,11 @@ const (
 	Suspended JobCollectionState = "Suspended"
 )
 
+// PossibleJobCollectionStateValues returns an array of possible values for the JobCollectionState const type.
+func PossibleJobCollectionStateValues() []JobCollectionState {
+	return []JobCollectionState{Deleted, Disabled, Enabled, Suspended}
+}
+
 // JobExecutionStatus enumerates the values for job execution status.
 type JobExecutionStatus string
 
@@ -88,6 +103,11 @@ const (
 	Postponed JobExecutionStatus = "Postponed"
 )
 
+// PossibleJobExecutionStatusValues returns an array of possible values for the JobExecutionStatus const type.
+func PossibleJobExecutionStatusValues() []JobExecutionStatus {
+	return []JobExecutionStatus{Completed, Failed, Postponed}
+}
+
 // JobHistoryActionName enumerates the values for job history action name.
 type JobHistoryActionName string
 
@@ -97,6 +117,11 @@ const (
 	// MainAction ...
 	MainAction JobHistoryActionName = "MainAction"
 )
+
+// PossibleJobHistoryActionNameValues returns an array of possible values for the JobHistoryActionName const type.
+func PossibleJobHistoryActionNameValues() []JobHistoryActionName {
+	return []JobHistoryActionName{ErrorAction, MainAction}
+}
 
 // JobScheduleDay enumerates the values for job schedule day.
 type JobScheduleDay string
@@ -118,6 +143,11 @@ const (
 	JobScheduleDayWednesday JobScheduleDay = "Wednesday"
 )
 
+// PossibleJobScheduleDayValues returns an array of possible values for the JobScheduleDay const type.
+func PossibleJobScheduleDayValues() []JobScheduleDay {
+	return []JobScheduleDay{JobScheduleDayFriday, JobScheduleDayMonday, JobScheduleDaySaturday, JobScheduleDaySunday, JobScheduleDayThursday, JobScheduleDayTuesday, JobScheduleDayWednesday}
+}
+
 // JobState enumerates the values for job state.
 type JobState string
 
@@ -131,6 +161,11 @@ const (
 	// JobStateFaulted ...
 	JobStateFaulted JobState = "Faulted"
 )
+
+// PossibleJobStateValues returns an array of possible values for the JobState const type.
+func PossibleJobStateValues() []JobState {
+	return []JobState{JobStateCompleted, JobStateDisabled, JobStateEnabled, JobStateFaulted}
+}
 
 // RecurrenceFrequency enumerates the values for recurrence frequency.
 type RecurrenceFrequency string
@@ -148,6 +183,11 @@ const (
 	Week RecurrenceFrequency = "Week"
 )
 
+// PossibleRecurrenceFrequencyValues returns an array of possible values for the RecurrenceFrequency const type.
+func PossibleRecurrenceFrequencyValues() []RecurrenceFrequency {
+	return []RecurrenceFrequency{Day, Hour, Minute, Month, Week}
+}
+
 // RetryType enumerates the values for retry type.
 type RetryType string
 
@@ -158,6 +198,11 @@ const (
 	None RetryType = "None"
 )
 
+// PossibleRetryTypeValues returns an array of possible values for the RetryType const type.
+func PossibleRetryTypeValues() []RetryType {
+	return []RetryType{Fixed, None}
+}
+
 // ServiceBusAuthenticationType enumerates the values for service bus authentication type.
 type ServiceBusAuthenticationType string
 
@@ -167,6 +212,11 @@ const (
 	// SharedAccessKey ...
 	SharedAccessKey ServiceBusAuthenticationType = "SharedAccessKey"
 )
+
+// PossibleServiceBusAuthenticationTypeValues returns an array of possible values for the ServiceBusAuthenticationType const type.
+func PossibleServiceBusAuthenticationTypeValues() []ServiceBusAuthenticationType {
+	return []ServiceBusAuthenticationType{NotSpecified, SharedAccessKey}
+}
 
 // ServiceBusTransportType enumerates the values for service bus transport type.
 type ServiceBusTransportType string
@@ -179,6 +229,11 @@ const (
 	// ServiceBusTransportTypeNotSpecified ...
 	ServiceBusTransportTypeNotSpecified ServiceBusTransportType = "NotSpecified"
 )
+
+// PossibleServiceBusTransportTypeValues returns an array of possible values for the ServiceBusTransportType const type.
+func PossibleServiceBusTransportTypeValues() []ServiceBusTransportType {
+	return []ServiceBusTransportType{ServiceBusTransportTypeAMQP, ServiceBusTransportTypeNetMessaging, ServiceBusTransportTypeNotSpecified}
+}
 
 // SkuDefinition enumerates the values for sku definition.
 type SkuDefinition string
@@ -194,6 +249,11 @@ const (
 	Standard SkuDefinition = "Standard"
 )
 
+// PossibleSkuDefinitionValues returns an array of possible values for the SkuDefinition const type.
+func PossibleSkuDefinitionValues() []SkuDefinition {
+	return []SkuDefinition{Free, P10Premium, P20Premium, Standard}
+}
+
 // Type enumerates the values for type.
 type Type string
 
@@ -207,6 +267,11 @@ const (
 	// TypeHTTPAuthentication ...
 	TypeHTTPAuthentication Type = "HttpAuthentication"
 )
+
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeActiveDirectoryOAuth, TypeBasic, TypeClientCertificate, TypeHTTPAuthentication}
+}
 
 // BasicAuthentication ...
 type BasicAuthentication struct {
@@ -228,7 +293,9 @@ func (ba BasicAuthentication) MarshalJSON() ([]byte, error) {
 	if ba.Password != nil {
 		objectMap["password"] = ba.Password
 	}
-	objectMap["type"] = ba.Type
+	if ba.Type != "" {
+		objectMap["type"] = ba.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -292,7 +359,9 @@ func (cca ClientCertAuthentication) MarshalJSON() ([]byte, error) {
 	if cca.CertificateSubjectName != nil {
 		objectMap["certificateSubjectName"] = cca.CertificateSubjectName
 	}
-	objectMap["type"] = cca.Type
+	if cca.Type != "" {
+		objectMap["type"] = cca.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -384,7 +453,9 @@ func unmarshalBasicHTTPAuthenticationArray(body []byte) ([]BasicHTTPAuthenticati
 func (ha HTTPAuthentication) MarshalJSON() ([]byte, error) {
 	ha.Type = TypeHTTPAuthentication
 	objectMap := make(map[string]interface{})
-	objectMap["type"] = ha.Type
+	if ha.Type != "" {
+		objectMap["type"] = ha.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1209,7 +1280,9 @@ func (oaa OAuthAuthentication) MarshalJSON() ([]byte, error) {
 	if oaa.ClientID != nil {
 		objectMap["clientId"] = oaa.ClientID
 	}
-	objectMap["type"] = oaa.Type
+	if oaa.Type != "" {
+		objectMap["type"] = oaa.Type
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1322,7 +1395,9 @@ func (sbm ServiceBusMessage) MarshalJSON() ([]byte, error) {
 	if sbm.Namespace != nil {
 		objectMap["namespace"] = sbm.Namespace
 	}
-	objectMap["transportType"] = sbm.TransportType
+	if sbm.TransportType != "" {
+		objectMap["transportType"] = sbm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1365,7 +1440,9 @@ func (sbqm ServiceBusQueueMessage) MarshalJSON() ([]byte, error) {
 	if sbqm.Namespace != nil {
 		objectMap["namespace"] = sbqm.Namespace
 	}
-	objectMap["transportType"] = sbqm.TransportType
+	if sbqm.TransportType != "" {
+		objectMap["transportType"] = sbqm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1408,7 +1485,9 @@ func (sbtm ServiceBusTopicMessage) MarshalJSON() ([]byte, error) {
 	if sbtm.Namespace != nil {
 		objectMap["namespace"] = sbtm.Namespace
 	}
-	objectMap["transportType"] = sbtm.TransportType
+	if sbtm.TransportType != "" {
+		objectMap["transportType"] = sbtm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 

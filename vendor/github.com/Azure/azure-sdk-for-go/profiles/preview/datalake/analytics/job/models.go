@@ -26,20 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithoutDefaults(adlaJobDNSSuffix string) BaseClient {
-	return original.NewWithoutDefaults(adlaJobDNSSuffix)
-}
-
 type Client = original.Client
-
-func NewClient() Client {
-	return original.NewClient()
-}
-
 type CompileMode = original.CompileMode
 
 const (
@@ -163,13 +150,44 @@ type UpdateJobParameters = original.UpdateJobParameters
 type USQLJobProperties = original.USQLJobProperties
 type YieldFuture = original.YieldFuture
 type PipelineClient = original.PipelineClient
+type RecurrenceClient = original.RecurrenceClient
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithoutDefaults(adlaJobDNSSuffix string) BaseClient {
+	return original.NewWithoutDefaults(adlaJobDNSSuffix)
+}
+func NewClient() Client {
+	return original.NewClient()
+}
+func PossibleCompileModeValues() []CompileMode {
+	return original.PossibleCompileModeValues()
+}
+func PossibleResourceTypeValues() []ResourceType {
+	return original.PossibleResourceTypeValues()
+}
+func PossibleResultValues() []Result {
+	return original.PossibleResultValues()
+}
+func PossibleSeverityTypesValues() []SeverityTypes {
+	return original.PossibleSeverityTypesValues()
+}
+func PossibleStateValues() []State {
+	return original.PossibleStateValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleTypeBasicCreateJobPropertiesValues() []TypeBasicCreateJobProperties {
+	return original.PossibleTypeBasicCreateJobPropertiesValues()
+}
+func PossibleTypeEnumValues() []TypeEnum {
+	return original.PossibleTypeEnumValues()
+}
 func NewPipelineClient() PipelineClient {
 	return original.NewPipelineClient()
 }
-
-type RecurrenceClient = original.RecurrenceClient
-
 func NewRecurrenceClient() RecurrenceClient {
 	return original.NewRecurrenceClient()
 }

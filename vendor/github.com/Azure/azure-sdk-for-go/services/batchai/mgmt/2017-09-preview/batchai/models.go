@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // AllocationState enumerates the values for allocation state.
 type AllocationState string
 
@@ -36,6 +37,13 @@ const (
 	Steady AllocationState = "steady"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleAllocationStateValues returns an array of possible values for the AllocationState const type.
+func PossibleAllocationStateValues() []AllocationState {
+	return []AllocationState{Resizing, Steady}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CachingType enumerates the values for caching type.
 type CachingType string
 
@@ -48,6 +56,13 @@ const (
 	Readwrite CachingType = "readwrite"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleCachingTypeValues returns an array of possible values for the CachingType const type.
+func PossibleCachingTypeValues() []CachingType {
+	return []CachingType{None, Readonly, Readwrite}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // DeallocationOption enumerates the values for deallocation option.
 type DeallocationOption string
 
@@ -62,6 +77,13 @@ const (
 	Waitforjobcompletion DeallocationOption = "waitforjobcompletion"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleDeallocationOptionValues returns an array of possible values for the DeallocationOption const type.
+func PossibleDeallocationOptionValues() []DeallocationOption {
+	return []DeallocationOption{Requeue, Terminate, Unknown, Waitforjobcompletion}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ExecutionState enumerates the values for execution state.
 type ExecutionState string
 
@@ -78,6 +100,13 @@ const (
 	Terminating ExecutionState = "terminating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleExecutionStateValues returns an array of possible values for the ExecutionState const type.
+func PossibleExecutionStateValues() []ExecutionState {
+	return []ExecutionState{Failed, Queued, Running, Succeeded, Terminating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerProvisioningState enumerates the values for file server provisioning state.
 type FileServerProvisioningState string
 
@@ -94,6 +123,13 @@ const (
 	FileServerProvisioningStateUpdating FileServerProvisioningState = "updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleFileServerProvisioningStateValues returns an array of possible values for the FileServerProvisioningState const type.
+func PossibleFileServerProvisioningStateValues() []FileServerProvisioningState {
+	return []FileServerProvisioningState{FileServerProvisioningStateCreating, FileServerProvisioningStateDeleting, FileServerProvisioningStateFailed, FileServerProvisioningStateSucceeded, FileServerProvisioningStateUpdating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerType enumerates the values for file server type.
 type FileServerType string
 
@@ -104,6 +140,13 @@ const (
 	Nfs FileServerType = "nfs"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleFileServerTypeValues returns an array of possible values for the FileServerType const type.
+func PossibleFileServerTypeValues() []FileServerType {
+	return []FileServerType{Glusterfs, Nfs}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OutputType enumerates the values for output type.
 type OutputType string
 
@@ -118,6 +161,13 @@ const (
 	Summary OutputType = "summary"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleOutputTypeValues returns an array of possible values for the OutputType const type.
+func PossibleOutputTypeValues() []OutputType {
+	return []OutputType{Custom, Logs, Model, Summary}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -132,6 +182,13 @@ const (
 	ProvisioningStateSucceeded ProvisioningState = "succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{ProvisioningStateCreating, ProvisioningStateDeleting, ProvisioningStateFailed, ProvisioningStateSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // StorageAccountType enumerates the values for storage account type.
 type StorageAccountType string
 
@@ -142,6 +199,13 @@ const (
 	StandardLRS StorageAccountType = "Standard_LRS"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleStorageAccountTypeValues returns an array of possible values for the StorageAccountType const type.
+func PossibleStorageAccountTypeValues() []StorageAccountType {
+	return []StorageAccountType{PremiumLRS, StandardLRS}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ToolType enumerates the values for tool type.
 type ToolType string
 
@@ -160,6 +224,13 @@ const (
 	ToolTypeTensorflow ToolType = "tensorflow"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleToolTypeValues returns an array of possible values for the ToolType const type.
+func PossibleToolTypeValues() []ToolType {
+	return []ToolType{ToolTypeCaffe, ToolTypeCaffe2, ToolTypeChainer, ToolTypeCntk, ToolTypeCustom, ToolTypeTensorflow}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // VMPriority enumerates the values for vm priority.
 type VMPriority string
 
@@ -170,6 +241,13 @@ const (
 	Lowpriority VMPriority = "lowpriority"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// PossibleVMPriorityValues returns an array of possible values for the VMPriority const type.
+func PossibleVMPriorityValues() []VMPriority {
+	return []VMPriority{Dedicated, Lowpriority}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // AutoScaleSettings the system automatically scales the cluster up and down (within minimumNodeCount and
 // maximumNodeCount) based on the pending and running jobs on the cluster.
 type AutoScaleSettings struct {
@@ -178,6 +256,7 @@ type AutoScaleSettings struct {
 	InitialNodeCount *int32 `json:"initialNodeCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // AzureBlobFileSystemReference provides required information, for the service to be able to mount Azure Blob
 // Storage container on the cluster nodes.
 type AzureBlobFileSystemReference struct {
@@ -189,6 +268,7 @@ type AzureBlobFileSystemReference struct {
 	MountOptions      *string `json:"mountOptions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // AzureFileShareReference details of the Azure File Share to mount on the cluster.
 type AzureFileShareReference struct {
 	AccountName  *string                      `json:"accountName,omitempty"`
@@ -202,6 +282,7 @@ type AzureFileShareReference struct {
 	DirectoryMode *string `json:"directoryMode,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // AzureStorageCredentialsInfo credentials to access Azure File Share.
 type AzureStorageCredentialsInfo struct {
 	// AccountKey - One of accountKey or accountKeySecretReference must be specified.
@@ -210,6 +291,7 @@ type AzureStorageCredentialsInfo struct {
 	AccountKeySecretReference *KeyVaultSecretReference `json:"accountKeySecretReference,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Caffe2Settings specifies the settings for Caffe2 job.
 type Caffe2Settings struct {
 	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
@@ -217,6 +299,7 @@ type Caffe2Settings struct {
 	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CaffeSettings specifies the settings for Caffe job.
 type CaffeSettings struct {
 	// ConfigFilePath - This property cannot be specified if pythonScriptFilePath is specified.
@@ -230,6 +313,7 @@ type CaffeSettings struct {
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ChainerSettings specifies the settings for Chainer job.
 type ChainerSettings struct {
 	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
@@ -239,12 +323,14 @@ type ChainerSettings struct {
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CloudError an error response from the Batch AI service.
 type CloudError struct {
 	// Error - An error response from the Batch AI service.
 	Error *CloudErrorBody `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CloudErrorBody an error response from the Batch AI service.
 type CloudErrorBody struct {
 	// Code - An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
@@ -257,6 +343,7 @@ type CloudErrorBody struct {
 	Details *[]CloudErrorBody `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Cluster contains information about a Cluster.
 type Cluster struct {
 	autorest.Response `json:"-"`
@@ -274,6 +361,7 @@ type Cluster struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for Cluster.
 func (c Cluster) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -298,6 +386,7 @@ func (c Cluster) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for Cluster struct.
 func (c *Cluster) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -367,6 +456,7 @@ func (c *Cluster) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterBaseProperties the properties of a Cluster.
 type ClusterBaseProperties struct {
 	// VMSize - All virtual machines in a cluster are the same size. For information about available VM sizes for clusters using images from the Virtual Machines Marketplace (see Sizes for Virtual Machines (Linux) or Sizes for Virtual Machines (Windows). Batch AI service supports all Azure VM sizes except STANDARD_A0 and those with premium storage (STANDARD_GS, STANDARD_DS, and STANDARD_DSV2 series).
@@ -380,6 +470,7 @@ type ClusterBaseProperties struct {
 	Subnet                      *ResourceID                  `json:"subnet,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterCreateParameters parameters supplied to the Create operation.
 type ClusterCreateParameters struct {
 	// Location - The region in which to create the cluster.
@@ -390,6 +481,7 @@ type ClusterCreateParameters struct {
 	*ClusterBaseProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for ClusterCreateParameters.
 func (ccp ClusterCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -405,6 +497,7 @@ func (ccp ClusterCreateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for ClusterCreateParameters struct.
 func (ccp *ClusterCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -447,6 +540,7 @@ func (ccp *ClusterCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterListResult values returned by the List Clusters operation.
 type ClusterListResult struct {
 	autorest.Response `json:"-"`
@@ -456,12 +550,14 @@ type ClusterListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterListResultIterator provides access to a complete listing of Cluster values.
 type ClusterListResultIterator struct {
 	i    int
 	page ClusterListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ClusterListResultIterator) Next() error {
@@ -478,16 +574,19 @@ func (iter *ClusterListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ClusterListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter ClusterListResultIterator) Response() ClusterListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ClusterListResultIterator) Value() Cluster {
@@ -497,6 +596,7 @@ func (iter ClusterListResultIterator) Value() Cluster {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (clr ClusterListResult) IsEmpty() bool {
 	return clr.Value == nil || len(*clr.Value) == 0
@@ -514,12 +614,14 @@ func (clr ClusterListResult) clusterListResultPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(clr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterListResultPage contains a page of Cluster values.
 type ClusterListResultPage struct {
 	fn  func(ClusterListResult) (ClusterListResult, error)
 	clr ClusterListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ClusterListResultPage) Next() error {
@@ -531,16 +633,19 @@ func (page *ClusterListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ClusterListResultPage) NotDone() bool {
 	return !page.clr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page ClusterListResultPage) Response() ClusterListResult {
 	return page.clr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ClusterListResultPage) Values() []Cluster {
 	if page.clr.IsEmpty() {
@@ -549,6 +654,7 @@ func (page ClusterListResultPage) Values() []Cluster {
 	return *page.clr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterProperties job specific properties.
 type ClusterProperties struct {
 	// VMSize - All virtual machines in a cluster are the same size. For information about available VM sizes for clusters using images from the Virtual Machines Marketplace (see Sizes for Virtual Machines (Linux) or Sizes for Virtual Machines (Windows). Batch AI service supports all Azure VM sizes except STANDARD_A0 and those with premium storage (STANDARD_GS, STANDARD_DS, and STANDARD_DSV2 series).
@@ -573,12 +679,14 @@ type ClusterProperties struct {
 	NodeStateCounts  *NodeStateCounts `json:"nodeStateCounts,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClustersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err error) {
@@ -621,12 +729,14 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
@@ -669,6 +779,7 @@ func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterUpdateParameters parameters supplied to the Update operation.
 type ClusterUpdateParameters struct {
 	// Tags - The user specified tags associated with the Cluster.
@@ -677,6 +788,7 @@ type ClusterUpdateParameters struct {
 	*ClusterUpdateProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for ClusterUpdateParameters.
 func (cup ClusterUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -689,6 +801,7 @@ func (cup ClusterUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for ClusterUpdateParameters struct.
 func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -722,11 +835,13 @@ func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ClusterUpdateProperties the properties of a Cluster that need to be updated.
 type ClusterUpdateProperties struct {
 	ScaleSettings *ScaleSettings `json:"scaleSettings,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CNTKsettings specifies the settings for CNTK (aka Microsoft Cognitive Toolkit) job.
 type CNTKsettings struct {
 	// LanguageType - Valid values are 'BrainScript' or 'Python'.
@@ -742,16 +857,19 @@ type CNTKsettings struct {
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ContainerSettings settings for the container to be downloaded.
 type ContainerSettings struct {
 	ImageSourceRegistry *ImageSourceRegistry `json:"imageSourceRegistry,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // CustomToolkitSettings specifies the settings for a custom tool kit job.
 type CustomToolkitSettings struct {
 	CommandLine *string `json:"commandLine,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // DataDisks settings for the data disk which would be created for the File Server.
 type DataDisks struct {
 	DiskSizeInGB *int32 `json:"diskSizeInGB,omitempty"`
@@ -762,12 +880,14 @@ type DataDisks struct {
 	StorageAccountType StorageAccountType `json:"storageAccountType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // EnvironmentSetting a collection of environment variables to set.
 type EnvironmentSetting struct {
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Error an error response from the Batch AI service.
 type Error struct {
 	// Code - An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
@@ -778,6 +898,7 @@ type Error struct {
 	Details *[]NameValuePair `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // File properties of the file.
 type File struct {
 	// Name - file name
@@ -788,6 +909,23 @@ type File struct {
 	*FileProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
+// MarshalJSON is the custom marshaler for File.
+func (f File) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if f.Name != nil {
+		objectMap["name"] = f.Name
+	}
+	if f.DownloadURL != nil {
+		objectMap["downloadUrl"] = f.DownloadURL
+	}
+	if f.FileProperties != nil {
+		objectMap["properties"] = f.FileProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for File struct.
 func (f *File) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -830,6 +968,7 @@ func (f *File) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileListResult values returned by the List operation.
 type FileListResult struct {
 	autorest.Response `json:"-"`
@@ -839,12 +978,14 @@ type FileListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileListResultIterator provides access to a complete listing of File values.
 type FileListResultIterator struct {
 	i    int
 	page FileListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *FileListResultIterator) Next() error {
@@ -861,16 +1002,19 @@ func (iter *FileListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter FileListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter FileListResultIterator) Response() FileListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter FileListResultIterator) Value() File {
@@ -880,6 +1024,7 @@ func (iter FileListResultIterator) Value() File {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (flr FileListResult) IsEmpty() bool {
 	return flr.Value == nil || len(*flr.Value) == 0
@@ -897,12 +1042,14 @@ func (flr FileListResult) fileListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(flr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileListResultPage contains a page of File values.
 type FileListResultPage struct {
 	fn  func(FileListResult) (FileListResult, error)
 	flr FileListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *FileListResultPage) Next() error {
@@ -914,16 +1061,19 @@ func (page *FileListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page FileListResultPage) NotDone() bool {
 	return !page.flr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page FileListResultPage) Response() FileListResult {
 	return page.flr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page FileListResultPage) Values() []File {
 	if page.flr.IsEmpty() {
@@ -932,6 +1082,7 @@ func (page FileListResultPage) Values() []File {
 	return *page.flr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileProperties file specific properties.
 type FileProperties struct {
 	// LastModified - The time at which the file was last modified.
@@ -940,6 +1091,7 @@ type FileProperties struct {
 	ContentLength *int64 `json:"contentLength,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServer contains information about the File Server.
 type FileServer struct {
 	autorest.Response `json:"-"`
@@ -957,6 +1109,7 @@ type FileServer struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for FileServer.
 func (fs FileServer) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -981,6 +1134,7 @@ func (fs FileServer) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for FileServer struct.
 func (fs *FileServer) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1050,6 +1204,7 @@ func (fs *FileServer) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerBaseProperties the properties of a file server.
 type FileServerBaseProperties struct {
 	// VMSize - For information about available VM sizes for fileservers from the Virtual Machines Marketplace, see Sizes for Virtual Machines (Linux).
@@ -1059,6 +1214,7 @@ type FileServerBaseProperties struct {
 	Subnet           *ResourceID       `json:"subnet,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerCreateParameters parameters supplied to the Create operation.
 type FileServerCreateParameters struct {
 	// Location - The region in which to create the File Server.
@@ -1069,6 +1225,7 @@ type FileServerCreateParameters struct {
 	*FileServerBaseProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for FileServerCreateParameters.
 func (fscp FileServerCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1084,6 +1241,7 @@ func (fscp FileServerCreateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for FileServerCreateParameters struct.
 func (fscp *FileServerCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1126,6 +1284,7 @@ func (fscp *FileServerCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerListResult values returned by the List operation.
 type FileServerListResult struct {
 	autorest.Response `json:"-"`
@@ -1135,12 +1294,14 @@ type FileServerListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerListResultIterator provides access to a complete listing of FileServer values.
 type FileServerListResultIterator struct {
 	i    int
 	page FileServerListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *FileServerListResultIterator) Next() error {
@@ -1157,16 +1318,19 @@ func (iter *FileServerListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter FileServerListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter FileServerListResultIterator) Response() FileServerListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter FileServerListResultIterator) Value() FileServer {
@@ -1176,6 +1340,7 @@ func (iter FileServerListResultIterator) Value() FileServer {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (fslr FileServerListResult) IsEmpty() bool {
 	return fslr.Value == nil || len(*fslr.Value) == 0
@@ -1193,12 +1358,14 @@ func (fslr FileServerListResult) fileServerListResultPreparer() (*http.Request, 
 		autorest.WithBaseURL(to.String(fslr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerListResultPage contains a page of FileServer values.
 type FileServerListResultPage struct {
 	fn   func(FileServerListResult) (FileServerListResult, error)
 	fslr FileServerListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *FileServerListResultPage) Next() error {
@@ -1210,16 +1377,19 @@ func (page *FileServerListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page FileServerListResultPage) NotDone() bool {
 	return !page.fslr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page FileServerListResultPage) Response() FileServerListResult {
 	return page.fslr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page FileServerListResultPage) Values() []FileServer {
 	if page.fslr.IsEmpty() {
@@ -1228,6 +1398,7 @@ func (page FileServerListResultPage) Values() []FileServer {
 	return *page.fslr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerProperties file server specific properties.
 type FileServerProperties struct {
 	// VMSize - For information about available VM sizes for File Server from the Virtual Machines Marketplace, see Sizes for Virtual Machines (Linux).
@@ -1242,6 +1413,7 @@ type FileServerProperties struct {
 	ProvisioningState FileServerProvisioningState `json:"provisioningState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServerReference provides required information, for the service to be able to mount Azure FileShare on the
 // cluster nodes.
 type FileServerReference struct {
@@ -1253,12 +1425,14 @@ type FileServerReference struct {
 	MountOptions      *string `json:"mountOptions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type FileServersCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FileServersCreateFuture) Result(client FileServersClient) (fs FileServer, err error) {
@@ -1301,12 +1475,14 @@ func (future FileServersCreateFuture) Result(client FileServersClient) (fs FileS
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // FileServersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type FileServersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FileServersDeleteFuture) Result(client FileServersClient) (ar autorest.Response, err error) {
@@ -1349,6 +1525,7 @@ func (future FileServersDeleteFuture) Result(client FileServersClient) (ar autor
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ImageReference the image reference.
 type ImageReference struct {
 	Publisher *string `json:"publisher,omitempty"`
@@ -1357,6 +1534,7 @@ type ImageReference struct {
 	Version   *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ImageSourceRegistry details of the container image such as name, URL and credentials.
 type ImageSourceRegistry struct {
 	ServerURL   *string                     `json:"serverUrl,omitempty"`
@@ -1364,6 +1542,7 @@ type ImageSourceRegistry struct {
 	Credentials *PrivateRegistryCredentials `json:"credentials,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // InputDirectory input directory for the job.
 type InputDirectory struct {
 	// ID - It will be available for the job as an environment variable under AZ_BATCHAI_INPUT_id. The service will also provide the following  environment variable: AZ_BATCHAI_PREV_OUTPUT_Name. The value of the variable will be populated if the job is being retried after a previous failure, otherwise it will be set to nothing.
@@ -1371,6 +1550,7 @@ type InputDirectory struct {
 	Path *string `json:"path,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Job contains information about the job.
 type Job struct {
 	autorest.Response `json:"-"`
@@ -1388,6 +1568,7 @@ type Job struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for Job.
 func (j Job) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1412,6 +1593,7 @@ func (j Job) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for Job struct.
 func (j *Job) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1481,6 +1663,7 @@ func (j *Job) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobBaseProperties the properties of a Batch AI job.
 type JobBaseProperties struct {
 	// ExperimentName - Describe the experiment information of the job
@@ -1510,12 +1693,14 @@ type JobBaseProperties struct {
 	Constraints *JobBasePropertiesConstraints `json:"constraints,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobBasePropertiesConstraints constraints associated with the Job.
 type JobBasePropertiesConstraints struct {
 	// MaxWallClockTime - Default Value = 1 week.
 	MaxWallClockTime *string `json:"maxWallClockTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobCreateParameters parameters supplied to the Create operation.
 type JobCreateParameters struct {
 	// Location - The region in which to create the job.
@@ -1526,6 +1711,7 @@ type JobCreateParameters struct {
 	*JobBaseProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for JobCreateParameters.
 func (jcp JobCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1541,6 +1727,7 @@ func (jcp JobCreateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmarshalJSON is the custom unmarshaler for JobCreateParameters struct.
 func (jcp *JobCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1583,6 +1770,7 @@ func (jcp *JobCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobListResult values returned by the List operation.
 type JobListResult struct {
 	autorest.Response `json:"-"`
@@ -1592,12 +1780,14 @@ type JobListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobListResultIterator provides access to a complete listing of Job values.
 type JobListResultIterator struct {
 	i    int
 	page JobListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *JobListResultIterator) Next() error {
@@ -1614,16 +1804,19 @@ func (iter *JobListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter JobListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter JobListResultIterator) Response() JobListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter JobListResultIterator) Value() Job {
@@ -1633,6 +1826,7 @@ func (iter JobListResultIterator) Value() Job {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (jlr JobListResult) IsEmpty() bool {
 	return jlr.Value == nil || len(*jlr.Value) == 0
@@ -1650,12 +1844,14 @@ func (jlr JobListResult) jobListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(jlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobListResultPage contains a page of Job values.
 type JobListResultPage struct {
 	fn  func(JobListResult) (JobListResult, error)
 	jlr JobListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *JobListResultPage) Next() error {
@@ -1667,16 +1863,19 @@ func (page *JobListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page JobListResultPage) NotDone() bool {
 	return !page.jlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page JobListResultPage) Response() JobListResult {
 	return page.jlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page JobListResultPage) Values() []Job {
 	if page.jlr.IsEmpty() {
@@ -1685,12 +1884,14 @@ func (page JobListResultPage) Values() []Job {
 	return *page.jlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobPreparation specifies the settings for job preparation.
 type JobPreparation struct {
 	// CommandLine - If containerSettings is specified on the job, this commandLine will be executed in the same container as job. Otherwise it will be executed on the node.
 	CommandLine *string `json:"commandLine,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobProperties job specific properties.
 type JobProperties struct {
 	// ExperimentName - Describe the experiment information of the job
@@ -1733,12 +1934,14 @@ type JobProperties struct {
 	ExecutionInfo *JobPropertiesExecutionInfo `json:"executionInfo,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobPropertiesConstraints constraints associated with the Job.
 type JobPropertiesConstraints struct {
 	// MaxWallClockTime - Default Value = 1 week.
 	MaxWallClockTime *string `json:"maxWallClockTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobPropertiesExecutionInfo contains information about the execution of a job in the Azure Batch service.
 type JobPropertiesExecutionInfo struct {
 	// StartTime - 'Running' corresponds to the running state. If the job has been restarted or retried, this is the most recent time at which the job started running. This property is present only for job that are in the running or completed state.
@@ -1750,12 +1953,14 @@ type JobPropertiesExecutionInfo struct {
 	Errors   *[]Error `json:"errors,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future JobsCreateFuture) Result(client JobsClient) (j Job, err error) {
@@ -1798,12 +2003,14 @@ func (future JobsCreateFuture) Result(client JobsClient) (j Job, err error) {
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future JobsDeleteFuture) Result(client JobsClient) (ar autorest.Response, err error) {
@@ -1846,12 +2053,14 @@ func (future JobsDeleteFuture) Result(client JobsClient) (ar autorest.Response, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // JobsTerminateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsTerminateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future JobsTerminateFuture) Result(client JobsClient) (ar autorest.Response, err error) {
@@ -1894,24 +2103,28 @@ func (future JobsTerminateFuture) Result(client JobsClient) (ar autorest.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // KeyVaultKeyReference describes a reference to Key Vault Key.
 type KeyVaultKeyReference struct {
 	SourceVault *ResourceID `json:"sourceVault,omitempty"`
 	KeyURL      *string     `json:"keyUrl,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // KeyVaultSecretReference describes a reference to Key Vault Secret.
 type KeyVaultSecretReference struct {
 	SourceVault *ResourceID `json:"sourceVault,omitempty"`
 	SecretURL   *string     `json:"secretUrl,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // LocalDataVolume represents mapping of host directories to directories in the container.
 type LocalDataVolume struct {
 	HostPath  *string `json:"hostPath,omitempty"`
 	LocalPath *string `json:"localPath,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ManualScaleSettings manual scale settings for the cluster.
 type ManualScaleSettings struct {
 	// TargetNodeCount - Default is 0. If autoScaleSettings are not specified, then the Cluster starts with this target.
@@ -1920,6 +2133,7 @@ type ManualScaleSettings struct {
 	NodeDeallocationOption DeallocationOption `json:"nodeDeallocationOption,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MountSettings details of the File Server.
 type MountSettings struct {
 	MountPoint           *string `json:"mountPoint,omitempty"`
@@ -1929,6 +2143,7 @@ type MountSettings struct {
 	FileServerType FileServerType `json:"fileServerType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MountVolumes details of volumes to mount on the cluster.
 type MountVolumes struct {
 	// AzureFileShares - References to Azure File Shares that are to be mounted to the cluster nodes.
@@ -1939,12 +2154,14 @@ type MountVolumes struct {
 	UnmanagedFileSystems *[]UnmanagedFileSystemReference `json:"unmanagedFileSystems,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NameValuePair represents a name-value pair.
 type NameValuePair struct {
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NodeSetup use this to prepare the VM. NOTE: The volumes specified in mountVolumes are mounted first and then the
 // setupTask is run. Therefore the setup task can use local mountPaths in its execution.
 type NodeSetup struct {
@@ -1952,6 +2169,7 @@ type NodeSetup struct {
 	MountVolumes *MountVolumes `json:"mountVolumes,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NodeStateCounts counts of various compute node states on the cluster.
 type NodeStateCounts struct {
 	IdleNodeCount      *int32 `json:"idleNodeCount,omitempty"`
@@ -1961,6 +2179,7 @@ type NodeStateCounts struct {
 	LeavingNodeCount   *int32 `json:"leavingNodeCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Operation details of a REST API operation
 type Operation struct {
 	// Name - This is of the format {provider}/{resource}/{operation}
@@ -1971,6 +2190,7 @@ type Operation struct {
 	Properties interface{}       `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OperationDisplay the object that describes the operation.
 type OperationDisplay struct {
 	Provider *string `json:"provider,omitempty"`
@@ -1980,6 +2200,7 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OperationListResult contains the list of all operations supported by BatchAI resource provider
 type OperationListResult struct {
 	autorest.Response `json:"-"`
@@ -1987,12 +2208,14 @@ type OperationListResult struct {
 	NextLink          *string      `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -2009,16 +2232,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -2028,6 +2254,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -2045,12 +2272,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -2062,16 +2291,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -2080,6 +2312,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // OutputDirectory output directory for the job.
 type OutputDirectory struct {
 	// ID - It will be available for the job as an environment variable under AZ_BATCHAI_OUTPUT_id.
@@ -2094,6 +2327,7 @@ type OutputDirectory struct {
 	CreateNew *bool `json:"createNew,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // PrivateRegistryCredentials credentials to access a container image in a private repository.
 type PrivateRegistryCredentials struct {
 	Username *string `json:"username,omitempty"`
@@ -2103,6 +2337,7 @@ type PrivateRegistryCredentials struct {
 	PasswordSecretReference *KeyVaultSecretReference `json:"passwordSecretReference,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // RemoteLoginInformation contains remote login details to SSH/RDP to a compute node in cluster.
 type RemoteLoginInformation struct {
 	// NodeID - Id of the compute node
@@ -2112,6 +2347,7 @@ type RemoteLoginInformation struct {
 	Port      *float64 `json:"port,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // RemoteLoginInformationListResult values returned by the List operation.
 type RemoteLoginInformationListResult struct {
 	autorest.Response `json:"-"`
@@ -2121,12 +2357,14 @@ type RemoteLoginInformationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // RemoteLoginInformationListResultIterator provides access to a complete listing of RemoteLoginInformation values.
 type RemoteLoginInformationListResultIterator struct {
 	i    int
 	page RemoteLoginInformationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *RemoteLoginInformationListResultIterator) Next() error {
@@ -2143,16 +2381,19 @@ func (iter *RemoteLoginInformationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter RemoteLoginInformationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (iter RemoteLoginInformationListResultIterator) Response() RemoteLoginInformationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter RemoteLoginInformationListResultIterator) Value() RemoteLoginInformation {
@@ -2162,6 +2403,7 @@ func (iter RemoteLoginInformationListResultIterator) Value() RemoteLoginInformat
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rlilr RemoteLoginInformationListResult) IsEmpty() bool {
 	return rlilr.Value == nil || len(*rlilr.Value) == 0
@@ -2179,12 +2421,14 @@ func (rlilr RemoteLoginInformationListResult) remoteLoginInformationListResultPr
 		autorest.WithBaseURL(to.String(rlilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // RemoteLoginInformationListResultPage contains a page of RemoteLoginInformation values.
 type RemoteLoginInformationListResultPage struct {
 	fn    func(RemoteLoginInformationListResult) (RemoteLoginInformationListResult, error)
 	rlilr RemoteLoginInformationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *RemoteLoginInformationListResultPage) Next() error {
@@ -2196,16 +2440,19 @@ func (page *RemoteLoginInformationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page RemoteLoginInformationListResultPage) NotDone() bool {
 	return !page.rlilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Response returns the raw server response from the last page request.
 func (page RemoteLoginInformationListResultPage) Response() RemoteLoginInformationListResult {
 	return page.rlilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page RemoteLoginInformationListResultPage) Values() []RemoteLoginInformation {
 	if page.rlilr.IsEmpty() {
@@ -2214,6 +2461,7 @@ func (page RemoteLoginInformationListResultPage) Values() []RemoteLoginInformati
 	return *page.rlilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // Resource a definition of an Azure resource.
 type Resource struct {
 	// ID - The ID of the resource
@@ -2228,6 +2476,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2249,12 +2498,14 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ResourceID represents a resource ID. For example, for a subnet, it is the resource URL for the subnet.
 type ResourceID struct {
 	// ID - The ID of the resource
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // ScaleSettings at least one of manual or autoScale settings must be specified. Only one of manual or autoScale
 // settings can be specified. If autoScale settings are specified, the system automatically scales the cluster up
 // and down (within the supplied limits) based on the pending jobs on the cluster.
@@ -2263,6 +2514,7 @@ type ScaleSettings struct {
 	AutoScale *AutoScaleSettings   `json:"autoScale,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // SetupTask specifies a setup task which can be used to customize the compute nodes of the cluster.
 type SetupTask struct {
 	CommandLine          *string               `json:"commandLine,omitempty"`
@@ -2272,6 +2524,7 @@ type SetupTask struct {
 	StdOutErrPathPrefix *string `json:"stdOutErrPathPrefix,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // SSHConfiguration SSH configuration settings for the VM
 type SSHConfiguration struct {
 	// PublicIPsToAllow - Default value is '*' can be used to match all source IPs. Maximum number of publicIPs that can be specified are 400.
@@ -2279,6 +2532,7 @@ type SSHConfiguration struct {
 	UserAccountSettings *UserAccountSettings `json:"userAccountSettings,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // TensorFlowSettings specifies the settings for TensorFlow job.
 type TensorFlowSettings struct {
 	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
@@ -2294,6 +2548,7 @@ type TensorFlowSettings struct {
 	ParameterServerCount *int32 `json:"parameterServerCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UnmanagedFileSystemReference details of the file system to mount on the compute cluster nodes.
 type UnmanagedFileSystemReference struct {
 	MountCommand *string `json:"mountCommand,omitempty"`
@@ -2301,6 +2556,7 @@ type UnmanagedFileSystemReference struct {
 	RelativeMountPath *string `json:"relativeMountPath,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // UserAccountSettings settings for user account that gets created on each on the nodes of a cluster.
 type UserAccountSettings struct {
 	AdminUserName         *string `json:"adminUserName,omitempty"`
@@ -2308,6 +2564,7 @@ type UserAccountSettings struct {
 	AdminUserPassword     *string `json:"adminUserPassword,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/batchai/mgmt/2017-09-preview/batchai instead.
 // VirtualMachineConfiguration settings for OS image.
 type VirtualMachineConfiguration struct {
 	ImageReference *ImageReference `json:"imageReference,omitempty"`

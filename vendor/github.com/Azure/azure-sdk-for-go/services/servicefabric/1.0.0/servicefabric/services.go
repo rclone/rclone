@@ -40,8 +40,9 @@ func NewServicesClientWithBaseURI(baseURI string, timeout *int32) ServicesClient
 }
 
 // Create create services
-//
-// applicationName is the name of the application createServiceDescription is the description of the service
+// Parameters:
+// applicationName - the name of the application
+// createServiceDescription - the description of the service
 func (client ServicesClient) Create(ctx context.Context, applicationName string, createServiceDescription BasicCreateServiceDescription) (result String, err error) {
 	req, err := client.CreatePreparer(ctx, applicationName, createServiceDescription)
 	if err != nil {
@@ -79,7 +80,7 @@ func (client ServicesClient) CreatePreparer(ctx context.Context, applicationName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/GetServices/$/Create", pathParameters),
@@ -109,8 +110,9 @@ func (client ServicesClient) CreateResponder(resp *http.Response) (result String
 }
 
 // Get get services
-//
-// applicationName is the name of the application serviceName is the name of the service
+// Parameters:
+// applicationName - the name of the application
+// serviceName - the name of the service
 func (client ServicesClient) Get(ctx context.Context, applicationName string, serviceName string) (result Service, err error) {
 	req, err := client.GetPreparer(ctx, applicationName, serviceName)
 	if err != nil {
@@ -177,8 +179,8 @@ func (client ServicesClient) GetResponder(resp *http.Response) (result Service, 
 }
 
 // List list services
-//
-// applicationName is the name of the application
+// Parameters:
+// applicationName - the name of the application
 func (client ServicesClient) List(ctx context.Context, applicationName string) (result ServiceList, err error) {
 	req, err := client.ListPreparer(ctx, applicationName)
 	if err != nil {
@@ -244,8 +246,8 @@ func (client ServicesClient) ListResponder(resp *http.Response) (result ServiceL
 }
 
 // Remove remove services
-//
-// serviceName is the name of the service
+// Parameters:
+// serviceName - the name of the service
 func (client ServicesClient) Remove(ctx context.Context, serviceName string) (result String, err error) {
 	req, err := client.RemovePreparer(ctx, serviceName)
 	if err != nil {
@@ -311,9 +313,11 @@ func (client ServicesClient) RemoveResponder(resp *http.Response) (result String
 }
 
 // Resolve resolve services
-//
-// serviceName is the name of the service partitionKeyType is the type of the partition key partitionKeyValue is
-// the value of the partition key previousRspVersion is the version of the previous rsp
+// Parameters:
+// serviceName - the name of the service
+// partitionKeyType - the type of the partition key
+// partitionKeyValue - the value of the partition key
+// previousRspVersion - the version of the previous rsp
 func (client ServicesClient) Resolve(ctx context.Context, serviceName string, partitionKeyType *int32, partitionKeyValue string, previousRspVersion string) (result ResolvedServicePartition, err error) {
 	req, err := client.ResolvePreparer(ctx, serviceName, partitionKeyType, partitionKeyValue, previousRspVersion)
 	if err != nil {
@@ -388,8 +392,9 @@ func (client ServicesClient) ResolveResponder(resp *http.Response) (result Resol
 }
 
 // Update update services
-//
-// serviceName is the name of the service updateServiceDescription is the description of the service update
+// Parameters:
+// serviceName - the name of the service
+// updateServiceDescription - the description of the service update
 func (client ServicesClient) Update(ctx context.Context, serviceName string, updateServiceDescription BasicUpdateServiceDescription) (result String, err error) {
 	req, err := client.UpdatePreparer(ctx, serviceName, updateServiceDescription)
 	if err != nil {
@@ -427,7 +432,7 @@ func (client ServicesClient) UpdatePreparer(ctx context.Context, serviceName str
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Services/{serviceName}/$/Update", pathParameters),

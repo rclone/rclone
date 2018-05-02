@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AggregationGranularity = original.AggregationGranularity
 
 const (
@@ -66,16 +58,26 @@ type UsageAggregationListResultIterator = original.UsageAggregationListResultIte
 type UsageAggregationListResultPage = original.UsageAggregationListResultPage
 type UsageSample = original.UsageSample
 type RateCardClient = original.RateCardClient
+type UsageAggregatesClient = original.UsageAggregatesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAggregationGranularityValues() []AggregationGranularity {
+	return original.PossibleAggregationGranularityValues()
+}
+func PossibleNameValues() []Name {
+	return original.PossibleNameValues()
+}
 func NewRateCardClient(subscriptionID string) RateCardClient {
 	return original.NewRateCardClient(subscriptionID)
 }
 func NewRateCardClientWithBaseURI(baseURI string, subscriptionID string) RateCardClient {
 	return original.NewRateCardClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UsageAggregatesClient = original.UsageAggregatesClient
-
 func NewUsageAggregatesClient(subscriptionID string) UsageAggregatesClient {
 	return original.NewUsageAggregatesClient(subscriptionID)
 }

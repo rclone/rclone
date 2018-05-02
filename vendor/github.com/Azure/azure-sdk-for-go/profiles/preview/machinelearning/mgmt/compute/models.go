@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type MachineLearningComputeClient = original.MachineLearningComputeClient
-
-func NewMachineLearningComputeClient(subscriptionID string) MachineLearningComputeClient {
-	return original.NewMachineLearningComputeClient(subscriptionID)
-}
-func NewMachineLearningComputeClientWithBaseURI(baseURI string, subscriptionID string) MachineLearningComputeClient {
-	return original.NewMachineLearningComputeClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AgentVMSizeTypes = original.AgentVMSizeTypes
 
 const (
@@ -179,6 +163,39 @@ type SystemService = original.SystemService
 type UpdateSystemServicesResponse = original.UpdateSystemServicesResponse
 type OperationalizationClustersClient = original.OperationalizationClustersClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewMachineLearningComputeClient(subscriptionID string) MachineLearningComputeClient {
+	return original.NewMachineLearningComputeClient(subscriptionID)
+}
+func NewMachineLearningComputeClientWithBaseURI(baseURI string, subscriptionID string) MachineLearningComputeClient {
+	return original.NewMachineLearningComputeClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAgentVMSizeTypesValues() []AgentVMSizeTypes {
+	return original.PossibleAgentVMSizeTypesValues()
+}
+func PossibleClusterTypeValues() []ClusterType {
+	return original.PossibleClusterTypeValues()
+}
+func PossibleOperationStatusValues() []OperationStatus {
+	return original.PossibleOperationStatusValues()
+}
+func PossibleOrchestratorTypeValues() []OrchestratorType {
+	return original.PossibleOrchestratorTypeValues()
+}
+func PossibleStatusValues() []Status {
+	return original.PossibleStatusValues()
+}
+func PossibleSystemServiceTypeValues() []SystemServiceType {
+	return original.PossibleSystemServiceTypeValues()
+}
+func PossibleUpdatesAvailableValues() []UpdatesAvailable {
+	return original.PossibleUpdatesAvailableValues()
+}
 func NewOperationalizationClustersClient(subscriptionID string) OperationalizationClustersClient {
 	return original.NewOperationalizationClustersClient(subscriptionID)
 }

@@ -38,8 +38,9 @@ func NewTrainClient(azureRegion AzureRegions) TrainClient {
 // GetStatus gets the training status of all models (intents and entities) for the specified LUIS app. You must call
 // the train API to train the LUIS app before you call this API to get training status. "appID" specifies the LUIS app
 // ID. "versionId" specifies the version number of the LUIS app. For example, "0.1".
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client TrainClient) GetStatus(ctx context.Context, appID uuid.UUID, versionID string) (result ListModelTrainingInfo, err error) {
 	req, err := client.GetStatusPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -105,8 +106,9 @@ func (client TrainClient) GetStatusResponder(resp *http.Response) (result ListMo
 // status. Note: The application version is not fully trained unless all the models (intents and entities) are trained
 // successfully or are up to date. To verify training success, get the training status at least once after training is
 // complete.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client TrainClient) TrainVersion(ctx context.Context, appID uuid.UUID, versionID string) (result EnqueueTrainingResponse, err error) {
 	req, err := client.TrainVersionPreparer(ctx, appID, versionID)
 	if err != nil {

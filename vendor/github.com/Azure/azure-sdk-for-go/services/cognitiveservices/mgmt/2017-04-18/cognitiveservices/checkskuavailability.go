@@ -41,8 +41,9 @@ func NewCheckSkuAvailabilityClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // List check available SKUs.
-//
-// location is resource location. parameters is check SKU Availablity POST body.
+// Parameters:
+// location - resource location.
+// parameters - check SKU Availablity POST body.
 func (client CheckSkuAvailabilityClient) List(ctx context.Context, location string, parameters CheckSkuAvailabilityParameter) (result CheckSkuAvailabilityResultList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -85,7 +86,7 @@ func (client CheckSkuAvailabilityClient) ListPreparer(ctx context.Context, locat
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.CognitiveServices/locations/{location}/checkSkuAvailability", pathParameters),

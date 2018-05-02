@@ -50,8 +50,9 @@ func NewListManagementTermListsClient(baseURL AzureRegionBaseURL) ListManagement
 }
 
 // Create creates a Term List
-//
-// contentType is the content type. body is schema of the body.
+// Parameters:
+// contentType - the content type.
+// body - schema of the body.
 func (client ListManagementTermListsClient) Create(ctx context.Context, contentType string, body Body) (result TermList, err error) {
 	req, err := client.CreatePreparer(ctx, contentType, body)
 	if err != nil {
@@ -81,7 +82,7 @@ func (client ListManagementTermListsClient) CreatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPath("/contentmoderator/lists/v1.0/termlists"),
@@ -111,8 +112,8 @@ func (client ListManagementTermListsClient) CreateResponder(resp *http.Response)
 }
 
 // Delete deletes term list with the list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementTermListsClient) Delete(ctx context.Context, listID string) (result String, err error) {
 	req, err := client.DeletePreparer(ctx, listID)
 	if err != nil {
@@ -229,8 +230,8 @@ func (client ListManagementTermListsClient) GetAllTermListsResponder(resp *http.
 }
 
 // GetDetails returns list Id details of the term list with list Id equal to list Id passed.
-//
-// listID is list Id of the image list.
+// Parameters:
+// listID - list Id of the image list.
 func (client ListManagementTermListsClient) GetDetails(ctx context.Context, listID string) (result TermList, err error) {
 	req, err := client.GetDetailsPreparer(ctx, listID)
 	if err != nil {
@@ -291,8 +292,9 @@ func (client ListManagementTermListsClient) GetDetailsResponder(resp *http.Respo
 }
 
 // RefreshIndexMethod refreshes the index of the list with list Id equal to list ID passed.
-//
-// listID is list Id of the image list. language is language of the terms.
+// Parameters:
+// listID - list Id of the image list.
+// language - language of the terms.
 func (client ListManagementTermListsClient) RefreshIndexMethod(ctx context.Context, listID string, language string) (result RefreshIndex, err error) {
 	req, err := client.RefreshIndexMethodPreparer(ctx, listID, language)
 	if err != nil {
@@ -358,8 +360,10 @@ func (client ListManagementTermListsClient) RefreshIndexMethodResponder(resp *ht
 }
 
 // Update updates an Term List.
-//
-// listID is list Id of the image list. contentType is the content type. body is schema of the body.
+// Parameters:
+// listID - list Id of the image list.
+// contentType - the content type.
+// body - schema of the body.
 func (client ListManagementTermListsClient) Update(ctx context.Context, listID string, contentType string, body Body) (result TermList, err error) {
 	req, err := client.UpdatePreparer(ctx, listID, contentType, body)
 	if err != nil {
@@ -393,7 +397,7 @@ func (client ListManagementTermListsClient) UpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPathParameters("/contentmoderator/lists/v1.0/termlists/{listId}", pathParameters),

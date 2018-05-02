@@ -19,31 +19,21 @@
 
 package billing
 
-import original "github.com/Azure/azure-sdk-for-go/services/billing/mgmt/2017-04-24-preview/billing"
+import original "github.com/Azure/azure-sdk-for-go/services/billing/mgmt/2018-03-01-preview/billing"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
+type EnrollmentAccountsClient = original.EnrollmentAccountsClient
 type InvoicesClient = original.InvoicesClient
-
-func NewInvoicesClient(subscriptionID string) InvoicesClient {
-	return original.NewInvoicesClient(subscriptionID)
-}
-func NewInvoicesClientWithBaseURI(baseURI string, subscriptionID string) InvoicesClient {
-	return original.NewInvoicesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DownloadURL = original.DownloadURL
+type EnrollmentAccount = original.EnrollmentAccount
+type EnrollmentAccountListResult = original.EnrollmentAccountListResult
+type EnrollmentAccountListResultIterator = original.EnrollmentAccountListResultIterator
+type EnrollmentAccountListResultPage = original.EnrollmentAccountListResultPage
+type EnrollmentAccountProperties = original.EnrollmentAccountProperties
 type ErrorDetails = original.ErrorDetails
 type ErrorResponse = original.ErrorResponse
 type Invoice = original.Invoice
@@ -63,16 +53,32 @@ type PeriodsListResultIterator = original.PeriodsListResultIterator
 type PeriodsListResultPage = original.PeriodsListResultPage
 type Resource = original.Resource
 type OperationsClient = original.OperationsClient
+type PeriodsClient = original.PeriodsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewEnrollmentAccountsClient(subscriptionID string) EnrollmentAccountsClient {
+	return original.NewEnrollmentAccountsClient(subscriptionID)
+}
+func NewEnrollmentAccountsClientWithBaseURI(baseURI string, subscriptionID string) EnrollmentAccountsClient {
+	return original.NewEnrollmentAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewInvoicesClient(subscriptionID string) InvoicesClient {
+	return original.NewInvoicesClient(subscriptionID)
+}
+func NewInvoicesClientWithBaseURI(baseURI string, subscriptionID string) InvoicesClient {
+	return original.NewInvoicesClientWithBaseURI(baseURI, subscriptionID)
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PeriodsClient = original.PeriodsClient
-
 func NewPeriodsClient(subscriptionID string) PeriodsClient {
 	return original.NewPeriodsClient(subscriptionID)
 }

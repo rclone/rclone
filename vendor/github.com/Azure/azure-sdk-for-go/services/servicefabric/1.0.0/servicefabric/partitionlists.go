@@ -40,8 +40,8 @@ func NewPartitionListsClientWithBaseURI(baseURI string, timeout *int32) Partitio
 }
 
 // Repair repair partition lists
-//
-// serviceName is the name of the service
+// Parameters:
+// serviceName - the name of the service
 func (client PartitionListsClient) Repair(ctx context.Context, serviceName string) (result String, err error) {
 	req, err := client.RepairPreparer(ctx, serviceName)
 	if err != nil {

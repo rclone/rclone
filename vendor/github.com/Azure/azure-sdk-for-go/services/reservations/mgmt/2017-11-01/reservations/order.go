@@ -40,8 +40,8 @@ func NewOrderClientWithBaseURI(baseURI string) OrderClient {
 }
 
 // Get get the details of the `ReservationOrder`.
-//
-// reservationOrderID is order Id of the reservation
+// Parameters:
+// reservationOrderID - order Id of the reservation
 func (client OrderClient) Get(ctx context.Context, reservationOrderID string) (result OrderResponse, err error) {
 	req, err := client.GetPreparer(ctx, reservationOrderID)
 	if err != nil {

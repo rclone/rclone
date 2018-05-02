@@ -93,7 +93,7 @@ func (client CertificateClient) AddPreparer(ctx context.Context, certificate Cer
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/certificates"),

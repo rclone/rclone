@@ -9,7 +9,7 @@
     }
   },
   "basePath": "",
-  "baseUrl": "https://content-storagetransfer.googleapis.com/",
+  "baseUrl": "https://storagetransfer.googleapis.com/",
   "batchPath": "batch",
   "description": "Transfers data from external data sources to a Google Cloud Storage bucket or between Google Cloud Storage buckets.",
   "discoveryVersion": "v1",
@@ -430,8 +430,8 @@
       }
     }
   },
-  "revision": "20180308",
-  "rootUrl": "https://content-storagetransfer.googleapis.com/",
+  "revision": "20180423",
+  "rootUrl": "https://storagetransfer.googleapis.com/",
   "schemas": {
     "AwsAccessKey": {
       "description": "AWS access key (see\n[AWS Security Credentials](http://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html)).",
@@ -449,7 +449,7 @@
       "type": "object"
     },
     "AwsS3Data": {
-      "description": "An AwsS3Data can be a data source, but not a data sink.\nIn an AwsS3Data, an object's name is the S3 object's key name.",
+      "description": "An AwsS3Data resource can be a data source, but not a data sink.\nIn an AwsS3Data resource, an object's name is the S3 object's key name.",
       "id": "AwsS3Data",
       "properties": {
         "awsAccessKey": {
@@ -473,7 +473,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -571,11 +571,11 @@
       "type": "object"
     },
     "GcsData": {
-      "description": "In a GcsData, an object's name is the Google Cloud Storage object's name and\nits `lastModificationTime` refers to the object's updated time, which changes\nwhen the content or the metadata of the object is updated.",
+      "description": "In a GcsData resource, an object's name is the Google Cloud Storage object's\nname and its `lastModificationTime` refers to the object's updated time,\nwhich changes when the content or the metadata of the object is updated.",
       "id": "GcsData",
       "properties": {
         "bucketName": {
-          "description": "Google Cloud Storage bucket name (see\n[Bucket Name Requirements](https://cloud.google.com/storage/docs/bucket-naming#requirements)).\nRequired.",
+          "description": "Google Cloud Storage bucket name (see\n[Bucket Name\nRequirements](https://cloud.google.com/storage/docs/naming#requirements)).\nRequired.",
           "type": "string"
         }
       },
@@ -593,7 +593,7 @@
       "type": "object"
     },
     "HttpData": {
-      "description": "An HttpData specifies a list of objects on the web to be transferred over\nHTTP.  The information of the objects to be transferred is contained in a\nfile referenced by a URL. The first line in the file must be\n\"TsvHttpData-1.0\", which specifies the format of the file.  Subsequent lines\nspecify the information of the list of objects, one object per list entry.\nEach entry has the following tab-delimited fields:\n\n* HTTP URL - The location of the object.\n\n* Length - The size of the object in bytes.\n\n* MD5 - The base64-encoded MD5 hash of the object.\n\nFor an example of a valid TSV file, see\n[Transferring data from URLs](https://cloud.google.com/storage/transfer/create-url-list).\n\nWhen transferring data based on a URL list, keep the following in mind:\n\n* When an object located at `http(s)://hostname:port/\u003cURL-path\u003e` is transferred\nto a data sink, the name of the object at the data sink is\n`\u003chostname\u003e/\u003cURL-path\u003e`.\n\n* If the specified size of an object does not match the actual size of the\nobject fetched, the object will not be transferred.\n\n* If the specified MD5 does not match the MD5 computed from the transferred\nbytes, the object transfer will fail. For more information, see\n[Generating MD5 hashes](https://cloud.google.com/storage/transfer/#md5)\n\n* Ensure that each URL you specify is publicly accessible. For\nexample, in Google Cloud Storage you can\n[share an object publicly]\n(https://cloud.google.com/storage/docs/cloud-console#_sharingdata) and get\na link to it.\n\n* Storage Transfer Service obeys `robots.txt` rules and requires the source\nHTTP server to support `Range` requests and to return a `Content-Length`\nheader in each response.\n\n* [ObjectConditions](#ObjectConditions) have no effect when filtering objects\nto transfer.",
+      "description": "An HttpData resource specifies a list of objects on the web to be transferred\nover HTTP.  The information of the objects to be transferred is contained in\na file referenced by a URL. The first line in the file must be\n\"TsvHttpData-1.0\", which specifies the format of the file.  Subsequent lines\nspecify the information of the list of objects, one object per list entry.\nEach entry has the following tab-delimited fields:\n\n* HTTP URL - The location of the object.\n\n* Length - The size of the object in bytes.\n\n* MD5 - The base64-encoded MD5 hash of the object.\n\nFor an example of a valid TSV file, see\n[Transferring data from\nURLs](https://cloud.google.com/storage/transfer/create-url-list).\n\nWhen transferring data based on a URL list, keep the following in mind:\n\n* When an object located at `http(s)://hostname:port/\u003cURL-path\u003e` is\ntransferred to a data sink, the name of the object at the data sink is\n`\u003chostname\u003e/\u003cURL-path\u003e`.\n\n* If the specified size of an object does not match the actual size of the\nobject fetched, the object will not be transferred.\n\n* If the specified MD5 does not match the MD5 computed from the transferred\nbytes, the object transfer will fail. For more information, see\n[Generating MD5 hashes](https://cloud.google.com/storage/transfer/#md5)\n\n* Ensure that each URL you specify is publicly accessible. For\nexample, in Google Cloud Storage you can\n[share an object publicly]\n(https://cloud.google.com/storage/docs/cloud-console#_sharingdata) and get\na link to it.\n\n* Storage Transfer Service obeys `robots.txt` rules and requires the source\nHTTP server to support `Range` requests and to return a `Content-Length`\nheader in each response.\n\n* [ObjectConditions](#ObjectConditions) have no effect when filtering objects\nto transfer.",
       "id": "HttpData",
       "properties": {
         "listUrl": {

@@ -15,7 +15,7 @@ const opBatchDeleteBuilds = "BatchDeleteBuilds"
 
 // BatchDeleteBuildsRequest generates a "aws/request.Request" representing the
 // client's request for the BatchDeleteBuilds operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -94,7 +94,7 @@ const opBatchGetBuilds = "BatchGetBuilds"
 
 // BatchGetBuildsRequest generates a "aws/request.Request" representing the
 // client's request for the BatchGetBuilds operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -173,7 +173,7 @@ const opBatchGetProjects = "BatchGetProjects"
 
 // BatchGetProjectsRequest generates a "aws/request.Request" representing the
 // client's request for the BatchGetProjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -252,7 +252,7 @@ const opCreateProject = "CreateProject"
 
 // CreateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -338,7 +338,7 @@ const opCreateWebhook = "CreateWebhook"
 
 // CreateWebhookRequest generates a "aws/request.Request" representing the
 // client's request for the CreateWebhook operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -438,7 +438,7 @@ const opDeleteProject = "DeleteProject"
 
 // DeleteProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -517,7 +517,7 @@ const opDeleteWebhook = "DeleteWebhook"
 
 // DeleteWebhookRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteWebhook operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -604,7 +604,7 @@ const opInvalidateProjectCache = "InvalidateProjectCache"
 
 // InvalidateProjectCacheRequest generates a "aws/request.Request" representing the
 // client's request for the InvalidateProjectCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -686,7 +686,7 @@ const opListBuilds = "ListBuilds"
 
 // ListBuildsRequest generates a "aws/request.Request" representing the
 // client's request for the ListBuilds operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -765,7 +765,7 @@ const opListBuildsForProject = "ListBuildsForProject"
 
 // ListBuildsForProjectRequest generates a "aws/request.Request" representing the
 // client's request for the ListBuildsForProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -848,7 +848,7 @@ const opListCuratedEnvironmentImages = "ListCuratedEnvironmentImages"
 
 // ListCuratedEnvironmentImagesRequest generates a "aws/request.Request" representing the
 // client's request for the ListCuratedEnvironmentImages operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -922,7 +922,7 @@ const opListProjects = "ListProjects"
 
 // ListProjectsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1002,7 +1002,7 @@ const opStartBuild = "StartBuild"
 
 // StartBuildRequest generates a "aws/request.Request" representing the
 // client's request for the StartBuild operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1087,7 +1087,7 @@ const opStopBuild = "StopBuild"
 
 // StopBuildRequest generates a "aws/request.Request" representing the
 // client's request for the StopBuild operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1169,7 +1169,7 @@ const opUpdateProject = "UpdateProject"
 
 // UpdateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1242,6 +1242,91 @@ func (c *CodeBuild) UpdateProject(input *UpdateProjectInput) (*UpdateProjectOutp
 // for more information on using Contexts.
 func (c *CodeBuild) UpdateProjectWithContext(ctx aws.Context, input *UpdateProjectInput, opts ...request.Option) (*UpdateProjectOutput, error) {
 	req, out := c.UpdateProjectRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateWebhook = "UpdateWebhook"
+
+// UpdateWebhookRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateWebhook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateWebhook for more information on using the UpdateWebhook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateWebhookRequest method.
+//    req, resp := client.UpdateWebhookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codebuild-2016-10-06/UpdateWebhook
+func (c *CodeBuild) UpdateWebhookRequest(input *UpdateWebhookInput) (req *request.Request, output *UpdateWebhookOutput) {
+	op := &request.Operation{
+		Name:       opUpdateWebhook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateWebhookInput{}
+	}
+
+	output = &UpdateWebhookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateWebhook API operation for AWS CodeBuild.
+//
+// Updates the webhook associated with an AWS CodeBuild build project.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS CodeBuild's
+// API operation UpdateWebhook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The input value that was provided is not valid.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified AWS resource cannot be found.
+//
+//   * ErrCodeOAuthProviderException "OAuthProviderException"
+//   There was a problem with the underlying OAuth provider.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codebuild-2016-10-06/UpdateWebhook
+func (c *CodeBuild) UpdateWebhook(input *UpdateWebhookInput) (*UpdateWebhookOutput, error) {
+	req, out := c.UpdateWebhookRequest(input)
+	return out, req.Send()
+}
+
+// UpdateWebhookWithContext is the same as UpdateWebhook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateWebhook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeBuild) UpdateWebhookWithContext(ctx aws.Context, input *UpdateWebhookInput, opts ...request.Option) (*UpdateWebhookOutput, error) {
+	req, out := c.UpdateWebhookRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1531,7 +1616,7 @@ type Build struct {
 	// about any current build phase that is not yet complete.
 	Phases []*BuildPhase `locationName:"phases" type:"list"`
 
-	// The name of the build project.
+	// The name of the AWS CodeBuild project.
 	ProjectName *string `locationName:"projectName" min:"1" type:"string"`
 
 	// Information about the source code to be built.
@@ -2107,7 +2192,13 @@ func (s *CreateProjectOutput) SetProject(v *Project) *CreateProjectOutput {
 type CreateWebhookInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the build project.
+	// A regular expression used to determine which branches in a repository are
+	// built when a webhook is triggered. If the name of a branch matches the regular
+	// expression, then it is built. If it doesn't match, then it is not. If branchFilter
+	// is empty, then all branches are built.
+	BranchFilter *string `locationName:"branchFilter" type:"string"`
+
+	// The name of the AWS CodeBuild project.
 	//
 	// ProjectName is a required field
 	ProjectName *string `locationName:"projectName" min:"2" type:"string" required:"true"`
@@ -2137,6 +2228,12 @@ func (s *CreateWebhookInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetBranchFilter sets the BranchFilter field's value.
+func (s *CreateWebhookInput) SetBranchFilter(v string) *CreateWebhookInput {
+	s.BranchFilter = &v
+	return s
 }
 
 // SetProjectName sets the ProjectName field's value.
@@ -2227,7 +2324,7 @@ func (s DeleteProjectOutput) GoString() string {
 type DeleteWebhookInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the build project.
+	// The name of the AWS CodeBuild project.
 	//
 	// ProjectName is a required field
 	ProjectName *string `locationName:"projectName" min:"2" type:"string" required:"true"`
@@ -2467,7 +2564,8 @@ func (s *EnvironmentVariable) SetValue(v string) *EnvironmentVariable {
 type InvalidateProjectCacheInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the build project that the cache will be reset for.
+	// The name of the AWS CodeBuild build project that the cache will be reset
+	// for.
 	//
 	// ProjectName is a required field
 	ProjectName *string `locationName:"projectName" min:"1" type:"string" required:"true"`
@@ -2530,7 +2628,7 @@ type ListBuildsForProjectInput struct {
 	// until no more next tokens are returned.
 	NextToken *string `locationName:"nextToken" type:"string"`
 
-	// The name of the build project.
+	// The name of the AWS CodeBuild project.
 	//
 	// ProjectName is a required field
 	ProjectName *string `locationName:"projectName" min:"1" type:"string" required:"true"`
@@ -3414,17 +3512,15 @@ type ProjectEnvironment struct {
 	// Image is a required field
 	Image *string `locationName:"image" min:"1" type:"string" required:"true"`
 
-	// If set to true, enables running the Docker daemon inside a Docker container;
-	// otherwise, false or not specified (the default). This value must be set to
-	// true only if this build project will be used to build Docker images, and
-	// the specified build environment image is not one provided by AWS CodeBuild
-	// with Docker support. Otherwise, all associated builds that attempt to interact
-	// with the Docker daemon will fail. Note that you must also start the Docker
-	// daemon so that your builds can interact with it as needed. One way to do
-	// this is to initialize the Docker daemon in the install phase of your build
-	// spec by running the following build commands. (Do not run the following build
-	// commands if the specified build environment image is provided by AWS CodeBuild
-	// with Docker support.)
+	// Enables running the Docker daemon inside a Docker container. Set to true
+	// only if the build project is be used to build Docker images, and the specified
+	// build environment image is not provided by AWS CodeBuild with Docker support.
+	// Otherwise, all associated builds that attempt to interact with the Docker
+	// daemon will fail. Note that you must also start the Docker daemon so that
+	// builds can interact with it. One way to do this is to initialize the Docker
+	// daemon during the install phase of your build spec by running the following
+	// build commands. (Do not run the following build commands if the specified
+	// build environment image is provided by AWS CodeBuild with Docker support.)
 	//
 	// - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375
 	// --storage-driver=overlay& - timeout -t 15 sh -c "until docker info; do echo
@@ -3737,7 +3833,7 @@ type StartBuildInput struct {
 	// for this build only, any previous depth of history defined in the build project.
 	GitCloneDepthOverride *int64 `locationName:"gitCloneDepthOverride" type:"integer"`
 
-	// The name of the build project to start running a build.
+	// The name of the AWS CodeBuild build project to start running a build.
 	//
 	// ProjectName is a required field
 	ProjectName *string `locationName:"projectName" min:"1" type:"string" required:"true"`
@@ -4215,6 +4311,93 @@ func (s *UpdateProjectOutput) SetProject(v *Project) *UpdateProjectOutput {
 	return s
 }
 
+type UpdateWebhookInput struct {
+	_ struct{} `type:"structure"`
+
+	// A regular expression used to determine which branches in a repository are
+	// built when a webhook is triggered. If the name of a branch matches the regular
+	// expression, then it is built. If it doesn't match, then it is not. If branchFilter
+	// is empty, then all branches are built.
+	BranchFilter *string `locationName:"branchFilter" type:"string"`
+
+	// The name of the AWS CodeBuild project.
+	//
+	// ProjectName is a required field
+	ProjectName *string `locationName:"projectName" min:"2" type:"string" required:"true"`
+
+	// A boolean value that specifies whether the associated repository's secret
+	// token should be updated.
+	RotateSecret *bool `locationName:"rotateSecret" type:"boolean"`
+}
+
+// String returns the string representation
+func (s UpdateWebhookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateWebhookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateWebhookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateWebhookInput"}
+	if s.ProjectName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ProjectName"))
+	}
+	if s.ProjectName != nil && len(*s.ProjectName) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("ProjectName", 2))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBranchFilter sets the BranchFilter field's value.
+func (s *UpdateWebhookInput) SetBranchFilter(v string) *UpdateWebhookInput {
+	s.BranchFilter = &v
+	return s
+}
+
+// SetProjectName sets the ProjectName field's value.
+func (s *UpdateWebhookInput) SetProjectName(v string) *UpdateWebhookInput {
+	s.ProjectName = &v
+	return s
+}
+
+// SetRotateSecret sets the RotateSecret field's value.
+func (s *UpdateWebhookInput) SetRotateSecret(v bool) *UpdateWebhookInput {
+	s.RotateSecret = &v
+	return s
+}
+
+type UpdateWebhookOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about a repository's webhook that is associated with a project
+	// in AWS CodeBuild.
+	Webhook *Webhook `locationName:"webhook" type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateWebhookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateWebhookOutput) GoString() string {
+	return s.String()
+}
+
+// SetWebhook sets the Webhook field's value.
+func (s *UpdateWebhookOutput) SetWebhook(v *Webhook) *UpdateWebhookOutput {
+	s.Webhook = v
+	return s
+}
+
 // Information about the VPC configuration that AWS CodeBuild will access.
 type VpcConfig struct {
 	_ struct{} `type:"structure"`
@@ -4275,12 +4458,19 @@ func (s *VpcConfig) SetVpcId(v string) *VpcConfig {
 type Webhook struct {
 	_ struct{} `type:"structure"`
 
-	// This is the server endpoint that will receive the webhook payload.
+	// A regular expression used to determine which branches in a repository are
+	// built when a webhook is triggered. If the name of a branch matches the regular
+	// expression, then it is built. If it doesn't match, then it is not. If branchFilter
+	// is empty, then all branches are built.
+	BranchFilter *string `locationName:"branchFilter" type:"string"`
+
+	// A timestamp indicating the last time a repository's secret token was modified.
+	LastModifiedSecret *time.Time `locationName:"lastModifiedSecret" type:"timestamp" timestampFormat:"unix"`
+
+	// The CodeBuild endpoint where webhook events are sent.
 	PayloadUrl *string `locationName:"payloadUrl" min:"1" type:"string"`
 
-	// Use this secret while creating a webhook in GitHub for Enterprise. The secret
-	// allows webhook requests sent by GitHub for Enterprise to be authenticated
-	// by AWS CodeBuild.
+	// The secret token of the associated repository.
 	Secret *string `locationName:"secret" min:"1" type:"string"`
 
 	// The URL to the webhook.
@@ -4295,6 +4485,18 @@ func (s Webhook) String() string {
 // GoString returns the string representation
 func (s Webhook) GoString() string {
 	return s.String()
+}
+
+// SetBranchFilter sets the BranchFilter field's value.
+func (s *Webhook) SetBranchFilter(v string) *Webhook {
+	s.BranchFilter = &v
+	return s
+}
+
+// SetLastModifiedSecret sets the LastModifiedSecret field's value.
+func (s *Webhook) SetLastModifiedSecret(v time.Time) *Webhook {
+	s.LastModifiedSecret = &v
+	return s
 }
 
 // SetPayloadUrl sets the PayloadUrl field's value.

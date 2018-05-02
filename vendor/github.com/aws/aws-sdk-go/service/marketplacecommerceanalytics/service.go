@@ -45,14 +45,14 @@ const (
 //     svc := marketplacecommerceanalytics.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *MarketplaceCommerceAnalytics {
 	c := p.ClientConfig(EndpointsID, cfgs...)
+	if c.SigningNameDerived || len(c.SigningName) == 0 {
+		c.SigningName = "marketplacecommerceanalytics"
+	}
 	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
 func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *MarketplaceCommerceAnalytics {
-	if len(signingName) == 0 {
-		signingName = "marketplacecommerceanalytics"
-	}
 	svc := &MarketplaceCommerceAnalytics{
 		Client: client.New(
 			cfg,

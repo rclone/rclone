@@ -24,23 +24,27 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ExpressRouteCircuitAuthorizationsClient is the network Client
 type ExpressRouteCircuitAuthorizationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewExpressRouteCircuitAuthorizationsClient creates an instance of the ExpressRouteCircuitAuthorizationsClient
 // client.
 func NewExpressRouteCircuitAuthorizationsClient(subscriptionID string) ExpressRouteCircuitAuthorizationsClient {
 	return NewExpressRouteCircuitAuthorizationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewExpressRouteCircuitAuthorizationsClientWithBaseURI creates an instance of the
 // ExpressRouteCircuitAuthorizationsClient client.
 func NewExpressRouteCircuitAuthorizationsClientWithBaseURI(baseURI string, subscriptionID string) ExpressRouteCircuitAuthorizationsClient {
 	return ExpressRouteCircuitAuthorizationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdate the Put Authorization operation creates/updates an authorization in thespecified ExpressRouteCircuits
 //
 // resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
@@ -62,6 +66,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdate(ctx context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string, authorizationParameters ExpressRouteCircuitAuthorization) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -77,7 +82,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdatePreparer(ctx
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}", pathParameters),
@@ -86,6 +91,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdatePreparer(ctx
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdateSender(req *http.Request) (future ExpressRouteCircuitAuthorizationsCreateOrUpdateFuture, err error) {
@@ -101,6 +107,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdateSender(req *
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdateResponder(resp *http.Response) (result ExpressRouteCircuitAuthorization, err error) {
@@ -114,6 +121,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) CreateOrUpdateResponder(re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Delete the delete authorization operation deletes the specified authorization from the specified
 // ExpressRouteCircuit.
 //
@@ -135,6 +143,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) Delete(ctx context.Context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeletePreparer prepares the Delete request.
 func (client ExpressRouteCircuitAuthorizationsClient) DeletePreparer(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -157,6 +166,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) DeletePreparer(ctx context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExpressRouteCircuitAuthorizationsClient) DeleteSender(req *http.Request) (future ExpressRouteCircuitAuthorizationsDeleteFuture, err error) {
@@ -172,6 +182,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) DeleteSender(req *http.Req
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ExpressRouteCircuitAuthorizationsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -184,6 +195,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) DeleteResponder(resp *http
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Get the GET authorization operation retrieves the specified authorization from the specified ExpressRouteCircuit.
 //
 // resourceGroupName is the name of the resource group. circuitName is the name of the express route circuit.
@@ -210,6 +222,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) Get(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetPreparer prepares the Get request.
 func (client ExpressRouteCircuitAuthorizationsClient) GetPreparer(ctx context.Context, resourceGroupName string, circuitName string, authorizationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -232,6 +245,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) GetPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExpressRouteCircuitAuthorizationsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -239,6 +253,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) GetSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ExpressRouteCircuitAuthorizationsClient) GetResponder(resp *http.Response) (result ExpressRouteCircuitAuthorization, err error) {
@@ -252,6 +267,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) GetResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // List the List authorization operation retrieves all the authorizations in an ExpressRouteCircuit.
 //
 // resourceGroupName is the name of the resource group. circuitName is the name of the curcuit.
@@ -278,6 +294,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) List(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListPreparer prepares the List request.
 func (client ExpressRouteCircuitAuthorizationsClient) ListPreparer(ctx context.Context, resourceGroupName string, circuitName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -299,6 +316,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) ListPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExpressRouteCircuitAuthorizationsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -306,6 +324,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) ListSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ExpressRouteCircuitAuthorizationsClient) ListResponder(resp *http.Response) (result AuthorizationListResult, err error) {
@@ -340,6 +359,7 @@ func (client ExpressRouteCircuitAuthorizationsClient) listNextResults(lastResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ExpressRouteCircuitAuthorizationsClient) ListComplete(ctx context.Context, resourceGroupName string, circuitName string) (result AuthorizationListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, circuitName)

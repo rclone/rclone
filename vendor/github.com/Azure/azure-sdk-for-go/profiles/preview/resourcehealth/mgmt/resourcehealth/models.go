@@ -23,26 +23,11 @@ import original "github.com/Azure/azure-sdk-for-go/services/resourcehealth/mgmt/
 
 type AvailabilityStatusesClient = original.AvailabilityStatusesClient
 
-func NewAvailabilityStatusesClient(subscriptionID string) AvailabilityStatusesClient {
-	return original.NewAvailabilityStatusesClient(subscriptionID)
-}
-func NewAvailabilityStatusesClientWithBaseURI(baseURI string, subscriptionID string) AvailabilityStatusesClient {
-	return original.NewAvailabilityStatusesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AvailabilityStateValues = original.AvailabilityStateValues
 
 const (
@@ -74,6 +59,24 @@ type ServiceImpactingEventIncidentProperties = original.ServiceImpactingEventInc
 type ServiceImpactingEventStatus = original.ServiceImpactingEventStatus
 type OperationsClient = original.OperationsClient
 
+func NewAvailabilityStatusesClient(subscriptionID string) AvailabilityStatusesClient {
+	return original.NewAvailabilityStatusesClient(subscriptionID)
+}
+func NewAvailabilityStatusesClientWithBaseURI(baseURI string, subscriptionID string) AvailabilityStatusesClient {
+	return original.NewAvailabilityStatusesClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAvailabilityStateValuesValues() []AvailabilityStateValues {
+	return original.PossibleAvailabilityStateValuesValues()
+}
+func PossibleReasonChronicityTypesValues() []ReasonChronicityTypes {
+	return original.PossibleReasonChronicityTypesValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }

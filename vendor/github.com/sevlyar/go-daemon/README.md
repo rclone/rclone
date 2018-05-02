@@ -25,10 +25,6 @@ You can use [gopkg.in](http://labix.org/gopkg.in):
 If you want to use the library in production project, please use vendoring,
 because i can not ensure backward compatibility before release v1.0.
 
-## Build
-
-Please keep in mind that if you want to use cross-compilation you should set `CGO_ENABLED` environment variable to `1` because cgo is turned off by default when cross-compiling.
-
 ## Examples
 
 * [Simple](examples/cmd/gd-simple/)

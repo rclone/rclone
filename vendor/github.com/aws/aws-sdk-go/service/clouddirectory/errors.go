@@ -45,7 +45,7 @@ const (
 	// ErrCodeDirectoryNotEnabledException for service response error code
 	// "DirectoryNotEnabledException".
 	//
-	// An operation can only operate on a directory that is not enabled.
+	// Operations are only permitted on enabled directories.
 	ErrCodeDirectoryNotEnabledException = "DirectoryNotEnabledException"
 
 	// ErrCodeFacetAlreadyExistsException for service response error code

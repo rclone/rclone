@@ -15,7 +15,7 @@ const opAddListenerCertificates = "AddListenerCertificates"
 
 // AddListenerCertificatesRequest generates a "aws/request.Request" representing the
 // client's request for the AddListenerCertificates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -106,7 +106,7 @@ const opAddTags = "AddTags"
 
 // AddTagsRequest generates a "aws/request.Request" representing the
 // client's request for the AddTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -202,7 +202,7 @@ const opCreateListener = "CreateListener"
 
 // CreateListenerRequest generates a "aws/request.Request" representing the
 // client's request for the CreateListener operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -332,7 +332,7 @@ const opCreateLoadBalancer = "CreateLoadBalancer"
 
 // CreateLoadBalancerRequest generates a "aws/request.Request" representing the
 // client's request for the CreateLoadBalancer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -468,7 +468,7 @@ const opCreateRule = "CreateRule"
 
 // CreateRuleRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -586,7 +586,7 @@ const opCreateTargetGroup = "CreateTargetGroup"
 
 // CreateTargetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTargetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -690,7 +690,7 @@ const opDeleteListener = "DeleteListener"
 
 // DeleteListenerRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteListener operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -772,7 +772,7 @@ const opDeleteLoadBalancer = "DeleteLoadBalancer"
 
 // DeleteLoadBalancerRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteLoadBalancer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -866,7 +866,7 @@ const opDeleteRule = "DeleteRule"
 
 // DeleteRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -948,7 +948,7 @@ const opDeleteTargetGroup = "DeleteTargetGroup"
 
 // DeleteTargetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTargetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1030,7 +1030,7 @@ const opDeregisterTargets = "DeregisterTargets"
 
 // DeregisterTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterTargets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1115,7 +1115,7 @@ const opDescribeAccountLimits = "DescribeAccountLimits"
 
 // DescribeAccountLimitsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAccountLimits operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1195,7 +1195,7 @@ const opDescribeListenerCertificates = "DescribeListenerCertificates"
 
 // DescribeListenerCertificatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeListenerCertificates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1274,7 +1274,7 @@ const opDescribeListeners = "DescribeListeners"
 
 // DescribeListenersRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeListeners operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1414,7 +1414,7 @@ const opDescribeLoadBalancerAttributes = "DescribeLoadBalancerAttributes"
 
 // DescribeLoadBalancerAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLoadBalancerAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1494,7 +1494,7 @@ const opDescribeLoadBalancers = "DescribeLoadBalancers"
 
 // DescribeLoadBalancersRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLoadBalancers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1632,7 +1632,7 @@ const opDescribeRules = "DescribeRules"
 
 // DescribeRulesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRules operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1715,7 +1715,7 @@ const opDescribeSSLPolicies = "DescribeSSLPolicies"
 
 // DescribeSSLPoliciesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSSLPolicies operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1797,7 +1797,7 @@ const opDescribeTags = "DescribeTags"
 
 // DescribeTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1887,7 +1887,7 @@ const opDescribeTargetGroupAttributes = "DescribeTargetGroupAttributes"
 
 // DescribeTargetGroupAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTargetGroupAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1966,7 +1966,7 @@ const opDescribeTargetGroups = "DescribeTargetGroups"
 
 // DescribeTargetGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTargetGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2110,7 +2110,7 @@ const opDescribeTargetHealth = "DescribeTargetHealth"
 
 // DescribeTargetHealthRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTargetHealth operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2197,7 +2197,7 @@ const opModifyListener = "ModifyListener"
 
 // ModifyListenerRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyListener operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2318,7 +2318,7 @@ const opModifyLoadBalancerAttributes = "ModifyLoadBalancerAttributes"
 
 // ModifyLoadBalancerAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyLoadBalancerAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2405,7 +2405,7 @@ const opModifyRule = "ModifyRule"
 
 // ModifyRuleRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyRule operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2507,7 +2507,7 @@ const opModifyTargetGroup = "ModifyTargetGroup"
 
 // ModifyTargetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyTargetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2592,7 +2592,7 @@ const opModifyTargetGroupAttributes = "ModifyTargetGroupAttributes"
 
 // ModifyTargetGroupAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyTargetGroupAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2674,7 +2674,7 @@ const opRegisterTargets = "RegisterTargets"
 
 // RegisterTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterTargets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2779,7 +2779,7 @@ const opRemoveListenerCertificates = "RemoveListenerCertificates"
 
 // RemoveListenerCertificatesRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveListenerCertificates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2866,7 +2866,7 @@ const opRemoveTags = "RemoveTags"
 
 // RemoveTagsRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2959,7 +2959,7 @@ const opSetIpAddressType = "SetIpAddressType"
 
 // SetIpAddressTypeRequest generates a "aws/request.Request" representing the
 // client's request for the SetIpAddressType operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3047,7 +3047,7 @@ const opSetRulePriorities = "SetRulePriorities"
 
 // SetRulePrioritiesRequest generates a "aws/request.Request" representing the
 // client's request for the SetRulePriorities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3136,7 +3136,7 @@ const opSetSecurityGroups = "SetSecurityGroups"
 
 // SetSecurityGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the SetSecurityGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3225,7 +3225,7 @@ const opSetSubnets = "SetSubnets"
 
 // SetSubnetsRequest generates a "aws/request.Request" representing the
 // client's request for the SetSubnets operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

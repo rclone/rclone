@@ -1,19 +1,21 @@
 {
   "version": "2.0",
-  "service": "<p>Use AWS Auto Scaling to quickly discover all the scalable AWS resources for your application and configure dynamic scaling for your scalable resources.</p> <p>To get started, create a scaling plan with a set of instructions used to configure dynamic scaling for the scalable resources in your application. AWS Auto Scaling creates target tracking scaling policies for the scalable resources in your scaling plan. Target tracking scaling policies adjust the capacity of your scalable resource as required to maintain resource utilization at the target value that you specified.</p>",
+  "service": "<fullname>AWS Auto Scaling</fullname> <p>Use AWS Auto Scaling to quickly discover all the scalable AWS resources for your application and configure dynamic scaling for your scalable resources.</p> <p>To get started, create a scaling plan with a set of instructions used to configure dynamic scaling for the scalable resources in your application. AWS Auto Scaling creates target tracking scaling policies for the scalable resources in your scaling plan. Target tracking scaling policies adjust the capacity of your scalable resource as required to maintain resource utilization at the target value that you specified.</p>",
   "operations": {
     "CreateScalingPlan": "<p>Creates a scaling plan.</p> <p>A scaling plan contains a set of instructions used to configure dynamic scaling for the scalable resources in your application. AWS Auto Scaling creates target tracking scaling policies based on the scaling instructions in your scaling plan.</p>",
     "DeleteScalingPlan": "<p>Deletes the specified scaling plan.</p>",
     "DescribeScalingPlanResources": "<p>Describes the scalable resources in the specified scaling plan.</p>",
-    "DescribeScalingPlans": "<p>Describes the specified scaling plans or all of your scaling plans.</p>"
+    "DescribeScalingPlans": "<p>Describes the specified scaling plans or all of your scaling plans.</p>",
+    "UpdateScalingPlan": "<p>Updates the scaling plan for the specified scaling plan.</p> <p>You cannot update a scaling plan if it is in the process of being created, updated, or deleted.</p>"
   },
   "shapes": {
     "ApplicationSource": {
       "base": "<p>Represents an application source.</p>",
       "refs": {
         "ApplicationSources$member": null,
-        "CreateScalingPlanRequest$ApplicationSource": "<p>The source for the application.</p>",
-        "ScalingPlan$ApplicationSource": "<p>The application source.</p>"
+        "CreateScalingPlanRequest$ApplicationSource": "<p>A CloudFormation stack or set of tags. You can create one scaling plan per application source.</p>",
+        "ScalingPlan$ApplicationSource": "<p>The application source.</p>",
+        "UpdateScalingPlanRequest$ApplicationSource": "<p>A CloudFormation stack or set of tags.</p>"
       }
     },
     "ApplicationSources": {
@@ -223,7 +225,7 @@
     "ResourceLabel": {
       "base": null,
       "refs": {
-        "PredefinedScalingMetricSpecification$ResourceLabel": "<p>Identifies the resource associated with the metric type. You can't specify a resource label unless the metric type is <code>ALBRequestCountPerTarget</code> and there is a target group attached to the Auto Scaling group, Spot Fleet request, or ECS service.</p> <p>The format is app/&lt;load-balancer-name&gt;/&lt;load-balancer-id&gt;/targetgroup/&lt;target-group-name&gt;/&lt;target-group-id&gt;, where:</p> <ul> <li> <p>app/&lt;load-balancer-name&gt;/&lt;load-balancer-id&gt; is the final portion of the load balancer ARN</p> </li> <li> <p>targetgroup/&lt;target-group-name&gt;/&lt;target-group-id&gt; is the final portion of the target group ARN.</p> </li> </ul>"
+        "PredefinedScalingMetricSpecification$ResourceLabel": "<p>Identifies the resource associated with the metric type. You can't specify a resource label unless the metric type is <code>ALBRequestCountPerTarget</code> and there is a target group for an Application Load Balancer attached to the Auto Scaling group, Spot Fleet request, or ECS service.</p> <p>The format is app/&lt;load-balancer-name&gt;/&lt;load-balancer-id&gt;/targetgroup/&lt;target-group-name&gt;/&lt;target-group-id&gt;, where:</p> <ul> <li> <p>app/&lt;load-balancer-name&gt;/&lt;load-balancer-id&gt; is the final portion of the load balancer ARN</p> </li> <li> <p>targetgroup/&lt;target-group-name&gt;/&lt;target-group-id&gt; is the final portion of the target group ARN.</p> </li> </ul>"
       }
     },
     "ScalableDimension": {
@@ -243,7 +245,8 @@
       "base": null,
       "refs": {
         "CreateScalingPlanRequest$ScalingInstructions": "<p>The scaling instructions.</p>",
-        "ScalingPlan$ScalingInstructions": "<p>The scaling instructions.</p>"
+        "ScalingPlan$ScalingInstructions": "<p>The scaling instructions.</p>",
+        "UpdateScalingPlanRequest$ScalingInstructions": "<p>The scaling instructions.</p>"
       }
     },
     "ScalingMetricType": {
@@ -261,12 +264,13 @@
     "ScalingPlanName": {
       "base": null,
       "refs": {
-        "CreateScalingPlanRequest$ScalingPlanName": "<p>The name of the scaling plan.</p>",
+        "CreateScalingPlanRequest$ScalingPlanName": "<p>The name of the scaling plan. Names cannot contain vertical bars, colons, or forward slashes.</p>",
         "DeleteScalingPlanRequest$ScalingPlanName": "<p>The name of the scaling plan.</p>",
         "DescribeScalingPlanResourcesRequest$ScalingPlanName": "<p>The name of the scaling plan.</p>",
         "ScalingPlan$ScalingPlanName": "<p>The name of the scaling plan.</p>",
         "ScalingPlanNames$member": null,
-        "ScalingPlanResource$ScalingPlanName": "<p>The name of the scaling plan.</p>"
+        "ScalingPlanResource$ScalingPlanName": "<p>The name of the scaling plan.</p>",
+        "UpdateScalingPlanRequest$ScalingPlanName": "<p>The name of the scaling plan.</p>"
       }
     },
     "ScalingPlanNames": {
@@ -301,7 +305,8 @@
         "DescribeScalingPlanResourcesRequest$ScalingPlanVersion": "<p>The version of the scaling plan.</p>",
         "DescribeScalingPlansRequest$ScalingPlanVersion": "<p>The version of the scaling plan. If you specify a scaling plan version, you must also specify a scaling plan name.</p>",
         "ScalingPlan$ScalingPlanVersion": "<p>The version of the scaling plan.</p>",
-        "ScalingPlanResource$ScalingPlanVersion": "<p>The version of the scaling plan.</p>"
+        "ScalingPlanResource$ScalingPlanVersion": "<p>The version of the scaling plan.</p>",
+        "UpdateScalingPlanRequest$ScalingPlanVersion": "<p>The version number.</p>"
       }
     },
     "ScalingPlans": {
@@ -335,6 +340,24 @@
         "ScalingPlanResource$ServiceNamespace": "<p>The namespace of the AWS service.</p>"
       }
     },
+    "TagFilter": {
+      "base": "<p>Represents a tag.</p>",
+      "refs": {
+        "TagFilters$member": null
+      }
+    },
+    "TagFilters": {
+      "base": null,
+      "refs": {
+        "ApplicationSource$TagFilters": "<p>A set of tags (up to 50).</p>"
+      }
+    },
+    "TagValues": {
+      "base": null,
+      "refs": {
+        "TagFilter$Values": "<p>The tag values (0 to 20).</p>"
+      }
+    },
     "TargetTrackingConfiguration": {
       "base": "<p>Represents a target tracking scaling policy.</p>",
       "refs": {
@@ -351,7 +374,18 @@
     "TimestampType": {
       "base": null,
       "refs": {
+        "ScalingPlan$StatusStartTime": "<p>The Unix timestamp when the scaling plan entered the current status.</p>",
         "ScalingPlan$CreationTime": "<p>The Unix timestamp when the scaling plan was created.</p>"
+      }
+    },
+    "UpdateScalingPlanRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateScalingPlanResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "ValidationException": {
@@ -365,6 +399,18 @@
         "ApplicationSource$CloudFormationStackARN": "<p>The Amazon Resource Name (ARN) of a CloudFormation stack.</p>",
         "ScalingPlan$StatusMessage": "<p>A simple message about the current status of the scaling plan.</p>",
         "ScalingPlanResource$ScalingStatusMessage": "<p>A simple message about the current scaling status of the resource.</p>"
+      }
+    },
+    "XmlStringMaxLen128": {
+      "base": null,
+      "refs": {
+        "TagFilter$Key": "<p>The tag key.</p>"
+      }
+    },
+    "XmlStringMaxLen256": {
+      "base": null,
+      "refs": {
+        "TagValues$member": null
       }
     }
   }

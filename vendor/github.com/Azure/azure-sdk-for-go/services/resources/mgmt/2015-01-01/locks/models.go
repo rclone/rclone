@@ -36,6 +36,11 @@ const (
 	ReadOnly LockLevel = "ReadOnly"
 )
 
+// PossibleLockLevelValues returns an array of possible values for the LockLevel const type.
+func PossibleLockLevelValues() []LockLevel {
+	return []LockLevel{CanNotDelete, NotSpecified, ReadOnly}
+}
+
 // ManagementLockListResult list of management locks.
 type ManagementLockListResult struct {
 	autorest.Response `json:"-"`
@@ -149,6 +154,24 @@ type ManagementLockObject struct {
 	Type *string `json:"type,omitempty"`
 	// Name - The name of the lock.
 	Name *string `json:"name,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ManagementLockObject.
+func (mlo ManagementLockObject) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mlo.ManagementLockProperties != nil {
+		objectMap["properties"] = mlo.ManagementLockProperties
+	}
+	if mlo.ID != nil {
+		objectMap["id"] = mlo.ID
+	}
+	if mlo.Type != nil {
+		objectMap["type"] = mlo.Type
+	}
+	if mlo.Name != nil {
+		objectMap["name"] = mlo.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ManagementLockObject struct.

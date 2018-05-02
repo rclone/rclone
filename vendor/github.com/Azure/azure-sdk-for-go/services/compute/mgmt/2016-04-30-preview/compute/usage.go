@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UsageClient is the compute Client
 type UsageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewUsageClient creates an instance of the UsageClient client.
 func NewUsageClient(subscriptionID string) UsageClient {
 	return NewUsageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewUsageClientWithBaseURI creates an instance of the UsageClient client.
 func NewUsageClientWithBaseURI(baseURI string, subscriptionID string) UsageClient {
 	return UsageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List gets, for the specified location, the current compute resource usage information as well as the limits for
 // compute resources under the subscription.
 //
@@ -73,6 +77,7 @@ func (client UsageClient) List(ctx context.Context, location string) (result Lis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client UsageClient) ListPreparer(ctx context.Context, location string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -93,6 +98,7 @@ func (client UsageClient) ListPreparer(ctx context.Context, location string) (*h
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -100,6 +106,7 @@ func (client UsageClient) ListSender(req *http.Request) (*http.Response, error) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client UsageClient) ListResponder(resp *http.Response) (result ListUsagesResult, err error) {
@@ -134,6 +141,7 @@ func (client UsageClient) listNextResults(lastResults ListUsagesResult) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UsageClient) ListComplete(ctx context.Context, location string) (result ListUsagesResultIterator, err error) {
 	result.page, err = client.List(ctx, location)

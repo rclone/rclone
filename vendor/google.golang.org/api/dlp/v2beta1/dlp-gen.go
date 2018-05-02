@@ -1,4 +1,4 @@
-// Package dlp provides access to the Cloud DLP API.
+// Package dlp provides access to the Cloud Data Loss Prevention (DLP) API.
 //
 // See https://cloud.google.com/dlp/docs/
 //
@@ -4835,7 +4835,9 @@ type GoogleTypeDate struct {
 	// if specifying a year/month where the day is not significant.
 	Day int64 `json:"day,omitempty"`
 
-	// Month: Month of year. Must be from 1 to 12.
+	// Month: Month of year. Must be from 1 to 12, or 0 if specifying a date
+	// without a
+	// month.
 	Month int64 `json:"month,omitempty"`
 
 	// Year: Year of date. Must be from 1 to 9999, or 0 if specifying a date

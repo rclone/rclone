@@ -15,7 +15,7 @@
   "description": "Manages product items, inventory, and Merchant Center accounts for Google Shopping.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/shopping-content",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/QMVTzP4sO9_JHyigCiKlZqLj3Hc\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/LI6UdBai7-kwhskTkR_vgy6vg2U\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -60,12 +60,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -792,7 +792,7 @@
       }
     }
   },
-  "revision": "20180205",
+  "revision": "20180410",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Error": {
@@ -1011,15 +1011,37 @@
       "id": "OrderCustomer",
       "properties": {
         "email": {
-          "description": "Email address of the customer.",
+          "description": "Email address that should be used for order related communications. In certain cases this might not be a real users email, but a proxy email.",
           "type": "string"
         },
         "explicitMarketingPreference": {
-          "description": "If set, this indicates the user explicitly chose to opt in or out of providing marketing rights to the merchant. If unset, this indicates the user has already made this choice in a previous purchase, and was thus not shown the marketing right opt in/out checkbox during the checkout flow.",
+          "description": "Deprecated. Please use marketingRightsInfo instead.",
           "type": "boolean"
         },
         "fullName": {
           "description": "Full name of the customer.",
+          "type": "string"
+        },
+        "marketingRightsInfo": {
+          "$ref": "OrderCustomerMarketingRightsInfo",
+          "description": "Customer's marketing preferences."
+        }
+      },
+      "type": "object"
+    },
+    "OrderCustomerMarketingRightsInfo": {
+      "id": "OrderCustomerMarketingRightsInfo",
+      "properties": {
+        "explicitMarketingPreference": {
+          "description": "Last known user selection regarding marketing preferences. In certain cases this selection might not be known, so this field would be empty.",
+          "type": "string"
+        },
+        "lastUpdatedTimestamp": {
+          "description": "Timestamp when last time marketing preference was updated. Could be empty, if user wasn't offered a selection yet.",
+          "type": "string"
+        },
+        "marketingEmailAddress": {
+          "description": "Email address that can be used for marketing purposes. This field is only filled when explicitMarketingPreference is equal to 'granted'.",
           "type": "string"
         }
       },
@@ -2749,11 +2771,29 @@
           "type": "string"
         },
         "explicitMarketingPreference": {
-          "description": "If set, this indicates the user explicitly chose to opt in or out of providing marketing rights to the merchant. If unset, this indicates the user has already made this choice in a previous purchase, and was thus not shown the marketing right opt in/out checkbox during the checkout flow. Optional.",
+          "description": "Deprecated. Please use marketingRightsInfo instead.",
           "type": "boolean"
         },
         "fullName": {
           "description": "Full name of the customer.",
+          "type": "string"
+        },
+        "marketingRightsInfo": {
+          "$ref": "TestOrderCustomerMarketingRightsInfo",
+          "description": "Customer's marketing preferences."
+        }
+      },
+      "type": "object"
+    },
+    "TestOrderCustomerMarketingRightsInfo": {
+      "id": "TestOrderCustomerMarketingRightsInfo",
+      "properties": {
+        "explicitMarketingPreference": {
+          "description": "Last know user use selection regards marketing preferences. In certain cases selection might not be known, so this field would be empty.",
+          "type": "string"
+        },
+        "lastUpdatedTimestamp": {
+          "description": "Timestamp when last time marketing preference was updated. Could be empty, if user wasn't offered a selection yet.",
           "type": "string"
         }
       },

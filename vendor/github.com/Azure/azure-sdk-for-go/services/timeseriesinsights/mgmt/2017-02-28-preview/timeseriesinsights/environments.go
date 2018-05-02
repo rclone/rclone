@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // EnvironmentsClient is the time Series Insights client
 type EnvironmentsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewEnvironmentsClient creates an instance of the EnvironmentsClient client.
 func NewEnvironmentsClient(subscriptionID string) EnvironmentsClient {
 	return NewEnvironmentsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewEnvironmentsClientWithBaseURI creates an instance of the EnvironmentsClient client.
 func NewEnvironmentsClientWithBaseURI(baseURI string, subscriptionID string) EnvironmentsClient {
 	return EnvironmentsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdate create or update an environment in the specified subscription and resource group.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is name of the environment parameters is
@@ -77,6 +81,7 @@ func (client EnvironmentsClient) CreateOrUpdate(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client EnvironmentsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, parameters EnvironmentCreateOrUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,7 +96,7 @@ func (client EnvironmentsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}", pathParameters),
@@ -100,6 +105,7 @@ func (client EnvironmentsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) CreateOrUpdateSender(req *http.Request) (future EnvironmentsCreateOrUpdateFuture, err error) {
@@ -115,6 +121,7 @@ func (client EnvironmentsClient) CreateOrUpdateSender(req *http.Request) (future
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) CreateOrUpdateResponder(resp *http.Response) (result EnvironmentResource, err error) {
@@ -128,6 +135,7 @@ func (client EnvironmentsClient) CreateOrUpdateResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Delete deletes the environment with the specified name in the specified subscription and resource group.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -154,6 +162,7 @@ func (client EnvironmentsClient) Delete(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeletePreparer prepares the Delete request.
 func (client EnvironmentsClient) DeletePreparer(ctx context.Context, resourceGroupName string, environmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -175,6 +184,7 @@ func (client EnvironmentsClient) DeletePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -182,6 +192,7 @@ func (client EnvironmentsClient) DeleteSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -194,6 +205,7 @@ func (client EnvironmentsClient) DeleteResponder(resp *http.Response) (result au
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Get gets the environment with the specified name in the specified subscription and resource group.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -220,6 +232,7 @@ func (client EnvironmentsClient) Get(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetPreparer prepares the Get request.
 func (client EnvironmentsClient) GetPreparer(ctx context.Context, resourceGroupName string, environmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -241,6 +254,7 @@ func (client EnvironmentsClient) GetPreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -248,6 +262,7 @@ func (client EnvironmentsClient) GetSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) GetResponder(resp *http.Response) (result EnvironmentResource, err error) {
@@ -261,6 +276,7 @@ func (client EnvironmentsClient) GetResponder(resp *http.Response) (result Envir
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByResourceGroup lists all the available environments associated with the subscription and within the specified
 // resource group.
 //
@@ -287,6 +303,7 @@ func (client EnvironmentsClient) ListByResourceGroup(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client EnvironmentsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -307,6 +324,7 @@ func (client EnvironmentsClient) ListByResourceGroupPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -314,6 +332,7 @@ func (client EnvironmentsClient) ListByResourceGroupSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) ListByResourceGroupResponder(resp *http.Response) (result EnvironmentListResponse, err error) {
@@ -327,6 +346,7 @@ func (client EnvironmentsClient) ListByResourceGroupResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListBySubscription lists all the available environments within a subscription, irrespective of the resource groups.
 func (client EnvironmentsClient) ListBySubscription(ctx context.Context) (result EnvironmentListResponse, err error) {
 	req, err := client.ListBySubscriptionPreparer(ctx)
@@ -350,6 +370,7 @@ func (client EnvironmentsClient) ListBySubscription(ctx context.Context) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client EnvironmentsClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -369,6 +390,7 @@ func (client EnvironmentsClient) ListBySubscriptionPreparer(ctx context.Context)
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -376,6 +398,7 @@ func (client EnvironmentsClient) ListBySubscriptionSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) ListBySubscriptionResponder(resp *http.Response) (result EnvironmentListResponse, err error) {
@@ -389,6 +412,7 @@ func (client EnvironmentsClient) ListBySubscriptionResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Update updates the environment with the specified name in the specified subscription and resource group.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -410,6 +434,7 @@ func (client EnvironmentsClient) Update(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdatePreparer prepares the Update request.
 func (client EnvironmentsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, environmentUpdateParameters EnvironmentUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -424,7 +449,7 @@ func (client EnvironmentsClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}", pathParameters),
@@ -433,6 +458,7 @@ func (client EnvironmentsClient) UpdatePreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) UpdateSender(req *http.Request) (future EnvironmentsUpdateFuture, err error) {
@@ -448,6 +474,7 @@ func (client EnvironmentsClient) UpdateSender(req *http.Request) (future Environ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client EnvironmentsClient) UpdateResponder(resp *http.Response) (result EnvironmentResource, err error) {

@@ -262,6 +262,9 @@ func (a *agent) createProfile(ctx context.Context) *pb.Profile {
 	gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
 		p, err = a.client.CreateProfile(ctx, &req, grpc.Trailer(&md))
+		if err != nil {
+			debugLog("failed to create a profile, will retry: %v", err)
+		}
 		return err
 	}, gax.WithRetry(func() gax.Retryer {
 		return &retryer{
@@ -495,6 +498,7 @@ func initializeConfig(cfg Config) error {
 // server for instructions, and collects and uploads profiles as
 // requested.
 func pollProfilerService(ctx context.Context, a *agent) {
+	debugLog("profiler has started")
 	for {
 		p := a.createProfile(ctx)
 		a.profileAndUpload(ctx, p)

@@ -135,7 +135,7 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
-// ImportSshPublicKeyResponse: A response message for importing an SSH
+// ImportSshPublicKeyResponse: A response message from importing an SSH
 // public key.
 type ImportSshPublicKeyResponse struct {
 	// LoginProfile: The login profile information for the user.
@@ -223,6 +223,17 @@ type PosixAccount struct {
 
 	// HomeDirectory: The path to the home directory for this account.
 	HomeDirectory string `json:"homeDirectory,omitempty"`
+
+	// OperatingSystemType: The operating system type where this account
+	// applies.
+	//
+	// Possible values:
+	//   "OPERATING_SYSTEM_TYPE_UNSPECIFIED" - The operating system type
+	// associated with the user account information is
+	// unspecified.
+	//   "LINUX" - Linux user account information.
+	//   "WINDOWS" - Windows user account information.
+	OperatingSystemType string `json:"operatingSystemType,omitempty"`
 
 	// Primary: Only one POSIX account can be marked as primary.
 	Primary bool `json:"primary,omitempty"`
@@ -621,6 +632,19 @@ func (r *UsersProjectsService) Delete(name string) *UsersProjectsDeleteCall {
 	return c
 }
 
+// OperatingSystemType sets the optional parameter
+// "operatingSystemType": The type of operating system associated with
+// the account.
+//
+// Possible values:
+//   "OPERATING_SYSTEM_TYPE_UNSPECIFIED"
+//   "LINUX"
+//   "WINDOWS"
+func (c *UsersProjectsDeleteCall) OperatingSystemType(operatingSystemType string) *UsersProjectsDeleteCall {
+	c.urlParams_.Set("operatingSystemType", operatingSystemType)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -715,6 +739,16 @@ func (c *UsersProjectsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 	//       "location": "path",
 	//       "pattern": "^users/[^/]+/projects/[^/]+$",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "operatingSystemType": {
+	//       "description": "The type of operating system associated with the account.",
+	//       "enum": [
+	//         "OPERATING_SYSTEM_TYPE_UNSPECIFIED",
+	//         "LINUX",
+	//         "WINDOWS"
+	//       ],
+	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },

@@ -12,6 +12,34 @@
     "uid":"transcribe-2017-10-26"
   },
   "operations":{
+    "CreateVocabulary":{
+      "name":"CreateVocabulary",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateVocabularyRequest"},
+      "output":{"shape":"CreateVocabularyResponse"},
+      "errors":[
+        {"shape":"BadRequestException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ConflictException"}
+      ]
+    },
+    "DeleteVocabulary":{
+      "name":"DeleteVocabulary",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteVocabularyRequest"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"}
+      ]
+    },
     "GetTranscriptionJob":{
       "name":"GetTranscriptionJob",
       "http":{
@@ -27,6 +55,21 @@
         {"shape":"NotFoundException"}
       ]
     },
+    "GetVocabulary":{
+      "name":"GetVocabulary",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetVocabularyRequest"},
+      "output":{"shape":"GetVocabularyResponse"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"}
+      ]
+    },
     "ListTranscriptionJobs":{
       "name":"ListTranscriptionJobs",
       "http":{
@@ -35,6 +78,20 @@
       },
       "input":{"shape":"ListTranscriptionJobsRequest"},
       "output":{"shape":"ListTranscriptionJobsResponse"},
+      "errors":[
+        {"shape":"BadRequestException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"}
+      ]
+    },
+    "ListVocabularies":{
+      "name":"ListVocabularies",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListVocabulariesRequest"},
+      "output":{"shape":"ListVocabulariesResponse"},
       "errors":[
         {"shape":"BadRequestException"},
         {"shape":"LimitExceededException"},
@@ -55,6 +112,21 @@
         {"shape":"InternalFailureException"},
         {"shape":"ConflictException"}
       ]
+    },
+    "UpdateVocabulary":{
+      "name":"UpdateVocabulary",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateVocabularyRequest"},
+      "output":{"shape":"UpdateVocabularyResponse"},
+      "errors":[
+        {"shape":"BadRequestException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"NotFoundException"}
+      ]
     }
   },
   "shapes":{
@@ -65,6 +137,7 @@
       },
       "exception":true
     },
+    "Boolean":{"type":"boolean"},
     "ConflictException":{
       "type":"structure",
       "members":{
@@ -72,7 +145,37 @@
       },
       "exception":true
     },
+    "CreateVocabularyRequest":{
+      "type":"structure",
+      "required":[
+        "VocabularyName",
+        "LanguageCode",
+        "Phrases"
+      ],
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "Phrases":{"shape":"Phrases"}
+      }
+    },
+    "CreateVocabularyResponse":{
+      "type":"structure",
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "VocabularyState":{"shape":"VocabularyState"},
+        "LastModifiedTime":{"shape":"DateTime"},
+        "FailureReason":{"shape":"FailureReason"}
+      }
+    },
     "DateTime":{"type":"timestamp"},
+    "DeleteVocabularyRequest":{
+      "type":"structure",
+      "required":["VocabularyName"],
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"}
+      }
+    },
     "FailureReason":{"type":"string"},
     "GetTranscriptionJobRequest":{
       "type":"structure",
@@ -85,6 +188,24 @@
       "type":"structure",
       "members":{
         "TranscriptionJob":{"shape":"TranscriptionJob"}
+      }
+    },
+    "GetVocabularyRequest":{
+      "type":"structure",
+      "required":["VocabularyName"],
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"}
+      }
+    },
+    "GetVocabularyResponse":{
+      "type":"structure",
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "VocabularyState":{"shape":"VocabularyState"},
+        "LastModifiedTime":{"shape":"DateTime"},
+        "FailureReason":{"shape":"FailureReason"},
+        "DownloadUri":{"shape":"Uri"}
       }
     },
     "InternalFailureException":{
@@ -111,9 +232,9 @@
     },
     "ListTranscriptionJobsRequest":{
       "type":"structure",
-      "required":["Status"],
       "members":{
         "Status":{"shape":"TranscriptionJobStatus"},
+        "JobNameContains":{"shape":"TranscriptionJobName"},
         "NextToken":{"shape":"NextToken"},
         "MaxResults":{"shape":"MaxResults"}
       }
@@ -126,10 +247,32 @@
         "TranscriptionJobSummaries":{"shape":"TranscriptionJobSummaries"}
       }
     },
+    "ListVocabulariesRequest":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"},
+        "StateEquals":{"shape":"VocabularyState"},
+        "NameContains":{"shape":"VocabularyName"}
+      }
+    },
+    "ListVocabulariesResponse":{
+      "type":"structure",
+      "members":{
+        "Status":{"shape":"TranscriptionJobStatus"},
+        "NextToken":{"shape":"NextToken"},
+        "Vocabularies":{"shape":"Vocabularies"}
+      }
+    },
     "MaxResults":{
       "type":"integer",
       "max":100,
       "min":1
+    },
+    "MaxSpeakers":{
+      "type":"integer",
+      "max":10,
+      "min":2
     },
     "Media":{
       "type":"structure",
@@ -162,6 +305,23 @@
       },
       "exception":true
     },
+    "Phrase":{
+      "type":"string",
+      "max":256,
+      "min":0
+    },
+    "Phrases":{
+      "type":"list",
+      "member":{"shape":"Phrase"}
+    },
+    "Settings":{
+      "type":"structure",
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "ShowSpeakerLabels":{"shape":"Boolean"},
+        "MaxSpeakerLabels":{"shape":"MaxSpeakers"}
+      }
+    },
     "StartTranscriptionJobRequest":{
       "type":"structure",
       "required":[
@@ -175,7 +335,8 @@
         "LanguageCode":{"shape":"LanguageCode"},
         "MediaSampleRateHertz":{"shape":"MediaSampleRateHertz"},
         "MediaFormat":{"shape":"MediaFormat"},
-        "Media":{"shape":"Media"}
+        "Media":{"shape":"Media"},
+        "Settings":{"shape":"Settings"}
       }
     },
     "StartTranscriptionJobResponse":{
@@ -203,7 +364,8 @@
         "Transcript":{"shape":"Transcript"},
         "CreationTime":{"shape":"DateTime"},
         "CompletionTime":{"shape":"DateTime"},
-        "FailureReason":{"shape":"FailureReason"}
+        "FailureReason":{"shape":"FailureReason"},
+        "Settings":{"shape":"Settings"}
       }
     },
     "TranscriptionJobName":{
@@ -235,10 +397,59 @@
         "FailureReason":{"shape":"FailureReason"}
       }
     },
+    "UpdateVocabularyRequest":{
+      "type":"structure",
+      "required":[
+        "VocabularyName",
+        "LanguageCode",
+        "Phrases"
+      ],
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "Phrases":{"shape":"Phrases"}
+      }
+    },
+    "UpdateVocabularyResponse":{
+      "type":"structure",
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "LastModifiedTime":{"shape":"DateTime"},
+        "VocabularyState":{"shape":"VocabularyState"}
+      }
+    },
     "Uri":{
       "type":"string",
       "max":2000,
       "min":1
+    },
+    "Vocabularies":{
+      "type":"list",
+      "member":{"shape":"VocabularyInfo"}
+    },
+    "VocabularyInfo":{
+      "type":"structure",
+      "members":{
+        "VocabularyName":{"shape":"VocabularyName"},
+        "LanguageCode":{"shape":"LanguageCode"},
+        "LastModifiedTime":{"shape":"DateTime"},
+        "VocabularyState":{"shape":"VocabularyState"}
+      }
+    },
+    "VocabularyName":{
+      "type":"string",
+      "max":200,
+      "min":1,
+      "pattern":"^[0-9a-zA-Z._-]+"
+    },
+    "VocabularyState":{
+      "type":"string",
+      "enum":[
+        "PENDING",
+        "READY",
+        "FAILED"
+      ]
     }
   }
 }

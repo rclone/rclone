@@ -131,7 +131,7 @@ func (e *encoder) marshal(tag string, in reflect.Value) {
 		} else {
 			e.structv(tag, in)
 		}
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		if in.Type().Elem() == mapItemType {
 			e.itemsv(tag, in)
 		} else {
@@ -328,14 +328,18 @@ func (e *encoder) uintv(tag string, in reflect.Value) {
 
 func (e *encoder) timev(tag string, in reflect.Value) {
 	t := in.Interface().(time.Time)
-	if tag == "" {
-		tag = yaml_TIMESTAMP_TAG
-	}
-	e.emitScalar(t.Format(time.RFC3339Nano), "", tag, yaml_PLAIN_SCALAR_STYLE)
+	s := t.Format(time.RFC3339Nano)
+	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
 }
 
 func (e *encoder) floatv(tag string, in reflect.Value) {
-	s := strconv.FormatFloat(in.Float(), 'g', -1, 64)
+	// Issue #352: When formatting, use the precision of the underlying value
+	precision := 64
+	if in.Kind() == reflect.Float32 {
+		precision = 32
+	}
+
+	s := strconv.FormatFloat(in.Float(), 'g', -1, precision)
 	switch s {
 	case "+Inf":
 		s = ".inf"

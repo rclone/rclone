@@ -15,7 +15,7 @@ const opAddTagsToResource = "AddTagsToResource"
 
 // AddTagsToResourceRequest generates a "aws/request.Request" representing the
 // client's request for the AddTagsToResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -55,10 +55,10 @@ func (c *DatabaseMigrationService) AddTagsToResourceRequest(input *AddTagsToReso
 
 // AddTagsToResource API operation for AWS Database Migration Service.
 //
-// Adds metadata tags to a DMS resource, including replication instance, endpoint,
-// security group, and migration task. These tags can also be used with cost
-// allocation reporting to track cost associated with DMS resources, or used
-// in a Condition statement in an IAM policy for DMS.
+// Adds metadata tags to an AWS DMS resource, including replication instance,
+// endpoint, security group, and migration task. These tags can also be used
+// with cost allocation reporting to track cost associated with DMS resources,
+// or used in a Condition statement in an IAM policy for DMS.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -97,7 +97,7 @@ const opCreateEndpoint = "CreateEndpoint"
 
 // CreateEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -192,7 +192,7 @@ const opCreateEventSubscription = "CreateEventSubscription"
 
 // CreateEventSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEventSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -299,7 +299,7 @@ const opCreateReplicationInstance = "CreateReplicationInstance"
 
 // CreateReplicationInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the CreateReplicationInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -407,7 +407,7 @@ const opCreateReplicationSubnetGroup = "CreateReplicationSubnetGroup"
 
 // CreateReplicationSubnetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateReplicationSubnetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -502,7 +502,7 @@ const opCreateReplicationTask = "CreateReplicationTask"
 
 // CreateReplicationTaskRequest generates a "aws/request.Request" representing the
 // client's request for the CreateReplicationTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -597,7 +597,7 @@ const opDeleteCertificate = "DeleteCertificate"
 
 // DeleteCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -680,7 +680,7 @@ const opDeleteEndpoint = "DeleteEndpoint"
 
 // DeleteEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -766,7 +766,7 @@ const opDeleteEventSubscription = "DeleteEventSubscription"
 
 // DeleteEventSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEventSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -849,7 +849,7 @@ const opDeleteReplicationInstance = "DeleteReplicationInstance"
 
 // DeleteReplicationInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteReplicationInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -935,7 +935,7 @@ const opDeleteReplicationSubnetGroup = "DeleteReplicationSubnetGroup"
 
 // DeleteReplicationSubnetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteReplicationSubnetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1018,7 +1018,7 @@ const opDeleteReplicationTask = "DeleteReplicationTask"
 
 // DeleteReplicationTaskRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteReplicationTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1101,7 +1101,7 @@ const opDescribeAccountAttributes = "DescribeAccountAttributes"
 
 // DescribeAccountAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAccountAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1180,7 +1180,7 @@ const opDescribeCertificates = "DescribeCertificates"
 
 // DescribeCertificatesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeCertificates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1315,7 +1315,7 @@ const opDescribeConnections = "DescribeConnections"
 
 // DescribeConnectionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConnections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1451,7 +1451,7 @@ const opDescribeEndpointTypes = "DescribeEndpointTypes"
 
 // DescribeEndpointTypesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEndpointTypes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1581,7 +1581,7 @@ const opDescribeEndpoints = "DescribeEndpoints"
 
 // DescribeEndpointsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEndpoints operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1716,7 +1716,7 @@ const opDescribeEventCategories = "DescribeEventCategories"
 
 // DescribeEventCategoriesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventCategories operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1793,7 +1793,7 @@ const opDescribeEventSubscriptions = "DescribeEventSubscriptions"
 
 // DescribeEventSubscriptionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEventSubscriptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1933,7 +1933,7 @@ const opDescribeEvents = "DescribeEvents"
 
 // DescribeEventsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEvents operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2065,7 +2065,7 @@ const opDescribeOrderableReplicationInstances = "DescribeOrderableReplicationIns
 
 // DescribeOrderableReplicationInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeOrderableReplicationInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2196,7 +2196,7 @@ const opDescribeRefreshSchemasStatus = "DescribeRefreshSchemasStatus"
 
 // DescribeRefreshSchemasStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRefreshSchemasStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2279,7 +2279,7 @@ const opDescribeReplicationInstanceTaskLogs = "DescribeReplicationInstanceTaskLo
 
 // DescribeReplicationInstanceTaskLogsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReplicationInstanceTaskLogs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2418,7 +2418,7 @@ const opDescribeReplicationInstances = "DescribeReplicationInstances"
 
 // DescribeReplicationInstancesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReplicationInstances operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2554,7 +2554,7 @@ const opDescribeReplicationSubnetGroups = "DescribeReplicationSubnetGroups"
 
 // DescribeReplicationSubnetGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReplicationSubnetGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2689,7 +2689,7 @@ const opDescribeReplicationTaskAssessmentResults = "DescribeReplicationTaskAsses
 
 // DescribeReplicationTaskAssessmentResultsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReplicationTaskAssessmentResults operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2825,7 +2825,7 @@ const opDescribeReplicationTasks = "DescribeReplicationTasks"
 
 // DescribeReplicationTasksRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeReplicationTasks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2961,7 +2961,7 @@ const opDescribeSchemas = "DescribeSchemas"
 
 // DescribeSchemasRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSchemas operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3100,7 +3100,7 @@ const opDescribeTableStatistics = "DescribeTableStatistics"
 
 // DescribeTableStatisticsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTableStatistics operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3244,7 +3244,7 @@ const opImportCertificate = "ImportCertificate"
 
 // ImportCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the ImportCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3329,7 +3329,7 @@ const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3408,7 +3408,7 @@ const opModifyEndpoint = "ModifyEndpoint"
 
 // ModifyEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyEndpoint operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3500,7 +3500,7 @@ const opModifyEventSubscription = "ModifyEventSubscription"
 
 // ModifyEventSubscriptionRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyEventSubscription operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3588,7 +3588,7 @@ const opModifyReplicationInstance = "ModifyReplicationInstance"
 
 // ModifyReplicationInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyReplicationInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3687,7 +3687,7 @@ const opModifyReplicationSubnetGroup = "ModifyReplicationSubnetGroup"
 
 // ModifyReplicationSubnetGroupRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyReplicationSubnetGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3782,7 +3782,7 @@ const opModifyReplicationTask = "ModifyReplicationTask"
 
 // ModifyReplicationTaskRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyReplicationTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3877,7 +3877,7 @@ const opRebootReplicationInstance = "RebootReplicationInstance"
 
 // RebootReplicationInstanceRequest generates a "aws/request.Request" representing the
 // client's request for the RebootReplicationInstance operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3961,7 +3961,7 @@ const opRefreshSchemas = "RefreshSchemas"
 
 // RefreshSchemasRequest generates a "aws/request.Request" representing the
 // client's request for the RefreshSchemas operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4052,7 +4052,7 @@ const opReloadTables = "ReloadTables"
 
 // ReloadTablesRequest generates a "aws/request.Request" representing the
 // client's request for the ReloadTables operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4135,7 +4135,7 @@ const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
 // RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTagsFromResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4214,7 +4214,7 @@ const opStartReplicationTask = "StartReplicationTask"
 
 // StartReplicationTaskRequest generates a "aws/request.Request" representing the
 // client's request for the StartReplicationTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4274,6 +4274,9 @@ func (c *DatabaseMigrationService) StartReplicationTaskRequest(input *StartRepli
 //   The resource is in a state that prevents it from being used for database
 //   migration.
 //
+//   * ErrCodeAccessDeniedFault "AccessDeniedFault"
+//   AWS DMS was denied access to the endpoint.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/StartReplicationTask
 func (c *DatabaseMigrationService) StartReplicationTask(input *StartReplicationTaskInput) (*StartReplicationTaskOutput, error) {
 	req, out := c.StartReplicationTaskRequest(input)
@@ -4300,7 +4303,7 @@ const opStartReplicationTaskAssessment = "StartReplicationTaskAssessment"
 
 // StartReplicationTaskAssessmentRequest generates a "aws/request.Request" representing the
 // client's request for the StartReplicationTaskAssessment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4384,7 +4387,7 @@ const opStopReplicationTask = "StopReplicationTask"
 
 // StopReplicationTaskRequest generates a "aws/request.Request" representing the
 // client's request for the StopReplicationTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4467,7 +4470,7 @@ const opTestConnection = "TestConnection"
 
 // TestConnectionRequest generates a "aws/request.Request" representing the
 // client's request for the TestConnection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4894,11 +4897,14 @@ type CreateEndpointInput struct {
 	EndpointType *string `type:"string" required:"true" enum:"ReplicationEndpointTypeValue"`
 
 	// The type of engine for the endpoint. Valid values, depending on the EndPointType,
-	// include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb,
-	// mongodb, and sqlserver.
+	// include mysql, oracle, postgres, mariadb, aurora, aurora-postgresql, redshift,
+	// s3, db2, azuredb, sybase, dynamodb, mongodb, and sqlserver.
 	//
 	// EngineName is a required field
 	EngineName *string `type:"string" required:"true"`
+
+	// The external table definition.
+	ExternalTableDefinition *string `type:"string"`
 
 	// Additional attributes associated with the connection.
 	ExtraConnectionAttributes *string `type:"string"`
@@ -4922,13 +4928,17 @@ type CreateEndpointInput struct {
 	// The port used by the endpoint database.
 	Port *int64 `type:"integer"`
 
-	// Settings in JSON format for the target S3 endpoint. For more information
+	// Settings in JSON format for the target Amazon S3 endpoint. For more information
 	// about the available settings, see the Extra Connection Attributes section
 	// at  Using Amazon S3 as a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.S3.html).
 	S3Settings *S3Settings `type:"structure"`
 
 	// The name of the server where the endpoint database resides.
 	ServerName *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) for the service access role you want to use
+	// to create the endpoint.
+	ServiceAccessRoleArn *string `type:"string"`
 
 	// The SSL mode to use for the SSL connection.
 	//
@@ -5014,6 +5024,12 @@ func (s *CreateEndpointInput) SetEngineName(v string) *CreateEndpointInput {
 	return s
 }
 
+// SetExternalTableDefinition sets the ExternalTableDefinition field's value.
+func (s *CreateEndpointInput) SetExternalTableDefinition(v string) *CreateEndpointInput {
+	s.ExternalTableDefinition = &v
+	return s
+}
+
 // SetExtraConnectionAttributes sets the ExtraConnectionAttributes field's value.
 func (s *CreateEndpointInput) SetExtraConnectionAttributes(v string) *CreateEndpointInput {
 	s.ExtraConnectionAttributes = &v
@@ -5053,6 +5069,12 @@ func (s *CreateEndpointInput) SetS3Settings(v *S3Settings) *CreateEndpointInput 
 // SetServerName sets the ServerName field's value.
 func (s *CreateEndpointInput) SetServerName(v string) *CreateEndpointInput {
 	s.ServerName = &v
+	return s
+}
+
+// SetServiceAccessRoleArn sets the ServiceAccessRoleArn field's value.
+func (s *CreateEndpointInput) SetServiceAccessRoleArn(v string) *CreateEndpointInput {
+	s.ServiceAccessRoleArn = &v
 	return s
 }
 
@@ -5132,7 +5154,7 @@ type CreateEventSubscriptionInput struct {
 	// Valid values: replication-instance | migration-task
 	SourceType *string `type:"string"`
 
-	// The name of the DMS event notification subscription.
+	// The name of the AWS DMS event notification subscription.
 	//
 	// Constraints: The name must be less than 255 characters.
 	//
@@ -5557,8 +5579,32 @@ func (s *CreateReplicationSubnetGroupOutput) SetReplicationSubnetGroup(v *Replic
 type CreateReplicationTaskInput struct {
 	_ struct{} `type:"structure"`
 
-	// The start time for the Change Data Capture (CDC) operation.
+	// Indicates when you want a change data capture (CDC) operation to start. Use
+	// either CdcStartPosition or CdcStartTime to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
+	//
+	// The value can be in date, checkpoint, or LSN/SCN format.
+	//
+	// Date Example: --cdc-start-position “2018-03-08T12:12:12”
+	//
+	// Checkpoint Example: --cdc-start-position "checkpoint:V1#27#mysql-bin-changelog.157832:1975:-1:2002:677883278264080:mysql-bin-changelog.157832:1876#0#0#*#0#93"
+	//
+	// LSN Example: --cdc-start-position “mysql-bin-changelog.000024:373”
+	CdcStartPosition *string `type:"string"`
+
+	// Indicates the start time for a change data capture (CDC) operation. Use either
+	// CdcStartTime or CdcStartPosition to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
 	CdcStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Indicates when you want a change data capture (CDC) operation to stop. The
+	// value can be either server time or commit time.
+	//
+	// Server time example: --cdc-stop-position “server_time:3018-02-09T12:12:12”
+	//
+	// Commit time example: --cdc-stop-position “commit_time: 3018-02-09T12:12:12
+	// “
+	CdcStopPosition *string `type:"string"`
 
 	// The migration type.
 	//
@@ -5649,9 +5695,21 @@ func (s *CreateReplicationTaskInput) Validate() error {
 	return nil
 }
 
+// SetCdcStartPosition sets the CdcStartPosition field's value.
+func (s *CreateReplicationTaskInput) SetCdcStartPosition(v string) *CreateReplicationTaskInput {
+	s.CdcStartPosition = &v
+	return s
+}
+
 // SetCdcStartTime sets the CdcStartTime field's value.
 func (s *CreateReplicationTaskInput) SetCdcStartTime(v time.Time) *CreateReplicationTaskInput {
 	s.CdcStartTime = &v
+	return s
+}
+
+// SetCdcStopPosition sets the CdcStopPosition field's value.
+func (s *CreateReplicationTaskInput) SetCdcStopPosition(v string) *CreateReplicationTaskInput {
+	s.CdcStopPosition = &v
 	return s
 }
 
@@ -7828,15 +7886,22 @@ type Endpoint struct {
 	// The type of endpoint.
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
+	// The expanded name for the engine name. For example, if the EngineName parameter
+	// is "aurora," this value would be "Amazon Aurora MySQL."
+	EngineDisplayName *string `type:"string"`
+
 	// The database engine name. Valid values, depending on the EndPointType, include
-	// mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb,
-	// mongodb, and sqlserver.
+	// mysql, oracle, postgres, mariadb, aurora, aurora-postgresql, redshift, s3,
+	// db2, azuredb, sybase, sybase, dynamodb, mongodb, and sqlserver.
 	EngineName *string `type:"string"`
 
 	// Value returned by a call to CreateEndpoint that can be used for cross-account
 	// validation. Use it on a subsequent call to CreateEndpoint to create the endpoint
 	// with a cross-account.
 	ExternalId *string `type:"string"`
+
+	// The external table definition.
+	ExternalTableDefinition *string `type:"string"`
 
 	// Additional connection attributes used to connect to the endpoint.
 	ExtraConnectionAttributes *string `type:"string"`
@@ -7861,6 +7926,9 @@ type Endpoint struct {
 
 	// The name of the server at the endpoint.
 	ServerName *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) used by the service access IAM role.
+	ServiceAccessRoleArn *string `type:"string"`
 
 	// The SSL mode used to connect to the endpoint.
 	//
@@ -7922,6 +7990,12 @@ func (s *Endpoint) SetEndpointType(v string) *Endpoint {
 	return s
 }
 
+// SetEngineDisplayName sets the EngineDisplayName field's value.
+func (s *Endpoint) SetEngineDisplayName(v string) *Endpoint {
+	s.EngineDisplayName = &v
+	return s
+}
+
 // SetEngineName sets the EngineName field's value.
 func (s *Endpoint) SetEngineName(v string) *Endpoint {
 	s.EngineName = &v
@@ -7931,6 +8005,12 @@ func (s *Endpoint) SetEngineName(v string) *Endpoint {
 // SetExternalId sets the ExternalId field's value.
 func (s *Endpoint) SetExternalId(v string) *Endpoint {
 	s.ExternalId = &v
+	return s
+}
+
+// SetExternalTableDefinition sets the ExternalTableDefinition field's value.
+func (s *Endpoint) SetExternalTableDefinition(v string) *Endpoint {
+	s.ExternalTableDefinition = &v
 	return s
 }
 
@@ -7967,6 +8047,12 @@ func (s *Endpoint) SetS3Settings(v *S3Settings) *Endpoint {
 // SetServerName sets the ServerName field's value.
 func (s *Endpoint) SetServerName(v string) *Endpoint {
 	s.ServerName = &v
+	return s
+}
+
+// SetServiceAccessRoleArn sets the ServiceAccessRoleArn field's value.
+func (s *Endpoint) SetServiceAccessRoleArn(v string) *Endpoint {
+	s.ServiceAccessRoleArn = &v
 	return s
 }
 
@@ -8429,9 +8515,12 @@ type ModifyEndpointInput struct {
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
 	// The type of engine for the endpoint. Valid values, depending on the EndPointType,
-	// include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb,
-	// mongodb, and sqlserver.
+	// include mysql, oracle, postgres, mariadb, aurora, aurora-postgresql, redshift,
+	// s3, db2, azuredb, sybase, sybase, dynamodb, mongodb, and sqlserver.
 	EngineName *string `type:"string"`
+
+	// The external table definition.
+	ExternalTableDefinition *string `type:"string"`
 
 	// Additional attributes associated with the connection. To reset this parameter,
 	// pass the empty string ("") as an argument.
@@ -8456,6 +8545,10 @@ type ModifyEndpointInput struct {
 
 	// The name of the server where the endpoint database resides.
 	ServerName *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) for the service access role you want to use
+	// to modify the endpoint.
+	ServiceAccessRoleArn *string `type:"string"`
 
 	// The SSL mode to be used.
 	//
@@ -8538,6 +8631,12 @@ func (s *ModifyEndpointInput) SetEngineName(v string) *ModifyEndpointInput {
 	return s
 }
 
+// SetExternalTableDefinition sets the ExternalTableDefinition field's value.
+func (s *ModifyEndpointInput) SetExternalTableDefinition(v string) *ModifyEndpointInput {
+	s.ExternalTableDefinition = &v
+	return s
+}
+
 // SetExtraConnectionAttributes sets the ExtraConnectionAttributes field's value.
 func (s *ModifyEndpointInput) SetExtraConnectionAttributes(v string) *ModifyEndpointInput {
 	s.ExtraConnectionAttributes = &v
@@ -8571,6 +8670,12 @@ func (s *ModifyEndpointInput) SetS3Settings(v *S3Settings) *ModifyEndpointInput 
 // SetServerName sets the ServerName field's value.
 func (s *ModifyEndpointInput) SetServerName(v string) *ModifyEndpointInput {
 	s.ServerName = &v
+	return s
+}
+
+// SetServiceAccessRoleArn sets the ServiceAccessRoleArn field's value.
+func (s *ModifyEndpointInput) SetServiceAccessRoleArn(v string) *ModifyEndpointInput {
+	s.ServiceAccessRoleArn = &v
 	return s
 }
 
@@ -8984,8 +9089,32 @@ func (s *ModifyReplicationSubnetGroupOutput) SetReplicationSubnetGroup(v *Replic
 type ModifyReplicationTaskInput struct {
 	_ struct{} `type:"structure"`
 
-	// The start time for the Change Data Capture (CDC) operation.
+	// Indicates when you want a change data capture (CDC) operation to start. Use
+	// either CdcStartPosition or CdcStartTime to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
+	//
+	// The value can be in date, checkpoint, or LSN/SCN format.
+	//
+	// Date Example: --cdc-start-position “2018-03-08T12:12:12”
+	//
+	// Checkpoint Example: --cdc-start-position "checkpoint:V1#27#mysql-bin-changelog.157832:1975:-1:2002:677883278264080:mysql-bin-changelog.157832:1876#0#0#*#0#93"
+	//
+	// LSN Example: --cdc-start-position “mysql-bin-changelog.000024:373”
+	CdcStartPosition *string `type:"string"`
+
+	// Indicates the start time for a change data capture (CDC) operation. Use either
+	// CdcStartTime or CdcStartPosition to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
 	CdcStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Indicates when you want a change data capture (CDC) operation to stop. The
+	// value can be either server time or commit time.
+	//
+	// Server time example: --cdc-stop-position “server_time:3018-02-09T12:12:12”
+	//
+	// Commit time example: --cdc-stop-position “commit_time: 3018-02-09T12:12:12
+	// “
+	CdcStopPosition *string `type:"string"`
 
 	// The migration type.
 	//
@@ -9042,9 +9171,21 @@ func (s *ModifyReplicationTaskInput) Validate() error {
 	return nil
 }
 
+// SetCdcStartPosition sets the CdcStartPosition field's value.
+func (s *ModifyReplicationTaskInput) SetCdcStartPosition(v string) *ModifyReplicationTaskInput {
+	s.CdcStartPosition = &v
+	return s
+}
+
 // SetCdcStartTime sets the CdcStartTime field's value.
 func (s *ModifyReplicationTaskInput) SetCdcStartTime(v time.Time) *ModifyReplicationTaskInput {
 	s.CdcStartTime = &v
+	return s
+}
+
+// SetCdcStopPosition sets the CdcStopPosition field's value.
+func (s *ModifyReplicationTaskInput) SetCdcStopPosition(v string) *ModifyReplicationTaskInput {
+	s.CdcStopPosition = &v
 	return s
 }
 
@@ -9140,6 +9281,13 @@ type MongoDbSettings struct {
 	// Default value is false.
 	ExtractDocId *string `type:"string"`
 
+	// The KMS key identifier that will be used to encrypt the connection parameters.
+	// If you do not specify a value for the KmsKeyId parameter, then AWS DMS will
+	// use your default encryption key. AWS KMS creates the default encryption key
+	// for your AWS account. Your AWS account has a different default encryption
+	// key for each AWS region.
+	KmsKeyId *string `type:"string"`
+
 	// Specifies either document or table mode.
 	//
 	// Valid values: NONE, ONE
@@ -9204,6 +9352,12 @@ func (s *MongoDbSettings) SetDocsToInvestigate(v string) *MongoDbSettings {
 // SetExtractDocId sets the ExtractDocId field's value.
 func (s *MongoDbSettings) SetExtractDocId(v string) *MongoDbSettings {
 	s.ExtractDocId = &v
+	return s
+}
+
+// SetKmsKeyId sets the KmsKeyId field's value.
+func (s *MongoDbSettings) SetKmsKeyId(v string) *MongoDbSettings {
+	s.KmsKeyId = &v
 	return s
 }
 
@@ -9685,6 +9839,10 @@ type ReplicationInstance struct {
 	// The engine version number of the replication instance.
 	EngineVersion *string `type:"string"`
 
+	// The expiration date of the free replication instance that is part of the
+	// Free DMS program.
+	FreeUntil *time.Time `type:"timestamp" timestampFormat:"unix"`
+
 	// The time the replication instance was created.
 	InstanceCreateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
@@ -9789,6 +9947,12 @@ func (s *ReplicationInstance) SetAvailabilityZone(v string) *ReplicationInstance
 // SetEngineVersion sets the EngineVersion field's value.
 func (s *ReplicationInstance) SetEngineVersion(v string) *ReplicationInstance {
 	s.EngineVersion = &v
+	return s
+}
+
+// SetFreeUntil sets the FreeUntil field's value.
+func (s *ReplicationInstance) SetFreeUntil(v time.Time) *ReplicationInstance {
+	s.FreeUntil = &v
 	return s
 }
 
@@ -10053,11 +10217,38 @@ func (s *ReplicationSubnetGroup) SetVpcId(v string) *ReplicationSubnetGroup {
 type ReplicationTask struct {
 	_ struct{} `type:"structure"`
 
+	// Indicates when you want a change data capture (CDC) operation to start. Use
+	// either CdcStartPosition or CdcStartTime to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
+	//
+	// The value can be in date, checkpoint, or LSN/SCN format.
+	//
+	// Date Example: --cdc-start-position “2018-03-08T12:12:12”
+	//
+	// Checkpoint Example: --cdc-start-position "checkpoint:V1#27#mysql-bin-changelog.157832:1975:-1:2002:677883278264080:mysql-bin-changelog.157832:1876#0#0#*#0#93"
+	//
+	// LSN Example: --cdc-start-position “mysql-bin-changelog.000024:373”
+	CdcStartPosition *string `type:"string"`
+
+	// Indicates when you want a change data capture (CDC) operation to stop. The
+	// value can be either server time or commit time.
+	//
+	// Server time example: --cdc-stop-position “server_time:3018-02-09T12:12:12”
+	//
+	// Commit time example: --cdc-stop-position “commit_time: 3018-02-09T12:12:12
+	// “
+	CdcStopPosition *string `type:"string"`
+
 	// The last error (failure) message generated for the replication instance.
 	LastFailureMessage *string `type:"string"`
 
 	// The type of migration.
 	MigrationType *string `type:"string" enum:"MigrationTypeValue"`
+
+	// Indicates the last checkpoint that occurred during a change data capture
+	// (CDC) operation. You can provide this value to the CdcStartPosition parameter
+	// to start a CDC operation that begins at that checkpoint.
+	RecoveryCheckpoint *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the replication instance.
 	ReplicationInstanceArn *string `type:"string"`
@@ -10115,6 +10306,18 @@ func (s ReplicationTask) GoString() string {
 	return s.String()
 }
 
+// SetCdcStartPosition sets the CdcStartPosition field's value.
+func (s *ReplicationTask) SetCdcStartPosition(v string) *ReplicationTask {
+	s.CdcStartPosition = &v
+	return s
+}
+
+// SetCdcStopPosition sets the CdcStopPosition field's value.
+func (s *ReplicationTask) SetCdcStopPosition(v string) *ReplicationTask {
+	s.CdcStopPosition = &v
+	return s
+}
+
 // SetLastFailureMessage sets the LastFailureMessage field's value.
 func (s *ReplicationTask) SetLastFailureMessage(v string) *ReplicationTask {
 	s.LastFailureMessage = &v
@@ -10124,6 +10327,12 @@ func (s *ReplicationTask) SetLastFailureMessage(v string) *ReplicationTask {
 // SetMigrationType sets the MigrationType field's value.
 func (s *ReplicationTask) SetMigrationType(v string) *ReplicationTask {
 	s.MigrationType = &v
+	return s
+}
+
+// SetRecoveryCheckpoint sets the RecoveryCheckpoint field's value.
+func (s *ReplicationTask) SetRecoveryCheckpoint(v string) *ReplicationTask {
+	s.RecoveryCheckpoint = &v
 	return s
 }
 
@@ -10370,6 +10579,7 @@ type S3Settings struct {
 	// carriage return (\n).
 	CsvRowDelimiter *string `type:"string"`
 
+	// The external table definition.
 	ExternalTableDefinition *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) used by the service access IAM role.
@@ -10492,8 +10702,32 @@ func (s *StartReplicationTaskAssessmentOutput) SetReplicationTask(v *Replication
 type StartReplicationTaskInput struct {
 	_ struct{} `type:"structure"`
 
-	// The start time for the Change Data Capture (CDC) operation.
+	// Indicates when you want a change data capture (CDC) operation to start. Use
+	// either CdcStartPosition or CdcStartTime to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
+	//
+	// The value can be in date, checkpoint, or LSN/SCN format.
+	//
+	// Date Example: --cdc-start-position “2018-03-08T12:12:12”
+	//
+	// Checkpoint Example: --cdc-start-position "checkpoint:V1#27#mysql-bin-changelog.157832:1975:-1:2002:677883278264080:mysql-bin-changelog.157832:1876#0#0#*#0#93"
+	//
+	// LSN Example: --cdc-start-position “mysql-bin-changelog.000024:373”
+	CdcStartPosition *string `type:"string"`
+
+	// Indicates the start time for a change data capture (CDC) operation. Use either
+	// CdcStartTime or CdcStartPosition to specify when you want a CDC operation
+	// to start. Specifying both values results in an error.
 	CdcStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Indicates when you want a change data capture (CDC) operation to stop. The
+	// value can be either server time or commit time.
+	//
+	// Server time example: --cdc-stop-position “server_time:3018-02-09T12:12:12”
+	//
+	// Commit time example: --cdc-stop-position “commit_time: 3018-02-09T12:12:12
+	// “
+	CdcStopPosition *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the replication task to be started.
 	//
@@ -10532,9 +10766,21 @@ func (s *StartReplicationTaskInput) Validate() error {
 	return nil
 }
 
+// SetCdcStartPosition sets the CdcStartPosition field's value.
+func (s *StartReplicationTaskInput) SetCdcStartPosition(v string) *StartReplicationTaskInput {
+	s.CdcStartPosition = &v
+	return s
+}
+
 // SetCdcStartTime sets the CdcStartTime field's value.
 func (s *StartReplicationTaskInput) SetCdcStartTime(v time.Time) *StartReplicationTaskInput {
 	s.CdcStartTime = &v
+	return s
+}
+
+// SetCdcStopPosition sets the CdcStopPosition field's value.
+func (s *StartReplicationTaskInput) SetCdcStopPosition(v string) *StartReplicationTaskInput {
+	s.CdcStopPosition = &v
 	return s
 }
 
@@ -10681,9 +10927,13 @@ type SupportedEndpointType struct {
 	// The type of endpoint.
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
+	// The expanded name for the engine name. For example, if the EngineName parameter
+	// is "aurora," this value would be "Amazon Aurora MySQL."
+	EngineDisplayName *string `type:"string"`
+
 	// The database engine name. Valid values, depending on the EndPointType, include
-	// mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb,
-	// mongodb, and sqlserver.
+	// mysql, oracle, postgres, mariadb, aurora, aurora-postgresql, redshift, s3,
+	// db2, azuredb, sybase, sybase, dynamodb, mongodb, and sqlserver.
 	EngineName *string `type:"string"`
 
 	// Indicates if Change Data Capture (CDC) is supported.
@@ -10703,6 +10953,12 @@ func (s SupportedEndpointType) GoString() string {
 // SetEndpointType sets the EndpointType field's value.
 func (s *SupportedEndpointType) SetEndpointType(v string) *SupportedEndpointType {
 	s.EndpointType = &v
+	return s
+}
+
+// SetEngineDisplayName sets the EngineDisplayName field's value.
+func (s *SupportedEndpointType) SetEngineDisplayName(v string) *SupportedEndpointType {
+	s.EngineDisplayName = &v
 	return s
 }
 

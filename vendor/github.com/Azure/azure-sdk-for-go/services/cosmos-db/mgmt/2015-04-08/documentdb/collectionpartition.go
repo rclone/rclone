@@ -41,12 +41,14 @@ func NewCollectionPartitionClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // ListMetrics retrieves the metrics determined by the given filter for the given collection, split by partition.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// databaseRid is cosmos DB database rid. collectionRid is cosmos DB collection rid. filter is an OData filter
-// expression that describes a subset of metrics to return. The parameters that can be filtered are name.value
-// (name of the metric, can have an or of multiple names), startTime, endTime, and timeGrain. The supported
-// operator is eq.
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
+// filter - an OData filter expression that describes a subset of metrics to return. The parameters that can be
+// filtered are name.value (name of the metric, can have an or of multiple names), startTime, endTime, and
+// timeGrain. The supported operator is eq.
 func (client CollectionPartitionClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, databaseRid string, collectionRid string, filter string) (result PartitionMetricListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -125,11 +127,13 @@ func (client CollectionPartitionClient) ListMetricsResponder(resp *http.Response
 }
 
 // ListUsages retrieves the usages (most recent storage data) for the given collection, split by partition.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// databaseRid is cosmos DB database rid. collectionRid is cosmos DB collection rid. filter is an OData filter
-// expression that describes a subset of usages to return. The supported parameter is name.value (name of the
-// metric, can have an or of multiple names).
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
+// filter - an OData filter expression that describes a subset of usages to return. The supported parameter is
+// name.value (name of the metric, can have an or of multiple names).
 func (client CollectionPartitionClient) ListUsages(ctx context.Context, resourceGroupName string, accountName string, databaseRid string, collectionRid string, filter string) (result PartitionUsagesResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

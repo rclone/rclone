@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // VirtualMachineScaleSetsClient is the compute Client
 type VirtualMachineScaleSetsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewVirtualMachineScaleSetsClient creates an instance of the VirtualMachineScaleSetsClient client.
 func NewVirtualMachineScaleSetsClient(subscriptionID string) VirtualMachineScaleSetsClient {
 	return NewVirtualMachineScaleSetsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewVirtualMachineScaleSetsClientWithBaseURI creates an instance of the VirtualMachineScaleSetsClient client.
 func NewVirtualMachineScaleSetsClientWithBaseURI(baseURI string, subscriptionID string) VirtualMachineScaleSetsClient {
 	return VirtualMachineScaleSetsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdate create or update a VM scale set.
 //
 // resourceGroupName is the name of the resource group. name is the name of the VM scale set to create or update.
@@ -60,6 +64,7 @@ func (client VirtualMachineScaleSetsClient) CreateOrUpdate(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client VirtualMachineScaleSetsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, name string, parameters VirtualMachineScaleSet) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client VirtualMachineScaleSetsClient) CreateOrUpdatePreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}", pathParameters),
@@ -83,6 +88,7 @@ func (client VirtualMachineScaleSetsClient) CreateOrUpdatePreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) CreateOrUpdateSender(req *http.Request) (future VirtualMachineScaleSetsCreateOrUpdateFuture, err error) {
@@ -98,6 +104,7 @@ func (client VirtualMachineScaleSetsClient) CreateOrUpdateSender(req *http.Reque
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) CreateOrUpdateResponder(resp *http.Response) (result VirtualMachineScaleSet, err error) {
@@ -111,6 +118,7 @@ func (client VirtualMachineScaleSetsClient) CreateOrUpdateResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Deallocate deallocates specific virtual machines in a VM scale set. Shuts down the virtual machines and releases the
 // compute resources. You are not billed for the compute resources that this virtual machine scale set deallocates.
 //
@@ -132,6 +140,7 @@ func (client VirtualMachineScaleSetsClient) Deallocate(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeallocatePreparer prepares the Deallocate request.
 func (client VirtualMachineScaleSetsClient) DeallocatePreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs *VirtualMachineScaleSetVMInstanceIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -146,7 +155,7 @@ func (client VirtualMachineScaleSetsClient) DeallocatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/deallocate", pathParameters),
@@ -158,6 +167,7 @@ func (client VirtualMachineScaleSetsClient) DeallocatePreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeallocateSender sends the Deallocate request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) DeallocateSender(req *http.Request) (future VirtualMachineScaleSetsDeallocateFuture, err error) {
@@ -173,6 +183,7 @@ func (client VirtualMachineScaleSetsClient) DeallocateSender(req *http.Request) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeallocateResponder handles the response to the Deallocate request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) DeallocateResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -186,6 +197,7 @@ func (client VirtualMachineScaleSetsClient) DeallocateResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Delete deletes a VM scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -205,6 +217,7 @@ func (client VirtualMachineScaleSetsClient) Delete(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeletePreparer prepares the Delete request.
 func (client VirtualMachineScaleSetsClient) DeletePreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -226,6 +239,7 @@ func (client VirtualMachineScaleSetsClient) DeletePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) DeleteSender(req *http.Request) (future VirtualMachineScaleSetsDeleteFuture, err error) {
@@ -241,6 +255,7 @@ func (client VirtualMachineScaleSetsClient) DeleteSender(req *http.Request) (fut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) DeleteResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -254,6 +269,7 @@ func (client VirtualMachineScaleSetsClient) DeleteResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteInstances deletes virtual machines in a VM scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -280,6 +296,7 @@ func (client VirtualMachineScaleSetsClient) DeleteInstances(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteInstancesPreparer prepares the DeleteInstances request.
 func (client VirtualMachineScaleSetsClient) DeleteInstancesPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs VirtualMachineScaleSetVMInstanceRequiredIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -294,7 +311,7 @@ func (client VirtualMachineScaleSetsClient) DeleteInstancesPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/delete", pathParameters),
@@ -303,6 +320,7 @@ func (client VirtualMachineScaleSetsClient) DeleteInstancesPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteInstancesSender sends the DeleteInstances request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) DeleteInstancesSender(req *http.Request) (future VirtualMachineScaleSetsDeleteInstancesFuture, err error) {
@@ -318,6 +336,7 @@ func (client VirtualMachineScaleSetsClient) DeleteInstancesSender(req *http.Requ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteInstancesResponder handles the response to the DeleteInstances request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) DeleteInstancesResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -331,6 +350,7 @@ func (client VirtualMachineScaleSetsClient) DeleteInstancesResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Get display information about a virtual machine scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -356,6 +376,7 @@ func (client VirtualMachineScaleSetsClient) Get(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client VirtualMachineScaleSetsClient) GetPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -377,6 +398,7 @@ func (client VirtualMachineScaleSetsClient) GetPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -384,6 +406,7 @@ func (client VirtualMachineScaleSetsClient) GetSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) GetResponder(resp *http.Response) (result VirtualMachineScaleSet, err error) {
@@ -397,6 +420,7 @@ func (client VirtualMachineScaleSetsClient) GetResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetInstanceView gets the status of a VM scale set instance.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -422,6 +446,7 @@ func (client VirtualMachineScaleSetsClient) GetInstanceView(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetInstanceViewPreparer prepares the GetInstanceView request.
 func (client VirtualMachineScaleSetsClient) GetInstanceViewPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -443,6 +468,7 @@ func (client VirtualMachineScaleSetsClient) GetInstanceViewPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetInstanceViewSender sends the GetInstanceView request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) GetInstanceViewSender(req *http.Request) (*http.Response, error) {
@@ -450,6 +476,7 @@ func (client VirtualMachineScaleSetsClient) GetInstanceViewSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetInstanceViewResponder handles the response to the GetInstanceView request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) GetInstanceViewResponder(resp *http.Response) (result VirtualMachineScaleSetInstanceView, err error) {
@@ -463,6 +490,7 @@ func (client VirtualMachineScaleSetsClient) GetInstanceViewResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List gets a list of all VM scale sets under a resource group.
 //
 // resourceGroupName is the name of the resource group.
@@ -489,6 +517,7 @@ func (client VirtualMachineScaleSetsClient) List(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client VirtualMachineScaleSetsClient) ListPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -509,6 +538,7 @@ func (client VirtualMachineScaleSetsClient) ListPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -516,6 +546,7 @@ func (client VirtualMachineScaleSetsClient) ListSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) ListResponder(resp *http.Response) (result VirtualMachineScaleSetListResult, err error) {
@@ -550,12 +581,14 @@ func (client VirtualMachineScaleSetsClient) listNextResults(lastResults VirtualM
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VirtualMachineScaleSetsClient) ListComplete(ctx context.Context, resourceGroupName string) (result VirtualMachineScaleSetListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAll gets a list of all VM Scale Sets in the subscription, regardless of the associated resource group. Use
 // nextLink property in the response to get the next page of VM Scale Sets. Do this till nextLink is null to fetch all
 // the VM Scale Sets.
@@ -582,6 +615,7 @@ func (client VirtualMachineScaleSetsClient) ListAll(ctx context.Context) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAllPreparer prepares the ListAll request.
 func (client VirtualMachineScaleSetsClient) ListAllPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -601,6 +635,7 @@ func (client VirtualMachineScaleSetsClient) ListAllPreparer(ctx context.Context)
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAllSender sends the ListAll request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) ListAllSender(req *http.Request) (*http.Response, error) {
@@ -608,6 +643,7 @@ func (client VirtualMachineScaleSetsClient) ListAllSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAllResponder handles the response to the ListAll request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) ListAllResponder(resp *http.Response) (result VirtualMachineScaleSetListWithLinkResult, err error) {
@@ -642,12 +678,14 @@ func (client VirtualMachineScaleSetsClient) listAllNextResults(lastResults Virtu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListAllComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VirtualMachineScaleSetsClient) ListAllComplete(ctx context.Context) (result VirtualMachineScaleSetListWithLinkResultIterator, err error) {
 	result.page, err = client.ListAll(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkus gets a list of SKUs available for your VM scale set, including the minimum and maximum VM instances allowed
 // for each SKU.
 //
@@ -675,6 +713,7 @@ func (client VirtualMachineScaleSetsClient) ListSkus(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusPreparer prepares the ListSkus request.
 func (client VirtualMachineScaleSetsClient) ListSkusPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -696,6 +735,7 @@ func (client VirtualMachineScaleSetsClient) ListSkusPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusSender sends the ListSkus request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) ListSkusSender(req *http.Request) (*http.Response, error) {
@@ -703,6 +743,7 @@ func (client VirtualMachineScaleSetsClient) ListSkusSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusResponder handles the response to the ListSkus request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) ListSkusResponder(resp *http.Response) (result VirtualMachineScaleSetListSkusResult, err error) {
@@ -737,12 +778,14 @@ func (client VirtualMachineScaleSetsClient) listSkusNextResults(lastResults Virt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VirtualMachineScaleSetsClient) ListSkusComplete(ctx context.Context, resourceGroupName string, VMScaleSetName string) (result VirtualMachineScaleSetListSkusResultIterator, err error) {
 	result.page, err = client.ListSkus(ctx, resourceGroupName, VMScaleSetName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // PowerOff power off (stop) one or more virtual machines in a VM scale set. Note that resources are still attached and
 // you are getting charged for the resources. Instead, use deallocate to release resources and avoid charges.
 //
@@ -764,6 +807,7 @@ func (client VirtualMachineScaleSetsClient) PowerOff(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // PowerOffPreparer prepares the PowerOff request.
 func (client VirtualMachineScaleSetsClient) PowerOffPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs *VirtualMachineScaleSetVMInstanceIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -778,7 +822,7 @@ func (client VirtualMachineScaleSetsClient) PowerOffPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/poweroff", pathParameters),
@@ -790,6 +834,7 @@ func (client VirtualMachineScaleSetsClient) PowerOffPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // PowerOffSender sends the PowerOff request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) PowerOffSender(req *http.Request) (future VirtualMachineScaleSetsPowerOffFuture, err error) {
@@ -805,6 +850,7 @@ func (client VirtualMachineScaleSetsClient) PowerOffSender(req *http.Request) (f
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // PowerOffResponder handles the response to the PowerOff request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) PowerOffResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -818,6 +864,7 @@ func (client VirtualMachineScaleSetsClient) PowerOffResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Reimage reimages (upgrade the operating system) one or more virtual machines in a VM scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -837,6 +884,7 @@ func (client VirtualMachineScaleSetsClient) Reimage(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimagePreparer prepares the Reimage request.
 func (client VirtualMachineScaleSetsClient) ReimagePreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -858,6 +906,7 @@ func (client VirtualMachineScaleSetsClient) ReimagePreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageSender sends the Reimage request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) ReimageSender(req *http.Request) (future VirtualMachineScaleSetsReimageFuture, err error) {
@@ -873,6 +922,7 @@ func (client VirtualMachineScaleSetsClient) ReimageSender(req *http.Request) (fu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageResponder handles the response to the Reimage request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) ReimageResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -886,6 +936,7 @@ func (client VirtualMachineScaleSetsClient) ReimageResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageAll reimages all the disks ( including data disks ) in the virtual machines in a VM scale set. This operation
 // is only supported for managed disks.
 //
@@ -906,6 +957,7 @@ func (client VirtualMachineScaleSetsClient) ReimageAll(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageAllPreparer prepares the ReimageAll request.
 func (client VirtualMachineScaleSetsClient) ReimageAllPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -927,6 +979,7 @@ func (client VirtualMachineScaleSetsClient) ReimageAllPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageAllSender sends the ReimageAll request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) ReimageAllSender(req *http.Request) (future VirtualMachineScaleSetsReimageAllFuture, err error) {
@@ -942,6 +995,7 @@ func (client VirtualMachineScaleSetsClient) ReimageAllSender(req *http.Request) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ReimageAllResponder handles the response to the ReimageAll request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) ReimageAllResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -955,6 +1009,7 @@ func (client VirtualMachineScaleSetsClient) ReimageAllResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Restart restarts one or more virtual machines in a VM scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -975,6 +1030,7 @@ func (client VirtualMachineScaleSetsClient) Restart(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RestartPreparer prepares the Restart request.
 func (client VirtualMachineScaleSetsClient) RestartPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs *VirtualMachineScaleSetVMInstanceIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -989,7 +1045,7 @@ func (client VirtualMachineScaleSetsClient) RestartPreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/restart", pathParameters),
@@ -1001,6 +1057,7 @@ func (client VirtualMachineScaleSetsClient) RestartPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RestartSender sends the Restart request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) RestartSender(req *http.Request) (future VirtualMachineScaleSetsRestartFuture, err error) {
@@ -1016,6 +1073,7 @@ func (client VirtualMachineScaleSetsClient) RestartSender(req *http.Request) (fu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RestartResponder handles the response to the Restart request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) RestartResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -1029,6 +1087,7 @@ func (client VirtualMachineScaleSetsClient) RestartResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Start starts one or more virtual machines in a VM scale set.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -1049,6 +1108,7 @@ func (client VirtualMachineScaleSetsClient) Start(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // StartPreparer prepares the Start request.
 func (client VirtualMachineScaleSetsClient) StartPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs *VirtualMachineScaleSetVMInstanceIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1063,7 +1123,7 @@ func (client VirtualMachineScaleSetsClient) StartPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/start", pathParameters),
@@ -1075,6 +1135,7 @@ func (client VirtualMachineScaleSetsClient) StartPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // StartSender sends the Start request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) StartSender(req *http.Request) (future VirtualMachineScaleSetsStartFuture, err error) {
@@ -1090,6 +1151,7 @@ func (client VirtualMachineScaleSetsClient) StartSender(req *http.Request) (futu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // StartResponder handles the response to the Start request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) StartResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -1103,6 +1165,7 @@ func (client VirtualMachineScaleSetsClient) StartResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateInstances upgrades one or more virtual machines to the latest SKU set in the VM scale set model.
 //
 // resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
@@ -1129,6 +1192,7 @@ func (client VirtualMachineScaleSetsClient) UpdateInstances(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateInstancesPreparer prepares the UpdateInstances request.
 func (client VirtualMachineScaleSetsClient) UpdateInstancesPreparer(ctx context.Context, resourceGroupName string, VMScaleSetName string, VMInstanceIDs VirtualMachineScaleSetVMInstanceRequiredIDs) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1143,7 +1207,7 @@ func (client VirtualMachineScaleSetsClient) UpdateInstancesPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/manualupgrade", pathParameters),
@@ -1152,6 +1216,7 @@ func (client VirtualMachineScaleSetsClient) UpdateInstancesPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateInstancesSender sends the UpdateInstances request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineScaleSetsClient) UpdateInstancesSender(req *http.Request) (future VirtualMachineScaleSetsUpdateInstancesFuture, err error) {
@@ -1167,6 +1232,7 @@ func (client VirtualMachineScaleSetsClient) UpdateInstancesSender(req *http.Requ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateInstancesResponder handles the response to the UpdateInstances request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineScaleSetsClient) UpdateInstancesResponder(resp *http.Response) (result OperationStatusResponse, err error) {

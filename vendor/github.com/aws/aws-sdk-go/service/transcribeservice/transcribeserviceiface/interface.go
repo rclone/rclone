@@ -26,7 +26,7 @@ import (
 //    // myFunc uses an SDK service client to make a request to
 //    // Amazon Transcribe Service.
 //    func myFunc(svc transcribeserviceiface.TranscribeServiceAPI) bool {
-//        // Make svc.GetTranscriptionJob request
+//        // Make svc.CreateVocabulary request
 //    }
 //
 //    func main() {
@@ -42,7 +42,7 @@ import (
 //    type mockTranscribeServiceClient struct {
 //        transcribeserviceiface.TranscribeServiceAPI
 //    }
-//    func (m *mockTranscribeServiceClient) GetTranscriptionJob(input *transcribeservice.GetTranscriptionJobInput) (*transcribeservice.GetTranscriptionJobOutput, error) {
+//    func (m *mockTranscribeServiceClient) CreateVocabulary(input *transcribeservice.CreateVocabularyInput) (*transcribeservice.CreateVocabularyOutput, error) {
 //        // mock response/functionality
 //    }
 //
@@ -60,9 +60,21 @@ import (
 // and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type TranscribeServiceAPI interface {
+	CreateVocabulary(*transcribeservice.CreateVocabularyInput) (*transcribeservice.CreateVocabularyOutput, error)
+	CreateVocabularyWithContext(aws.Context, *transcribeservice.CreateVocabularyInput, ...request.Option) (*transcribeservice.CreateVocabularyOutput, error)
+	CreateVocabularyRequest(*transcribeservice.CreateVocabularyInput) (*request.Request, *transcribeservice.CreateVocabularyOutput)
+
+	DeleteVocabulary(*transcribeservice.DeleteVocabularyInput) (*transcribeservice.DeleteVocabularyOutput, error)
+	DeleteVocabularyWithContext(aws.Context, *transcribeservice.DeleteVocabularyInput, ...request.Option) (*transcribeservice.DeleteVocabularyOutput, error)
+	DeleteVocabularyRequest(*transcribeservice.DeleteVocabularyInput) (*request.Request, *transcribeservice.DeleteVocabularyOutput)
+
 	GetTranscriptionJob(*transcribeservice.GetTranscriptionJobInput) (*transcribeservice.GetTranscriptionJobOutput, error)
 	GetTranscriptionJobWithContext(aws.Context, *transcribeservice.GetTranscriptionJobInput, ...request.Option) (*transcribeservice.GetTranscriptionJobOutput, error)
 	GetTranscriptionJobRequest(*transcribeservice.GetTranscriptionJobInput) (*request.Request, *transcribeservice.GetTranscriptionJobOutput)
+
+	GetVocabulary(*transcribeservice.GetVocabularyInput) (*transcribeservice.GetVocabularyOutput, error)
+	GetVocabularyWithContext(aws.Context, *transcribeservice.GetVocabularyInput, ...request.Option) (*transcribeservice.GetVocabularyOutput, error)
+	GetVocabularyRequest(*transcribeservice.GetVocabularyInput) (*request.Request, *transcribeservice.GetVocabularyOutput)
 
 	ListTranscriptionJobs(*transcribeservice.ListTranscriptionJobsInput) (*transcribeservice.ListTranscriptionJobsOutput, error)
 	ListTranscriptionJobsWithContext(aws.Context, *transcribeservice.ListTranscriptionJobsInput, ...request.Option) (*transcribeservice.ListTranscriptionJobsOutput, error)
@@ -71,9 +83,20 @@ type TranscribeServiceAPI interface {
 	ListTranscriptionJobsPages(*transcribeservice.ListTranscriptionJobsInput, func(*transcribeservice.ListTranscriptionJobsOutput, bool) bool) error
 	ListTranscriptionJobsPagesWithContext(aws.Context, *transcribeservice.ListTranscriptionJobsInput, func(*transcribeservice.ListTranscriptionJobsOutput, bool) bool, ...request.Option) error
 
+	ListVocabularies(*transcribeservice.ListVocabulariesInput) (*transcribeservice.ListVocabulariesOutput, error)
+	ListVocabulariesWithContext(aws.Context, *transcribeservice.ListVocabulariesInput, ...request.Option) (*transcribeservice.ListVocabulariesOutput, error)
+	ListVocabulariesRequest(*transcribeservice.ListVocabulariesInput) (*request.Request, *transcribeservice.ListVocabulariesOutput)
+
+	ListVocabulariesPages(*transcribeservice.ListVocabulariesInput, func(*transcribeservice.ListVocabulariesOutput, bool) bool) error
+	ListVocabulariesPagesWithContext(aws.Context, *transcribeservice.ListVocabulariesInput, func(*transcribeservice.ListVocabulariesOutput, bool) bool, ...request.Option) error
+
 	StartTranscriptionJob(*transcribeservice.StartTranscriptionJobInput) (*transcribeservice.StartTranscriptionJobOutput, error)
 	StartTranscriptionJobWithContext(aws.Context, *transcribeservice.StartTranscriptionJobInput, ...request.Option) (*transcribeservice.StartTranscriptionJobOutput, error)
 	StartTranscriptionJobRequest(*transcribeservice.StartTranscriptionJobInput) (*request.Request, *transcribeservice.StartTranscriptionJobOutput)
+
+	UpdateVocabulary(*transcribeservice.UpdateVocabularyInput) (*transcribeservice.UpdateVocabularyOutput, error)
+	UpdateVocabularyWithContext(aws.Context, *transcribeservice.UpdateVocabularyInput, ...request.Option) (*transcribeservice.UpdateVocabularyOutput, error)
+	UpdateVocabularyRequest(*transcribeservice.UpdateVocabularyInput) (*request.Request, *transcribeservice.UpdateVocabularyOutput)
 }
 
 var _ TranscribeServiceAPI = (*transcribeservice.TranscribeService)(nil)

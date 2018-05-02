@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ConnectionMode enumerates the values for connection mode.
 type ConnectionMode string
 
@@ -35,6 +36,13 @@ const (
 	ReadOnly ConnectionMode = "ReadOnly"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
+// PossibleConnectionModeValues returns an array of possible values for the ConnectionMode const type.
+func PossibleConnectionModeValues() []ConnectionMode {
+	return []ConnectionMode{All, ReadOnly}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -65,6 +73,13 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Deleting, Failed, Paused, Pausing, Preparing, Provisioning, Resuming, Scaling, Succeeded, Suspended, Suspending, Updating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -77,6 +92,13 @@ const (
 	Standard SkuTier = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Basic, Development, Standard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // State enumerates the values for state.
 type State string
 
@@ -107,6 +129,13 @@ const (
 	StateUpdating State = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{StateDeleting, StateFailed, StatePaused, StatePausing, StatePreparing, StateProvisioning, StateResuming, StateScaling, StateSucceeded, StateSuspended, StateSuspending, StateUpdating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Status enumerates the values for status.
 type Status string
 
@@ -115,6 +144,13 @@ const (
 	Live Status = "Live"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
+// PossibleStatusValues returns an array of possible values for the Status const type.
+func PossibleStatusValues() []Status {
+	return []Status{Live}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // CheckServerNameAvailabilityParameters details of server name request body.
 type CheckServerNameAvailabilityParameters struct {
 	// Name - Name for checking availability.
@@ -123,6 +159,7 @@ type CheckServerNameAvailabilityParameters struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // CheckServerNameAvailabilityResult the checking result of server name availibility.
 type CheckServerNameAvailabilityResult struct {
 	autorest.Response `json:"-"`
@@ -134,6 +171,7 @@ type CheckServerNameAvailabilityResult struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ErrorResponse describes the format of Error response.
 type ErrorResponse struct {
 	// Code - Error code
@@ -142,6 +180,7 @@ type ErrorResponse struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // GatewayDetails the gateway details.
 type GatewayDetails struct {
 	// GatewayResourceID - Gateway resource to be associated with the server.
@@ -152,6 +191,7 @@ type GatewayDetails struct {
 	DmtsClusterURI *string `json:"dmtsClusterUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // GatewayError detail of gateway errors.
 type GatewayError struct {
 	// Code - Error code of list gateway.
@@ -160,12 +200,14 @@ type GatewayError struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // GatewayListStatusError status of gateway is error.
 type GatewayListStatusError struct {
 	// Error - Error of the list gateway status.
 	Error *GatewayError `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // GatewayListStatusLive status of gateway is live.
 type GatewayListStatusLive struct {
 	autorest.Response `json:"-"`
@@ -173,6 +215,7 @@ type GatewayListStatusLive struct {
 	Status Status `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // IPv4FirewallRule the detail of firewall rule.
 type IPv4FirewallRule struct {
 	// FirewallRuleName - The rule name.
@@ -183,6 +226,7 @@ type IPv4FirewallRule struct {
 	RangeEnd *string `json:"rangeEnd,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // IPv4FirewallSettings an array of firewall rules.
 type IPv4FirewallSettings struct {
 	// FirewallRules - An array of firewall rules.
@@ -191,6 +235,7 @@ type IPv4FirewallSettings struct {
 	EnablePowerBIService *string `json:"enablePowerBIService,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Operation a Consumption REST API operation.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}.
@@ -199,6 +244,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // OperationDisplay the object that represents the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft.Consumption.
@@ -209,6 +255,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // OperationListResult result of listing consumption operations. It contains a list of operations and a URL link to
 // get the next set of results.
 type OperationListResult struct {
@@ -219,12 +266,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -241,16 +290,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -260,6 +312,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -277,12 +330,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -294,16 +349,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -312,6 +370,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // OperationStatus the status of operation.
 type OperationStatus struct {
 	autorest.Response `json:"-"`
@@ -329,6 +388,7 @@ type OperationStatus struct {
 	Error *ErrorResponse `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Resource represents an instance of an Analysis Services resource.
 type Resource struct {
 	// ID - An identifier that represents the Analysis Services resource.
@@ -345,6 +405,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -369,6 +430,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ResourceSku represents the SKU name and Azure pricing tier for Analysis Services resource.
 type ResourceSku struct {
 	// Name - Name of the SKU level.
@@ -379,6 +441,7 @@ type ResourceSku struct {
 	Capacity *int32 `json:"capacity,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Server represents an instance of an Analysis Services resource.
 type Server struct {
 	autorest.Response `json:"-"`
@@ -398,6 +461,7 @@ type Server struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // MarshalJSON is the custom marshaler for Server.
 func (s Server) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -425,6 +489,7 @@ func (s Server) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // UnmarshalJSON is the custom unmarshaler for Server struct.
 func (s *Server) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -503,12 +568,14 @@ func (s *Server) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServerAdministrators an array of administrator user identities.
 type ServerAdministrators struct {
 	// Members - An array of administrator user identities.
 	Members *[]string `json:"members,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServerMutableProperties an object that represents a set of mutable Analysis Services resource properties.
 type ServerMutableProperties struct {
 	// AsAdministrators - A collection of AS server administrators
@@ -523,6 +590,7 @@ type ServerMutableProperties struct {
 	QuerypoolConnectionMode ConnectionMode `json:"querypoolConnectionMode,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServerProperties properties of Analysis Services resource.
 type ServerProperties struct {
 	// State - The current state of Analysis Services resource. The state is to indicate more states outside of resource provisioning. Possible values include: 'StateDeleting', 'StateSucceeded', 'StateFailed', 'StatePaused', 'StateSuspended', 'StateProvisioning', 'StateUpdating', 'StateSuspending', 'StatePausing', 'StateResuming', 'StatePreparing', 'StateScaling'
@@ -543,6 +611,7 @@ type ServerProperties struct {
 	QuerypoolConnectionMode ConnectionMode `json:"querypoolConnectionMode,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Servers an array of Analysis Services resources.
 type Servers struct {
 	autorest.Response `json:"-"`
@@ -550,12 +619,14 @@ type Servers struct {
 	Value *[]Server `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersCreateFuture) Result(client ServersClient) (s Server, err error) {
@@ -598,12 +669,14 @@ func (future ServersCreateFuture) Result(client ServersClient) (s Server, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersDeleteFuture) Result(client ServersClient) (ar autorest.Response, err error) {
@@ -646,12 +719,14 @@ func (future ServersDeleteFuture) Result(client ServersClient) (ar autorest.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServersResumeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersResumeFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersResumeFuture) Result(client ServersClient) (ar autorest.Response, err error) {
@@ -694,12 +769,14 @@ func (future ServersResumeFuture) Result(client ServersClient) (ar autorest.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServersSuspendFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersSuspendFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersSuspendFuture) Result(client ServersClient) (ar autorest.Response, err error) {
@@ -742,12 +819,14 @@ func (future ServersSuspendFuture) Result(client ServersClient) (ar autorest.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServersUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersUpdateFuture) Result(client ServersClient) (s Server, err error) {
@@ -790,6 +869,7 @@ func (future ServersUpdateFuture) Result(client ServersClient) (s Server, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // ServerUpdateParameters provision request specification
 type ServerUpdateParameters struct {
 	// Sku - The SKU of the Analysis Services resource.
@@ -800,6 +880,7 @@ type ServerUpdateParameters struct {
 	*ServerMutableProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // MarshalJSON is the custom marshaler for ServerUpdateParameters.
 func (sup ServerUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -815,6 +896,7 @@ func (sup ServerUpdateParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // UnmarshalJSON is the custom unmarshaler for ServerUpdateParameters struct.
 func (sup *ServerUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -857,12 +939,14 @@ func (sup *ServerUpdateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // SkuDetailsForExistingResource an object that represents SKU details for existing resources.
 type SkuDetailsForExistingResource struct {
 	// Sku - The SKU in SKU details for existing resources.
 	Sku *ResourceSku `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // SkuEnumerationForExistingResourceResult an object that represents enumerating SKUs for existing resources.
 type SkuEnumerationForExistingResourceResult struct {
 	autorest.Response `json:"-"`
@@ -870,6 +954,7 @@ type SkuEnumerationForExistingResourceResult struct {
 	Value *[]SkuDetailsForExistingResource `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/analysisservices/preview/mgmt/2017-08-01-beta/analysisservices instead.
 // SkuEnumerationForNewResourceResult an object that represents enumerating SKUs for new resources.
 type SkuEnumerationForNewResourceResult struct {
 	autorest.Response `json:"-"`

@@ -40,10 +40,11 @@ func NewProtectionContainersClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Get gets details of the specific container registered to your Recovery Services Vault.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is name of the fabric where the container belongs.
-// containerName is name of the container whose details need to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - name of the fabric where the container belongs.
+// containerName - name of the container whose details need to be fetched.
 func (client ProtectionContainersClient) Get(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string) (result ProtectionContainerResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName)
 	if err != nil {
@@ -110,10 +111,11 @@ func (client ProtectionContainersClient) GetResponder(resp *http.Response) (resu
 }
 
 // Inquire inquires all the protectable items that are protectable under the given container.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric Name associated with the container. containerName
-// is name of the container in which inquiry needs to be triggered.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric Name associated with the container.
+// containerName - name of the container in which inquiry needs to be triggered.
 func (client ProtectionContainersClient) Inquire(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string) (result autorest.Response, err error) {
 	req, err := client.InquirePreparer(ctx, vaultName, resourceGroupName, fabricName, containerName)
 	if err != nil {
@@ -180,10 +182,11 @@ func (client ProtectionContainersClient) InquireResponder(resp *http.Response) (
 
 // Refresh discovers all the containers in the subscription that can be backed up to Recovery Services Vault. This is
 // an asynchronous operation. To know the status of the operation, call GetRefreshOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated the container. filter is oData
-// filter options.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated the container.
+// filter - oData filter options.
 func (client ProtectionContainersClient) Refresh(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, filter string) (result autorest.Response, err error) {
 	req, err := client.RefreshPreparer(ctx, vaultName, resourceGroupName, fabricName, filter)
 	if err != nil {
@@ -253,10 +256,12 @@ func (client ProtectionContainersClient) RefreshResponder(resp *http.Response) (
 // Register registers the container with Recovery Services vault.
 // This is an asynchronous operation. To track the operation status, use location header to call get latest status of
 // the operation.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the container. containerName
-// is name of the container to be registered. parameters is request body for operation
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the container.
+// containerName - name of the container to be registered.
+// parameters - request body for operation
 func (client ProtectionContainersClient) Register(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, parameters ProtectionContainerResource) (result ProtectionContainerResource, err error) {
 	req, err := client.RegisterPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, parameters)
 	if err != nil {
@@ -295,7 +300,7 @@ func (client ProtectionContainersClient) RegisterPreparer(ctx context.Context, v
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}", pathParameters),
@@ -327,10 +332,11 @@ func (client ProtectionContainersClient) RegisterResponder(resp *http.Response) 
 // Unregister unregisters the given container from your Recovery Services Vault.
 // This is an asynchronous operation. To determine whether the backend service has finished processing the request,
 // call Get Container Operation Result API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is name of the fabric where the container belongs.
-// containerName is name of the container which needs to be unregistered from the Recovery Services Vault.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - name of the fabric where the container belongs.
+// containerName - name of the container which needs to be unregistered from the Recovery Services Vault.
 func (client ProtectionContainersClient) Unregister(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string) (result autorest.Response, err error) {
 	req, err := client.UnregisterPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName)
 	if err != nil {

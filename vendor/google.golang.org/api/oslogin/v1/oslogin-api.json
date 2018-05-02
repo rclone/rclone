@@ -306,7 +306,7 @@
       }
     }
   },
-  "revision": "20180306",
+  "revision": "20180413",
   "rootUrl": "https://oslogin.googleapis.com/",
   "schemas": {
     "Empty": {
@@ -370,6 +370,20 @@
         },
         "homeDirectory": {
           "description": "The path to the home directory for this account.",
+          "type": "string"
+        },
+        "operatingSystemType": {
+          "description": "The operating system type where this account applies.",
+          "enum": [
+            "OPERATING_SYSTEM_TYPE_UNSPECIFIED",
+            "LINUX",
+            "WINDOWS"
+          ],
+          "enumDescriptions": [
+            "The operating system type associated with the user account information is\nunspecified.",
+            "Linux user account information.",
+            "Windows user account information."
+          ],
           "type": "string"
         },
         "primary": {

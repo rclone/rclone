@@ -16,6 +16,13 @@ const (
 	// An entity with the same name already exists.
 	ErrCodeIdempotencyException = "IdempotencyException"
 
+	// ErrCodeInvalidOperationException for service response error code
+	// "InvalidOperationException".
+	//
+	// There was an error with the update request, or you do not have sufficient
+	// permissions to update this VPC endpoint configuration.
+	ErrCodeInvalidOperationException = "InvalidOperationException"
+
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//

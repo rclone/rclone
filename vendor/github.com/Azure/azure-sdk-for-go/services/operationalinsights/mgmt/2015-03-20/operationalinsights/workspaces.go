@@ -31,19 +31,19 @@ type WorkspacesClient struct {
 }
 
 // NewWorkspacesClient creates an instance of the WorkspacesClient client.
-func NewWorkspacesClient(subscriptionID string) WorkspacesClient {
-	return NewWorkspacesClientWithBaseURI(DefaultBaseURI, subscriptionID)
+func NewWorkspacesClient(subscriptionID string, purgeID string) WorkspacesClient {
+	return NewWorkspacesClientWithBaseURI(DefaultBaseURI, subscriptionID, purgeID)
 }
 
 // NewWorkspacesClientWithBaseURI creates an instance of the WorkspacesClient client.
-func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) WorkspacesClient {
-	return WorkspacesClient{NewWithBaseURI(baseURI, subscriptionID)}
+func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) WorkspacesClient {
+	return WorkspacesClient{NewWithBaseURI(baseURI, subscriptionID, purgeID)}
 }
 
 // GetSchema gets the schema for a given workspace.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics workspace name
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics workspace name
 func (client WorkspacesClient) GetSchema(ctx context.Context, resourceGroupName string, workspaceName string) (result SearchGetSchemaResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -118,9 +118,10 @@ func (client WorkspacesClient) GetSchemaResponder(resp *http.Response) (result S
 // GetSearchResults submit a search for a given workspace. The response will contain an id to track the search. User
 // can use the id to poll the search status and get the full search result later if the search takes long time to
 // finish.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics workspace name parameters is the parameters required to execute a search query.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics workspace name
+// parameters - the parameters required to execute a search query.
 func (client WorkspacesClient) GetSearchResults(ctx context.Context, resourceGroupName string, workspaceName string, parameters SearchParameters) (result WorkspacesGetSearchResultsFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -161,7 +162,7 @@ func (client WorkspacesClient) GetSearchResultsPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/search", pathParameters),
@@ -261,11 +262,95 @@ func (client WorkspacesClient) ListLinkTargetsResponder(resp *http.Response) (re
 	return
 }
 
+// Purge purges data in an Log Analytics workspace by a set of user-defined filters.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics workspace name
+// body - describes the body of a request to purge data in a single table of an Log Analytics Workspace
+func (client WorkspacesClient) Purge(ctx context.Context, resourceGroupName string, workspaceName string, body WorkspacePurgeBody) (result WorkspacesPurgeFuture, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
+		{TargetValue: body,
+			Constraints: []validation.Constraint{{Target: "body.Table", Name: validation.Null, Rule: true, Chain: nil},
+				{Target: "body.Filters", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("operationalinsights.WorkspacesClient", "Purge", err.Error())
+	}
+
+	req, err := client.PurgePreparer(ctx, resourceGroupName, workspaceName, body)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesClient", "Purge", nil, "Failure preparing request")
+		return
+	}
+
+	result, err = client.PurgeSender(req)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesClient", "Purge", result.Response(), "Failure sending request")
+		return
+	}
+
+	return
+}
+
+// PurgePreparer prepares the Purge request.
+func (client WorkspacesClient) PurgePreparer(ctx context.Context, resourceGroupName string, workspaceName string, body WorkspacePurgeBody) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"workspaceName":     autorest.Encode("path", workspaceName),
+	}
+
+	const APIVersion = "2015-03-20"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/purge", pathParameters),
+		autorest.WithJSON(body),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// PurgeSender sends the Purge request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkspacesClient) PurgeSender(req *http.Request) (future WorkspacesPurgeFuture, err error) {
+	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
+	future.Future = azure.NewFuture(req)
+	future.req = req
+	_, err = future.Done(sender)
+	if err != nil {
+		return
+	}
+	err = autorest.Respond(future.Response(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	return
+}
+
+// PurgeResponder handles the response to the Purge request. The method always
+// closes the http.Response Body.
+func (client WorkspacesClient) PurgeResponder(resp *http.Response) (result SetObject, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // UpdateSearchResults gets updated search results for a given search query.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics workspace name ID is the id of the search that will have results updated. You can get the id from the
-// response of the GetResults call.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics workspace name
+// ID - the id of the search that will have results updated. You can get the id from the response of the
+// GetResults call.
 func (client WorkspacesClient) UpdateSearchResults(ctx context.Context, resourceGroupName string, workspaceName string, ID string) (result SearchResultsResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

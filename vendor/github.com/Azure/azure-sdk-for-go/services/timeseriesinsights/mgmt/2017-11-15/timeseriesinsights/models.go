@@ -37,6 +37,26 @@ const (
 	Reader AccessPolicyRole = "Reader"
 )
 
+// PossibleAccessPolicyRoleValues returns an array of possible values for the AccessPolicyRole const type.
+func PossibleAccessPolicyRoleValues() []AccessPolicyRole {
+	return []AccessPolicyRole{Contributor, Reader}
+}
+
+// DataStringComparisonBehavior enumerates the values for data string comparison behavior.
+type DataStringComparisonBehavior string
+
+const (
+	// Ordinal ...
+	Ordinal DataStringComparisonBehavior = "Ordinal"
+	// OrdinalIgnoreCase ...
+	OrdinalIgnoreCase DataStringComparisonBehavior = "OrdinalIgnoreCase"
+)
+
+// PossibleDataStringComparisonBehaviorValues returns an array of possible values for the DataStringComparisonBehavior const type.
+func PossibleDataStringComparisonBehaviorValues() []DataStringComparisonBehavior {
+	return []DataStringComparisonBehavior{Ordinal, OrdinalIgnoreCase}
+}
+
 // IngressState enumerates the values for ingress state.
 type IngressState string
 
@@ -53,6 +73,11 @@ const (
 	Unknown IngressState = "Unknown"
 )
 
+// PossibleIngressStateValues returns an array of possible values for the IngressState const type.
+func PossibleIngressStateValues() []IngressState {
+	return []IngressState{Disabled, Paused, Ready, Running, Unknown}
+}
+
 // Kind enumerates the values for kind.
 type Kind string
 
@@ -64,6 +89,11 @@ const (
 	// KindMicrosoftIoTHub ...
 	KindMicrosoftIoTHub Kind = "Microsoft.IoTHub"
 )
+
+// PossibleKindValues returns an array of possible values for the Kind const type.
+func PossibleKindValues() []Kind {
+	return []Kind{KindEventSourceCreateOrUpdateParameters, KindMicrosoftEventHub, KindMicrosoftIoTHub}
+}
 
 // KindBasicEventSourceResource enumerates the values for kind basic event source resource.
 type KindBasicEventSourceResource string
@@ -77,6 +107,11 @@ const (
 	KindBasicEventSourceResourceKindMicrosoftIotHub KindBasicEventSourceResource = "Microsoft.IotHub"
 )
 
+// PossibleKindBasicEventSourceResourceValues returns an array of possible values for the KindBasicEventSourceResource const type.
+func PossibleKindBasicEventSourceResourceValues() []KindBasicEventSourceResource {
+	return []KindBasicEventSourceResource{KindBasicEventSourceResourceKindEventSourceResource, KindBasicEventSourceResourceKindMicrosoftEventHub, KindBasicEventSourceResourceKindMicrosoftIotHub}
+}
+
 // LocalTimestampFormat enumerates the values for local timestamp format.
 type LocalTimestampFormat string
 
@@ -88,6 +123,24 @@ const (
 	// TimeSpan ...
 	TimeSpan LocalTimestampFormat = "TimeSpan"
 )
+
+// PossibleLocalTimestampFormatValues returns an array of possible values for the LocalTimestampFormat const type.
+func PossibleLocalTimestampFormatValues() []LocalTimestampFormat {
+	return []LocalTimestampFormat{Embedded, Iana, TimeSpan}
+}
+
+// PropertyType enumerates the values for property type.
+type PropertyType string
+
+const (
+	// String ...
+	String PropertyType = "String"
+)
+
+// PossiblePropertyTypeValues returns an array of possible values for the PropertyType const type.
+func PossiblePropertyTypeValues() []PropertyType {
+	return []PropertyType{String}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -107,19 +160,29 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Accepted, Creating, Deleting, Failed, Succeeded, Updating}
+}
+
 // ReferenceDataKeyPropertyType enumerates the values for reference data key property type.
 type ReferenceDataKeyPropertyType string
 
 const (
-	// Bool ...
-	Bool ReferenceDataKeyPropertyType = "Bool"
-	// DateTime ...
-	DateTime ReferenceDataKeyPropertyType = "DateTime"
-	// Double ...
-	Double ReferenceDataKeyPropertyType = "Double"
-	// String ...
-	String ReferenceDataKeyPropertyType = "String"
+	// ReferenceDataKeyPropertyTypeBool ...
+	ReferenceDataKeyPropertyTypeBool ReferenceDataKeyPropertyType = "Bool"
+	// ReferenceDataKeyPropertyTypeDateTime ...
+	ReferenceDataKeyPropertyTypeDateTime ReferenceDataKeyPropertyType = "DateTime"
+	// ReferenceDataKeyPropertyTypeDouble ...
+	ReferenceDataKeyPropertyTypeDouble ReferenceDataKeyPropertyType = "Double"
+	// ReferenceDataKeyPropertyTypeString ...
+	ReferenceDataKeyPropertyTypeString ReferenceDataKeyPropertyType = "String"
 )
+
+// PossibleReferenceDataKeyPropertyTypeValues returns an array of possible values for the ReferenceDataKeyPropertyType const type.
+func PossibleReferenceDataKeyPropertyTypeValues() []ReferenceDataKeyPropertyType {
+	return []ReferenceDataKeyPropertyType{ReferenceDataKeyPropertyTypeBool, ReferenceDataKeyPropertyTypeDateTime, ReferenceDataKeyPropertyTypeDouble, ReferenceDataKeyPropertyTypeString}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -131,6 +194,11 @@ const (
 	S2 SkuName = "S2"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{S1, S2}
+}
+
 // StorageLimitExceededBehavior enumerates the values for storage limit exceeded behavior.
 type StorageLimitExceededBehavior string
 
@@ -141,9 +209,23 @@ const (
 	PurgeOldData StorageLimitExceededBehavior = "PurgeOldData"
 )
 
+// PossibleStorageLimitExceededBehaviorValues returns an array of possible values for the StorageLimitExceededBehavior const type.
+func PossibleStorageLimitExceededBehaviorValues() []StorageLimitExceededBehavior {
+	return []StorageLimitExceededBehavior{PauseIngress, PurgeOldData}
+}
+
 // AccessPolicyCreateOrUpdateParameters ...
 type AccessPolicyCreateOrUpdateParameters struct {
 	*AccessPolicyResourceProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccessPolicyCreateOrUpdateParameters.
+func (apcoup AccessPolicyCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if apcoup.AccessPolicyResourceProperties != nil {
+		objectMap["properties"] = apcoup.AccessPolicyResourceProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccessPolicyCreateOrUpdateParameters struct.
@@ -197,6 +279,24 @@ type AccessPolicyResource struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccessPolicyResource.
+func (apr AccessPolicyResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if apr.AccessPolicyResourceProperties != nil {
+		objectMap["properties"] = apr.AccessPolicyResourceProperties
+	}
+	if apr.ID != nil {
+		objectMap["id"] = apr.ID
+	}
+	if apr.Name != nil {
+		objectMap["name"] = apr.Name
+	}
+	if apr.Type != nil {
+		objectMap["type"] = apr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccessPolicyResource struct.
@@ -263,6 +363,15 @@ type AccessPolicyResourceProperties struct {
 // AccessPolicyUpdateParameters ...
 type AccessPolicyUpdateParameters struct {
 	*AccessPolicyMutableProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccessPolicyUpdateParameters.
+func (apup AccessPolicyUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if apup.AccessPolicyMutableProperties != nil {
+		objectMap["properties"] = apup.AccessPolicyMutableProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccessPolicyUpdateParameters struct.
@@ -426,6 +535,8 @@ type EnvironmentCreationProperties struct {
 	DataRetentionTime *string `json:"dataRetentionTime,omitempty"`
 	// StorageLimitExceededBehavior - The behavior the Time Series Insights service should take when the environment's capacity has been exceeded. If "PauseIngress" is specified, new events will not be read from the event source. If "PurgeOldData" is specified, new events will continue to be read and old events will be deleted from the environment. The default behavior is PurgeOldData. Possible values include: 'PurgeOldData', 'PauseIngress'
 	StorageLimitExceededBehavior StorageLimitExceededBehavior `json:"storageLimitExceededBehavior,omitempty"`
+	// PartitionKeyProperties - The list of partition keys according to which the data in the environment will be ordered.
+	PartitionKeyProperties *[]PartitionKeyProperty `json:"partitionKeyProperties,omitempty"`
 }
 
 // EnvironmentListResponse the response of the List Environments operation.
@@ -441,6 +552,8 @@ type EnvironmentMutableProperties struct {
 	DataRetentionTime *string `json:"dataRetentionTime,omitempty"`
 	// StorageLimitExceededBehavior - The behavior the Time Series Insights service should take when the environment's capacity has been exceeded. If "PauseIngress" is specified, new events will not be read from the event source. If "PurgeOldData" is specified, new events will continue to be read and old events will be deleted from the environment. The default behavior is PurgeOldData. Possible values include: 'PurgeOldData', 'PauseIngress'
 	StorageLimitExceededBehavior StorageLimitExceededBehavior `json:"storageLimitExceededBehavior,omitempty"`
+	// PartitionKeyProperties - The list of event properties which will be used to partition data in the environment.
+	PartitionKeyProperties *[]PartitionKeyProperty `json:"partitionKeyProperties,omitempty"`
 }
 
 // EnvironmentResource an environment is a set of time-series data avaliable for query, and is the top level Azure
@@ -573,6 +686,8 @@ type EnvironmentResourceProperties struct {
 	DataRetentionTime *string `json:"dataRetentionTime,omitempty"`
 	// StorageLimitExceededBehavior - The behavior the Time Series Insights service should take when the environment's capacity has been exceeded. If "PauseIngress" is specified, new events will not be read from the event source. If "PurgeOldData" is specified, new events will continue to be read and old events will be deleted from the environment. The default behavior is PurgeOldData. Possible values include: 'PurgeOldData', 'PauseIngress'
 	StorageLimitExceededBehavior StorageLimitExceededBehavior `json:"storageLimitExceededBehavior,omitempty"`
+	// PartitionKeyProperties - The list of partition keys according to which the data in the environment will be ordered.
+	PartitionKeyProperties *[]PartitionKeyProperty `json:"partitionKeyProperties,omitempty"`
 	// ProvisioningState - Provisioning state of the resource. Possible values include: 'Accepted', 'Creating', 'Updating', 'Succeeded', 'Failed', 'Deleting'
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 	// CreationTime - The time the resource was created.
@@ -803,6 +918,9 @@ func (ehescoup EventHubEventSourceCreateOrUpdateParameters) MarshalJSON() ([]byt
 	if ehescoup.EventHubEventSourceCreationProperties != nil {
 		objectMap["properties"] = ehescoup.EventHubEventSourceCreationProperties
 	}
+	if ehescoup.Kind != "" {
+		objectMap["kind"] = ehescoup.Kind
+	}
 	if ehescoup.Location != nil {
 		objectMap["location"] = ehescoup.Location
 	}
@@ -812,34 +930,24 @@ func (ehescoup EventHubEventSourceCreateOrUpdateParameters) MarshalJSON() ([]byt
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
-func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsEnvironmentCreateOrUpdateParameters() (*EnvironmentCreateOrUpdateParameters, bool) {
-	return nil, false
-}
-
-// AsEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
-func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
-	return nil, false
-}
-
-// AsBasicEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
-func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
-	return &ehescoup, true
-}
-
-// AsEventHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
+// AsEventHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventHubEventSourceCreateOrUpdateParameters.
 func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsEventHubEventSourceCreateOrUpdateParameters() (*EventHubEventSourceCreateOrUpdateParameters, bool) {
 	return &ehescoup, true
 }
 
-// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
+// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventHubEventSourceCreateOrUpdateParameters.
 func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsIoTHubEventSourceCreateOrUpdateParameters() (*IoTHubEventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
 }
 
-// AsReferenceDataSetCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventHubEventSourceCreateOrUpdateParameters.
-func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsReferenceDataSetCreateOrUpdateParameters() (*ReferenceDataSetCreateOrUpdateParameters, bool) {
+// AsEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventHubEventSourceCreateOrUpdateParameters.
+func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
+}
+
+// AsBasicEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventHubEventSourceCreateOrUpdateParameters.
+func (ehescoup EventHubEventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
+	return &ehescoup, true
 }
 
 // UnmarshalJSON is the custom unmarshaler for EventHubEventSourceCreateOrUpdateParameters struct.
@@ -859,6 +967,15 @@ func (ehescoup *EventHubEventSourceCreateOrUpdateParameters) UnmarshalJSON(body 
 					return err
 				}
 				ehescoup.EventHubEventSourceCreationProperties = &eventHubEventSourceCreationProperties
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				ehescoup.Kind = kind
 			}
 		case "location":
 			if v != nil {
@@ -942,6 +1059,9 @@ func (ehesr EventHubEventSourceResource) MarshalJSON() ([]byte, error) {
 	if ehesr.EventHubEventSourceResourceProperties != nil {
 		objectMap["properties"] = ehesr.EventHubEventSourceResourceProperties
 	}
+	if ehesr.Kind != "" {
+		objectMap["kind"] = ehesr.Kind
+	}
 	if ehesr.Location != nil {
 		objectMap["location"] = ehesr.Location
 	}
@@ -960,34 +1080,24 @@ func (ehesr EventHubEventSourceResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
-func (ehesr EventHubEventSourceResource) AsEnvironmentResource() (*EnvironmentResource, bool) {
-	return nil, false
-}
-
-// AsEventSourceResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
-func (ehesr EventHubEventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
-	return nil, false
-}
-
-// AsBasicEventSourceResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
-func (ehesr EventHubEventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
-	return &ehesr, true
-}
-
-// AsEventHubEventSourceResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
+// AsEventHubEventSourceResource is the BasicEventSourceResource implementation for EventHubEventSourceResource.
 func (ehesr EventHubEventSourceResource) AsEventHubEventSourceResource() (*EventHubEventSourceResource, bool) {
 	return &ehesr, true
 }
 
-// AsIoTHubEventSourceResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
+// AsIoTHubEventSourceResource is the BasicEventSourceResource implementation for EventHubEventSourceResource.
 func (ehesr EventHubEventSourceResource) AsIoTHubEventSourceResource() (*IoTHubEventSourceResource, bool) {
 	return nil, false
 }
 
-// AsReferenceDataSetResource is the BasicTrackedResource implementation for EventHubEventSourceResource.
-func (ehesr EventHubEventSourceResource) AsReferenceDataSetResource() (*ReferenceDataSetResource, bool) {
+// AsEventSourceResource is the BasicEventSourceResource implementation for EventHubEventSourceResource.
+func (ehesr EventHubEventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
 	return nil, false
+}
+
+// AsBasicEventSourceResource is the BasicEventSourceResource implementation for EventHubEventSourceResource.
+func (ehesr EventHubEventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
+	return &ehesr, true
 }
 
 // UnmarshalJSON is the custom unmarshaler for EventHubEventSourceResource struct.
@@ -1007,6 +1117,15 @@ func (ehesr *EventHubEventSourceResource) UnmarshalJSON(body []byte) error {
 					return err
 				}
 				ehesr.EventHubEventSourceResourceProperties = &eventHubEventSourceResourceProperties
+			}
+		case "kind":
+			if v != nil {
+				var kind KindBasicEventSourceResource
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				ehesr.Kind = kind
 			}
 		case "location":
 			if v != nil {
@@ -1167,7 +1286,7 @@ func unmarshalBasicEventSourceCreateOrUpdateParameters(body []byte) (BasicEventS
 		return nil, err
 	}
 
-	switch m[""] {
+	switch m["kind"] {
 	case string(KindMicrosoftEventHub):
 		var ehescoup EventHubEventSourceCreateOrUpdateParameters
 		err := json.Unmarshal(body, &ehescoup)
@@ -1205,7 +1324,9 @@ func unmarshalBasicEventSourceCreateOrUpdateParametersArray(body []byte) ([]Basi
 func (escoup EventSourceCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
 	escoup.Kind = KindEventSourceCreateOrUpdateParameters
 	objectMap := make(map[string]interface{})
-	objectMap["kind"] = escoup.Kind
+	if escoup.Kind != "" {
+		objectMap["kind"] = escoup.Kind
+	}
 	if escoup.Location != nil {
 		objectMap["location"] = escoup.Location
 	}
@@ -1215,34 +1336,24 @@ func (escoup EventSourceCreateOrUpdateParameters) MarshalJSON() ([]byte, error) 
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
-func (escoup EventSourceCreateOrUpdateParameters) AsEnvironmentCreateOrUpdateParameters() (*EnvironmentCreateOrUpdateParameters, bool) {
-	return nil, false
-}
-
-// AsEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
-func (escoup EventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
-	return &escoup, true
-}
-
-// AsBasicEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
-func (escoup EventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
-	return &escoup, true
-}
-
-// AsEventHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
+// AsEventHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventSourceCreateOrUpdateParameters.
 func (escoup EventSourceCreateOrUpdateParameters) AsEventHubEventSourceCreateOrUpdateParameters() (*EventHubEventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
 }
 
-// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
+// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventSourceCreateOrUpdateParameters.
 func (escoup EventSourceCreateOrUpdateParameters) AsIoTHubEventSourceCreateOrUpdateParameters() (*IoTHubEventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
 }
 
-// AsReferenceDataSetCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for EventSourceCreateOrUpdateParameters.
-func (escoup EventSourceCreateOrUpdateParameters) AsReferenceDataSetCreateOrUpdateParameters() (*ReferenceDataSetCreateOrUpdateParameters, bool) {
-	return nil, false
+// AsEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventSourceCreateOrUpdateParameters.
+func (escoup EventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
+	return &escoup, true
+}
+
+// AsBasicEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for EventSourceCreateOrUpdateParameters.
+func (escoup EventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
+	return &escoup, true
 }
 
 // EventSourceListResponse the response of the List EventSources operation.
@@ -1318,7 +1429,7 @@ func unmarshalBasicEventSourceResource(body []byte) (BasicEventSourceResource, e
 		return nil, err
 	}
 
-	switch m[""] {
+	switch m["kind"] {
 	case string(KindBasicEventSourceResourceKindMicrosoftEventHub):
 		var ehesr EventHubEventSourceResource
 		err := json.Unmarshal(body, &ehesr)
@@ -1356,7 +1467,9 @@ func unmarshalBasicEventSourceResourceArray(body []byte) ([]BasicEventSourceReso
 func (esr EventSourceResource) MarshalJSON() ([]byte, error) {
 	esr.Kind = KindBasicEventSourceResourceKindEventSourceResource
 	objectMap := make(map[string]interface{})
-	objectMap["kind"] = esr.Kind
+	if esr.Kind != "" {
+		objectMap["kind"] = esr.Kind
+	}
 	if esr.Location != nil {
 		objectMap["location"] = esr.Location
 	}
@@ -1375,34 +1488,24 @@ func (esr EventSourceResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentResource is the BasicTrackedResource implementation for EventSourceResource.
-func (esr EventSourceResource) AsEnvironmentResource() (*EnvironmentResource, bool) {
-	return nil, false
-}
-
-// AsEventSourceResource is the BasicTrackedResource implementation for EventSourceResource.
-func (esr EventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
-	return &esr, true
-}
-
-// AsBasicEventSourceResource is the BasicTrackedResource implementation for EventSourceResource.
-func (esr EventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
-	return &esr, true
-}
-
-// AsEventHubEventSourceResource is the BasicTrackedResource implementation for EventSourceResource.
+// AsEventHubEventSourceResource is the BasicEventSourceResource implementation for EventSourceResource.
 func (esr EventSourceResource) AsEventHubEventSourceResource() (*EventHubEventSourceResource, bool) {
 	return nil, false
 }
 
-// AsIoTHubEventSourceResource is the BasicTrackedResource implementation for EventSourceResource.
+// AsIoTHubEventSourceResource is the BasicEventSourceResource implementation for EventSourceResource.
 func (esr EventSourceResource) AsIoTHubEventSourceResource() (*IoTHubEventSourceResource, bool) {
 	return nil, false
 }
 
-// AsReferenceDataSetResource is the BasicTrackedResource implementation for EventSourceResource.
-func (esr EventSourceResource) AsReferenceDataSetResource() (*ReferenceDataSetResource, bool) {
-	return nil, false
+// AsEventSourceResource is the BasicEventSourceResource implementation for EventSourceResource.
+func (esr EventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
+	return &esr, true
+}
+
+// AsBasicEventSourceResource is the BasicEventSourceResource implementation for EventSourceResource.
+func (esr EventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
+	return &esr, true
 }
 
 // EventSourceResourceModel ...
@@ -1482,7 +1585,9 @@ func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) MarshalJSON() ([]byte
 	if ithescoup.IoTHubEventSourceCreationProperties != nil {
 		objectMap["properties"] = ithescoup.IoTHubEventSourceCreationProperties
 	}
-	objectMap["kind"] = ithescoup.Kind
+	if ithescoup.Kind != "" {
+		objectMap["kind"] = ithescoup.Kind
+	}
 	if ithescoup.Location != nil {
 		objectMap["location"] = ithescoup.Location
 	}
@@ -1492,34 +1597,24 @@ func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) MarshalJSON() ([]byte
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
-func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsEnvironmentCreateOrUpdateParameters() (*EnvironmentCreateOrUpdateParameters, bool) {
-	return nil, false
-}
-
-// AsEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
-func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
-	return nil, false
-}
-
-// AsBasicEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
-func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
-	return &ithescoup, true
-}
-
-// AsEventHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
+// AsEventHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for IoTHubEventSourceCreateOrUpdateParameters.
 func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsEventHubEventSourceCreateOrUpdateParameters() (*EventHubEventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
 }
 
-// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
+// AsIoTHubEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for IoTHubEventSourceCreateOrUpdateParameters.
 func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsIoTHubEventSourceCreateOrUpdateParameters() (*IoTHubEventSourceCreateOrUpdateParameters, bool) {
 	return &ithescoup, true
 }
 
-// AsReferenceDataSetCreateOrUpdateParameters is the BasicCreateOrUpdateTrackedResourceProperties implementation for IoTHubEventSourceCreateOrUpdateParameters.
-func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsReferenceDataSetCreateOrUpdateParameters() (*ReferenceDataSetCreateOrUpdateParameters, bool) {
+// AsEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for IoTHubEventSourceCreateOrUpdateParameters.
+func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsEventSourceCreateOrUpdateParameters() (*EventSourceCreateOrUpdateParameters, bool) {
 	return nil, false
+}
+
+// AsBasicEventSourceCreateOrUpdateParameters is the BasicEventSourceCreateOrUpdateParameters implementation for IoTHubEventSourceCreateOrUpdateParameters.
+func (ithescoup IoTHubEventSourceCreateOrUpdateParameters) AsBasicEventSourceCreateOrUpdateParameters() (BasicEventSourceCreateOrUpdateParameters, bool) {
+	return &ithescoup, true
 }
 
 // UnmarshalJSON is the custom unmarshaler for IoTHubEventSourceCreateOrUpdateParameters struct.
@@ -1629,7 +1724,9 @@ func (ithesr IoTHubEventSourceResource) MarshalJSON() ([]byte, error) {
 	if ithesr.IoTHubEventSourceResourceProperties != nil {
 		objectMap["properties"] = ithesr.IoTHubEventSourceResourceProperties
 	}
-	objectMap["kind"] = ithesr.Kind
+	if ithesr.Kind != "" {
+		objectMap["kind"] = ithesr.Kind
+	}
 	if ithesr.Location != nil {
 		objectMap["location"] = ithesr.Location
 	}
@@ -1648,34 +1745,24 @@ func (ithesr IoTHubEventSourceResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// AsEnvironmentResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
-func (ithesr IoTHubEventSourceResource) AsEnvironmentResource() (*EnvironmentResource, bool) {
-	return nil, false
-}
-
-// AsEventSourceResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
-func (ithesr IoTHubEventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
-	return nil, false
-}
-
-// AsBasicEventSourceResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
-func (ithesr IoTHubEventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
-	return &ithesr, true
-}
-
-// AsEventHubEventSourceResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
+// AsEventHubEventSourceResource is the BasicEventSourceResource implementation for IoTHubEventSourceResource.
 func (ithesr IoTHubEventSourceResource) AsEventHubEventSourceResource() (*EventHubEventSourceResource, bool) {
 	return nil, false
 }
 
-// AsIoTHubEventSourceResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
+// AsIoTHubEventSourceResource is the BasicEventSourceResource implementation for IoTHubEventSourceResource.
 func (ithesr IoTHubEventSourceResource) AsIoTHubEventSourceResource() (*IoTHubEventSourceResource, bool) {
 	return &ithesr, true
 }
 
-// AsReferenceDataSetResource is the BasicTrackedResource implementation for IoTHubEventSourceResource.
-func (ithesr IoTHubEventSourceResource) AsReferenceDataSetResource() (*ReferenceDataSetResource, bool) {
+// AsEventSourceResource is the BasicEventSourceResource implementation for IoTHubEventSourceResource.
+func (ithesr IoTHubEventSourceResource) AsEventSourceResource() (*EventSourceResource, bool) {
 	return nil, false
+}
+
+// AsBasicEventSourceResource is the BasicEventSourceResource implementation for IoTHubEventSourceResource.
+func (ithesr IoTHubEventSourceResource) AsBasicEventSourceResource() (BasicEventSourceResource, bool) {
+	return &ithesr, true
 }
 
 // UnmarshalJSON is the custom unmarshaler for IoTHubEventSourceResource struct.
@@ -1968,6 +2055,15 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// PartitionKeyProperty the structure of the property that a partition key can have. An environment can have
+// multiple such properties.
+type PartitionKeyProperty struct {
+	// Name - The name of the property.
+	Name *string `json:"name,omitempty"`
+	// Type - The type of the property. Possible values include: 'String'
+	Type PropertyType `json:"type,omitempty"`
+}
+
 // ReferenceDataSetCreateOrUpdateParameters ...
 type ReferenceDataSetCreateOrUpdateParameters struct {
 	*ReferenceDataSetCreationProperties `json:"properties,omitempty"`
@@ -2038,6 +2134,8 @@ func (rdscoup *ReferenceDataSetCreateOrUpdateParameters) UnmarshalJSON(body []by
 type ReferenceDataSetCreationProperties struct {
 	// KeyProperties - The list of key properties for the reference data set.
 	KeyProperties *[]ReferenceDataSetKeyProperty `json:"keyProperties,omitempty"`
+	// DataStringComparisonBehavior - The reference data set key comparison behavior can be set using this property. By default, the value is 'Ordinal' - which means case sensitive key comparison will be performed while joining reference data with events or while adding new reference data. When 'OrdinalIgnoreCase' is set, case insensitive comparison will be used. Possible values include: 'Ordinal', 'OrdinalIgnoreCase'
+	DataStringComparisonBehavior DataStringComparisonBehavior `json:"dataStringComparisonBehavior,omitempty"`
 }
 
 // ReferenceDataSetKeyProperty a key property for the reference data set. A reference data set can have multiple
@@ -2045,7 +2143,7 @@ type ReferenceDataSetCreationProperties struct {
 type ReferenceDataSetKeyProperty struct {
 	// Name - The name of the key property.
 	Name *string `json:"name,omitempty"`
-	// Type - The type of the key property. Possible values include: 'String', 'Double', 'Bool', 'DateTime'
+	// Type - The type of the key property. Possible values include: 'ReferenceDataKeyPropertyTypeString', 'ReferenceDataKeyPropertyTypeDouble', 'ReferenceDataKeyPropertyTypeBool', 'ReferenceDataKeyPropertyTypeDateTime'
 	Type ReferenceDataKeyPropertyType `json:"type,omitempty"`
 }
 
@@ -2171,6 +2269,8 @@ func (rdsr *ReferenceDataSetResource) UnmarshalJSON(body []byte) error {
 type ReferenceDataSetResourceProperties struct {
 	// KeyProperties - The list of key properties for the reference data set.
 	KeyProperties *[]ReferenceDataSetKeyProperty `json:"keyProperties,omitempty"`
+	// DataStringComparisonBehavior - The reference data set key comparison behavior can be set using this property. By default, the value is 'Ordinal' - which means case sensitive key comparison will be performed while joining reference data with events or while adding new reference data. When 'OrdinalIgnoreCase' is set, case insensitive comparison will be used. Possible values include: 'Ordinal', 'OrdinalIgnoreCase'
+	DataStringComparisonBehavior DataStringComparisonBehavior `json:"dataStringComparisonBehavior,omitempty"`
 	// ProvisioningState - Provisioning state of the resource. Possible values include: 'Accepted', 'Creating', 'Updating', 'Succeeded', 'Failed', 'Deleting'
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 	// CreationTime - The time the resource was created.

@@ -14,7 +14,7 @@ const opCreateEnvironmentEC2 = "CreateEnvironmentEC2"
 
 // CreateEnvironmentEC2Request generates a "aws/request.Request" representing the
 // client's request for the CreateEnvironmentEC2 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -113,7 +113,7 @@ const opCreateEnvironmentMembership = "CreateEnvironmentMembership"
 
 // CreateEnvironmentMembershipRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEnvironmentMembership operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -210,7 +210,7 @@ const opDeleteEnvironment = "DeleteEnvironment"
 
 // DeleteEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -308,7 +308,7 @@ const opDeleteEnvironmentMembership = "DeleteEnvironmentMembership"
 
 // DeleteEnvironmentMembershipRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEnvironmentMembership operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -405,7 +405,7 @@ const opDescribeEnvironmentMemberships = "DescribeEnvironmentMemberships"
 
 // DescribeEnvironmentMembershipsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentMemberships operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -559,7 +559,7 @@ const opDescribeEnvironmentStatus = "DescribeEnvironmentStatus"
 
 // DescribeEnvironmentStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -656,7 +656,7 @@ const opDescribeEnvironments = "DescribeEnvironments"
 
 // DescribeEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -753,7 +753,7 @@ const opListEnvironments = "ListEnvironments"
 
 // ListEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the ListEnvironments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -906,7 +906,7 @@ const opUpdateEnvironment = "UpdateEnvironment"
 
 // UpdateEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1003,7 +1003,7 @@ const opUpdateEnvironmentMembership = "UpdateEnvironmentMembership"
 
 // UpdateEnvironmentMembershipRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEnvironmentMembership operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AuthenticationType = original.AuthenticationType
 
 const (
@@ -392,57 +384,133 @@ type SQLMigrationTaskInput = original.SQLMigrationTaskInput
 type TaskList = original.TaskList
 type TaskListIterator = original.TaskListIterator
 type TaskListPage = original.TaskListPage
-type TaskOutput = original.TaskOutput
 type TrackedResource = original.TrackedResource
 type ValidationError = original.ValidationError
 type WaitStatistics = original.WaitStatistics
 type OperationsClient = original.OperationsClient
+type ProjectsClient = original.ProjectsClient
+type ResourceSkusClient = original.ResourceSkusClient
+type ServicesClient = original.ServicesClient
+type TasksClient = original.TasksClient
+type UsagesClient = original.UsagesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAuthenticationTypeValues() []AuthenticationType {
+	return original.PossibleAuthenticationTypeValues()
+}
+func PossibleDatabaseCompatLevelValues() []DatabaseCompatLevel {
+	return original.PossibleDatabaseCompatLevelValues()
+}
+func PossibleDatabaseFileTypeValues() []DatabaseFileType {
+	return original.PossibleDatabaseFileTypeValues()
+}
+func PossibleDatabaseMigrationStageValues() []DatabaseMigrationStage {
+	return original.PossibleDatabaseMigrationStageValues()
+}
+func PossibleDatabaseStateValues() []DatabaseState {
+	return original.PossibleDatabaseStateValues()
+}
+func PossibleErrorTypeValues() []ErrorType {
+	return original.PossibleErrorTypeValues()
+}
+func PossibleMigrationStateValues() []MigrationState {
+	return original.PossibleMigrationStateValues()
+}
+func PossibleMigrationStatusValues() []MigrationStatus {
+	return original.PossibleMigrationStatusValues()
+}
+func PossibleNameCheckFailureReasonValues() []NameCheckFailureReason {
+	return original.PossibleNameCheckFailureReasonValues()
+}
+func PossibleObjectTypeValues() []ObjectType {
+	return original.PossibleObjectTypeValues()
+}
+func PossibleProjectProvisioningStateValues() []ProjectProvisioningState {
+	return original.PossibleProjectProvisioningStateValues()
+}
+func PossibleProjectSourcePlatformValues() []ProjectSourcePlatform {
+	return original.PossibleProjectSourcePlatformValues()
+}
+func PossibleProjectTargetPlatformValues() []ProjectTargetPlatform {
+	return original.PossibleProjectTargetPlatformValues()
+}
+func PossibleResourceSkuCapacityScaleTypeValues() []ResourceSkuCapacityScaleType {
+	return original.PossibleResourceSkuCapacityScaleTypeValues()
+}
+func PossibleResourceSkuRestrictionsReasonCodeValues() []ResourceSkuRestrictionsReasonCode {
+	return original.PossibleResourceSkuRestrictionsReasonCodeValues()
+}
+func PossibleResourceSkuRestrictionsTypeValues() []ResourceSkuRestrictionsType {
+	return original.PossibleResourceSkuRestrictionsTypeValues()
+}
+func PossibleResultTypeValues() []ResultType {
+	return original.PossibleResultTypeValues()
+}
+func PossibleResultTypeBasicConnectToSourceSQLServerTaskOutputValues() []ResultTypeBasicConnectToSourceSQLServerTaskOutput {
+	return original.PossibleResultTypeBasicConnectToSourceSQLServerTaskOutputValues()
+}
+func PossibleServerLevelPermissionsGroupValues() []ServerLevelPermissionsGroup {
+	return original.PossibleServerLevelPermissionsGroupValues()
+}
+func PossibleServiceProvisioningStateValues() []ServiceProvisioningState {
+	return original.PossibleServiceProvisioningStateValues()
+}
+func PossibleServiceScalabilityValues() []ServiceScalability {
+	return original.PossibleServiceScalabilityValues()
+}
+func PossibleSeverityValues() []Severity {
+	return original.PossibleSeverityValues()
+}
+func PossibleTaskStateValues() []TaskState {
+	return original.PossibleTaskStateValues()
+}
+func PossibleTaskTypeValues() []TaskType {
+	return original.PossibleTaskTypeValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleUpdateActionTypeValues() []UpdateActionType {
+	return original.PossibleUpdateActionTypeValues()
+}
+func PossibleValidationStatusValues() []ValidationStatus {
+	return original.PossibleValidationStatusValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ProjectsClient = original.ProjectsClient
-
 func NewProjectsClient(subscriptionID string) ProjectsClient {
 	return original.NewProjectsClient(subscriptionID)
 }
 func NewProjectsClientWithBaseURI(baseURI string, subscriptionID string) ProjectsClient {
 	return original.NewProjectsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ResourceSkusClient = original.ResourceSkusClient
-
 func NewResourceSkusClient(subscriptionID string) ResourceSkusClient {
 	return original.NewResourceSkusClient(subscriptionID)
 }
 func NewResourceSkusClientWithBaseURI(baseURI string, subscriptionID string) ResourceSkusClient {
 	return original.NewResourceSkusClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ServicesClient = original.ServicesClient
-
 func NewServicesClient(subscriptionID string) ServicesClient {
 	return original.NewServicesClient(subscriptionID)
 }
 func NewServicesClientWithBaseURI(baseURI string, subscriptionID string) ServicesClient {
 	return original.NewServicesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TasksClient = original.TasksClient
-
 func NewTasksClient(subscriptionID string) TasksClient {
 	return original.NewTasksClient(subscriptionID)
 }
 func NewTasksClientWithBaseURI(baseURI string, subscriptionID string) TasksClient {
 	return original.NewTasksClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UsagesClient = original.UsagesClient
-
 func NewUsagesClient(subscriptionID string) UsagesClient {
 	return original.NewUsagesClient(subscriptionID)
 }

@@ -335,7 +335,7 @@ func (dbx *apiImpl) DevicesListMemberDevices(arg *ListMemberDevicesArg) (res *Li
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -404,7 +404,7 @@ func (dbx *apiImpl) DevicesListMembersDevices(arg *ListMembersDevicesArg) (res *
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -476,7 +476,7 @@ func (dbx *apiImpl) DevicesListTeamDevices(arg *ListTeamDevicesArg) (res *ListTe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -540,7 +540,7 @@ func (dbx *apiImpl) DevicesRevokeDeviceSession(arg *RevokeDeviceSessionArg) (err
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -609,7 +609,7 @@ func (dbx *apiImpl) DevicesRevokeDeviceSessionBatch(arg *RevokeDeviceSessionBatc
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -678,7 +678,7 @@ func (dbx *apiImpl) FeaturesGetValues(arg *FeaturesGetValuesBatchArg) (res *Feat
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -739,7 +739,7 @@ func (dbx *apiImpl) GetInfo() (res *TeamGetInfoResult, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -808,7 +808,7 @@ func (dbx *apiImpl) GroupsCreate(arg *GroupCreateArg) (res *GroupFullInfo, err e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -877,7 +877,7 @@ func (dbx *apiImpl) GroupsDelete(arg *GroupSelector) (res *async.LaunchEmptyResu
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -946,7 +946,7 @@ func (dbx *apiImpl) GroupsGetInfo(arg *GroupsSelector) (res []*GroupsGetInfoItem
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1015,7 +1015,7 @@ func (dbx *apiImpl) GroupsJobStatusGet(arg *async.PollArg) (res *async.PollEmpty
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1084,7 +1084,7 @@ func (dbx *apiImpl) GroupsList(arg *GroupsListArg) (res *GroupsListResult, err e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1153,7 +1153,7 @@ func (dbx *apiImpl) GroupsListContinue(arg *GroupsListContinueArg) (res *GroupsL
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1222,7 +1222,7 @@ func (dbx *apiImpl) GroupsMembersAdd(arg *GroupMembersAddArg) (res *GroupMembers
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1291,7 +1291,7 @@ func (dbx *apiImpl) GroupsMembersList(arg *GroupsMembersListArg) (res *GroupsMem
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1360,7 +1360,7 @@ func (dbx *apiImpl) GroupsMembersListContinue(arg *GroupsMembersListContinueArg)
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1429,7 +1429,7 @@ func (dbx *apiImpl) GroupsMembersRemove(arg *GroupMembersRemoveArg) (res *GroupM
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1498,7 +1498,7 @@ func (dbx *apiImpl) GroupsMembersSetAccessType(arg *GroupMembersSetAccessTypeArg
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1567,7 +1567,7 @@ func (dbx *apiImpl) GroupsUpdate(arg *GroupUpdateArgs) (res *GroupFullInfo, err 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1636,7 +1636,7 @@ func (dbx *apiImpl) LinkedAppsListMemberLinkedApps(arg *ListMemberAppsArg) (res 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1705,7 +1705,7 @@ func (dbx *apiImpl) LinkedAppsListMembersLinkedApps(arg *ListMembersAppsArg) (re
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1777,7 +1777,7 @@ func (dbx *apiImpl) LinkedAppsListTeamLinkedApps(arg *ListTeamAppsArg) (res *Lis
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1841,7 +1841,7 @@ func (dbx *apiImpl) LinkedAppsRevokeLinkedApp(arg *RevokeLinkedApiAppArg) (err e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1910,7 +1910,7 @@ func (dbx *apiImpl) LinkedAppsRevokeLinkedAppBatch(arg *RevokeLinkedApiAppBatchA
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1979,7 +1979,7 @@ func (dbx *apiImpl) MemberSpaceLimitsExcludedUsersAdd(arg *ExcludedUsersUpdateAr
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2048,7 +2048,7 @@ func (dbx *apiImpl) MemberSpaceLimitsExcludedUsersList(arg *ExcludedUsersListArg
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2117,7 +2117,7 @@ func (dbx *apiImpl) MemberSpaceLimitsExcludedUsersListContinue(arg *ExcludedUser
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2186,7 +2186,7 @@ func (dbx *apiImpl) MemberSpaceLimitsExcludedUsersRemove(arg *ExcludedUsersUpdat
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2255,7 +2255,7 @@ func (dbx *apiImpl) MemberSpaceLimitsGetCustomQuota(arg *CustomQuotaUsersArg) (r
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2324,7 +2324,7 @@ func (dbx *apiImpl) MemberSpaceLimitsRemoveCustomQuota(arg *CustomQuotaUsersArg)
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2393,7 +2393,7 @@ func (dbx *apiImpl) MemberSpaceLimitsSetCustomQuota(arg *SetCustomQuotaArg) (res
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2462,7 +2462,7 @@ func (dbx *apiImpl) MembersAdd(arg *MembersAddArg) (res *MembersAddLaunch, err e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2531,7 +2531,7 @@ func (dbx *apiImpl) MembersAddJobStatusGet(arg *async.PollArg) (res *MembersAddJ
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2600,7 +2600,7 @@ func (dbx *apiImpl) MembersGetInfo(arg *MembersGetInfoArgs) (res []*MembersGetIn
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2669,7 +2669,7 @@ func (dbx *apiImpl) MembersList(arg *MembersListArg) (res *MembersListResult, er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2738,7 +2738,7 @@ func (dbx *apiImpl) MembersListContinue(arg *MembersListContinueArg) (res *Membe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2802,7 +2802,7 @@ func (dbx *apiImpl) MembersRecover(arg *MembersRecoverArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2871,7 +2871,7 @@ func (dbx *apiImpl) MembersRemove(arg *MembersRemoveArg) (res *async.LaunchEmpty
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2940,7 +2940,7 @@ func (dbx *apiImpl) MembersRemoveJobStatusGet(arg *async.PollArg) (res *async.Po
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3004,7 +3004,7 @@ func (dbx *apiImpl) MembersSendWelcomeEmail(arg *UserSelectorArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3073,7 +3073,7 @@ func (dbx *apiImpl) MembersSetAdminPermissions(arg *MembersSetPermissionsArg) (r
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3142,7 +3142,7 @@ func (dbx *apiImpl) MembersSetProfile(arg *MembersSetProfileArg) (res *TeamMembe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3206,7 +3206,7 @@ func (dbx *apiImpl) MembersSuspend(arg *MembersDeactivateArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3270,7 +3270,7 @@ func (dbx *apiImpl) MembersUnsuspend(arg *MembersUnsuspendArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3339,7 +3339,7 @@ func (dbx *apiImpl) NamespacesList(arg *TeamNamespacesListArg) (res *TeamNamespa
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3408,7 +3408,7 @@ func (dbx *apiImpl) NamespacesListContinue(arg *TeamNamespacesListContinueArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3479,7 +3479,7 @@ func (dbx *apiImpl) PropertiesTemplateAdd(arg *file_properties.AddTemplateArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3550,7 +3550,7 @@ func (dbx *apiImpl) PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3613,7 +3613,7 @@ func (dbx *apiImpl) PropertiesTemplateList() (res *file_properties.ListTemplateR
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3684,7 +3684,7 @@ func (dbx *apiImpl) PropertiesTemplateUpdate(arg *file_properties.UpdateTemplate
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3753,7 +3753,7 @@ func (dbx *apiImpl) ReportsGetActivity(arg *DateRange) (res *GetActivityReport, 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3822,7 +3822,7 @@ func (dbx *apiImpl) ReportsGetDevices(arg *DateRange) (res *GetDevicesReport, er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3891,7 +3891,7 @@ func (dbx *apiImpl) ReportsGetMembership(arg *DateRange) (res *GetMembershipRepo
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3960,7 +3960,7 @@ func (dbx *apiImpl) ReportsGetStorage(arg *DateRange) (res *GetStorageReport, er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4029,7 +4029,7 @@ func (dbx *apiImpl) TeamFolderActivate(arg *TeamFolderIdArg) (res *TeamFolderMet
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4098,7 +4098,7 @@ func (dbx *apiImpl) TeamFolderArchive(arg *TeamFolderArchiveArg) (res *TeamFolde
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4167,7 +4167,7 @@ func (dbx *apiImpl) TeamFolderArchiveCheck(arg *async.PollArg) (res *TeamFolderA
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4236,7 +4236,7 @@ func (dbx *apiImpl) TeamFolderCreate(arg *TeamFolderCreateArg) (res *TeamFolderM
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4305,7 +4305,7 @@ func (dbx *apiImpl) TeamFolderGetInfo(arg *TeamFolderIdListArg) (res []*TeamFold
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4374,7 +4374,7 @@ func (dbx *apiImpl) TeamFolderList(arg *TeamFolderListArg) (res *TeamFolderListR
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4443,7 +4443,7 @@ func (dbx *apiImpl) TeamFolderListContinue(arg *TeamFolderListContinueArg) (res 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4507,7 +4507,7 @@ func (dbx *apiImpl) TeamFolderPermanentlyDelete(arg *TeamFolderIdArg) (err error
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4576,7 +4576,7 @@ func (dbx *apiImpl) TeamFolderRename(arg *TeamFolderRenameArg) (res *TeamFolderM
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -4637,7 +4637,7 @@ func (dbx *apiImpl) TokenGetAuthenticatedAdmin() (res *TokenGetAuthenticatedAdmi
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

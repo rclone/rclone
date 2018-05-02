@@ -38,6 +38,11 @@ const (
 	Warning AggregatedHealthState = "Warning"
 )
 
+// PossibleAggregatedHealthStateValues returns an array of possible values for the AggregatedHealthState const type.
+func PossibleAggregatedHealthStateValues() []AggregatedHealthState {
+	return []AggregatedHealthState{Error, Invalid, Ok, Unknown, Warning}
+}
+
 // AggregatedHealthState1 enumerates the values for aggregated health state 1.
 type AggregatedHealthState1 string
 
@@ -53,6 +58,11 @@ const (
 	// AggregatedHealthState1Warning ...
 	AggregatedHealthState1Warning AggregatedHealthState1 = "Warning"
 )
+
+// PossibleAggregatedHealthState1Values returns an array of possible values for the AggregatedHealthState1 const type.
+func PossibleAggregatedHealthState1Values() []AggregatedHealthState1 {
+	return []AggregatedHealthState1{AggregatedHealthState1Error, AggregatedHealthState1Invalid, AggregatedHealthState1Ok, AggregatedHealthState1Unknown, AggregatedHealthState1Warning}
+}
 
 // AggregatedHealthState10 enumerates the values for aggregated health state 10.
 type AggregatedHealthState10 string
@@ -70,6 +80,11 @@ const (
 	AggregatedHealthState10Warning AggregatedHealthState10 = "Warning"
 )
 
+// PossibleAggregatedHealthState10Values returns an array of possible values for the AggregatedHealthState10 const type.
+func PossibleAggregatedHealthState10Values() []AggregatedHealthState10 {
+	return []AggregatedHealthState10{AggregatedHealthState10Error, AggregatedHealthState10Invalid, AggregatedHealthState10Ok, AggregatedHealthState10Unknown, AggregatedHealthState10Warning}
+}
+
 // AggregatedHealthState11 enumerates the values for aggregated health state 11.
 type AggregatedHealthState11 string
 
@@ -85,6 +100,11 @@ const (
 	// AggregatedHealthState11Warning ...
 	AggregatedHealthState11Warning AggregatedHealthState11 = "Warning"
 )
+
+// PossibleAggregatedHealthState11Values returns an array of possible values for the AggregatedHealthState11 const type.
+func PossibleAggregatedHealthState11Values() []AggregatedHealthState11 {
+	return []AggregatedHealthState11{AggregatedHealthState11Error, AggregatedHealthState11Invalid, AggregatedHealthState11Ok, AggregatedHealthState11Unknown, AggregatedHealthState11Warning}
+}
 
 // AggregatedHealthState12 enumerates the values for aggregated health state 12.
 type AggregatedHealthState12 string
@@ -102,6 +122,11 @@ const (
 	AggregatedHealthState12Warning AggregatedHealthState12 = "Warning"
 )
 
+// PossibleAggregatedHealthState12Values returns an array of possible values for the AggregatedHealthState12 const type.
+func PossibleAggregatedHealthState12Values() []AggregatedHealthState12 {
+	return []AggregatedHealthState12{AggregatedHealthState12Error, AggregatedHealthState12Invalid, AggregatedHealthState12Ok, AggregatedHealthState12Unknown, AggregatedHealthState12Warning}
+}
+
 // AggregatedHealthState13 enumerates the values for aggregated health state 13.
 type AggregatedHealthState13 string
 
@@ -117,6 +142,11 @@ const (
 	// AggregatedHealthState13Warning ...
 	AggregatedHealthState13Warning AggregatedHealthState13 = "Warning"
 )
+
+// PossibleAggregatedHealthState13Values returns an array of possible values for the AggregatedHealthState13 const type.
+func PossibleAggregatedHealthState13Values() []AggregatedHealthState13 {
+	return []AggregatedHealthState13{AggregatedHealthState13Error, AggregatedHealthState13Invalid, AggregatedHealthState13Ok, AggregatedHealthState13Unknown, AggregatedHealthState13Warning}
+}
 
 // AggregatedHealthState14 enumerates the values for aggregated health state 14.
 type AggregatedHealthState14 string
@@ -134,6 +164,11 @@ const (
 	AggregatedHealthState14Warning AggregatedHealthState14 = "Warning"
 )
 
+// PossibleAggregatedHealthState14Values returns an array of possible values for the AggregatedHealthState14 const type.
+func PossibleAggregatedHealthState14Values() []AggregatedHealthState14 {
+	return []AggregatedHealthState14{AggregatedHealthState14Error, AggregatedHealthState14Invalid, AggregatedHealthState14Ok, AggregatedHealthState14Unknown, AggregatedHealthState14Warning}
+}
+
 // AggregatedHealthState15 enumerates the values for aggregated health state 15.
 type AggregatedHealthState15 string
 
@@ -149,6 +184,11 @@ const (
 	// AggregatedHealthState15Warning ...
 	AggregatedHealthState15Warning AggregatedHealthState15 = "Warning"
 )
+
+// PossibleAggregatedHealthState15Values returns an array of possible values for the AggregatedHealthState15 const type.
+func PossibleAggregatedHealthState15Values() []AggregatedHealthState15 {
+	return []AggregatedHealthState15{AggregatedHealthState15Error, AggregatedHealthState15Invalid, AggregatedHealthState15Ok, AggregatedHealthState15Unknown, AggregatedHealthState15Warning}
+}
 
 // AggregatedHealthState2 enumerates the values for aggregated health state 2.
 type AggregatedHealthState2 string
@@ -166,6 +206,11 @@ const (
 	AggregatedHealthState2Warning AggregatedHealthState2 = "Warning"
 )
 
+// PossibleAggregatedHealthState2Values returns an array of possible values for the AggregatedHealthState2 const type.
+func PossibleAggregatedHealthState2Values() []AggregatedHealthState2 {
+	return []AggregatedHealthState2{AggregatedHealthState2Error, AggregatedHealthState2Invalid, AggregatedHealthState2Ok, AggregatedHealthState2Unknown, AggregatedHealthState2Warning}
+}
+
 // AggregatedHealthState3 enumerates the values for aggregated health state 3.
 type AggregatedHealthState3 string
 
@@ -181,6 +226,11 @@ const (
 	// AggregatedHealthState3Warning ...
 	AggregatedHealthState3Warning AggregatedHealthState3 = "Warning"
 )
+
+// PossibleAggregatedHealthState3Values returns an array of possible values for the AggregatedHealthState3 const type.
+func PossibleAggregatedHealthState3Values() []AggregatedHealthState3 {
+	return []AggregatedHealthState3{AggregatedHealthState3Error, AggregatedHealthState3Invalid, AggregatedHealthState3Ok, AggregatedHealthState3Unknown, AggregatedHealthState3Warning}
+}
 
 // AggregatedHealthState4 enumerates the values for aggregated health state 4.
 type AggregatedHealthState4 string
@@ -198,6 +248,11 @@ const (
 	AggregatedHealthState4Warning AggregatedHealthState4 = "Warning"
 )
 
+// PossibleAggregatedHealthState4Values returns an array of possible values for the AggregatedHealthState4 const type.
+func PossibleAggregatedHealthState4Values() []AggregatedHealthState4 {
+	return []AggregatedHealthState4{AggregatedHealthState4Error, AggregatedHealthState4Invalid, AggregatedHealthState4Ok, AggregatedHealthState4Unknown, AggregatedHealthState4Warning}
+}
+
 // AggregatedHealthState5 enumerates the values for aggregated health state 5.
 type AggregatedHealthState5 string
 
@@ -213,6 +268,11 @@ const (
 	// AggregatedHealthState5Warning ...
 	AggregatedHealthState5Warning AggregatedHealthState5 = "Warning"
 )
+
+// PossibleAggregatedHealthState5Values returns an array of possible values for the AggregatedHealthState5 const type.
+func PossibleAggregatedHealthState5Values() []AggregatedHealthState5 {
+	return []AggregatedHealthState5{AggregatedHealthState5Error, AggregatedHealthState5Invalid, AggregatedHealthState5Ok, AggregatedHealthState5Unknown, AggregatedHealthState5Warning}
+}
 
 // AggregatedHealthState6 enumerates the values for aggregated health state 6.
 type AggregatedHealthState6 string
@@ -230,6 +290,11 @@ const (
 	AggregatedHealthState6Warning AggregatedHealthState6 = "Warning"
 )
 
+// PossibleAggregatedHealthState6Values returns an array of possible values for the AggregatedHealthState6 const type.
+func PossibleAggregatedHealthState6Values() []AggregatedHealthState6 {
+	return []AggregatedHealthState6{AggregatedHealthState6Error, AggregatedHealthState6Invalid, AggregatedHealthState6Ok, AggregatedHealthState6Unknown, AggregatedHealthState6Warning}
+}
+
 // AggregatedHealthState7 enumerates the values for aggregated health state 7.
 type AggregatedHealthState7 string
 
@@ -245,6 +310,11 @@ const (
 	// AggregatedHealthState7Warning ...
 	AggregatedHealthState7Warning AggregatedHealthState7 = "Warning"
 )
+
+// PossibleAggregatedHealthState7Values returns an array of possible values for the AggregatedHealthState7 const type.
+func PossibleAggregatedHealthState7Values() []AggregatedHealthState7 {
+	return []AggregatedHealthState7{AggregatedHealthState7Error, AggregatedHealthState7Invalid, AggregatedHealthState7Ok, AggregatedHealthState7Unknown, AggregatedHealthState7Warning}
+}
 
 // AggregatedHealthState8 enumerates the values for aggregated health state 8.
 type AggregatedHealthState8 string
@@ -262,6 +332,11 @@ const (
 	AggregatedHealthState8Warning AggregatedHealthState8 = "Warning"
 )
 
+// PossibleAggregatedHealthState8Values returns an array of possible values for the AggregatedHealthState8 const type.
+func PossibleAggregatedHealthState8Values() []AggregatedHealthState8 {
+	return []AggregatedHealthState8{AggregatedHealthState8Error, AggregatedHealthState8Invalid, AggregatedHealthState8Ok, AggregatedHealthState8Unknown, AggregatedHealthState8Warning}
+}
+
 // AggregatedHealthState9 enumerates the values for aggregated health state 9.
 type AggregatedHealthState9 string
 
@@ -278,6 +353,11 @@ const (
 	AggregatedHealthState9Warning AggregatedHealthState9 = "Warning"
 )
 
+// PossibleAggregatedHealthState9Values returns an array of possible values for the AggregatedHealthState9 const type.
+func PossibleAggregatedHealthState9Values() []AggregatedHealthState9 {
+	return []AggregatedHealthState9{AggregatedHealthState9Error, AggregatedHealthState9Invalid, AggregatedHealthState9Ok, AggregatedHealthState9Unknown, AggregatedHealthState9Warning}
+}
+
 // DeactivationIntent enumerates the values for deactivation intent.
 type DeactivationIntent string
 
@@ -291,6 +371,11 @@ const (
 	// Restart ...
 	Restart DeactivationIntent = "Restart"
 )
+
+// PossibleDeactivationIntentValues returns an array of possible values for the DeactivationIntent const type.
+func PossibleDeactivationIntentValues() []DeactivationIntent {
+	return []DeactivationIntent{Pause, RemoveData, RemoveNode, Restart}
+}
 
 // DefaultMoveCost enumerates the values for default move cost.
 type DefaultMoveCost string
@@ -306,6 +391,11 @@ const (
 	Zero DefaultMoveCost = "Zero"
 )
 
+// PossibleDefaultMoveCostValues returns an array of possible values for the DefaultMoveCost const type.
+func PossibleDefaultMoveCostValues() []DefaultMoveCost {
+	return []DefaultMoveCost{High, Low, Medium, Zero}
+}
+
 // DefaultMoveCost1 enumerates the values for default move cost 1.
 type DefaultMoveCost1 string
 
@@ -319,6 +409,11 @@ const (
 	// DefaultMoveCost1Zero ...
 	DefaultMoveCost1Zero DefaultMoveCost1 = "Zero"
 )
+
+// PossibleDefaultMoveCost1Values returns an array of possible values for the DefaultMoveCost1 const type.
+func PossibleDefaultMoveCost1Values() []DefaultMoveCost1 {
+	return []DefaultMoveCost1{DefaultMoveCost1High, DefaultMoveCost1Low, DefaultMoveCost1Medium, DefaultMoveCost1Zero}
+}
 
 // DefaultMoveCost2 enumerates the values for default move cost 2.
 type DefaultMoveCost2 string
@@ -334,6 +429,11 @@ const (
 	DefaultMoveCost2Zero DefaultMoveCost2 = "Zero"
 )
 
+// PossibleDefaultMoveCost2Values returns an array of possible values for the DefaultMoveCost2 const type.
+func PossibleDefaultMoveCost2Values() []DefaultMoveCost2 {
+	return []DefaultMoveCost2{DefaultMoveCost2High, DefaultMoveCost2Low, DefaultMoveCost2Medium, DefaultMoveCost2Zero}
+}
+
 // DefaultMoveCost3 enumerates the values for default move cost 3.
 type DefaultMoveCost3 string
 
@@ -347,6 +447,11 @@ const (
 	// DefaultMoveCost3Zero ...
 	DefaultMoveCost3Zero DefaultMoveCost3 = "Zero"
 )
+
+// PossibleDefaultMoveCost3Values returns an array of possible values for the DefaultMoveCost3 const type.
+func PossibleDefaultMoveCost3Values() []DefaultMoveCost3 {
+	return []DefaultMoveCost3{DefaultMoveCost3High, DefaultMoveCost3Low, DefaultMoveCost3Medium, DefaultMoveCost3Zero}
+}
 
 // FailureReason enumerates the values for failure reason.
 type FailureReason string
@@ -364,6 +469,11 @@ const (
 	FailureReasonUpgradeDomainTimeout FailureReason = "UpgradeDomainTimeout"
 )
 
+// PossibleFailureReasonValues returns an array of possible values for the FailureReason const type.
+func PossibleFailureReasonValues() []FailureReason {
+	return []FailureReason{FailureReasonHealthCheck, FailureReasonInterrupted, FailureReasonInvalid, FailureReasonOverallUpgradeTimeout, FailureReasonUpgradeDomainTimeout}
+}
+
 // FailureReason1 enumerates the values for failure reason 1.
 type FailureReason1 string
 
@@ -379,6 +489,11 @@ const (
 	// FailureReason1UpgradeDomainTimeout ...
 	FailureReason1UpgradeDomainTimeout FailureReason1 = "UpgradeDomainTimeout"
 )
+
+// PossibleFailureReason1Values returns an array of possible values for the FailureReason1 const type.
+func PossibleFailureReason1Values() []FailureReason1 {
+	return []FailureReason1{FailureReason1HealthCheck, FailureReason1Interrupted, FailureReason1Invalid, FailureReason1OverallUpgradeTimeout, FailureReason1UpgradeDomainTimeout}
+}
 
 // HealthState enumerates the values for health state.
 type HealthState string
@@ -396,6 +511,11 @@ const (
 	HealthStateWarning HealthState = "Warning"
 )
 
+// PossibleHealthStateValues returns an array of possible values for the HealthState const type.
+func PossibleHealthStateValues() []HealthState {
+	return []HealthState{HealthStateError, HealthStateInvalid, HealthStateOk, HealthStateUnknown, HealthStateWarning}
+}
+
 // HealthState1 enumerates the values for health state 1.
 type HealthState1 string
 
@@ -411,6 +531,11 @@ const (
 	// HealthState1Warning ...
 	HealthState1Warning HealthState1 = "Warning"
 )
+
+// PossibleHealthState1Values returns an array of possible values for the HealthState1 const type.
+func PossibleHealthState1Values() []HealthState1 {
+	return []HealthState1{HealthState1Error, HealthState1Invalid, HealthState1Ok, HealthState1Unknown, HealthState1Warning}
+}
 
 // HealthState2 enumerates the values for health state 2.
 type HealthState2 string
@@ -428,6 +553,11 @@ const (
 	HealthState2Warning HealthState2 = "Warning"
 )
 
+// PossibleHealthState2Values returns an array of possible values for the HealthState2 const type.
+func PossibleHealthState2Values() []HealthState2 {
+	return []HealthState2{HealthState2Error, HealthState2Invalid, HealthState2Ok, HealthState2Unknown, HealthState2Warning}
+}
+
 // HealthState3 enumerates the values for health state 3.
 type HealthState3 string
 
@@ -443,6 +573,11 @@ const (
 	// HealthState3Warning ...
 	HealthState3Warning HealthState3 = "Warning"
 )
+
+// PossibleHealthState3Values returns an array of possible values for the HealthState3 const type.
+func PossibleHealthState3Values() []HealthState3 {
+	return []HealthState3{HealthState3Error, HealthState3Invalid, HealthState3Ok, HealthState3Unknown, HealthState3Warning}
+}
 
 // HealthState4 enumerates the values for health state 4.
 type HealthState4 string
@@ -460,6 +595,11 @@ const (
 	HealthState4Warning HealthState4 = "Warning"
 )
 
+// PossibleHealthState4Values returns an array of possible values for the HealthState4 const type.
+func PossibleHealthState4Values() []HealthState4 {
+	return []HealthState4{HealthState4Error, HealthState4Invalid, HealthState4Ok, HealthState4Unknown, HealthState4Warning}
+}
+
 // HealthState5 enumerates the values for health state 5.
 type HealthState5 string
 
@@ -476,6 +616,11 @@ const (
 	HealthState5Warning HealthState5 = "Warning"
 )
 
+// PossibleHealthState5Values returns an array of possible values for the HealthState5 const type.
+func PossibleHealthState5Values() []HealthState5 {
+	return []HealthState5{HealthState5Error, HealthState5Invalid, HealthState5Ok, HealthState5Unknown, HealthState5Warning}
+}
+
 // HealthState6 enumerates the values for health state 6.
 type HealthState6 string
 
@@ -491,6 +636,11 @@ const (
 	// HealthState6Warning ...
 	HealthState6Warning HealthState6 = "Warning"
 )
+
+// PossibleHealthState6Values returns an array of possible values for the HealthState6 const type.
+func PossibleHealthState6Values() []HealthState6 {
+	return []HealthState6{HealthState6Error, HealthState6Invalid, HealthState6Ok, HealthState6Unknown, HealthState6Warning}
+}
 
 // Kind enumerates the values for kind.
 type Kind string
@@ -542,6 +692,11 @@ const (
 	KindUpgradeDomainNodes Kind = "UpgradeDomainNodes"
 )
 
+// PossibleKindValues returns an array of possible values for the Kind const type.
+func PossibleKindValues() []Kind {
+	return []Kind{KindApplication, KindApplications, KindApplicationType, KindDeltaNodesCheck, KindDeployedApplication, KindDeployedApplications, KindDeployedServicePackage, KindDeployedServicePackages, KindEvent, KindHealthEvaluation, KindNode, KindNodes, KindPartition, KindPartitions, KindReplica, KindReplicas, KindService, KindServices, KindSystemApplication, KindUpgradeDomainDeltaNodesCheck, KindUpgradeDomainDeployedApplications, KindUpgradeDomainNodes}
+}
+
 // NodeDeactivationIntent enumerates the values for node deactivation intent.
 type NodeDeactivationIntent string
 
@@ -556,6 +711,11 @@ const (
 	NodeDeactivationIntentRestart NodeDeactivationIntent = "Restart"
 )
 
+// PossibleNodeDeactivationIntentValues returns an array of possible values for the NodeDeactivationIntent const type.
+func PossibleNodeDeactivationIntentValues() []NodeDeactivationIntent {
+	return []NodeDeactivationIntent{NodeDeactivationIntentInvalid, NodeDeactivationIntentPause, NodeDeactivationIntentRemoveData, NodeDeactivationIntentRestart}
+}
+
 // NodeDeactivationStatus enumerates the values for node deactivation status.
 type NodeDeactivationStatus string
 
@@ -569,6 +729,11 @@ const (
 	// NodeDeactivationStatusSafetyCheckInProgress ...
 	NodeDeactivationStatusSafetyCheckInProgress NodeDeactivationStatus = "SafetyCheckInProgress"
 )
+
+// PossibleNodeDeactivationStatusValues returns an array of possible values for the NodeDeactivationStatus const type.
+func PossibleNodeDeactivationStatusValues() []NodeDeactivationStatus {
+	return []NodeDeactivationStatus{NodeDeactivationStatusCompleted, NodeDeactivationStatusInvalid, NodeDeactivationStatusSafetyCheckComplete, NodeDeactivationStatusSafetyCheckInProgress}
+}
 
 // NodeStatus enumerates the values for node status.
 type NodeStatus string
@@ -592,6 +757,11 @@ const (
 	NodeStatusUp NodeStatus = "Up"
 )
 
+// PossibleNodeStatusValues returns an array of possible values for the NodeStatus const type.
+func PossibleNodeStatusValues() []NodeStatus {
+	return []NodeStatus{NodeStatusDisabled, NodeStatusDisabling, NodeStatusDown, NodeStatusEnabling, NodeStatusInvalid, NodeStatusRemoved, NodeStatusUnknown, NodeStatusUp}
+}
+
 // PartitionScheme enumerates the values for partition scheme.
 type PartitionScheme string
 
@@ -605,6 +775,11 @@ const (
 	// PartitionSchemeUniformInt64 ...
 	PartitionSchemeUniformInt64 PartitionScheme = "UniformInt64"
 )
+
+// PossiblePartitionSchemeValues returns an array of possible values for the PartitionScheme const type.
+func PossiblePartitionSchemeValues() []PartitionScheme {
+	return []PartitionScheme{PartitionSchemeInvalid, PartitionSchemeNamed, PartitionSchemeSingleton, PartitionSchemeUniformInt64}
+}
 
 // PartitionStatus enumerates the values for partition status.
 type PartitionStatus string
@@ -624,6 +799,11 @@ const (
 	PartitionStatusReconfiguring PartitionStatus = "Reconfiguring"
 )
 
+// PossiblePartitionStatusValues returns an array of possible values for the PartitionStatus const type.
+func PossiblePartitionStatusValues() []PartitionStatus {
+	return []PartitionStatus{PartitionStatusDeleting, PartitionStatusInQuorumLoss, PartitionStatusInvalid, PartitionStatusNotReady, PartitionStatusReady, PartitionStatusReconfiguring}
+}
+
 // ReplicaRole enumerates the values for replica role.
 type ReplicaRole string
 
@@ -640,6 +820,11 @@ const (
 	ReplicaRolePrimary ReplicaRole = "Primary"
 )
 
+// PossibleReplicaRoleValues returns an array of possible values for the ReplicaRole const type.
+func PossibleReplicaRoleValues() []ReplicaRole {
+	return []ReplicaRole{ReplicaRoleActiveSecondary, ReplicaRoleIdleSecondary, ReplicaRoleInvalid, ReplicaRoleNone, ReplicaRolePrimary}
+}
+
 // ReplicaRole1 enumerates the values for replica role 1.
 type ReplicaRole1 string
 
@@ -655,6 +840,11 @@ const (
 	// ReplicaRole1Primary ...
 	ReplicaRole1Primary ReplicaRole1 = "Primary"
 )
+
+// PossibleReplicaRole1Values returns an array of possible values for the ReplicaRole1 const type.
+func PossibleReplicaRole1Values() []ReplicaRole1 {
+	return []ReplicaRole1{ReplicaRole1ActiveSecondary, ReplicaRole1IdleSecondary, ReplicaRole1Invalid, ReplicaRole1None, ReplicaRole1Primary}
+}
 
 // ReplicaStatus enumerates the values for replica status.
 type ReplicaStatus string
@@ -674,6 +864,11 @@ const (
 	ReplicaStatusStandby ReplicaStatus = "Standby"
 )
 
+// PossibleReplicaStatusValues returns an array of possible values for the ReplicaStatus const type.
+func PossibleReplicaStatusValues() []ReplicaStatus {
+	return []ReplicaStatus{ReplicaStatusDown, ReplicaStatusDropped, ReplicaStatusInBuild, ReplicaStatusInvalid, ReplicaStatusReady, ReplicaStatusStandby}
+}
+
 // ReplicaStatus1 enumerates the values for replica status 1.
 type ReplicaStatus1 string
 
@@ -692,6 +887,11 @@ const (
 	ReplicaStatus1Standby ReplicaStatus1 = "Standby"
 )
 
+// PossibleReplicaStatus1Values returns an array of possible values for the ReplicaStatus1 const type.
+func PossibleReplicaStatus1Values() []ReplicaStatus1 {
+	return []ReplicaStatus1{ReplicaStatus1Down, ReplicaStatus1Dropped, ReplicaStatus1InBuild, ReplicaStatus1Invalid, ReplicaStatus1Ready, ReplicaStatus1Standby}
+}
+
 // RollingUpgradeMode enumerates the values for rolling upgrade mode.
 type RollingUpgradeMode string
 
@@ -705,6 +905,11 @@ const (
 	// RollingUpgradeModeUnmonitoredManual ...
 	RollingUpgradeModeUnmonitoredManual RollingUpgradeMode = "UnmonitoredManual"
 )
+
+// PossibleRollingUpgradeModeValues returns an array of possible values for the RollingUpgradeMode const type.
+func PossibleRollingUpgradeModeValues() []RollingUpgradeMode {
+	return []RollingUpgradeMode{RollingUpgradeModeInvalid, RollingUpgradeModeMonitored, RollingUpgradeModeUnmonitoredAuto, RollingUpgradeModeUnmonitoredManual}
+}
 
 // RollingUpgradeMode1 enumerates the values for rolling upgrade mode 1.
 type RollingUpgradeMode1 string
@@ -720,6 +925,11 @@ const (
 	RollingUpgradeMode1UnmonitoredManual RollingUpgradeMode1 = "UnmonitoredManual"
 )
 
+// PossibleRollingUpgradeMode1Values returns an array of possible values for the RollingUpgradeMode1 const type.
+func PossibleRollingUpgradeMode1Values() []RollingUpgradeMode1 {
+	return []RollingUpgradeMode1{RollingUpgradeMode1Invalid, RollingUpgradeMode1Monitored, RollingUpgradeMode1UnmonitoredAuto, RollingUpgradeMode1UnmonitoredManual}
+}
+
 // RollingUpgradeMode2 enumerates the values for rolling upgrade mode 2.
 type RollingUpgradeMode2 string
 
@@ -733,6 +943,11 @@ const (
 	// RollingUpgradeMode2UnmonitoredManual ...
 	RollingUpgradeMode2UnmonitoredManual RollingUpgradeMode2 = "UnmonitoredManual"
 )
+
+// PossibleRollingUpgradeMode2Values returns an array of possible values for the RollingUpgradeMode2 const type.
+func PossibleRollingUpgradeMode2Values() []RollingUpgradeMode2 {
+	return []RollingUpgradeMode2{RollingUpgradeMode2Invalid, RollingUpgradeMode2Monitored, RollingUpgradeMode2UnmonitoredAuto, RollingUpgradeMode2UnmonitoredManual}
+}
 
 // RollingUpgradeMode3 enumerates the values for rolling upgrade mode 3.
 type RollingUpgradeMode3 string
@@ -748,6 +963,11 @@ const (
 	RollingUpgradeMode3UnmonitoredManual RollingUpgradeMode3 = "UnmonitoredManual"
 )
 
+// PossibleRollingUpgradeMode3Values returns an array of possible values for the RollingUpgradeMode3 const type.
+func PossibleRollingUpgradeMode3Values() []RollingUpgradeMode3 {
+	return []RollingUpgradeMode3{RollingUpgradeMode3Invalid, RollingUpgradeMode3Monitored, RollingUpgradeMode3UnmonitoredAuto, RollingUpgradeMode3UnmonitoredManual}
+}
+
 // RollingUpgradeMode4 enumerates the values for rolling upgrade mode 4.
 type RollingUpgradeMode4 string
 
@@ -761,6 +981,11 @@ const (
 	// RollingUpgradeMode4UnmonitoredManual ...
 	RollingUpgradeMode4UnmonitoredManual RollingUpgradeMode4 = "UnmonitoredManual"
 )
+
+// PossibleRollingUpgradeMode4Values returns an array of possible values for the RollingUpgradeMode4 const type.
+func PossibleRollingUpgradeMode4Values() []RollingUpgradeMode4 {
+	return []RollingUpgradeMode4{RollingUpgradeMode4Invalid, RollingUpgradeMode4Monitored, RollingUpgradeMode4UnmonitoredAuto, RollingUpgradeMode4UnmonitoredManual}
+}
 
 // RollingUpgradeMode5 enumerates the values for rolling upgrade mode 5.
 type RollingUpgradeMode5 string
@@ -776,6 +1001,11 @@ const (
 	RollingUpgradeMode5UnmonitoredManual RollingUpgradeMode5 = "UnmonitoredManual"
 )
 
+// PossibleRollingUpgradeMode5Values returns an array of possible values for the RollingUpgradeMode5 const type.
+func PossibleRollingUpgradeMode5Values() []RollingUpgradeMode5 {
+	return []RollingUpgradeMode5{RollingUpgradeMode5Invalid, RollingUpgradeMode5Monitored, RollingUpgradeMode5UnmonitoredAuto, RollingUpgradeMode5UnmonitoredManual}
+}
+
 // ServiceCorrelationScheme enumerates the values for service correlation scheme.
 type ServiceCorrelationScheme string
 
@@ -790,6 +1020,11 @@ const (
 	ServiceCorrelationSchemeNonAlignedAffinity ServiceCorrelationScheme = "NonAlignedAffinity"
 )
 
+// PossibleServiceCorrelationSchemeValues returns an array of possible values for the ServiceCorrelationScheme const type.
+func PossibleServiceCorrelationSchemeValues() []ServiceCorrelationScheme {
+	return []ServiceCorrelationScheme{ServiceCorrelationSchemeAffinity, ServiceCorrelationSchemeAlignedAffinity, ServiceCorrelationSchemeInvalid, ServiceCorrelationSchemeNonAlignedAffinity}
+}
+
 // ServiceKind enumerates the values for service kind.
 type ServiceKind string
 
@@ -801,6 +1036,11 @@ const (
 	// ServiceKindStateless ...
 	ServiceKindStateless ServiceKind = "Stateless"
 )
+
+// PossibleServiceKindValues returns an array of possible values for the ServiceKind const type.
+func PossibleServiceKindValues() []ServiceKind {
+	return []ServiceKind{ServiceKindInvalid, ServiceKindStateful, ServiceKindStateless}
+}
 
 // ServiceKind1 enumerates the values for service kind 1.
 type ServiceKind1 string
@@ -814,6 +1054,11 @@ const (
 	ServiceKind1Stateless ServiceKind1 = "Stateless"
 )
 
+// PossibleServiceKind1Values returns an array of possible values for the ServiceKind1 const type.
+func PossibleServiceKind1Values() []ServiceKind1 {
+	return []ServiceKind1{ServiceKind1Invalid, ServiceKind1Stateful, ServiceKind1Stateless}
+}
+
 // ServiceKind2 enumerates the values for service kind 2.
 type ServiceKind2 string
 
@@ -825,6 +1070,11 @@ const (
 	// ServiceKind2Stateless ...
 	ServiceKind2Stateless ServiceKind2 = "Stateless"
 )
+
+// PossibleServiceKind2Values returns an array of possible values for the ServiceKind2 const type.
+func PossibleServiceKind2Values() []ServiceKind2 {
+	return []ServiceKind2{ServiceKind2Invalid, ServiceKind2Stateful, ServiceKind2Stateless}
+}
 
 // ServiceKind3 enumerates the values for service kind 3.
 type ServiceKind3 string
@@ -838,6 +1088,11 @@ const (
 	ServiceKind3Stateless ServiceKind3 = "Stateless"
 )
 
+// PossibleServiceKind3Values returns an array of possible values for the ServiceKind3 const type.
+func PossibleServiceKind3Values() []ServiceKind3 {
+	return []ServiceKind3{ServiceKind3Invalid, ServiceKind3Stateful, ServiceKind3Stateless}
+}
+
 // ServiceKind4 enumerates the values for service kind 4.
 type ServiceKind4 string
 
@@ -849,6 +1104,11 @@ const (
 	// ServiceKind4Stateless ...
 	ServiceKind4Stateless ServiceKind4 = "Stateless"
 )
+
+// PossibleServiceKind4Values returns an array of possible values for the ServiceKind4 const type.
+func PossibleServiceKind4Values() []ServiceKind4 {
+	return []ServiceKind4{ServiceKind4Invalid, ServiceKind4Stateful, ServiceKind4Stateless}
+}
 
 // ServiceKind5 enumerates the values for service kind 5.
 type ServiceKind5 string
@@ -862,6 +1122,11 @@ const (
 	ServiceKind5Stateless ServiceKind5 = "Stateless"
 )
 
+// PossibleServiceKind5Values returns an array of possible values for the ServiceKind5 const type.
+func PossibleServiceKind5Values() []ServiceKind5 {
+	return []ServiceKind5{ServiceKind5Invalid, ServiceKind5Stateful, ServiceKind5Stateless}
+}
+
 // ServiceKind6 enumerates the values for service kind 6.
 type ServiceKind6 string
 
@@ -873,6 +1138,11 @@ const (
 	// ServiceKind6Stateless ...
 	ServiceKind6Stateless ServiceKind6 = "Stateless"
 )
+
+// PossibleServiceKind6Values returns an array of possible values for the ServiceKind6 const type.
+func PossibleServiceKind6Values() []ServiceKind6 {
+	return []ServiceKind6{ServiceKind6Invalid, ServiceKind6Stateful, ServiceKind6Stateless}
+}
 
 // ServiceKindBasicCreateServiceDescription enumerates the values for service kind basic create service
 // description.
@@ -887,6 +1157,11 @@ const (
 	ServiceKindStateless1 ServiceKindBasicCreateServiceDescription = "Stateless"
 )
 
+// PossibleServiceKindBasicCreateServiceDescriptionValues returns an array of possible values for the ServiceKindBasicCreateServiceDescription const type.
+func PossibleServiceKindBasicCreateServiceDescriptionValues() []ServiceKindBasicCreateServiceDescription {
+	return []ServiceKindBasicCreateServiceDescription{ServiceKindCreateServiceDescription, ServiceKindStateful1, ServiceKindStateless1}
+}
+
 // ServiceKindBasicCreateServiceGroupDescription enumerates the values for service kind basic create service
 // group description.
 type ServiceKindBasicCreateServiceGroupDescription string
@@ -900,6 +1175,11 @@ const (
 	ServiceKindBasicCreateServiceGroupDescriptionServiceKindStateless ServiceKindBasicCreateServiceGroupDescription = "Stateless"
 )
 
+// PossibleServiceKindBasicCreateServiceGroupDescriptionValues returns an array of possible values for the ServiceKindBasicCreateServiceGroupDescription const type.
+func PossibleServiceKindBasicCreateServiceGroupDescriptionValues() []ServiceKindBasicCreateServiceGroupDescription {
+	return []ServiceKindBasicCreateServiceGroupDescription{ServiceKindBasicCreateServiceGroupDescriptionServiceKindCreateServiceGroupDescription, ServiceKindBasicCreateServiceGroupDescriptionServiceKindStateful, ServiceKindBasicCreateServiceGroupDescriptionServiceKindStateless}
+}
+
 // ServiceKindBasicServiceDescription enumerates the values for service kind basic service description.
 type ServiceKindBasicServiceDescription string
 
@@ -911,6 +1191,11 @@ const (
 	// ServiceKindBasicServiceDescriptionServiceKindStateless ...
 	ServiceKindBasicServiceDescriptionServiceKindStateless ServiceKindBasicServiceDescription = "Stateless"
 )
+
+// PossibleServiceKindBasicServiceDescriptionValues returns an array of possible values for the ServiceKindBasicServiceDescription const type.
+func PossibleServiceKindBasicServiceDescriptionValues() []ServiceKindBasicServiceDescription {
+	return []ServiceKindBasicServiceDescription{ServiceKindBasicServiceDescriptionServiceKindServiceDescription, ServiceKindBasicServiceDescriptionServiceKindStateful, ServiceKindBasicServiceDescriptionServiceKindStateless}
+}
 
 // ServiceKindBasicServiceGroupDescription enumerates the values for service kind basic service group
 // description.
@@ -925,6 +1210,11 @@ const (
 	ServiceKindBasicServiceGroupDescriptionServiceKindStateless ServiceKindBasicServiceGroupDescription = "Stateless"
 )
 
+// PossibleServiceKindBasicServiceGroupDescriptionValues returns an array of possible values for the ServiceKindBasicServiceGroupDescription const type.
+func PossibleServiceKindBasicServiceGroupDescriptionValues() []ServiceKindBasicServiceGroupDescription {
+	return []ServiceKindBasicServiceGroupDescription{ServiceKindBasicServiceGroupDescriptionServiceKindServiceGroupDescription, ServiceKindBasicServiceGroupDescriptionServiceKindStateful, ServiceKindBasicServiceGroupDescriptionServiceKindStateless}
+}
+
 // ServiceKindBasicUpdateServiceDescription enumerates the values for service kind basic update service
 // description.
 type ServiceKindBasicUpdateServiceDescription string
@@ -938,6 +1228,11 @@ const (
 	ServiceKindBasicUpdateServiceDescriptionServiceKindUpdateServiceDescription ServiceKindBasicUpdateServiceDescription = "UpdateServiceDescription"
 )
 
+// PossibleServiceKindBasicUpdateServiceDescriptionValues returns an array of possible values for the ServiceKindBasicUpdateServiceDescription const type.
+func PossibleServiceKindBasicUpdateServiceDescriptionValues() []ServiceKindBasicUpdateServiceDescription {
+	return []ServiceKindBasicUpdateServiceDescription{ServiceKindBasicUpdateServiceDescriptionServiceKindStateful, ServiceKindBasicUpdateServiceDescriptionServiceKindStateless, ServiceKindBasicUpdateServiceDescriptionServiceKindUpdateServiceDescription}
+}
+
 // ServiceKindBasicUpdateServiceGroupDescription enumerates the values for service kind basic update service
 // group description.
 type ServiceKindBasicUpdateServiceGroupDescription string
@@ -950,6 +1245,11 @@ const (
 	// ServiceKindBasicUpdateServiceGroupDescriptionServiceKindUpdateServiceGroupDescription ...
 	ServiceKindBasicUpdateServiceGroupDescriptionServiceKindUpdateServiceGroupDescription ServiceKindBasicUpdateServiceGroupDescription = "UpdateServiceGroupDescription"
 )
+
+// PossibleServiceKindBasicUpdateServiceGroupDescriptionValues returns an array of possible values for the ServiceKindBasicUpdateServiceGroupDescription const type.
+func PossibleServiceKindBasicUpdateServiceGroupDescriptionValues() []ServiceKindBasicUpdateServiceGroupDescription {
+	return []ServiceKindBasicUpdateServiceGroupDescription{ServiceKindBasicUpdateServiceGroupDescriptionServiceKindStateful, ServiceKindBasicUpdateServiceGroupDescriptionServiceKindStateless, ServiceKindBasicUpdateServiceGroupDescriptionServiceKindUpdateServiceGroupDescription}
+}
 
 // ServiceLoadMetricWeight enumerates the values for service load metric weight.
 type ServiceLoadMetricWeight string
@@ -965,6 +1265,11 @@ const (
 	ServiceLoadMetricWeightZero ServiceLoadMetricWeight = "Zero"
 )
 
+// PossibleServiceLoadMetricWeightValues returns an array of possible values for the ServiceLoadMetricWeight const type.
+func PossibleServiceLoadMetricWeightValues() []ServiceLoadMetricWeight {
+	return []ServiceLoadMetricWeight{ServiceLoadMetricWeightHigh, ServiceLoadMetricWeightLow, ServiceLoadMetricWeightMedium, ServiceLoadMetricWeightZero}
+}
+
 // ServicePartitionKind enumerates the values for service partition kind.
 type ServicePartitionKind string
 
@@ -978,6 +1283,11 @@ const (
 	// ServicePartitionKindSingleton ...
 	ServicePartitionKindSingleton ServicePartitionKind = "Singleton"
 )
+
+// PossibleServicePartitionKindValues returns an array of possible values for the ServicePartitionKind const type.
+func PossibleServicePartitionKindValues() []ServicePartitionKind {
+	return []ServicePartitionKind{ServicePartitionKindInt64Range, ServicePartitionKindInvalid, ServicePartitionKindNamed, ServicePartitionKindSingleton}
+}
 
 // ServiceStatus enumerates the values for service status.
 type ServiceStatus string
@@ -997,6 +1307,11 @@ const (
 	ServiceStatusUpgrading ServiceStatus = "Upgrading"
 )
 
+// PossibleServiceStatusValues returns an array of possible values for the ServiceStatus const type.
+func PossibleServiceStatusValues() []ServiceStatus {
+	return []ServiceStatus{ServiceStatusActive, ServiceStatusCreating, ServiceStatusDeleting, ServiceStatusFaile, ServiceStatusInvalid, ServiceStatusUpgrading}
+}
+
 // UpgradeKind enumerates the values for upgrade kind.
 type UpgradeKind string
 
@@ -1006,6 +1321,11 @@ const (
 	// UpgradeKindRolling ...
 	UpgradeKindRolling UpgradeKind = "Rolling"
 )
+
+// PossibleUpgradeKindValues returns an array of possible values for the UpgradeKind const type.
+func PossibleUpgradeKindValues() []UpgradeKind {
+	return []UpgradeKind{UpgradeKindInvalid, UpgradeKindRolling}
+}
 
 // UpgradeState enumerates the values for upgrade state.
 type UpgradeState string
@@ -1025,6 +1345,11 @@ const (
 	UpgradeStateRollingForwardPending UpgradeState = "RollingForwardPending"
 )
 
+// PossibleUpgradeStateValues returns an array of possible values for the UpgradeState const type.
+func PossibleUpgradeStateValues() []UpgradeState {
+	return []UpgradeState{UpgradeStateInvalid, UpgradeStateRollingBackCompleted, UpgradeStateRollingBackInProgress, UpgradeStateRollingForwardCompleted, UpgradeStateRollingForwardInProgress, UpgradeStateRollingForwardPending}
+}
+
 // UpgradeState1 enumerates the values for upgrade state 1.
 type UpgradeState1 string
 
@@ -1042,6 +1367,11 @@ const (
 	// UpgradeState1RollingForwardPending ...
 	UpgradeState1RollingForwardPending UpgradeState1 = "RollingForwardPending"
 )
+
+// PossibleUpgradeState1Values returns an array of possible values for the UpgradeState1 const type.
+func PossibleUpgradeState1Values() []UpgradeState1 {
+	return []UpgradeState1{UpgradeState1Invalid, UpgradeState1RollingBackCompleted, UpgradeState1RollingBackInProgress, UpgradeState1RollingForwardCompleted, UpgradeState1RollingForwardInProgress, UpgradeState1RollingForwardPending}
+}
 
 // Application the application
 type Application struct {
@@ -1114,8 +1444,12 @@ func (ahe ApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if ahe.Description != nil {
 		objectMap["Description"] = ahe.Description
 	}
-	objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
-	objectMap["Kind"] = ahe.Kind
+	if ahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
+	}
+	if ahe.Kind != "" {
+		objectMap["Kind"] = ahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1331,8 +1665,12 @@ func (ahe ApplicationsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if ahe.Description != nil {
 		objectMap["Description"] = ahe.Description
 	}
-	objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
-	objectMap["Kind"] = ahe.Kind
+	if ahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
+	}
+	if ahe.Kind != "" {
+		objectMap["Kind"] = ahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1496,8 +1834,12 @@ func (athe ApplicationTypeHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if athe.Description != nil {
 		objectMap["Description"] = athe.Description
 	}
-	objectMap["AggregatedHealthState"] = athe.AggregatedHealthState
-	objectMap["Kind"] = athe.Kind
+	if athe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = athe.AggregatedHealthState
+	}
+	if athe.Kind != "" {
+		objectMap["Kind"] = athe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1880,7 +2222,9 @@ func (csd CreateServiceDescription) MarshalJSON() ([]byte, error) {
 	if csd.Flags != nil {
 		objectMap["Flags"] = csd.Flags
 	}
-	objectMap["ServiceKind"] = csd.ServiceKind
+	if csd.ServiceKind != "" {
+		objectMap["ServiceKind"] = csd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2002,7 +2346,9 @@ func (csgd CreateServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if csgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = csgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = csgd.ServiceKind
+	if csgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = csgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2062,8 +2408,12 @@ func (dnche DeltaNodesCheckHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if dnche.Description != nil {
 		objectMap["Description"] = dnche.Description
 	}
-	objectMap["AggregatedHealthState"] = dnche.AggregatedHealthState
-	objectMap["Kind"] = dnche.Kind
+	if dnche.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = dnche.AggregatedHealthState
+	}
+	if dnche.Kind != "" {
+		objectMap["Kind"] = dnche.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2234,8 +2584,12 @@ func (dahe DeployedApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if dahe.Description != nil {
 		objectMap["Description"] = dahe.Description
 	}
-	objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
-	objectMap["Kind"] = dahe.Kind
+	if dahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
+	}
+	if dahe.Kind != "" {
+		objectMap["Kind"] = dahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2394,8 +2748,12 @@ func (dahe DeployedApplicationsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if dahe.Description != nil {
 		objectMap["Description"] = dahe.Description
 	}
-	objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
-	objectMap["Kind"] = dahe.Kind
+	if dahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
+	}
+	if dahe.Kind != "" {
+		objectMap["Kind"] = dahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2642,8 +3000,12 @@ func (dsphe DeployedServicePackageHealthEvaluation) MarshalJSON() ([]byte, error
 	if dsphe.Description != nil {
 		objectMap["Description"] = dsphe.Description
 	}
-	objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
-	objectMap["Kind"] = dsphe.Kind
+	if dsphe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
+	}
+	if dsphe.Kind != "" {
+		objectMap["Kind"] = dsphe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2795,8 +3157,12 @@ func (dsphe DeployedServicePackagesHealthEvaluation) MarshalJSON() ([]byte, erro
 	if dsphe.Description != nil {
 		objectMap["Description"] = dsphe.Description
 	}
-	objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
-	objectMap["Kind"] = dsphe.Kind
+	if dsphe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
+	}
+	if dsphe.Kind != "" {
+		objectMap["Kind"] = dsphe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2975,8 +3341,12 @@ func (ehe EventHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if ehe.Description != nil {
 		objectMap["Description"] = ehe.Description
 	}
-	objectMap["AggregatedHealthState"] = ehe.AggregatedHealthState
-	objectMap["Kind"] = ehe.Kind
+	if ehe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = ehe.AggregatedHealthState
+	}
+	if ehe.Kind != "" {
+		objectMap["Kind"] = ehe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3254,8 +3624,12 @@ func (he HealthEvaluation) MarshalJSON() ([]byte, error) {
 	if he.Description != nil {
 		objectMap["Description"] = he.Description
 	}
-	objectMap["AggregatedHealthState"] = he.AggregatedHealthState
-	objectMap["Kind"] = he.Kind
+	if he.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = he.AggregatedHealthState
+	}
+	if he.Kind != "" {
+		objectMap["Kind"] = he.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3547,8 +3921,12 @@ func (nhe NodeHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if nhe.Description != nil {
 		objectMap["Description"] = nhe.Description
 	}
-	objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
-	objectMap["Kind"] = nhe.Kind
+	if nhe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
+	}
+	if nhe.Kind != "" {
+		objectMap["Kind"] = nhe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3745,8 +4123,12 @@ func (nhe NodesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if nhe.Description != nil {
 		objectMap["Description"] = nhe.Description
 	}
-	objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
-	objectMap["Kind"] = nhe.Kind
+	if nhe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
+	}
+	if nhe.Kind != "" {
+		objectMap["Kind"] = nhe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3932,8 +4314,12 @@ func (phe PartitionHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if phe.Description != nil {
 		objectMap["Description"] = phe.Description
 	}
-	objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
-	objectMap["Kind"] = phe.Kind
+	if phe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
+	}
+	if phe.Kind != "" {
+		objectMap["Kind"] = phe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4126,8 +4512,12 @@ func (phe PartitionsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if phe.Description != nil {
 		objectMap["Description"] = phe.Description
 	}
-	objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
-	objectMap["Kind"] = phe.Kind
+	if phe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
+	}
+	if phe.Kind != "" {
+		objectMap["Kind"] = phe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4317,8 +4707,12 @@ func (rhe ReplicaHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if rhe.Description != nil {
 		objectMap["Description"] = rhe.Description
 	}
-	objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
-	objectMap["Kind"] = rhe.Kind
+	if rhe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
+	}
+	if rhe.Kind != "" {
+		objectMap["Kind"] = rhe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4492,8 +4886,12 @@ func (rhe ReplicasHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if rhe.Description != nil {
 		objectMap["Description"] = rhe.Description
 	}
-	objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
-	objectMap["Kind"] = rhe.Kind
+	if rhe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
+	}
+	if rhe.Kind != "" {
+		objectMap["Kind"] = rhe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4756,7 +5154,9 @@ func (sd ServiceDescription) MarshalJSON() ([]byte, error) {
 	if sd.Flags != nil {
 		objectMap["Flags"] = sd.Flags
 	}
-	objectMap["ServiceKind"] = sd.ServiceKind
+	if sd.ServiceKind != "" {
+		objectMap["ServiceKind"] = sd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4902,7 +5302,9 @@ func (sgd ServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if sgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = sgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = sgd.ServiceKind
+	if sgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = sgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4992,8 +5394,12 @@ func (she ServiceHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if she.Description != nil {
 		objectMap["Description"] = she.Description
 	}
-	objectMap["AggregatedHealthState"] = she.AggregatedHealthState
-	objectMap["Kind"] = she.Kind
+	if she.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = she.AggregatedHealthState
+	}
+	if she.Kind != "" {
+		objectMap["Kind"] = she.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5190,8 +5596,12 @@ func (she ServicesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if she.Description != nil {
 		objectMap["Description"] = she.Description
 	}
-	objectMap["AggregatedHealthState"] = she.AggregatedHealthState
-	objectMap["Kind"] = she.Kind
+	if she.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = she.AggregatedHealthState
+	}
+	if she.Kind != "" {
+		objectMap["Kind"] = she.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5418,7 +5828,9 @@ func (scsd StatefulCreateServiceDescription) MarshalJSON() ([]byte, error) {
 	if scsd.StandByReplicaKeepDurationSeconds != nil {
 		objectMap["StandByReplicaKeepDurationSeconds"] = scsd.StandByReplicaKeepDurationSeconds
 	}
-	objectMap["DefaultMoveCost"] = scsd.DefaultMoveCost
+	if scsd.DefaultMoveCost != "" {
+		objectMap["DefaultMoveCost"] = scsd.DefaultMoveCost
+	}
 	if scsd.IsDefaultMoveCostSpecified != nil {
 		objectMap["IsDefaultMoveCostSpecified"] = scsd.IsDefaultMoveCostSpecified
 	}
@@ -5449,7 +5861,9 @@ func (scsd StatefulCreateServiceDescription) MarshalJSON() ([]byte, error) {
 	if scsd.Flags != nil {
 		objectMap["Flags"] = scsd.Flags
 	}
-	objectMap["ServiceKind"] = scsd.ServiceKind
+	if scsd.ServiceKind != "" {
+		objectMap["ServiceKind"] = scsd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5520,7 +5934,9 @@ func (scsgd StatefulCreateServiceGroupDescription) MarshalJSON() ([]byte, error)
 	if scsgd.StandByReplicaKeepDurationSeconds != nil {
 		objectMap["StandByReplicaKeepDurationSeconds"] = scsgd.StandByReplicaKeepDurationSeconds
 	}
-	objectMap["DefaultMoveCost"] = scsgd.DefaultMoveCost
+	if scsgd.DefaultMoveCost != "" {
+		objectMap["DefaultMoveCost"] = scsgd.DefaultMoveCost
+	}
 	if scsgd.IsDefaultMoveCostSpecified != nil {
 		objectMap["IsDefaultMoveCostSpecified"] = scsgd.IsDefaultMoveCostSpecified
 	}
@@ -5554,7 +5970,9 @@ func (scsgd StatefulCreateServiceGroupDescription) MarshalJSON() ([]byte, error)
 	if scsgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = scsgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = scsgd.ServiceKind
+	if scsgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = scsgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5624,7 +6042,9 @@ func (ssd StatefulServiceDescription) MarshalJSON() ([]byte, error) {
 	if ssd.StandByReplicaKeepDurationSeconds != nil {
 		objectMap["StandByReplicaKeepDurationSeconds"] = ssd.StandByReplicaKeepDurationSeconds
 	}
-	objectMap["DefaultMoveCost"] = ssd.DefaultMoveCost
+	if ssd.DefaultMoveCost != "" {
+		objectMap["DefaultMoveCost"] = ssd.DefaultMoveCost
+	}
 	if ssd.IsDefaultMoveCostSpecified != nil {
 		objectMap["IsDefaultMoveCostSpecified"] = ssd.IsDefaultMoveCostSpecified
 	}
@@ -5655,7 +6075,9 @@ func (ssd StatefulServiceDescription) MarshalJSON() ([]byte, error) {
 	if ssd.Flags != nil {
 		objectMap["Flags"] = ssd.Flags
 	}
-	objectMap["ServiceKind"] = ssd.ServiceKind
+	if ssd.ServiceKind != "" {
+		objectMap["ServiceKind"] = ssd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5726,7 +6148,9 @@ func (ssgd StatefulServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if ssgd.StandByReplicaKeepDurationSeconds != nil {
 		objectMap["StandByReplicaKeepDurationSeconds"] = ssgd.StandByReplicaKeepDurationSeconds
 	}
-	objectMap["DefaultMoveCost"] = ssgd.DefaultMoveCost
+	if ssgd.DefaultMoveCost != "" {
+		objectMap["DefaultMoveCost"] = ssgd.DefaultMoveCost
+	}
 	if ssgd.IsDefaultMoveCostSpecified != nil {
 		objectMap["IsDefaultMoveCostSpecified"] = ssgd.IsDefaultMoveCostSpecified
 	}
@@ -5760,7 +6184,9 @@ func (ssgd StatefulServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if ssgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = ssgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = ssgd.ServiceKind
+	if ssgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = ssgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5818,7 +6244,9 @@ func (susd StatefulUpdateServiceDescription) MarshalJSON() ([]byte, error) {
 	if susd.Flags != nil {
 		objectMap["Flags"] = susd.Flags
 	}
-	objectMap["ServiceKind"] = susd.ServiceKind
+	if susd.ServiceKind != "" {
+		objectMap["ServiceKind"] = susd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5876,7 +6304,9 @@ func (susgd StatefulUpdateServiceGroupDescription) MarshalJSON() ([]byte, error)
 	if susgd.Flags != nil {
 		objectMap["Flags"] = susgd.Flags
 	}
-	objectMap["ServiceKind"] = susgd.ServiceKind
+	if susgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = susgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5950,7 +6380,9 @@ func (scsd StatelessCreateServiceDescription) MarshalJSON() ([]byte, error) {
 	if scsd.Flags != nil {
 		objectMap["Flags"] = scsd.Flags
 	}
-	objectMap["ServiceKind"] = scsd.ServiceKind
+	if scsd.ServiceKind != "" {
+		objectMap["ServiceKind"] = scsd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6028,7 +6460,9 @@ func (scsgd StatelessCreateServiceGroupDescription) MarshalJSON() ([]byte, error
 	if scsgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = scsgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = scsgd.ServiceKind
+	if scsgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = scsgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6102,7 +6536,9 @@ func (ssd StatelessServiceDescription) MarshalJSON() ([]byte, error) {
 	if ssd.Flags != nil {
 		objectMap["Flags"] = ssd.Flags
 	}
-	objectMap["ServiceKind"] = ssd.ServiceKind
+	if ssd.ServiceKind != "" {
+		objectMap["ServiceKind"] = ssd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6180,7 +6616,9 @@ func (ssgd StatelessServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if ssgd.ServiceGroupMemberDescription != nil {
 		objectMap["ServiceGroupMemberDescription"] = ssgd.ServiceGroupMemberDescription
 	}
-	objectMap["ServiceKind"] = ssgd.ServiceKind
+	if ssgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = ssgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6222,7 +6660,9 @@ func (susd StatelessUpdateServiceDescription) MarshalJSON() ([]byte, error) {
 	if susd.Flags != nil {
 		objectMap["Flags"] = susd.Flags
 	}
-	objectMap["ServiceKind"] = susd.ServiceKind
+	if susd.ServiceKind != "" {
+		objectMap["ServiceKind"] = susd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6264,7 +6704,9 @@ func (susgd StatelessUpdateServiceGroupDescription) MarshalJSON() ([]byte, error
 	if susgd.Flags != nil {
 		objectMap["Flags"] = susgd.Flags
 	}
-	objectMap["ServiceKind"] = susgd.ServiceKind
+	if susgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = susgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6314,8 +6756,12 @@ func (sahe SystemApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if sahe.Description != nil {
 		objectMap["Description"] = sahe.Description
 	}
-	objectMap["AggregatedHealthState"] = sahe.AggregatedHealthState
-	objectMap["Kind"] = sahe.Kind
+	if sahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = sahe.AggregatedHealthState
+	}
+	if sahe.Kind != "" {
+		objectMap["Kind"] = sahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6579,7 +7025,9 @@ func (usd UpdateServiceDescription) MarshalJSON() ([]byte, error) {
 	if usd.Flags != nil {
 		objectMap["Flags"] = usd.Flags
 	}
-	objectMap["ServiceKind"] = usd.ServiceKind
+	if usd.ServiceKind != "" {
+		objectMap["ServiceKind"] = usd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6665,7 +7113,9 @@ func (usgd UpdateServiceGroupDescription) MarshalJSON() ([]byte, error) {
 	if usgd.Flags != nil {
 		objectMap["Flags"] = usgd.Flags
 	}
-	objectMap["ServiceKind"] = usgd.ServiceKind
+	if usgd.ServiceKind != "" {
+		objectMap["ServiceKind"] = usgd.ServiceKind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6729,8 +7179,12 @@ func (uddnche UpgradeDomainDeltaNodesCheckHealthEvaluation) MarshalJSON() ([]byt
 	if uddnche.Description != nil {
 		objectMap["Description"] = uddnche.Description
 	}
-	objectMap["AggregatedHealthState"] = uddnche.AggregatedHealthState
-	objectMap["Kind"] = uddnche.Kind
+	if uddnche.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = uddnche.AggregatedHealthState
+	}
+	if uddnche.Kind != "" {
+		objectMap["Kind"] = uddnche.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6882,8 +7336,12 @@ func (uddahe UpgradeDomainDeployedApplicationsHealthEvaluation) MarshalJSON() ([
 	if uddahe.Description != nil {
 		objectMap["Description"] = uddahe.Description
 	}
-	objectMap["AggregatedHealthState"] = uddahe.AggregatedHealthState
-	objectMap["Kind"] = uddahe.Kind
+	if uddahe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = uddahe.AggregatedHealthState
+	}
+	if uddahe.Kind != "" {
+		objectMap["Kind"] = uddahe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -7034,8 +7492,12 @@ func (udnhe UpgradeDomainNodesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	if udnhe.Description != nil {
 		objectMap["Description"] = udnhe.Description
 	}
-	objectMap["AggregatedHealthState"] = udnhe.AggregatedHealthState
-	objectMap["Kind"] = udnhe.Kind
+	if udnhe.AggregatedHealthState != "" {
+		objectMap["AggregatedHealthState"] = udnhe.AggregatedHealthState
+	}
+	if udnhe.Kind != "" {
+		objectMap["Kind"] = udnhe.Kind
+	}
 	return json.Marshal(objectMap)
 }
 

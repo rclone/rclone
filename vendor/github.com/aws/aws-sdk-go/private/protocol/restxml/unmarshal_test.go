@@ -107,7 +107,7 @@ const opOutputService1TestCaseOperation1 = "OperationName"
 
 // OutputService1TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService1TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -127,7 +127,7 @@ const opOutputService1TestCaseOperation1 = "OperationName"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1Request(input *OutputService1TestShapeOutputService1TestCaseOperation1Input) (req *request.Request, output *OutputService1TestShapeOutputService1TestCaseOperation2Output) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1Request(input *OutputService1TestShapeOutputService1TestCaseOperation1Input) (req *request.Request, output *OutputService1TestShapeOutputService1TestCaseOperation3Output) {
 	op := &request.Operation{
 		Name:     opOutputService1TestCaseOperation1,
 		HTTPPath: "/",
@@ -137,7 +137,7 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1Request(inp
 		input = &OutputService1TestShapeOutputService1TestCaseOperation1Input{}
 	}
 
-	output = &OutputService1TestShapeOutputService1TestCaseOperation2Output{}
+	output = &OutputService1TestShapeOutputService1TestCaseOperation3Output{}
 	req = c.newRequest(op, input, output)
 	return
 }
@@ -150,7 +150,7 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1Request(inp
 //
 // See the AWS API reference guide for 's
 // API operation OutputService1TestCaseOperation1 for usage and error information.
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1(input *OutputService1TestShapeOutputService1TestCaseOperation1Input) (*OutputService1TestShapeOutputService1TestCaseOperation2Output, error) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1(input *OutputService1TestShapeOutputService1TestCaseOperation1Input) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
 	req, out := c.OutputService1TestCaseOperation1Request(input)
 	return out, req.Send()
 }
@@ -164,7 +164,7 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1(input *Out
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1WithContext(ctx aws.Context, input *OutputService1TestShapeOutputService1TestCaseOperation1Input, opts ...request.Option) (*OutputService1TestShapeOutputService1TestCaseOperation2Output, error) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation1WithContext(ctx aws.Context, input *OutputService1TestShapeOutputService1TestCaseOperation1Input, opts ...request.Option) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
 	req, out := c.OutputService1TestCaseOperation1Request(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
@@ -175,7 +175,7 @@ const opOutputService1TestCaseOperation2 = "OperationName"
 
 // OutputService1TestCaseOperation2Request generates a "aws/request.Request" representing the
 // client's request for the OutputService1TestCaseOperation2 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -195,7 +195,7 @@ const opOutputService1TestCaseOperation2 = "OperationName"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2Request(input *OutputService1TestShapeOutputService1TestCaseOperation2Input) (req *request.Request, output *OutputService1TestShapeOutputService1TestCaseOperation2Output) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2Request(input *OutputService1TestShapeOutputService1TestCaseOperation2Input) (req *request.Request, output *OutputService1TestShapeOutputService1TestCaseOperation3Output) {
 	op := &request.Operation{
 		Name:     opOutputService1TestCaseOperation2,
 		HTTPPath: "/",
@@ -205,7 +205,7 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2Request(inp
 		input = &OutputService1TestShapeOutputService1TestCaseOperation2Input{}
 	}
 
-	output = &OutputService1TestShapeOutputService1TestCaseOperation2Output{}
+	output = &OutputService1TestShapeOutputService1TestCaseOperation3Output{}
 	req = c.newRequest(op, input, output)
 	return
 }
@@ -218,7 +218,7 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2Request(inp
 //
 // See the AWS API reference guide for 's
 // API operation OutputService1TestCaseOperation2 for usage and error information.
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2(input *OutputService1TestShapeOutputService1TestCaseOperation2Input) (*OutputService1TestShapeOutputService1TestCaseOperation2Output, error) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2(input *OutputService1TestShapeOutputService1TestCaseOperation2Input) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
 	req, out := c.OutputService1TestCaseOperation2Request(input)
 	return out, req.Send()
 }
@@ -232,8 +232,76 @@ func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2(input *Out
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
-func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2WithContext(ctx aws.Context, input *OutputService1TestShapeOutputService1TestCaseOperation2Input, opts ...request.Option) (*OutputService1TestShapeOutputService1TestCaseOperation2Output, error) {
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation2WithContext(ctx aws.Context, input *OutputService1TestShapeOutputService1TestCaseOperation2Input, opts ...request.Option) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
 	req, out := c.OutputService1TestCaseOperation2Request(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opOutputService1TestCaseOperation3 = "OperationName"
+
+// OutputService1TestCaseOperation3Request generates a "aws/request.Request" representing the
+// client's request for the OutputService1TestCaseOperation3 operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See OutputService1TestCaseOperation3 for more information on using the OutputService1TestCaseOperation3
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the OutputService1TestCaseOperation3Request method.
+//    req, resp := client.OutputService1TestCaseOperation3Request(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation3Request(input *OutputService1TestShapeOutputService1TestCaseOperation3Input) (req *request.Request, output *OutputService1TestShapeOutputService1TestCaseOperation3Output) {
+	op := &request.Operation{
+		Name:     opOutputService1TestCaseOperation3,
+		HTTPPath: "/",
+	}
+
+	if input == nil {
+		input = &OutputService1TestShapeOutputService1TestCaseOperation3Input{}
+	}
+
+	output = &OutputService1TestShapeOutputService1TestCaseOperation3Output{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// OutputService1TestCaseOperation3 API operation for .
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for 's
+// API operation OutputService1TestCaseOperation3 for usage and error information.
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation3(input *OutputService1TestShapeOutputService1TestCaseOperation3Input) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
+	req, out := c.OutputService1TestCaseOperation3Request(input)
+	return out, req.Send()
+}
+
+// OutputService1TestCaseOperation3WithContext is the same as OutputService1TestCaseOperation3 with the addition of
+// the ability to pass a context and additional request options.
+//
+// See OutputService1TestCaseOperation3 for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *OutputService1ProtocolTest) OutputService1TestCaseOperation3WithContext(ctx aws.Context, input *OutputService1TestShapeOutputService1TestCaseOperation3Input, opts ...request.Option) (*OutputService1TestShapeOutputService1TestCaseOperation3Output, error) {
+	req, out := c.OutputService1TestCaseOperation3Request(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -247,8 +315,14 @@ type OutputService1TestShapeOutputService1TestCaseOperation2Input struct {
 	_ struct{} `type:"structure"`
 }
 
-type OutputService1TestShapeOutputService1TestCaseOperation2Output struct {
+type OutputService1TestShapeOutputService1TestCaseOperation3Input struct {
 	_ struct{} `type:"structure"`
+}
+
+type OutputService1TestShapeOutputService1TestCaseOperation3Output struct {
+	_ struct{} `type:"structure"`
+
+	Blobs [][]byte `type:"list"`
 
 	Char *string `type:"character"`
 
@@ -270,71 +344,85 @@ type OutputService1TestShapeOutputService1TestCaseOperation2Output struct {
 
 	Timestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
+	Timestamps []*time.Time `type:"list"`
+
 	TrueBool *bool `type:"boolean"`
 }
 
+// SetBlobs sets the Blobs field's value.
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetBlobs(v [][]byte) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
+	s.Blobs = v
+	return s
+}
+
 // SetChar sets the Char field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetChar(v string) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetChar(v string) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Char = &v
 	return s
 }
 
 // SetDouble sets the Double field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetDouble(v float64) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetDouble(v float64) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Double = &v
 	return s
 }
 
 // SetFalseBool sets the FalseBool field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetFalseBool(v bool) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetFalseBool(v bool) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.FalseBool = &v
 	return s
 }
 
 // SetFloat sets the Float field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetFloat(v float64) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetFloat(v float64) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Float = &v
 	return s
 }
 
 // SetImaHeader sets the ImaHeader field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetImaHeader(v string) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetImaHeader(v string) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.ImaHeader = &v
 	return s
 }
 
 // SetImaHeaderLocation sets the ImaHeaderLocation field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetImaHeaderLocation(v string) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetImaHeaderLocation(v string) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.ImaHeaderLocation = &v
 	return s
 }
 
 // SetLong sets the Long field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetLong(v int64) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetLong(v int64) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Long = &v
 	return s
 }
 
 // SetNum sets the Num field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetNum(v int64) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetNum(v int64) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Num = &v
 	return s
 }
 
 // SetStr sets the Str field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetStr(v string) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetStr(v string) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Str = &v
 	return s
 }
 
 // SetTimestamp sets the Timestamp field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetTimestamp(v time.Time) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetTimestamp(v time.Time) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.Timestamp = &v
 	return s
 }
 
+// SetTimestamps sets the Timestamps field's value.
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetTimestamps(v []*time.Time) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
+	s.Timestamps = v
+	return s
+}
+
 // SetTrueBool sets the TrueBool field's value.
-func (s *OutputService1TestShapeOutputService1TestCaseOperation2Output) SetTrueBool(v bool) *OutputService1TestShapeOutputService1TestCaseOperation2Output {
+func (s *OutputService1TestShapeOutputService1TestCaseOperation3Output) SetTrueBool(v bool) *OutputService1TestShapeOutputService1TestCaseOperation3Output {
 	s.TrueBool = &v
 	return s
 }
@@ -402,7 +490,7 @@ const opOutputService2TestCaseOperation1 = "OperationName"
 
 // OutputService2TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService2TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -546,7 +634,7 @@ const opOutputService3TestCaseOperation1 = "OperationName"
 
 // OutputService3TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService3TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -689,7 +777,7 @@ const opOutputService4TestCaseOperation1 = "OperationName"
 
 // OutputService4TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService4TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -832,7 +920,7 @@ const opOutputService5TestCaseOperation1 = "OperationName"
 
 // OutputService5TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService5TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -975,7 +1063,7 @@ const opOutputService6TestCaseOperation1 = "OperationName"
 
 // OutputService6TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService6TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1130,7 +1218,7 @@ const opOutputService7TestCaseOperation1 = "OperationName"
 
 // OutputService7TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService7TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1273,7 +1361,7 @@ const opOutputService8TestCaseOperation1 = "OperationName"
 
 // OutputService8TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService8TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1416,7 +1504,7 @@ const opOutputService9TestCaseOperation1 = "OperationName"
 
 // OutputService9TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService9TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1579,7 +1667,7 @@ const opOutputService10TestCaseOperation1 = "OperationName"
 
 // OutputService10TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService10TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1722,7 +1810,7 @@ const opOutputService11TestCaseOperation1 = "OperationName"
 
 // OutputService11TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService11TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1929,7 +2017,7 @@ const opOutputService12TestCaseOperation1 = "OperationName"
 
 // OutputService12TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService12TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2072,7 +2160,7 @@ const opOutputService13TestCaseOperation1 = "OperationName"
 
 // OutputService13TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService13TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2141,7 +2229,7 @@ const opOutputService13TestCaseOperation2 = "OperationName"
 
 // OutputService13TestCaseOperation2Request generates a "aws/request.Request" representing the
 // client's request for the OutputService13TestCaseOperation2 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2321,7 +2409,7 @@ const opOutputService14TestCaseOperation1 = "OperationName"
 
 // OutputService14TestCaseOperation1Request generates a "aws/request.Request" representing the
 // client's request for the OutputService14TestCaseOperation1 operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2561,6 +2649,41 @@ func TestOutputService1ProtocolTestScalarMembersCase2(t *testing.T) {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 	if e, a := true, *out.TrueBool; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+
+}
+
+func TestOutputService1ProtocolTestScalarMembersCase3(t *testing.T) {
+	svc := NewOutputService1ProtocolTest(unit.Session, &aws.Config{Endpoint: aws.String("https://test")})
+
+	buf := bytes.NewReader([]byte("<OperationNameResponse><Blobs><member>dmFsdWU=</member><member>dmFsdWUy</member></Blobs><Timestamps><member>2015-01-25T08:00:00Z</member><member>2015-01-25T08:00:01Z</member></Timestamps></OperationNameResponse>"))
+	req, out := svc.OutputService1TestCaseOperation3Request(nil)
+	req.HTTPResponse = &http.Response{StatusCode: 200, Body: ioutil.NopCloser(buf), Header: http.Header{}}
+
+	// set headers
+
+	// unmarshal response
+	restxml.UnmarshalMeta(req)
+	restxml.Unmarshal(req)
+	if req.Error != nil {
+		t.Errorf("expect not error, got %v", req.Error)
+	}
+
+	// assert response
+	if out == nil {
+		t.Errorf("expect not to be nil")
+	}
+	if e, a := "value", string(out.Blobs[0]); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "value2", string(out.Blobs[1]); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamps[0].String(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := time.Unix(1.422172801e+09, 0).UTC().String(), out.Timestamps[1].String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 

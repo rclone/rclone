@@ -41,6 +41,11 @@ const (
 	UserObj ACLType = "UserObj"
 )
 
+// PossibleACLTypeValues returns an array of possible values for the ACLType const type.
+func PossibleACLTypeValues() []ACLType {
+	return []ACLType{Group, GroupObj, Other, User, UserObj}
+}
+
 // FileType enumerates the values for file type.
 type FileType string
 
@@ -52,6 +57,11 @@ const (
 	// Resource ...
 	Resource FileType = "Resource"
 )
+
+// PossibleFileTypeValues returns an array of possible values for the FileType const type.
+func PossibleFileTypeValues() []FileType {
+	return []FileType{Assembly, Nodeploy, Resource}
+}
 
 // PermissionType enumerates the values for permission type.
 type PermissionType string
@@ -72,6 +82,11 @@ const (
 	// Write ...
 	Write PermissionType = "Write"
 )
+
+// PossiblePermissionTypeValues returns an array of possible values for the PermissionType const type.
+func PossiblePermissionTypeValues() []PermissionType {
+	return []PermissionType{All, Alter, Create, Drop, None, Use, Write}
+}
 
 // ACL a Data Lake Analytics catalog access control list (ACL) entry.
 type ACL struct {
@@ -1240,6 +1255,124 @@ type USQLTableColumn struct {
 	Name *string `json:"name,omitempty"`
 	// Type - the object type of the specified column (such as System.String).
 	Type *string `json:"type,omitempty"`
+}
+
+// USQLTableFragment a Data Lake Analytics catalog U-SQL table fragment item.
+type USQLTableFragment struct {
+	// ParentID - the parent object Id of the table fragment. The parent could be a table or table partition.
+	ParentID *uuid.UUID `json:"parentId,omitempty"`
+	// FragmentID - the version of the catalog item.
+	FragmentID *uuid.UUID `json:"fragmentId,omitempty"`
+	// IndexID - the ordinal of the index which contains the table fragment.
+	IndexID *int32 `json:"indexId,omitempty"`
+	// Size - the data size of the table fragment in bytes.
+	Size *int64 `json:"size,omitempty"`
+	// RowCount - the number of rows in the table fragment.
+	RowCount *int64 `json:"rowCount,omitempty"`
+	// CreateDate - the creation time of the table fragment.
+	CreateDate *date.Time `json:"createDate,omitempty"`
+}
+
+// USQLTableFragmentList a Data Lake Analytics catalog U-SQL table fragment item list.
+type USQLTableFragmentList struct {
+	autorest.Response `json:"-"`
+	// Value - the list of table fragments in the database, schema and table combination
+	Value *[]USQLTableFragment `json:"value,omitempty"`
+	// NextLink - the link to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// USQLTableFragmentListIterator provides access to a complete listing of USQLTableFragment values.
+type USQLTableFragmentListIterator struct {
+	i    int
+	page USQLTableFragmentListPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *USQLTableFragmentListIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter USQLTableFragmentListIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter USQLTableFragmentListIterator) Response() USQLTableFragmentList {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter USQLTableFragmentListIterator) Value() USQLTableFragment {
+	if !iter.page.NotDone() {
+		return USQLTableFragment{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (ustfl USQLTableFragmentList) IsEmpty() bool {
+	return ustfl.Value == nil || len(*ustfl.Value) == 0
+}
+
+// uSQLTableFragmentListPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (ustfl USQLTableFragmentList) uSQLTableFragmentListPreparer() (*http.Request, error) {
+	if ustfl.NextLink == nil || len(to.String(ustfl.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(ustfl.NextLink)))
+}
+
+// USQLTableFragmentListPage contains a page of USQLTableFragment values.
+type USQLTableFragmentListPage struct {
+	fn   func(USQLTableFragmentList) (USQLTableFragmentList, error)
+	utfl USQLTableFragmentList
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *USQLTableFragmentListPage) Next() error {
+	next, err := page.fn(page.utfl)
+	if err != nil {
+		return err
+	}
+	page.utfl = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page USQLTableFragmentListPage) NotDone() bool {
+	return !page.utfl.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page USQLTableFragmentListPage) Response() USQLTableFragmentList {
+	return page.utfl
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page USQLTableFragmentListPage) Values() []USQLTableFragment {
+	if page.utfl.IsEmpty() {
+		return nil
+	}
+	return *page.utfl.Value
 }
 
 // USQLTableList a Data Lake Analytics catalog U-SQL table item list.

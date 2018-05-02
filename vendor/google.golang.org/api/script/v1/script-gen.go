@@ -1,4 +1,4 @@
-// Package script provides access to the Google Apps Script API.
+// Package script provides access to the Apps Script API.
 //
 // See https://developers.google.com/apps-script/api/
 //
@@ -1467,9 +1467,10 @@ func (s *ScriptStackTraceElement) MarshalJSON() ([]byte, error) {
 // Script itself) throws an exception, the response body's error field
 // contains this `Status` object.
 type Status struct {
-	// Code: The status code. For this API, this value either: <ul> <li> 3,
-	// indicating an `INVALID_ARGUMENT` error, or</li> <li> 1, indicating a
-	// `CANCELLED` execution.</li> </ul>
+	// Code: The status code. For this API, this value either: <ul> <li> 10,
+	// indicating a `SCRIPT_TIMEOUT` error,</li> <li> 3, indicating an
+	// `INVALID_ARGUMENT` error, or</li> <li> 1, indicating a `CANCELLED`
+	// execution.</li> </ul>
 	Code int64 `json:"code,omitempty"`
 
 	// Details: An array that contains a single ExecutionError object that
@@ -1648,7 +1649,7 @@ func (c *ProcessesListCall) UserProcessFilterFunctionName(userProcessFilterFunct
 // UserProcessFilterProjectName sets the optional parameter
 // "userProcessFilter.projectName": Optional field used to limit
 // returned processes to those originating from
-// projects with a specific project name.
+// projects with project names containing a specific string.
 func (c *ProcessesListCall) UserProcessFilterProjectName(userProcessFilterProjectName string) *ProcessesListCall {
 	c.urlParams_.Set("userProcessFilter.projectName", userProcessFilterProjectName)
 	return c
@@ -1851,7 +1852,7 @@ func (c *ProcessesListCall) Do(opts ...googleapi.CallOption) (*ListUserProcesses
 	//       "type": "string"
 	//     },
 	//     "userProcessFilter.projectName": {
-	//       "description": "Optional field used to limit returned processes to those originating from\nprojects with a specific project name.",
+	//       "description": "Optional field used to limit returned processes to those originating from\nprojects with project names containing a specific string.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

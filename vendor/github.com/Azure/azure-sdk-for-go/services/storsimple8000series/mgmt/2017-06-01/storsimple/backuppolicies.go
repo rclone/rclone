@@ -41,10 +41,12 @@ func NewBackupPoliciesClientWithBaseURI(baseURI string, subscriptionID string) B
 }
 
 // BackupNow backup the backup policy now.
-//
-// deviceName is the device name backupPolicyName is the backup policy name. backupType is the backup Type. This
-// can be cloudSnapshot or localSnapshot. resourceGroupName is the resource group name managerName is the manager
-// name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the backup policy name.
+// backupType - the backup Type. This can be cloudSnapshot or localSnapshot.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupPoliciesClient) BackupNow(ctx context.Context, deviceName string, backupPolicyName string, backupType string, resourceGroupName string, managerName string) (result BackupPoliciesBackupNowFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -120,9 +122,12 @@ func (client BackupPoliciesClient) BackupNowResponder(resp *http.Response) (resu
 }
 
 // CreateOrUpdate creates or updates the backup policy.
-//
-// deviceName is the device name backupPolicyName is the name of the backup policy to be created/updated.
-// parameters is the backup policy. resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the name of the backup policy to be created/updated.
+// parameters - the backup policy.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupPoliciesClient) CreateOrUpdate(ctx context.Context, deviceName string, backupPolicyName string, parameters BackupPolicy, resourceGroupName string, managerName string) (result BackupPoliciesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -165,7 +170,7 @@ func (client BackupPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, d
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{deviceName}/backupPolicies/{backupPolicyName}", pathParameters),
@@ -203,9 +208,11 @@ func (client BackupPoliciesClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete deletes the backup policy.
-//
-// deviceName is the device name backupPolicyName is the name of the backup policy. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the name of the backup policy.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupPoliciesClient) Delete(ctx context.Context, deviceName string, backupPolicyName string, resourceGroupName string, managerName string) (result BackupPoliciesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -280,9 +287,11 @@ func (client BackupPoliciesClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // Get gets the properties of the specified backup policy name.
-//
-// deviceName is the device name backupPolicyName is the name of backup policy to be fetched. resourceGroupName is
-// the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// backupPolicyName - the name of backup policy to be fetched.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupPoliciesClient) Get(ctx context.Context, deviceName string, backupPolicyName string, resourceGroupName string, managerName string) (result BackupPolicy, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -356,8 +365,10 @@ func (client BackupPoliciesClient) GetResponder(resp *http.Response) (result Bac
 }
 
 // ListByDevice gets all the backup policies in a device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BackupPoliciesClient) ListByDevice(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result BackupPolicyList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

@@ -118,7 +118,7 @@
     "billingAccounts": {
       "methods": {
         "create": {
-          "description": "Creates a billing account.\nThis method can only be used to create\n[billing subaccounts](https://cloud.google.com/billing/docs/concepts).\nWhen creating a subaccount, the current authenticated user must have the\n`billing.accounts.update` IAM permission on the master account, which is\ntypically given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+          "description": "Creates a billing account.\nThis method can only be used to create\n[billing subaccounts](https://cloud.google.com/billing/docs/concepts)\nfor GCP resellers.\nWhen creating a subaccount, the current authenticated user must have the\n`billing.accounts.update` IAM permission on the master account, which is\ntypically given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
           "flatPath": "v1/billingAccounts",
           "httpMethod": "POST",
           "id": "cloudbilling.billingAccounts.create",
@@ -493,7 +493,7 @@
       }
     }
   },
-  "revision": "20180307",
+  "revision": "20180410",
   "rootUrl": "https://cloudbilling.googleapis.com/",
   "schemas": {
     "AggregationInfo": {
@@ -539,7 +539,7 @@
       "id": "AuditConfig",
       "properties": {
         "auditLogConfigs": {
-          "description": "The configuration for logging of each type of permission.\nNext ID: 4",
+          "description": "The configuration for logging of each type of permission.",
           "items": {
             "$ref": "AuditLogConfig"
           },

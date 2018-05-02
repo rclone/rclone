@@ -41,9 +41,9 @@ func NewDeploymentsClientWithBaseURI(baseURI string, subscriptionID string) Depl
 }
 
 // Cancel cancel a currently running template deployment.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment.
 func (client DeploymentsClient) Cancel(ctx context.Context, resourceGroupName string, deploymentName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -115,9 +115,9 @@ func (client DeploymentsClient) CancelResponder(resp *http.Response) (result aut
 }
 
 // CheckExistence checks whether deployment exists.
-//
-// resourceGroupName is the name of the resource group to check. The name is case insensitive. deploymentName is
-// the name of the deployment.
+// Parameters:
+// resourceGroupName - the name of the resource group to check. The name is case insensitive.
+// deploymentName - the name of the deployment.
 func (client DeploymentsClient) CheckExistence(ctx context.Context, resourceGroupName string, deploymentName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -189,9 +189,10 @@ func (client DeploymentsClient) CheckExistenceResponder(resp *http.Response) (re
 }
 
 // CreateOrUpdate create a named template deployment using a template.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment. parameters is additional parameters supplied to the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment.
+// parameters - additional parameters supplied to the operation.
 func (client DeploymentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, deploymentName string, parameters Deployment) (result DeploymentsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -237,7 +238,7 @@ func (client DeploymentsClient) CreateOrUpdatePreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}", pathParameters),
@@ -276,9 +277,9 @@ func (client DeploymentsClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // Delete begin deleting deployment.To determine whether the operation has finished processing the request, call
 // GetLongRunningOperationStatus.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment to be deleted.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment to be deleted.
 func (client DeploymentsClient) Delete(ctx context.Context, resourceGroupName string, deploymentName string) (result DeploymentsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -352,9 +353,9 @@ func (client DeploymentsClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get get a deployment.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. deploymentName is the
-// name of the deployment.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// deploymentName - the name of the deployment.
 func (client DeploymentsClient) Get(ctx context.Context, resourceGroupName string, deploymentName string) (result DeploymentExtended, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -427,9 +428,10 @@ func (client DeploymentsClient) GetResponder(resp *http.Response) (result Deploy
 }
 
 // List get a list of deployments.
-//
-// resourceGroupName is the name of the resource group to filter by. The name is case insensitive. filter is the
-// filter to apply on the operation. top is query parameters. If null is passed returns all deployments.
+// Parameters:
+// resourceGroupName - the name of the resource group to filter by. The name is case insensitive.
+// filter - the filter to apply on the operation.
+// top - query parameters. If null is passed returns all deployments.
 func (client DeploymentsClient) List(ctx context.Context, resourceGroupName string, filter string, top *int32) (result DeploymentListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -535,9 +537,10 @@ func (client DeploymentsClient) ListComplete(ctx context.Context, resourceGroupN
 }
 
 // Validate validate a deployment template.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment. parameters is deployment to validate.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment.
+// parameters - deployment to validate.
 func (client DeploymentsClient) Validate(ctx context.Context, resourceGroupName string, deploymentName string, parameters Deployment) (result DeploymentValidateResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -589,7 +592,7 @@ func (client DeploymentsClient) ValidatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/validate", pathParameters),

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // RoutesClient is the network Client
 type RoutesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewRoutesClient creates an instance of the RoutesClient client.
 func NewRoutesClient(subscriptionID string) RoutesClient {
 	return NewRoutesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // NewRoutesClientWithBaseURI creates an instance of the RoutesClient client.
 func NewRoutesClientWithBaseURI(baseURI string, subscriptionID string) RoutesClient {
 	return RoutesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdate the Put route operation creates/updates a route in the specified route table
 //
 // resourceGroupName is the name of the resource group. routeTableName is the name of the route table. routeName is
@@ -59,6 +63,7 @@ func (client RoutesClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client RoutesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, routeTableName string, routeName string, routeParameters Route) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client RoutesClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/routeTables/{routeTableName}/routes/{routeName}", pathParameters),
@@ -83,6 +88,7 @@ func (client RoutesClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoutesClient) CreateOrUpdateSender(req *http.Request) (future RoutesCreateOrUpdateFuture, err error) {
@@ -98,6 +104,7 @@ func (client RoutesClient) CreateOrUpdateSender(req *http.Request) (future Route
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client RoutesClient) CreateOrUpdateResponder(resp *http.Response) (result Route, err error) {
@@ -111,6 +118,7 @@ func (client RoutesClient) CreateOrUpdateResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Delete the delete route operation deletes the specified route from a route table.
 //
 // resourceGroupName is the name of the resource group. routeTableName is the name of the route table. routeName is
@@ -131,6 +139,7 @@ func (client RoutesClient) Delete(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeletePreparer prepares the Delete request.
 func (client RoutesClient) DeletePreparer(ctx context.Context, resourceGroupName string, routeTableName string, routeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -153,6 +162,7 @@ func (client RoutesClient) DeletePreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoutesClient) DeleteSender(req *http.Request) (future RoutesDeleteFuture, err error) {
@@ -168,6 +178,7 @@ func (client RoutesClient) DeleteSender(req *http.Request) (future RoutesDeleteF
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client RoutesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -180,6 +191,7 @@ func (client RoutesClient) DeleteResponder(resp *http.Response) (result autorest
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // Get the Get route operation retreives information about the specified route from the route table.
 //
 // resourceGroupName is the name of the resource group. routeTableName is the name of the route table. routeName is
@@ -206,6 +218,7 @@ func (client RoutesClient) Get(ctx context.Context, resourceGroupName string, ro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetPreparer prepares the Get request.
 func (client RoutesClient) GetPreparer(ctx context.Context, resourceGroupName string, routeTableName string, routeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -228,6 +241,7 @@ func (client RoutesClient) GetPreparer(ctx context.Context, resourceGroupName st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoutesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -235,6 +249,7 @@ func (client RoutesClient) GetSender(req *http.Request) (*http.Response, error) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RoutesClient) GetResponder(resp *http.Response) (result Route, err error) {
@@ -248,6 +263,7 @@ func (client RoutesClient) GetResponder(resp *http.Response) (result Route, err 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // List the List network security rule opertion retrieves all the routes in a route table.
 //
 // resourceGroupName is the name of the resource group. routeTableName is the name of the route table.
@@ -274,6 +290,7 @@ func (client RoutesClient) List(ctx context.Context, resourceGroupName string, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListPreparer prepares the List request.
 func (client RoutesClient) ListPreparer(ctx context.Context, resourceGroupName string, routeTableName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -295,6 +312,7 @@ func (client RoutesClient) ListPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoutesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -302,6 +320,7 @@ func (client RoutesClient) ListSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client RoutesClient) ListResponder(resp *http.Response) (result RouteListResult, err error) {
@@ -336,6 +355,7 @@ func (client RoutesClient) listNextResults(lastResults RouteListResult) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/network/mgmt/2015-05-01-preview/network instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client RoutesClient) ListComplete(ctx context.Context, resourceGroupName string, routeTableName string) (result RouteListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, routeTableName)

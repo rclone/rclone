@@ -40,8 +40,9 @@ func NewServiceGroupDescriptionsClientWithBaseURI(baseURI string, timeout *int32
 }
 
 // Get get service group descriptions
-//
-// applicationName is the name of the application serviceName is the name of the service
+// Parameters:
+// applicationName - the name of the application
+// serviceName - the name of the service
 func (client ServiceGroupDescriptionsClient) Get(ctx context.Context, applicationName string, serviceName string) (result ServiceGroupDescriptionModel, err error) {
 	req, err := client.GetPreparer(ctx, applicationName, serviceName)
 	if err != nil {

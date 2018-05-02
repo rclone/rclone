@@ -74,16 +74,27 @@ func TestLoad(t *testing.T) {
 	c := &Client{projectID: "client-project-id"}
 
 	testCases := []struct {
-		dst    *Table
-		src    LoadSource
-		jobID  string
-		config LoadConfig
-		want   *bq.Job
+		dst      *Table
+		src      LoadSource
+		jobID    string
+		location string
+		config   LoadConfig
+		want     *bq.Job
 	}{
 		{
 			dst:  c.Dataset("dataset-id").Table("table-id"),
 			src:  NewGCSReference("uri"),
 			want: defaultLoadJob(),
+		},
+		{
+			dst:      c.Dataset("dataset-id").Table("table-id"),
+			src:      NewGCSReference("uri"),
+			location: "loc",
+			want: func() *bq.Job {
+				j := defaultLoadJob()
+				j.JobReference.Location = "loc"
+				return j
+			}(),
 		},
 		{
 			dst:   c.Dataset("dataset-id").Table("table-id"),
@@ -94,6 +105,7 @@ func TestLoad(t *testing.T) {
 				Labels:                      map[string]string{"a": "b"},
 				TimePartitioning:            &TimePartitioning{Expiration: 1234 * time.Millisecond},
 				DestinationEncryptionConfig: &EncryptionConfig{KMSKeyName: "keyName"},
+				SchemaUpdateOptions:         []string{"ALLOW_FIELD_ADDITION"},
 			},
 			src: NewGCSReference("uri"),
 			want: func() *bq.Job {
@@ -110,6 +122,7 @@ func TestLoad(t *testing.T) {
 					JobId:     "ajob",
 					ProjectId: "client-project-id",
 				}
+				j.Configuration.Load.SchemaUpdateOptions = []string{"ALLOW_FIELD_ADDITION"}
 				return j
 			}(),
 		},
@@ -226,6 +239,7 @@ func TestLoad(t *testing.T) {
 	for i, tc := range testCases {
 		loader := tc.dst.LoaderFrom(tc.src)
 		loader.JobID = tc.jobID
+		loader.Location = tc.location
 		tc.config.Src = tc.src
 		tc.config.Dst = tc.dst
 		loader.LoadConfig = tc.config

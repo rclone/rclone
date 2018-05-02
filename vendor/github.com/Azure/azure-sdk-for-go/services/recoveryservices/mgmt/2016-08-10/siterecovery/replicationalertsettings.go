@@ -40,9 +40,9 @@ func NewReplicationAlertSettingsClientWithBaseURI(baseURI string, subscriptionID
 }
 
 // Create create or update an email notification(alert) configuration.
-//
-// alertSettingName is the name of the email notification(alert) configuration. request is the input to configure
-// the email notification(alert).
+// Parameters:
+// alertSettingName - the name of the email notification(alert) configuration.
+// request - the input to configure the email notification(alert).
 func (client ReplicationAlertSettingsClient) Create(ctx context.Context, alertSettingName string, request ConfigureAlertRequest) (result Alert, err error) {
 	req, err := client.CreatePreparer(ctx, alertSettingName, request)
 	if err != nil {
@@ -80,7 +80,7 @@ func (client ReplicationAlertSettingsClient) CreatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationAlertSettings/{alertSettingName}", pathParameters),
@@ -110,8 +110,8 @@ func (client ReplicationAlertSettingsClient) CreateResponder(resp *http.Response
 }
 
 // Get gets the details of the specified email notification(alert) configuration.
-//
-// alertSettingName is the name of the email notification configuration.
+// Parameters:
+// alertSettingName - the name of the email notification configuration.
 func (client ReplicationAlertSettingsClient) Get(ctx context.Context, alertSettingName string) (result Alert, err error) {
 	req, err := client.GetPreparer(ctx, alertSettingName)
 	if err != nil {

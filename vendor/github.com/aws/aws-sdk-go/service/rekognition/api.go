@@ -14,7 +14,7 @@ const opCompareFaces = "CompareFaces"
 
 // CompareFacesRequest generates a "aws/request.Request" representing the
 // client's request for the CompareFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -156,7 +156,7 @@ const opCreateCollection = "CreateCollection"
 
 // CreateCollectionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateCollection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -261,7 +261,7 @@ const opCreateStreamProcessor = "CreateStreamProcessor"
 
 // CreateStreamProcessorRequest generates a "aws/request.Request" representing the
 // client's request for the CreateStreamProcessor operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -338,6 +338,11 @@ func (c *Rekognition) CreateStreamProcessorRequest(input *CreateStreamProcessorI
 //   the API operation again.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //
@@ -370,7 +375,7 @@ const opDeleteCollection = "DeleteCollection"
 
 // DeleteCollectionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteCollection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -468,7 +473,7 @@ const opDeleteFaces = "DeleteFaces"
 
 // DeleteFacesRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -566,7 +571,7 @@ const opDeleteStreamProcessor = "DeleteStreamProcessor"
 
 // DeleteStreamProcessorRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteStreamProcessor operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -665,7 +670,7 @@ const opDescribeStreamProcessor = "DescribeStreamProcessor"
 
 // DescribeStreamProcessorRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeStreamProcessor operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -761,7 +766,7 @@ const opDetectFaces = "DetectFaces"
 
 // DetectFacesRequest generates a "aws/request.Request" representing the
 // client's request for the DetectFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -885,7 +890,7 @@ const opDetectLabels = "DetectLabels"
 
 // DetectLabelsRequest generates a "aws/request.Request" representing the
 // client's request for the DetectLabels operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1039,7 +1044,7 @@ const opDetectModerationLabels = "DetectModerationLabels"
 
 // DetectModerationLabelsRequest generates a "aws/request.Request" representing the
 // client's request for the DetectModerationLabels operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1152,7 +1157,7 @@ const opDetectText = "DetectText"
 
 // DetectTextRequest generates a "aws/request.Request" representing the
 // client's request for the DetectText operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1283,7 +1288,7 @@ const opGetCelebrityInfo = "GetCelebrityInfo"
 
 // GetCelebrityInfoRequest generates a "aws/request.Request" representing the
 // client's request for the GetCelebrityInfo operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1383,7 +1388,7 @@ const opGetCelebrityRecognition = "GetCelebrityRecognition"
 
 // GetCelebrityRecognitionRequest generates a "aws/request.Request" representing the
 // client's request for the GetCelebrityRecognition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1444,6 +1449,11 @@ func (c *Rekognition) GetCelebrityRecognitionRequest(input *GetCelebrityRecognit
 // are detected in an array (Celebrities) of objects. Each CelebrityRecognition
 // contains information about the celebrity in a object and the time, Timestamp,
 // the celebrity was detected.
+//
+// GetCelebrityRecognition only returns the default facial attributes (BoundingBox,
+// Confidence, Landmarks, Pose, and Quality). The other facial attributes listed
+// in the Face object of the following response syntax are not returned. For
+// more information, see .
 //
 // By default, the Celebrities array is sorted by time (milliseconds from the
 // start of the video). You can also sort the array by celebrity by specifying
@@ -1569,7 +1579,7 @@ const opGetContentModeration = "GetContentModeration"
 
 // GetContentModerationRequest generates a "aws/request.Request" representing the
 // client's request for the GetContentModeration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1749,7 +1759,7 @@ const opGetFaceDetection = "GetFaceDetection"
 
 // GetFaceDetectionRequest generates a "aws/request.Request" representing the
 // client's request for the GetFaceDetection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1921,7 +1931,7 @@ const opGetFaceSearch = "GetFaceSearch"
 
 // GetFaceSearchRequest generates a "aws/request.Request" representing the
 // client's request for the GetFaceSearch operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1981,8 +1991,13 @@ func (c *Rekognition) GetFaceSearchRequest(input *GetFaceSearchInput) (req *requ
 //
 // The search results are retured in an array, Persons, of objects. EachPersonMatch
 // element contains details about the matching faces in the input collection,
-// person information for the matched person, and the time the person was matched
-// in the video.
+// person information (facial attributes, bounding boxes, and person identifer)
+// for the matched person, and the time the person was matched in the video.
+//
+// GetFaceSearch only returns the default facial attributes (BoundingBox, Confidence,
+// Landmarks, Pose, and Quality). The other facial attributes listed in the
+// Face object of the following response syntax are not returned. For more information,
+// see .
 //
 // By default, the Persons array is sorted by the time, in milliseconds from
 // the start of the video, persons are matched. You can also sort by persons
@@ -2095,7 +2110,7 @@ const opGetLabelDetection = "GetLabelDetection"
 
 // GetLabelDetectionRequest generates a "aws/request.Request" representing the
 // client's request for the GetLabelDetection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2272,7 +2287,7 @@ const opGetPersonTracking = "GetPersonTracking"
 
 // GetPersonTrackingRequest generates a "aws/request.Request" representing the
 // client's request for the GetPersonTracking operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2330,6 +2345,11 @@ func (c *Rekognition) GetPersonTrackingRequest(input *GetPersonTrackingInput) (r
 //
 // GetPersonTracking returns an array, Persons, of tracked persons and the time(s)
 // they were tracked in the video.
+//
+// GetPersonTracking only returns the default facial attributes (BoundingBox,
+// Confidence, Landmarks, Pose, and Quality). The other facial attributes listed
+// in the Face object of the following response syntax are not returned. For
+// more information, see .
 //
 // By default, the array is sorted by the time(s) a person is tracked in the
 // video. You can sort by tracked persons by specifying INDEX for the SortBy
@@ -2449,7 +2469,7 @@ const opIndexFaces = "IndexFaces"
 
 // IndexFacesRequest generates a "aws/request.Request" representing the
 // client's request for the IndexFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2590,7 +2610,7 @@ const opListCollections = "ListCollections"
 
 // ListCollectionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListCollections operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2750,7 +2770,7 @@ const opListFaces = "ListFaces"
 
 // ListFacesRequest generates a "aws/request.Request" representing the
 // client's request for the ListFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2908,7 +2928,7 @@ const opListStreamProcessors = "ListStreamProcessors"
 
 // ListStreamProcessorsRequest generates a "aws/request.Request" representing the
 // client's request for the ListStreamProcessors operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3058,7 +3078,7 @@ const opRecognizeCelebrities = "RecognizeCelebrities"
 
 // RecognizeCelebritiesRequest generates a "aws/request.Request" representing the
 // client's request for the RecognizeCelebrities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3190,7 +3210,7 @@ const opSearchFaces = "SearchFaces"
 
 // SearchFacesRequest generates a "aws/request.Request" representing the
 // client's request for the SearchFaces operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3301,7 +3321,7 @@ const opSearchFacesByImage = "SearchFacesByImage"
 
 // SearchFacesByImageRequest generates a "aws/request.Request" representing the
 // client's request for the SearchFacesByImage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3432,7 +3452,7 @@ const opStartCelebrityRecognition = "StartCelebrityRecognition"
 
 // StartCelebrityRecognitionRequest generates a "aws/request.Request" representing the
 // client's request for the StartCelebrityRecognition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3518,6 +3538,11 @@ func (c *Rekognition) StartCelebrityRecognitionRequest(input *StartCelebrityReco
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeThrottlingException "ThrottlingException"
 //   Amazon Rekognition is temporarily unable to process the request. Try your
@@ -3548,7 +3573,7 @@ const opStartContentModeration = "StartContentModeration"
 
 // StartContentModerationRequest generates a "aws/request.Request" representing the
 // client's request for the StartContentModeration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3636,6 +3661,11 @@ func (c *Rekognition) StartContentModerationRequest(input *StartContentModeratio
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeThrottlingException "ThrottlingException"
 //   Amazon Rekognition is temporarily unable to process the request. Try your
@@ -3666,7 +3696,7 @@ const opStartFaceDetection = "StartFaceDetection"
 
 // StartFaceDetectionRequest generates a "aws/request.Request" representing the
 // client's request for the StartFaceDetection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3751,6 +3781,11 @@ func (c *Rekognition) StartFaceDetectionRequest(input *StartFaceDetectionInput) 
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeThrottlingException "ThrottlingException"
 //   Amazon Rekognition is temporarily unable to process the request. Try your
@@ -3781,7 +3816,7 @@ const opStartFaceSearch = "StartFaceSearch"
 
 // StartFaceSearchRequest generates a "aws/request.Request" representing the
 // client's request for the StartFaceSearch operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3867,6 +3902,11 @@ func (c *Rekognition) StartFaceSearchRequest(input *StartFaceSearchInput) (req *
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The collection specified in the request cannot be found.
@@ -3900,7 +3940,7 @@ const opStartLabelDetection = "StartLabelDetection"
 
 // StartLabelDetectionRequest generates a "aws/request.Request" representing the
 // client's request for the StartLabelDetection operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3992,6 +4032,11 @@ func (c *Rekognition) StartLabelDetectionRequest(input *StartLabelDetectionInput
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeThrottlingException "ThrottlingException"
 //   Amazon Rekognition is temporarily unable to process the request. Try your
@@ -4022,7 +4067,7 @@ const opStartPersonTracking = "StartPersonTracking"
 
 // StartPersonTrackingRequest generates a "aws/request.Request" representing the
 // client's request for the StartPersonTracking operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4108,6 +4153,11 @@ func (c *Rekognition) StartPersonTrackingRequest(input *StartPersonTrackingInput
 //   this limit, contact Amazon Rekognition.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
+//   An Amazon Rekognition service limit was exceeded. For example, if you start
+//   too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+//   for example) will raise a LimitExceededException exception (HTTP status code:
+//   400) until the number of concurrently running jobs is below the Amazon Rekognition
+//   service limit.
 //
 //   * ErrCodeThrottlingException "ThrottlingException"
 //   Amazon Rekognition is temporarily unable to process the request. Try your
@@ -4138,7 +4188,7 @@ const opStartStreamProcessor = "StartStreamProcessor"
 
 // StartStreamProcessorRequest generates a "aws/request.Request" representing the
 // client's request for the StartStreamProcessor operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4236,7 +4286,7 @@ const opStopStreamProcessor = "StopStreamProcessor"
 
 // StopStreamProcessorRequest generates a "aws/request.Request" representing the
 // client's request for the StopStreamProcessor operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6055,6 +6105,26 @@ func (s *Face) SetImageId(v string) *Face {
 }
 
 // Structure containing attributes of the face that the algorithm detected.
+//
+// A FaceDetail object contains either the default facial attributes or all
+// facial attributes. The default attributes are BoundingBox, Confidence, Landmarks,
+// Pose, and Quality.
+//
+// is the only Rekognition Video stored video operation that can return a FaceDetail
+// object with all attributes. To specify which attributes to return, use the
+// FaceAttributes input parameter for . The following Rekognition Video operations
+// return only the default attributes. The corresponding Start operations don't
+// have a FaceAttributes input parameter.
+//
+//    * GetCelebrityRecognition
+//
+//    * GetPersonTracking
+//
+//    * GetFaceSearch
+//
+// The Rekognition Image and operations can return all facial attributes. To
+// specify which attributes to return, use the Attributes input parameter for
+// DetectFaces. For IndexFaces, use the DetectAttributes input parameter.
 type FaceDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -6066,11 +6136,11 @@ type FaceDetail struct {
 	// the determination.
 	Beard *Beard `type:"structure"`
 
-	// Bounding box of the face.
+	// Bounding box of the face. Default attribute.
 	BoundingBox *BoundingBox `type:"structure"`
 
 	// Confidence level that the bounding box contains a face (and not a different
-	// object such as a tree).
+	// object such as a tree). Default attribute.
 	Confidence *float64 `type:"float"`
 
 	// The emotions detected on the face, and the confidence level in the determination.
@@ -6088,7 +6158,7 @@ type FaceDetail struct {
 	// Gender of the face and the confidence level in the determination.
 	Gender *Gender `type:"structure"`
 
-	// Indicates the location of landmarks on the face.
+	// Indicates the location of landmarks on the face. Default attribute.
 	Landmarks []*Landmark `type:"list"`
 
 	// Indicates whether or not the mouth on the face is open, and the confidence
@@ -6100,9 +6170,10 @@ type FaceDetail struct {
 	Mustache *Mustache `type:"structure"`
 
 	// Indicates the pose of the face as determined by its pitch, roll, and yaw.
+	// Default attribute.
 	Pose *Pose `type:"structure"`
 
-	// Identifies image brightness and sharpness.
+	// Identifies image brightness and sharpness. Default attribute.
 	Quality *ImageQuality `type:"structure"`
 
 	// Indicates whether or not the face is smiling, and the confidence level in
@@ -6514,8 +6585,9 @@ type GetCelebrityRecognitionInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of celebrities you want Rekognition Video to return in the
-	// response. The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there is more recognized
@@ -6654,7 +6726,9 @@ type GetContentModerationInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of content moderation labels to return. The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there is more data to retrieve),
@@ -6793,7 +6867,9 @@ type GetFaceDetectionInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of detected faces to return. The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there are more faces to
@@ -6922,8 +6998,9 @@ type GetFaceSearchInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of search results you want Rekognition Video to return in
-	// the response. The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there is more search results
@@ -7065,8 +7142,9 @@ type GetLabelDetectionInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of labels you want Amazon Rekognition to return in the response.
-	// The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there are more labels to
@@ -7207,7 +7285,9 @@ type GetPersonTrackingInput struct {
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
 
-	// Maximum number of tracked persons to return. The default is 1000.
+	// Maximum number of results to return per paginated call. The largest value
+	// you can specify is 1000. If you specify a value greater than 1000, a maximum
+	// of 1000 results is returned. The default value is 1000.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the previous response was incomplete (because there are more persons to
@@ -8278,7 +8358,7 @@ func (s *PersonDetection) SetTimestamp(v int64) *PersonDetection {
 
 // Information about a person whose face matches a face(s) in a Amazon Rekognition
 // collection. Includes information about the faces in the Amazon Rekognition
-// collection (,information about the person (PersonDetail) and the timestamp
+// collection (, information about the person (PersonDetail) and the timestamp
 // for when the person was detected in a video. An array of PersonMatch objects
 // is returned by .
 type PersonMatch struct {

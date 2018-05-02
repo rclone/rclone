@@ -18,7 +18,7 @@
   "description": "Creates and configures Cloud SQL instances, which provide fully-managed MySQL databases.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/sql/docs/reference/latest",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/mSPyWksLXfT4Y1yNDG7t3sTwHiI\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/JK0E1gVAzolIm-0oBe-45M8ICm0\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -63,12 +63,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -1524,7 +1524,7 @@
       }
     }
   },
-  "revision": "20180227",
+  "revision": "20180314",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AclEntry": {
@@ -1570,7 +1570,7 @@
           "type": "string"
         },
         "replicationLogArchivingEnabled": {
-          "description": "Whether replication log archiving is enabled. Replication log archiving is required for the point-in-time recovery (PITR) feature. PostgreSQL instances only.",
+          "description": "Reserved for future use.",
           "type": "boolean"
         },
         "startTime": {
@@ -1703,7 +1703,7 @@
           "type": "string"
         },
         "pitrTimestampMs": {
-          "description": "The epoch timestamp, in milliseconds, of the time to which a point-in-time recovery (PITR) is performed. PostgreSQL instances only. For MySQL instances, use the binLogCoordinates property.",
+          "description": "Reserved for future use.",
           "format": "int64",
           "type": "string"
         }

@@ -23,26 +23,11 @@ import original "github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2016-01
 
 type AccountsClient = original.AccountsClient
 
-func NewAccountsClient(subscriptionID string) AccountsClient {
-	return original.NewAccountsClient(subscriptionID)
-}
-func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
-	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessTier = original.AccessTier
 
 const (
@@ -139,6 +124,45 @@ type UsageListResult = original.UsageListResult
 type UsageName = original.UsageName
 type UsageClient = original.UsageClient
 
+func NewAccountsClient(subscriptionID string) AccountsClient {
+	return original.NewAccountsClient(subscriptionID)
+}
+func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
+	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessTierValues() []AccessTier {
+	return original.PossibleAccessTierValues()
+}
+func PossibleAccountStatusValues() []AccountStatus {
+	return original.PossibleAccountStatusValues()
+}
+func PossibleKeyPermissionValues() []KeyPermission {
+	return original.PossibleKeyPermissionValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleReasonValues() []Reason {
+	return original.PossibleReasonValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleSkuTierValues() []SkuTier {
+	return original.PossibleSkuTierValues()
+}
+func PossibleUsageUnitValues() []UsageUnit {
+	return original.PossibleUsageUnitValues()
+}
 func NewUsageClient(subscriptionID string) UsageClient {
 	return original.NewUsageClient(subscriptionID)
 }

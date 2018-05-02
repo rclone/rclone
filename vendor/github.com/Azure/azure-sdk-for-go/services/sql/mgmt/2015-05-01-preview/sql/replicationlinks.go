@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ReplicationLinksClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -31,16 +32,19 @@ type ReplicationLinksClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewReplicationLinksClient creates an instance of the ReplicationLinksClient client.
 func NewReplicationLinksClient(subscriptionID string) ReplicationLinksClient {
 	return NewReplicationLinksClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // NewReplicationLinksClientWithBaseURI creates an instance of the ReplicationLinksClient client.
 func NewReplicationLinksClientWithBaseURI(baseURI string, subscriptionID string) ReplicationLinksClient {
 	return ReplicationLinksClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // Delete deletes a database replication link. Cannot be done during failover.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -69,6 +73,7 @@ func (client ReplicationLinksClient) Delete(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // DeletePreparer prepares the Delete request.
 func (client ReplicationLinksClient) DeletePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,6 +97,7 @@ func (client ReplicationLinksClient) DeletePreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationLinksClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -99,6 +105,7 @@ func (client ReplicationLinksClient) DeleteSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ReplicationLinksClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -111,6 +118,7 @@ func (client ReplicationLinksClient) DeleteResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // Failover sets which replica database is primary by failing over from the current primary replica database.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -133,6 +141,7 @@ func (client ReplicationLinksClient) Failover(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverPreparer prepares the Failover request.
 func (client ReplicationLinksClient) FailoverPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -156,6 +165,7 @@ func (client ReplicationLinksClient) FailoverPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverSender sends the Failover request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationLinksClient) FailoverSender(req *http.Request) (future ReplicationLinksFailoverFuture, err error) {
@@ -171,6 +181,7 @@ func (client ReplicationLinksClient) FailoverSender(req *http.Request) (future R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverResponder handles the response to the Failover request. The method always
 // closes the http.Response Body.
 func (client ReplicationLinksClient) FailoverResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -183,6 +194,7 @@ func (client ReplicationLinksClient) FailoverResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverAllowDataLoss sets which replica database is primary by failing over from the current primary replica
 // database. This operation might result in data loss.
 //
@@ -206,6 +218,7 @@ func (client ReplicationLinksClient) FailoverAllowDataLoss(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverAllowDataLossPreparer prepares the FailoverAllowDataLoss request.
 func (client ReplicationLinksClient) FailoverAllowDataLossPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -229,6 +242,7 @@ func (client ReplicationLinksClient) FailoverAllowDataLossPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverAllowDataLossSender sends the FailoverAllowDataLoss request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationLinksClient) FailoverAllowDataLossSender(req *http.Request) (future ReplicationLinksFailoverAllowDataLossFuture, err error) {
@@ -244,6 +258,7 @@ func (client ReplicationLinksClient) FailoverAllowDataLossSender(req *http.Reque
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // FailoverAllowDataLossResponder handles the response to the FailoverAllowDataLoss request. The method always
 // closes the http.Response Body.
 func (client ReplicationLinksClient) FailoverAllowDataLossResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -256,6 +271,7 @@ func (client ReplicationLinksClient) FailoverAllowDataLossResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // Get gets a database replication link.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -283,6 +299,7 @@ func (client ReplicationLinksClient) Get(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client ReplicationLinksClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -306,6 +323,7 @@ func (client ReplicationLinksClient) GetPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationLinksClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -313,6 +331,7 @@ func (client ReplicationLinksClient) GetSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ReplicationLinksClient) GetResponder(resp *http.Response) (result ReplicationLink, err error) {
@@ -326,6 +345,7 @@ func (client ReplicationLinksClient) GetResponder(resp *http.Response) (result R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabase lists a database's replication links.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -353,6 +373,7 @@ func (client ReplicationLinksClient) ListByDatabase(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client ReplicationLinksClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -375,6 +396,7 @@ func (client ReplicationLinksClient) ListByDatabasePreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationLinksClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -382,6 +404,7 @@ func (client ReplicationLinksClient) ListByDatabaseSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2015-05-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client ReplicationLinksClient) ListByDatabaseResponder(resp *http.Response) (result ReplicationLinkListResult, err error) {

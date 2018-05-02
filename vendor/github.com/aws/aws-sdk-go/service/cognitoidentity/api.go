@@ -17,7 +17,7 @@ const opCreateIdentityPool = "CreateIdentityPool"
 
 // CreateIdentityPoolRequest generates a "aws/request.Request" representing the
 // client's request for the CreateIdentityPool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -126,7 +126,7 @@ const opDeleteIdentities = "DeleteIdentities"
 
 // DeleteIdentitiesRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteIdentities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -214,7 +214,7 @@ const opDeleteIdentityPool = "DeleteIdentityPool"
 
 // DeleteIdentityPoolRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteIdentityPool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -311,7 +311,7 @@ const opDescribeIdentity = "DescribeIdentity"
 
 // DescribeIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -406,7 +406,7 @@ const opDescribeIdentityPool = "DescribeIdentityPool"
 
 // DescribeIdentityPoolRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeIdentityPool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -501,7 +501,7 @@ const opGetCredentialsForIdentity = "GetCredentialsForIdentity"
 
 // GetCredentialsForIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the GetCredentialsForIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -610,7 +610,7 @@ const opGetId = "GetId"
 
 // GetIdRequest generates a "aws/request.Request" representing the
 // client's request for the GetId operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -716,7 +716,7 @@ const opGetIdentityPoolRoles = "GetIdentityPoolRoles"
 
 // GetIdentityPoolRolesRequest generates a "aws/request.Request" representing the
 // client's request for the GetIdentityPoolRoles operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -814,7 +814,7 @@ const opGetOpenIdToken = "GetOpenIdToken"
 
 // GetOpenIdTokenRequest generates a "aws/request.Request" representing the
 // client's request for the GetOpenIdToken operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -920,7 +920,7 @@ const opGetOpenIdTokenForDeveloperIdentity = "GetOpenIdTokenForDeveloperIdentity
 
 // GetOpenIdTokenForDeveloperIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the GetOpenIdTokenForDeveloperIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1035,7 +1035,7 @@ const opListIdentities = "ListIdentities"
 
 // ListIdentitiesRequest generates a "aws/request.Request" representing the
 // client's request for the ListIdentities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1129,7 +1129,7 @@ const opListIdentityPools = "ListIdentityPools"
 
 // ListIdentityPoolsRequest generates a "aws/request.Request" representing the
 // client's request for the ListIdentityPools operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1219,7 +1219,7 @@ const opLookupDeveloperIdentity = "LookupDeveloperIdentity"
 
 // LookupDeveloperIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the LookupDeveloperIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1324,7 +1324,7 @@ const opMergeDeveloperIdentities = "MergeDeveloperIdentities"
 
 // MergeDeveloperIdentitiesRequest generates a "aws/request.Request" representing the
 // client's request for the MergeDeveloperIdentities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1428,7 +1428,7 @@ const opSetIdentityPoolRoles = "SetIdentityPoolRoles"
 
 // SetIdentityPoolRolesRequest generates a "aws/request.Request" representing the
 // client's request for the SetIdentityPoolRoles operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1532,7 +1532,7 @@ const opUnlinkDeveloperIdentity = "UnlinkDeveloperIdentity"
 
 // UnlinkDeveloperIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the UnlinkDeveloperIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1635,7 +1635,7 @@ const opUnlinkIdentity = "UnlinkIdentity"
 
 // UnlinkIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the UnlinkIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1741,7 +1741,7 @@ const opUpdateIdentityPool = "UpdateIdentityPool"
 
 // UpdateIdentityPoolRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateIdentityPool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

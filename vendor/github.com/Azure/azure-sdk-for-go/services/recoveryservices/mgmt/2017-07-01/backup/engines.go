@@ -40,10 +40,12 @@ func NewEnginesClientWithBaseURI(baseURI string, subscriptionID string) EnginesC
 }
 
 // Get returns backup management server registered to Recovery Services Vault.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. backupEngineName is name of the backup management server. filter is
-// oData filter options. skipToken is skipToken Filter.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// backupEngineName - name of the backup management server.
+// filter - oData filter options.
+// skipToken - skipToken Filter.
 func (client EnginesClient) Get(ctx context.Context, vaultName string, resourceGroupName string, backupEngineName string, filter string, skipToken string) (result EngineBaseResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, backupEngineName, filter, skipToken)
 	if err != nil {
@@ -115,9 +117,11 @@ func (client EnginesClient) GetResponder(resp *http.Response) (result EngineBase
 }
 
 // List backup management servers registered to Recovery Services Vault. Returns a pageable list of servers.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. filter is oData filter options. skipToken is skipToken Filter.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// filter - oData filter options.
+// skipToken - skipToken Filter.
 func (client EnginesClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result EngineBaseResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

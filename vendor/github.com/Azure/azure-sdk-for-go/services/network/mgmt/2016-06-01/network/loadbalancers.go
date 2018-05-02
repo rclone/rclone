@@ -40,9 +40,10 @@ func NewLoadBalancersClientWithBaseURI(baseURI string, subscriptionID string) Lo
 }
 
 // CreateOrUpdate the Put LoadBalancer operation creates/updates a LoadBalancer
-//
-// resourceGroupName is the name of the resource group. loadBalancerName is the name of the loadBalancer.
-// parameters is parameters supplied to the create/delete LoadBalancer operation
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// loadBalancerName - the name of the loadBalancer.
+// parameters - parameters supplied to the create/delete LoadBalancer operation
 func (client LoadBalancersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, loadBalancerName string, parameters LoadBalancer) (result LoadBalancersCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, loadBalancerName, parameters)
 	if err != nil {
@@ -73,7 +74,7 @@ func (client LoadBalancersClient) CreateOrUpdatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}", pathParameters),
@@ -111,8 +112,9 @@ func (client LoadBalancersClient) CreateOrUpdateResponder(resp *http.Response) (
 }
 
 // Delete the delete LoadBalancer operation deletes the specified load balancer.
-//
-// resourceGroupName is the name of the resource group. loadBalancerName is the name of the loadBalancer.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// loadBalancerName - the name of the loadBalancer.
 func (client LoadBalancersClient) Delete(ctx context.Context, resourceGroupName string, loadBalancerName string) (result LoadBalancersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, loadBalancerName)
 	if err != nil {
@@ -178,9 +180,10 @@ func (client LoadBalancersClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get the Get LoadBalancer operation retrieves information about the specified LoadBalancer.
-//
-// resourceGroupName is the name of the resource group. loadBalancerName is the name of the loadBalancer. expand is
-// expand references resources.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// loadBalancerName - the name of the loadBalancer.
+// expand - expand references resources.
 func (client LoadBalancersClient) Get(ctx context.Context, resourceGroupName string, loadBalancerName string, expand string) (result LoadBalancer, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, loadBalancerName, expand)
 	if err != nil {
@@ -248,8 +251,8 @@ func (client LoadBalancersClient) GetResponder(resp *http.Response) (result Load
 }
 
 // List the List loadBalancer operation retrieves all the load balancers in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client LoadBalancersClient) List(ctx context.Context, resourceGroupName string) (result LoadBalancerListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)

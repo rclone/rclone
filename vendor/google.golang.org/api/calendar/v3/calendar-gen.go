@@ -1747,8 +1747,9 @@ type EventAttendee struct {
 	// Read-only. The default is False.
 	Organizer bool `json:"organizer,omitempty"`
 
-	// Resource: Whether the attendee is a resource. Read-only. The default
-	// is False.
+	// Resource: Whether the attendee is a resource. Can only be set when
+	// the attendee is added to the event for the first time. Subsequent
+	// modifications are ignored. Optional. The default is False.
 	Resource bool `json:"resource,omitempty"`
 
 	// ResponseStatus: The attendee's response status. Possible values are:

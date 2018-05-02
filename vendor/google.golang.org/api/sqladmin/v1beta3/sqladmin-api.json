@@ -18,7 +18,7 @@
   "description": "Creates and configures Cloud SQL instances, which provide fully-managed MySQL databases.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/sql/docs/reference/latest",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/EHk4rp8xy9W88y5wezvrHDWf9Y4\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/WK2amJgLtVn-1ir4wN1RfkSPODA\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -63,12 +63,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -910,7 +910,7 @@
       }
     }
   },
-  "revision": "20180124",
+  "revision": "20180314",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "BackupConfiguration": {

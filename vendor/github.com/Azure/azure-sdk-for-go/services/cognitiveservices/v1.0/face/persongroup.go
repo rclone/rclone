@@ -36,8 +36,9 @@ func NewPersonGroupClient(azureRegion AzureRegions) PersonGroupClient {
 }
 
 // Create create a new person group with specified personGroupId, name and user-provided userData.
-//
-// personGroupID is id referencing a particular person group. body is request body for creating new person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// body - request body for creating new person group.
 func (client PersonGroupClient) Create(ctx context.Context, personGroupID string, body NameAndUserDataContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -83,7 +84,7 @@ func (client PersonGroupClient) CreatePreparer(ctx context.Context, personGroupI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}", pathParameters),
@@ -112,8 +113,8 @@ func (client PersonGroupClient) CreateResponder(resp *http.Response) (result aut
 
 // Delete delete an existing person group. Persisted face images of all people in the person group will also be
 // deleted.
-//
-// personGroupID is id referencing a particular person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
 func (client PersonGroupClient) Delete(ctx context.Context, personGroupID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -180,8 +181,8 @@ func (client PersonGroupClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get retrieve the information of a person group, including its name and userData.
-//
-// personGroupID is id referencing a particular person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
 func (client PersonGroupClient) Get(ctx context.Context, personGroupID string) (result PersonGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -249,8 +250,8 @@ func (client PersonGroupClient) GetResponder(resp *http.Response) (result Person
 }
 
 // GetTrainingStatus retrieve the training status of a person group (completed or ongoing).
-//
-// personGroupID is id referencing a particular person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
 func (client PersonGroupClient) GetTrainingStatus(ctx context.Context, personGroupID string) (result TrainingStatus, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -318,9 +319,9 @@ func (client PersonGroupClient) GetTrainingStatusResponder(resp *http.Response) 
 }
 
 // List list person groups and their information.
-//
-// start is list person groups from the least personGroupId greater than the "start". top is the number of person
-// groups to list.
+// Parameters:
+// start - list person groups from the least personGroupId greater than the "start".
+// top - the number of person groups to list.
 func (client PersonGroupClient) List(ctx context.Context, start string, top *int32) (result ListPersonGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: start,
@@ -399,8 +400,8 @@ func (client PersonGroupClient) ListResponder(resp *http.Response) (result ListP
 }
 
 // Train queue a person group training task, the training task may not be started immediately.
-//
-// personGroupID is id referencing a particular person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
 func (client PersonGroupClient) Train(ctx context.Context, personGroupID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -468,8 +469,9 @@ func (client PersonGroupClient) TrainResponder(resp *http.Response) (result auto
 
 // Update update an existing person group's display name and userData. The properties which does not appear in request
 // body will not be updated.
-//
-// personGroupID is id referencing a particular person group. body is request body for updating person group.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// body - request body for updating person group.
 func (client PersonGroupClient) Update(ctx context.Context, personGroupID string, body NameAndUserDataContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -510,7 +512,7 @@ func (client PersonGroupClient) UpdatePreparer(ctx context.Context, personGroupI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}", pathParameters),

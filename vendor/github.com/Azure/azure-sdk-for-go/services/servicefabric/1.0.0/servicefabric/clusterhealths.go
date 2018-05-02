@@ -40,9 +40,10 @@ func NewClusterHealthsClientWithBaseURI(baseURI string, timeout *int32) ClusterH
 }
 
 // Get get cluster healths
-//
-// eventsHealthStateFilter is the filter of the events health state nodesHealthStateFilter is the filter of the
-// nodes health state applicationsHealthStateFilter is the filter of the applications health state
+// Parameters:
+// eventsHealthStateFilter - the filter of the events health state
+// nodesHealthStateFilter - the filter of the nodes health state
+// applicationsHealthStateFilter - the filter of the applications health state
 func (client ClusterHealthsClient) Get(ctx context.Context, eventsHealthStateFilter string, nodesHealthStateFilter string, applicationsHealthStateFilter string) (result ClusterHealth, err error) {
 	req, err := client.GetPreparer(ctx, eventsHealthStateFilter, nodesHealthStateFilter, applicationsHealthStateFilter)
 	if err != nil {
@@ -113,8 +114,8 @@ func (client ClusterHealthsClient) GetResponder(resp *http.Response) (result Clu
 }
 
 // Send report cluster healths
-//
-// clusterHealthReport is the report of the cluster health
+// Parameters:
+// clusterHealthReport - the report of the cluster health
 func (client ClusterHealthsClient) Send(ctx context.Context, clusterHealthReport ClusterHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, clusterHealthReport)
 	if err != nil {
@@ -148,7 +149,7 @@ func (client ClusterHealthsClient) SendPreparer(ctx context.Context, clusterHeal
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/$/ReportClusterHealth"),

@@ -85,25 +85,29 @@ func (r *referenceResolver) resolveReference(ref *ShapeRef) {
 		return
 	}
 
-	if shape, ok := r.API.Shapes[ref.ShapeName]; ok {
-		if ref.JSONValue {
-			ref.ShapeName = "JSONValue"
-			r.API.Shapes[ref.ShapeName] = jsonvalueShape
-		}
-
-		ref.API = r.API   // resolve reference back to API
-		ref.Shape = shape // resolve shape reference
-
-		if r.visited[ref] {
-			return
-		}
-		r.visited[ref] = true
-
-		shape.refs = append(shape.refs, ref) // register the ref
-
-		// resolve shape's references, if it has any
-		r.resolveShape(shape)
+	shape, ok := r.API.Shapes[ref.ShapeName]
+	if !ok {
+		panic(fmt.Sprintf("unable resolve reference, %s", ref.ShapeName))
+		return
 	}
+
+	if ref.JSONValue {
+		ref.ShapeName = "JSONValue"
+		r.API.Shapes[ref.ShapeName] = jsonvalueShape
+	}
+
+	ref.API = r.API   // resolve reference back to API
+	ref.Shape = shape // resolve shape reference
+
+	if r.visited[ref] {
+		return
+	}
+	r.visited[ref] = true
+
+	shape.refs = append(shape.refs, ref) // register the ref
+
+	// resolve shape's references, if it has any
+	r.resolveShape(shape)
 }
 
 // resolveShape resolves a shape's Member Key Value, and nested member
@@ -322,9 +326,9 @@ func (a *API) makeIOShape(name string) *Shape {
 // removeUnusedShapes removes shapes from the API which are not referenced by any
 // other shape in the API.
 func (a *API) removeUnusedShapes() {
-	for n, s := range a.Shapes {
+	for _, s := range a.Shapes {
 		if len(s.refs) == 0 {
-			delete(a.Shapes, n)
+			a.removeShape(s)
 		}
 	}
 }

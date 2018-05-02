@@ -41,9 +41,9 @@ func NewEventHubsClientWithBaseURI(baseURI string, subscriptionID string) EventH
 }
 
 // ListByNamespace gets all the Event Hubs in a service bus Namespace.
-//
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
-// name
+// Parameters:
+// resourceGroupName - name of the Resource group within the Azure subscription.
+// namespaceName - the namespace name
 func (client EventHubsClient) ListByNamespace(ctx context.Context, resourceGroupName string, namespaceName string) (result EventHubListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

@@ -27,4 +27,11 @@ const (
 	//
 	// You made too many calls in a short period of time. Try again later.
 	ErrCodeLimitExceededException = "LimitExceededException"
+
+	// ErrCodeRequestChangedException for service response error code
+	// "RequestChangedException".
+	//
+	// Your request parameters changed between pages. Try again with the old parameters
+	// or without a pagination token.
+	ErrCodeRequestChangedException = "RequestChangedException"
 )

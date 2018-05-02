@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // FactoriesClient is the the Azure Data Factory V2 management API provides a RESTful set of web services that interact
 // with Azure Data Factory V2 services.
 type FactoriesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewFactoriesClient creates an instance of the FactoriesClient client.
 func NewFactoriesClient(subscriptionID string) FactoriesClient {
 	return NewFactoriesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewFactoriesClientWithBaseURI creates an instance of the FactoriesClient client.
 func NewFactoriesClientWithBaseURI(baseURI string, subscriptionID string) FactoriesClient {
 	return FactoriesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CancelPipelineRun cancel a pipeline run by its run ID.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
@@ -79,6 +83,7 @@ func (client FactoriesClient) CancelPipelineRun(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CancelPipelineRunPreparer prepares the CancelPipelineRun request.
 func (client FactoriesClient) CancelPipelineRunPreparer(ctx context.Context, resourceGroupName string, factoryName string, runID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -101,6 +106,7 @@ func (client FactoriesClient) CancelPipelineRunPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CancelPipelineRunSender sends the CancelPipelineRun request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) CancelPipelineRunSender(req *http.Request) (*http.Response, error) {
@@ -108,6 +114,7 @@ func (client FactoriesClient) CancelPipelineRunSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CancelPipelineRunResponder handles the response to the CancelPipelineRun request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) CancelPipelineRunResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -120,6 +127,7 @@ func (client FactoriesClient) CancelPipelineRunResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CreateOrUpdate creates or updates a factory.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. factory is factory resource
@@ -161,6 +169,7 @@ func (client FactoriesClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client FactoriesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, factoryName string, factory Factory) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -175,7 +184,7 @@ func (client FactoriesClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}", pathParameters),
@@ -184,6 +193,7 @@ func (client FactoriesClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -191,6 +201,7 @@ func (client FactoriesClient) CreateOrUpdateSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) CreateOrUpdateResponder(resp *http.Response) (result Factory, err error) {
@@ -204,6 +215,7 @@ func (client FactoriesClient) CreateOrUpdateResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Delete deletes a factory.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name.
@@ -241,6 +253,7 @@ func (client FactoriesClient) Delete(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeletePreparer prepares the Delete request.
 func (client FactoriesClient) DeletePreparer(ctx context.Context, resourceGroupName string, factoryName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -262,6 +275,7 @@ func (client FactoriesClient) DeletePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -269,6 +283,7 @@ func (client FactoriesClient) DeleteSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -281,6 +296,7 @@ func (client FactoriesClient) DeleteResponder(resp *http.Response) (result autor
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Get gets a factory.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name.
@@ -318,6 +334,7 @@ func (client FactoriesClient) Get(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetPreparer prepares the Get request.
 func (client FactoriesClient) GetPreparer(ctx context.Context, resourceGroupName string, factoryName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -339,6 +356,7 @@ func (client FactoriesClient) GetPreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -346,6 +364,7 @@ func (client FactoriesClient) GetSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) GetResponder(resp *http.Response) (result Factory, err error) {
@@ -359,6 +378,7 @@ func (client FactoriesClient) GetResponder(resp *http.Response) (result Factory,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // List lists factories under the specified subscription.
 func (client FactoriesClient) List(ctx context.Context) (result FactoryListResponsePage, err error) {
 	result.fn = client.listNextResults
@@ -383,6 +403,7 @@ func (client FactoriesClient) List(ctx context.Context) (result FactoryListRespo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListPreparer prepares the List request.
 func (client FactoriesClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -402,6 +423,7 @@ func (client FactoriesClient) ListPreparer(ctx context.Context) (*http.Request, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -409,6 +431,7 @@ func (client FactoriesClient) ListSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) ListResponder(resp *http.Response) (result FactoryListResponse, err error) {
@@ -443,12 +466,14 @@ func (client FactoriesClient) listNextResults(lastResults FactoryListResponse) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client FactoriesClient) ListComplete(ctx context.Context) (result FactoryListResponseIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByResourceGroup lists factories.
 //
 // resourceGroupName is the resource group name.
@@ -483,6 +508,7 @@ func (client FactoriesClient) ListByResourceGroup(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client FactoriesClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -503,6 +529,7 @@ func (client FactoriesClient) ListByResourceGroupPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -510,6 +537,7 @@ func (client FactoriesClient) ListByResourceGroupSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) ListByResourceGroupResponder(resp *http.Response) (result FactoryListResponse, err error) {
@@ -544,12 +572,14 @@ func (client FactoriesClient) listByResourceGroupNextResults(lastResults Factory
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client FactoriesClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result FactoryListResponseIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Update updates a factory.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. factoryUpdateParameters is the
@@ -588,6 +618,7 @@ func (client FactoriesClient) Update(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdatePreparer prepares the Update request.
 func (client FactoriesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, factoryName string, factoryUpdateParameters FactoryUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -602,7 +633,7 @@ func (client FactoriesClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}", pathParameters),
@@ -611,6 +642,7 @@ func (client FactoriesClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client FactoriesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -618,6 +650,7 @@ func (client FactoriesClient) UpdateSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client FactoriesClient) UpdateResponder(resp *http.Response) (result Factory, err error) {

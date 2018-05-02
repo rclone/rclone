@@ -26,7 +26,7 @@
     "ListHITs": "<p> The <code>ListHITs</code> operation returns all of a Requester's HITs. The operation returns HITs of any status, except for HITs that have been deleted of with the DeleteHIT operation or that have been auto-deleted. </p>",
     "ListHITsForQualificationType": "<p> The <code>ListHITsForQualificationType</code> operation returns the HITs that use the given Qualification type for a Qualification requirement. The operation returns HITs of any status, except for HITs that have been deleted with the <code>DeleteHIT</code> operation or that have been auto-deleted. </p>",
     "ListQualificationRequests": "<p> The <code>ListQualificationRequests</code> operation retrieves requests for Qualifications of a particular Qualification type. The owner of the Qualification type calls this operation to poll for pending requests, and accepts them using the AcceptQualification operation. </p>",
-    "ListQualificationTypes": "<p> The <code>ListQualificationRequests</code> operation retrieves requests for Qualifications of a particular Qualification type. The owner of the Qualification type calls this operation to poll for pending requests, and accepts them using the AcceptQualification operation. </p>",
+    "ListQualificationTypes": "<p> The <code>ListQualificationTypes</code> operation returns a list of Qualification types, filtered by an optional search term. </p>",
     "ListReviewPolicyResultsForHIT": "<p> The <code>ListReviewPolicyResultsForHIT</code> operation retrieves the computed results and the actions taken in the course of executing your Review Policies for a given HIT. For information about how to specify Review Policies when you call CreateHIT, see Review Policies. The ListReviewPolicyResultsForHIT operation can return results for both Assignment-level and HIT-level review results. </p>",
     "ListReviewableHITs": "<p> The <code>ListReviewableHITs</code> operation retrieves the HITs with Status equal to Reviewable or Status equal to Reviewing that belong to the Requester calling the operation. </p>",
     "ListWorkerBlocks": "<p>The <code>ListWorkersBlocks</code> operation retrieves a list of Workers who are blocked from working on your HITs.</p>",
@@ -121,7 +121,7 @@
         "ListQualificationTypesRequest$MustBeOwnedByCaller": "<p> Specifies that only Qualification types that the Requester created are returned. If false, the operation returns all Qualification types. </p>",
         "ListReviewPolicyResultsForHITRequest$RetrieveActions": "<p> Specify if the operation should retrieve a list of the actions taken executing the Review Policies and their outcomes. </p>",
         "ListReviewPolicyResultsForHITRequest$RetrieveResults": "<p> Specify if the operation should retrieve a list of the results computed by the Review Policies. </p>",
-        "QualificationRequirement$RequiredToPreview": "<p> If true, the question data for the HIT will not be shown when a Worker whose Qualifications do not meet this requirement tries to preview the HIT. That is, a Worker's Qualifications must meet all of the requirements for which RequiredToPreview is true in order to preview the HIT. If a Worker meets all of the requirements where RequiredToPreview is true (or if there are no such requirements), but does not meet all of the requirements for the HIT, the Worker will be allowed to preview the HIT's question data, but will not be allowed to accept and complete the HIT. The default is false. </p>",
+        "QualificationRequirement$RequiredToPreview": "<p> DEPRECATED: Use the <code>ActionsGuarded</code> field instead. If RequiredToPreview is true, the question data for the HIT will not be shown when a Worker whose Qualifications do not meet this requirement tries to preview the HIT. That is, a Worker's Qualifications must meet all of the requirements for which RequiredToPreview is true in order to preview the HIT. If a Worker meets all of the requirements where RequiredToPreview is true (or if there are no such requirements), but does not meet all of the requirements for the HIT, the Worker will be allowed to preview the HIT's question data, but will not be allowed to accept and complete the HIT. The default is false. This should not be used in combination with the <code>ActionsGuarded</code> field. </p>",
         "QualificationType$IsRequestable": "<p> Specifies whether the Qualification type is one that a user can request through the Amazon Mechanical Turk web site, such as by taking a Qualification test. This value is False for Qualifications assigned automatically by the system. Valid values are True | False. </p>",
         "QualificationType$AutoGranted": "<p>Specifies that requests for the Qualification type are granted immediately, without prompting the Worker with a Qualification test. Valid values are True | False.</p>",
         "UpdateHITReviewStatusRequest$Revert": "<p> Specifies how to update the HIT status. Default is <code>False</code>. </p> <ul> <li> <p> Setting this to false will only transition a HIT from <code>Reviewable</code> to <code>Reviewing</code> </p> </li> <li> <p> Setting this to true will only transition a HIT from <code>Reviewing</code> to <code>Reviewable</code> </p> </li> </ul>",
@@ -418,6 +418,12 @@
         "GetAssignmentResponse$HIT": "<p> The HIT associated with this assignment. The response includes one HIT element.</p>",
         "GetHITResponse$HIT": "<p> Contains the requested HIT data.</p>",
         "HITList$member": null
+      }
+    },
+    "HITAccessActions": {
+      "base": null,
+      "refs": {
+        "QualificationRequirement$ActionsGuarded": "<p> Setting this attribute prevents Workers whose Qualifications do not meet this QualificationRequirement from taking the specified action. Valid arguments include \"Accept\" (Worker cannot accept the HIT, but can preview the HIT and see it in their search results), \"PreviewAndAccept\" (Worker cannot accept or preview the HIT, but can see the HIT in their search results), and \"DiscoverPreviewAndAccept\" (Worker cannot accept, preview, or see the HIT in their search results). It's possible for you to create a HIT with multiple QualificationRequirements (which can have different values for the ActionGuarded attribute). In this case, the Worker is only permitted to perform an action when they have met all QualificationRequirements guarding the action. The actions in the order of least restrictive to most restrictive are Discover, Preview and Accept. For example, if a Worker meets all QualificationRequirements that are set to DiscoverPreviewAndAccept, but do not meet all requirements that are set with PreviewAndAccept, then the Worker will be able to Discover, i.e. see the HIT in their search result, but will not be able to Preview or Accept the HIT. ActionsGuarded should not be used in combination with the <code>RequiredToPreview</code> field. </p>"
       }
     },
     "HITLayoutParameter": {
@@ -744,7 +750,7 @@
       }
     },
     "QualificationRequirement": {
-      "base": "<p> The QualificationRequirement data structure describes a Qualification that a Worker must have before the Worker is allowed to accept a HIT. A requirement may optionally state that a Worker must have the Qualification in order to preview the HIT. </p>",
+      "base": "<p> The QualificationRequirement data structure describes a Qualification that a Worker must have before the Worker is allowed to accept a HIT. A requirement may optionally state that a Worker must have the Qualification in order to preview the HIT, or see the HIT in search results. </p>",
       "refs": {
         "QualificationRequirementList$member": null
       }
@@ -752,9 +758,9 @@
     "QualificationRequirementList": {
       "base": null,
       "refs": {
-        "CreateHITRequest$QualificationRequirements": "<p> A condition that a Worker's Qualifications must meet before the Worker is allowed to accept and complete the HIT. </p>",
-        "CreateHITTypeRequest$QualificationRequirements": "<p> A condition that a Worker's Qualifications must meet before the Worker is allowed to accept and complete the HIT. </p>",
-        "HIT$QualificationRequirements": "<p> A condition that a Worker's Qualifications must meet in order to accept the HIT. A HIT can have between zero and ten Qualification requirements. All requirements must be met by a Worker's Qualifications for the Worker to accept the HIT.</p>"
+        "CreateHITRequest$QualificationRequirements": "<p> Conditions that a Worker's Qualifications must meet in order to accept the HIT. A HIT can have between zero and ten Qualification requirements. All requirements must be met in order for a Worker to accept the HIT. Additionally, other actions can be restricted using the <code>ActionsGuarded</code> field on each <code>QualificationRequirement</code> structure. </p>",
+        "CreateHITTypeRequest$QualificationRequirements": "<p> Conditions that a Worker's Qualifications must meet in order to accept the HIT. A HIT can have between zero and ten Qualification requirements. All requirements must be met in order for a Worker to accept the HIT. Additionally, other actions can be restricted using the <code>ActionsGuarded</code> field on each <code>QualificationRequirement</code> structure. </p>",
+        "HIT$QualificationRequirements": "<p> Conditions that a Worker's Qualifications must meet in order to accept the HIT. A HIT can have between zero and ten Qualification requirements. All requirements must be met in order for a Worker to accept the HIT. Additionally, other actions can be restricted using the <code>ActionsGuarded</code> field on each <code>QualificationRequirement</code> structure. </p>"
       }
     },
     "QualificationStatus": {

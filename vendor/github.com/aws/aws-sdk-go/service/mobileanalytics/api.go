@@ -16,7 +16,7 @@ const opPutEvents = "PutEvents"
 
 // PutEventsRequest generates a "aws/request.Request" representing the
 // client's request for the PutEvents operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

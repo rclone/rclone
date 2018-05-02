@@ -22,6 +22,7 @@ import (
 
 	"cloud.google.com/go/internal/fields"
 	"github.com/golang/protobuf/ptypes"
+	ts "github.com/golang/protobuf/ptypes/timestamp"
 	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
 	"google.golang.org/genproto/googleapis/type/latlng"
 )
@@ -29,10 +30,11 @@ import (
 var nullValue = &pb.Value{&pb.Value_NullValue{}}
 
 var (
-	typeOfByteSlice   = reflect.TypeOf([]byte{})
-	typeOfGoTime      = reflect.TypeOf(time.Time{})
-	typeOfLatLng      = reflect.TypeOf((*latlng.LatLng)(nil))
-	typeOfDocumentRef = reflect.TypeOf((*DocumentRef)(nil))
+	typeOfByteSlice      = reflect.TypeOf([]byte{})
+	typeOfGoTime         = reflect.TypeOf(time.Time{})
+	typeOfLatLng         = reflect.TypeOf((*latlng.LatLng)(nil))
+	typeOfDocumentRef    = reflect.TypeOf((*DocumentRef)(nil))
+	typeOfProtoTimestamp = reflect.TypeOf((*ts.Timestamp)(nil))
 )
 
 // toProtoValue converts a Go value to a Firestore Value protobuf.
@@ -64,6 +66,12 @@ func toProtoValue(v reflect.Value) (pbv *pb.Value, sawServerTimestamp bool, err 
 			return nil, false, err
 		}
 		return &pb.Value{&pb.Value_TimestampValue{ts}}, false, nil
+	case *ts.Timestamp:
+		if x == nil {
+			// gRPC doesn't like nil oneofs. Use NullValue.
+			return nullValue, false, nil
+		}
+		return &pb.Value{&pb.Value_TimestampValue{x}}, false, nil
 	case *latlng.LatLng:
 		if x == nil {
 			// gRPC doesn't like nil oneofs. Use NullValue.
@@ -240,7 +248,7 @@ func parseTag(t reflect.StructTag) (name string, keep bool, other interface{}, e
 // isLeafType determines whether or not a type is a 'leaf type'
 // and should not be recursed into, but considered one field.
 func isLeafType(t reflect.Type) bool {
-	return t == typeOfGoTime || t == typeOfLatLng
+	return t == typeOfGoTime || t == typeOfLatLng || t == typeOfProtoTimestamp
 }
 
 var fieldCache = fields.NewCache(parseTag, nil, isLeafType)

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // LocationClient is the hDInsight Management Client
 type LocationClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewLocationClient creates an instance of the LocationClient client.
 func NewLocationClient(subscriptionID string) LocationClient {
 	return NewLocationClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewLocationClientWithBaseURI creates an instance of the LocationClient client.
 func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) LocationClient {
 	return LocationClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetCapabilities gets the capabilities for the specified location.
 //
 // location is the location to get capabilities for.
@@ -64,6 +68,7 @@ func (client LocationClient) GetCapabilities(ctx context.Context, location strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetCapabilitiesPreparer prepares the GetCapabilities request.
 func (client LocationClient) GetCapabilitiesPreparer(ctx context.Context, location string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -84,6 +89,7 @@ func (client LocationClient) GetCapabilitiesPreparer(ctx context.Context, locati
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetCapabilitiesSender sends the GetCapabilities request. The method will close the
 // http.Response Body if it receives an error.
 func (client LocationClient) GetCapabilitiesSender(req *http.Request) (*http.Response, error) {
@@ -91,6 +97,7 @@ func (client LocationClient) GetCapabilitiesSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetCapabilitiesResponder handles the response to the GetCapabilities request. The method always
 // closes the http.Response Body.
 func (client LocationClient) GetCapabilitiesResponder(resp *http.Response) (result CapabilitiesResult, err error) {

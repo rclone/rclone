@@ -38,8 +38,8 @@ const (
 )
 
 // PossibleCreateModeValues returns an array of possible values for the CreateMode const type.
-func PossibleCreateModeValues() [3]CreateMode {
-	return [3]CreateMode{CreateModeDefault, CreateModePointInTimeRestore, CreateModeServerPropertiesForCreate}
+func PossibleCreateModeValues() []CreateMode {
+	return []CreateMode{CreateModeDefault, CreateModePointInTimeRestore, CreateModeServerPropertiesForCreate}
 }
 
 // GeoRedundantBackup enumerates the values for geo redundant backup.
@@ -53,8 +53,8 @@ const (
 )
 
 // PossibleGeoRedundantBackupValues returns an array of possible values for the GeoRedundantBackup const type.
-func PossibleGeoRedundantBackupValues() [2]GeoRedundantBackup {
-	return [2]GeoRedundantBackup{Disabled, Enabled}
+func PossibleGeoRedundantBackupValues() []GeoRedundantBackup {
+	return []GeoRedundantBackup{Disabled, Enabled}
 }
 
 // OperationOrigin enumerates the values for operation origin.
@@ -70,8 +70,8 @@ const (
 )
 
 // PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
-func PossibleOperationOriginValues() [3]OperationOrigin {
-	return [3]OperationOrigin{NotSpecified, System, User}
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{NotSpecified, System, User}
 }
 
 // ServerState enumerates the values for server state.
@@ -87,8 +87,8 @@ const (
 )
 
 // PossibleServerStateValues returns an array of possible values for the ServerState const type.
-func PossibleServerStateValues() [3]ServerState {
-	return [3]ServerState{ServerStateDisabled, ServerStateDropping, ServerStateReady}
+func PossibleServerStateValues() []ServerState {
+	return []ServerState{ServerStateDisabled, ServerStateDropping, ServerStateReady}
 }
 
 // ServerVersion enumerates the values for server version.
@@ -102,8 +102,8 @@ const (
 )
 
 // PossibleServerVersionValues returns an array of possible values for the ServerVersion const type.
-func PossibleServerVersionValues() [2]ServerVersion {
-	return [2]ServerVersion{NineFullStopFive, NineFullStopSix}
+func PossibleServerVersionValues() []ServerVersion {
+	return []ServerVersion{NineFullStopFive, NineFullStopSix}
 }
 
 // SkuTier enumerates the values for sku tier.
@@ -119,8 +119,8 @@ const (
 )
 
 // PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
-func PossibleSkuTierValues() [3]SkuTier {
-	return [3]SkuTier{Basic, GeneralPurpose, MemoryOptimized}
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Basic, GeneralPurpose, MemoryOptimized}
 }
 
 // SslEnforcementEnum enumerates the values for ssl enforcement enum.
@@ -134,8 +134,8 @@ const (
 )
 
 // PossibleSslEnforcementEnumValues returns an array of possible values for the SslEnforcementEnum const type.
-func PossibleSslEnforcementEnumValues() [2]SslEnforcementEnum {
-	return [2]SslEnforcementEnum{SslEnforcementEnumDisabled, SslEnforcementEnumEnabled}
+func PossibleSslEnforcementEnumValues() []SslEnforcementEnum {
+	return []SslEnforcementEnum{SslEnforcementEnumDisabled, SslEnforcementEnumEnabled}
 }
 
 // Configuration represents a Configuration.

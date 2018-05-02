@@ -36,6 +36,8 @@ import "multi/multi3.proto";
 
 package multitest;
 
+option go_package = "github.com/golang/protobuf/protoc-gen-go/testdata/multi;multitest";
+
 message Multi1 {
   required Multi2 multi2 = 1;
   optional Multi2.Color color = 2;

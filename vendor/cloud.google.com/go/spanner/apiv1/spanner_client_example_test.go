@@ -252,3 +252,39 @@ func ExampleClient_Rollback() {
 		// TODO: Handle error.
 	}
 }
+
+func ExampleClient_PartitionQuery() {
+	ctx := context.Background()
+	c, err := spanner.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &spannerpb.PartitionQueryRequest{
+		// TODO: Fill request struct fields.
+	}
+	resp, err := c.PartitionQuery(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleClient_PartitionRead() {
+	ctx := context.Background()
+	c, err := spanner.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &spannerpb.PartitionReadRequest{
+		// TODO: Fill request struct fields.
+	}
+	resp, err := c.PartitionRead(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}

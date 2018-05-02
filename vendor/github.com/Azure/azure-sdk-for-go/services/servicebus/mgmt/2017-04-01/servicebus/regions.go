@@ -41,8 +41,8 @@ func NewRegionsClientWithBaseURI(baseURI string, subscriptionID string) RegionsC
 }
 
 // ListBySku gets the available Regions for a given sku
-//
-// sku is the sku type.
+// Parameters:
+// sku - the sku type.
 func (client RegionsClient) ListBySku(ctx context.Context, sku string) (result PremiumMessagingRegionsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: sku,

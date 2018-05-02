@@ -12,11 +12,10 @@ import (
 // an error if building a new request fails.
 func httpCode(handler http.HandlerFunc, method, url string, values url.Values) (int, error) {
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url+"?"+values.Encode(), nil)
 	if err != nil {
 		return -1, err
 	}
-	req.URL.RawQuery = values.Encode()
 	handler(w, req)
 	return w.Code, nil
 }
@@ -27,9 +26,6 @@ func httpCode(handler http.HandlerFunc, method, url string, values url.Values) (
 //
 // Returns whether the assertion was successful (true) or not (false).
 func HTTPSuccess(t TestingT, handler http.HandlerFunc, method, url string, values url.Values, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	code, err := httpCode(handler, method, url, values)
 	if err != nil {
 		Fail(t, fmt.Sprintf("Failed to build test request, got error: %s", err))
@@ -50,9 +46,6 @@ func HTTPSuccess(t TestingT, handler http.HandlerFunc, method, url string, value
 //
 // Returns whether the assertion was successful (true) or not (false).
 func HTTPRedirect(t TestingT, handler http.HandlerFunc, method, url string, values url.Values, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	code, err := httpCode(handler, method, url, values)
 	if err != nil {
 		Fail(t, fmt.Sprintf("Failed to build test request, got error: %s", err))
@@ -73,9 +66,6 @@ func HTTPRedirect(t TestingT, handler http.HandlerFunc, method, url string, valu
 //
 // Returns whether the assertion was successful (true) or not (false).
 func HTTPError(t TestingT, handler http.HandlerFunc, method, url string, values url.Values, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	code, err := httpCode(handler, method, url, values)
 	if err != nil {
 		Fail(t, fmt.Sprintf("Failed to build test request, got error: %s", err))
@@ -109,9 +99,6 @@ func HTTPBody(handler http.HandlerFunc, method, url string, values url.Values) s
 //
 // Returns whether the assertion was successful (true) or not (false).
 func HTTPBodyContains(t TestingT, handler http.HandlerFunc, method, url string, values url.Values, str interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	body := HTTPBody(handler, method, url, values)
 
 	contains := strings.Contains(body, fmt.Sprint(str))
@@ -129,9 +116,6 @@ func HTTPBodyContains(t TestingT, handler http.HandlerFunc, method, url string, 
 //
 // Returns whether the assertion was successful (true) or not (false).
 func HTTPBodyNotContains(t TestingT, handler http.HandlerFunc, method, url string, values url.Values, str interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	body := HTTPBody(handler, method, url, values)
 
 	contains := strings.Contains(body, fmt.Sprint(str))

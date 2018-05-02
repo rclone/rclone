@@ -766,7 +766,7 @@
       }
     }
   },
-  "revision": "20180305",
+  "revision": "20180423",
   "rootUrl": "https://androidmanagement.googleapis.com/",
   "schemas": {
     "AlwaysOnVpnPackage": {
@@ -849,7 +849,7 @@
       "id": "ApplicationPolicy",
       "properties": {
         "defaultPermissionPolicy": {
-          "description": "The default policy for all permissions requested by the app. If specified, this overrides the policy-level default_permission_policy which applies to all apps.",
+          "description": "The default policy for all permissions requested by the app. If specified, this overrides the policy-level default_permission_policy which applies to all apps. It does not override the permission_grants which applies to all apps.",
           "enum": [
             "PERMISSION_POLICY_UNSPECIFIED",
             "PROMPT",
@@ -925,7 +925,7 @@
           "type": "string"
         },
         "permissionGrants": {
-          "description": "Explicit permission grants or denials for the app. These values override the default_permission_policy.",
+          "description": "Explicit permission grants or denials for the app. These values override the default_permission_policy and permission_grants which apply to all apps.",
           "items": {
             "$ref": "PermissionGrant"
           },
@@ -946,6 +946,26 @@
         "duration": {
           "description": "The duration for which the command is valid. The command will expire if not executed by the device during this time. The default duration if unspecified is ten minutes. There is no maximum duration.",
           "format": "google-duration",
+          "type": "string"
+        },
+        "errorCode": {
+          "description": "If the command failed, an error code explaining the failure. This is not set when the command is cancelled by the caller.",
+          "enum": [
+            "COMMAND_ERROR_CODE_UNSPECIFIED",
+            "UNKNOWN",
+            "API_LEVEL",
+            "MANAGEMENT_MODE",
+            "INVALID_VALUE",
+            "UNSUPPORTED"
+          ],
+          "enumDescriptions": [
+            "There was no error.",
+            "An unknown error occurred.",
+            "The API level of the device does not support this command.",
+            "The management mode (profile owner, device owner, etc.) does not support the command.",
+            "The command has an invalid parameter value.",
+            "The device doesn't support the command. Updating Android Device Policy to the latest version may resolve the issue."
+          ],
           "type": "string"
         },
         "newPassword": {
@@ -1335,7 +1355,7 @@
       "id": "Enterprise",
       "properties": {
         "appAutoApprovalEnabled": {
-          "description": "Whether permissions for apps installed via policy are automatically approved. If enabled, you must display an app's permissions to the enterprise admin before setting the app to be installed in a policy.",
+          "description": "Deprecated and unused.",
           "type": "boolean"
         },
         "enabledNotificationTypes": {
@@ -1379,6 +1399,13 @@
         "pubsubTopic": {
           "description": "The topic that Cloud Pub/Sub notifications are published to, in the form projects/{project}/topics/{topic}. This field is only required if Pub/Sub notifications are enabled.",
           "type": "string"
+        },
+        "termsAndConditions": {
+          "description": "Terms and conditions that must be accepted when provisioning a device for this enterprise. A page of terms is generated for each value in this list.",
+          "items": {
+            "$ref": "TermsAndConditions"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -2111,7 +2138,7 @@
           "type": "array"
         },
         "appAutoUpdatePolicy": {
-          "description": "The auto update policy value. Specifies whether the user is given a choice to configure the app update policy, or otherwise contains the enforced update policy",
+          "description": "The app auto update policy, which controls when automatic app updates can be applied.",
           "enum": [
             "APP_AUTO_UPDATE_POLICY_UNSPECIFIED",
             "CHOICE_TO_THE_USER",
@@ -2120,7 +2147,7 @@
             "ALWAYS"
           ],
           "enumDescriptions": [
-            "The auto-update policy is not set. Same as giving auto-update policy choice to the user.",
+            "The auto-update policy is not set. Equivalent to CHOICE_TO_THE_USER.",
             "The user can control auto-updates.",
             "Apps are never auto-updated.",
             "Apps are auto-updated over Wi-Fi only.",
@@ -2202,6 +2229,24 @@
           ],
           "type": "string"
         },
+        "deviceOwnerLockScreenInfo": {
+          "$ref": "UserFacingMessage",
+          "description": "The device owner information to be shown on the lock screen."
+        },
+        "encryptionPolicy": {
+          "description": "Whether encryption is enabled",
+          "enum": [
+            "ENCRYPTION_POLICY_UNSPECIFIED",
+            "ENABLED_WITHOUT_PASSWORD",
+            "ENABLED_WITH_PASSWORD"
+          ],
+          "enumDescriptions": [
+            "This value is ignored, i.e. no encryption required",
+            "Encryption required but no password required to boot",
+            "Encryption required with password required to boot"
+          ],
+          "type": "string"
+        },
         "ensureVerifyAppsEnabled": {
           "description": "Whether app verification is force-enabled.",
           "type": "boolean"
@@ -2263,6 +2308,24 @@
         "kioskCustomLauncherEnabled": {
           "description": "Whether the kiosk custom launcher is enabled. This replaces the home screen with a launcher that locks down the device to the apps installed via the applications setting. The apps appear on a single page in alphabetical order. It is recommended to also use status_bar_disabled to block access to device settings.",
           "type": "boolean"
+        },
+        "locationMode": {
+          "description": "The degree of location detection enabled. The user may change the value unless the user is otherwise blocked from accessing device settings.",
+          "enum": [
+            "LOCATION_MODE_UNSPECIFIED",
+            "HIGH_ACCURACY",
+            "SENSORS_ONLY",
+            "BATTERY_SAVING",
+            "OFF"
+          ],
+          "enumDescriptions": [
+            "The current device value is not modified.",
+            "All location detection methods are enabled, including GPS, networks, and other sensors.",
+            "Only GPS and other sensors are enabled.",
+            "Only the network location provider is enabled.",
+            "Location detection is disabled."
+          ],
+          "type": "string"
         },
         "longSupportMessage": {
           "$ref": "UserFacingMessage",
@@ -2352,9 +2415,17 @@
           "description": "Whether changing the wallpaper is disabled.",
           "type": "boolean"
         },
+        "shareLocationDisabled": {
+          "description": "Whether location sharing is disabled.",
+          "type": "boolean"
+        },
         "shortSupportMessage": {
           "$ref": "UserFacingMessage",
           "description": "A message displayed to the user in the settings screen wherever functionality has been disabled by the admin."
+        },
+        "skipFirstUseHintsEnabled": {
+          "description": "Flag to skip hints on the first use. Enterprise admin can enable the system recommendation for apps to skip their user tutorial and other introductory hints on first start-up.",
+          "type": "boolean"
         },
         "smsDisabled": {
           "description": "Whether sending and receiving SMS messages is disabled.",
@@ -2405,6 +2476,10 @@
         },
         "usbFileTransferDisabled": {
           "description": "Whether transferring files over USB is disabled.",
+          "type": "boolean"
+        },
+        "usbMassStorageEnabled": {
+          "description": "Allows admins to toggle whether USB storge is enabled or disabled on user's devices.",
           "type": "boolean"
         },
         "version": {
@@ -2646,6 +2721,21 @@
             "Postpone automatic install up to a maximum of 30 days."
           ],
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "TermsAndConditions": {
+      "description": "A terms and conditions page to be accepted during provisioning.",
+      "id": "TermsAndConditions",
+      "properties": {
+        "content": {
+          "$ref": "UserFacingMessage",
+          "description": "A well-formatted HTML string. It will be parsed on the client with android.text.Html#fromHtml."
+        },
+        "header": {
+          "$ref": "UserFacingMessage",
+          "description": "A short header which appears above the HTML content."
         }
       },
       "type": "object"

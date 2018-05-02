@@ -395,6 +395,7 @@
       "refs": {
         "ConcurrentModificationException$Message": null,
         "IncompatibleImageException$Message": null,
+        "InvalidAccountStatusException$Message": null,
         "InvalidParameterCombinationException$Message": null,
         "InvalidRoleException$Message": null,
         "LimitExceededException$Message": null,
@@ -413,6 +414,14 @@
     "ExpireSessionResult": {
       "base": null,
       "refs": {
+      }
+    },
+    "FeedbackURL": {
+      "base": null,
+      "refs": {
+        "CreateStackRequest$FeedbackURL": "<p>The URL that users are redirected to after they click the Send Feedback link. If no URL is specified, no Send Feedback link is displayed.</p>",
+        "Stack$FeedbackURL": "<p>The URL that users are redirected to after they click the Send Feedback link. If no URL is specified, no Send Feedback link is displayed.</p>",
+        "UpdateStackRequest$FeedbackURL": "<p>The URL that users are redirected to after they click the Send Feedback link. If no URL is specified, no Send Feedback link is displayed.</p>"
       }
     },
     "Fleet": {
@@ -562,6 +571,11 @@
         "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended, in seconds. If a user who was disconnected reconnects within this time interval, the user is connected to their previous session. Specify a value between 60 and 57600.</p>"
       }
     },
+    "InvalidAccountStatusException": {
+      "base": "<p>The resource cannot be created because your AWS account is suspended. For assistance, contact AWS Support. </p>",
+      "refs": {
+      }
+    },
     "InvalidParameterCombinationException": {
       "base": "<p>Indicates an incorrect combination of parameters, or a missing parameter.</p>",
       "refs": {
@@ -662,9 +676,9 @@
     "RedirectURL": {
       "base": null,
       "refs": {
-        "CreateStackRequest$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>",
-        "Stack$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>",
-        "UpdateStackRequest$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>"
+        "CreateStackRequest$RedirectURL": "<p>The URL that users are redirected to after their streaming session ends.</p>",
+        "Stack$RedirectURL": "<p>The URL that users are redirected to after their streaming session ends.</p>",
+        "UpdateStackRequest$RedirectURL": "<p>The URL that users are redirected to after their streaming session ends.</p>"
       }
     },
     "RegionName": {
@@ -861,7 +875,7 @@
         "Application$IconURL": "<p>The URL for the application icon. This URL might be time-limited.</p>",
         "Application$LaunchPath": "<p>The path to the application executable in the instance.</p>",
         "Application$LaunchParameters": "<p>The arguments that are passed to the application at launch.</p>",
-        "AssociateFleetRequest$FleetName": "<p>The name of the fleet.</p>",
+        "AssociateFleetRequest$FleetName": "<p>The name of the fleet. </p>",
         "AssociateFleetRequest$StackName": "<p>The name of the stack.</p>",
         "CreateFleetRequest$ImageName": "<p>The name of the image used to create the fleet.</p>",
         "CreateFleetRequest$InstanceType": "<p>The instance type to use when launching fleet instances. The following instance types are available:</p> <ul> <li> <p>stream.standard.medium</p> </li> <li> <p>stream.standard.large</p> </li> <li> <p>stream.compute.large</p> </li> <li> <p>stream.compute.xlarge</p> </li> <li> <p>stream.compute.2xlarge</p> </li> <li> <p>stream.compute.4xlarge</p> </li> <li> <p>stream.compute.8xlarge</p> </li> <li> <p>stream.memory.large</p> </li> <li> <p>stream.memory.xlarge</p> </li> <li> <p>stream.memory.2xlarge</p> </li> <li> <p>stream.memory.4xlarge</p> </li> <li> <p>stream.memory.8xlarge</p> </li> <li> <p>stream.graphics-design.large</p> </li> <li> <p>stream.graphics-design.xlarge</p> </li> <li> <p>stream.graphics-design.2xlarge</p> </li> <li> <p>stream.graphics-design.4xlarge</p> </li> <li> <p>stream.graphics-desktop.2xlarge</p> </li> <li> <p>stream.graphics-pro.4xlarge</p> </li> <li> <p>stream.graphics-pro.8xlarge</p> </li> <li> <p>stream.graphics-pro.16xlarge</p> </li> </ul>",

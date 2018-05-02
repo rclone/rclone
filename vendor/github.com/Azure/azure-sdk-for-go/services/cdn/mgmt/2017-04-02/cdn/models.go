@@ -37,6 +37,11 @@ const (
 	Deleting CustomDomainResourceState = "Deleting"
 )
 
+// PossibleCustomDomainResourceStateValues returns an array of possible values for the CustomDomainResourceState const type.
+func PossibleCustomDomainResourceStateValues() []CustomDomainResourceState {
+	return []CustomDomainResourceState{Active, Creating, Deleting}
+}
+
 // CustomHTTPSProvisioningState enumerates the values for custom https provisioning state.
 type CustomHTTPSProvisioningState string
 
@@ -52,6 +57,11 @@ const (
 	// Failed ...
 	Failed CustomHTTPSProvisioningState = "Failed"
 )
+
+// PossibleCustomHTTPSProvisioningStateValues returns an array of possible values for the CustomHTTPSProvisioningState const type.
+func PossibleCustomHTTPSProvisioningStateValues() []CustomHTTPSProvisioningState {
+	return []CustomHTTPSProvisioningState{Disabled, Disabling, Enabled, Enabling, Failed}
+}
 
 // CustomHTTPSProvisioningSubstate enumerates the values for custom https provisioning substate.
 type CustomHTTPSProvisioningSubstate string
@@ -79,6 +89,11 @@ const (
 	SubmittingDomainControlValidationRequest CustomHTTPSProvisioningSubstate = "SubmittingDomainControlValidationRequest"
 )
 
+// PossibleCustomHTTPSProvisioningSubstateValues returns an array of possible values for the CustomHTTPSProvisioningSubstate const type.
+func PossibleCustomHTTPSProvisioningSubstateValues() []CustomHTTPSProvisioningSubstate {
+	return []CustomHTTPSProvisioningSubstate{CertificateDeleted, CertificateDeployed, DeletingCertificate, DeployingCertificate, DomainControlValidationRequestApproved, DomainControlValidationRequestRejected, DomainControlValidationRequestTimedOut, IssuingCertificate, PendingDomainControlValidationREquestApproval, SubmittingDomainControlValidationRequest}
+}
+
 // EndpointResourceState enumerates the values for endpoint resource state.
 type EndpointResourceState string
 
@@ -97,6 +112,11 @@ const (
 	EndpointResourceStateStopping EndpointResourceState = "Stopping"
 )
 
+// PossibleEndpointResourceStateValues returns an array of possible values for the EndpointResourceState const type.
+func PossibleEndpointResourceStateValues() []EndpointResourceState {
+	return []EndpointResourceState{EndpointResourceStateCreating, EndpointResourceStateDeleting, EndpointResourceStateRunning, EndpointResourceStateStarting, EndpointResourceStateStopped, EndpointResourceStateStopping}
+}
+
 // GeoFilterActions enumerates the values for geo filter actions.
 type GeoFilterActions string
 
@@ -106,6 +126,11 @@ const (
 	// Block ...
 	Block GeoFilterActions = "Block"
 )
+
+// PossibleGeoFilterActionsValues returns an array of possible values for the GeoFilterActions const type.
+func PossibleGeoFilterActionsValues() []GeoFilterActions {
+	return []GeoFilterActions{Allow, Block}
+}
 
 // OptimizationType enumerates the values for optimization type.
 type OptimizationType string
@@ -123,6 +148,11 @@ const (
 	VideoOnDemandMediaStreaming OptimizationType = "VideoOnDemandMediaStreaming"
 )
 
+// PossibleOptimizationTypeValues returns an array of possible values for the OptimizationType const type.
+func PossibleOptimizationTypeValues() []OptimizationType {
+	return []OptimizationType{DynamicSiteAcceleration, GeneralMediaStreaming, GeneralWebDelivery, LargeFileDownload, VideoOnDemandMediaStreaming}
+}
+
 // OriginResourceState enumerates the values for origin resource state.
 type OriginResourceState string
 
@@ -134,6 +164,11 @@ const (
 	// OriginResourceStateDeleting ...
 	OriginResourceStateDeleting OriginResourceState = "Deleting"
 )
+
+// PossibleOriginResourceStateValues returns an array of possible values for the OriginResourceState const type.
+func PossibleOriginResourceStateValues() []OriginResourceState {
+	return []OriginResourceState{OriginResourceStateActive, OriginResourceStateCreating, OriginResourceStateDeleting}
+}
 
 // ProfileResourceState enumerates the values for profile resource state.
 type ProfileResourceState string
@@ -149,6 +184,11 @@ const (
 	ProfileResourceStateDisabled ProfileResourceState = "Disabled"
 )
 
+// PossibleProfileResourceStateValues returns an array of possible values for the ProfileResourceState const type.
+func PossibleProfileResourceStateValues() []ProfileResourceState {
+	return []ProfileResourceState{ProfileResourceStateActive, ProfileResourceStateCreating, ProfileResourceStateDeleting, ProfileResourceStateDisabled}
+}
+
 // QueryStringCachingBehavior enumerates the values for query string caching behavior.
 type QueryStringCachingBehavior string
 
@@ -163,6 +203,11 @@ const (
 	UseQueryString QueryStringCachingBehavior = "UseQueryString"
 )
 
+// PossibleQueryStringCachingBehaviorValues returns an array of possible values for the QueryStringCachingBehavior const type.
+func PossibleQueryStringCachingBehaviorValues() []QueryStringCachingBehavior {
+	return []QueryStringCachingBehavior{BypassCaching, IgnoreQueryString, NotSet, UseQueryString}
+}
+
 // ResourceType enumerates the values for resource type.
 type ResourceType string
 
@@ -170,6 +215,11 @@ const (
 	// MicrosoftCdnProfilesEndpoints ...
 	MicrosoftCdnProfilesEndpoints ResourceType = "Microsoft.Cdn/Profiles/Endpoints"
 )
+
+// PossibleResourceTypeValues returns an array of possible values for the ResourceType const type.
+func PossibleResourceTypeValues() []ResourceType {
+	return []ResourceType{MicrosoftCdnProfilesEndpoints}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -186,6 +236,11 @@ const (
 	// StandardVerizon ...
 	StandardVerizon SkuName = "Standard_Verizon"
 )
+
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{CustomVerizon, PremiumVerizon, StandardAkamai, StandardChinaCdn, StandardVerizon}
+}
 
 // CheckNameAvailabilityInput input of CheckNameAvailability API.
 type CheckNameAvailabilityInput struct {
@@ -225,6 +280,24 @@ type CustomDomain struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CustomDomain.
+func (cd CustomDomain) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cd.CustomDomainProperties != nil {
+		objectMap["properties"] = cd.CustomDomainProperties
+	}
+	if cd.ID != nil {
+		objectMap["id"] = cd.ID
+	}
+	if cd.Name != nil {
+		objectMap["name"] = cd.Name
+	}
+	if cd.Type != nil {
+		objectMap["type"] = cd.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CustomDomain struct.
@@ -386,6 +459,15 @@ type CustomDomainParameters struct {
 	*CustomDomainPropertiesParameters `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CustomDomainParameters.
+func (cdp CustomDomainParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cdp.CustomDomainPropertiesParameters != nil {
+		objectMap["properties"] = cdp.CustomDomainPropertiesParameters
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CustomDomainParameters struct.
 func (cdp *CustomDomainParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -535,6 +617,18 @@ type DeepCreatedOrigin struct {
 	*DeepCreatedOriginProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DeepCreatedOrigin.
+func (dco DeepCreatedOrigin) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dco.Name != nil {
+		objectMap["name"] = dco.Name
+	}
+	if dco.DeepCreatedOriginProperties != nil {
+		objectMap["properties"] = dco.DeepCreatedOriginProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DeepCreatedOrigin struct.
 func (dco *DeepCreatedOrigin) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -587,6 +681,24 @@ type EdgeNode struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for EdgeNode.
+func (en EdgeNode) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if en.EdgeNodeProperties != nil {
+		objectMap["properties"] = en.EdgeNodeProperties
+	}
+	if en.ID != nil {
+		objectMap["id"] = en.ID
+	}
+	if en.Name != nil {
+		objectMap["name"] = en.Name
+	}
+	if en.Type != nil {
+		objectMap["type"] = en.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for EdgeNode struct.
@@ -1853,6 +1965,15 @@ func (future OriginsUpdateFuture) Result(client OriginsClient) (o Origin, err er
 // OriginUpdateParameters origin properties needed for origin creation or update.
 type OriginUpdateParameters struct {
 	*OriginPropertiesParameters `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for OriginUpdateParameters.
+func (oup OriginUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if oup.OriginPropertiesParameters != nil {
+		objectMap["properties"] = oup.OriginPropertiesParameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for OriginUpdateParameters struct.

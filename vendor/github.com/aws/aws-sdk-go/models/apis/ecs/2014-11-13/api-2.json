@@ -798,6 +798,7 @@
         "serviceName":{"shape":"String"},
         "taskDefinition":{"shape":"String"},
         "loadBalancers":{"shape":"LoadBalancers"},
+        "serviceRegistries":{"shape":"ServiceRegistries"},
         "desiredCount":{"shape":"BoxedInteger"},
         "clientToken":{"shape":"String"},
         "launchType":{"shape":"LaunchType"},
@@ -1125,7 +1126,9 @@
       "members":{
         "capabilities":{"shape":"KernelCapabilities"},
         "devices":{"shape":"DevicesList"},
-        "initProcessEnabled":{"shape":"BoxedBoolean"}
+        "initProcessEnabled":{"shape":"BoxedBoolean"},
+        "sharedMemorySize":{"shape":"BoxedInteger"},
+        "tmpfs":{"shape":"TmpfsList"}
       }
     },
     "ListAttributesRequest":{
@@ -1527,6 +1530,7 @@
         "serviceName":{"shape":"String"},
         "clusterArn":{"shape":"String"},
         "loadBalancers":{"shape":"LoadBalancers"},
+        "serviceRegistries":{"shape":"ServiceRegistries"},
         "status":{"shape":"String"},
         "desiredCount":{"shape":"Integer"},
         "runningCount":{"shape":"Integer"},
@@ -1568,6 +1572,17 @@
       "members":{
       },
       "exception":true
+    },
+    "ServiceRegistries":{
+      "type":"list",
+      "member":{"shape":"ServiceRegistry"}
+    },
+    "ServiceRegistry":{
+      "type":"structure",
+      "members":{
+        "registryArn":{"shape":"String"},
+        "port":{"shape":"BoxedInteger"}
+      }
     },
     "Services":{
       "type":"list",
@@ -1770,6 +1785,22 @@
       "member":{"shape":"Task"}
     },
     "Timestamp":{"type":"timestamp"},
+    "Tmpfs":{
+      "type":"structure",
+      "required":[
+        "containerPath",
+        "size"
+      ],
+      "members":{
+        "containerPath":{"shape":"String"},
+        "size":{"shape":"Integer"},
+        "mountOptions":{"shape":"StringList"}
+      }
+    },
+    "TmpfsList":{
+      "type":"list",
+      "member":{"shape":"Tmpfs"}
+    },
     "TransportProtocol":{
       "type":"string",
       "enum":[

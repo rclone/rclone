@@ -75,6 +75,10 @@ type AutoScalingPlansAPI interface {
 	DescribeScalingPlans(*autoscalingplans.DescribeScalingPlansInput) (*autoscalingplans.DescribeScalingPlansOutput, error)
 	DescribeScalingPlansWithContext(aws.Context, *autoscalingplans.DescribeScalingPlansInput, ...request.Option) (*autoscalingplans.DescribeScalingPlansOutput, error)
 	DescribeScalingPlansRequest(*autoscalingplans.DescribeScalingPlansInput) (*request.Request, *autoscalingplans.DescribeScalingPlansOutput)
+
+	UpdateScalingPlan(*autoscalingplans.UpdateScalingPlanInput) (*autoscalingplans.UpdateScalingPlanOutput, error)
+	UpdateScalingPlanWithContext(aws.Context, *autoscalingplans.UpdateScalingPlanInput, ...request.Option) (*autoscalingplans.UpdateScalingPlanOutput, error)
+	UpdateScalingPlanRequest(*autoscalingplans.UpdateScalingPlanInput) (*request.Request, *autoscalingplans.UpdateScalingPlanOutput)
 }
 
 var _ AutoScalingPlansAPI = (*autoscalingplans.AutoScalingPlans)(nil)

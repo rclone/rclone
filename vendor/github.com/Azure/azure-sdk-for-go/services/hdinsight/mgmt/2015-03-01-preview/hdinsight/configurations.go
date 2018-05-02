@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ConfigurationsClient is the hDInsight Management Client
 type ConfigurationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewConfigurationsClient creates an instance of the ConfigurationsClient client.
 func NewConfigurationsClient(subscriptionID string) ConfigurationsClient {
 	return NewConfigurationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewConfigurationsClientWithBaseURI creates an instance of the ConfigurationsClient client.
 func NewConfigurationsClientWithBaseURI(baseURI string, subscriptionID string) ConfigurationsClient {
 	return ConfigurationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Get the configuration object for the specified cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. configurationName
@@ -65,6 +69,7 @@ func (client ConfigurationsClient) Get(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetPreparer prepares the Get request.
 func (client ConfigurationsClient) GetPreparer(ctx context.Context, resourceGroupName string, clusterName string, configurationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -87,6 +92,7 @@ func (client ConfigurationsClient) GetPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConfigurationsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -94,6 +100,7 @@ func (client ConfigurationsClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ConfigurationsClient) GetResponder(resp *http.Response) (result SetString, err error) {
@@ -107,6 +114,7 @@ func (client ConfigurationsClient) GetResponder(resp *http.Response) (result Set
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateHTTPSettings configures the HTTP settings on the specified cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. parameters is the
@@ -127,6 +135,7 @@ func (client ConfigurationsClient) UpdateHTTPSettings(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateHTTPSettingsPreparer prepares the UpdateHTTPSettings request.
 func (client ConfigurationsClient) UpdateHTTPSettingsPreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters HTTPConnectivitySettings) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -142,7 +151,7 @@ func (client ConfigurationsClient) UpdateHTTPSettingsPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}/configurations/{configurationName}", pathParameters),
@@ -151,6 +160,7 @@ func (client ConfigurationsClient) UpdateHTTPSettingsPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateHTTPSettingsSender sends the UpdateHTTPSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConfigurationsClient) UpdateHTTPSettingsSender(req *http.Request) (future ConfigurationsUpdateHTTPSettingsFuture, err error) {
@@ -166,6 +176,7 @@ func (client ConfigurationsClient) UpdateHTTPSettingsSender(req *http.Request) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // UpdateHTTPSettingsResponder handles the response to the UpdateHTTPSettings request. The method always
 // closes the http.Response Body.
 func (client ConfigurationsClient) UpdateHTTPSettingsResponder(resp *http.Response) (result autorest.Response, err error) {

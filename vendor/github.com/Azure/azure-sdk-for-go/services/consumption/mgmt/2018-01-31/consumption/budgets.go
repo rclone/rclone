@@ -44,8 +44,9 @@ func NewBudgetsClientWithBaseURI(baseURI string, subscriptionID string) BudgetsC
 // CreateOrUpdate the operation to create or update a budget. Update operation requires latest eTag to be set in the
 // request mandatorily. You may obtain the latest eTag by performing a get operation. Create operation does not require
 // eTag.
-//
-// budgetName is budget Name. parameters is parameters supplied to the Create Budget operation.
+// Parameters:
+// budgetName - budget Name.
+// parameters - parameters supplied to the Create Budget operation.
 func (client BudgetsClient) CreateOrUpdate(ctx context.Context, budgetName string, parameters Budget) (result Budget, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -105,7 +106,7 @@ func (client BudgetsClient) CreateOrUpdatePreparer(ctx context.Context, budgetNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Consumption/budgets/{budgetName}", pathParameters),
@@ -137,9 +138,10 @@ func (client BudgetsClient) CreateOrUpdateResponder(resp *http.Response) (result
 // CreateOrUpdateByResourceGroupName the operation to create or update a budget. Update operation requires latest eTag
 // to be set in the request mandatorily. You may obtain the latest eTag by performing a get operation. Create operation
 // does not require eTag.
-//
-// resourceGroupName is azure Resource Group Name. budgetName is budget Name. parameters is parameters supplied to
-// the Create Budget operation.
+// Parameters:
+// resourceGroupName - azure Resource Group Name.
+// budgetName - budget Name.
+// parameters - parameters supplied to the Create Budget operation.
 func (client BudgetsClient) CreateOrUpdateByResourceGroupName(ctx context.Context, resourceGroupName string, budgetName string, parameters Budget) (result Budget, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -200,7 +202,7 @@ func (client BudgetsClient) CreateOrUpdateByResourceGroupNamePreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Consumption/budgets/{budgetName}", pathParameters),
@@ -230,8 +232,8 @@ func (client BudgetsClient) CreateOrUpdateByResourceGroupNameResponder(resp *htt
 }
 
 // Delete the operation to delete a budget.
-//
-// budgetName is budget Name.
+// Parameters:
+// budgetName - budget Name.
 func (client BudgetsClient) Delete(ctx context.Context, budgetName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, budgetName)
 	if err != nil {
@@ -294,8 +296,9 @@ func (client BudgetsClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // DeleteByResourceGroupName the operation to delete a budget.
-//
-// resourceGroupName is azure Resource Group Name. budgetName is budget Name.
+// Parameters:
+// resourceGroupName - azure Resource Group Name.
+// budgetName - budget Name.
 func (client BudgetsClient) DeleteByResourceGroupName(ctx context.Context, resourceGroupName string, budgetName string) (result autorest.Response, err error) {
 	req, err := client.DeleteByResourceGroupNamePreparer(ctx, resourceGroupName, budgetName)
 	if err != nil {
@@ -359,8 +362,8 @@ func (client BudgetsClient) DeleteByResourceGroupNameResponder(resp *http.Respon
 }
 
 // Get gets the budget for a subscription by budget name.
-//
-// budgetName is budget Name.
+// Parameters:
+// budgetName - budget Name.
 func (client BudgetsClient) Get(ctx context.Context, budgetName string) (result Budget, err error) {
 	req, err := client.GetPreparer(ctx, budgetName)
 	if err != nil {
@@ -424,8 +427,9 @@ func (client BudgetsClient) GetResponder(resp *http.Response) (result Budget, er
 }
 
 // GetByResourceGroupName gets the budget for a resource group under a subscription by budget name.
-//
-// resourceGroupName is azure Resource Group Name. budgetName is budget Name.
+// Parameters:
+// resourceGroupName - azure Resource Group Name.
+// budgetName - budget Name.
 func (client BudgetsClient) GetByResourceGroupName(ctx context.Context, resourceGroupName string, budgetName string) (result Budget, err error) {
 	req, err := client.GetByResourceGroupNamePreparer(ctx, resourceGroupName, budgetName)
 	if err != nil {
@@ -580,8 +584,8 @@ func (client BudgetsClient) ListComplete(ctx context.Context) (result BudgetsLis
 }
 
 // ListByResourceGroupName lists all budgets for a resource group under a subscription.
-//
-// resourceGroupName is azure Resource Group Name.
+// Parameters:
+// resourceGroupName - azure Resource Group Name.
 func (client BudgetsClient) ListByResourceGroupName(ctx context.Context, resourceGroupName string) (result BudgetsListResultPage, err error) {
 	result.fn = client.listByResourceGroupNameNextResults
 	req, err := client.ListByResourceGroupNamePreparer(ctx, resourceGroupName)

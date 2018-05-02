@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type ErrorCode = original.ErrorCode
 
 const (
@@ -136,6 +128,30 @@ type TrendingTopics = original.TrendingTopics
 type VideoObject = original.VideoObject
 type NewsClient = original.NewsClient
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleFreshnessValues() []Freshness {
+	return original.PossibleFreshnessValues()
+}
+func PossibleSafeSearchValues() []SafeSearch {
+	return original.PossibleSafeSearchValues()
+}
+func PossibleTextFormatValues() []TextFormat {
+	return original.PossibleTextFormatValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func NewNewsClient() NewsClient {
 	return original.NewNewsClient()
 }

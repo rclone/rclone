@@ -26,21 +26,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DpsCertificateClient is the API for using the Azure IoT Hub Device Provisioning Service features.
 type DpsCertificateClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewDpsCertificateClient creates an instance of the DpsCertificateClient client.
 func NewDpsCertificateClient(subscriptionID string) DpsCertificateClient {
 	return NewDpsCertificateClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // NewDpsCertificateClientWithBaseURI creates an instance of the DpsCertificateClient client.
 func NewDpsCertificateClientWithBaseURI(baseURI string, subscriptionID string) DpsCertificateClient {
 	return DpsCertificateClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdate add new certificate or update an existing certificate.
 //
 // resourceGroupName is resource group identifier. provisioningServiceName is the name of the provisioning service.
@@ -75,6 +79,7 @@ func (client DpsCertificateClient) CreateOrUpdate(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client DpsCertificateClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, provisioningServiceName string, certificateName string, certificateDescription CertificateBodyDescription, ifMatch string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,7 +95,7 @@ func (client DpsCertificateClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}/certificates/{certificateName}", pathParameters),
@@ -103,6 +108,7 @@ func (client DpsCertificateClient) CreateOrUpdatePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificateClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -110,6 +116,7 @@ func (client DpsCertificateClient) CreateOrUpdateSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client DpsCertificateClient) CreateOrUpdateResponder(resp *http.Response) (result CertificateResponse, err error) {
@@ -123,6 +130,7 @@ func (client DpsCertificateClient) CreateOrUpdateResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Delete sends the delete request.
 //
 // resourceGroupName is resource group identifier. ifMatch is eTag of the certificate provisioningServiceName is
@@ -155,6 +163,7 @@ func (client DpsCertificateClient) Delete(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeletePreparer prepares the Delete request.
 func (client DpsCertificateClient) DeletePreparer(ctx context.Context, resourceGroupName string, ifMatch string, provisioningServiceName string, certificateName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -202,6 +211,7 @@ func (client DpsCertificateClient) DeletePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificateClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -209,6 +219,7 @@ func (client DpsCertificateClient) DeleteSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client DpsCertificateClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -221,6 +232,7 @@ func (client DpsCertificateClient) DeleteResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GenerateVerificationCode generate verification code for Proof of Possession.
 //
 // certificateName is the mandatory logical name of the certificate, that the provisioning service uses to access.
@@ -254,6 +266,7 @@ func (client DpsCertificateClient) GenerateVerificationCode(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GenerateVerificationCodePreparer prepares the GenerateVerificationCode request.
 func (client DpsCertificateClient) GenerateVerificationCodePreparer(ctx context.Context, certificateName string, ifMatch string, resourceGroupName string, provisioningServiceName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -301,6 +314,7 @@ func (client DpsCertificateClient) GenerateVerificationCodePreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GenerateVerificationCodeSender sends the GenerateVerificationCode request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificateClient) GenerateVerificationCodeSender(req *http.Request) (*http.Response, error) {
@@ -308,6 +322,7 @@ func (client DpsCertificateClient) GenerateVerificationCodeSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GenerateVerificationCodeResponder handles the response to the GenerateVerificationCode request. The method always
 // closes the http.Response Body.
 func (client DpsCertificateClient) GenerateVerificationCodeResponder(resp *http.Response) (result VerificationCodeResponse, err error) {
@@ -321,6 +336,7 @@ func (client DpsCertificateClient) GenerateVerificationCodeResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // Get get the certificate from the provisioning service.
 //
 // certificateName is name of the certificate to retrieve. resourceGroupName is resource group identifier.
@@ -348,6 +364,7 @@ func (client DpsCertificateClient) Get(ctx context.Context, certificateName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetPreparer prepares the Get request.
 func (client DpsCertificateClient) GetPreparer(ctx context.Context, certificateName string, resourceGroupName string, provisioningServiceName string, ifMatch string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -374,6 +391,7 @@ func (client DpsCertificateClient) GetPreparer(ctx context.Context, certificateN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificateClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -381,6 +399,7 @@ func (client DpsCertificateClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client DpsCertificateClient) GetResponder(resp *http.Response) (result CertificateResponse, err error) {
@@ -394,6 +413,7 @@ func (client DpsCertificateClient) GetResponder(resp *http.Response) (result Cer
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerifyCertificate verifies certificate for the provisioning service.
 //
 // certificateName is the mandatory logical name of the certificate, that the provisioning service uses to access.
@@ -425,6 +445,7 @@ func (client DpsCertificateClient) VerifyCertificate(ctx context.Context, certif
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerifyCertificatePreparer prepares the VerifyCertificate request.
 func (client DpsCertificateClient) VerifyCertificatePreparer(ctx context.Context, certificateName string, ifMatch string, request VerificationCodeRequest, resourceGroupName string, provisioningServiceName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -464,7 +485,7 @@ func (client DpsCertificateClient) VerifyCertificatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}/certificates/{certificateName}/verify", pathParameters),
@@ -474,6 +495,7 @@ func (client DpsCertificateClient) VerifyCertificatePreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerifyCertificateSender sends the VerifyCertificate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DpsCertificateClient) VerifyCertificateSender(req *http.Request) (*http.Response, error) {
@@ -481,6 +503,7 @@ func (client DpsCertificateClient) VerifyCertificateSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/provisioningservices/preview/mgmt/2017-08-21-preview/iothub instead.
 // VerifyCertificateResponder handles the response to the VerifyCertificate request. The method always
 // closes the http.Response Body.
 func (client DpsCertificateClient) VerifyCertificateResponder(resp *http.Response) (result CertificateResponse, err error) {

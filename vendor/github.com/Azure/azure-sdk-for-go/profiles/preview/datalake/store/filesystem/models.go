@@ -26,20 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithoutDefaults(adlsFileSystemDNSSuffix string) BaseClient {
-	return original.NewWithoutDefaults(adlsFileSystemDNSSuffix)
-}
-
 type Client = original.Client
-
-func NewClient() Client {
-	return original.NewClient()
-}
-
 type AppendModeType = original.AppendModeType
 
 const (
@@ -110,6 +97,30 @@ type FileStatusProperties = original.FileStatusProperties
 type FileStatusResult = original.FileStatusResult
 type ReadCloser = original.ReadCloser
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithoutDefaults(adlsFileSystemDNSSuffix string) BaseClient {
+	return original.NewWithoutDefaults(adlsFileSystemDNSSuffix)
+}
+func NewClient() Client {
+	return original.NewClient()
+}
+func PossibleAppendModeTypeValues() []AppendModeType {
+	return original.PossibleAppendModeTypeValues()
+}
+func PossibleExceptionValues() []Exception {
+	return original.PossibleExceptionValues()
+}
+func PossibleExpiryOptionTypeValues() []ExpiryOptionType {
+	return original.PossibleExpiryOptionTypeValues()
+}
+func PossibleFileTypeValues() []FileType {
+	return original.PossibleFileTypeValues()
+}
+func PossibleSyncFlagValues() []SyncFlag {
+	return original.PossibleSyncFlagValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

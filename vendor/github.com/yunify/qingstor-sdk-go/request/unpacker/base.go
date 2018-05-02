@@ -96,6 +96,11 @@ func (b *BaseUnpacker) parseResponseHeaders() error {
 			fieldTagLocation := fields.Type().Field(i).Tag.Get("location")
 			fieldStringValue := b.httpResponse.Header.Get(fieldTagName)
 
+			// Empty value should be ignored.
+			if fieldStringValue == "" {
+				continue
+			}
+
 			if fieldTagName != "" && fieldTagLocation == "headers" {
 				switch field.Interface().(type) {
 				case *string:

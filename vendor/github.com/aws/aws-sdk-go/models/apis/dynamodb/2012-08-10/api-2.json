@@ -173,6 +173,19 @@
         {"shape":"GlobalTableNotFoundException"}
       ]
     },
+    "DescribeGlobalTableSettings":{
+      "name":"DescribeGlobalTableSettings",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeGlobalTableSettingsInput"},
+      "output":{"shape":"DescribeGlobalTableSettingsOutput"},
+      "errors":[
+        {"shape":"GlobalTableNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "DescribeLimits":{
       "name":"DescribeLimits",
       "http":{
@@ -321,6 +334,24 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "RestoreTableToPointInTime":{
+      "name":"RestoreTableToPointInTime",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"RestoreTableToPointInTimeInput"},
+      "output":{"shape":"RestoreTableToPointInTimeOutput"},
+      "errors":[
+        {"shape":"TableAlreadyExistsException"},
+        {"shape":"TableNotFoundException"},
+        {"shape":"TableInUseException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InvalidRestoreTimeException"},
+        {"shape":"PointInTimeRecoveryUnavailableException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "Scan":{
       "name":"Scan",
       "http":{
@@ -363,6 +394,20 @@
         {"shape":"ResourceInUseException"}
       ]
     },
+    "UpdateContinuousBackups":{
+      "name":"UpdateContinuousBackups",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateContinuousBackupsInput"},
+      "output":{"shape":"UpdateContinuousBackupsOutput"},
+      "errors":[
+        {"shape":"TableNotFoundException"},
+        {"shape":"ContinuousBackupsUnavailableException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "UpdateGlobalTable":{
       "name":"UpdateGlobalTable",
       "http":{
@@ -377,6 +422,23 @@
         {"shape":"ReplicaAlreadyExistsException"},
         {"shape":"ReplicaNotFoundException"},
         {"shape":"TableNotFoundException"}
+      ]
+    },
+    "UpdateGlobalTableSettings":{
+      "name":"UpdateGlobalTableSettings",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateGlobalTableSettingsInput"},
+      "output":{"shape":"UpdateGlobalTableSettingsOutput"},
+      "errors":[
+        {"shape":"GlobalTableNotFoundException"},
+        {"shape":"ReplicaNotFoundException"},
+        {"shape":"IndexNotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InternalServerError"}
       ]
     },
     "UpdateItem":{
@@ -706,7 +768,8 @@
       "type":"structure",
       "required":["ContinuousBackupsStatus"],
       "members":{
-        "ContinuousBackupsStatus":{"shape":"ContinuousBackupsStatus"}
+        "ContinuousBackupsStatus":{"shape":"ContinuousBackupsStatus"},
+        "PointInTimeRecoveryDescription":{"shape":"PointInTimeRecoveryDescription"}
       }
     },
     "ContinuousBackupsStatus":{
@@ -918,6 +981,20 @@
         "GlobalTableDescription":{"shape":"GlobalTableDescription"}
       }
     },
+    "DescribeGlobalTableSettingsInput":{
+      "type":"structure",
+      "required":["GlobalTableName"],
+      "members":{
+        "GlobalTableName":{"shape":"TableName"}
+      }
+    },
+    "DescribeGlobalTableSettingsOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "ReplicaSettings":{"shape":"ReplicaSettingsDescriptionList"}
+      }
+    },
     "DescribeLimitsInput":{
       "type":"structure",
       "members":{
@@ -1100,6 +1177,20 @@
         "GlobalTableName":{"shape":"TableName"}
       }
     },
+    "GlobalTableGlobalSecondaryIndexSettingsUpdate":{
+      "type":"structure",
+      "required":["IndexName"],
+      "members":{
+        "IndexName":{"shape":"IndexName"},
+        "ProvisionedWriteCapacityUnits":{"shape":"PositiveLongObject"}
+      }
+    },
+    "GlobalTableGlobalSecondaryIndexSettingsUpdateList":{
+      "type":"list",
+      "member":{"shape":"GlobalTableGlobalSecondaryIndexSettingsUpdate"},
+      "max":20,
+      "min":1
+    },
     "GlobalTableList":{
       "type":"list",
       "member":{"shape":"GlobalTable"}
@@ -1126,6 +1217,13 @@
       "min":3,
       "pattern":"[a-zA-Z0-9_.-]+"
     },
+    "IndexNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
     "IndexStatus":{
       "type":"string",
       "enum":[
@@ -1143,6 +1241,13 @@
       },
       "exception":true,
       "fault":true
+    },
+    "InvalidRestoreTimeException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "ItemCollectionKeyAttributeMap":{
       "type":"map",
@@ -1387,6 +1492,35 @@
       "type":"list",
       "member":{"shape":"NumberAttributeValue"}
     },
+    "PointInTimeRecoveryDescription":{
+      "type":"structure",
+      "members":{
+        "PointInTimeRecoveryStatus":{"shape":"PointInTimeRecoveryStatus"},
+        "EarliestRestorableDateTime":{"shape":"Date"},
+        "LatestRestorableDateTime":{"shape":"Date"}
+      }
+    },
+    "PointInTimeRecoverySpecification":{
+      "type":"structure",
+      "required":["PointInTimeRecoveryEnabled"],
+      "members":{
+        "PointInTimeRecoveryEnabled":{"shape":"BooleanObject"}
+      }
+    },
+    "PointInTimeRecoveryStatus":{
+      "type":"string",
+      "enum":[
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "PointInTimeRecoveryUnavailableException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
     "PositiveIntegerObject":{
       "type":"integer",
       "min":1
@@ -1535,6 +1669,34 @@
       "type":"list",
       "member":{"shape":"ReplicaDescription"}
     },
+    "ReplicaGlobalSecondaryIndexSettingsDescription":{
+      "type":"structure",
+      "required":["IndexName"],
+      "members":{
+        "IndexName":{"shape":"IndexName"},
+        "IndexStatus":{"shape":"IndexStatus"},
+        "ProvisionedReadCapacityUnits":{"shape":"PositiveLongObject"},
+        "ProvisionedWriteCapacityUnits":{"shape":"PositiveLongObject"}
+      }
+    },
+    "ReplicaGlobalSecondaryIndexSettingsDescriptionList":{
+      "type":"list",
+      "member":{"shape":"ReplicaGlobalSecondaryIndexSettingsDescription"}
+    },
+    "ReplicaGlobalSecondaryIndexSettingsUpdate":{
+      "type":"structure",
+      "required":["IndexName"],
+      "members":{
+        "IndexName":{"shape":"IndexName"},
+        "ProvisionedReadCapacityUnits":{"shape":"PositiveLongObject"}
+      }
+    },
+    "ReplicaGlobalSecondaryIndexSettingsUpdateList":{
+      "type":"list",
+      "member":{"shape":"ReplicaGlobalSecondaryIndexSettingsUpdate"},
+      "max":20,
+      "min":1
+    },
     "ReplicaList":{
       "type":"list",
       "member":{"shape":"Replica"}
@@ -1545,6 +1707,45 @@
         "message":{"shape":"ErrorMessage"}
       },
       "exception":true
+    },
+    "ReplicaSettingsDescription":{
+      "type":"structure",
+      "required":["RegionName"],
+      "members":{
+        "RegionName":{"shape":"RegionName"},
+        "ReplicaStatus":{"shape":"ReplicaStatus"},
+        "ReplicaProvisionedReadCapacityUnits":{"shape":"PositiveLongObject"},
+        "ReplicaProvisionedWriteCapacityUnits":{"shape":"PositiveLongObject"},
+        "ReplicaGlobalSecondaryIndexSettings":{"shape":"ReplicaGlobalSecondaryIndexSettingsDescriptionList"}
+      }
+    },
+    "ReplicaSettingsDescriptionList":{
+      "type":"list",
+      "member":{"shape":"ReplicaSettingsDescription"}
+    },
+    "ReplicaSettingsUpdate":{
+      "type":"structure",
+      "required":["RegionName"],
+      "members":{
+        "RegionName":{"shape":"RegionName"},
+        "ReplicaProvisionedReadCapacityUnits":{"shape":"PositiveLongObject"},
+        "ReplicaGlobalSecondaryIndexSettingsUpdate":{"shape":"ReplicaGlobalSecondaryIndexSettingsUpdateList"}
+      }
+    },
+    "ReplicaSettingsUpdateList":{
+      "type":"list",
+      "member":{"shape":"ReplicaSettingsUpdate"},
+      "max":50,
+      "min":1
+    },
+    "ReplicaStatus":{
+      "type":"string",
+      "enum":[
+        "CREATING",
+        "UPDATING",
+        "DELETING",
+        "ACTIVE"
+      ]
     },
     "ReplicaUpdate":{
       "type":"structure",
@@ -1576,7 +1777,6 @@
       },
       "exception":true
     },
-    "RestoreDateTime":{"type":"timestamp"},
     "RestoreInProgress":{"type":"boolean"},
     "RestoreSummary":{
       "type":"structure",
@@ -1587,7 +1787,7 @@
       "members":{
         "SourceBackupArn":{"shape":"BackupArn"},
         "SourceTableArn":{"shape":"TableArn"},
-        "RestoreDateTime":{"shape":"RestoreDateTime"},
+        "RestoreDateTime":{"shape":"Date"},
         "RestoreInProgress":{"shape":"RestoreInProgress"}
       }
     },
@@ -1603,6 +1803,25 @@
       }
     },
     "RestoreTableFromBackupOutput":{
+      "type":"structure",
+      "members":{
+        "TableDescription":{"shape":"TableDescription"}
+      }
+    },
+    "RestoreTableToPointInTimeInput":{
+      "type":"structure",
+      "required":[
+        "SourceTableName",
+        "TargetTableName"
+      ],
+      "members":{
+        "SourceTableName":{"shape":"TableName"},
+        "TargetTableName":{"shape":"TableName"},
+        "UseLatestRestorableTime":{"shape":"BooleanObject"},
+        "RestoreDateTime":{"shape":"Date"}
+      }
+    },
+    "RestoreTableToPointInTimeOutput":{
       "type":"structure",
       "members":{
         "TableDescription":{"shape":"TableDescription"}
@@ -1932,6 +2151,23 @@
         "TagKeys":{"shape":"TagKeyList"}
       }
     },
+    "UpdateContinuousBackupsInput":{
+      "type":"structure",
+      "required":[
+        "TableName",
+        "PointInTimeRecoverySpecification"
+      ],
+      "members":{
+        "TableName":{"shape":"TableName"},
+        "PointInTimeRecoverySpecification":{"shape":"PointInTimeRecoverySpecification"}
+      }
+    },
+    "UpdateContinuousBackupsOutput":{
+      "type":"structure",
+      "members":{
+        "ContinuousBackupsDescription":{"shape":"ContinuousBackupsDescription"}
+      }
+    },
     "UpdateExpression":{"type":"string"},
     "UpdateGlobalSecondaryIndexAction":{
       "type":"structure",
@@ -1959,6 +2195,23 @@
       "type":"structure",
       "members":{
         "GlobalTableDescription":{"shape":"GlobalTableDescription"}
+      }
+    },
+    "UpdateGlobalTableSettingsInput":{
+      "type":"structure",
+      "required":["GlobalTableName"],
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "GlobalTableProvisionedWriteCapacityUnits":{"shape":"PositiveLongObject"},
+        "GlobalTableGlobalSecondaryIndexSettingsUpdate":{"shape":"GlobalTableGlobalSecondaryIndexSettingsUpdateList"},
+        "ReplicaSettingsUpdate":{"shape":"ReplicaSettingsUpdateList"}
+      }
+    },
+    "UpdateGlobalTableSettingsOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "ReplicaSettings":{"shape":"ReplicaSettingsDescriptionList"}
       }
     },
     "UpdateItemInput":{

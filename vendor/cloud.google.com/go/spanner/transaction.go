@@ -268,7 +268,7 @@ func errUnexpectedTxState(ts txState) error {
 // applications do not need to worry about this in practice. See the
 // documentation of TimestampBound for more details.
 //
-// A ReadOnlyTransaction consumes resources on the server until Close() is
+// A ReadOnlyTransaction consumes resources on the server until Close is
 // called.
 type ReadOnlyTransaction struct {
 	// txReadOnly contains methods for performing transactional reads.
