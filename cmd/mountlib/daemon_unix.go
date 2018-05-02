@@ -1,7 +1,6 @@
 // Daemonization interface for Unix variants only
 
 // +build !windows
-// +build !darwin cgo
 
 package mountlib
 
