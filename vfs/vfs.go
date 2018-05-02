@@ -222,7 +222,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Start polling if required
 	if vfs.Opt.PollInterval > 0 {
 		if do := vfs.f.Features().ChangeNotify; do != nil {
-			do(vfs.root.ForgetPath, vfs.Opt.PollInterval)
+			do(vfs.notifyFunc, vfs.Opt.PollInterval)
 		} else {
 			fs.Infof(f, "poll-interval is not supported by this remote")
 		}
@@ -492,4 +492,14 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		}
 	}
 	return
+}
+
+// notifyFunc removes the last path segement for directories and calls ForgetPath with the result.
+//
+// This ensures that new or renamed directories appear in their parent.
+func (vfs *VFS) notifyFunc(relativePath string, entryType fs.EntryType) {
+	if entryType == fs.EntryDirectory {
+		relativePath = path.Dir(relativePath)
+	}
+	vfs.root.ForgetPath(relativePath, entryType)
 }
