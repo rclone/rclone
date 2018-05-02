@@ -1,6 +1,6 @@
 // Daemonization interface for non-Unix variants only
 
-// +build windows darwin,!cgo
+// +build windows
 
 package mountlib
 
