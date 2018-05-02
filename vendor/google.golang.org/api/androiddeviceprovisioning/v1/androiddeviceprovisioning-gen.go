@@ -165,13 +165,16 @@ type PartnersDevicesService struct {
 // ClaimDeviceRequest: Request message to claim a device on behalf of a
 // customer.
 type ClaimDeviceRequest struct {
-	// CustomerId: The customer to claim for.
+	// CustomerId: Required. The ID of the customer for whom the device is
+	// being claimed.
 	CustomerId int64 `json:"customerId,omitempty,string"`
 
-	// DeviceIdentifier: The device identifier of the device to claim.
+	// DeviceIdentifier: Required. The device identifier of the device to
+	// claim.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// SectionType: The section to claim.
+	// SectionType: Required. The section type of the device's provisioning
+	// record.
 	//
 	// Possible values:
 	//   "SECTION_TYPE_UNSPECIFIED" - Unspecified section type.
@@ -240,9 +243,12 @@ func (s *ClaimDeviceResponse) MarshalJSON() ([]byte, error) {
 }
 
 // ClaimDevicesRequest: Request to claim devices asynchronously in
-// batch.
+// batch. Claiming a device adds the
+// device to zero-touch enrollment and shows the device in the
+// customer's view
+// of the portal.
 type ClaimDevicesRequest struct {
-	// Claims: List of claims.
+	// Claims: Required. A list of device claims.
 	Claims []*PartnerClaim `json:"claims,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Claims") to
@@ -939,12 +945,21 @@ func (s *DeviceReference) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// DevicesLongRunningOperationMetadata: Long running operation metadata.
+// DevicesLongRunningOperationMetadata: Tracks the status of a
+// long-running operation to asynchronously update a
+// batch of reseller metadata attached to devices. To learn more,
+// read
+// [Long‑running batch
+// operations](/zero-touch/guides/how-it-works#operations).
 type DevicesLongRunningOperationMetadata struct {
-	// DevicesCount: Number of devices parsed in your requests.
+	// DevicesCount: The number of metadata updates in the operation. This
+	// might be different
+	// from the number of updates in the request if the API can't parse some
+	// of
+	// the updates.
 	DevicesCount int64 `json:"devicesCount,omitempty"`
 
-	// ProcessingStatus: The overall processing status.
+	// ProcessingStatus: The processing status of the operation.
 	//
 	// Possible values:
 	//   "BATCH_PROCESS_STATUS_UNSPECIFIED" - Invalid code. Shouldn't be
@@ -957,7 +972,11 @@ type DevicesLongRunningOperationMetadata struct {
 	// check the `response` field for the result of every item.
 	ProcessingStatus string `json:"processingStatus,omitempty"`
 
-	// Progress: Processing progress from 0 to 100.
+	// Progress: The processing progress of the operation. Measured as a
+	// number from 0 to
+	// 100. A value of 10O doesnt always mean the operation
+	// completed—check for
+	// the inclusion of a `done` field.
 	Progress int64 `json:"progress,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DevicesCount") to
@@ -983,14 +1002,22 @@ func (s *DevicesLongRunningOperationMetadata) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// DevicesLongRunningOperationResponse: Long running operation response.
+// DevicesLongRunningOperationResponse: Tracks the status of a
+// long-running operation to claim, unclaim, or attach
+// metadata to devices. To learn more, read
+// [Long‑running batch
+// operations](/zero-touch/guides/how-it-works#operations).
 type DevicesLongRunningOperationResponse struct {
-	// PerDeviceStatus: Processing status for each device.
-	// One `PerDeviceStatus` per device. The order is the same as in your
-	// requests.
+	// PerDeviceStatus: The processing status for each device in the
+	// operation.
+	// One `PerDeviceStatus` per device. The list order matches the items in
+	// the
+	// original request.
 	PerDeviceStatus []*OperationPerDevice `json:"perDeviceStatus,omitempty"`
 
-	// SuccessCount: Number of succeesfully processed ones.
+	// SuccessCount: A summary of how many items in the operation the server
+	// processed
+	// successfully. Updated as the operation progresses.
 	SuccessCount int64 `json:"successCount,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PerDeviceStatus") to
@@ -1017,8 +1044,10 @@ func (s *DevicesLongRunningOperationResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Dpc: An EMM's DPC ([device policy
-// controller](/android/work/dpc/build-dpc)).
+// Dpc: An EMM's DPC ([device
+// policy
+// controller](http://developer.android.com/work/dpc/build-dpc.htm
+// l)).
 // Zero-touch enrollment installs a DPC (listed in the `Configuration`)
 // on a
 // device to maintain the customer's mobile policies. All the DPCs
@@ -1088,13 +1117,15 @@ type Empty struct {
 
 // FindDevicesByDeviceIdentifierRequest: Request to find devices.
 type FindDevicesByDeviceIdentifierRequest struct {
-	// DeviceIdentifier: The device identifier to search.
+	// DeviceIdentifier: Required. The device identifier to search for.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// Limit: Number of devices to show.
+	// Limit: Required. The maximum number of devices to show in a page of
+	// results. Must
+	// be between 1 and 100 inclusive.
 	Limit int64 `json:"limit,omitempty,string"`
 
-	// PageToken: Page token.
+	// PageToken: A token specifying which result page to return.
 	PageToken string `json:"pageToken,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DeviceIdentifier") to
@@ -1127,7 +1158,9 @@ type FindDevicesByDeviceIdentifierResponse struct {
 	// Devices: Found devices.
 	Devices []*Device `json:"devices,omitempty"`
 
-	// NextPageToken: Page token of the next page.
+	// NextPageToken: A token used to access the next page of results.
+	// Omitted if no further
+	// results are available.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1159,16 +1192,19 @@ func (s *FindDevicesByDeviceIdentifierResponse) MarshalJSON() ([]byte, error) {
 
 // FindDevicesByOwnerRequest: Request to find devices by customers.
 type FindDevicesByOwnerRequest struct {
-	// CustomerId: List of customer IDs to search for.
+	// CustomerId: Required. The list of customer IDs to search for.
 	CustomerId googleapi.Int64s `json:"customerId,omitempty"`
 
-	// Limit: The number of devices to show in the result.
+	// Limit: Required. The maximum number of devices to show in a page of
+	// results. Must
+	// be between 1 and 100 inclusive.
 	Limit int64 `json:"limit,omitempty,string"`
 
-	// PageToken: Page token.
+	// PageToken: A token specifying which result page to return.
 	PageToken string `json:"pageToken,omitempty"`
 
-	// SectionType: The section type.
+	// SectionType: Required. The section type of the device's provisioning
+	// record.
 	//
 	// Possible values:
 	//   "SECTION_TYPE_UNSPECIFIED" - Unspecified section type.
@@ -1200,10 +1236,12 @@ func (s *FindDevicesByOwnerRequest) MarshalJSON() ([]byte, error) {
 
 // FindDevicesByOwnerResponse: Response containing found devices.
 type FindDevicesByOwnerResponse struct {
-	// Devices: Devices found.
+	// Devices: The customer's devices.
 	Devices []*Device `json:"devices,omitempty"`
 
-	// NextPageToken: Page token of the next page.
+	// NextPageToken: A token used to access the next page of
+	// results.
+	// Omitted if no further results are available.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1236,7 +1274,7 @@ func (s *FindDevicesByOwnerResponse) MarshalJSON() ([]byte, error) {
 // ListCustomersResponse: Response message of all customers related to
 // this partner.
 type ListCustomersResponse struct {
-	// Customers: List of customers related to this partner.
+	// Customers: List of customers related to this reseller partner.
 	Customers []*Company `json:"customers,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1327,18 +1365,23 @@ func (s *Operation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// OperationPerDevice: Operation the server received for every device.
+// OperationPerDevice: A task for each device in the operation.
+// Corresponds to each device
+// change in the request.
 type OperationPerDevice struct {
-	// Claim: Request to claim a device.
+	// Claim: A copy of the original device-claim request received by the
+	// server.
 	Claim *PartnerClaim `json:"claim,omitempty"`
 
-	// Result: Processing result for every device.
+	// Result: The processing result for each device.
 	Result *PerDeviceStatusInBatch `json:"result,omitempty"`
 
-	// Unclaim: Request to unclaim a device.
+	// Unclaim: A copy of the original device-unclaim request received by
+	// the server.
 	Unclaim *PartnerUnclaim `json:"unclaim,omitempty"`
 
-	// UpdateMetadata: Request to set metadata for a device.
+	// UpdateMetadata: A copy of the original metadata-update request
+	// received by the server.
 	UpdateMetadata *UpdateMetadataArguments `json:"updateMetadata,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Claim") to
@@ -1366,16 +1409,19 @@ func (s *OperationPerDevice) MarshalJSON() ([]byte, error) {
 
 // PartnerClaim: Identifies one claim request.
 type PartnerClaim struct {
-	// CustomerId: Customer ID to claim for.
+	// CustomerId: Required. The ID of the customer for whom the device is
+	// being claimed.
 	CustomerId int64 `json:"customerId,omitempty,string"`
 
-	// DeviceIdentifier: Device identifier of the device.
+	// DeviceIdentifier: Required. Device identifier of the device.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// DeviceMetadata: Metadata to set at claim.
+	// DeviceMetadata: Required. The metadata to attach to the device at
+	// claim.
 	DeviceMetadata *DeviceMetadata `json:"deviceMetadata,omitempty"`
 
-	// SectionType: Section type to claim.
+	// SectionType: Required. The section type of the device's provisioning
+	// record.
 	//
 	// Possible values:
 	//   "SECTION_TYPE_UNSPECIFIED" - Unspecified section type.
@@ -1413,7 +1459,8 @@ type PartnerUnclaim struct {
 	// DeviceIdentifier: Device identifier of the device.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// SectionType: Section type to unclaim.
+	// SectionType: Required. The section type of the device's provisioning
+	// record.
 	//
 	// Possible values:
 	//   "SECTION_TYPE_UNSPECIFIED" - Unspecified section type.
@@ -1443,18 +1490,20 @@ func (s *PartnerUnclaim) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// PerDeviceStatusInBatch: Stores the processing result for each device.
+// PerDeviceStatusInBatch: Captures the processing status for each
+// device in the operation.
 type PerDeviceStatusInBatch struct {
-	// DeviceId: Device ID of the device if process succeeds.
+	// DeviceId: If processing succeeds, the device ID of the device.
 	DeviceId int64 `json:"deviceId,omitempty,string"`
 
-	// ErrorIdentifier: Error identifier.
+	// ErrorIdentifier: If processing fails, the error type.
 	ErrorIdentifier string `json:"errorIdentifier,omitempty"`
 
-	// ErrorMessage: Error message.
+	// ErrorMessage: If processing fails, a developer message explaining
+	// what went wrong.
 	ErrorMessage string `json:"errorMessage,omitempty"`
 
-	// Status: Process result.
+	// Status: The result status of the device after processing.
 	//
 	// Possible values:
 	//   "SINGLE_DEVICE_STATUS_UNSPECIFIED" - Invalid code. Shouldn't be
@@ -1625,7 +1674,8 @@ type UnclaimDeviceRequest struct {
 	// this device.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// SectionType: The section type to unclaim for.
+	// SectionType: Required. The section type of the device's provisioning
+	// record.
 	//
 	// Possible values:
 	//   "SECTION_TYPE_UNSPECIFIED" - Unspecified section type.
@@ -1658,7 +1708,7 @@ func (s *UnclaimDeviceRequest) MarshalJSON() ([]byte, error) {
 // UnclaimDevicesRequest: Request to unclaim devices asynchronously in
 // batch.
 type UnclaimDevicesRequest struct {
-	// Unclaims: List of devices to unclaim.
+	// Unclaims: Required. The list of devices to unclaim.
 	Unclaims []*PartnerUnclaim `json:"unclaims,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Unclaims") to
@@ -1687,7 +1737,7 @@ func (s *UnclaimDevicesRequest) MarshalJSON() ([]byte, error) {
 // UpdateDeviceMetadataInBatchRequest: Request to update device metadata
 // in batch.
 type UpdateDeviceMetadataInBatchRequest struct {
-	// Updates: List of metadata updates.
+	// Updates: Required. The list of metadata updates.
 	Updates []*UpdateMetadataArguments `json:"updates,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Updates") to
@@ -1715,7 +1765,7 @@ func (s *UpdateDeviceMetadataInBatchRequest) MarshalJSON() ([]byte, error) {
 
 // UpdateDeviceMetadataRequest: Request to set metadata for a device.
 type UpdateDeviceMetadataRequest struct {
-	// DeviceMetadata: The metdata to set.
+	// DeviceMetadata: Required. The metdata to attach to the device.
 	DeviceMetadata *DeviceMetadata `json:"deviceMetadata,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DeviceMetadata") to
@@ -1750,7 +1800,7 @@ type UpdateMetadataArguments struct {
 	// DeviceIdentifier: Device identifier.
 	DeviceIdentifier *DeviceIdentifier `json:"deviceIdentifier,omitempty"`
 
-	// DeviceMetadata: The metadata to update.
+	// DeviceMetadata: Required. The metadata to update.
 	DeviceMetadata *DeviceMetadata `json:"deviceMetadata,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DeviceId") to
@@ -3892,7 +3942,7 @@ func (c *PartnersCustomersListCall) Do(opts ...googleapi.CallOption) (*ListCusto
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "The ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -3919,7 +3969,10 @@ type PartnersDevicesClaimCall struct {
 	header_            http.Header
 }
 
-// Claim: Claim the device identified by device identifier.
+// Claim: Claims a device for a customer and adds it to zero-touch
+// enrollment. If the
+// device is already claimed by another customer, the call returns an
+// error.
 func (r *PartnersDevicesService) Claim(partnerId int64, claimdevicerequest *ClaimDeviceRequest) *PartnersDevicesClaimCall {
 	c := &PartnersDevicesClaimCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -4013,7 +4066,7 @@ func (c *PartnersDevicesClaimCall) Do(opts ...googleapi.CallOption) (*ClaimDevic
 	}
 	return ret, nil
 	// {
-	//   "description": "Claim the device identified by device identifier.",
+	//   "description": "Claims a device for a customer and adds it to zero-touch enrollment. If the\ndevice is already claimed by another customer, the call returns an error.",
 	//   "flatPath": "v1/partners/{partnersId}/devices:claim",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.claim",
@@ -4022,7 +4075,7 @@ func (c *PartnersDevicesClaimCall) Do(opts ...googleapi.CallOption) (*ClaimDevic
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4052,7 +4105,11 @@ type PartnersDevicesClaimAsyncCall struct {
 	header_             http.Header
 }
 
-// ClaimAsync: Claim devices asynchronously.
+// ClaimAsync: Claims a batch of devices for a customer asynchronously.
+// Adds the devices
+// to zero-touch enrollment. To learn more, read [Long‑running
+// batch
+// operations](/zero-touch/guides/how-it-works#operations).
 func (r *PartnersDevicesService) ClaimAsync(partnerId int64, claimdevicesrequest *ClaimDevicesRequest) *PartnersDevicesClaimAsyncCall {
 	c := &PartnersDevicesClaimAsyncCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -4146,7 +4203,7 @@ func (c *PartnersDevicesClaimAsyncCall) Do(opts ...googleapi.CallOption) (*Opera
 	}
 	return ret, nil
 	// {
-	//   "description": "Claim devices asynchronously.",
+	//   "description": "Claims a batch of devices for a customer asynchronously. Adds the devices\nto zero-touch enrollment. To learn more, read [Long‑running batch\noperations](/zero-touch/guides/how-it-works#operations).",
 	//   "flatPath": "v1/partners/{partnersId}/devices:claimAsync",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.claimAsync",
@@ -4155,7 +4212,7 @@ func (c *PartnersDevicesClaimAsyncCall) Do(opts ...googleapi.CallOption) (*Opera
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "Partner ID.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4185,7 +4242,8 @@ type PartnersDevicesFindByIdentifierCall struct {
 	header_                              http.Header
 }
 
-// FindByIdentifier: Find devices by device identifier.
+// FindByIdentifier: Finds devices by hardware identifiers, such as
+// IMEI.
 func (r *PartnersDevicesService) FindByIdentifier(partnerId int64, finddevicesbydeviceidentifierrequest *FindDevicesByDeviceIdentifierRequest) *PartnersDevicesFindByIdentifierCall {
 	c := &PartnersDevicesFindByIdentifierCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -4280,7 +4338,7 @@ func (c *PartnersDevicesFindByIdentifierCall) Do(opts ...googleapi.CallOption) (
 	}
 	return ret, nil
 	// {
-	//   "description": "Find devices by device identifier.",
+	//   "description": "Finds devices by hardware identifiers, such as IMEI.",
 	//   "flatPath": "v1/partners/{partnersId}/devices:findByIdentifier",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.findByIdentifier",
@@ -4289,7 +4347,7 @@ func (c *PartnersDevicesFindByIdentifierCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4340,7 +4398,13 @@ type PartnersDevicesFindByOwnerCall struct {
 	header_                   http.Header
 }
 
-// FindByOwner: Find devices by ownership.
+// FindByOwner: Finds devices claimed for customers. The results only
+// contain devices
+// registered to the reseller that's identified by the `partnerId`
+// argument.
+// The customer's devices purchased from other resellers don't appear in
+// the
+// results.
 func (r *PartnersDevicesService) FindByOwner(partnerId int64, finddevicesbyownerrequest *FindDevicesByOwnerRequest) *PartnersDevicesFindByOwnerCall {
 	c := &PartnersDevicesFindByOwnerCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -4434,7 +4498,7 @@ func (c *PartnersDevicesFindByOwnerCall) Do(opts ...googleapi.CallOption) (*Find
 	}
 	return ret, nil
 	// {
-	//   "description": "Find devices by ownership.",
+	//   "description": "Finds devices claimed for customers. The results only contain devices\nregistered to the reseller that's identified by the `partnerId` argument.\nThe customer's devices purchased from other resellers don't appear in the\nresults.",
 	//   "flatPath": "v1/partners/{partnersId}/devices:findByOwner",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.findByOwner",
@@ -4443,7 +4507,7 @@ func (c *PartnersDevicesFindByOwnerCall) Do(opts ...googleapi.CallOption) (*Find
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4494,7 +4558,7 @@ type PartnersDevicesGetCall struct {
 	header_      http.Header
 }
 
-// Get: Get a device.
+// Get: Gets a device.
 func (r *PartnersDevicesService) Get(name string) *PartnersDevicesGetCall {
 	c := &PartnersDevicesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4595,7 +4659,7 @@ func (c *PartnersDevicesGetCall) Do(opts ...googleapi.CallOption) (*Device, erro
 	}
 	return ret, nil
 	// {
-	//   "description": "Get a device.",
+	//   "description": "Gets a device.",
 	//   "flatPath": "v1/partners/{partnersId}/devices/{devicesId}",
 	//   "httpMethod": "GET",
 	//   "id": "androiddeviceprovisioning.partners.devices.get",
@@ -4604,7 +4668,7 @@ func (c *PartnersDevicesGetCall) Do(opts ...googleapi.CallOption) (*Device, erro
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name in `partners/[PARTNER_ID]/devices/[DEVICE_ID]`.",
+	//       "description": "Required. The device API resource name in the format\n`partners/[PARTNER_ID]/devices/[DEVICE_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^partners/[^/]+/devices/[^/]+$",
 	//       "required": true,
@@ -4631,7 +4695,7 @@ type PartnersDevicesMetadataCall struct {
 	header_                     http.Header
 }
 
-// Metadata: Update the metadata.
+// Metadata: Updates reseller metadata associated with the device.
 func (r *PartnersDevicesService) Metadata(metadataOwnerId int64, deviceId int64, updatedevicemetadatarequest *UpdateDeviceMetadataRequest) *PartnersDevicesMetadataCall {
 	c := &PartnersDevicesMetadataCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.metadataOwnerId = metadataOwnerId
@@ -4727,7 +4791,7 @@ func (c *PartnersDevicesMetadataCall) Do(opts ...googleapi.CallOption) (*DeviceM
 	}
 	return ret, nil
 	// {
-	//   "description": "Update the metadata.",
+	//   "description": "Updates reseller metadata associated with the device.",
 	//   "flatPath": "v1/partners/{partnersId}/devices/{devicesId}/metadata",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.metadata",
@@ -4737,7 +4801,7 @@ func (c *PartnersDevicesMetadataCall) Do(opts ...googleapi.CallOption) (*DeviceM
 	//   ],
 	//   "parameters": {
 	//     "deviceId": {
-	//       "description": "ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4745,7 +4809,7 @@ func (c *PartnersDevicesMetadataCall) Do(opts ...googleapi.CallOption) (*DeviceM
 	//       "type": "string"
 	//     },
 	//     "metadataOwnerId": {
-	//       "description": "The owner of the newly set metadata. Set this to the partner ID.",
+	//       "description": "Required. The owner of the newly set metadata. Set this to the partner ID.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4775,8 +4839,9 @@ type PartnersDevicesUnclaimCall struct {
 	header_              http.Header
 }
 
-// Unclaim: Unclaim the device identified by the `device_id` or the
-// `deviceIdentifier`.
+// Unclaim: Unclaims a device from a customer and removes it from
+// zero-touch
+// enrollment.
 func (r *PartnersDevicesService) Unclaim(partnerId int64, unclaimdevicerequest *UnclaimDeviceRequest) *PartnersDevicesUnclaimCall {
 	c := &PartnersDevicesUnclaimCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -4870,7 +4935,7 @@ func (c *PartnersDevicesUnclaimCall) Do(opts ...googleapi.CallOption) (*Empty, e
 	}
 	return ret, nil
 	// {
-	//   "description": "Unclaim the device identified by the `device_id` or the `deviceIdentifier`.",
+	//   "description": "Unclaims a device from a customer and removes it from zero-touch\nenrollment.",
 	//   "flatPath": "v1/partners/{partnersId}/devices:unclaim",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.unclaim",
@@ -4879,7 +4944,7 @@ func (c *PartnersDevicesUnclaimCall) Do(opts ...googleapi.CallOption) (*Empty, e
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "ID of the partner.",
+	//       "description": "Required. The ID of the reseller partner.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -4909,7 +4974,12 @@ type PartnersDevicesUnclaimAsyncCall struct {
 	header_               http.Header
 }
 
-// UnclaimAsync: Unclaim devices asynchronously.
+// UnclaimAsync: Unclaims a batch of devices for a customer
+// asynchronously. Removes the
+// devices from zero-touch enrollment. To learn more, read
+// [Long‑running
+// batch
+// operations](/zero-touch/guides/how-it-works#operations).
 func (r *PartnersDevicesService) UnclaimAsync(partnerId int64, unclaimdevicesrequest *UnclaimDevicesRequest) *PartnersDevicesUnclaimAsyncCall {
 	c := &PartnersDevicesUnclaimAsyncCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -5003,7 +5073,7 @@ func (c *PartnersDevicesUnclaimAsyncCall) Do(opts ...googleapi.CallOption) (*Ope
 	}
 	return ret, nil
 	// {
-	//   "description": "Unclaim devices asynchronously.",
+	//   "description": "Unclaims a batch of devices for a customer asynchronously. Removes the\ndevices from zero-touch enrollment. To learn more, read [Long‑running batch\noperations](/zero-touch/guides/how-it-works#operations).",
 	//   "flatPath": "v1/partners/{partnersId}/devices:unclaimAsync",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.unclaimAsync",
@@ -5012,7 +5082,7 @@ func (c *PartnersDevicesUnclaimAsyncCall) Do(opts ...googleapi.CallOption) (*Ope
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "Partner ID.",
+	//       "description": "Required. The reseller partner ID.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",
@@ -5042,7 +5112,13 @@ type PartnersDevicesUpdateMetadataAsyncCall struct {
 	header_                            http.Header
 }
 
-// UpdateMetadataAsync: Set metadata in batch asynchronously.
+// UpdateMetadataAsync: Updates the reseller metadata attached to a
+// batch of devices. This method
+// updates devices asynchronously and returns an `Operation` that can be
+// used
+// to track progress. Read [Long‑running
+// batch
+// operations](/zero-touch/guides/how-it-works#operations).
 func (r *PartnersDevicesService) UpdateMetadataAsync(partnerId int64, updatedevicemetadatainbatchrequest *UpdateDeviceMetadataInBatchRequest) *PartnersDevicesUpdateMetadataAsyncCall {
 	c := &PartnersDevicesUpdateMetadataAsyncCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.partnerId = partnerId
@@ -5136,7 +5212,7 @@ func (c *PartnersDevicesUpdateMetadataAsyncCall) Do(opts ...googleapi.CallOption
 	}
 	return ret, nil
 	// {
-	//   "description": "Set metadata in batch asynchronously.",
+	//   "description": "Updates the reseller metadata attached to a batch of devices. This method\nupdates devices asynchronously and returns an `Operation` that can be used\nto track progress. Read [Long‑running batch\noperations](/zero-touch/guides/how-it-works#operations).",
 	//   "flatPath": "v1/partners/{partnersId}/devices:updateMetadataAsync",
 	//   "httpMethod": "POST",
 	//   "id": "androiddeviceprovisioning.partners.devices.updateMetadataAsync",
@@ -5145,7 +5221,7 @@ func (c *PartnersDevicesUpdateMetadataAsyncCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "partnerId": {
-	//       "description": "Partner ID.",
+	//       "description": "Required. The reseller partner ID.",
 	//       "format": "int64",
 	//       "location": "path",
 	//       "pattern": "^[^/]+$",

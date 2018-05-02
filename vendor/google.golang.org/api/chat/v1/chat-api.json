@@ -3,7 +3,7 @@
   "baseUrl": "https://chat.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "Hangouts Chat",
-  "description": "",
+  "description": "Enables bots to fetch information and perform actions in the new Hangouts Chat.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/hangouts/chat",
   "fullyEncodeReservedExpansion": true,
@@ -106,158 +106,6 @@
   },
   "protocol": "rest",
   "resources": {
-    "dms": {
-      "resources": {
-        "conversations": {
-          "resources": {
-            "messages": {
-              "methods": {
-                "create": {
-                  "description": "Creates a message.",
-                  "flatPath": "v1/dms/{dmsId}/conversations/{conversationsId}/messages",
-                  "httpMethod": "POST",
-                  "id": "chat.dms.conversations.messages.create",
-                  "parameterOrder": [
-                    "parent"
-                  ],
-                  "parameters": {
-                    "parent": {
-                      "description": "Required. Space resource name, in the form \"spaces/*\".\nExample: spaces/AAAAMpdlehY",
-                      "location": "path",
-                      "pattern": "^dms/[^/]+/conversations/[^/]+$",
-                      "required": true,
-                      "type": "string"
-                    },
-                    "threadKey": {
-                      "description": "Opaque thread identifier string that can be specified to group messages\ninto a single thread. If this is the first message with a given thread\nidentifier, a new thread is created. Subsequent messages with the same\nthread identifier will be posted into the same thread. This relieves bots\nand webhooks from having to store the Hangouts Chat thread ID of a thread (created earlier by them) to post\nfurther updates to it.\n\nHas no effect if thread field,\ncorresponding to an existing thread, is set in message.",
-                      "location": "query",
-                      "type": "string"
-                    }
-                  },
-                  "path": "v1/{+parent}/messages",
-                  "request": {
-                    "$ref": "Message"
-                  },
-                  "response": {
-                    "$ref": "Message"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "messages": {
-          "methods": {
-            "create": {
-              "description": "Creates a message.",
-              "flatPath": "v1/dms/{dmsId}/messages",
-              "httpMethod": "POST",
-              "id": "chat.dms.messages.create",
-              "parameterOrder": [
-                "parent"
-              ],
-              "parameters": {
-                "parent": {
-                  "description": "Required. Space resource name, in the form \"spaces/*\".\nExample: spaces/AAAAMpdlehY",
-                  "location": "path",
-                  "pattern": "^dms/[^/]+$",
-                  "required": true,
-                  "type": "string"
-                },
-                "threadKey": {
-                  "description": "Opaque thread identifier string that can be specified to group messages\ninto a single thread. If this is the first message with a given thread\nidentifier, a new thread is created. Subsequent messages with the same\nthread identifier will be posted into the same thread. This relieves bots\nand webhooks from having to store the Hangouts Chat thread ID of a thread (created earlier by them) to post\nfurther updates to it.\n\nHas no effect if thread field,\ncorresponding to an existing thread, is set in message.",
-                  "location": "query",
-                  "type": "string"
-                }
-              },
-              "path": "v1/{+parent}/messages",
-              "request": {
-                "$ref": "Message"
-              },
-              "response": {
-                "$ref": "Message"
-              }
-            }
-          }
-        }
-      }
-    },
-    "rooms": {
-      "resources": {
-        "conversations": {
-          "resources": {
-            "messages": {
-              "methods": {
-                "create": {
-                  "description": "Creates a message.",
-                  "flatPath": "v1/rooms/{roomsId}/conversations/{conversationsId}/messages",
-                  "httpMethod": "POST",
-                  "id": "chat.rooms.conversations.messages.create",
-                  "parameterOrder": [
-                    "parent"
-                  ],
-                  "parameters": {
-                    "parent": {
-                      "description": "Required. Space resource name, in the form \"spaces/*\".\nExample: spaces/AAAAMpdlehY",
-                      "location": "path",
-                      "pattern": "^rooms/[^/]+/conversations/[^/]+$",
-                      "required": true,
-                      "type": "string"
-                    },
-                    "threadKey": {
-                      "description": "Opaque thread identifier string that can be specified to group messages\ninto a single thread. If this is the first message with a given thread\nidentifier, a new thread is created. Subsequent messages with the same\nthread identifier will be posted into the same thread. This relieves bots\nand webhooks from having to store the Hangouts Chat thread ID of a thread (created earlier by them) to post\nfurther updates to it.\n\nHas no effect if thread field,\ncorresponding to an existing thread, is set in message.",
-                      "location": "query",
-                      "type": "string"
-                    }
-                  },
-                  "path": "v1/{+parent}/messages",
-                  "request": {
-                    "$ref": "Message"
-                  },
-                  "response": {
-                    "$ref": "Message"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "messages": {
-          "methods": {
-            "create": {
-              "description": "Creates a message.",
-              "flatPath": "v1/rooms/{roomsId}/messages",
-              "httpMethod": "POST",
-              "id": "chat.rooms.messages.create",
-              "parameterOrder": [
-                "parent"
-              ],
-              "parameters": {
-                "parent": {
-                  "description": "Required. Space resource name, in the form \"spaces/*\".\nExample: spaces/AAAAMpdlehY",
-                  "location": "path",
-                  "pattern": "^rooms/[^/]+$",
-                  "required": true,
-                  "type": "string"
-                },
-                "threadKey": {
-                  "description": "Opaque thread identifier string that can be specified to group messages\ninto a single thread. If this is the first message with a given thread\nidentifier, a new thread is created. Subsequent messages with the same\nthread identifier will be posted into the same thread. This relieves bots\nand webhooks from having to store the Hangouts Chat thread ID of a thread (created earlier by them) to post\nfurther updates to it.\n\nHas no effect if thread field,\ncorresponding to an existing thread, is set in message.",
-                  "location": "query",
-                  "type": "string"
-                }
-              },
-              "path": "v1/{+parent}/messages",
-              "request": {
-                "$ref": "Message"
-              },
-              "response": {
-                "$ref": "Message"
-              }
-            }
-          }
-        }
-      }
-    },
     "spaces": {
       "methods": {
         "get": {
@@ -479,7 +327,7 @@
       }
     }
   },
-  "revision": "20180301",
+  "revision": "20180424",
   "rootUrl": "https://chat.googleapis.com/",
   "schemas": {
     "ActionParameter": {
@@ -970,6 +818,10 @@
             "$ref": "Annotation"
           },
           "type": "array"
+        },
+        "argumentText": {
+          "description": "Plain-text body of the message with all bot mentions stripped out.",
+          "type": "string"
         },
         "cards": {
           "description": "Rich, formatted and interactive cards that can be used to display UI\nelements such as: formatted texts, buttons, clickable images. Cards are\nnormally displayed below the plain-text body of the message.",

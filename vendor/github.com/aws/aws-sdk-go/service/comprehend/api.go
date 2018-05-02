@@ -14,7 +14,7 @@ const opBatchDetectDominantLanguage = "BatchDetectDominantLanguage"
 
 // BatchDetectDominantLanguageRequest generates a "aws/request.Request" representing the
 // client's request for the BatchDetectDominantLanguage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -105,7 +105,7 @@ const opBatchDetectEntities = "BatchDetectEntities"
 
 // BatchDetectEntitiesRequest generates a "aws/request.Request" representing the
 // client's request for the BatchDetectEntities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -201,7 +201,7 @@ const opBatchDetectKeyPhrases = "BatchDetectKeyPhrases"
 
 // BatchDetectKeyPhrasesRequest generates a "aws/request.Request" representing the
 // client's request for the BatchDetectKeyPhrases operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -296,7 +296,7 @@ const opBatchDetectSentiment = "BatchDetectSentiment"
 
 // BatchDetectSentimentRequest generates a "aws/request.Request" representing the
 // client's request for the BatchDetectSentiment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -392,7 +392,7 @@ const opDescribeTopicsDetectionJob = "DescribeTopicsDetectionJob"
 
 // DescribeTopicsDetectionJobRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTopicsDetectionJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -481,7 +481,7 @@ const opDetectDominantLanguage = "DetectDominantLanguage"
 
 // DetectDominantLanguageRequest generates a "aws/request.Request" representing the
 // client's request for the DetectDominantLanguage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -568,7 +568,7 @@ const opDetectEntities = "DetectEntities"
 
 // DetectEntitiesRequest generates a "aws/request.Request" representing the
 // client's request for the DetectEntities operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -660,7 +660,7 @@ const opDetectKeyPhrases = "DetectKeyPhrases"
 
 // DetectKeyPhrasesRequest generates a "aws/request.Request" representing the
 // client's request for the DetectKeyPhrases operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -751,7 +751,7 @@ const opDetectSentiment = "DetectSentiment"
 
 // DetectSentimentRequest generates a "aws/request.Request" representing the
 // client's request for the DetectSentiment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -843,7 +843,7 @@ const opListTopicsDetectionJobs = "ListTopicsDetectionJobs"
 
 // ListTopicsDetectionJobsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTopicsDetectionJobs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -988,7 +988,7 @@ const opStartTopicsDetectionJob = "StartTopicsDetectionJob"
 
 // StartTopicsDetectionJobRequest generates a "aws/request.Request" representing the
 // client's request for the StartTopicsDetectionJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

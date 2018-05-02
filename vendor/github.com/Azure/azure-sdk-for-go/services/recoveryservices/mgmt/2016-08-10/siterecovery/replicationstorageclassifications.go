@@ -43,8 +43,9 @@ func NewReplicationStorageClassificationsClientWithBaseURI(baseURI string, subsc
 }
 
 // Get gets the details of the specified storage classification.
-//
-// fabricName is fabric name. storageClassificationName is storage classification name.
+// Parameters:
+// fabricName - fabric name.
+// storageClassificationName - storage classification name.
 func (client ReplicationStorageClassificationsClient) Get(ctx context.Context, fabricName string, storageClassificationName string) (result StorageClassification, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, storageClassificationName)
 	if err != nil {
@@ -203,8 +204,8 @@ func (client ReplicationStorageClassificationsClient) ListComplete(ctx context.C
 }
 
 // ListByReplicationFabrics lists the storage classifications available in the specified fabric.
-//
-// fabricName is site name of interest.
+// Parameters:
+// fabricName - site name of interest.
 func (client ReplicationStorageClassificationsClient) ListByReplicationFabrics(ctx context.Context, fabricName string) (result StorageClassificationCollectionPage, err error) {
 	result.fn = client.listByReplicationFabricsNextResults
 	req, err := client.ListByReplicationFabricsPreparer(ctx, fabricName)

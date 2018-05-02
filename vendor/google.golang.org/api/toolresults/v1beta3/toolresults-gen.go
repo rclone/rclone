@@ -2527,7 +2527,10 @@ type TestIssue struct {
 	// Possible values:
 	//   "anr"
 	//   "compatibleWithOrchestrator"
+	//   "completeRoboScriptExecution"
+	//   "failedToInstall"
 	//   "fatalException"
+	//   "incompleteRoboScriptExecution"
 	//   "launcherActivityNotFound"
 	//   "nativeCrash"
 	//   "startActivityNotFound"

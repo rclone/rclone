@@ -26,13 +26,12 @@ const (
 )
 
 type BaseClient = original.BaseClient
+type PurgeState = original.PurgeState
 
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
+const (
+	Completed PurgeState = original.Completed
+	Pending   PurgeState = original.Pending
+)
 
 type SearchSortEnum = original.SearchSortEnum
 
@@ -68,6 +67,7 @@ type SearchParameters = original.SearchParameters
 type SearchResultsResponse = original.SearchResultsResponse
 type SearchSchemaValue = original.SearchSchemaValue
 type SearchSort = original.SearchSort
+type SetObject = original.SetObject
 type StorageAccount = original.StorageAccount
 type StorageInsight = original.StorageInsight
 type StorageInsightListResult = original.StorageInsightListResult
@@ -76,32 +76,49 @@ type StorageInsightListResultPage = original.StorageInsightListResultPage
 type StorageInsightProperties = original.StorageInsightProperties
 type StorageInsightStatus = original.StorageInsightStatus
 type Tag = original.Tag
+type WorkspacePurgeBody = original.WorkspacePurgeBody
+type WorkspacePurgeBodyFilters = original.WorkspacePurgeBodyFilters
+type WorkspacePurgeResponse = original.WorkspacePurgeResponse
+type WorkspacePurgeStatusResponse = original.WorkspacePurgeStatusResponse
 type WorkspacesGetSearchResultsFuture = original.WorkspacesGetSearchResultsFuture
+type WorkspacesPurgeFuture = original.WorkspacesPurgeFuture
 type OperationsClient = original.OperationsClient
-
-func NewOperationsClient(subscriptionID string) OperationsClient {
-	return original.NewOperationsClient(subscriptionID)
-}
-func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
-	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type SavedSearchesClient = original.SavedSearchesClient
-
-func NewSavedSearchesClient(subscriptionID string) SavedSearchesClient {
-	return original.NewSavedSearchesClient(subscriptionID)
-}
-func NewSavedSearchesClientWithBaseURI(baseURI string, subscriptionID string) SavedSearchesClient {
-	return original.NewSavedSearchesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type StorageInsightsClient = original.StorageInsightsClient
+type WorkspacesClient = original.WorkspacesClient
 
-func NewStorageInsightsClient(subscriptionID string) StorageInsightsClient {
-	return original.NewStorageInsightsClient(subscriptionID)
+func New(subscriptionID string, purgeID string) BaseClient {
+	return original.New(subscriptionID, purgeID)
 }
-func NewStorageInsightsClientWithBaseURI(baseURI string, subscriptionID string) StorageInsightsClient {
-	return original.NewStorageInsightsClientWithBaseURI(baseURI, subscriptionID)
+func NewWithBaseURI(baseURI string, subscriptionID string, purgeID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID, purgeID)
+}
+func PossiblePurgeStateValues() []PurgeState {
+	return original.PossiblePurgeStateValues()
+}
+func PossibleSearchSortEnumValues() []SearchSortEnum {
+	return original.PossibleSearchSortEnumValues()
+}
+func PossibleStorageInsightStateValues() []StorageInsightState {
+	return original.PossibleStorageInsightStateValues()
+}
+func NewOperationsClient(subscriptionID string, purgeID string) OperationsClient {
+	return original.NewOperationsClient(subscriptionID, purgeID)
+}
+func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) OperationsClient {
+	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID, purgeID)
+}
+func NewSavedSearchesClient(subscriptionID string, purgeID string) SavedSearchesClient {
+	return original.NewSavedSearchesClient(subscriptionID, purgeID)
+}
+func NewSavedSearchesClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) SavedSearchesClient {
+	return original.NewSavedSearchesClientWithBaseURI(baseURI, subscriptionID, purgeID)
+}
+func NewStorageInsightsClient(subscriptionID string, purgeID string) StorageInsightsClient {
+	return original.NewStorageInsightsClient(subscriptionID, purgeID)
+}
+func NewStorageInsightsClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) StorageInsightsClient {
+	return original.NewStorageInsightsClientWithBaseURI(baseURI, subscriptionID, purgeID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"
@@ -109,12 +126,9 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type WorkspacesClient = original.WorkspacesClient
-
-func NewWorkspacesClient(subscriptionID string) WorkspacesClient {
-	return original.NewWorkspacesClient(subscriptionID)
+func NewWorkspacesClient(subscriptionID string, purgeID string) WorkspacesClient {
+	return original.NewWorkspacesClient(subscriptionID, purgeID)
 }
-func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) WorkspacesClient {
-	return original.NewWorkspacesClientWithBaseURI(baseURI, subscriptionID)
+func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) WorkspacesClient {
+	return original.NewWorkspacesClientWithBaseURI(baseURI, subscriptionID, purgeID)
 }

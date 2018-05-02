@@ -41,9 +41,10 @@ func NewEnvironmentsClientWithBaseURI(baseURI string, subscriptionID string) Env
 }
 
 // CreateOrUpdate create or update an environment in the specified subscription and resource group.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is name of the environment parameters is
-// parameters for creating an environment resource.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - name of the environment
+// parameters - parameters for creating an environment resource.
 func (client EnvironmentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, environmentName string, parameters EnvironmentCreateOrUpdateParameters) (result EnvironmentsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: environmentName,
@@ -91,7 +92,7 @@ func (client EnvironmentsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}", pathParameters),
@@ -129,9 +130,10 @@ func (client EnvironmentsClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete deletes the environment with the specified name in the specified subscription and resource group.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
 func (client EnvironmentsClient) Delete(ctx context.Context, resourceGroupName string, environmentName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, environmentName)
 	if err != nil {
@@ -195,10 +197,12 @@ func (client EnvironmentsClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get gets the environment with the specified name in the specified subscription and resource group.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. expand is setting $expand=status will include the
-// status of the internal services of the environment in the Time Series Insights service.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// expand - setting $expand=status will include the status of the internal services of the environment in the
+// Time Series Insights service.
 func (client EnvironmentsClient) Get(ctx context.Context, resourceGroupName string, environmentName string, expand string) (result EnvironmentResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, environmentName, expand)
 	if err != nil {
@@ -267,8 +271,8 @@ func (client EnvironmentsClient) GetResponder(resp *http.Response) (result Envir
 
 // ListByResourceGroup lists all the available environments associated with the subscription and within the specified
 // resource group.
-//
-// resourceGroupName is name of an Azure Resource group.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
 func (client EnvironmentsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result EnvironmentListResponse, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -394,10 +398,11 @@ func (client EnvironmentsClient) ListBySubscriptionResponder(resp *http.Response
 }
 
 // Update updates the environment with the specified name in the specified subscription and resource group.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. environmentUpdateParameters is request object that
-// contains the updated information for the environment.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// environmentUpdateParameters - request object that contains the updated information for the environment.
 func (client EnvironmentsClient) Update(ctx context.Context, resourceGroupName string, environmentName string, environmentUpdateParameters EnvironmentUpdateParameters) (result EnvironmentsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, environmentName, environmentUpdateParameters)
 	if err != nil {
@@ -428,7 +433,7 @@ func (client EnvironmentsClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}", pathParameters),

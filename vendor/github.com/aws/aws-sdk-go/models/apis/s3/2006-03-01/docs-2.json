@@ -77,6 +77,7 @@
     "PutObjectAcl": "uses the acl subresource to set the access control list (ACL) permissions for an object that already exists in a bucket",
     "PutObjectTagging": "Sets the supplied tag-set to an object that already exists in a bucket",
     "RestoreObject": "Restores an archived copy of an object back into Amazon S3",
+    "SelectObjectContent": "This operation filters the contents of an Amazon S3 object based on a simple Structured Query Language (SQL) statement. In the request, along with the SQL expression, you must also specify a data serialization format (JSON or CSV) of the object. Amazon S3 uses this to parse object data into records, and returns only records that match the specified SQL expression. You must also specify the data serialization format for the response.",
     "UploadPart": "<p>Uploads a part in a multipart upload.</p><p><b>Note:</b> After you initiate multipart upload and upload one or more parts, you must either complete or abort multipart upload in order to stop getting charged for storage of the uploaded parts. Only after you either complete or abort multipart upload, Amazon S3 frees up the parts storage and stops charging you for the parts storage.</p>",
     "UploadPartCopy": "Uploads a part by copying data from an existing object as data source."
   },
@@ -241,6 +242,7 @@
         "GetObjectOutput$Body": "Object data.",
         "GetObjectTorrentOutput$Body": null,
         "PutObjectRequest$Body": "Object data.",
+        "RecordsEvent$Payload": "The byte array of partial, one or more result records.",
         "UploadPartRequest$Body": "Object data."
       }
     },
@@ -387,6 +389,7 @@
         "PutObjectTaggingRequest$Bucket": null,
         "RestoreObjectRequest$Bucket": null,
         "S3Location$BucketName": "The name of the bucket where the restore results will be placed.",
+        "SelectObjectContentRequest$Bucket": "The S3 Bucket.",
         "UploadPartCopyRequest$Bucket": null,
         "UploadPartRequest$Bucket": "Name of the bucket to which the multipart upload was initiated."
       }
@@ -402,6 +405,20 @@
       "base": null,
       "refs": {
         "ListBucketsOutput$Buckets": null
+      }
+    },
+    "BytesProcessed": {
+      "base": null,
+      "refs": {
+        "Progress$BytesProcessed": "Current number of uncompressed object bytes processed.",
+        "Stats$BytesProcessed": "Total number of uncompressed object bytes processed."
+      }
+    },
+    "BytesScanned": {
+      "base": null,
+      "refs": {
+        "Progress$BytesScanned": "Current number of object bytes scanned.",
+        "Stats$BytesScanned": "Total number of object bytes scanned."
       }
     },
     "CORSConfiguration": {
@@ -518,6 +535,12 @@
         "CompletedMultipartUpload$Parts": null
       }
     },
+    "CompressionType": {
+      "base": null,
+      "refs": {
+        "InputSerialization$CompressionType": "Specifies object's compression format. Valid values: NONE, GZIP. Default Value: NONE."
+      }
+    },
     "Condition": {
       "base": null,
       "refs": {
@@ -604,6 +627,12 @@
         "GetObjectOutput$ContentType": "A standard MIME type describing the format of the object data.",
         "HeadObjectOutput$ContentType": "A standard MIME type describing the format of the object data.",
         "PutObjectRequest$ContentType": "A standard MIME type describing the format of the object data."
+      }
+    },
+    "ContinuationEvent": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentEventStream$Cont": "The Continuation Event."
       }
     },
     "CopyObjectOutput": {
@@ -937,6 +966,12 @@
         "Grantee$EmailAddress": "Email address of the grantee."
       }
     },
+    "EnableRequestProgress": {
+      "base": null,
+      "refs": {
+        "RequestProgress$Enabled": "Specifies whether periodic QueryProgress frames should be sent. Valid values: TRUE, FALSE. Default value: FALSE."
+      }
+    },
     "EncodingType": {
       "base": "Requests Amazon S3 to encode the object keys in the response and specifies the encoding method to use. An object key may contain any Unicode character; however, XML 1.0 parser cannot parse some characters, such as characters with an ASCII value from 0 to 10. For characters that are not supported in XML 1.0, you can add this parameter to request that Amazon S3 encode the keys in the response.",
       "refs": {
@@ -960,6 +995,12 @@
       "base": "Container for information regarding encryption based configuration for replicas.",
       "refs": {
         "Destination$EncryptionConfiguration": "Container for information regarding encryption based configuration for replicas."
+      }
+    },
+    "EndEvent": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentEventStream$End": "The End Event."
       }
     },
     "Error": {
@@ -1049,12 +1090,14 @@
     "Expression": {
       "base": null,
       "refs": {
+        "SelectObjectContentRequest$Expression": "The expression that is used to query the object.",
         "SelectParameters$Expression": "The expression that is used to query the object."
       }
     },
     "ExpressionType": {
       "base": null,
       "refs": {
+        "SelectObjectContentRequest$ExpressionType": "The type of the provided expression (e.g., SQL).",
         "SelectParameters$ExpressionType": "The type of the provided expression (e.g., SQL)."
       }
     },
@@ -1492,6 +1535,7 @@
     "InputSerialization": {
       "base": "Describes the serialization format of the object.",
       "refs": {
+        "SelectObjectContentRequest$InputSerialization": "Describes the format of the data in the object that is being queried.",
         "SelectParameters$InputSerialization": "Describes the serialization format of the object."
       }
     },
@@ -1602,6 +1646,24 @@
         "ListObjectsOutput$IsTruncated": "A flag that indicates whether or not Amazon S3 returned all of the results that satisfied the search criteria.",
         "ListObjectsV2Output$IsTruncated": "A flag that indicates whether or not Amazon S3 returned all of the results that satisfied the search criteria.",
         "ListPartsOutput$IsTruncated": "Indicates whether the returned list of parts is truncated."
+      }
+    },
+    "JSONInput": {
+      "base": null,
+      "refs": {
+        "InputSerialization$JSON": "Specifies JSON as object's input serialization format."
+      }
+    },
+    "JSONOutput": {
+      "base": null,
+      "refs": {
+        "OutputSerialization$JSON": "Specifies JSON as request's output serialization format."
+      }
+    },
+    "JSONType": {
+      "base": null,
+      "refs": {
+        "JSONInput$Type": "The type of JSON. Valid values: Document, Lines."
       }
     },
     "KMSContext": {
@@ -1799,7 +1861,7 @@
       }
     },
     "LoggingEnabled": {
-      "base": null,
+      "base": "Container for logging information. Presence of this element indicates that logging is enabled. Parameters TargetBucket and TargetPrefix are required in this case.",
       "refs": {
         "BucketLoggingStatus$LoggingEnabled": null,
         "GetBucketLoggingOutput$LoggingEnabled": null
@@ -2035,7 +2097,7 @@
       }
     },
     "NoncurrentVersionTransition": {
-      "base": "Container for the transition rule that describes when noncurrent objects transition to the STANDARD_IA or GLACIER storage class. If your bucket is versioning-enabled (or versioning is suspended), you can set this action to request that Amazon S3 transition noncurrent object versions to the STANDARD_IA or GLACIER storage class at a specific period in the object's lifetime.",
+      "base": "Container for the transition rule that describes when noncurrent objects transition to the STANDARD_IA, ONEZONE_IA or GLACIER storage class. If your bucket is versioning-enabled (or versioning is suspended), you can set this action to request that Amazon S3 transition noncurrent object versions to the STANDARD_IA, ONEZONE_IA or GLACIER storage class at a specific period in the object's lifetime.",
       "refs": {
         "NoncurrentVersionTransitionList$member": null,
         "Rule$NoncurrentVersionTransition": null
@@ -2141,6 +2203,7 @@
         "PutObjectRequest$Key": "Object key for which the PUT operation was initiated.",
         "PutObjectTaggingRequest$Key": null,
         "RestoreObjectRequest$Key": null,
+        "SelectObjectContentRequest$Key": "The Object Key.",
         "Tag$Key": "Name of the tag.",
         "UploadPartCopyRequest$Key": null,
         "UploadPartRequest$Key": "Object key for which the multipart upload was initiated."
@@ -2219,6 +2282,7 @@
     "OutputSerialization": {
       "base": "Describes how results of the Select job are serialized.",
       "refs": {
+        "SelectObjectContentRequest$OutputSerialization": "Describes the format of the data that you want Amazon S3 to return in response.",
         "SelectParameters$OutputSerialization": "Describes how the results of the Select job are serialized."
       }
     },
@@ -2323,6 +2387,18 @@
         "MetricsFilter$Prefix": "The prefix used when evaluating a metrics filter.",
         "ReplicationRule$Prefix": "Object keyname prefix identifying one or more objects to which the rule applies. Maximum prefix length can be up to 1,024 characters. Overlapping prefixes are not supported.",
         "Rule$Prefix": "Prefix identifying one or more objects to which the rule applies."
+      }
+    },
+    "Progress": {
+      "base": null,
+      "refs": {
+        "ProgressEvent$Details": "The Progress event details."
+      }
+    },
+    "ProgressEvent": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentEventStream$Progress": "The Progress Event."
       }
     },
     "Protocol": {
@@ -2514,7 +2590,14 @@
       "base": null,
       "refs": {
         "CSVInput$RecordDelimiter": "Value used to separate individual records.",
-        "CSVOutput$RecordDelimiter": "Value used to separate individual records."
+        "CSVOutput$RecordDelimiter": "Value used to separate individual records.",
+        "JSONOutput$RecordDelimiter": "The value used to separate individual records in the output."
+      }
+    },
+    "RecordsEvent": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentEventStream$Records": "The Records Event."
       }
     },
     "Redirect": {
@@ -2628,6 +2711,12 @@
       "base": null,
       "refs": {
         "PutBucketRequestPaymentRequest$RequestPaymentConfiguration": null
+      }
+    },
+    "RequestProgress": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentRequest$RequestProgress": "Specifies if periodic request progress information should be enabled."
       }
     },
     "ResponseCacheControl": {
@@ -2758,6 +2847,7 @@
         "HeadObjectRequest$SSECustomerAlgorithm": "Specifies the algorithm to use to when encrypting the object (e.g., AES256).",
         "PutObjectOutput$SSECustomerAlgorithm": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header confirming the encryption algorithm used.",
         "PutObjectRequest$SSECustomerAlgorithm": "Specifies the algorithm to use to when encrypting the object (e.g., AES256).",
+        "SelectObjectContentRequest$SSECustomerAlgorithm": "The SSE Algorithm used to encrypt the object. For more information, go to <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html\"> Server-Side Encryption (Using Customer-Provided Encryption Keys</a>.",
         "UploadPartCopyOutput$SSECustomerAlgorithm": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header confirming the encryption algorithm used.",
         "UploadPartCopyRequest$SSECustomerAlgorithm": "Specifies the algorithm to use to when encrypting the object (e.g., AES256).",
         "UploadPartOutput$SSECustomerAlgorithm": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header confirming the encryption algorithm used.",
@@ -2772,6 +2862,7 @@
         "GetObjectRequest$SSECustomerKey": "Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to store the object and then it is discarded; Amazon does not store the encryption key. The key must be appropriate for use with the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm header.",
         "HeadObjectRequest$SSECustomerKey": "Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to store the object and then it is discarded; Amazon does not store the encryption key. The key must be appropriate for use with the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm header.",
         "PutObjectRequest$SSECustomerKey": "Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to store the object and then it is discarded; Amazon does not store the encryption key. The key must be appropriate for use with the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm header.",
+        "SelectObjectContentRequest$SSECustomerKey": "The SSE Customer Key. For more information, go to <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html\"> Server-Side Encryption (Using Customer-Provided Encryption Keys</a>.",
         "UploadPartCopyRequest$SSECustomerKey": "Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to store the object and then it is discarded; Amazon does not store the encryption key. The key must be appropriate for use with the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm header. This must be the same encryption key specified in the initiate multipart upload request.",
         "UploadPartRequest$SSECustomerKey": "Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to store the object and then it is discarded; Amazon does not store the encryption key. The key must be appropriate for use with the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm header. This must be the same encryption key specified in the initiate multipart upload request."
       }
@@ -2789,6 +2880,7 @@
         "HeadObjectRequest$SSECustomerKeyMD5": "Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for a message integrity check to ensure the encryption key was transmitted without error.",
         "PutObjectOutput$SSECustomerKeyMD5": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header to provide round trip message integrity verification of the customer-provided encryption key.",
         "PutObjectRequest$SSECustomerKeyMD5": "Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for a message integrity check to ensure the encryption key was transmitted without error.",
+        "SelectObjectContentRequest$SSECustomerKeyMD5": "The SSE Customer Key MD5. For more information, go to <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html\"> Server-Side Encryption (Using Customer-Provided Encryption Keys</a>.",
         "UploadPartCopyOutput$SSECustomerKeyMD5": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header to provide round trip message integrity verification of the customer-provided encryption key.",
         "UploadPartCopyRequest$SSECustomerKeyMD5": "Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for a message integrity check to ensure the encryption key was transmitted without error.",
         "UploadPartOutput$SSECustomerKeyMD5": "If server-side encryption with a customer-provided encryption key was requested, the response will include this header to provide round trip message integrity verification of the customer-provided encryption key.",
@@ -2824,6 +2916,22 @@
       "base": "Specifies the use of SSE-S3 to encrypt delievered Inventory reports.",
       "refs": {
         "InventoryEncryption$SSES3": "Specifies the use of SSE-S3 to encrypt delievered Inventory reports."
+      }
+    },
+    "SelectObjectContentEventStream": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentOutput$Payload": null
+      }
+    },
+    "SelectObjectContentOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SelectObjectContentRequest": {
+      "base": "Request to filter the contents of an Amazon S3 object based on a simple Structured Query Language (SQL) statement. In the request, along with the SQL expression, you must also specify a data serialization format (JSON or CSV) of the object. Amazon S3 uses this to parse object data into records, and returns only records that match the specified SQL expression. You must also specify the data serialization format for the response. For more information, go to <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectSELECTContent.html\">S3Select API Documentation</a>.",
+      "refs": {
       }
     },
     "SelectParameters": {
@@ -2906,6 +3014,18 @@
       "refs": {
         "ListObjectsV2Output$StartAfter": "StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this specified key. StartAfter can be any key in the bucket",
         "ListObjectsV2Request$StartAfter": "StartAfter is where you want Amazon S3 to start listing from. Amazon S3 starts listing after this specified key. StartAfter can be any key in the bucket"
+      }
+    },
+    "Stats": {
+      "base": null,
+      "refs": {
+        "StatsEvent$Details": "The Stats event details."
+      }
+    },
+    "StatsEvent": {
+      "base": null,
+      "refs": {
+        "SelectObjectContentEventStream$Stats": "The Stats Event."
       }
     },
     "StorageClass": {

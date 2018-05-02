@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS IoT</fullname> <p>AWS IoT provides secure, bi-directional communication between Internet-connected things (such as sensors, actuators, embedded devices, or smart appliances) and the AWS cloud. You can discover your custom IoT-Data endpoint to communicate with, configure rules for data processing and integration with other services, organize resources associated with each thing (Thing Registry), configure logging, and create and manage policies and credentials to authenticate things.</p> <p>For more information about how AWS IoT works, see the <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/aws-iot-how-it-works.html\">Developer Guide</a>.</p>",
+  "service": "<fullname>AWS IoT</fullname> <p>AWS IoT provides secure, bi-directional communication between Internet-connected devices (such as sensors, actuators, embedded devices, or smart appliances) and the AWS cloud. You can discover your custom IoT-Data endpoint to communicate with, configure rules for data processing and integration with other services, organize resources associated with each device (Registry), configure logging, and create and manage policies and credentials to authenticate devices.</p> <p>For more information about how AWS IoT works, see the <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/aws-iot-how-it-works.html\">Developer Guide</a>.</p>",
   "operations": {
     "AcceptCertificateTransfer": "<p>Accepts a pending certificate transfer. The default state of the certificate is INACTIVE.</p> <p>To check for pending certificate transfers, call <a>ListCertificates</a> to enumerate your certificates.</p>",
     "AddThingToThingGroup": "<p>Adds a thing to a thing group.</p>",
@@ -20,7 +20,7 @@
     "CreatePolicyVersion": "<p>Creates a new version of the specified AWS IoT policy. To update a policy, create a new policy version. A managed policy can have up to five versions. If the policy has five versions, you must use <a>DeletePolicyVersion</a> to delete an existing version before you create a new one.</p> <p>Optionally, you can set the new version as the policy's default version. The default version is the operative version (that is, the version that is in effect for the certificates to which the policy is attached).</p>",
     "CreateRoleAlias": "<p>Creates a role alias.</p>",
     "CreateStream": "<p>Creates a stream for delivering one or more large files in chunks over MQTT. A stream transports data bytes in chunks or blocks packaged as MQTT messages from a source like S3. You can have one or more files associated with a stream. The total size of a file associated with the stream cannot exceed more than 2 MB. The stream will be created with version 0. If a stream is created with the same streamID as a stream that existed and was deleted within last 90 days, we will resurrect that old stream by incrementing the version by 1.</p>",
-    "CreateThing": "<p>Creates a thing record in the thing registry.</p>",
+    "CreateThing": "<p>Creates a thing record in the registry.</p>",
     "CreateThingGroup": "<p>Create a thing group.</p>",
     "CreateThingType": "<p>Creates a new thing type.</p>",
     "CreateTopicRule": "<p>Creates a rule. Creating rules is an administrator-level action. Any user who has permission to create rules will be able to access data processed by the rule.</p>",
@@ -393,6 +393,8 @@
         "FirehoseAction$roleArn": "<p>The IAM role that grants access to the Amazon Kinesis Firehose stream.</p>",
         "GetLoggingOptionsResponse$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
         "GetV2LoggingOptionsResponse$roleArn": "<p>The IAM role ARN AWS IoT uses to write to your CloudWatch logs.</p>",
+        "IotAnalyticsAction$channelArn": "<p>(deprecated) The ARN of the IoT Analytics channel to which message data will be sent.</p>",
+        "IotAnalyticsAction$roleArn": "<p>The ARN of the role which has a policy that grants IoT permission to send message data via IoT Analytics (iotanalytics:BatchPutMessage).</p>",
         "KinesisAction$roleArn": "<p>The ARN of the IAM role that grants access to the Amazon Kinesis stream.</p>",
         "LoggingOptionsPayload$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
         "RepublishAction$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
@@ -524,27 +526,27 @@
     "CertificateId": {
       "base": null,
       "refs": {
-        "AcceptCertificateTransferRequest$certificateId": "<p>The ID of the certificate.</p>",
+        "AcceptCertificateTransferRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
         "CACertificate$certificateId": "<p>The ID of the CA certificate.</p>",
         "CACertificateDescription$certificateId": "<p>The CA certificate ID.</p>",
-        "CancelCertificateTransferRequest$certificateId": "<p>The ID of the certificate.</p>",
-        "Certificate$certificateId": "<p>The ID of the certificate.</p>",
+        "CancelCertificateTransferRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
+        "Certificate$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
         "CertificateDescription$certificateId": "<p>The ID of the certificate.</p>",
         "CertificateDescription$caCertificateId": "<p>The certificate ID of the CA certificate used to sign this certificate.</p>",
         "CreateCertificateFromCsrResponse$certificateId": "<p>The ID of the certificate. Certificate management operations only take a certificateId.</p>",
         "CreateKeysAndCertificateResponse$certificateId": "<p>The ID of the certificate. AWS IoT issues a default subject name for the certificate (for example, AWS IoT Certificate).</p>",
-        "DeleteCACertificateRequest$certificateId": "<p>The ID of the certificate to delete.</p>",
-        "DeleteCertificateRequest$certificateId": "<p>The ID of the certificate.</p>",
+        "DeleteCACertificateRequest$certificateId": "<p>The ID of the certificate to delete. (The last part of the certificate ARN contains the certificate ID.)</p>",
+        "DeleteCertificateRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
         "DescribeCACertificateRequest$certificateId": "<p>The CA certificate identifier.</p>",
-        "DescribeCertificateRequest$certificateId": "<p>The ID of the certificate.</p>",
+        "DescribeCertificateRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
         "ListCertificatesByCARequest$caCertificateId": "<p>The ID of the CA certificate. This operation will list all registered device certificate that were signed by this CA certificate.</p>",
         "OutgoingCertificate$certificateId": "<p>The certificate ID.</p>",
         "RegisterCACertificateResponse$certificateId": "<p>The CA certificate identifier.</p>",
         "RegisterCertificateResponse$certificateId": "<p>The certificate identifier.</p>",
-        "RejectCertificateTransferRequest$certificateId": "<p>The ID of the certificate.</p>",
-        "TransferCertificateRequest$certificateId": "<p>The ID of the certificate.</p>",
+        "RejectCertificateTransferRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
+        "TransferCertificateRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>",
         "UpdateCACertificateRequest$certificateId": "<p>The CA certificate identifier.</p>",
-        "UpdateCertificateRequest$certificateId": "<p>The ID of the certificate.</p>"
+        "UpdateCertificateRequest$certificateId": "<p>The ID of the certificate. (The last part of the certificate ARN contains the certificate ID.)</p>"
       }
     },
     "CertificateName": {
@@ -597,6 +599,12 @@
       "refs": {
         "ListCertificatesByCAResponse$certificates": "<p>The device certificates signed by the specified CA certificate.</p>",
         "ListCertificatesResponse$certificates": "<p>The descriptions of the certificates.</p>"
+      }
+    },
+    "ChannelName": {
+      "base": null,
+      "refs": {
+        "IotAnalyticsAction$channelName": "<p>The name of the IoT Analytics channel to which message data will be sent.</p>"
       }
     },
     "ClearDefaultAuthorizerRequest": {
@@ -843,8 +851,8 @@
     "CustomerVersion": {
       "base": null,
       "refs": {
-        "CACertificateDescription$customerVersion": null,
-        "CertificateDescription$customerVersion": null
+        "CACertificateDescription$customerVersion": "<p>The customer version of the CA certificate.</p>",
+        "CertificateDescription$customerVersion": "<p>The customer version of the certificate.</p>"
       }
     },
     "DateType": {
@@ -854,14 +862,14 @@
         "AuthorizerDescription$lastModifiedDate": "<p>The UNIX timestamp of when the authorizer was last updated.</p>",
         "CACertificate$creationDate": "<p>The date the CA certificate was created.</p>",
         "CACertificateDescription$creationDate": "<p>The date the CA certificate was created.</p>",
-        "CACertificateDescription$lastModifiedDate": null,
+        "CACertificateDescription$lastModifiedDate": "<p>The date the CA certificate was last modified.</p>",
         "Certificate$creationDate": "<p>The date and time the certificate was created.</p>",
         "CertificateDescription$creationDate": "<p>The date and time the certificate was created.</p>",
         "CertificateDescription$lastModifiedDate": "<p>The date and time the certificate was last modified.</p>",
-        "GetPolicyResponse$creationDate": null,
-        "GetPolicyResponse$lastModifiedDate": null,
-        "GetPolicyVersionResponse$creationDate": null,
-        "GetPolicyVersionResponse$lastModifiedDate": null,
+        "GetPolicyResponse$creationDate": "<p>The date the policy was created.</p>",
+        "GetPolicyResponse$lastModifiedDate": "<p>The date the policy was last modified.</p>",
+        "GetPolicyVersionResponse$creationDate": "<p>The date the policy version was created.</p>",
+        "GetPolicyVersionResponse$lastModifiedDate": "<p>The date the policy version was last modified.</p>",
         "Job$createdAt": "<p>The time, in milliseconds since the epoch, when the job was created.</p>",
         "Job$lastUpdatedAt": "<p>The time, in milliseconds since the epoch, when the job was last updated.</p>",
         "Job$completedAt": "<p>The time, in milliseconds since the epoch, when the job was completed.</p>",
@@ -1437,10 +1445,10 @@
     "GenerationId": {
       "base": null,
       "refs": {
-        "CACertificateDescription$generationId": null,
-        "CertificateDescription$generationId": null,
-        "GetPolicyResponse$generationId": null,
-        "GetPolicyVersionResponse$generationId": null
+        "CACertificateDescription$generationId": "<p>The generation ID of the CA certificate.</p>",
+        "CertificateDescription$generationId": "<p>The generation ID of the certificate.</p>",
+        "GetPolicyResponse$generationId": "<p>The generation ID of the policy.</p>",
+        "GetPolicyVersionResponse$generationId": "<p>The generation ID of the policy version.</p>"
       }
     },
     "GetEffectivePoliciesRequest": {
@@ -1642,6 +1650,12 @@
       "refs": {
       }
     },
+    "IotAnalyticsAction": {
+      "base": "<p>Sends message data to an AWS IoT Analytics channel.</p>",
+      "refs": {
+        "Action$iotAnalytics": "<p>Sends message data to an AWS IoT Analytics channel.</p>"
+      }
+    },
     "IsAuthenticated": {
       "base": null,
       "refs": {
@@ -1827,7 +1841,7 @@
     "JsonDocument": {
       "base": null,
       "refs": {
-        "ThingDocument$shadow": "<p>The thing shadow.</p>"
+        "ThingDocument$shadow": "<p>The shadow.</p>"
       }
     },
     "Key": {
@@ -2343,7 +2357,7 @@
         "ListJobExecutionsForThingResponse$nextToken": "<p>The token for the next set of results, or <b>null</b> if there are no additional results.</p>",
         "ListJobsRequest$nextToken": "<p>The token to retrieve the next set of results.</p>",
         "ListJobsResponse$nextToken": "<p>The token for the next set of results, or <b>null</b> if there are no additional results.</p>",
-        "ListOTAUpdatesRequest$nextToken": "<p>A token used to retreive the next set of results.</p>",
+        "ListOTAUpdatesRequest$nextToken": "<p>A token used to retrieve the next set of results.</p>",
         "ListOTAUpdatesResponse$nextToken": "<p>A token to use to get the next set of results.</p>",
         "ListPrincipalThingsRequest$nextToken": "<p>The token used to get the next set of results, or <b>null</b> if there are no additional results.</p>",
         "ListPrincipalThingsResponse$nextToken": "<p>The token used to get the next set of results, or <b>null</b> if there are no additional results.</p>",
@@ -2511,7 +2525,7 @@
     "Parameters": {
       "base": null,
       "refs": {
-        "RegisterThingRequest$parameters": "<p>The parameters for provisioning a thing.</p>"
+        "RegisterThingRequest$parameters": "<p>The parameters for provisioning a thing. See <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/programmatic-provisioning.html\">Programmatic Provisioning</a> for more information.</p>"
       }
     },
     "PartitionKey": {
@@ -2979,7 +2993,7 @@
       "base": null,
       "refs": {
         "CreateRoleAliasResponse$roleAliasArn": "<p>The role alias ARN.</p>",
-        "RoleAliasDescription$roleAliasArn": null,
+        "RoleAliasDescription$roleAliasArn": "<p>The ARN of the role alias.</p>",
         "UpdateRoleAliasResponse$roleAliasArn": "<p>The role alias ARN.</p>"
       }
     },
@@ -3410,7 +3424,7 @@
       "base": null,
       "refs": {
         "DescribeThingRegistrationTaskResponse$templateBody": "<p>The task's template.</p>",
-        "RegisterThingRequest$templateBody": "<p>The provisioning template. </p>",
+        "RegisterThingRequest$templateBody": "<p>The provisioning template. See <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/programmatic-provisioning.html\">Programmatic Provisioning</a> for more information.</p>",
         "RegistrationConfig$templateBody": "<p>The template body.</p>",
         "StartThingRegistrationTaskRequest$templateBody": "<p>The provisioning template.</p>"
       }

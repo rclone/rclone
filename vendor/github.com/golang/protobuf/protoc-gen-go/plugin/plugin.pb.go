@@ -37,14 +37,33 @@ type Version struct {
 	Patch *int32 `protobuf:"varint,3,opt,name=patch" json:"patch,omitempty"`
 	// A suffix for alpha, beta or rc release, e.g., "alpha-1", "rc2". It should
 	// be empty for mainline stable releases.
-	Suffix           *string `protobuf:"bytes,4,opt,name=suffix" json:"suffix,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Suffix               *string  `protobuf:"bytes,4,opt,name=suffix" json:"suffix,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Version) Reset()                    { *m = Version{} }
 func (m *Version) String() string            { return proto.CompactTextString(m) }
 func (*Version) ProtoMessage()               {}
 func (*Version) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *Version) Unmarshal(b []byte) error {
+	return xxx_messageInfo_Version.Unmarshal(m, b)
+}
+func (m *Version) Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Version.Marshal(b, m, deterministic)
+}
+func (dst *Version) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Version.Merge(dst, src)
+}
+func (m *Version) XXX_Size() int {
+	return xxx_messageInfo_Version.Size(m)
+}
+func (m *Version) XXX_DiscardUnknown() {
+	xxx_messageInfo_Version.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Version proto.InternalMessageInfo
 
 func (m *Version) GetMajor() int32 {
 	if m != nil && m.Major != nil {
@@ -98,14 +117,33 @@ type CodeGeneratorRequest struct {
 	// fully qualified.
 	ProtoFile []*google_protobuf.FileDescriptorProto `protobuf:"bytes,15,rep,name=proto_file,json=protoFile" json:"proto_file,omitempty"`
 	// The version number of protocol compiler.
-	CompilerVersion  *Version `protobuf:"bytes,3,opt,name=compiler_version,json=compilerVersion" json:"compiler_version,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	CompilerVersion      *Version `protobuf:"bytes,3,opt,name=compiler_version,json=compilerVersion" json:"compiler_version,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *CodeGeneratorRequest) Reset()                    { *m = CodeGeneratorRequest{} }
 func (m *CodeGeneratorRequest) String() string            { return proto.CompactTextString(m) }
 func (*CodeGeneratorRequest) ProtoMessage()               {}
 func (*CodeGeneratorRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *CodeGeneratorRequest) Unmarshal(b []byte) error {
+	return xxx_messageInfo_CodeGeneratorRequest.Unmarshal(m, b)
+}
+func (m *CodeGeneratorRequest) Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CodeGeneratorRequest.Marshal(b, m, deterministic)
+}
+func (dst *CodeGeneratorRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CodeGeneratorRequest.Merge(dst, src)
+}
+func (m *CodeGeneratorRequest) XXX_Size() int {
+	return xxx_messageInfo_CodeGeneratorRequest.Size(m)
+}
+func (m *CodeGeneratorRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CodeGeneratorRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CodeGeneratorRequest proto.InternalMessageInfo
 
 func (m *CodeGeneratorRequest) GetFileToGenerate() []string {
 	if m != nil {
@@ -145,15 +183,34 @@ type CodeGeneratorResponse struct {
 	// problem in protoc itself -- such as the input CodeGeneratorRequest being
 	// unparseable -- should be reported by writing a message to stderr and
 	// exiting with a non-zero status code.
-	Error            *string                       `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
-	File             []*CodeGeneratorResponse_File `protobuf:"bytes,15,rep,name=file" json:"file,omitempty"`
-	XXX_unrecognized []byte                        `json:"-"`
+	Error                *string                       `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	File                 []*CodeGeneratorResponse_File `protobuf:"bytes,15,rep,name=file" json:"file,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                      `json:"-"`
+	XXX_unrecognized     []byte                        `json:"-"`
+	XXX_sizecache        int32                         `json:"-"`
 }
 
 func (m *CodeGeneratorResponse) Reset()                    { *m = CodeGeneratorResponse{} }
 func (m *CodeGeneratorResponse) String() string            { return proto.CompactTextString(m) }
 func (*CodeGeneratorResponse) ProtoMessage()               {}
 func (*CodeGeneratorResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (m *CodeGeneratorResponse) Unmarshal(b []byte) error {
+	return xxx_messageInfo_CodeGeneratorResponse.Unmarshal(m, b)
+}
+func (m *CodeGeneratorResponse) Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CodeGeneratorResponse.Marshal(b, m, deterministic)
+}
+func (dst *CodeGeneratorResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CodeGeneratorResponse.Merge(dst, src)
+}
+func (m *CodeGeneratorResponse) XXX_Size() int {
+	return xxx_messageInfo_CodeGeneratorResponse.Size(m)
+}
+func (m *CodeGeneratorResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CodeGeneratorResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CodeGeneratorResponse proto.InternalMessageInfo
 
 func (m *CodeGeneratorResponse) GetError() string {
 	if m != nil && m.Error != nil {
@@ -222,14 +279,33 @@ type CodeGeneratorResponse_File struct {
 	// If |insertion_point| is present, |name| must also be present.
 	InsertionPoint *string `protobuf:"bytes,2,opt,name=insertion_point,json=insertionPoint" json:"insertion_point,omitempty"`
 	// The file contents.
-	Content          *string `protobuf:"bytes,15,opt,name=content" json:"content,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Content              *string  `protobuf:"bytes,15,opt,name=content" json:"content,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *CodeGeneratorResponse_File) Reset()                    { *m = CodeGeneratorResponse_File{} }
 func (m *CodeGeneratorResponse_File) String() string            { return proto.CompactTextString(m) }
 func (*CodeGeneratorResponse_File) ProtoMessage()               {}
 func (*CodeGeneratorResponse_File) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2, 0} }
+func (m *CodeGeneratorResponse_File) Unmarshal(b []byte) error {
+	return xxx_messageInfo_CodeGeneratorResponse_File.Unmarshal(m, b)
+}
+func (m *CodeGeneratorResponse_File) Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CodeGeneratorResponse_File.Marshal(b, m, deterministic)
+}
+func (dst *CodeGeneratorResponse_File) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CodeGeneratorResponse_File.Merge(dst, src)
+}
+func (m *CodeGeneratorResponse_File) XXX_Size() int {
+	return xxx_messageInfo_CodeGeneratorResponse_File.Size(m)
+}
+func (m *CodeGeneratorResponse_File) XXX_DiscardUnknown() {
+	xxx_messageInfo_CodeGeneratorResponse_File.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CodeGeneratorResponse_File proto.InternalMessageInfo
 
 func (m *CodeGeneratorResponse_File) GetName() string {
 	if m != nil && m.Name != nil {

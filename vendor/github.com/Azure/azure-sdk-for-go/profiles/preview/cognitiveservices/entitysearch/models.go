@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type EntitiesClient = original.EntitiesClient
-
-func NewEntitiesClient() EntitiesClient {
-	return original.NewEntitiesClient()
-}
-func NewEntitiesClientWithBaseURI(baseURI string) EntitiesClient {
-	return original.NewEntitiesClientWithBaseURI(baseURI)
-}
-
 type AnswerType = original.AnswerType
 
 const (
@@ -266,6 +250,48 @@ type BasicThing = original.BasicThing
 type Thing = original.Thing
 type TouristAttraction = original.TouristAttraction
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func NewEntitiesClient() EntitiesClient {
+	return original.NewEntitiesClient()
+}
+func NewEntitiesClientWithBaseURI(baseURI string) EntitiesClient {
+	return original.NewEntitiesClientWithBaseURI(baseURI)
+}
+func PossibleAnswerTypeValues() []AnswerType {
+	return original.PossibleAnswerTypeValues()
+}
+func PossibleEntityQueryScenarioValues() []EntityQueryScenario {
+	return original.PossibleEntityQueryScenarioValues()
+}
+func PossibleEntityScenarioValues() []EntityScenario {
+	return original.PossibleEntityScenarioValues()
+}
+func PossibleEntityTypeValues() []EntityType {
+	return original.PossibleEntityTypeValues()
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleResponseFormatValues() []ResponseFormat {
+	return original.PossibleResponseFormatValues()
+}
+func PossibleSafeSearchValues() []SafeSearch {
+	return original.PossibleSafeSearchValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleTypeBasicResponseBaseValues() []TypeBasicResponseBase {
+	return original.PossibleTypeBasicResponseBaseValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

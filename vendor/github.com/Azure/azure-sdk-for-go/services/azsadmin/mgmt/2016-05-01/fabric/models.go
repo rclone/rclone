@@ -39,6 +39,11 @@ const (
 	Stopping InfraRoleInstanceState = "Stopping"
 )
 
+// PossibleInfraRoleInstanceStateValues returns an array of possible values for the InfraRoleInstanceState const type.
+func PossibleInfraRoleInstanceStateValues() []InfraRoleInstanceState {
+	return []InfraRoleInstanceState{Running, Starting, Stopped, Stopping}
+}
+
 // PowerState enumerates the values for power state.
 type PowerState string
 
@@ -53,6 +58,11 @@ const (
 	PowerStateStopping PowerState = "Stopping"
 )
 
+// PossiblePowerStateValues returns an array of possible values for the PowerState const type.
+func PossiblePowerStateValues() []PowerState {
+	return []PowerState{PowerStateRunning, PowerStateStarting, PowerStateStopped, PowerStateStopping}
+}
+
 // ScaleUnitNodeStatus enumerates the values for scale unit node status.
 type ScaleUnitNodeStatus string
 
@@ -64,6 +74,11 @@ const (
 	// ScaleUnitNodeStatusStopped ...
 	ScaleUnitNodeStatusStopped ScaleUnitNodeStatus = "Stopped"
 )
+
+// PossibleScaleUnitNodeStatusValues returns an array of possible values for the ScaleUnitNodeStatus const type.
+func PossibleScaleUnitNodeStatusValues() []ScaleUnitNodeStatus {
+	return []ScaleUnitNodeStatus{ScaleUnitNodeStatusMaintenance, ScaleUnitNodeStatusRunning, ScaleUnitNodeStatusStopped}
+}
 
 // ScaleUnitState enumerates the values for scale unit state.
 type ScaleUnitState string
@@ -81,6 +96,11 @@ const (
 	ScaleUnitStateUpgrading ScaleUnitState = "Upgrading"
 )
 
+// PossibleScaleUnitStateValues returns an array of possible values for the ScaleUnitState const type.
+func PossibleScaleUnitStateValues() []ScaleUnitState {
+	return []ScaleUnitState{ScaleUnitStateCreating, ScaleUnitStateDeleting, ScaleUnitStateRunning, ScaleUnitStateUnknown, ScaleUnitStateUpgrading}
+}
+
 // ScaleUnitType enumerates the values for scale unit type.
 type ScaleUnitType string
 
@@ -94,6 +114,11 @@ const (
 	// Unknown ...
 	Unknown ScaleUnitType = "Unknown"
 )
+
+// PossibleScaleUnitTypeValues returns an array of possible values for the ScaleUnitType const type.
+func PossibleScaleUnitTypeValues() []ScaleUnitType {
+	return []ScaleUnitType{ComputeOnly, HyperConverged, StorageOnly, Unknown}
+}
 
 // EdgeGateway this resource represents a gateway, which provides the configuration needed to provide gateway
 // services to virtual networks.
@@ -2467,6 +2492,15 @@ type OperationStatus struct {
 	autorest.Response `json:"-"`
 	// ProvisioningStateModel - The state of the operation.
 	*ProvisioningStateModel `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for OperationStatus.
+func (osVar OperationStatus) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if osVar.ProvisioningStateModel != nil {
+		objectMap["properties"] = osVar.ProvisioningStateModel
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for OperationStatus struct.

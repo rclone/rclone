@@ -41,12 +41,13 @@ func NewQueryKeysClientWithBaseURI(baseURI string, subscriptionID string) QueryK
 }
 
 // Create generates a new query key for the specified Search service. You can create up to 50 query keys per service.
-//
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
-// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
-// associated with the specified resource group. name is the name of the new query API key. clientRequestID is a
-// client-generated GUID value that identifies this request. If specified, this will be included in response
-// information as a way to track the request.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription. You can obtain this
+// value from the Azure Resource Manager API or the portal.
+// searchServiceName - the name of the Azure Search service associated with the specified resource group.
+// name - the name of the new query API key.
+// clientRequestID - a client-generated GUID value that identifies this request. If specified, this will be
+// included in response information as a way to track the request.
 func (client QueryKeysClient) Create(ctx context.Context, resourceGroupName string, searchServiceName string, name string, clientRequestID *uuid.UUID) (result QueryKey, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, searchServiceName, name, clientRequestID)
 	if err != nil {
@@ -117,12 +118,13 @@ func (client QueryKeysClient) CreateResponder(resp *http.Response) (result Query
 
 // Delete deletes the specified query key. Unlike admin keys, query keys are not regenerated. The process for
 // regenerating a query key is to delete and then recreate it.
-//
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
-// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
-// associated with the specified resource group. key is the query key to be deleted. Query keys are identified by
-// value, not by name. clientRequestID is a client-generated GUID value that identifies this request. If specified,
-// this will be included in response information as a way to track the request.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription. You can obtain this
+// value from the Azure Resource Manager API or the portal.
+// searchServiceName - the name of the Azure Search service associated with the specified resource group.
+// key - the query key to be deleted. Query keys are identified by value, not by name.
+// clientRequestID - a client-generated GUID value that identifies this request. If specified, this will be
+// included in response information as a way to track the request.
 func (client QueryKeysClient) Delete(ctx context.Context, resourceGroupName string, searchServiceName string, key string, clientRequestID *uuid.UUID) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, searchServiceName, key, clientRequestID)
 	if err != nil {
@@ -191,11 +193,12 @@ func (client QueryKeysClient) DeleteResponder(resp *http.Response) (result autor
 }
 
 // ListBySearchService returns the list of query API keys for the given Azure Search service.
-//
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
-// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
-// associated with the specified resource group. clientRequestID is a client-generated GUID value that identifies
-// this request. If specified, this will be included in response information as a way to track the request.
+// Parameters:
+// resourceGroupName - the name of the resource group within the current subscription. You can obtain this
+// value from the Azure Resource Manager API or the portal.
+// searchServiceName - the name of the Azure Search service associated with the specified resource group.
+// clientRequestID - a client-generated GUID value that identifies this request. If specified, this will be
+// included in response information as a way to track the request.
 func (client QueryKeysClient) ListBySearchService(ctx context.Context, resourceGroupName string, searchServiceName string, clientRequestID *uuid.UUID) (result ListQueryKeysResult, err error) {
 	req, err := client.ListBySearchServicePreparer(ctx, resourceGroupName, searchServiceName, clientRequestID)
 	if err != nil {

@@ -41,9 +41,11 @@ func NewProtectableItemsClientWithBaseURI(baseURI string, subscriptionID string)
 
 // List provides a pageable list of protectable objects within your subscription according to the query filter and the
 // pagination parameters.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. filter is oData filter options. skipToken is skipToken Filter.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// filter - oData filter options.
+// skipToken - skipToken Filter.
 func (client ProtectableItemsClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result WorkloadProtectableItemResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

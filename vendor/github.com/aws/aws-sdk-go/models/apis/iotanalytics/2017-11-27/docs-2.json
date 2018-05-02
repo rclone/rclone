@@ -1,0 +1,984 @@
+{
+  "version": "2.0",
+  "service": "<p>AWS IoT Analytics provides advanced data analysis for AWS IoT. It allows you to collect large amounts of device data, process messages, store them, and then query the data and run sophisticated analytics to make accurate decisions in your IoT applications and machine learning use cases. AWS IoT Analytics enables advanced data exploration through integration with Jupyter Notebooks and data visualization through integration with Amazon QuickSight.</p> <p>Traditional analytics and business intelligence tools are designed to process structured data. IoT data often comes from devices that record noisy processes (such as temperature, motion, or sound). As a result, the data from these devices can have significant gaps, corrupted messages, and false readings that must be cleaned up before analysis can occur. Also, IoT data is often only meaningful in the context of other data from external sources. </p> <p>AWS IoT Analytics automates each of the steps required to analyze data from IoT devices. AWS IoT Analytics filters, transforms, and enriches IoT data before storing it in a time-series data store for analysis. You can set up the service to collect only the data you need from your devices, apply mathematical transforms to process the data, and enrich the data with device-specific metadata such as device type and location before storing it. Then, you can analyze your data by running queries using the built-in SQL query engine, or perform more complex analytics and machine learning inference. AWS IoT Analytics includes models for common IoT use cases so you can answer questions like which devices are about to fail or which customers are at risk of abandoning their wearable devices.</p>",
+  "operations": {
+    "BatchPutMessage": "<p>Sends messages to a channel.</p>",
+    "CancelPipelineReprocessing": "<p>Cancels the reprocessing of data through the pipeline.</p>",
+    "CreateChannel": "<p>Creates a channel. A channel collects data from an MQTT topic and archives the raw, unprocessed messages before publishing the data to a pipeline.</p>",
+    "CreateDataset": "<p>Creates a data set. A data set stores data retrieved from a data store by applying an SQL action.</p> <note> <p>This operation creates the skeleton of a data set. To populate the data set, call \"CreateDatasetContent\".</p> </note>",
+    "CreateDatasetContent": "<p>Creates the content of a data set by applying an SQL action.</p>",
+    "CreateDatastore": "<p>Creates a data store, which is a repository for messages.</p>",
+    "CreatePipeline": "<p>Creates a pipeline. A pipeline consumes messages from one or more channels and allows you to process the messages before storing them in a data store.</p>",
+    "DeleteChannel": "<p>Deletes the specified channel.</p>",
+    "DeleteDataset": "<p>Deletes the specified data set.</p> <p>You do not have to delete the content of the data set before you perform this operation.</p>",
+    "DeleteDatasetContent": "<p>Deletes the content of the specified data set.</p>",
+    "DeleteDatastore": "<p>Deletes the specified data store.</p>",
+    "DeletePipeline": "<p>Deletes the specified pipeline.</p>",
+    "DescribeChannel": "<p>Retrieves information about a channel.</p>",
+    "DescribeDataset": "<p>Retrieves information about a data set.</p>",
+    "DescribeDatastore": "<p>Retrieves information about a data store.</p>",
+    "DescribeLoggingOptions": "<p>Retrieves the current settings of the AWS IoT Analytics logging options.</p>",
+    "DescribePipeline": "<p>Retrieves information about a pipeline.</p>",
+    "GetDatasetContent": "<p>Retrieves the contents of a data set as pre-signed URIs.</p>",
+    "ListChannels": "<p>Retrieves a list of channels.</p>",
+    "ListDatasets": "<p>Retrieves information about data sets.</p>",
+    "ListDatastores": "<p>Retrieves a list of data stores.</p>",
+    "ListPipelines": "<p>Retrieves a list of pipelines.</p>",
+    "PutLoggingOptions": "<p>Sets or updates the AWS IoT Analytics logging options.</p>",
+    "RunPipelineActivity": "<p>Simulates the results of running a pipeline activity on a message payload.</p>",
+    "SampleChannelData": "<p>Retrieves a sample of messages from the specified channel ingested during the specified timeframe. Up to 10 messages can be retrieved.</p>",
+    "StartPipelineReprocessing": "<p>Starts the reprocessing of raw message data through the pipeline.</p>",
+    "UpdateChannel": "<p>Updates the settings of a channel.</p>",
+    "UpdateDataset": "<p>Updates the settings of a data set.</p>",
+    "UpdateDatastore": "<p>Updates the settings of a data store.</p>",
+    "UpdatePipeline": "<p>Updates the settings of a pipeline.</p>"
+  },
+  "shapes": {
+    "ActivityBatchSize": {
+      "base": null,
+      "refs": {
+        "LambdaActivity$batchSize": "<p>The number of messages passed to the Lambda function for processing.</p> <p>The AWS Lambda function must be able to process all of these messages within five minutes, which is the maximum timeout duration for Lambda functions.</p>"
+      }
+    },
+    "ActivityName": {
+      "base": null,
+      "refs": {
+        "AddAttributesActivity$name": "<p>The name of the 'addAttributes' activity.</p>",
+        "AddAttributesActivity$next": "<p>The next activity in the pipeline.</p>",
+        "ChannelActivity$name": "<p>The name of the 'channel' activity.</p>",
+        "ChannelActivity$next": "<p>The next activity in the pipeline.</p>",
+        "DatastoreActivity$name": "<p>The name of the 'datastore' activity.</p>",
+        "DeviceRegistryEnrichActivity$name": "<p>The name of the 'deviceRegistryEnrich' activity.</p>",
+        "DeviceRegistryEnrichActivity$next": "<p>The next activity in the pipeline.</p>",
+        "DeviceShadowEnrichActivity$name": "<p>The name of the 'deviceShadowEnrich' activity.</p>",
+        "DeviceShadowEnrichActivity$next": "<p>The next activity in the pipeline.</p>",
+        "FilterActivity$name": "<p>The name of the 'filter' activity.</p>",
+        "FilterActivity$next": "<p>The next activity in the pipeline.</p>",
+        "LambdaActivity$name": "<p>The name of the 'lambda' activity.</p>",
+        "LambdaActivity$next": "<p>The next activity in the pipeline.</p>",
+        "MathActivity$name": "<p>The name of the 'math' activity.</p>",
+        "MathActivity$next": "<p>The next activity in the pipeline.</p>",
+        "RemoveAttributesActivity$name": "<p>The name of the 'removeAttributes' activity.</p>",
+        "RemoveAttributesActivity$next": "<p>The next activity in the pipeline.</p>",
+        "SelectAttributesActivity$name": "<p>The name of the 'selectAttributes' activity.</p>",
+        "SelectAttributesActivity$next": "<p>The next activity in the pipeline.</p>"
+      }
+    },
+    "AddAttributesActivity": {
+      "base": "<p>An activity that adds other attributes based on existing attributes in the message.</p>",
+      "refs": {
+        "PipelineActivity$addAttributes": "<p>Adds other attributes based on existing attributes in the message.</p>"
+      }
+    },
+    "AttributeName": {
+      "base": null,
+      "refs": {
+        "AttributeNameMapping$key": null,
+        "AttributeNameMapping$value": null,
+        "AttributeNames$member": null,
+        "DeviceRegistryEnrichActivity$attribute": "<p>The name of the attribute that is added to the message.</p>",
+        "DeviceRegistryEnrichActivity$thingName": "<p>The name of the IoT device whose registry information is added to the message.</p>",
+        "DeviceShadowEnrichActivity$attribute": "<p>The name of the attribute that is added to the message.</p>",
+        "DeviceShadowEnrichActivity$thingName": "<p>The name of the IoT device whose shadow information is added to the message.</p>",
+        "MathActivity$attribute": "<p>The name of the attribute that will contain the result of the math operation.</p>"
+      }
+    },
+    "AttributeNameMapping": {
+      "base": null,
+      "refs": {
+        "AddAttributesActivity$attributes": "<p>A list of 1-50 \"AttributeNameMapping\" objects that map an existing attribute to a new attribute.</p> <note> <p>The existing attributes remain in the message, so if you want to remove the originals, use \"RemoveAttributeActivity\".</p> </note>"
+      }
+    },
+    "AttributeNames": {
+      "base": null,
+      "refs": {
+        "RemoveAttributesActivity$attributes": "<p>A list of 1-50 attributes to remove from the message.</p>",
+        "SelectAttributesActivity$attributes": "<p>A list of the attributes to select from the message.</p>"
+      }
+    },
+    "BatchPutMessageErrorEntries": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageResponse$batchPutMessageErrorEntries": "<p>A list of any errors encountered when sending the messages to the channel.</p>"
+      }
+    },
+    "BatchPutMessageErrorEntry": {
+      "base": "<p>Contains informations about errors.</p>",
+      "refs": {
+        "BatchPutMessageErrorEntries$member": null
+      }
+    },
+    "BatchPutMessageRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "BatchPutMessageResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CancelPipelineReprocessingRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CancelPipelineReprocessingResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Channel": {
+      "base": "<p>A collection of data from an MQTT topic. Channels archive the raw, unprocessed messages before publishing the data to a pipeline.</p>",
+      "refs": {
+        "DescribeChannelResponse$channel": "<p>An object that contains information about the channel.</p>"
+      }
+    },
+    "ChannelActivity": {
+      "base": "<p>The activity that determines the source of the messages to be processed.</p>",
+      "refs": {
+        "PipelineActivity$channel": "<p>Determines the source of the messages to be processed.</p>"
+      }
+    },
+    "ChannelArn": {
+      "base": null,
+      "refs": {
+        "Channel$arn": "<p>The ARN of the channel.</p>",
+        "CreateChannelResponse$channelArn": "<p>The ARN of the channel.</p>"
+      }
+    },
+    "ChannelName": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageRequest$channelName": "<p>The name of the channel where the messages are sent.</p>",
+        "Channel$name": "<p>The name of the channel.</p>",
+        "ChannelActivity$channelName": "<p>The name of the channel from which the messages are processed.</p>",
+        "ChannelSummary$channelName": "<p>The name of the channel.</p>",
+        "CreateChannelRequest$channelName": "<p>The name of the channel.</p>",
+        "CreateChannelResponse$channelName": "<p>The name of the channel.</p>",
+        "DeleteChannelRequest$channelName": "<p>The name of the channel to delete.</p>",
+        "DescribeChannelRequest$channelName": "<p>The name of the channel whose information is retrieved.</p>",
+        "SampleChannelDataRequest$channelName": "<p>The name of the channel whose message samples are retrieved.</p>",
+        "UpdateChannelRequest$channelName": "<p>The name of the channel to be updated.</p>"
+      }
+    },
+    "ChannelStatus": {
+      "base": null,
+      "refs": {
+        "Channel$status": "<p>The status of the channel.</p>",
+        "ChannelSummary$status": "<p>The status of the channel.</p>"
+      }
+    },
+    "ChannelSummaries": {
+      "base": null,
+      "refs": {
+        "ListChannelsResponse$channelSummaries": "<p>A list of \"ChannelSummary\" objects.</p>"
+      }
+    },
+    "ChannelSummary": {
+      "base": "<p>A summary of information about a channel.</p>",
+      "refs": {
+        "ChannelSummaries$member": null
+      }
+    },
+    "CreateChannelRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateChannelResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDatasetContentRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDatasetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDatasetResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDatastoreRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDatastoreResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreatePipelineRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreatePipelineResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Dataset": {
+      "base": "<p>Information about a data set.</p>",
+      "refs": {
+        "DescribeDatasetResponse$dataset": "<p>An object that contains information about the data set.</p>"
+      }
+    },
+    "DatasetAction": {
+      "base": "<p>A \"DatasetAction\" object specifying the query that creates the data set content.</p>",
+      "refs": {
+        "DatasetActions$member": null
+      }
+    },
+    "DatasetActionName": {
+      "base": null,
+      "refs": {
+        "DatasetAction$actionName": "<p>The name of the data set action.</p>"
+      }
+    },
+    "DatasetActions": {
+      "base": null,
+      "refs": {
+        "CreateDatasetRequest$actions": "<p>A list of actions that create the data set. Only one action is supported at this time.</p>",
+        "Dataset$actions": "<p>The \"DatasetAction\" objects that create the data set.</p>",
+        "UpdateDatasetRequest$actions": "<p>A list of \"DatasetAction\" objects. Only one action is supported at this time.</p>"
+      }
+    },
+    "DatasetArn": {
+      "base": null,
+      "refs": {
+        "CreateDatasetResponse$datasetArn": "<p>The ARN of the data set.</p>",
+        "Dataset$arn": "<p>The ARN of the data set.</p>"
+      }
+    },
+    "DatasetContentState": {
+      "base": null,
+      "refs": {
+        "DatasetContentStatus$state": "<p>The state of the data set. Can be one of \"CREATING\", \"SUCCEEDED\" or \"FAILED\".</p>"
+      }
+    },
+    "DatasetContentStatus": {
+      "base": "<p>The state of the data set and the reason it is in this state.</p>",
+      "refs": {
+        "GetDatasetContentResponse$status": "<p>The status of the data set content.</p>"
+      }
+    },
+    "DatasetContentVersion": {
+      "base": null,
+      "refs": {
+        "DeleteDatasetContentRequest$versionId": "<p>The version of the data set whose content is deleted. You can also use the strings \"$LATEST\" or \"$LATEST_SUCCEEDED\" to delete the latest or latest successfully completed data set. If not specified, \"$LATEST_SUCCEEDED\" is the default.</p>",
+        "GetDatasetContentRequest$versionId": "<p>The version of the data set whose contents are retrieved. You can also use the strings \"$LATEST\" or \"$LATEST_SUCCEEDED\" to retrieve the contents of the latest or latest successfully completed data set. If not specified, \"$LATEST_SUCCEEDED\" is the default.</p>"
+      }
+    },
+    "DatasetEntries": {
+      "base": null,
+      "refs": {
+        "GetDatasetContentResponse$entries": "<p>A list of \"DatasetEntry\" objects.</p>"
+      }
+    },
+    "DatasetEntry": {
+      "base": "<p>The reference to a data set entry.</p>",
+      "refs": {
+        "DatasetEntries$member": null
+      }
+    },
+    "DatasetName": {
+      "base": null,
+      "refs": {
+        "CreateDatasetContentRequest$datasetName": "<p>The name of the data set.</p>",
+        "CreateDatasetRequest$datasetName": "<p>The name of the data set.</p>",
+        "CreateDatasetResponse$datasetName": "<p>The name of the data set.</p>",
+        "Dataset$name": "<p>The name of the data set.</p>",
+        "DatasetSummary$datasetName": "<p>The name of the data set.</p>",
+        "DeleteDatasetContentRequest$datasetName": "<p>The name of the data set whose content is deleted.</p>",
+        "DeleteDatasetRequest$datasetName": "<p>The name of the data set to delete.</p>",
+        "DescribeDatasetRequest$datasetName": "<p>The name of the data set whose information is retrieved.</p>",
+        "GetDatasetContentRequest$datasetName": "<p>The name of the data set whose contents are retrieved.</p>",
+        "UpdateDatasetRequest$datasetName": "<p>The name of the data set to update.</p>"
+      }
+    },
+    "DatasetStatus": {
+      "base": null,
+      "refs": {
+        "Dataset$status": "<p>The status of the data set.</p>",
+        "DatasetSummary$status": "<p>The status of the data set.</p>"
+      }
+    },
+    "DatasetSummaries": {
+      "base": null,
+      "refs": {
+        "ListDatasetsResponse$datasetSummaries": "<p>A list of \"DatasetSummary\" objects.</p>"
+      }
+    },
+    "DatasetSummary": {
+      "base": "<p>A summary of information about a data set.</p>",
+      "refs": {
+        "DatasetSummaries$member": null
+      }
+    },
+    "DatasetTrigger": {
+      "base": "<p>The \"DatasetTrigger\" that specifies when the data set is automatically updated.</p>",
+      "refs": {
+        "DatasetTriggers$member": null
+      }
+    },
+    "DatasetTriggers": {
+      "base": null,
+      "refs": {
+        "CreateDatasetRequest$triggers": "<p>A list of triggers. A trigger causes data set content to be populated at a specified time or time interval. The list of triggers can be empty or contain up to five <b>DataSetTrigger</b> objects.</p>",
+        "Dataset$triggers": "<p>The \"DatasetTrigger\" objects that specify when the data set is automatically updated.</p>",
+        "UpdateDatasetRequest$triggers": "<p>A list of \"DatasetTrigger\" objects. The list can be empty or can contain up to five <b>DataSetTrigger</b> objects.</p>"
+      }
+    },
+    "Datastore": {
+      "base": "<p>Information about a data store.</p>",
+      "refs": {
+        "DescribeDatastoreResponse$datastore": "<p>Information about the data store.</p>"
+      }
+    },
+    "DatastoreActivity": {
+      "base": "<p>The 'datastore' activity that specifies where to store the processed data.</p>",
+      "refs": {
+        "PipelineActivity$datastore": "<p>Specifies where to store the processed message data.</p>"
+      }
+    },
+    "DatastoreArn": {
+      "base": null,
+      "refs": {
+        "CreateDatastoreResponse$datastoreArn": "<p>The ARN of the data store.</p>",
+        "Datastore$arn": "<p>The ARN of the data store.</p>"
+      }
+    },
+    "DatastoreName": {
+      "base": null,
+      "refs": {
+        "CreateDatastoreRequest$datastoreName": "<p>The name of the data store.</p>",
+        "CreateDatastoreResponse$datastoreName": "<p>The name of the data store.</p>",
+        "Datastore$name": "<p>The name of the data store.</p>",
+        "DatastoreActivity$datastoreName": "<p>The name of the data store where processed messages are stored.</p>",
+        "DatastoreSummary$datastoreName": "<p>The name of the data store.</p>",
+        "DeleteDatastoreRequest$datastoreName": "<p>The name of the data store to delete.</p>",
+        "DescribeDatastoreRequest$datastoreName": "<p>The name of the data store</p>",
+        "UpdateDatastoreRequest$datastoreName": "<p>The name of the data store to be updated.</p>"
+      }
+    },
+    "DatastoreStatus": {
+      "base": null,
+      "refs": {
+        "Datastore$status": "<p>The status of a data store:</p> <dl> <dt>CREATING</dt> <dd> <p>The data store is being created.</p> </dd> <dt>ACTIVE</dt> <dd> <p>The data store has been created and can be used.</p> </dd> <dt>DELETING</dt> <dd> <p>The data store is being deleted.</p> </dd> </dl>",
+        "DatastoreSummary$status": "<p>The status of the data store.</p>"
+      }
+    },
+    "DatastoreSummaries": {
+      "base": null,
+      "refs": {
+        "ListDatastoresResponse$datastoreSummaries": "<p>A list of \"DatastoreSummary\" objects.</p>"
+      }
+    },
+    "DatastoreSummary": {
+      "base": "<p>A summary of information about a data store.</p>",
+      "refs": {
+        "DatastoreSummaries$member": null
+      }
+    },
+    "DeleteChannelRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteDatasetContentRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteDatasetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteDatastoreRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeletePipelineRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeChannelRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeChannelResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDatasetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDatasetResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDatastoreRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDatastoreResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeLoggingOptionsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeLoggingOptionsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribePipelineRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribePipelineResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeviceRegistryEnrichActivity": {
+      "base": "<p>An activity that adds data from the AWS IoT device registry to your message.</p>",
+      "refs": {
+        "PipelineActivity$deviceRegistryEnrich": "<p>Adds data from the AWS IoT device registry to your message.</p>"
+      }
+    },
+    "DeviceShadowEnrichActivity": {
+      "base": "<p>An activity that adds information from the AWS IoT Device Shadows service to a message.</p>",
+      "refs": {
+        "PipelineActivity$deviceShadowEnrich": "<p>Adds information from the AWS IoT Device Shadows service to a message.</p>"
+      }
+    },
+    "EndTime": {
+      "base": null,
+      "refs": {
+        "SampleChannelDataRequest$endTime": "<p>The end of the time window from which sample messages are retrieved.</p>",
+        "StartPipelineReprocessingRequest$endTime": "<p>The end time (exclusive) of raw message data that is reprocessed.</p>"
+      }
+    },
+    "EntryName": {
+      "base": null,
+      "refs": {
+        "DatasetEntry$entryName": "<p>The name of the data set item.</p>"
+      }
+    },
+    "ErrorCode": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageErrorEntry$errorCode": "<p>The code associated with the error.</p>"
+      }
+    },
+    "ErrorMessage": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageErrorEntry$errorMessage": "<p>The message associated with the error.</p>"
+      }
+    },
+    "FilterActivity": {
+      "base": "<p>An activity that filters a message based on its attributes.</p>",
+      "refs": {
+        "PipelineActivity$filter": "<p>Filters a message based on its attributes.</p>"
+      }
+    },
+    "FilterExpression": {
+      "base": null,
+      "refs": {
+        "FilterActivity$filter": "<p>An expression that looks like an SQL WHERE clause that must return a Boolean value.</p>"
+      }
+    },
+    "GetDatasetContentRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetDatasetContentResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "InternalFailureException": {
+      "base": "<p>There was an internal failure.</p>",
+      "refs": {
+      }
+    },
+    "InvalidRequestException": {
+      "base": "<p>The request was not valid.</p>",
+      "refs": {
+      }
+    },
+    "LambdaActivity": {
+      "base": "<p>An activity that runs a Lambda function to modify the message.</p>",
+      "refs": {
+        "PipelineActivity$lambda": "<p>Runs a Lambda function to modify the message.</p>"
+      }
+    },
+    "LambdaName": {
+      "base": null,
+      "refs": {
+        "LambdaActivity$lambdaName": "<p>The name of the Lambda function that is run on the message.</p>"
+      }
+    },
+    "LimitExceededException": {
+      "base": "<p>The command caused an internal limit to be exceeded.</p>",
+      "refs": {
+      }
+    },
+    "ListChannelsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListChannelsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListDatasetsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListDatasetsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListDatastoresRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListDatastoresResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListPipelinesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListPipelinesResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "LogResult": {
+      "base": null,
+      "refs": {
+        "RunPipelineActivityResponse$logResult": "<p>In case the pipeline activity fails, the log message that is generated.</p>"
+      }
+    },
+    "LoggingEnabled": {
+      "base": null,
+      "refs": {
+        "LoggingOptions$enabled": "<p>If true, logging is enabled for AWS IoT Analytics.</p>"
+      }
+    },
+    "LoggingLevel": {
+      "base": null,
+      "refs": {
+        "LoggingOptions$level": "<p>The logging level. Currently, only \"ERROR\" is supported.</p>"
+      }
+    },
+    "LoggingOptions": {
+      "base": "<p>Information about logging options.</p>",
+      "refs": {
+        "DescribeLoggingOptionsResponse$loggingOptions": "<p>The current settings of the AWS IoT Analytics logging options.</p>",
+        "PutLoggingOptionsRequest$loggingOptions": "<p>The new values of the AWS IoT Analytics logging options.</p>"
+      }
+    },
+    "MathActivity": {
+      "base": "<p>An activity that computes an arithmetic expression using the message's attributes.</p>",
+      "refs": {
+        "PipelineActivity$math": "<p>Computes an arithmetic expression using the message's attributes and adds it to the message.</p>"
+      }
+    },
+    "MathExpression": {
+      "base": null,
+      "refs": {
+        "MathActivity$math": "<p>An expression that uses one or more existing attributes and must return an integer value.</p>"
+      }
+    },
+    "MaxMessages": {
+      "base": null,
+      "refs": {
+        "SampleChannelDataRequest$maxMessages": "<p>The number of sample messages to be retrieved. The limit is 10, the default is also 10.</p>"
+      }
+    },
+    "MaxResults": {
+      "base": null,
+      "refs": {
+        "ListChannelsRequest$maxResults": "<p>The maximum number of results to return in this request.</p> <p>The default value is 100.</p>",
+        "ListDatasetsRequest$maxResults": "<p>The maximum number of results to return in this request.</p> <p>The default value is 100.</p>",
+        "ListDatastoresRequest$maxResults": "<p>The maximum number of results to return in this request.</p> <p>The default value is 100.</p>",
+        "ListPipelinesRequest$maxResults": "<p>The maximum number of results to return in this request.</p> <p>The default value is 100.</p>"
+      }
+    },
+    "Message": {
+      "base": "<p>Information about a message.</p>",
+      "refs": {
+        "Messages$member": null
+      }
+    },
+    "MessageId": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageErrorEntry$messageId": "<p>The ID of the message that caused the error. (See the value corresponding to the \"messageId\" key in the message object.)</p>",
+        "Message$messageId": "<p>The ID you wish to assign to the message.</p>"
+      }
+    },
+    "MessagePayload": {
+      "base": null,
+      "refs": {
+        "Message$payload": "<p>The payload of the message.</p>",
+        "MessagePayloads$member": null
+      }
+    },
+    "MessagePayloads": {
+      "base": null,
+      "refs": {
+        "RunPipelineActivityRequest$payloads": "<p>The sample message payloads on which the pipeline activity is run.</p>",
+        "RunPipelineActivityResponse$payloads": "<p>The enriched or transformed sample message payloads as base64-encoded strings. (The results of running the pipeline activity on each input sample message payload, encoded in base64.)</p>",
+        "SampleChannelDataResponse$payloads": "<p>The list of message samples. Each sample message is returned as a base64-encoded string.</p>"
+      }
+    },
+    "Messages": {
+      "base": null,
+      "refs": {
+        "BatchPutMessageRequest$messages": "<p>The list of messages to be sent. Each message has format: '{ \"messageId\": \"string\", \"payload\": \"string\"}'.</p>"
+      }
+    },
+    "NextToken": {
+      "base": null,
+      "refs": {
+        "ListChannelsRequest$nextToken": "<p>The token for the next set of results.</p>",
+        "ListChannelsResponse$nextToken": "<p>The token to retrieve the next set of results, or <code>null</code> if there are no more results.</p>",
+        "ListDatasetsRequest$nextToken": "<p>The token for the next set of results.</p>",
+        "ListDatasetsResponse$nextToken": "<p>The token to retrieve the next set of results, or <code>null</code> if there are no more results.</p>",
+        "ListDatastoresRequest$nextToken": "<p>The token for the next set of results.</p>",
+        "ListDatastoresResponse$nextToken": "<p>The token to retrieve the next set of results, or <code>null</code> if there are no more results.</p>",
+        "ListPipelinesRequest$nextToken": "<p>The token for the next set of results.</p>",
+        "ListPipelinesResponse$nextToken": "<p>The token to retrieve the next set of results, or <code>null</code> if there are no more results.</p>"
+      }
+    },
+    "Pipeline": {
+      "base": "<p>Contains information about a pipeline.</p>",
+      "refs": {
+        "DescribePipelineResponse$pipeline": "<p>A \"Pipeline\" object that contains information about the pipeline.</p>"
+      }
+    },
+    "PipelineActivities": {
+      "base": null,
+      "refs": {
+        "CreatePipelineRequest$pipelineActivities": "<p>A list of pipeline activities.</p> <p>The list can be 1-25 <b>PipelineActivity</b> objects. Activities perform transformations on your messages, such as removing, renaming, or adding message attributes; filtering messages based on attribute values; invoking your Lambda functions on messages for advanced processing; or performing mathematical transformations to normalize device data.</p>",
+        "Pipeline$activities": "<p>The activities that perform transformations on the messages.</p>",
+        "UpdatePipelineRequest$pipelineActivities": "<p>A list of \"PipelineActivity\" objects.</p> <p>The list can be 1-25 <b>PipelineActivity</b> objects. Activities perform transformations on your messages, such as removing, renaming or adding message attributes; filtering messages based on attribute values; invoking your Lambda functions on messages for advanced processing; or performing mathematical transformations to normalize device data.</p>"
+      }
+    },
+    "PipelineActivity": {
+      "base": "<p>An activity that performs a transformation on a message.</p>",
+      "refs": {
+        "PipelineActivities$member": null,
+        "RunPipelineActivityRequest$pipelineActivity": "<p>The pipeline activity that is run. This must not be a 'channel' activity or a 'datastore' activity because these activities are used in a pipeline only to load the original message and to store the (possibly) transformed message. If a 'lambda' activity is specified, only short-running Lambda functions (those with a timeout of less than 30 seconds or less) can be used.</p>"
+      }
+    },
+    "PipelineArn": {
+      "base": null,
+      "refs": {
+        "CreatePipelineResponse$pipelineArn": "<p>The ARN of the pipeline.</p>",
+        "Pipeline$arn": "<p>The ARN of the pipeline.</p>"
+      }
+    },
+    "PipelineName": {
+      "base": null,
+      "refs": {
+        "CancelPipelineReprocessingRequest$pipelineName": "<p>The name of pipeline for which data reprocessing is canceled.</p>",
+        "CreatePipelineRequest$pipelineName": "<p>The name of the pipeline.</p>",
+        "CreatePipelineResponse$pipelineName": "<p>The name of the pipeline.</p>",
+        "DeletePipelineRequest$pipelineName": "<p>The name of the pipeline to delete.</p>",
+        "DescribePipelineRequest$pipelineName": "<p>The name of the pipeline whose information is retrieved.</p>",
+        "Pipeline$name": "<p>The name of the pipeline.</p>",
+        "PipelineSummary$pipelineName": "<p>The name of the pipeline.</p>",
+        "StartPipelineReprocessingRequest$pipelineName": "<p>The name of the pipeline on which to start reprocessing.</p>",
+        "UpdatePipelineRequest$pipelineName": "<p>The name of the pipeline to update.</p>"
+      }
+    },
+    "PipelineSummaries": {
+      "base": null,
+      "refs": {
+        "ListPipelinesResponse$pipelineSummaries": "<p>A list of \"PipelineSummary\" objects.</p>"
+      }
+    },
+    "PipelineSummary": {
+      "base": "<p>A summary of information about a pipeline.</p>",
+      "refs": {
+        "PipelineSummaries$member": null
+      }
+    },
+    "PresignedURI": {
+      "base": null,
+      "refs": {
+        "DatasetEntry$dataURI": "<p>The pre-signed URI of the data set item.</p>"
+      }
+    },
+    "PutLoggingOptionsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Reason": {
+      "base": null,
+      "refs": {
+        "DatasetContentStatus$reason": "<p>The reason the data set is in this state.</p>"
+      }
+    },
+    "RemoveAttributesActivity": {
+      "base": "<p>An activity that removes attributes from a message.</p>",
+      "refs": {
+        "PipelineActivity$removeAttributes": "<p>Removes attributes from a message.</p>"
+      }
+    },
+    "ReprocessingId": {
+      "base": null,
+      "refs": {
+        "CancelPipelineReprocessingRequest$reprocessingId": "<p>The ID of the reprocessing task (returned by \"StartPipelineReprocessing\").</p>",
+        "ReprocessingSummary$id": "<p>The 'reprocessingId' returned by \"StartPipelineReprocessing\".</p>",
+        "StartPipelineReprocessingResponse$reprocessingId": "<p>The ID of the pipeline reprocessing activity that was started.</p>"
+      }
+    },
+    "ReprocessingStatus": {
+      "base": null,
+      "refs": {
+        "ReprocessingSummary$status": "<p>The status of the pipeline reprocessing.</p>"
+      }
+    },
+    "ReprocessingSummaries": {
+      "base": null,
+      "refs": {
+        "Pipeline$reprocessingSummaries": "<p>A summary of information about the pipeline reprocessing.</p>",
+        "PipelineSummary$reprocessingSummaries": "<p>A summary of information about the pipeline reprocessing.</p>"
+      }
+    },
+    "ReprocessingSummary": {
+      "base": "<p>Information about pipeline reprocessing.</p>",
+      "refs": {
+        "ReprocessingSummaries$member": null
+      }
+    },
+    "ResourceAlreadyExistsException": {
+      "base": "<p>A resource with the same name already exists.</p>",
+      "refs": {
+      }
+    },
+    "ResourceNotFoundException": {
+      "base": "<p>A resource with the specified name could not be found.</p>",
+      "refs": {
+      }
+    },
+    "RetentionPeriod": {
+      "base": "<p>How long, in days, message data is kept.</p>",
+      "refs": {
+        "Channel$retentionPeriod": "<p>How long, in days, message data is kept for the channel.</p>",
+        "CreateChannelRequest$retentionPeriod": "<p>How long, in days, message data is kept for the channel.</p>",
+        "CreateChannelResponse$retentionPeriod": "<p>How long, in days, message data is kept for the channel.</p>",
+        "CreateDatastoreRequest$retentionPeriod": "<p>How long, in days, message data is kept for the data store.</p>",
+        "CreateDatastoreResponse$retentionPeriod": "<p>How long, in days, message data is kept for the data store.</p>",
+        "Datastore$retentionPeriod": "<p>How long, in days, message data is kept for the data store.</p>",
+        "UpdateChannelRequest$retentionPeriod": "<p>How long, in days, message data is kept for the channel.</p>",
+        "UpdateDatastoreRequest$retentionPeriod": "<p>How long, in days, message data is kept for the data store.</p>"
+      }
+    },
+    "RetentionPeriodInDays": {
+      "base": null,
+      "refs": {
+        "RetentionPeriod$numberOfDays": "<p>The number of days that message data is kept. The \"unlimited\" parameter must be false.</p>"
+      }
+    },
+    "RoleArn": {
+      "base": null,
+      "refs": {
+        "DeviceRegistryEnrichActivity$roleArn": "<p>The ARN of the role that allows access to the device's registry information.</p>",
+        "DeviceShadowEnrichActivity$roleArn": "<p>The ARN of the role that allows access to the device's shadow.</p>",
+        "LoggingOptions$roleArn": "<p>The ARN of the role that grants permission to AWS IoT Analytics to perform logging.</p>"
+      }
+    },
+    "RunPipelineActivityRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RunPipelineActivityResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SampleChannelDataRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SampleChannelDataResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Schedule": {
+      "base": "<p>The schedule for when to trigger an update.</p>",
+      "refs": {
+        "DatasetTrigger$schedule": "<p>The \"Schedule\" when the trigger is initiated.</p>"
+      }
+    },
+    "ScheduleExpression": {
+      "base": null,
+      "refs": {
+        "Schedule$expression": "<p>The expression that defines when to trigger an update. For more information, see <a href=\"https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html\"> Schedule Expressions for Rules</a> in the Amazon CloudWatch documentation.</p>"
+      }
+    },
+    "SelectAttributesActivity": {
+      "base": "<p>Creates a new message using only the specified attributes from the original message.</p>",
+      "refs": {
+        "PipelineActivity$selectAttributes": "<p>Creates a new message using only the specified attributes from the original message. </p>"
+      }
+    },
+    "ServiceUnavailableException": {
+      "base": "<p>The service is temporarily unavailable.</p>",
+      "refs": {
+      }
+    },
+    "SqlQuery": {
+      "base": null,
+      "refs": {
+        "SqlQueryDatasetAction$sqlQuery": "<p>An SQL query string.</p>"
+      }
+    },
+    "SqlQueryDatasetAction": {
+      "base": "<p>The SQL query to modify the message.</p>",
+      "refs": {
+        "DatasetAction$queryAction": "<p>An \"SqlQueryDatasetAction\" object that contains the SQL query to modify the message.</p>"
+      }
+    },
+    "StartPipelineReprocessingRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartPipelineReprocessingResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartTime": {
+      "base": null,
+      "refs": {
+        "SampleChannelDataRequest$startTime": "<p>The start of the time window from which sample messages are retrieved.</p>",
+        "StartPipelineReprocessingRequest$startTime": "<p>The start time (inclusive) of raw message data that is reprocessed.</p>"
+      }
+    },
+    "ThrottlingException": {
+      "base": "<p>The request was denied due to request throttling.</p>",
+      "refs": {
+      }
+    },
+    "Timestamp": {
+      "base": null,
+      "refs": {
+        "Channel$creationTime": "<p>When the channel was created.</p>",
+        "Channel$lastUpdateTime": "<p>When the channel was last updated.</p>",
+        "ChannelSummary$creationTime": "<p>When the channel was created.</p>",
+        "ChannelSummary$lastUpdateTime": "<p>The last time the channel was updated.</p>",
+        "Dataset$creationTime": "<p>When the data set was created.</p>",
+        "Dataset$lastUpdateTime": "<p>The last time the data set was updated.</p>",
+        "DatasetSummary$creationTime": "<p>The time the data set was created.</p>",
+        "DatasetSummary$lastUpdateTime": "<p>The last time the data set was updated.</p>",
+        "Datastore$creationTime": "<p>When the data store was created.</p>",
+        "Datastore$lastUpdateTime": "<p>The last time the data store was updated.</p>",
+        "DatastoreSummary$creationTime": "<p>When the data store was created.</p>",
+        "DatastoreSummary$lastUpdateTime": "<p>The last time the data store was updated.</p>",
+        "GetDatasetContentResponse$timestamp": "<p>The time when the request was made.</p>",
+        "Pipeline$creationTime": "<p>When the pipeline was created.</p>",
+        "Pipeline$lastUpdateTime": "<p>The last time the pipeline was updated.</p>",
+        "PipelineSummary$creationTime": "<p>When the pipeline was created.</p>",
+        "PipelineSummary$lastUpdateTime": "<p>When the pipeline was last updated.</p>",
+        "ReprocessingSummary$creationTime": "<p>The time the pipeline reprocessing was created.</p>"
+      }
+    },
+    "UnlimitedRetentionPeriod": {
+      "base": null,
+      "refs": {
+        "RetentionPeriod$unlimited": "<p>If true, message data is kept indefinitely.</p>"
+      }
+    },
+    "UpdateChannelRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateDatasetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateDatastoreRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdatePipelineRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "errorMessage": {
+      "base": null,
+      "refs": {
+        "InternalFailureException$message": null,
+        "InvalidRequestException$message": null,
+        "LimitExceededException$message": null,
+        "ResourceAlreadyExistsException$message": null,
+        "ResourceNotFoundException$message": null,
+        "ServiceUnavailableException$message": null,
+        "ThrottlingException$message": null
+      }
+    },
+    "resourceArn": {
+      "base": null,
+      "refs": {
+        "ResourceAlreadyExistsException$resourceArn": "<p>The ARN of the resource.</p>"
+      }
+    },
+    "resourceId": {
+      "base": null,
+      "refs": {
+        "ResourceAlreadyExistsException$resourceId": "<p>The ID of the resource.</p>"
+      }
+    }
+  }
+}

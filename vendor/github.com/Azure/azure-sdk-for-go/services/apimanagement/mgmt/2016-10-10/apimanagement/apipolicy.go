@@ -42,12 +42,13 @@ func NewAPIPolicyClientWithBaseURI(baseURI string, subscriptionID string) APIPol
 }
 
 // CreateOrUpdate creates or updates policy configuration for the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. parameters is the policy
-// contents to apply. parameters will be closed upon successful return. Callers should ensure closure when
-// receiving an error.ifMatch is the entity state (Etag) version of the Api Policy to update. A value of "*" can be
-// used for If-Match to unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// parameters - the policy contents to apply.
+// ifMatch - the entity state (Etag) version of the Api Policy to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client APIPolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, parameters io.ReadCloser, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -97,7 +98,7 @@ func (client APIPolicyClient) CreateOrUpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/vnd.ms-azure-apim.policy+xml"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/policy", pathParameters),
@@ -127,11 +128,12 @@ func (client APIPolicyClient) CreateOrUpdateResponder(resp *http.Response) (resu
 }
 
 // Delete deletes the policy configuration at the Api.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. ifMatch is the entity
-// state (Etag) version of the Api policy to update. A value of "*" can be used for If-Match to unconditionally
-// apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// ifMatch - the entity state (Etag) version of the Api policy to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client APIPolicyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -209,9 +211,10 @@ func (client APIPolicyClient) DeleteResponder(resp *http.Response) (result autor
 }
 
 // Get get the policy configuration at the API level.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
 func (client APIPolicyClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string) (result ReadCloser, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

@@ -120,6 +120,147 @@ type ProjectsTriggersService struct {
 	s *Service
 }
 
+// ArtifactObjects: Files in the workspace to upload to Cloud Storage
+// upon successful
+// completion of all build steps.
+type ArtifactObjects struct {
+	// Location: Cloud Storage bucket and optional object path, in the
+	// form
+	// "gs://bucket/path/to/somewhere/". (see [Bucket
+	// Name
+	// Requirements](https://cloud.google.com/storage/docs/bucket-naming
+	// #requirements)).
+	//
+	// Files in the workspace matching any path pattern will be uploaded
+	// to
+	// Cloud Storage with this location as a prefix.
+	Location string `json:"location,omitempty"`
+
+	// Paths: Path globs used to match files in the build's workspace.
+	Paths []string `json:"paths,omitempty"`
+
+	// Timing: Stores timing information for pushing all artifact
+	// objects.
+	// @OutputOnly
+	Timing *TimeSpan `json:"timing,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Location") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Location") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ArtifactObjects) MarshalJSON() ([]byte, error) {
+	type NoMethod ArtifactObjects
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ArtifactResult: An artifact that was uploaded during a build. This
+// is a single record in the artifact manifest JSON file.
+type ArtifactResult struct {
+	// FileHash: The file hash of the artifact.
+	FileHash []*FileHashes `json:"fileHash,omitempty"`
+
+	// Location: The path of an artifact in a Google Cloud Storage bucket,
+	// with the
+	// generation number. For
+	// example,
+	// `gs://mybucket/path/to/output.jar#generation`.
+	Location string `json:"location,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FileHash") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FileHash") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ArtifactResult) MarshalJSON() ([]byte, error) {
+	type NoMethod ArtifactResult
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Artifacts: Artifacts produced by a build that should be uploaded
+// upon
+// successful completion of all build steps.
+type Artifacts struct {
+	// Images: A list of images to be pushed upon the successful completion
+	// of all build
+	// steps.
+	//
+	// The images will be pushed using the builder service account's
+	// credentials.
+	//
+	// The digests of the pushed images will be stored in the Build
+	// resource's
+	// results field.
+	//
+	// If any of the images fail to be pushed, the build is marked FAILURE.
+	Images []string `json:"images,omitempty"`
+
+	// Objects: A list of objects to be uploaded to Cloud Storage upon
+	// successful
+	// completion of all build steps.
+	//
+	// Files in the workspace matching specified paths globs will be
+	// uploaded to
+	// the specified Cloud Storage location using the builder service
+	// account's
+	// credentials.
+	//
+	// The location and generation of the uploaded objects will be stored in
+	// the
+	// Build resource's results field.
+	//
+	// If any objects fail to be pushed, the build is marked FAILURE.
+	Objects *ArtifactObjects `json:"objects,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Images") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Images") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Artifacts) MarshalJSON() ([]byte, error) {
+	type NoMethod Artifacts
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Build: A build resource in the Container Builder API.
 //
 // At a high level, a `Build` describes where to find source code, how
@@ -142,6 +283,11 @@ type ProjectsTriggersService struct {
 //   resolved from the specified branch or tag.
 // - $SHORT_SHA: first 7 characters of $REVISION_ID or $COMMIT_SHA.
 type Build struct {
+	// Artifacts: Artifacts produced by the build that should be uploaded
+	// upon
+	// successful completion of all build steps.
+	Artifacts *Artifacts `json:"artifacts,omitempty"`
+
 	// BuildTriggerId: The ID of the `BuildTrigger` that triggered this
 	// build, if it was
 	// triggered automatically.
@@ -276,7 +422,7 @@ type Build struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "BuildTriggerId") to
+	// ForceSendFields is a list of field names (e.g. "Artifacts") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -284,13 +430,12 @@ type Build struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BuildTriggerId") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Artifacts") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -378,6 +523,7 @@ type BuildOptions struct {
 	// Possible values:
 	//   "NONE" - No hash requested.
 	//   "SHA256" - Use a sha256 hash.
+	//   "MD5" - Use a md5 hash.
 	SourceProvenanceHash []string `json:"sourceProvenanceHash,omitempty"`
 
 	// SubstitutionOption: Option to specify behavior when there is an error
@@ -750,6 +896,7 @@ type Hash struct {
 	// Possible values:
 	//   "NONE" - No hash requested.
 	//   "SHA256" - Use a sha256 hash.
+	//   "MD5" - Use a md5 hash.
 	Type string `json:"type,omitempty"`
 
 	// Value: The hash value.
@@ -1014,6 +1161,10 @@ func (s *RepoSource) MarshalJSON() ([]byte, error) {
 
 // Results: Artifacts created by the build pipeline.
 type Results struct {
+	// ArtifactManifest: Path to the artifact manifest. Only populated when
+	// artifacts are uploaded.
+	ArtifactManifest string `json:"artifactManifest,omitempty"`
+
 	// BuildStepImages: List of build step digests, in the order
 	// corresponding to build step
 	// indices.
@@ -1022,7 +1173,11 @@ type Results struct {
 	// Images: Container images that were built as a part of the build.
 	Images []*BuiltImage `json:"images,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "BuildStepImages") to
+	// NumArtifacts: Number of artifacts uploaded. Only populated when
+	// artifacts are uploaded.
+	NumArtifacts int64 `json:"numArtifacts,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "ArtifactManifest") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1030,7 +1185,7 @@ type Results struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BuildStepImages") to
+	// NullFields is a list of field names (e.g. "ArtifactManifest") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the

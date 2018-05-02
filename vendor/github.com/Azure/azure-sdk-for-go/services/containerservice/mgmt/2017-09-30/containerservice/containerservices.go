@@ -42,10 +42,10 @@ func NewContainerServicesClientWithBaseURI(baseURI string, subscriptionID string
 
 // CreateOrUpdate creates or updates a container service with the specified configuration of orchestrator, masters, and
 // agents.
-//
-// resourceGroupName is the name of the resource group. containerServiceName is the name of the container service
-// in the specified subscription and resource group. parameters is parameters supplied to the Create or Update a
-// Container Service operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// containerServiceName - the name of the container service in the specified subscription and resource group.
+// parameters - parameters supplied to the Create or Update a Container Service operation.
 func (client ContainerServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, containerServiceName string, parameters ContainerService) (result ContainerServicesCreateOrUpdateFutureType, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -110,7 +110,7 @@ func (client ContainerServicesClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/containerServices/{containerServiceName}", pathParameters),
@@ -151,9 +151,9 @@ func (client ContainerServicesClient) CreateOrUpdateResponder(resp *http.Respons
 // not delete other resources created as part of creating a container service, including storage accounts, VMs, and
 // availability sets. All the other resources created with the container service are part of the same resource group
 // and can be deleted individually.
-//
-// resourceGroupName is the name of the resource group. containerServiceName is the name of the container service
-// in the specified subscription and resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// containerServiceName - the name of the container service in the specified subscription and resource group.
 func (client ContainerServicesClient) Delete(ctx context.Context, resourceGroupName string, containerServiceName string) (result ContainerServicesDeleteFutureType, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, containerServiceName)
 	if err != nil {
@@ -221,9 +221,9 @@ func (client ContainerServicesClient) DeleteResponder(resp *http.Response) (resu
 // Get gets the properties of the specified container service in the specified subscription and resource group. The
 // operation returns the properties including state, orchestrator, number of masters and agents, and FQDNs of masters
 // and agents.
-//
-// resourceGroupName is the name of the resource group. containerServiceName is the name of the container service
-// in the specified subscription and resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// containerServiceName - the name of the container service in the specified subscription and resource group.
 func (client ContainerServicesClient) Get(ctx context.Context, resourceGroupName string, containerServiceName string) (result ContainerService, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, containerServiceName)
 	if err != nil {
@@ -381,8 +381,8 @@ func (client ContainerServicesClient) ListComplete(ctx context.Context) (result 
 // ListByResourceGroup gets a list of container services in the specified subscription and resource group. The
 // operation returns properties of each container service including state, orchestrator, number of masters and agents,
 // and FQDNs of masters and agents.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client ContainerServicesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -475,9 +475,9 @@ func (client ContainerServicesClient) ListByResourceGroupComplete(ctx context.Co
 
 // ListOrchestrators gets a list of supported orchestrators in the specified subscription. The operation returns
 // properties of each orchestrator including verison and available upgrades.
-//
-// location is the name of a supported Azure region. resourceType is resource type for which the list of
-// orchestrators needs to be returned
+// Parameters:
+// location - the name of a supported Azure region.
+// resourceType - resource type for which the list of orchestrators needs to be returned
 func (client ContainerServicesClient) ListOrchestrators(ctx context.Context, location string, resourceType string) (result OrchestratorVersionProfileListResult, err error) {
 	req, err := client.ListOrchestratorsPreparer(ctx, location, resourceType)
 	if err != nil {

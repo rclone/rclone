@@ -9,7 +9,3 @@ func lockFile(fd uintptr) error {
 func unlockFile(fd uintptr) error {
 	return errNotSupported
 }
-
-func getFdName(fd uintptr) (name string, err error) {
-	return "", errNotSupported
-}

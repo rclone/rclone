@@ -42,12 +42,14 @@ func NewPercentileTargetClientWithBaseURI(baseURI string, subscriptionID string)
 
 // ListMetrics retrieves the metrics determined by the given filter for the given account target region. This url is
 // only for PBS and Replication Latency data
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// targetRegion is target region to which data is written. Cosmos DB region, with spaces between words and each
-// word capitalized. filter is an OData filter expression that describes a subset of metrics to return. The
-// parameters that can be filtered are name.value (name of the metric, can have an or of multiple names),
-// startTime, endTime, and timeGrain. The supported operator is eq.
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// targetRegion - target region to which data is written. Cosmos DB region, with spaces between words and each
+// word capitalized.
+// filter - an OData filter expression that describes a subset of metrics to return. The parameters that can be
+// filtered are name.value (name of the metric, can have an or of multiple names), startTime, endTime, and
+// timeGrain. The supported operator is eq.
 func (client PercentileTargetClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, targetRegion string, filter string) (result PercentileMetricListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

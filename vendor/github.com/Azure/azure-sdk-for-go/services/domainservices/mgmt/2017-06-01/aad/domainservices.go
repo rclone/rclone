@@ -43,10 +43,11 @@ func NewDomainServicesClientWithBaseURI(baseURI string, subscriptionID string) D
 // CreateOrUpdate the Create Domain Service operation creates a new domain service with the specified parameters. If
 // the specific service already exists, then any patchable properties will be updated and any immutable properties will
 // remain unchanged.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. The name is case
-// insensitive. domainServiceName is the name of the domain service in the specified subscription and resource
-// group. properties is properties supplied to the Create or Update a Domain Service operation.
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription. The name is case
+// insensitive.
+// domainServiceName - the name of the domain service in the specified subscription and resource group.
+// properties - properties supplied to the Create or Update a Domain Service operation.
 func (client DomainServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, domainServiceName string, properties DomainServiceProperties) (result DomainServicesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -85,7 +86,7 @@ func (client DomainServicesClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AAD/domainServices/{domainServiceName}", pathParameters),
@@ -123,10 +124,10 @@ func (client DomainServicesClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete the Delete Domain Service operation deletes an existing Domain Service.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. The name is case
-// insensitive. domainServiceName is the name of the domain service in the specified subscription and resource
-// group.
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription. The name is case
+// insensitive.
+// domainServiceName - the name of the domain service in the specified subscription and resource group.
 func (client DomainServicesClient) Delete(ctx context.Context, resourceGroupName string, domainServiceName string) (result DomainServicesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -201,10 +202,10 @@ func (client DomainServicesClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // Get the Get Domain Service operation retrieves a json representation of the Domain Service.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. The name is case
-// insensitive. domainServiceName is the name of the domain service in the specified subscription and resource
-// group.
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription. The name is case
+// insensitive.
+// domainServiceName - the name of the domain service in the specified subscription and resource group.
 func (client DomainServicesClient) Get(ctx context.Context, resourceGroupName string, domainServiceName string) (result DomainService, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -341,8 +342,8 @@ func (client DomainServicesClient) ListResponder(resp *http.Response) (result Do
 
 // ListByResourceGroup the List Domain Services in Resource Group operation lists all the domain services available
 // under the given resource group.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. The name is case
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription. The name is case
 // insensitive.
 func (client DomainServicesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result DomainServiceListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -416,10 +417,11 @@ func (client DomainServicesClient) ListByResourceGroupResponder(resp *http.Respo
 
 // Update the Update Domain Service operation can be used to update the existing deployment. The update call only
 // supports the properties listed in the PATCH body.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. The name is case
-// insensitive. domainServiceName is the name of the domain service in the specified subscription and resource
-// group. properties is properties supplied to the Update a Domain Service operation.
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription. The name is case
+// insensitive.
+// domainServiceName - the name of the domain service in the specified subscription and resource group.
+// properties - properties supplied to the Update a Domain Service operation.
 func (client DomainServicesClient) Update(ctx context.Context, resourceGroupName string, domainServiceName string, properties DomainServicePatchProperties) (result DomainServicesUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -458,7 +460,7 @@ func (client DomainServicesClient) UpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AAD/domainServices/{domainServiceName}", pathParameters),

@@ -40,8 +40,9 @@ func NewNodeHealthsClientWithBaseURI(baseURI string, timeout *int32) NodeHealths
 }
 
 // Get get node healths
-//
-// nodeName is the name of the node eventsHealthStateFilter is the filter of the events health state
+// Parameters:
+// nodeName - the name of the node
+// eventsHealthStateFilter - the filter of the events health state
 func (client NodeHealthsClient) Get(ctx context.Context, nodeName string, eventsHealthStateFilter string) (result NodeHealth, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, eventsHealthStateFilter)
 	if err != nil {
@@ -110,8 +111,9 @@ func (client NodeHealthsClient) GetResponder(resp *http.Response) (result NodeHe
 }
 
 // Send send node health
-//
-// nodeName is the name of the node nodeHealthReport is the report of the node health
+// Parameters:
+// nodeName - the name of the node
+// nodeHealthReport - the report of the node health
 func (client NodeHealthsClient) Send(ctx context.Context, nodeName string, nodeHealthReport NodeHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, nodeName, nodeHealthReport)
 	if err != nil {
@@ -149,7 +151,7 @@ func (client NodeHealthsClient) SendPreparer(ctx context.Context, nodeName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/ReportHealth", pathParameters),

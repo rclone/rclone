@@ -23,35 +23,12 @@ import original "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2017-
 
 type AssignmentsClient = original.AssignmentsClient
 
-func NewAssignmentsClient(subscriptionID string) AssignmentsClient {
-	return original.NewAssignmentsClient(subscriptionID)
-}
-func NewAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) AssignmentsClient {
-	return original.NewAssignmentsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type DefinitionsClient = original.DefinitionsClient
-
-func NewDefinitionsClient(subscriptionID string) DefinitionsClient {
-	return original.NewDefinitionsClient(subscriptionID)
-}
-func NewDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) DefinitionsClient {
-	return original.NewDefinitionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type Mode = original.Mode
 
 const (
@@ -88,6 +65,30 @@ type SetDefinitionProperties = original.SetDefinitionProperties
 type Sku = original.Sku
 type SetDefinitionsClient = original.SetDefinitionsClient
 
+func NewAssignmentsClient(subscriptionID string) AssignmentsClient {
+	return original.NewAssignmentsClient(subscriptionID)
+}
+func NewAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) AssignmentsClient {
+	return original.NewAssignmentsClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewDefinitionsClient(subscriptionID string) DefinitionsClient {
+	return original.NewDefinitionsClient(subscriptionID)
+}
+func NewDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) DefinitionsClient {
+	return original.NewDefinitionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleModeValues() []Mode {
+	return original.PossibleModeValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func NewSetDefinitionsClient(subscriptionID string) SetDefinitionsClient {
 	return original.NewSetDefinitionsClient(subscriptionID)
 }

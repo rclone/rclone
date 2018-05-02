@@ -41,9 +41,12 @@ func NewSecretsClientWithBaseURI(baseURI string, subscriptionID string) SecretsC
 }
 
 // CreateOrUpdate create or replace an existing secret.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the secret. secret is a secret.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the secret.
+// secret - a secret.
 func (client SecretsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, userName string, name string, secret Secret) (result Secret, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: secret,
@@ -88,7 +91,7 @@ func (client SecretsClient) CreateOrUpdatePreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/users/{userName}/secrets/{name}", pathParameters),
@@ -118,9 +121,11 @@ func (client SecretsClient) CreateOrUpdateResponder(resp *http.Response) (result
 }
 
 // Delete delete secret.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the secret.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the secret.
 func (client SecretsClient) Delete(ctx context.Context, resourceGroupName string, labName string, userName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, userName, name)
 	if err != nil {
@@ -186,10 +191,12 @@ func (client SecretsClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Get get secret.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the secret. expand is specify the $expand query. Example:
-// 'properties($select=value)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the secret.
+// expand - specify the $expand query. Example: 'properties($select=value)'
 func (client SecretsClient) Get(ctx context.Context, resourceGroupName string, labName string, userName string, name string, expand string) (result Secret, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, userName, name, expand)
 	if err != nil {
@@ -259,11 +266,14 @@ func (client SecretsClient) GetResponder(resp *http.Response) (result Secret, er
 }
 
 // List list secrets in a given user profile.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. expand is specify the $expand query. Example: 'properties($select=value)' filter is the filter to
-// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
-// ordering expression for the results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// expand - specify the $expand query. Example: 'properties($select=value)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client SecretsClient) List(ctx context.Context, resourceGroupName string, labName string, userName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSecretPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, userName, expand, filter, top, orderby)

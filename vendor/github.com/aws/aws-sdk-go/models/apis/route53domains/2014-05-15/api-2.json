@@ -1015,6 +1015,7 @@
     "ListOperationsRequest":{
       "type":"structure",
       "members":{
+        "SubmittedSince":{"shape":"Timestamp"},
         "Marker":{"shape":"PageMarker"},
         "MaxItems":{"shape":"PageMaxItems"}
       }

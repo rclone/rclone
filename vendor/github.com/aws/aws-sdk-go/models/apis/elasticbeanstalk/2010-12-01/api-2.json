@@ -658,9 +658,11 @@
         "Unknown"
       ]
     },
+    "ApplicationArn":{"type":"string"},
     "ApplicationDescription":{
       "type":"structure",
       "members":{
+        "ApplicationArn":{"shape":"ApplicationArn"},
         "ApplicationName":{"shape":"ApplicationName"},
         "Description":{"shape":"Description"},
         "DateCreated":{"shape":"CreationDate"},
@@ -718,9 +720,11 @@
         "ResourceLifecycleConfig":{"shape":"ApplicationResourceLifecycleConfig"}
       }
     },
+    "ApplicationVersionArn":{"type":"string"},
     "ApplicationVersionDescription":{
       "type":"structure",
       "members":{
+        "ApplicationVersionArn":{"shape":"ApplicationVersionArn"},
         "ApplicationName":{"shape":"ApplicationName"},
         "Description":{"shape":"Description"},
         "VersionLabel":{"shape":"VersionLabel"},

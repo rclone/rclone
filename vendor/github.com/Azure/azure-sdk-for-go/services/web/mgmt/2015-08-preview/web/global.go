@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GlobalClient is the webSite Management Client
 type GlobalClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewGlobalClient creates an instance of the GlobalClient client.
 func NewGlobalClient(subscriptionID string) GlobalClient {
 	return NewGlobalClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewGlobalClientWithBaseURI creates an instance of the GlobalClient client.
 func NewGlobalClientWithBaseURI(baseURI string, subscriptionID string) GlobalClient {
 	return GlobalClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CheckNameAvailability sends the check name availability request.
 //
 // request is name availability request
@@ -64,6 +68,7 @@ func (client GlobalClient) CheckNameAvailability(ctx context.Context, request Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
 func (client GlobalClient) CheckNameAvailabilityPreparer(ctx context.Context, request ResourceNameAvailabilityRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -76,7 +81,7 @@ func (client GlobalClient) CheckNameAvailabilityPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Web/checknameavailability", pathParameters),
@@ -85,6 +90,7 @@ func (client GlobalClient) CheckNameAvailabilityPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
@@ -92,6 +98,7 @@ func (client GlobalClient) CheckNameAvailabilitySender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) CheckNameAvailabilityResponder(resp *http.Response) (result ResourceNameAvailability, err error) {
@@ -105,6 +112,7 @@ func (client GlobalClient) CheckNameAvailabilityResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllCertificates sends the get all certificates request.
 func (client GlobalClient) GetAllCertificates(ctx context.Context) (result CertificateCollectionPage, err error) {
 	result.fn = client.getAllCertificatesNextResults
@@ -129,6 +137,7 @@ func (client GlobalClient) GetAllCertificates(ctx context.Context) (result Certi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllCertificatesPreparer prepares the GetAllCertificates request.
 func (client GlobalClient) GetAllCertificatesPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -148,6 +157,7 @@ func (client GlobalClient) GetAllCertificatesPreparer(ctx context.Context) (*htt
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllCertificatesSender sends the GetAllCertificates request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllCertificatesSender(req *http.Request) (*http.Response, error) {
@@ -155,6 +165,7 @@ func (client GlobalClient) GetAllCertificatesSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllCertificatesResponder handles the response to the GetAllCertificates request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllCertificatesResponder(resp *http.Response) (result CertificateCollection, err error) {
@@ -189,12 +200,14 @@ func (client GlobalClient) getAllCertificatesNextResults(lastResults Certificate
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllCertificatesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllCertificatesComplete(ctx context.Context) (result CertificateCollectionIterator, err error) {
 	result.page, err = client.GetAllCertificates(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllClassicMobileServices sends the get all classic mobile services request.
 func (client GlobalClient) GetAllClassicMobileServices(ctx context.Context) (result ClassicMobileServiceCollectionPage, err error) {
 	result.fn = client.getAllClassicMobileServicesNextResults
@@ -219,6 +232,7 @@ func (client GlobalClient) GetAllClassicMobileServices(ctx context.Context) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllClassicMobileServicesPreparer prepares the GetAllClassicMobileServices request.
 func (client GlobalClient) GetAllClassicMobileServicesPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -238,6 +252,7 @@ func (client GlobalClient) GetAllClassicMobileServicesPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllClassicMobileServicesSender sends the GetAllClassicMobileServices request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllClassicMobileServicesSender(req *http.Request) (*http.Response, error) {
@@ -245,6 +260,7 @@ func (client GlobalClient) GetAllClassicMobileServicesSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllClassicMobileServicesResponder handles the response to the GetAllClassicMobileServices request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllClassicMobileServicesResponder(resp *http.Response) (result ClassicMobileServiceCollection, err error) {
@@ -279,12 +295,14 @@ func (client GlobalClient) getAllClassicMobileServicesNextResults(lastResults Cl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllClassicMobileServicesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllClassicMobileServicesComplete(ctx context.Context) (result ClassicMobileServiceCollectionIterator, err error) {
 	result.page, err = client.GetAllClassicMobileServices(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllHostingEnvironments sends the get all hosting environments request.
 func (client GlobalClient) GetAllHostingEnvironments(ctx context.Context) (result HostingEnvironmentCollectionPage, err error) {
 	result.fn = client.getAllHostingEnvironmentsNextResults
@@ -309,6 +327,7 @@ func (client GlobalClient) GetAllHostingEnvironments(ctx context.Context) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllHostingEnvironmentsPreparer prepares the GetAllHostingEnvironments request.
 func (client GlobalClient) GetAllHostingEnvironmentsPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -328,6 +347,7 @@ func (client GlobalClient) GetAllHostingEnvironmentsPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllHostingEnvironmentsSender sends the GetAllHostingEnvironments request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllHostingEnvironmentsSender(req *http.Request) (*http.Response, error) {
@@ -335,6 +355,7 @@ func (client GlobalClient) GetAllHostingEnvironmentsSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllHostingEnvironmentsResponder handles the response to the GetAllHostingEnvironments request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllHostingEnvironmentsResponder(resp *http.Response) (result HostingEnvironmentCollection, err error) {
@@ -369,12 +390,14 @@ func (client GlobalClient) getAllHostingEnvironmentsNextResults(lastResults Host
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllHostingEnvironmentsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllHostingEnvironmentsComplete(ctx context.Context) (result HostingEnvironmentCollectionIterator, err error) {
 	result.page, err = client.GetAllHostingEnvironments(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllManagedHostingEnvironments sends the get all managed hosting environments request.
 func (client GlobalClient) GetAllManagedHostingEnvironments(ctx context.Context) (result ManagedHostingEnvironmentCollectionPage, err error) {
 	result.fn = client.getAllManagedHostingEnvironmentsNextResults
@@ -399,6 +422,7 @@ func (client GlobalClient) GetAllManagedHostingEnvironments(ctx context.Context)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllManagedHostingEnvironmentsPreparer prepares the GetAllManagedHostingEnvironments request.
 func (client GlobalClient) GetAllManagedHostingEnvironmentsPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -418,6 +442,7 @@ func (client GlobalClient) GetAllManagedHostingEnvironmentsPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllManagedHostingEnvironmentsSender sends the GetAllManagedHostingEnvironments request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllManagedHostingEnvironmentsSender(req *http.Request) (*http.Response, error) {
@@ -425,6 +450,7 @@ func (client GlobalClient) GetAllManagedHostingEnvironmentsSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllManagedHostingEnvironmentsResponder handles the response to the GetAllManagedHostingEnvironments request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllManagedHostingEnvironmentsResponder(resp *http.Response) (result ManagedHostingEnvironmentCollection, err error) {
@@ -459,12 +485,14 @@ func (client GlobalClient) getAllManagedHostingEnvironmentsNextResults(lastResul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllManagedHostingEnvironmentsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllManagedHostingEnvironmentsComplete(ctx context.Context) (result ManagedHostingEnvironmentCollectionIterator, err error) {
 	result.page, err = client.GetAllManagedHostingEnvironments(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllServerFarms sends the get all server farms request.
 //
 // detailed is false to return a subset of App Service Plan properties, true to return all of the properties.
@@ -492,6 +520,7 @@ func (client GlobalClient) GetAllServerFarms(ctx context.Context, detailed *bool
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllServerFarmsPreparer prepares the GetAllServerFarms request.
 func (client GlobalClient) GetAllServerFarmsPreparer(ctx context.Context, detailed *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -514,6 +543,7 @@ func (client GlobalClient) GetAllServerFarmsPreparer(ctx context.Context, detail
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllServerFarmsSender sends the GetAllServerFarms request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllServerFarmsSender(req *http.Request) (*http.Response, error) {
@@ -521,6 +551,7 @@ func (client GlobalClient) GetAllServerFarmsSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllServerFarmsResponder handles the response to the GetAllServerFarms request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllServerFarmsResponder(resp *http.Response) (result ServerFarmCollection, err error) {
@@ -555,12 +586,14 @@ func (client GlobalClient) getAllServerFarmsNextResults(lastResults ServerFarmCo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllServerFarmsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllServerFarmsComplete(ctx context.Context, detailed *bool) (result ServerFarmCollectionIterator, err error) {
 	result.page, err = client.GetAllServerFarms(ctx, detailed)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllSites sends the get all sites request.
 func (client GlobalClient) GetAllSites(ctx context.Context) (result SiteCollectionPage, err error) {
 	result.fn = client.getAllSitesNextResults
@@ -585,6 +618,7 @@ func (client GlobalClient) GetAllSites(ctx context.Context) (result SiteCollecti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllSitesPreparer prepares the GetAllSites request.
 func (client GlobalClient) GetAllSitesPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -604,6 +638,7 @@ func (client GlobalClient) GetAllSitesPreparer(ctx context.Context) (*http.Reque
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllSitesSender sends the GetAllSites request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetAllSitesSender(req *http.Request) (*http.Response, error) {
@@ -611,6 +646,7 @@ func (client GlobalClient) GetAllSitesSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllSitesResponder handles the response to the GetAllSites request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetAllSitesResponder(resp *http.Response) (result SiteCollection, err error) {
@@ -645,12 +681,14 @@ func (client GlobalClient) getAllSitesNextResults(lastResults SiteCollection) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetAllSitesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetAllSitesComplete(ctx context.Context) (result SiteCollectionIterator, err error) {
 	result.page, err = client.GetAllSites(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionGeoRegions sends the get subscription geo regions request.
 //
 // sku is filter only to regions that support this sku linuxWorkersEnabled is filter only to regions that support
@@ -678,6 +716,7 @@ func (client GlobalClient) GetSubscriptionGeoRegions(ctx context.Context, sku st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionGeoRegionsPreparer prepares the GetSubscriptionGeoRegions request.
 func (client GlobalClient) GetSubscriptionGeoRegionsPreparer(ctx context.Context, sku string, linuxWorkersEnabled *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -703,6 +742,7 @@ func (client GlobalClient) GetSubscriptionGeoRegionsPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionGeoRegionsSender sends the GetSubscriptionGeoRegions request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetSubscriptionGeoRegionsSender(req *http.Request) (*http.Response, error) {
@@ -710,6 +750,7 @@ func (client GlobalClient) GetSubscriptionGeoRegionsSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionGeoRegionsResponder handles the response to the GetSubscriptionGeoRegions request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetSubscriptionGeoRegionsResponder(resp *http.Response) (result GeoRegionCollection, err error) {
@@ -744,12 +785,14 @@ func (client GlobalClient) getSubscriptionGeoRegionsNextResults(lastResults GeoR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionGeoRegionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client GlobalClient) GetSubscriptionGeoRegionsComplete(ctx context.Context, sku string, linuxWorkersEnabled *bool) (result GeoRegionCollectionIterator, err error) {
 	result.page, err = client.GetSubscriptionGeoRegions(ctx, sku, linuxWorkersEnabled)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionPublishingCredentials sends the get subscription publishing credentials request.
 func (client GlobalClient) GetSubscriptionPublishingCredentials(ctx context.Context) (result User, err error) {
 	req, err := client.GetSubscriptionPublishingCredentialsPreparer(ctx)
@@ -773,6 +816,7 @@ func (client GlobalClient) GetSubscriptionPublishingCredentials(ctx context.Cont
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionPublishingCredentialsPreparer prepares the GetSubscriptionPublishingCredentials request.
 func (client GlobalClient) GetSubscriptionPublishingCredentialsPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -792,6 +836,7 @@ func (client GlobalClient) GetSubscriptionPublishingCredentialsPreparer(ctx cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionPublishingCredentialsSender sends the GetSubscriptionPublishingCredentials request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) GetSubscriptionPublishingCredentialsSender(req *http.Request) (*http.Response, error) {
@@ -799,6 +844,7 @@ func (client GlobalClient) GetSubscriptionPublishingCredentialsSender(req *http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSubscriptionPublishingCredentialsResponder handles the response to the GetSubscriptionPublishingCredentials request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) GetSubscriptionPublishingCredentialsResponder(resp *http.Response) (result User, err error) {
@@ -812,6 +858,7 @@ func (client GlobalClient) GetSubscriptionPublishingCredentialsResponder(resp *h
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentNameAvailable sends the is hosting environment name available request.
 //
 // name is hosting environment name
@@ -837,6 +884,7 @@ func (client GlobalClient) IsHostingEnvironmentNameAvailable(ctx context.Context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentNameAvailablePreparer prepares the IsHostingEnvironmentNameAvailable request.
 func (client GlobalClient) IsHostingEnvironmentNameAvailablePreparer(ctx context.Context, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -857,6 +905,7 @@ func (client GlobalClient) IsHostingEnvironmentNameAvailablePreparer(ctx context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentNameAvailableSender sends the IsHostingEnvironmentNameAvailable request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) IsHostingEnvironmentNameAvailableSender(req *http.Request) (*http.Response, error) {
@@ -864,6 +913,7 @@ func (client GlobalClient) IsHostingEnvironmentNameAvailableSender(req *http.Req
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentNameAvailableResponder handles the response to the IsHostingEnvironmentNameAvailable request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) IsHostingEnvironmentNameAvailableResponder(resp *http.Response) (result SetObject, err error) {
@@ -877,6 +927,7 @@ func (client GlobalClient) IsHostingEnvironmentNameAvailableResponder(resp *http
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentWithLegacyNameAvailable sends the is hosting environment with legacy name available request.
 //
 // name is hosting environment name
@@ -902,6 +953,7 @@ func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailable(ctx conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentWithLegacyNameAvailablePreparer prepares the IsHostingEnvironmentWithLegacyNameAvailable request.
 func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailablePreparer(ctx context.Context, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -922,6 +974,7 @@ func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailablePreparer(c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentWithLegacyNameAvailableSender sends the IsHostingEnvironmentWithLegacyNameAvailable request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailableSender(req *http.Request) (*http.Response, error) {
@@ -929,6 +982,7 @@ func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailableSender(req
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsHostingEnvironmentWithLegacyNameAvailableResponder handles the response to the IsHostingEnvironmentWithLegacyNameAvailable request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailableResponder(resp *http.Response) (result SetObject, err error) {
@@ -942,6 +996,7 @@ func (client GlobalClient) IsHostingEnvironmentWithLegacyNameAvailableResponder(
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListPremierAddOnOffers sends the list premier add on offers request.
 func (client GlobalClient) ListPremierAddOnOffers(ctx context.Context) (result SetObject, err error) {
 	req, err := client.ListPremierAddOnOffersPreparer(ctx)
@@ -965,6 +1020,7 @@ func (client GlobalClient) ListPremierAddOnOffers(ctx context.Context) (result S
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListPremierAddOnOffersPreparer prepares the ListPremierAddOnOffers request.
 func (client GlobalClient) ListPremierAddOnOffersPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -984,6 +1040,7 @@ func (client GlobalClient) ListPremierAddOnOffersPreparer(ctx context.Context) (
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListPremierAddOnOffersSender sends the ListPremierAddOnOffers request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) ListPremierAddOnOffersSender(req *http.Request) (*http.Response, error) {
@@ -991,6 +1048,7 @@ func (client GlobalClient) ListPremierAddOnOffersSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListPremierAddOnOffersResponder handles the response to the ListPremierAddOnOffers request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) ListPremierAddOnOffersResponder(resp *http.Response) (result SetObject, err error) {
@@ -1004,6 +1062,7 @@ func (client GlobalClient) ListPremierAddOnOffersResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSubscriptionPublishingCredentials sends the update subscription publishing credentials request.
 //
 // requestMessage is requestMessage with new publishing credentials
@@ -1029,6 +1088,7 @@ func (client GlobalClient) UpdateSubscriptionPublishingCredentials(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSubscriptionPublishingCredentialsPreparer prepares the UpdateSubscriptionPublishingCredentials request.
 func (client GlobalClient) UpdateSubscriptionPublishingCredentialsPreparer(ctx context.Context, requestMessage User) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1041,7 +1101,7 @@ func (client GlobalClient) UpdateSubscriptionPublishingCredentialsPreparer(ctx c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Web/publishingCredentials", pathParameters),
@@ -1050,6 +1110,7 @@ func (client GlobalClient) UpdateSubscriptionPublishingCredentialsPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSubscriptionPublishingCredentialsSender sends the UpdateSubscriptionPublishingCredentials request. The method will close the
 // http.Response Body if it receives an error.
 func (client GlobalClient) UpdateSubscriptionPublishingCredentialsSender(req *http.Request) (*http.Response, error) {
@@ -1057,6 +1118,7 @@ func (client GlobalClient) UpdateSubscriptionPublishingCredentialsSender(req *ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSubscriptionPublishingCredentialsResponder handles the response to the UpdateSubscriptionPublishingCredentials request. The method always
 // closes the http.Response Body.
 func (client GlobalClient) UpdateSubscriptionPublishingCredentialsResponder(resp *http.Response) (result User, err error) {

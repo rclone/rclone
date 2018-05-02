@@ -26,16 +26,19 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Client is the creates an Azure Data Lake Analytics job client.
 type Client struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NewClient creates an instance of the Client client.
 func NewClient() Client {
 	return Client{New()}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Build builds (compiles) the specified job in the specified Data Lake Analytics account for job correctness and
 // validation.
 //
@@ -63,6 +66,7 @@ func (client Client) Build(ctx context.Context, accountName string, parameters B
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BuildPreparer prepares the Build request.
 func (client Client) BuildPreparer(ctx context.Context, accountName string, parameters BuildJobParameters) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -76,7 +80,7 @@ func (client Client) BuildPreparer(ctx context.Context, accountName string, para
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
 		autorest.WithPath("/buildJob"),
@@ -85,6 +89,7 @@ func (client Client) BuildPreparer(ctx context.Context, accountName string, para
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BuildSender sends the Build request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) BuildSender(req *http.Request) (*http.Response, error) {
@@ -92,6 +97,7 @@ func (client Client) BuildSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BuildResponder handles the response to the Build request. The method always
 // closes the http.Response Body.
 func (client Client) BuildResponder(resp *http.Response) (result Information, err error) {
@@ -105,6 +111,7 @@ func (client Client) BuildResponder(resp *http.Response) (result Information, er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Cancel cancels the running job specified by the job ID.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
@@ -125,6 +132,7 @@ func (client Client) Cancel(ctx context.Context, accountName string, jobIdentity
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CancelPreparer prepares the Cancel request.
 func (client Client) CancelPreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -149,6 +157,7 @@ func (client Client) CancelPreparer(ctx context.Context, accountName string, job
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CancelSender sends the Cancel request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CancelSender(req *http.Request) (future CancelFuture, err error) {
@@ -164,6 +173,7 @@ func (client Client) CancelSender(req *http.Request) (future CancelFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CancelResponder handles the response to the Cancel request. The method always
 // closes the http.Response Body.
 func (client Client) CancelResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -176,6 +186,7 @@ func (client Client) CancelResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Create submits a job to the specified Data Lake Analytics account.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
@@ -216,6 +227,7 @@ func (client Client) Create(ctx context.Context, accountName string, jobIdentity
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreatePreparer prepares the Create request.
 func (client Client) CreatePreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID, parameters CreateJobParameters) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -233,7 +245,7 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, job
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/jobs/{jobIdentity}", pathParameters),
@@ -242,6 +254,7 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, job
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateSender(req *http.Request) (*http.Response, error) {
@@ -249,6 +262,7 @@ func (client Client) CreateSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client Client) CreateResponder(resp *http.Response) (result Information, err error) {
@@ -262,6 +276,7 @@ func (client Client) CreateResponder(resp *http.Response) (result Information, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Get gets the job information for the specified job ID.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is jobInfo ID.
@@ -287,6 +302,7 @@ func (client Client) Get(ctx context.Context, accountName string, jobIdentity uu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetPreparer prepares the Get request.
 func (client Client) GetPreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -311,6 +327,7 @@ func (client Client) GetPreparer(ctx context.Context, accountName string, jobIde
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetSender(req *http.Request) (*http.Response, error) {
@@ -318,6 +335,7 @@ func (client Client) GetSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client Client) GetResponder(resp *http.Response) (result Information, err error) {
@@ -331,6 +349,7 @@ func (client Client) GetResponder(resp *http.Response) (result Information, err 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetDebugDataPath gets the job debug data information specified by the job ID.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
@@ -357,6 +376,7 @@ func (client Client) GetDebugDataPath(ctx context.Context, accountName string, j
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetDebugDataPathPreparer prepares the GetDebugDataPath request.
 func (client Client) GetDebugDataPathPreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -381,6 +401,7 @@ func (client Client) GetDebugDataPathPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetDebugDataPathSender sends the GetDebugDataPath request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetDebugDataPathSender(req *http.Request) (*http.Response, error) {
@@ -388,6 +409,7 @@ func (client Client) GetDebugDataPathSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetDebugDataPathResponder handles the response to the GetDebugDataPath request. The method always
 // closes the http.Response Body.
 func (client Client) GetDebugDataPathResponder(resp *http.Response) (result DataPath, err error) {
@@ -401,6 +423,7 @@ func (client Client) GetDebugDataPathResponder(resp *http.Response) (result Data
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetStatistics gets statistics of the specified job.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
@@ -427,6 +450,7 @@ func (client Client) GetStatistics(ctx context.Context, accountName string, jobI
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetStatisticsPreparer prepares the GetStatistics request.
 func (client Client) GetStatisticsPreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -451,6 +475,7 @@ func (client Client) GetStatisticsPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetStatisticsSender sends the GetStatistics request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetStatisticsSender(req *http.Request) (*http.Response, error) {
@@ -458,6 +483,7 @@ func (client Client) GetStatisticsSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetStatisticsResponder handles the response to the GetStatistics request. The method always
 // closes the http.Response Body.
 func (client Client) GetStatisticsResponder(resp *http.Response) (result Statistics, err error) {
@@ -471,6 +497,7 @@ func (client Client) GetStatisticsResponder(resp *http.Response) (result Statist
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // List lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link
 // to the next page of results, if any.
 //
@@ -515,6 +542,7 @@ func (client Client) List(ctx context.Context, accountName string, filter string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListPreparer prepares the List request.
 func (client Client) ListPreparer(ctx context.Context, accountName string, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -553,6 +581,7 @@ func (client Client) ListPreparer(ctx context.Context, accountName string, filte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListSender(req *http.Request) (*http.Response, error) {
@@ -560,6 +589,7 @@ func (client Client) ListSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client Client) ListResponder(resp *http.Response) (result InfoListResult, err error) {
@@ -594,12 +624,14 @@ func (client Client) listNextResults(lastResults InfoListResult) (result InfoLis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListComplete(ctx context.Context, accountName string, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result InfoListResultIterator, err error) {
 	result.page, err = client.List(ctx, accountName, filter, top, skip, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Update updates the job information for the specified job ID. (Only for use internally with Scope job type.)
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
@@ -621,6 +653,7 @@ func (client Client) Update(ctx context.Context, accountName string, jobIdentity
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UpdatePreparer prepares the Update request.
 func (client Client) UpdatePreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID, parameters *UpdateJobParameters) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -638,7 +671,7 @@ func (client Client) UpdatePreparer(ctx context.Context, accountName string, job
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/jobs/{jobIdentity}", pathParameters),
@@ -650,6 +683,7 @@ func (client Client) UpdatePreparer(ctx context.Context, accountName string, job
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
@@ -665,6 +699,7 @@ func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client Client) UpdateResponder(resp *http.Response) (result Information, err error) {
@@ -678,6 +713,7 @@ func (client Client) UpdateResponder(resp *http.Response) (result Information, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Yield pauses the specified job and places it back in the job queue, behind other jobs of equal or higher importance,
 // based on priority. (Only for use internally with Scope job type.)
 //
@@ -699,6 +735,7 @@ func (client Client) Yield(ctx context.Context, accountName string, jobIdentity 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // YieldPreparer prepares the Yield request.
 func (client Client) YieldPreparer(ctx context.Context, accountName string, jobIdentity uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -723,6 +760,7 @@ func (client Client) YieldPreparer(ctx context.Context, accountName string, jobI
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // YieldSender sends the Yield request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) YieldSender(req *http.Request) (future YieldFuture, err error) {
@@ -738,6 +776,7 @@ func (client Client) YieldSender(req *http.Request) (future YieldFuture, err err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // YieldResponder handles the response to the Yield request. The method always
 // closes the http.Response Body.
 func (client Client) YieldResponder(resp *http.Response) (result autorest.Response, err error) {

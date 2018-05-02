@@ -20,6 +20,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -213,6 +214,14 @@ func IsTokenRefreshError(err error) bool {
 	}
 	if de, ok := err.(DetailedError); ok {
 		return IsTokenRefreshError(de.Original)
+	}
+	return false
+}
+
+// IsTemporaryNetworkError returns true if the specified error is a temporary network error.
+func IsTemporaryNetworkError(err error) bool {
+	if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+		return true
 	}
 	return false
 }

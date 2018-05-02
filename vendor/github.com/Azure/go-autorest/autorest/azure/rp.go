@@ -115,7 +115,7 @@ func register(client autorest.Client, originalReq *http.Request, re RequestError
 	if err != nil {
 		return err
 	}
-	req.Cancel = originalReq.Cancel
+	req = req.WithContext(originalReq.Context())
 
 	resp, err := autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
@@ -154,7 +154,7 @@ func register(client autorest.Client, originalReq *http.Request, re RequestError
 		if err != nil {
 			return err
 		}
-		req.Cancel = originalReq.Cancel
+		req = req.WithContext(originalReq.Context())
 
 		resp, err := autorest.SendWithSender(client, req,
 			autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
@@ -178,9 +178,9 @@ func register(client autorest.Client, originalReq *http.Request, re RequestError
 			break
 		}
 
-		delayed := autorest.DelayWithRetryAfter(resp, originalReq.Cancel)
-		if !delayed {
-			autorest.DelayForBackoff(client.PollingDelay, 0, originalReq.Cancel)
+		delayed := autorest.DelayWithRetryAfter(resp, originalReq.Context().Done())
+		if !delayed && !autorest.DelayForBackoff(client.PollingDelay, 0, originalReq.Context().Done()) {
+			return originalReq.Context().Err()
 		}
 	}
 	if !(time.Since(now) < client.PollingDuration) {

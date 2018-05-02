@@ -13,7 +13,7 @@ const (
 	// ErrCodeInsufficientPrivilegesException for service response error code
 	// "InsufficientPrivilegesException".
 	//
-	// The specified account does not have sufficient privileges for one of more
+	// The specified account does not have sufficient privileges for one or more
 	// AWS services.
 	ErrCodeInsufficientPrivilegesException = "InsufficientPrivilegesException"
 

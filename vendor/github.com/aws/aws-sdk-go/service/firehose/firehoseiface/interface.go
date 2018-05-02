@@ -76,6 +76,10 @@ type FirehoseAPI interface {
 	ListDeliveryStreamsWithContext(aws.Context, *firehose.ListDeliveryStreamsInput, ...request.Option) (*firehose.ListDeliveryStreamsOutput, error)
 	ListDeliveryStreamsRequest(*firehose.ListDeliveryStreamsInput) (*request.Request, *firehose.ListDeliveryStreamsOutput)
 
+	ListTagsForDeliveryStream(*firehose.ListTagsForDeliveryStreamInput) (*firehose.ListTagsForDeliveryStreamOutput, error)
+	ListTagsForDeliveryStreamWithContext(aws.Context, *firehose.ListTagsForDeliveryStreamInput, ...request.Option) (*firehose.ListTagsForDeliveryStreamOutput, error)
+	ListTagsForDeliveryStreamRequest(*firehose.ListTagsForDeliveryStreamInput) (*request.Request, *firehose.ListTagsForDeliveryStreamOutput)
+
 	PutRecord(*firehose.PutRecordInput) (*firehose.PutRecordOutput, error)
 	PutRecordWithContext(aws.Context, *firehose.PutRecordInput, ...request.Option) (*firehose.PutRecordOutput, error)
 	PutRecordRequest(*firehose.PutRecordInput) (*request.Request, *firehose.PutRecordOutput)
@@ -83,6 +87,14 @@ type FirehoseAPI interface {
 	PutRecordBatch(*firehose.PutRecordBatchInput) (*firehose.PutRecordBatchOutput, error)
 	PutRecordBatchWithContext(aws.Context, *firehose.PutRecordBatchInput, ...request.Option) (*firehose.PutRecordBatchOutput, error)
 	PutRecordBatchRequest(*firehose.PutRecordBatchInput) (*request.Request, *firehose.PutRecordBatchOutput)
+
+	TagDeliveryStream(*firehose.TagDeliveryStreamInput) (*firehose.TagDeliveryStreamOutput, error)
+	TagDeliveryStreamWithContext(aws.Context, *firehose.TagDeliveryStreamInput, ...request.Option) (*firehose.TagDeliveryStreamOutput, error)
+	TagDeliveryStreamRequest(*firehose.TagDeliveryStreamInput) (*request.Request, *firehose.TagDeliveryStreamOutput)
+
+	UntagDeliveryStream(*firehose.UntagDeliveryStreamInput) (*firehose.UntagDeliveryStreamOutput, error)
+	UntagDeliveryStreamWithContext(aws.Context, *firehose.UntagDeliveryStreamInput, ...request.Option) (*firehose.UntagDeliveryStreamOutput, error)
+	UntagDeliveryStreamRequest(*firehose.UntagDeliveryStreamInput) (*request.Request, *firehose.UntagDeliveryStreamOutput)
 
 	UpdateDestination(*firehose.UpdateDestinationInput) (*firehose.UpdateDestinationOutput, error)
 	UpdateDestinationWithContext(aws.Context, *firehose.UpdateDestinationInput, ...request.Option) (*firehose.UpdateDestinationOutput, error)

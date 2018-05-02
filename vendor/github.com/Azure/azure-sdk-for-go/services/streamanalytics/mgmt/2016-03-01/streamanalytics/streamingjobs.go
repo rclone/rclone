@@ -40,14 +40,16 @@ func NewStreamingJobsClientWithBaseURI(baseURI string, subscriptionID string) St
 }
 
 // CreateOrReplace creates a streaming job or replaces an already existing streaming job.
-//
-// streamingJob is the definition of the streaming job that will be used to create a new streaming job or replace
-// the existing one. resourceGroupName is the name of the resource group that contains the resource. You can obtain
-// this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. ifMatch
-// is the ETag of the streaming job. Omit this value to always overwrite the current record set. Specify the
-// last-seen ETag value to prevent accidentally overwritting concurrent changes. ifNoneMatch is set to '*' to allow
-// a new streaming job to be created, but to prevent updating an existing record set. Other values will result in a
-// 412 Pre-condition Failed response.
+// Parameters:
+// streamingJob - the definition of the streaming job that will be used to create a new streaming job or
+// replace the existing one.
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// ifMatch - the ETag of the streaming job. Omit this value to always overwrite the current record set. Specify
+// the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// ifNoneMatch - set to '*' to allow a new streaming job to be created, but to prevent updating an existing
+// record set. Other values will result in a 412 Pre-condition Failed response.
 func (client StreamingJobsClient) CreateOrReplace(ctx context.Context, streamingJob StreamingJob, resourceGroupName string, jobName string, ifMatch string, ifNoneMatch string) (result StreamingJobsCreateOrReplaceFuture, err error) {
 	req, err := client.CreateOrReplacePreparer(ctx, streamingJob, resourceGroupName, jobName, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -78,7 +80,7 @@ func (client StreamingJobsClient) CreateOrReplacePreparer(ctx context.Context, s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}", pathParameters),
@@ -124,9 +126,10 @@ func (client StreamingJobsClient) CreateOrReplaceResponder(resp *http.Response) 
 }
 
 // Delete deletes a streaming job.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
 func (client StreamingJobsClient) Delete(ctx context.Context, resourceGroupName string, jobName string) (result StreamingJobsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, jobName)
 	if err != nil {
@@ -192,12 +195,14 @@ func (client StreamingJobsClient) DeleteResponder(resp *http.Response) (result a
 }
 
 // Get gets details about the specified streaming job.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. expand is the $expand
-// OData query parameter. This is a comma-separated list of additional streaming job properties to include in the
-// response, beyond the default set returned when this parameter is absent. The default set is all streaming job
-// properties other than 'inputs', 'transformation', 'outputs', and 'functions'.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// expand - the $expand OData query parameter. This is a comma-separated list of additional streaming job
+// properties to include in the response, beyond the default set returned when this parameter is absent. The
+// default set is all streaming job properties other than 'inputs', 'transformation', 'outputs', and
+// 'functions'.
 func (client StreamingJobsClient) Get(ctx context.Context, resourceGroupName string, jobName string, expand string) (result StreamingJob, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobName, expand)
 	if err != nil {
@@ -265,10 +270,11 @@ func (client StreamingJobsClient) GetResponder(resp *http.Response) (result Stre
 }
 
 // List lists all of the streaming jobs in the given subscription.
-//
-// expand is the $expand OData query parameter. This is a comma-separated list of additional streaming job
+// Parameters:
+// expand - the $expand OData query parameter. This is a comma-separated list of additional streaming job
 // properties to include in the response, beyond the default set returned when this parameter is absent. The
-// default set is all streaming job properties other than 'inputs', 'transformation', 'outputs', and 'functions'.
+// default set is all streaming job properties other than 'inputs', 'transformation', 'outputs', and
+// 'functions'.
 func (client StreamingJobsClient) List(ctx context.Context, expand string) (result StreamingJobListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, expand)
@@ -362,12 +368,13 @@ func (client StreamingJobsClient) ListComplete(ctx context.Context, expand strin
 }
 
 // ListByResourceGroup lists all of the streaming jobs in the specified resource group.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. expand is the $expand OData query parameter. This is a
-// comma-separated list of additional streaming job properties to include in the response, beyond the default set
-// returned when this parameter is absent. The default set is all streaming job properties other than 'inputs',
-// 'transformation', 'outputs', and 'functions'.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// expand - the $expand OData query parameter. This is a comma-separated list of additional streaming job
+// properties to include in the response, beyond the default set returned when this parameter is absent. The
+// default set is all streaming job properties other than 'inputs', 'transformation', 'outputs', and
+// 'functions'.
 func (client StreamingJobsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, expand string) (result StreamingJobListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, expand)
@@ -462,10 +469,11 @@ func (client StreamingJobsClient) ListByResourceGroupComplete(ctx context.Contex
 }
 
 // Start starts a streaming job. Once a job is started it will start processing input events and produce output.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. startJobParameters is
-// parameters applicable to a start streaming job operation.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// startJobParameters - parameters applicable to a start streaming job operation.
 func (client StreamingJobsClient) Start(ctx context.Context, resourceGroupName string, jobName string, startJobParameters *StartStreamingJobParameters) (result StreamingJobsStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, jobName, startJobParameters)
 	if err != nil {
@@ -496,7 +504,7 @@ func (client StreamingJobsClient) StartPreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/start", pathParameters),
@@ -537,9 +545,10 @@ func (client StreamingJobsClient) StartResponder(resp *http.Response) (result au
 
 // Stop stops a running streaming job. This will cause a running streaming job to stop processing input events and
 // producing output.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
 func (client StreamingJobsClient) Stop(ctx context.Context, resourceGroupName string, jobName string) (result StreamingJobsStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, resourceGroupName, jobName)
 	if err != nil {
@@ -606,14 +615,16 @@ func (client StreamingJobsClient) StopResponder(resp *http.Response) (result aut
 
 // Update updates an existing streaming job. This can be used to partially update (ie. update one or two properties) a
 // streaming job without affecting the rest the job definition.
-//
-// streamingJob is a streaming job object. The properties specified here will overwrite the corresponding
-// properties in the existing streaming job (ie. Those properties will be updated). Any properties that are set to
-// null here will mean that the corresponding property in the existing input will remain the same and not change as
-// a result of this PATCH operation. resourceGroupName is the name of the resource group that contains the
-// resource. You can obtain this value from the Azure Resource Manager API or the portal. jobName is the name of
-// the streaming job. ifMatch is the ETag of the streaming job. Omit this value to always overwrite the current
-// record set. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// Parameters:
+// streamingJob - a streaming job object. The properties specified here will overwrite the corresponding
+// properties in the existing streaming job (ie. Those properties will be updated). Any properties that are set
+// to null here will mean that the corresponding property in the existing input will remain the same and not
+// change as a result of this PATCH operation.
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// ifMatch - the ETag of the streaming job. Omit this value to always overwrite the current record set. Specify
+// the last-seen ETag value to prevent accidentally overwritting concurrent changes.
 func (client StreamingJobsClient) Update(ctx context.Context, streamingJob StreamingJob, resourceGroupName string, jobName string, ifMatch string) (result StreamingJob, err error) {
 	req, err := client.UpdatePreparer(ctx, streamingJob, resourceGroupName, jobName, ifMatch)
 	if err != nil {
@@ -650,7 +661,7 @@ func (client StreamingJobsClient) UpdatePreparer(ctx context.Context, streamingJ
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}", pathParameters),

@@ -14,7 +14,7 @@ const opSearch = "Search"
 
 // SearchRequest generates a "aws/request.Request" representing the
 // client's request for the Search operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -110,7 +110,7 @@ const opSuggest = "Suggest"
 
 // SuggestRequest generates a "aws/request.Request" representing the
 // client's request for the Suggest operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -202,7 +202,7 @@ const opUploadDocuments = "UploadDocuments"
 
 // UploadDocumentsRequest generates a "aws/request.Request" representing the
 // client's request for the UploadDocuments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"AWS Device Farm",
+    "serviceId":"Device Farm",
     "signatureVersion":"v4",
     "targetPrefix":"DeviceFarm_20150623",
     "uid":"devicefarm-2015-06-23"
@@ -19,6 +20,21 @@
       },
       "input":{"shape":"CreateDevicePoolRequest"},
       "output":{"shape":"CreateDevicePoolResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
+    "CreateInstanceProfile":{
+      "name":"CreateInstanceProfile",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateInstanceProfileRequest"},
+      "output":{"shape":"CreateInstanceProfileResult"},
       "errors":[
         {"shape":"ArgumentException"},
         {"shape":"NotFoundException"},
@@ -86,6 +102,20 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "CreateVPCEConfiguration":{
+      "name":"CreateVPCEConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateVPCEConfigurationRequest"},
+      "output":{"shape":"CreateVPCEConfigurationResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "DeleteDevicePool":{
       "name":"DeleteDevicePool",
       "http":{
@@ -94,6 +124,21 @@
       },
       "input":{"shape":"DeleteDevicePoolRequest"},
       "output":{"shape":"DeleteDevicePoolResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
+    "DeleteInstanceProfile":{
+      "name":"DeleteInstanceProfile",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteInstanceProfileRequest"},
+      "output":{"shape":"DeleteInstanceProfileResult"},
       "errors":[
         {"shape":"ArgumentException"},
         {"shape":"NotFoundException"},
@@ -176,6 +221,21 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "DeleteVPCEConfiguration":{
+      "name":"DeleteVPCEConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteVPCEConfigurationRequest"},
+      "output":{"shape":"DeleteVPCEConfigurationResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"ServiceAccountException"},
+        {"shape":"InvalidOperationException"}
+      ]
+    },
     "GetAccountSettings":{
       "name":"GetAccountSettings",
       "http":{
@@ -206,6 +266,21 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "GetDeviceInstance":{
+      "name":"GetDeviceInstance",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetDeviceInstanceRequest"},
+      "output":{"shape":"GetDeviceInstanceResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "GetDevicePool":{
       "name":"GetDevicePool",
       "http":{
@@ -229,6 +304,21 @@
       },
       "input":{"shape":"GetDevicePoolCompatibilityRequest"},
       "output":{"shape":"GetDevicePoolCompatibilityResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
+    "GetInstanceProfile":{
+      "name":"GetInstanceProfile",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetInstanceProfileRequest"},
+      "output":{"shape":"GetInstanceProfileResult"},
       "errors":[
         {"shape":"ArgumentException"},
         {"shape":"NotFoundException"},
@@ -372,6 +462,20 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "GetVPCEConfiguration":{
+      "name":"GetVPCEConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetVPCEConfigurationRequest"},
+      "output":{"shape":"GetVPCEConfigurationResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "InstallToRemoteAccessSession":{
       "name":"InstallToRemoteAccessSession",
       "http":{
@@ -402,6 +506,21 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "ListDeviceInstances":{
+      "name":"ListDeviceInstances",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListDeviceInstancesRequest"},
+      "output":{"shape":"ListDeviceInstancesResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "ListDevicePools":{
       "name":"ListDevicePools",
       "http":{
@@ -425,6 +544,21 @@
       },
       "input":{"shape":"ListDevicesRequest"},
       "output":{"shape":"ListDevicesResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
+    "ListInstanceProfiles":{
+      "name":"ListInstanceProfiles",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListInstanceProfilesRequest"},
+      "output":{"shape":"ListInstanceProfilesResult"},
       "errors":[
         {"shape":"ArgumentException"},
         {"shape":"NotFoundException"},
@@ -630,6 +764,19 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "ListVPCEConfigurations":{
+      "name":"ListVPCEConfigurations",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListVPCEConfigurationsRequest"},
+      "output":{"shape":"ListVPCEConfigurationsResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "PurchaseOffering":{
       "name":"PurchaseOffering",
       "http":{
@@ -708,6 +855,21 @@
         {"shape":"ServiceAccountException"}
       ]
     },
+    "UpdateDeviceInstance":{
+      "name":"UpdateDeviceInstance",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateDeviceInstanceRequest"},
+      "output":{"shape":"UpdateDeviceInstanceResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
     "UpdateDevicePool":{
       "name":"UpdateDevicePool",
       "http":{
@@ -716,6 +878,21 @@
       },
       "input":{"shape":"UpdateDevicePoolRequest"},
       "output":{"shape":"UpdateDevicePoolResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ServiceAccountException"}
+      ]
+    },
+    "UpdateInstanceProfile":{
+      "name":"UpdateInstanceProfile",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateInstanceProfileRequest"},
+      "output":{"shape":"UpdateInstanceProfileResult"},
       "errors":[
         {"shape":"ArgumentException"},
         {"shape":"NotFoundException"},
@@ -752,6 +929,21 @@
         {"shape":"LimitExceededException"},
         {"shape":"ServiceAccountException"}
       ]
+    },
+    "UpdateVPCEConfiguration":{
+      "name":"UpdateVPCEConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateVPCEConfigurationRequest"},
+      "output":{"shape":"UpdateVPCEConfigurationResult"},
+      "errors":[
+        {"shape":"ArgumentException"},
+        {"shape":"NotFoundException"},
+        {"shape":"ServiceAccountException"},
+        {"shape":"InvalidOperationException"}
+      ]
     }
   },
   "shapes":{
@@ -769,7 +961,8 @@
         "maxJobTimeoutMinutes":{"shape":"JobTimeoutMinutes"},
         "trialMinutes":{"shape":"TrialMinutes"},
         "maxSlots":{"shape":"MaxSlotMap"},
-        "defaultJobTimeoutMinutes":{"shape":"JobTimeoutMinutes"}
+        "defaultJobTimeoutMinutes":{"shape":"JobTimeoutMinutes"},
+        "skipAppResign":{"shape":"SkipAppResign"}
       }
     },
     "AccountsCleanup":{"type":"boolean"},
@@ -905,6 +1098,23 @@
         "devicePool":{"shape":"DevicePool"}
       }
     },
+    "CreateInstanceProfileRequest":{
+      "type":"structure",
+      "required":["name"],
+      "members":{
+        "name":{"shape":"Name"},
+        "description":{"shape":"Message"},
+        "packageCleanup":{"shape":"Boolean"},
+        "excludeAppPackagesFromCleanup":{"shape":"PackageIds"},
+        "rebootAfterUse":{"shape":"Boolean"}
+      }
+    },
+    "CreateInstanceProfileResult":{
+      "type":"structure",
+      "members":{
+        "instanceProfile":{"shape":"InstanceProfile"}
+      }
+    },
     "CreateNetworkProfileRequest":{
       "type":"structure",
       "required":[
@@ -961,6 +1171,7 @@
       "members":{
         "projectArn":{"shape":"AmazonResourceName"},
         "deviceArn":{"shape":"AmazonResourceName"},
+        "instanceArn":{"shape":"AmazonResourceName"},
         "sshPublicKey":{"shape":"SshPublicKey"},
         "remoteDebugEnabled":{"shape":"Boolean"},
         "remoteRecordEnabled":{"shape":"Boolean"},
@@ -968,7 +1179,8 @@
         "name":{"shape":"Name"},
         "clientId":{"shape":"ClientId"},
         "configuration":{"shape":"CreateRemoteAccessSessionConfiguration"},
-        "interactionMode":{"shape":"InteractionMode"}
+        "interactionMode":{"shape":"InteractionMode"},
+        "skipAppResign":{"shape":"Boolean"}
       }
     },
     "CreateRemoteAccessSessionResult":{
@@ -997,6 +1209,26 @@
         "upload":{"shape":"Upload"}
       }
     },
+    "CreateVPCEConfigurationRequest":{
+      "type":"structure",
+      "required":[
+        "vpceConfigurationName",
+        "vpceServiceName",
+        "serviceDnsName"
+      ],
+      "members":{
+        "vpceConfigurationName":{"shape":"VPCEConfigurationName"},
+        "vpceServiceName":{"shape":"VPCEServiceName"},
+        "serviceDnsName":{"shape":"ServiceDnsName"},
+        "vpceConfigurationDescription":{"shape":"VPCEConfigurationDescription"}
+      }
+    },
+    "CreateVPCEConfigurationResult":{
+      "type":"structure",
+      "members":{
+        "vpceConfiguration":{"shape":"VPCEConfiguration"}
+      }
+    },
     "CurrencyCode":{
       "type":"string",
       "enum":["USD"]
@@ -1018,6 +1250,18 @@
       }
     },
     "DeleteDevicePoolResult":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteInstanceProfileRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"}
+      }
+    },
+    "DeleteInstanceProfileResult":{
       "type":"structure",
       "members":{
       }
@@ -1082,6 +1326,18 @@
       "members":{
       }
     },
+    "DeleteVPCEConfigurationRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"}
+      }
+    },
+    "DeleteVPCEConfigurationResult":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "Device":{
       "type":"structure",
       "members":{
@@ -1103,7 +1359,8 @@
         "remoteAccessEnabled":{"shape":"Boolean"},
         "remoteDebugEnabled":{"shape":"Boolean"},
         "fleetType":{"shape":"String"},
-        "fleetName":{"shape":"String"}
+        "fleetName":{"shape":"String"},
+        "instances":{"shape":"DeviceInstances"}
       }
     },
     "DeviceAttribute":{
@@ -1115,7 +1372,10 @@
         "MANUFACTURER",
         "REMOTE_ACCESS_ENABLED",
         "REMOTE_DEBUG_ENABLED",
-        "APPIUM_VERSION"
+        "APPIUM_VERSION",
+        "INSTANCE_ARN",
+        "INSTANCE_LABELS",
+        "FLEET_TYPE"
       ]
     },
     "DeviceFormFactor":{
@@ -1128,6 +1388,21 @@
     "DeviceHostPaths":{
       "type":"list",
       "member":{"shape":"String"}
+    },
+    "DeviceInstance":{
+      "type":"structure",
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "deviceArn":{"shape":"AmazonResourceName"},
+        "labels":{"shape":"InstanceLabels"},
+        "status":{"shape":"InstanceStatus"},
+        "udid":{"shape":"String"},
+        "instanceProfile":{"shape":"InstanceProfile"}
+      }
+    },
+    "DeviceInstances":{
+      "type":"list",
+      "member":{"shape":"DeviceInstance"}
     },
     "DeviceMinutes":{
       "type":"structure",
@@ -1187,7 +1462,8 @@
       "members":{
         "jobTimeoutMinutes":{"shape":"JobTimeoutMinutes"},
         "accountsCleanup":{"shape":"AccountsCleanup"},
-        "appPackagesCleanup":{"shape":"AppPackagesCleanup"}
+        "appPackagesCleanup":{"shape":"AppPackagesCleanup"},
+        "skipAppResign":{"shape":"SkipAppResign"}
       }
     },
     "ExecutionResult":{
@@ -1204,7 +1480,10 @@
     },
     "ExecutionResultCode":{
       "type":"string",
-      "enum":["PARSING_FAILED"]
+      "enum":[
+        "PARSING_FAILED",
+        "VPC_ENDPOINT_SETUP_FAILED"
+      ]
     },
     "ExecutionStatus":{
       "type":"string",
@@ -1236,6 +1515,19 @@
         "accountSettings":{"shape":"AccountSettings"}
       }
     },
+    "GetDeviceInstanceRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"}
+      }
+    },
+    "GetDeviceInstanceResult":{
+      "type":"structure",
+      "members":{
+        "deviceInstance":{"shape":"DeviceInstance"}
+      }
+    },
     "GetDevicePoolCompatibilityRequest":{
       "type":"structure",
       "required":["devicePoolArn"],
@@ -1243,7 +1535,8 @@
         "devicePoolArn":{"shape":"AmazonResourceName"},
         "appArn":{"shape":"AmazonResourceName"},
         "testType":{"shape":"TestType"},
-        "test":{"shape":"ScheduleRunTest"}
+        "test":{"shape":"ScheduleRunTest"},
+        "configuration":{"shape":"ScheduleRunConfiguration"}
       }
     },
     "GetDevicePoolCompatibilityResult":{
@@ -1277,6 +1570,19 @@
       "type":"structure",
       "members":{
         "device":{"shape":"Device"}
+      }
+    },
+    "GetInstanceProfileRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"}
+      }
+    },
+    "GetInstanceProfileResult":{
+      "type":"structure",
+      "members":{
+        "instanceProfile":{"shape":"InstanceProfile"}
       }
     },
     "GetJobRequest":{
@@ -1397,6 +1703,19 @@
         "upload":{"shape":"Upload"}
       }
     },
+    "GetVPCEConfigurationRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"}
+      }
+    },
+    "GetVPCEConfigurationResult":{
+      "type":"structure",
+      "members":{
+        "vpceConfiguration":{"shape":"VPCEConfiguration"}
+      }
+    },
     "HostAddress":{
       "type":"string",
       "max":1024
@@ -1436,6 +1755,34 @@
         "appUpload":{"shape":"Upload"}
       }
     },
+    "InstanceLabels":{
+      "type":"list",
+      "member":{"shape":"String"}
+    },
+    "InstanceProfile":{
+      "type":"structure",
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "packageCleanup":{"shape":"Boolean"},
+        "excludeAppPackagesFromCleanup":{"shape":"PackageIds"},
+        "rebootAfterUse":{"shape":"Boolean"},
+        "name":{"shape":"Name"},
+        "description":{"shape":"Message"}
+      }
+    },
+    "InstanceProfiles":{
+      "type":"list",
+      "member":{"shape":"InstanceProfile"}
+    },
+    "InstanceStatus":{
+      "type":"string",
+      "enum":[
+        "IN_USE",
+        "PREPARING",
+        "AVAILABLE",
+        "NOT_AVAILABLE"
+      ]
+    },
     "Integer":{"type":"integer"},
     "InteractionMode":{
       "type":"string",
@@ -1446,6 +1793,13 @@
       ],
       "max":64,
       "min":0
+    },
+    "InvalidOperationException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"Message"}
+      },
+      "exception":true
     },
     "IosPaths":{
       "type":"list",
@@ -1465,6 +1819,7 @@
         "counters":{"shape":"Counters"},
         "message":{"shape":"Message"},
         "device":{"shape":"Device"},
+        "instanceArn":{"shape":"AmazonResourceName"},
         "deviceMinutes":{"shape":"DeviceMinutes"}
       }
     },
@@ -1499,6 +1854,20 @@
         "nextToken":{"shape":"PaginationToken"}
       }
     },
+    "ListDeviceInstancesRequest":{
+      "type":"structure",
+      "members":{
+        "maxResults":{"shape":"Integer"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
+    "ListDeviceInstancesResult":{
+      "type":"structure",
+      "members":{
+        "deviceInstances":{"shape":"DeviceInstances"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
     "ListDevicePoolsRequest":{
       "type":"structure",
       "required":["arn"],
@@ -1526,6 +1895,20 @@
       "type":"structure",
       "members":{
         "devices":{"shape":"Devices"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
+    "ListInstanceProfilesRequest":{
+      "type":"structure",
+      "members":{
+        "maxResults":{"shape":"Integer"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
+    "ListInstanceProfilesResult":{
+      "type":"structure",
+      "members":{
+        "instanceProfiles":{"shape":"InstanceProfiles"},
         "nextToken":{"shape":"PaginationToken"}
       }
     },
@@ -1718,6 +2101,20 @@
         "nextToken":{"shape":"PaginationToken"}
       }
     },
+    "ListVPCEConfigurationsRequest":{
+      "type":"structure",
+      "members":{
+        "maxResults":{"shape":"Integer"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
+    "ListVPCEConfigurationsResult":{
+      "type":"structure",
+      "members":{
+        "vpceConfigurations":{"shape":"VPCEConfigurations"},
+        "nextToken":{"shape":"PaginationToken"}
+      }
+    },
     "Location":{
       "type":"structure",
       "required":[
@@ -1872,6 +2269,10 @@
       "type":"list",
       "member":{"shape":"Offering"}
     },
+    "PackageIds":{
+      "type":"list",
+      "member":{"shape":"String"}
+    },
     "PaginationToken":{
       "type":"string",
       "max":1024,
@@ -1973,6 +2374,7 @@
         "started":{"shape":"DateTime"},
         "stopped":{"shape":"DateTime"},
         "device":{"shape":"Device"},
+        "instanceArn":{"shape":"AmazonResourceName"},
         "remoteDebugEnabled":{"shape":"Boolean"},
         "remoteRecordEnabled":{"shape":"Boolean"},
         "remoteRecordAppArn":{"shape":"AmazonResourceName"},
@@ -1982,7 +2384,8 @@
         "deviceMinutes":{"shape":"DeviceMinutes"},
         "endpoint":{"shape":"String"},
         "deviceUdid":{"shape":"String"},
-        "interactionMode":{"shape":"InteractionMode"}
+        "interactionMode":{"shape":"InteractionMode"},
+        "skipAppResign":{"shape":"SkipAppResign"}
       }
     },
     "RemoteAccessSessions":{
@@ -2062,7 +2465,8 @@
         "radios":{"shape":"Radios"},
         "location":{"shape":"Location"},
         "customerArtifactPaths":{"shape":"CustomerArtifactPaths"},
-        "webUrl":{"shape":"String"}
+        "webUrl":{"shape":"String"},
+        "skipAppResign":{"shape":"SkipAppResign"}
       }
     },
     "Runs":{
@@ -2110,6 +2514,7 @@
         "networkProfileArn":{"shape":"AmazonResourceName"},
         "locale":{"shape":"String"},
         "location":{"shape":"Location"},
+        "vpceConfigurationArns":{"shape":"AmazonResourceNames"},
         "customerArtifactPaths":{"shape":"CustomerArtifactPaths"},
         "radios":{"shape":"Radios"},
         "auxiliaryApps":{"shape":"AmazonResourceNames"},
@@ -2156,6 +2561,12 @@
       },
       "exception":true
     },
+    "ServiceDnsName":{
+      "type":"string",
+      "max":2048,
+      "min":0
+    },
+    "SkipAppResign":{"type":"boolean"},
     "SshPublicKey":{
       "type":"string",
       "max":8192,
@@ -2287,6 +2698,21 @@
       "key":{"shape":"ExecutionResult"},
       "value":{"shape":"UniqueProblems"}
     },
+    "UpdateDeviceInstanceRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "profileArn":{"shape":"AmazonResourceName"},
+        "labels":{"shape":"InstanceLabels"}
+      }
+    },
+    "UpdateDeviceInstanceResult":{
+      "type":"structure",
+      "members":{
+        "deviceInstance":{"shape":"DeviceInstance"}
+      }
+    },
     "UpdateDevicePoolRequest":{
       "type":"structure",
       "required":["arn"],
@@ -2301,6 +2727,24 @@
       "type":"structure",
       "members":{
         "devicePool":{"shape":"DevicePool"}
+      }
+    },
+    "UpdateInstanceProfileRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "name":{"shape":"Name"},
+        "description":{"shape":"Message"},
+        "packageCleanup":{"shape":"Boolean"},
+        "excludeAppPackagesFromCleanup":{"shape":"PackageIds"},
+        "rebootAfterUse":{"shape":"Boolean"}
+      }
+    },
+    "UpdateInstanceProfileResult":{
+      "type":"structure",
+      "members":{
+        "instanceProfile":{"shape":"InstanceProfile"}
       }
     },
     "UpdateNetworkProfileRequest":{
@@ -2340,6 +2784,23 @@
       "type":"structure",
       "members":{
         "project":{"shape":"Project"}
+      }
+    },
+    "UpdateVPCEConfigurationRequest":{
+      "type":"structure",
+      "required":["arn"],
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "vpceConfigurationName":{"shape":"VPCEConfigurationName"},
+        "vpceServiceName":{"shape":"VPCEServiceName"},
+        "serviceDnsName":{"shape":"ServiceDnsName"},
+        "vpceConfigurationDescription":{"shape":"VPCEConfigurationDescription"}
+      }
+    },
+    "UpdateVPCEConfigurationResult":{
+      "type":"structure",
+      "members":{
+        "vpceConfiguration":{"shape":"VPCEConfiguration"}
       }
     },
     "Upload":{
@@ -2389,6 +2850,35 @@
     "Uploads":{
       "type":"list",
       "member":{"shape":"Upload"}
+    },
+    "VPCEConfiguration":{
+      "type":"structure",
+      "members":{
+        "arn":{"shape":"AmazonResourceName"},
+        "vpceConfigurationName":{"shape":"VPCEConfigurationName"},
+        "vpceServiceName":{"shape":"VPCEServiceName"},
+        "serviceDnsName":{"shape":"ServiceDnsName"},
+        "vpceConfigurationDescription":{"shape":"VPCEConfigurationDescription"}
+      }
+    },
+    "VPCEConfigurationDescription":{
+      "type":"string",
+      "max":2048,
+      "min":0
+    },
+    "VPCEConfigurationName":{
+      "type":"string",
+      "max":1024,
+      "min":0
+    },
+    "VPCEConfigurations":{
+      "type":"list",
+      "member":{"shape":"VPCEConfiguration"}
+    },
+    "VPCEServiceName":{
+      "type":"string",
+      "max":2048,
+      "min":0
     }
   }
 }

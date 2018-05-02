@@ -5,7 +5,7 @@
   "description": "Analyzes the performance of a web page and provides tailored suggestions to make that page faster.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/speed/docs/insights/v1/getting_started",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/2oDXdMEFBFoscYUyDCfpupjQitI\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/gGcCi737FK2H5i1UbYiYxyXb0rQ\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/pagespeed-16.png",
     "x32": "https://www.google.com/images/icons/product/pagespeed-32.png"
@@ -50,12 +50,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -126,7 +126,7 @@
       }
     }
   },
-  "revision": "20180127",
+  "revision": "20180315",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Result": {

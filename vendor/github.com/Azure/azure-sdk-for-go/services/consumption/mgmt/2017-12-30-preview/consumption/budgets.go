@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // BudgetsClient is the consumption management client provides access to consumption resources for Azure Enterprise
 // Subscriptions.
 type BudgetsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // NewBudgetsClient creates an instance of the BudgetsClient client.
 func NewBudgetsClient(subscriptionID string, name string) BudgetsClient {
 	return NewBudgetsClientWithBaseURI(DefaultBaseURI, subscriptionID, name)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // NewBudgetsClientWithBaseURI creates an instance of the BudgetsClient client.
 func NewBudgetsClientWithBaseURI(baseURI string, subscriptionID string, name string) BudgetsClient {
 	return BudgetsClient{NewWithBaseURI(baseURI, subscriptionID, name)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // CreateOrUpdate the operation to create or update a budget. Update operation requires latest eTag to be set in the
 // request mandatorily. You may obtain the latest eTag by performing a get operation. Create operation does not require
 // eTag.
@@ -79,6 +83,7 @@ func (client BudgetsClient) CreateOrUpdate(ctx context.Context, parameters Budge
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client BudgetsClient) CreateOrUpdatePreparer(ctx context.Context, parameters Budget) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,7 +97,7 @@ func (client BudgetsClient) CreateOrUpdatePreparer(ctx context.Context, paramete
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Consumption/budgets/{name}", pathParameters),
@@ -101,6 +106,7 @@ func (client BudgetsClient) CreateOrUpdatePreparer(ctx context.Context, paramete
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client BudgetsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -108,6 +114,7 @@ func (client BudgetsClient) CreateOrUpdateSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client BudgetsClient) CreateOrUpdateResponder(resp *http.Response) (result Budget, err error) {
@@ -121,6 +128,7 @@ func (client BudgetsClient) CreateOrUpdateResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // Delete the operation to delete a budget.
 func (client BudgetsClient) Delete(ctx context.Context) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx)
@@ -144,6 +152,7 @@ func (client BudgetsClient) Delete(ctx context.Context) (result autorest.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // DeletePreparer prepares the Delete request.
 func (client BudgetsClient) DeletePreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -164,6 +173,7 @@ func (client BudgetsClient) DeletePreparer(ctx context.Context) (*http.Request, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client BudgetsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -171,6 +181,7 @@ func (client BudgetsClient) DeleteSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client BudgetsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -183,6 +194,7 @@ func (client BudgetsClient) DeleteResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // Get gets the budget for a subscription by budget name.
 func (client BudgetsClient) Get(ctx context.Context) (result Budget, err error) {
 	req, err := client.GetPreparer(ctx)
@@ -206,6 +218,7 @@ func (client BudgetsClient) Get(ctx context.Context) (result Budget, err error) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // GetPreparer prepares the Get request.
 func (client BudgetsClient) GetPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -226,6 +239,7 @@ func (client BudgetsClient) GetPreparer(ctx context.Context) (*http.Request, err
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BudgetsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -233,6 +247,7 @@ func (client BudgetsClient) GetSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client BudgetsClient) GetResponder(resp *http.Response) (result Budget, err error) {
@@ -246,6 +261,7 @@ func (client BudgetsClient) GetResponder(resp *http.Response) (result Budget, er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // List lists all budgets for a subscription.
 func (client BudgetsClient) List(ctx context.Context) (result BudgetsListResult, err error) {
 	req, err := client.ListPreparer(ctx)
@@ -269,6 +285,7 @@ func (client BudgetsClient) List(ctx context.Context) (result BudgetsListResult,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // ListPreparer prepares the List request.
 func (client BudgetsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -288,6 +305,7 @@ func (client BudgetsClient) ListPreparer(ctx context.Context) (*http.Request, er
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client BudgetsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -295,6 +313,7 @@ func (client BudgetsClient) ListSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-12-30-preview/consumption instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client BudgetsClient) ListResponder(resp *http.Response) (result BudgetsListResult, err error) {

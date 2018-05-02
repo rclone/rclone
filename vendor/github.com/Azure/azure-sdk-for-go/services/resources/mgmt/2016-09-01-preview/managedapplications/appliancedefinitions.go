@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionsClient is the ARM managed applications (appliances)
 type ApplianceDefinitionsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NewApplianceDefinitionsClient creates an instance of the ApplianceDefinitionsClient client.
 func NewApplianceDefinitionsClient(subscriptionID string) ApplianceDefinitionsClient {
 	return NewApplianceDefinitionsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NewApplianceDefinitionsClientWithBaseURI creates an instance of the ApplianceDefinitionsClient client.
 func NewApplianceDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) ApplianceDefinitionsClient {
 	return ApplianceDefinitionsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdate creates a new appliance definition.
 //
 // resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
@@ -77,6 +81,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdate(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ApplianceDefinitionsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, applianceDefinitionName string, parameters ApplianceDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,7 +96,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Solutions/applianceDefinitions/{applianceDefinitionName}", pathParameters),
@@ -100,6 +105,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdatePreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) CreateOrUpdateSender(req *http.Request) (future ApplianceDefinitionsCreateOrUpdateFuture, err error) {
@@ -115,6 +121,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateSender(req *http.Request)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) CreateOrUpdateResponder(resp *http.Response) (result ApplianceDefinition, err error) {
@@ -128,6 +135,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateByID creates a new appliance definition.
 //
 // applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
@@ -159,6 +167,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByID(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateByIDPreparer prepares the CreateOrUpdateByID request.
 func (client ApplianceDefinitionsClient) CreateOrUpdateByIDPreparer(ctx context.Context, applianceDefinitionID string, parameters ApplianceDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -171,7 +180,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{applianceDefinitionId}", pathParameters),
@@ -180,6 +189,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateByIDSender sends the CreateOrUpdateByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) CreateOrUpdateByIDSender(req *http.Request) (future ApplianceDefinitionsCreateOrUpdateByIDFuture, err error) {
@@ -195,6 +205,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDSender(req *http.Requ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // CreateOrUpdateByIDResponder handles the response to the CreateOrUpdateByID request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) CreateOrUpdateByIDResponder(resp *http.Response) (result ApplianceDefinition, err error) {
@@ -208,6 +219,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Delete deletes the appliance definition.
 //
 // resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
@@ -239,6 +251,7 @@ func (client ApplianceDefinitionsClient) Delete(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeletePreparer prepares the Delete request.
 func (client ApplianceDefinitionsClient) DeletePreparer(ctx context.Context, resourceGroupName string, applianceDefinitionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -260,6 +273,7 @@ func (client ApplianceDefinitionsClient) DeletePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) DeleteSender(req *http.Request) (future ApplianceDefinitionsDeleteFuture, err error) {
@@ -275,6 +289,7 @@ func (client ApplianceDefinitionsClient) DeleteSender(req *http.Request) (future
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -287,6 +302,7 @@ func (client ApplianceDefinitionsClient) DeleteResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteByID deletes the appliance definition.
 //
 // applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
@@ -308,6 +324,7 @@ func (client ApplianceDefinitionsClient) DeleteByID(ctx context.Context, applian
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteByIDPreparer prepares the DeleteByID request.
 func (client ApplianceDefinitionsClient) DeleteByIDPreparer(ctx context.Context, applianceDefinitionID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -327,6 +344,7 @@ func (client ApplianceDefinitionsClient) DeleteByIDPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteByIDSender sends the DeleteByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) DeleteByIDSender(req *http.Request) (future ApplianceDefinitionsDeleteByIDFuture, err error) {
@@ -342,6 +360,7 @@ func (client ApplianceDefinitionsClient) DeleteByIDSender(req *http.Request) (fu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // DeleteByIDResponder handles the response to the DeleteByID request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) DeleteByIDResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -354,6 +373,7 @@ func (client ApplianceDefinitionsClient) DeleteByIDResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Get gets the appliance definition.
 //
 // resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
@@ -391,6 +411,7 @@ func (client ApplianceDefinitionsClient) Get(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetPreparer prepares the Get request.
 func (client ApplianceDefinitionsClient) GetPreparer(ctx context.Context, resourceGroupName string, applianceDefinitionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -412,6 +433,7 @@ func (client ApplianceDefinitionsClient) GetPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -419,6 +441,7 @@ func (client ApplianceDefinitionsClient) GetSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) GetResponder(resp *http.Response) (result ApplianceDefinition, err error) {
@@ -432,6 +455,7 @@ func (client ApplianceDefinitionsClient) GetResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetByID gets the appliance definition.
 //
 // applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
@@ -459,6 +483,7 @@ func (client ApplianceDefinitionsClient) GetByID(ctx context.Context, applianceD
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetByIDPreparer prepares the GetByID request.
 func (client ApplianceDefinitionsClient) GetByIDPreparer(ctx context.Context, applianceDefinitionID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -478,6 +503,7 @@ func (client ApplianceDefinitionsClient) GetByIDPreparer(ctx context.Context, ap
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetByIDSender sends the GetByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) GetByIDSender(req *http.Request) (*http.Response, error) {
@@ -485,6 +511,7 @@ func (client ApplianceDefinitionsClient) GetByIDSender(req *http.Request) (*http
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GetByIDResponder handles the response to the GetByID request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) GetByIDResponder(resp *http.Response) (result ApplianceDefinition, err error) {
@@ -498,6 +525,7 @@ func (client ApplianceDefinitionsClient) GetByIDResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ListByResourceGroup lists the appliance definitions in a resource group.
 //
 // resourceGroupName is the name of the resource group. The name is case insensitive.
@@ -532,6 +560,7 @@ func (client ApplianceDefinitionsClient) ListByResourceGroup(ctx context.Context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client ApplianceDefinitionsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -552,6 +581,7 @@ func (client ApplianceDefinitionsClient) ListByResourceGroupPreparer(ctx context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -559,6 +589,7 @@ func (client ApplianceDefinitionsClient) ListByResourceGroupSender(req *http.Req
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client ApplianceDefinitionsClient) ListByResourceGroupResponder(resp *http.Response) (result ApplianceDefinitionListResult, err error) {
@@ -593,6 +624,7 @@ func (client ApplianceDefinitionsClient) listByResourceGroupNextResults(lastResu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ApplianceDefinitionsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result ApplianceDefinitionListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)

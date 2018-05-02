@@ -42,9 +42,9 @@ func NewGroupsClientWithBaseURI(baseURI string, tenantID string) GroupsClient {
 }
 
 // AddMember add a member to a group.
-//
-// groupObjectID is the object ID of the group to which to add the member. parameters is the URL of the member
-// object, such as
+// Parameters:
+// groupObjectID - the object ID of the group to which to add the member.
+// parameters - the URL of the member object, such as
 // https://graph.windows.net/0b1f9851-1bf0-433f-aec3-cb9272f093dc/directoryObjects/f260bbc4-c254-447b-94cf-293b5ec434dd.
 func (client GroupsClient) AddMember(ctx context.Context, groupObjectID string, parameters GroupAddMemberParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -87,7 +87,7 @@ func (client GroupsClient) AddMemberPreparer(ctx context.Context, groupObjectID 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/groups/{groupObjectId}/$links/members", pathParameters),
@@ -116,8 +116,8 @@ func (client GroupsClient) AddMemberResponder(resp *http.Response) (result autor
 }
 
 // Create create a group in the directory.
-//
-// parameters is the parameters for the group to create.
+// Parameters:
+// parameters - the parameters for the group to create.
 func (client GroupsClient) Create(ctx context.Context, parameters GroupCreateParameters) (result ADGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -161,7 +161,7 @@ func (client GroupsClient) CreatePreparer(ctx context.Context, parameters GroupC
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/groups", pathParameters),
@@ -191,8 +191,8 @@ func (client GroupsClient) CreateResponder(resp *http.Response) (result ADGroup,
 }
 
 // Delete delete a group from the directory.
-//
-// objectID is the object ID of the group to delete.
+// Parameters:
+// objectID - the object ID of the group to delete.
 func (client GroupsClient) Delete(ctx context.Context, objectID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, objectID)
 	if err != nil {
@@ -255,8 +255,8 @@ func (client GroupsClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // Get gets group information from the directory.
-//
-// objectID is the object ID of the user for which to get group information.
+// Parameters:
+// objectID - the object ID of the user for which to get group information.
 func (client GroupsClient) Get(ctx context.Context, objectID string) (result ADGroup, err error) {
 	req, err := client.GetPreparer(ctx, objectID)
 	if err != nil {
@@ -320,8 +320,8 @@ func (client GroupsClient) GetResponder(resp *http.Response) (result ADGroup, er
 }
 
 // GetGroupMembers gets the members of a group.
-//
-// objectID is the object ID of the group whose members should be retrieved.
+// Parameters:
+// objectID - the object ID of the group whose members should be retrieved.
 func (client GroupsClient) GetGroupMembers(ctx context.Context, objectID string) (result GetObjectsResultPage, err error) {
 	result.fn = func(lastResult GetObjectsResult) (GetObjectsResult, error) {
 		if lastResult.OdataNextLink == nil || len(to.String(lastResult.OdataNextLink)) < 1 {
@@ -397,8 +397,8 @@ func (client GroupsClient) GetGroupMembersComplete(ctx context.Context, objectID
 }
 
 // GetGroupMembersNext gets the members of a group.
-//
-// nextLink is next link for the list operation.
+// Parameters:
+// nextLink - next link for the list operation.
 func (client GroupsClient) GetGroupMembersNext(ctx context.Context, nextLink string) (result GetObjectsResult, err error) {
 	req, err := client.GetGroupMembersNextPreparer(ctx, nextLink)
 	if err != nil {
@@ -462,9 +462,9 @@ func (client GroupsClient) GetGroupMembersNextResponder(resp *http.Response) (re
 }
 
 // GetMemberGroups gets a collection of object IDs of groups of which the specified group is a member.
-//
-// objectID is the object ID of the group for which to get group membership. parameters is group filtering
-// parameters.
+// Parameters:
+// objectID - the object ID of the group for which to get group membership.
+// parameters - group filtering parameters.
 func (client GroupsClient) GetMemberGroups(ctx context.Context, objectID string, parameters GroupGetMemberGroupsParameters) (result GroupGetMemberGroupsResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -506,7 +506,7 @@ func (client GroupsClient) GetMemberGroupsPreparer(ctx context.Context, objectID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/groups/{objectId}/getMemberGroups", pathParameters),
@@ -537,8 +537,8 @@ func (client GroupsClient) GetMemberGroupsResponder(resp *http.Response) (result
 
 // IsMemberOf checks whether the specified user, group, contact, or service principal is a direct or transitive member
 // of the specified group.
-//
-// parameters is the check group membership parameters.
+// Parameters:
+// parameters - the check group membership parameters.
 func (client GroupsClient) IsMemberOf(ctx context.Context, parameters CheckGroupMembershipParameters) (result CheckGroupMembershipResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -580,7 +580,7 @@ func (client GroupsClient) IsMemberOfPreparer(ctx context.Context, parameters Ch
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/isMemberOf", pathParameters),
@@ -610,8 +610,8 @@ func (client GroupsClient) IsMemberOfResponder(resp *http.Response) (result Chec
 }
 
 // List gets list of groups for the current tenant.
-//
-// filter is the filter to apply to the operation.
+// Parameters:
+// filter - the filter to apply to the operation.
 func (client GroupsClient) List(ctx context.Context, filter string) (result GroupListResultPage, err error) {
 	result.fn = func(lastResult GroupListResult) (GroupListResult, error) {
 		if lastResult.OdataNextLink == nil || len(to.String(lastResult.OdataNextLink)) < 1 {
@@ -689,8 +689,8 @@ func (client GroupsClient) ListComplete(ctx context.Context, filter string) (res
 }
 
 // ListNext gets a list of groups for the current tenant.
-//
-// nextLink is next link for the list operation.
+// Parameters:
+// nextLink - next link for the list operation.
 func (client GroupsClient) ListNext(ctx context.Context, nextLink string) (result GroupListResult, err error) {
 	req, err := client.ListNextPreparer(ctx, nextLink)
 	if err != nil {
@@ -754,8 +754,9 @@ func (client GroupsClient) ListNextResponder(resp *http.Response) (result GroupL
 }
 
 // RemoveMember remove a member from a group.
-//
-// groupObjectID is the object ID of the group from which to remove the member. memberObjectID is member object id
+// Parameters:
+// groupObjectID - the object ID of the group from which to remove the member.
+// memberObjectID - member object id
 func (client GroupsClient) RemoveMember(ctx context.Context, groupObjectID string, memberObjectID string) (result autorest.Response, err error) {
 	req, err := client.RemoveMemberPreparer(ctx, groupObjectID, memberObjectID)
 	if err != nil {

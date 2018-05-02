@@ -42,9 +42,10 @@ func NewManagedClustersClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // CreateOrUpdate creates or updates a managed cluster with the specified configuration for agents and Kubernetes
 // version.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the managed cluster resource.
-// parameters is parameters supplied to the Create or Update a Managed Cluster operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
+// parameters - parameters supplied to the Create or Update a Managed Cluster operation.
 func (client ManagedClustersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, parameters ManagedCluster) (result ManagedClustersCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -95,7 +96,7 @@ func (client ManagedClustersClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedClusters/{resourceName}", pathParameters),
@@ -133,8 +134,9 @@ func (client ManagedClustersClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // Delete deletes the managed cluster with a specified resource group and name.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the managed cluster resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
 func (client ManagedClustersClient) Delete(ctx context.Context, resourceGroupName string, resourceName string) (result ManagedClustersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -200,8 +202,9 @@ func (client ManagedClustersClient) DeleteResponder(resp *http.Response) (result
 }
 
 // Get gets the details of the managed cluster with a specified resource group and name.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the managed cluster resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
 func (client ManagedClustersClient) Get(ctx context.Context, resourceGroupName string, resourceName string) (result ManagedCluster, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -267,9 +270,10 @@ func (client ManagedClustersClient) GetResponder(resp *http.Response) (result Ma
 
 // GetAccessProfiles gets the accessProfile for the specified role name of the managed cluster with a specified
 // resource group and name.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the managed cluster resource.
-// roleName is the name of the role for managed cluster accessProfile resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
+// roleName - the name of the role for managed cluster accessProfile resource.
 func (client ManagedClustersClient) GetAccessProfiles(ctx context.Context, resourceGroupName string, resourceName string, roleName string) (result ManagedClusterAccessProfile, err error) {
 	req, err := client.GetAccessProfilesPreparer(ctx, resourceGroupName, resourceName, roleName)
 	if err != nil {
@@ -336,8 +340,9 @@ func (client ManagedClustersClient) GetAccessProfilesResponder(resp *http.Respon
 
 // GetUpgradeProfile gets the details of the upgrade profile for a managed cluster with a specified resource group and
 // name.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the managed cluster resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
 func (client ManagedClustersClient) GetUpgradeProfile(ctx context.Context, resourceGroupName string, resourceName string) (result ManagedClusterUpgradeProfile, err error) {
 	req, err := client.GetUpgradeProfilePreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -494,8 +499,8 @@ func (client ManagedClustersClient) ListComplete(ctx context.Context) (result Ma
 
 // ListByResourceGroup lists managed clusters in the specified subscription and resource group. The operation returns
 // properties of each managed cluster.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client ManagedClustersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ManagedClusterListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)

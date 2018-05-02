@@ -26,7 +26,6 @@ import (
 	"log"
 	"net/http"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -36,8 +35,8 @@ const (
 	hostAPI       = "api"
 	hostContent   = "content"
 	hostNotify    = "notify"
-	sdkVersion    = "4.5.0"
-	specVersion   = "a1d5111"
+	sdkVersion    = "4.0.0"
+	specVersion   = "5389e5b"
 )
 
 // Version returns the current SDK version and API Spec version
@@ -78,12 +77,12 @@ const (
 	LogInfo
 )
 
-func (l LogLevel) shouldLog(v LogLevel) bool {
+func (l LogLevel) ShouldLog(v LogLevel) bool {
 	return l > v || l&v == v
 }
 
 func (c *Config) doLog(l LogLevel, format string, v ...interface{}) {
-	if !c.LogLevel.shouldLog(l) {
+	if !c.LogLevel.ShouldLog(l) {
 		return
 	}
 
@@ -153,7 +152,7 @@ func NewContext(c Config) Context {
 	if client == nil {
 		var conf = &oauth2.Config{Endpoint: OAuthEndpoint(domain)}
 		tok := &oauth2.Token{AccessToken: c.Token}
-		client = conf.Client(context.Background(), tok)
+		client = conf.Client(oauth2.NoContext, tok)
 	}
 
 	headerGenerator := c.HeaderGenerator

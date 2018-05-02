@@ -8,7 +8,7 @@
 // errors. For detailed information about CloudFront features, see the Amazon
 // CloudFront Developer Guide.
 //
-// See https://docs.aws.amazon.com/goto/WebAPI/cloudfront-2017-03-25 for more information on this service.
+// See https://docs.aws.amazon.com/goto/WebAPI/cloudfront-2017-10-30 for more information on this service.
 //
 // See cloudfront package documentation for more information.
 // https://docs.aws.amazon.com/sdk-for-go/api/service/cloudfront/

@@ -41,12 +41,14 @@ func NewAPISchemaClientWithBaseURI(baseURI string, subscriptionID string) APISch
 }
 
 // CreateOrUpdate creates or updates schema configuration for the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. schemaID is schema identifier within an API.
-// Must be unique in the current API Management service instance. parameters is the schema contents to apply.
-// ifMatch is eTag of the Entity. Not required when creating an entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// schemaID - schema identifier within an API. Must be unique in the current API Management service instance.
+// parameters - the schema contents to apply.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client APISchemaClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, schemaID string, parameters SchemaContract, ifMatch string) (result SchemaContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -138,12 +140,14 @@ func (client APISchemaClient) CreateOrUpdateResponder(resp *http.Response) (resu
 }
 
 // Delete deletes the schema configuration at the Api.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. schemaID is schema identifier within an API.
-// Must be unique in the current API Management service instance. ifMatch is eTag of the Entity. ETag should match
-// the current entity state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// schemaID - schema identifier within an API. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client APISchemaClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, schemaID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -226,11 +230,12 @@ func (client APISchemaClient) DeleteResponder(resp *http.Response) (result autor
 }
 
 // Get get the schema configuration at the API level.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. schemaID is schema identifier within an API.
-// Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// schemaID - schema identifier within an API. Must be unique in the current API Management service instance.
 func (client APISchemaClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, schemaID string) (result SchemaContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -313,11 +318,12 @@ func (client APISchemaClient) GetResponder(resp *http.Response) (result SchemaCo
 }
 
 // GetEntityTag gets the entity state (Etag) version of the schema specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. schemaID is schema identifier within an API.
-// Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// schemaID - schema identifier within an API. Must be unique in the current API Management service instance.
 func (client APISchemaClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, apiid string, schemaID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -399,9 +405,10 @@ func (client APISchemaClient) GetEntityTagResponder(resp *http.Response) (result
 }
 
 // ListByAPI get the schema configuration at the API level.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
 // revision has ;rev=n as a suffix where n is the revision number.
 func (client APISchemaClient) ListByAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string) (result SchemaCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{

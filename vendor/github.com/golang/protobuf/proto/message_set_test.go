@@ -64,3 +64,14 @@ func TestUnmarshalMessageSetWithDuplicate(t *testing.T) {
 		t.Errorf("Combined extension is %q, want %q", got, want)
 	}
 }
+
+func TestMarshalMessageSetJSON_UnknownType(t *testing.T) {
+	extMap := map[int32]Extension{12345: Extension{}}
+	got, err := MarshalMessageSetJSON(extMap)
+	if err != nil {
+		t.Fatalf("MarshalMessageSetJSON: %v", err)
+	}
+	if want := []byte("{}"); !bytes.Equal(got, want) {
+		t.Errorf("MarshalMessageSetJSON(%v) = %q, want %q", extMap, got, want)
+	}
+}

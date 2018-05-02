@@ -29,7 +29,7 @@
   "description": "The Resource View API allows users to create and manage logical sets of Google Compute Engine instances.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/compute/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/HxZRDFK7f86Z7kwjlvcp4S6C4Oc\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/Ro0aUXh28mPKBh7gAwjWlFWsvmw\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -77,12 +77,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }

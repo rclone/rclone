@@ -41,9 +41,11 @@ func NewIdentityProvidersClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate creates or Updates the IdentityProvider configuration.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier. parameters is create parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// identityProviderName - identity Provider Type identifier.
+// parameters - create parameters.
 func (client IdentityProvidersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType, parameters IdentityProviderContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -96,7 +98,7 @@ func (client IdentityProvidersClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/identityProviders/{identityProviderName}", pathParameters),
@@ -125,10 +127,12 @@ func (client IdentityProvidersClient) CreateOrUpdateResponder(resp *http.Respons
 }
 
 // Delete deletes the specified identity provider configuration.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier. ifMatch is the entity state (Etag) version of the
-// backend to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// identityProviderName - identity Provider Type identifier.
+// ifMatch - the entity state (Etag) version of the backend to delete. A value of "*" can be used for If-Match
+// to unconditionally apply the operation.
 func (client IdentityProvidersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -202,9 +206,10 @@ func (client IdentityProvidersClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get gets the configuration details of the identity Provider configured in specified service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// identityProviderName - identity Provider Type identifier.
 func (client IdentityProvidersClient) Get(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType) (result IdentityProviderContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -278,8 +283,9 @@ func (client IdentityProvidersClient) GetResponder(resp *http.Response) (result 
 }
 
 // ListByService lists a collection of Identity Provider configured in the specified service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client IdentityProvidersClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string) (result IdentityProviderList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -352,11 +358,13 @@ func (client IdentityProvidersClient) ListByServiceResponder(resp *http.Response
 }
 
 // Update updates an existing IdentityProvider configuration.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier. parameters is update parameters. ifMatch is the
-// entity state (Etag) version of the identity provider configuration to update. A value of "*" can be used for
-// If-Match to unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// identityProviderName - identity Provider Type identifier.
+// parameters - update parameters.
+// ifMatch - the entity state (Etag) version of the identity provider configuration to update. A value of "*"
+// can be used for If-Match to unconditionally apply the operation.
 func (client IdentityProvidersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType, parameters IdentityProviderUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -402,7 +410,7 @@ func (client IdentityProvidersClient) UpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/identityProviders/{identityProviderName}", pathParameters),

@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperationsClient is the the Azure SQL Database management API provides a RESTful set of web services that
 // interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update,
 // and delete databases.
@@ -32,16 +33,19 @@ type DatabaseOperationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewDatabaseOperationsClient creates an instance of the DatabaseOperationsClient client.
 func NewDatabaseOperationsClient(subscriptionID string) DatabaseOperationsClient {
 	return NewDatabaseOperationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewDatabaseOperationsClientWithBaseURI creates an instance of the DatabaseOperationsClient client.
 func NewDatabaseOperationsClientWithBaseURI(baseURI string, subscriptionID string) DatabaseOperationsClient {
 	return DatabaseOperationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Cancel cancels the asynchronous operation on the database.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -69,6 +73,7 @@ func (client DatabaseOperationsClient) Cancel(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CancelPreparer prepares the Cancel request.
 func (client DatabaseOperationsClient) CancelPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, operationID uuid.UUID) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,6 +97,7 @@ func (client DatabaseOperationsClient) CancelPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CancelSender sends the Cancel request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseOperationsClient) CancelSender(req *http.Request) (*http.Response, error) {
@@ -99,6 +105,7 @@ func (client DatabaseOperationsClient) CancelSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CancelResponder handles the response to the Cancel request. The method always
 // closes the http.Response Body.
 func (client DatabaseOperationsClient) CancelResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -111,6 +118,7 @@ func (client DatabaseOperationsClient) CancelResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabase gets a list of operations performed on the database.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -139,6 +147,7 @@ func (client DatabaseOperationsClient) ListByDatabase(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabasePreparer prepares the ListByDatabase request.
 func (client DatabaseOperationsClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -161,6 +170,7 @@ func (client DatabaseOperationsClient) ListByDatabasePreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseOperationsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -168,6 +178,7 @@ func (client DatabaseOperationsClient) ListByDatabaseSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
 // closes the http.Response Body.
 func (client DatabaseOperationsClient) ListByDatabaseResponder(resp *http.Response) (result DatabaseOperationListResult, err error) {
@@ -202,6 +213,7 @@ func (client DatabaseOperationsClient) listByDatabaseNextResults(lastResults Dat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByDatabaseComplete enumerates all values, automatically crossing page boundaries as required.
 func (client DatabaseOperationsClient) ListByDatabaseComplete(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseOperationListResultIterator, err error) {
 	result.page, err = client.ListByDatabase(ctx, resourceGroupName, serverName, databaseName)

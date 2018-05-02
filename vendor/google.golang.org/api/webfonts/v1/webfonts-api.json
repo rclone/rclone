@@ -5,7 +5,7 @@
   "description": "Accesses the metadata for all families served by Google Fonts, providing a list of families currently available (including available styles and a list of supported script subsets).",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/fonts/docs/developer_api",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/Knx7w96lfDrwO6_VUi53vC5n2dE\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/DHQjC9wxAX4S-TGftTxSDlwB9vA\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/feature/font_api-16.png",
     "x32": "https://www.google.com/images/icons/feature/font_api-32.gif"
@@ -50,12 +50,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }

@@ -7,14 +7,12 @@ package proxy
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
-	"sync"
 	"testing"
+
+	"golang.org/x/net/internal/sockstest"
 )
 
 type proxyFromEnvTest struct {
@@ -73,131 +71,41 @@ func TestFromEnvironment(t *testing.T) {
 }
 
 func TestFromURL(t *testing.T) {
-	endSystem, err := net.Listen("tcp", "127.0.0.1:0")
+	ss, err := sockstest.NewServer(sockstest.NoAuthRequired, sockstest.NoProxyRequired)
 	if err != nil {
-		t.Fatalf("net.Listen failed: %v", err)
+		t.Fatal(err)
 	}
-	defer endSystem.Close()
-	gateway, err := net.Listen("tcp", "127.0.0.1:0")
+	defer ss.Close()
+	url, err := url.Parse("socks5://user:password@" + ss.Addr().String())
 	if err != nil {
-		t.Fatalf("net.Listen failed: %v", err)
+		t.Fatal(err)
 	}
-	defer gateway.Close()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go socks5Gateway(t, gateway, endSystem, socks5Domain, &wg)
-
-	url, err := url.Parse("socks5://user:password@" + gateway.Addr().String())
+	proxy, err := FromURL(url, nil)
 	if err != nil {
-		t.Fatalf("url.Parse failed: %v", err)
+		t.Fatal(err)
 	}
-	proxy, err := FromURL(url, Direct)
+	c, err := proxy.Dial("tcp", "fqdn.doesnotexist:5963")
 	if err != nil {
-		t.Fatalf("FromURL failed: %v", err)
+		t.Fatal(err)
 	}
-	_, port, err := net.SplitHostPort(endSystem.Addr().String())
-	if err != nil {
-		t.Fatalf("net.SplitHostPort failed: %v", err)
-	}
-	if c, err := proxy.Dial("tcp", "localhost:"+port); err != nil {
-		t.Fatalf("FromURL.Dial failed: %v", err)
-	} else {
-		c.Close()
-	}
-
-	wg.Wait()
+	c.Close()
 }
 
 func TestSOCKS5(t *testing.T) {
-	endSystem, err := net.Listen("tcp", "127.0.0.1:0")
+	ss, err := sockstest.NewServer(sockstest.NoAuthRequired, sockstest.NoProxyRequired)
 	if err != nil {
-		t.Fatalf("net.Listen failed: %v", err)
+		t.Fatal(err)
 	}
-	defer endSystem.Close()
-	gateway, err := net.Listen("tcp", "127.0.0.1:0")
+	defer ss.Close()
+	proxy, err := SOCKS5("tcp", ss.Addr().String(), nil, nil)
 	if err != nil {
-		t.Fatalf("net.Listen failed: %v", err)
+		t.Fatal(err)
 	}
-	defer gateway.Close()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go socks5Gateway(t, gateway, endSystem, socks5IP4, &wg)
-
-	proxy, err := SOCKS5("tcp", gateway.Addr().String(), nil, Direct)
+	c, err := proxy.Dial("tcp", ss.TargetAddr().String())
 	if err != nil {
-		t.Fatalf("SOCKS5 failed: %v", err)
+		t.Fatal(err)
 	}
-	if c, err := proxy.Dial("tcp", endSystem.Addr().String()); err != nil {
-		t.Fatalf("SOCKS5.Dial failed: %v", err)
-	} else {
-		c.Close()
-	}
-
-	wg.Wait()
-}
-
-func socks5Gateway(t *testing.T, gateway, endSystem net.Listener, typ byte, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	c, err := gateway.Accept()
-	if err != nil {
-		t.Errorf("net.Listener.Accept failed: %v", err)
-		return
-	}
-	defer c.Close()
-
-	b := make([]byte, 32)
-	var n int
-	if typ == socks5Domain {
-		n = 4
-	} else {
-		n = 3
-	}
-	if _, err := io.ReadFull(c, b[:n]); err != nil {
-		t.Errorf("io.ReadFull failed: %v", err)
-		return
-	}
-	if _, err := c.Write([]byte{socks5Version, socks5AuthNone}); err != nil {
-		t.Errorf("net.Conn.Write failed: %v", err)
-		return
-	}
-	if typ == socks5Domain {
-		n = 16
-	} else {
-		n = 10
-	}
-	if _, err := io.ReadFull(c, b[:n]); err != nil {
-		t.Errorf("io.ReadFull failed: %v", err)
-		return
-	}
-	if b[0] != socks5Version || b[1] != socks5Connect || b[2] != 0x00 || b[3] != typ {
-		t.Errorf("got an unexpected packet: %#02x %#02x %#02x %#02x", b[0], b[1], b[2], b[3])
-		return
-	}
-	if typ == socks5Domain {
-		copy(b[:5], []byte{socks5Version, 0x00, 0x00, socks5Domain, 9})
-		b = append(b, []byte("localhost")...)
-	} else {
-		copy(b[:4], []byte{socks5Version, 0x00, 0x00, socks5IP4})
-	}
-	host, port, err := net.SplitHostPort(endSystem.Addr().String())
-	if err != nil {
-		t.Errorf("net.SplitHostPort failed: %v", err)
-		return
-	}
-	b = append(b, []byte(net.ParseIP(host).To4())...)
-	p, err := strconv.Atoi(port)
-	if err != nil {
-		t.Errorf("strconv.Atoi failed: %v", err)
-		return
-	}
-	b = append(b, []byte{byte(p >> 8), byte(p)}...)
-	if _, err := c.Write(b); err != nil {
-		t.Errorf("net.Conn.Write failed: %v", err)
-		return
-	}
+	c.Close()
 }
 
 func ResetProxyEnv() {

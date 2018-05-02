@@ -41,9 +41,10 @@ func NewDeploymentOperationsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Get gets a deployments operation.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment. operationID is the ID of the operation to get.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment.
+// operationID - the ID of the operation to get.
 func (client DeploymentOperationsClient) Get(ctx context.Context, resourceGroupName string, deploymentName string, operationID string) (result DeploymentOperation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -121,9 +122,10 @@ func (client DeploymentOperationsClient) GetResponder(resp *http.Response) (resu
 }
 
 // List gets all deployments operations for a deployment.
-//
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
-// the deployment with the operation to get. top is the number of results to return.
+// Parameters:
+// resourceGroupName - the name of the resource group. The name is case insensitive.
+// deploymentName - the name of the deployment with the operation to get.
+// top - the number of results to return.
 func (client DeploymentOperationsClient) List(ctx context.Context, resourceGroupName string, deploymentName string, top *int32) (result DeploymentOperationsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

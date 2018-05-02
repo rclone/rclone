@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ResourceSkusClient is the data Migration Client
 type ResourceSkusClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewResourceSkusClient creates an instance of the ResourceSkusClient client.
 func NewResourceSkusClient(subscriptionID string) ResourceSkusClient {
 	return NewResourceSkusClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewResourceSkusClientWithBaseURI creates an instance of the ResourceSkusClient client.
 func NewResourceSkusClientWithBaseURI(baseURI string, subscriptionID string) ResourceSkusClient {
 	return ResourceSkusClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSkus the skus action returns the list of SKUs that DMS supports.
 func (client ResourceSkusClient) ListSkus(ctx context.Context) (result ResourceSkusResultPage, err error) {
 	result.fn = client.listSkusNextResults
@@ -63,6 +67,7 @@ func (client ResourceSkusClient) ListSkus(ctx context.Context) (result ResourceS
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSkusPreparer prepares the ListSkus request.
 func (client ResourceSkusClient) ListSkusPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -82,6 +87,7 @@ func (client ResourceSkusClient) ListSkusPreparer(ctx context.Context) (*http.Re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSkusSender sends the ListSkus request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceSkusClient) ListSkusSender(req *http.Request) (*http.Response, error) {
@@ -89,6 +95,7 @@ func (client ResourceSkusClient) ListSkusSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSkusResponder handles the response to the ListSkus request. The method always
 // closes the http.Response Body.
 func (client ResourceSkusClient) ListSkusResponder(resp *http.Response) (result ResourceSkusResult, err error) {
@@ -123,6 +130,7 @@ func (client ResourceSkusClient) listSkusNextResults(lastResults ResourceSkusRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSkusComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ResourceSkusClient) ListSkusComplete(ctx context.Context) (result ResourceSkusResultIterator, err error) {
 	result.page, err = client.ListSkus(ctx)

@@ -888,6 +888,7 @@
         "Parameters":{"shape":"Parameters"},
         "Capabilities":{"shape":"Capabilities"},
         "Tags":{"shape":"Tags"},
+        "AdministrationRoleARN":{"shape":"RoleARN"},
         "ClientRequestToken":{
           "shape":"ClientRequestToken",
           "idempotencyToken":true
@@ -1963,9 +1964,12 @@
         "TemplateBody":{"shape":"TemplateBody"},
         "Parameters":{"shape":"Parameters"},
         "Capabilities":{"shape":"Capabilities"},
-        "Tags":{"shape":"Tags"}
+        "Tags":{"shape":"Tags"},
+        "StackSetARN":{"shape":"StackSetARN"},
+        "AdministrationRoleARN":{"shape":"RoleARN"}
       }
     },
+    "StackSetARN":{"type":"string"},
     "StackSetId":{"type":"string"},
     "StackSetName":{"type":"string"},
     "StackSetNameOrId":{
@@ -2003,6 +2007,7 @@
         "Status":{"shape":"StackSetOperationStatus"},
         "OperationPreferences":{"shape":"StackSetOperationPreferences"},
         "RetainStacks":{"shape":"RetainStacksNullable"},
+        "AdministrationRoleARN":{"shape":"RoleARN"},
         "CreationTimestamp":{"shape":"Timestamp"},
         "EndTimestamp":{"shape":"Timestamp"}
       }
@@ -2323,6 +2328,7 @@
         "Capabilities":{"shape":"Capabilities"},
         "Tags":{"shape":"Tags"},
         "OperationPreferences":{"shape":"StackSetOperationPreferences"},
+        "AdministrationRoleARN":{"shape":"RoleARN"},
         "OperationId":{
           "shape":"ClientRequestToken",
           "idempotencyToken":true

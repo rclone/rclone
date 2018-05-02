@@ -34,6 +34,11 @@ const (
 	Secondary AdminKeyKind = "secondary"
 )
 
+// PossibleAdminKeyKindValues returns an array of possible values for the AdminKeyKind const type.
+func PossibleAdminKeyKindValues() []AdminKeyKind {
+	return []AdminKeyKind{Primary, Secondary}
+}
+
 // HostingMode enumerates the values for hosting mode.
 type HostingMode string
 
@@ -43,6 +48,11 @@ const (
 	// HighDensity ...
 	HighDensity HostingMode = "highDensity"
 )
+
+// PossibleHostingModeValues returns an array of possible values for the HostingMode const type.
+func PossibleHostingModeValues() []HostingMode {
+	return []HostingMode{Default, HighDensity}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -55,6 +65,11 @@ const (
 	// Succeeded ...
 	Succeeded ProvisioningState = "succeeded"
 )
+
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Failed, Provisioning, Succeeded}
+}
 
 // ServiceStatus enumerates the values for service status.
 type ServiceStatus string
@@ -74,6 +89,11 @@ const (
 	ServiceStatusRunning ServiceStatus = "running"
 )
 
+// PossibleServiceStatusValues returns an array of possible values for the ServiceStatus const type.
+func PossibleServiceStatusValues() []ServiceStatus {
+	return []ServiceStatus{ServiceStatusDegraded, ServiceStatusDeleting, ServiceStatusDisabled, ServiceStatusError, ServiceStatusProvisioning, ServiceStatusRunning}
+}
+
 // SkuName enumerates the values for sku name.
 type SkuName string
 
@@ -90,6 +110,11 @@ const (
 	Standard3 SkuName = "standard3"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Basic, Free, Standard, Standard2, Standard3}
+}
+
 // UnavailableNameReason enumerates the values for unavailable name reason.
 type UnavailableNameReason string
 
@@ -99,6 +124,11 @@ const (
 	// Invalid ...
 	Invalid UnavailableNameReason = "Invalid"
 )
+
+// PossibleUnavailableNameReasonValues returns an array of possible values for the UnavailableNameReason const type.
+func PossibleUnavailableNameReasonValues() []UnavailableNameReason {
+	return []UnavailableNameReason{AlreadyExists, Invalid}
+}
 
 // AdminKeyResult response containing the primary and secondary admin API keys for a given Azure Search service.
 type AdminKeyResult struct {

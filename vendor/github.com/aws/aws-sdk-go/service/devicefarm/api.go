@@ -14,7 +14,7 @@ const opCreateDevicePool = "CreateDevicePool"
 
 // CreateDevicePoolRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDevicePool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -98,11 +98,100 @@ func (c *DeviceFarm) CreateDevicePoolWithContext(ctx aws.Context, input *CreateD
 	return out, req.Send()
 }
 
+const opCreateInstanceProfile = "CreateInstanceProfile"
+
+// CreateInstanceProfileRequest generates a "aws/request.Request" representing the
+// client's request for the CreateInstanceProfile operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateInstanceProfile for more information on using the CreateInstanceProfile
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateInstanceProfileRequest method.
+//    req, resp := client.CreateInstanceProfileRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateInstanceProfile
+func (c *DeviceFarm) CreateInstanceProfileRequest(input *CreateInstanceProfileInput) (req *request.Request, output *CreateInstanceProfileOutput) {
+	op := &request.Operation{
+		Name:       opCreateInstanceProfile,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateInstanceProfileInput{}
+	}
+
+	output = &CreateInstanceProfileOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateInstanceProfile API operation for AWS Device Farm.
+//
+// Creates a profile that can be applied to one or more private fleet device
+// instances.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation CreateInstanceProfile for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateInstanceProfile
+func (c *DeviceFarm) CreateInstanceProfile(input *CreateInstanceProfileInput) (*CreateInstanceProfileOutput, error) {
+	req, out := c.CreateInstanceProfileRequest(input)
+	return out, req.Send()
+}
+
+// CreateInstanceProfileWithContext is the same as CreateInstanceProfile with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateInstanceProfile for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) CreateInstanceProfileWithContext(ctx aws.Context, input *CreateInstanceProfileInput, opts ...request.Option) (*CreateInstanceProfileOutput, error) {
+	req, out := c.CreateInstanceProfileRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateNetworkProfile = "CreateNetworkProfile"
 
 // CreateNetworkProfileRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNetworkProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -190,7 +279,7 @@ const opCreateProject = "CreateProject"
 
 // CreateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -278,7 +367,7 @@ const opCreateRemoteAccessSession = "CreateRemoteAccessSession"
 
 // CreateRemoteAccessSessionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRemoteAccessSession operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -366,7 +455,7 @@ const opCreateUpload = "CreateUpload"
 
 // CreateUploadRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUpload operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -450,11 +539,97 @@ func (c *DeviceFarm) CreateUploadWithContext(ctx aws.Context, input *CreateUploa
 	return out, req.Send()
 }
 
+const opCreateVPCEConfiguration = "CreateVPCEConfiguration"
+
+// CreateVPCEConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the CreateVPCEConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateVPCEConfiguration for more information on using the CreateVPCEConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateVPCEConfigurationRequest method.
+//    req, resp := client.CreateVPCEConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateVPCEConfiguration
+func (c *DeviceFarm) CreateVPCEConfigurationRequest(input *CreateVPCEConfigurationInput) (req *request.Request, output *CreateVPCEConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opCreateVPCEConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateVPCEConfigurationInput{}
+	}
+
+	output = &CreateVPCEConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateVPCEConfiguration API operation for AWS Device Farm.
+//
+// Creates a configuration record in Device Farm for your Amazon Virtual Private
+// Cloud (VPC) endpoint.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation CreateVPCEConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateVPCEConfiguration
+func (c *DeviceFarm) CreateVPCEConfiguration(input *CreateVPCEConfigurationInput) (*CreateVPCEConfigurationOutput, error) {
+	req, out := c.CreateVPCEConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// CreateVPCEConfigurationWithContext is the same as CreateVPCEConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateVPCEConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) CreateVPCEConfigurationWithContext(ctx aws.Context, input *CreateVPCEConfigurationInput, opts ...request.Option) (*CreateVPCEConfigurationOutput, error) {
+	req, out := c.CreateVPCEConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteDevicePool = "DeleteDevicePool"
 
 // DeleteDevicePoolRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDevicePool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -539,11 +714,99 @@ func (c *DeviceFarm) DeleteDevicePoolWithContext(ctx aws.Context, input *DeleteD
 	return out, req.Send()
 }
 
+const opDeleteInstanceProfile = "DeleteInstanceProfile"
+
+// DeleteInstanceProfileRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteInstanceProfile operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteInstanceProfile for more information on using the DeleteInstanceProfile
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteInstanceProfileRequest method.
+//    req, resp := client.DeleteInstanceProfileRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteInstanceProfile
+func (c *DeviceFarm) DeleteInstanceProfileRequest(input *DeleteInstanceProfileInput) (req *request.Request, output *DeleteInstanceProfileOutput) {
+	op := &request.Operation{
+		Name:       opDeleteInstanceProfile,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteInstanceProfileInput{}
+	}
+
+	output = &DeleteInstanceProfileOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteInstanceProfile API operation for AWS Device Farm.
+//
+// Deletes a profile that can be applied to one or more private device instances.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation DeleteInstanceProfile for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteInstanceProfile
+func (c *DeviceFarm) DeleteInstanceProfile(input *DeleteInstanceProfileInput) (*DeleteInstanceProfileOutput, error) {
+	req, out := c.DeleteInstanceProfileRequest(input)
+	return out, req.Send()
+}
+
+// DeleteInstanceProfileWithContext is the same as DeleteInstanceProfile with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteInstanceProfile for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) DeleteInstanceProfileWithContext(ctx aws.Context, input *DeleteInstanceProfileInput, opts ...request.Option) (*DeleteInstanceProfileOutput, error) {
+	req, out := c.DeleteInstanceProfileRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteNetworkProfile = "DeleteNetworkProfile"
 
 // DeleteNetworkProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNetworkProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -631,7 +894,7 @@ const opDeleteProject = "DeleteProject"
 
 // DeleteProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -721,7 +984,7 @@ const opDeleteRemoteAccessSession = "DeleteRemoteAccessSession"
 
 // DeleteRemoteAccessSessionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRemoteAccessSession operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -809,7 +1072,7 @@ const opDeleteRun = "DeleteRun"
 
 // DeleteRunRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRun operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -899,7 +1162,7 @@ const opDeleteUpload = "DeleteUpload"
 
 // DeleteUploadRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUpload operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -983,11 +1246,100 @@ func (c *DeviceFarm) DeleteUploadWithContext(ctx aws.Context, input *DeleteUploa
 	return out, req.Send()
 }
 
+const opDeleteVPCEConfiguration = "DeleteVPCEConfiguration"
+
+// DeleteVPCEConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteVPCEConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteVPCEConfiguration for more information on using the DeleteVPCEConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteVPCEConfigurationRequest method.
+//    req, resp := client.DeleteVPCEConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteVPCEConfiguration
+func (c *DeviceFarm) DeleteVPCEConfigurationRequest(input *DeleteVPCEConfigurationInput) (req *request.Request, output *DeleteVPCEConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteVPCEConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteVPCEConfigurationInput{}
+	}
+
+	output = &DeleteVPCEConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteVPCEConfiguration API operation for AWS Device Farm.
+//
+// Deletes a configuration for your Amazon Virtual Private Cloud (VPC) endpoint.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation DeleteVPCEConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+//   * ErrCodeInvalidOperationException "InvalidOperationException"
+//   There was an error with the update request, or you do not have sufficient
+//   permissions to update this VPC endpoint configuration.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteVPCEConfiguration
+func (c *DeviceFarm) DeleteVPCEConfiguration(input *DeleteVPCEConfigurationInput) (*DeleteVPCEConfigurationOutput, error) {
+	req, out := c.DeleteVPCEConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteVPCEConfigurationWithContext is the same as DeleteVPCEConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteVPCEConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) DeleteVPCEConfigurationWithContext(ctx aws.Context, input *DeleteVPCEConfigurationInput, opts ...request.Option) (*DeleteVPCEConfigurationOutput, error) {
+	req, out := c.DeleteVPCEConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetAccountSettings = "GetAccountSettings"
 
 // GetAccountSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the GetAccountSettings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1076,7 +1428,7 @@ const opGetDevice = "GetDevice"
 
 // GetDeviceRequest generates a "aws/request.Request" representing the
 // client's request for the GetDevice operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1160,11 +1512,100 @@ func (c *DeviceFarm) GetDeviceWithContext(ctx aws.Context, input *GetDeviceInput
 	return out, req.Send()
 }
 
+const opGetDeviceInstance = "GetDeviceInstance"
+
+// GetDeviceInstanceRequest generates a "aws/request.Request" representing the
+// client's request for the GetDeviceInstance operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDeviceInstance for more information on using the GetDeviceInstance
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetDeviceInstanceRequest method.
+//    req, resp := client.GetDeviceInstanceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDeviceInstance
+func (c *DeviceFarm) GetDeviceInstanceRequest(input *GetDeviceInstanceInput) (req *request.Request, output *GetDeviceInstanceOutput) {
+	op := &request.Operation{
+		Name:       opGetDeviceInstance,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDeviceInstanceInput{}
+	}
+
+	output = &GetDeviceInstanceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDeviceInstance API operation for AWS Device Farm.
+//
+// Returns information about a device instance belonging to a private device
+// fleet.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation GetDeviceInstance for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDeviceInstance
+func (c *DeviceFarm) GetDeviceInstance(input *GetDeviceInstanceInput) (*GetDeviceInstanceOutput, error) {
+	req, out := c.GetDeviceInstanceRequest(input)
+	return out, req.Send()
+}
+
+// GetDeviceInstanceWithContext is the same as GetDeviceInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDeviceInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) GetDeviceInstanceWithContext(ctx aws.Context, input *GetDeviceInstanceInput, opts ...request.Option) (*GetDeviceInstanceOutput, error) {
+	req, out := c.GetDeviceInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetDevicePool = "GetDevicePool"
 
 // GetDevicePoolRequest generates a "aws/request.Request" representing the
 // client's request for the GetDevicePool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1252,7 +1693,7 @@ const opGetDevicePoolCompatibility = "GetDevicePoolCompatibility"
 
 // GetDevicePoolCompatibilityRequest generates a "aws/request.Request" representing the
 // client's request for the GetDevicePoolCompatibility operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1336,11 +1777,99 @@ func (c *DeviceFarm) GetDevicePoolCompatibilityWithContext(ctx aws.Context, inpu
 	return out, req.Send()
 }
 
+const opGetInstanceProfile = "GetInstanceProfile"
+
+// GetInstanceProfileRequest generates a "aws/request.Request" representing the
+// client's request for the GetInstanceProfile operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetInstanceProfile for more information on using the GetInstanceProfile
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetInstanceProfileRequest method.
+//    req, resp := client.GetInstanceProfileRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetInstanceProfile
+func (c *DeviceFarm) GetInstanceProfileRequest(input *GetInstanceProfileInput) (req *request.Request, output *GetInstanceProfileOutput) {
+	op := &request.Operation{
+		Name:       opGetInstanceProfile,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetInstanceProfileInput{}
+	}
+
+	output = &GetInstanceProfileOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetInstanceProfile API operation for AWS Device Farm.
+//
+// Returns information about the specified instance profile.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation GetInstanceProfile for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetInstanceProfile
+func (c *DeviceFarm) GetInstanceProfile(input *GetInstanceProfileInput) (*GetInstanceProfileOutput, error) {
+	req, out := c.GetInstanceProfileRequest(input)
+	return out, req.Send()
+}
+
+// GetInstanceProfileWithContext is the same as GetInstanceProfile with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetInstanceProfile for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) GetInstanceProfileWithContext(ctx aws.Context, input *GetInstanceProfileInput, opts ...request.Option) (*GetInstanceProfileOutput, error) {
+	req, out := c.GetInstanceProfileRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetJob = "GetJob"
 
 // GetJobRequest generates a "aws/request.Request" representing the
 // client's request for the GetJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1428,7 +1957,7 @@ const opGetNetworkProfile = "GetNetworkProfile"
 
 // GetNetworkProfileRequest generates a "aws/request.Request" representing the
 // client's request for the GetNetworkProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1516,7 +2045,7 @@ const opGetOfferingStatus = "GetOfferingStatus"
 
 // GetOfferingStatusRequest generates a "aws/request.Request" representing the
 // client's request for the GetOfferingStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1669,7 +2198,7 @@ const opGetProject = "GetProject"
 
 // GetProjectRequest generates a "aws/request.Request" representing the
 // client's request for the GetProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1757,7 +2286,7 @@ const opGetRemoteAccessSession = "GetRemoteAccessSession"
 
 // GetRemoteAccessSessionRequest generates a "aws/request.Request" representing the
 // client's request for the GetRemoteAccessSession operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1845,7 +2374,7 @@ const opGetRun = "GetRun"
 
 // GetRunRequest generates a "aws/request.Request" representing the
 // client's request for the GetRun operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1933,7 +2462,7 @@ const opGetSuite = "GetSuite"
 
 // GetSuiteRequest generates a "aws/request.Request" representing the
 // client's request for the GetSuite operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2021,7 +2550,7 @@ const opGetTest = "GetTest"
 
 // GetTestRequest generates a "aws/request.Request" representing the
 // client's request for the GetTest operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2109,7 +2638,7 @@ const opGetUpload = "GetUpload"
 
 // GetUploadRequest generates a "aws/request.Request" representing the
 // client's request for the GetUpload operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2193,11 +2722,97 @@ func (c *DeviceFarm) GetUploadWithContext(ctx aws.Context, input *GetUploadInput
 	return out, req.Send()
 }
 
+const opGetVPCEConfiguration = "GetVPCEConfiguration"
+
+// GetVPCEConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the GetVPCEConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetVPCEConfiguration for more information on using the GetVPCEConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetVPCEConfigurationRequest method.
+//    req, resp := client.GetVPCEConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetVPCEConfiguration
+func (c *DeviceFarm) GetVPCEConfigurationRequest(input *GetVPCEConfigurationInput) (req *request.Request, output *GetVPCEConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opGetVPCEConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetVPCEConfigurationInput{}
+	}
+
+	output = &GetVPCEConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetVPCEConfiguration API operation for AWS Device Farm.
+//
+// Returns information about the configuration settings for your Amazon Virtual
+// Private Cloud (VPC) endpoint.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation GetVPCEConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetVPCEConfiguration
+func (c *DeviceFarm) GetVPCEConfiguration(input *GetVPCEConfigurationInput) (*GetVPCEConfigurationOutput, error) {
+	req, out := c.GetVPCEConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// GetVPCEConfigurationWithContext is the same as GetVPCEConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetVPCEConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) GetVPCEConfigurationWithContext(ctx aws.Context, input *GetVPCEConfigurationInput, opts ...request.Option) (*GetVPCEConfigurationOutput, error) {
+	req, out := c.GetVPCEConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opInstallToRemoteAccessSession = "InstallToRemoteAccessSession"
 
 // InstallToRemoteAccessSessionRequest generates a "aws/request.Request" representing the
 // client's request for the InstallToRemoteAccessSession operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2287,7 +2902,7 @@ const opListArtifacts = "ListArtifacts"
 
 // ListArtifactsRequest generates a "aws/request.Request" representing the
 // client's request for the ListArtifacts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2427,11 +3042,100 @@ func (c *DeviceFarm) ListArtifactsPagesWithContext(ctx aws.Context, input *ListA
 	return p.Err()
 }
 
+const opListDeviceInstances = "ListDeviceInstances"
+
+// ListDeviceInstancesRequest generates a "aws/request.Request" representing the
+// client's request for the ListDeviceInstances operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDeviceInstances for more information on using the ListDeviceInstances
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListDeviceInstancesRequest method.
+//    req, resp := client.ListDeviceInstancesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDeviceInstances
+func (c *DeviceFarm) ListDeviceInstancesRequest(input *ListDeviceInstancesInput) (req *request.Request, output *ListDeviceInstancesOutput) {
+	op := &request.Operation{
+		Name:       opListDeviceInstances,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListDeviceInstancesInput{}
+	}
+
+	output = &ListDeviceInstancesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDeviceInstances API operation for AWS Device Farm.
+//
+// Returns information about the private device instances associated with one
+// or more AWS accounts.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation ListDeviceInstances for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDeviceInstances
+func (c *DeviceFarm) ListDeviceInstances(input *ListDeviceInstancesInput) (*ListDeviceInstancesOutput, error) {
+	req, out := c.ListDeviceInstancesRequest(input)
+	return out, req.Send()
+}
+
+// ListDeviceInstancesWithContext is the same as ListDeviceInstances with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDeviceInstances for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) ListDeviceInstancesWithContext(ctx aws.Context, input *ListDeviceInstancesInput, opts ...request.Option) (*ListDeviceInstancesOutput, error) {
+	req, out := c.ListDeviceInstancesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListDevicePools = "ListDevicePools"
 
 // ListDevicePoolsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDevicePools operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2575,7 +3279,7 @@ const opListDevices = "ListDevices"
 
 // ListDevicesRequest generates a "aws/request.Request" representing the
 // client's request for the ListDevices operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2715,11 +3419,99 @@ func (c *DeviceFarm) ListDevicesPagesWithContext(ctx aws.Context, input *ListDev
 	return p.Err()
 }
 
+const opListInstanceProfiles = "ListInstanceProfiles"
+
+// ListInstanceProfilesRequest generates a "aws/request.Request" representing the
+// client's request for the ListInstanceProfiles operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListInstanceProfiles for more information on using the ListInstanceProfiles
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListInstanceProfilesRequest method.
+//    req, resp := client.ListInstanceProfilesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListInstanceProfiles
+func (c *DeviceFarm) ListInstanceProfilesRequest(input *ListInstanceProfilesInput) (req *request.Request, output *ListInstanceProfilesOutput) {
+	op := &request.Operation{
+		Name:       opListInstanceProfiles,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListInstanceProfilesInput{}
+	}
+
+	output = &ListInstanceProfilesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListInstanceProfiles API operation for AWS Device Farm.
+//
+// Returns information about all the instance profiles in an AWS account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation ListInstanceProfiles for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListInstanceProfiles
+func (c *DeviceFarm) ListInstanceProfiles(input *ListInstanceProfilesInput) (*ListInstanceProfilesOutput, error) {
+	req, out := c.ListInstanceProfilesRequest(input)
+	return out, req.Send()
+}
+
+// ListInstanceProfilesWithContext is the same as ListInstanceProfiles with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListInstanceProfiles for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) ListInstanceProfilesWithContext(ctx aws.Context, input *ListInstanceProfilesInput, opts ...request.Option) (*ListInstanceProfilesOutput, error) {
+	req, out := c.ListInstanceProfilesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListJobs = "ListJobs"
 
 // ListJobsRequest generates a "aws/request.Request" representing the
 // client's request for the ListJobs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2863,7 +3655,7 @@ const opListNetworkProfiles = "ListNetworkProfiles"
 
 // ListNetworkProfilesRequest generates a "aws/request.Request" representing the
 // client's request for the ListNetworkProfiles operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2951,7 +3743,7 @@ const opListOfferingPromotions = "ListOfferingPromotions"
 
 // ListOfferingPromotionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListOfferingPromotions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3047,7 +3839,7 @@ const opListOfferingTransactions = "ListOfferingTransactions"
 
 // ListOfferingTransactionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListOfferingTransactions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3200,7 +3992,7 @@ const opListOfferings = "ListOfferings"
 
 // ListOfferingsRequest generates a "aws/request.Request" representing the
 // client's request for the ListOfferings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3353,7 +4145,7 @@ const opListProjects = "ListProjects"
 
 // ListProjectsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3497,7 +4289,7 @@ const opListRemoteAccessSessions = "ListRemoteAccessSessions"
 
 // ListRemoteAccessSessionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListRemoteAccessSessions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3585,7 +4377,7 @@ const opListRuns = "ListRuns"
 
 // ListRunsRequest generates a "aws/request.Request" representing the
 // client's request for the ListRuns operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3729,7 +4521,7 @@ const opListSamples = "ListSamples"
 
 // ListSamplesRequest generates a "aws/request.Request" representing the
 // client's request for the ListSamples operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3873,7 +4665,7 @@ const opListSuites = "ListSuites"
 
 // ListSuitesRequest generates a "aws/request.Request" representing the
 // client's request for the ListSuites operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4017,7 +4809,7 @@ const opListTests = "ListTests"
 
 // ListTestsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTests operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4161,7 +4953,7 @@ const opListUniqueProblems = "ListUniqueProblems"
 
 // ListUniqueProblemsRequest generates a "aws/request.Request" representing the
 // client's request for the ListUniqueProblems operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4305,7 +5097,7 @@ const opListUploads = "ListUploads"
 
 // ListUploadsRequest generates a "aws/request.Request" representing the
 // client's request for the ListUploads operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4445,11 +5237,94 @@ func (c *DeviceFarm) ListUploadsPagesWithContext(ctx aws.Context, input *ListUpl
 	return p.Err()
 }
 
+const opListVPCEConfigurations = "ListVPCEConfigurations"
+
+// ListVPCEConfigurationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListVPCEConfigurations operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListVPCEConfigurations for more information on using the ListVPCEConfigurations
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListVPCEConfigurationsRequest method.
+//    req, resp := client.ListVPCEConfigurationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListVPCEConfigurations
+func (c *DeviceFarm) ListVPCEConfigurationsRequest(input *ListVPCEConfigurationsInput) (req *request.Request, output *ListVPCEConfigurationsOutput) {
+	op := &request.Operation{
+		Name:       opListVPCEConfigurations,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListVPCEConfigurationsInput{}
+	}
+
+	output = &ListVPCEConfigurationsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListVPCEConfigurations API operation for AWS Device Farm.
+//
+// Returns information about all Amazon Virtual Private Cloud (VPC) endpoint
+// configurations in the AWS account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation ListVPCEConfigurations for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListVPCEConfigurations
+func (c *DeviceFarm) ListVPCEConfigurations(input *ListVPCEConfigurationsInput) (*ListVPCEConfigurationsOutput, error) {
+	req, out := c.ListVPCEConfigurationsRequest(input)
+	return out, req.Send()
+}
+
+// ListVPCEConfigurationsWithContext is the same as ListVPCEConfigurations with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListVPCEConfigurations for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) ListVPCEConfigurationsWithContext(ctx aws.Context, input *ListVPCEConfigurationsInput, opts ...request.Option) (*ListVPCEConfigurationsOutput, error) {
+	req, out := c.ListVPCEConfigurationsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opPurchaseOffering = "PurchaseOffering"
 
 // PurchaseOfferingRequest generates a "aws/request.Request" representing the
 // client's request for the PurchaseOffering operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4546,7 +5421,7 @@ const opRenewOffering = "RenewOffering"
 
 // RenewOfferingRequest generates a "aws/request.Request" representing the
 // client's request for the RenewOffering operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4642,7 +5517,7 @@ const opScheduleRun = "ScheduleRun"
 
 // ScheduleRunRequest generates a "aws/request.Request" representing the
 // client's request for the ScheduleRun operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4733,7 +5608,7 @@ const opStopRemoteAccessSession = "StopRemoteAccessSession"
 
 // StopRemoteAccessSessionRequest generates a "aws/request.Request" representing the
 // client's request for the StopRemoteAccessSession operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4821,7 +5696,7 @@ const opStopRun = "StopRun"
 
 // StopRunRequest generates a "aws/request.Request" representing the
 // client's request for the StopRun operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4910,11 +5785,99 @@ func (c *DeviceFarm) StopRunWithContext(ctx aws.Context, input *StopRunInput, op
 	return out, req.Send()
 }
 
+const opUpdateDeviceInstance = "UpdateDeviceInstance"
+
+// UpdateDeviceInstanceRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateDeviceInstance operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateDeviceInstance for more information on using the UpdateDeviceInstance
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateDeviceInstanceRequest method.
+//    req, resp := client.UpdateDeviceInstanceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateDeviceInstance
+func (c *DeviceFarm) UpdateDeviceInstanceRequest(input *UpdateDeviceInstanceInput) (req *request.Request, output *UpdateDeviceInstanceOutput) {
+	op := &request.Operation{
+		Name:       opUpdateDeviceInstance,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateDeviceInstanceInput{}
+	}
+
+	output = &UpdateDeviceInstanceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateDeviceInstance API operation for AWS Device Farm.
+//
+// Updates information about an existing private device instance.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation UpdateDeviceInstance for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateDeviceInstance
+func (c *DeviceFarm) UpdateDeviceInstance(input *UpdateDeviceInstanceInput) (*UpdateDeviceInstanceOutput, error) {
+	req, out := c.UpdateDeviceInstanceRequest(input)
+	return out, req.Send()
+}
+
+// UpdateDeviceInstanceWithContext is the same as UpdateDeviceInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateDeviceInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) UpdateDeviceInstanceWithContext(ctx aws.Context, input *UpdateDeviceInstanceInput, opts ...request.Option) (*UpdateDeviceInstanceOutput, error) {
+	req, out := c.UpdateDeviceInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateDevicePool = "UpdateDevicePool"
 
 // UpdateDevicePoolRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDevicePool operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5000,11 +5963,99 @@ func (c *DeviceFarm) UpdateDevicePoolWithContext(ctx aws.Context, input *UpdateD
 	return out, req.Send()
 }
 
+const opUpdateInstanceProfile = "UpdateInstanceProfile"
+
+// UpdateInstanceProfileRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateInstanceProfile operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateInstanceProfile for more information on using the UpdateInstanceProfile
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateInstanceProfileRequest method.
+//    req, resp := client.UpdateInstanceProfileRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateInstanceProfile
+func (c *DeviceFarm) UpdateInstanceProfileRequest(input *UpdateInstanceProfileInput) (req *request.Request, output *UpdateInstanceProfileOutput) {
+	op := &request.Operation{
+		Name:       opUpdateInstanceProfile,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateInstanceProfileInput{}
+	}
+
+	output = &UpdateInstanceProfileOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateInstanceProfile API operation for AWS Device Farm.
+//
+// Updates information about an existing private device instance profile.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation UpdateInstanceProfile for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A limit was exceeded.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateInstanceProfile
+func (c *DeviceFarm) UpdateInstanceProfile(input *UpdateInstanceProfileInput) (*UpdateInstanceProfileOutput, error) {
+	req, out := c.UpdateInstanceProfileRequest(input)
+	return out, req.Send()
+}
+
+// UpdateInstanceProfileWithContext is the same as UpdateInstanceProfile with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateInstanceProfile for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) UpdateInstanceProfileWithContext(ctx aws.Context, input *UpdateInstanceProfileInput, opts ...request.Option) (*UpdateInstanceProfileOutput, error) {
+	req, out := c.UpdateInstanceProfileRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateNetworkProfile = "UpdateNetworkProfile"
 
 // UpdateNetworkProfileRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateNetworkProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5092,7 +6143,7 @@ const opUpdateProject = "UpdateProject"
 
 // UpdateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProject operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5176,6 +6227,96 @@ func (c *DeviceFarm) UpdateProjectWithContext(ctx aws.Context, input *UpdateProj
 	return out, req.Send()
 }
 
+const opUpdateVPCEConfiguration = "UpdateVPCEConfiguration"
+
+// UpdateVPCEConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateVPCEConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateVPCEConfiguration for more information on using the UpdateVPCEConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateVPCEConfigurationRequest method.
+//    req, resp := client.UpdateVPCEConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateVPCEConfiguration
+func (c *DeviceFarm) UpdateVPCEConfigurationRequest(input *UpdateVPCEConfigurationInput) (req *request.Request, output *UpdateVPCEConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opUpdateVPCEConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateVPCEConfigurationInput{}
+	}
+
+	output = &UpdateVPCEConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateVPCEConfiguration API operation for AWS Device Farm.
+//
+// Updates information about an existing Amazon Virtual Private Cloud (VPC)
+// endpoint configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Device Farm's
+// API operation UpdateVPCEConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeArgumentException "ArgumentException"
+//   An invalid argument was specified.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The specified entity was not found.
+//
+//   * ErrCodeServiceAccountException "ServiceAccountException"
+//   There was a problem with the service account.
+//
+//   * ErrCodeInvalidOperationException "InvalidOperationException"
+//   There was an error with the update request, or you do not have sufficient
+//   permissions to update this VPC endpoint configuration.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateVPCEConfiguration
+func (c *DeviceFarm) UpdateVPCEConfiguration(input *UpdateVPCEConfigurationInput) (*UpdateVPCEConfigurationOutput, error) {
+	req, out := c.UpdateVPCEConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// UpdateVPCEConfigurationWithContext is the same as UpdateVPCEConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateVPCEConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DeviceFarm) UpdateVPCEConfigurationWithContext(ctx aws.Context, input *UpdateVPCEConfigurationInput, opts ...request.Option) (*UpdateVPCEConfigurationOutput, error) {
+	req, out := c.UpdateVPCEConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 // A container for account-level settings within AWS Device Farm.
 type AccountSettings struct {
 	_ struct{} `type:"structure"`
@@ -5194,6 +6335,15 @@ type AccountSettings struct {
 	// maximum is expressed as an offering-id:number pair, where the offering-id
 	// represents one of the IDs returned by the ListOfferings command.
 	MaxSlots map[string]*int64 `locationName:"maxSlots" type:"map"`
+
+	// When set to true, for private devices, Device Farm will not sign your app
+	// again. For public devices, Device Farm always signs your apps again and this
+	// parameter has no effect.
+	//
+	// For more information about how Device Farm re-signs your app(s), see Do you
+	// modify my app? (https://aws.amazon.com/device-farm/faq/) in the AWS Device
+	// Farm FAQs.
+	SkipAppResign *bool `locationName:"skipAppResign" type:"boolean"`
 
 	// Information about an AWS account's usage of free trial device minutes.
 	TrialMinutes *TrialMinutes `locationName:"trialMinutes" type:"structure"`
@@ -5237,6 +6387,12 @@ func (s *AccountSettings) SetMaxJobTimeoutMinutes(v int64) *AccountSettings {
 // SetMaxSlots sets the MaxSlots field's value.
 func (s *AccountSettings) SetMaxSlots(v map[string]*int64) *AccountSettings {
 	s.MaxSlots = v
+	return s
+}
+
+// SetSkipAppResign sets the SkipAppResign field's value.
+func (s *AccountSettings) SetSkipAppResign(v bool) *AccountSettings {
+	s.SkipAppResign = &v
 	return s
 }
 
@@ -5594,6 +6750,108 @@ func (s *CreateDevicePoolOutput) SetDevicePool(v *DevicePool) *CreateDevicePoolO
 	return s
 }
 
+type CreateInstanceProfileInput struct {
+	_ struct{} `type:"structure"`
+
+	// The description of your instance profile.
+	Description *string `locationName:"description" type:"string"`
+
+	// An array of strings specifying the list of app packages that should not be
+	// cleaned up from the device after a test run is over.
+	//
+	// The list of packages is only considered if you set packageCleanup to true.
+	ExcludeAppPackagesFromCleanup []*string `locationName:"excludeAppPackagesFromCleanup" type:"list"`
+
+	// The name of your instance profile.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
+
+	// When set to true, Device Farm will remove app packages after a test run.
+	// The default value is false for private devices.
+	PackageCleanup *bool `locationName:"packageCleanup" type:"boolean"`
+
+	// When set to true, Device Farm will reboot the instance after a test run.
+	// The default value is true.
+	RebootAfterUse *bool `locationName:"rebootAfterUse" type:"boolean"`
+}
+
+// String returns the string representation
+func (s CreateInstanceProfileInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateInstanceProfileInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateInstanceProfileInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateInstanceProfileInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateInstanceProfileInput) SetDescription(v string) *CreateInstanceProfileInput {
+	s.Description = &v
+	return s
+}
+
+// SetExcludeAppPackagesFromCleanup sets the ExcludeAppPackagesFromCleanup field's value.
+func (s *CreateInstanceProfileInput) SetExcludeAppPackagesFromCleanup(v []*string) *CreateInstanceProfileInput {
+	s.ExcludeAppPackagesFromCleanup = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateInstanceProfileInput) SetName(v string) *CreateInstanceProfileInput {
+	s.Name = &v
+	return s
+}
+
+// SetPackageCleanup sets the PackageCleanup field's value.
+func (s *CreateInstanceProfileInput) SetPackageCleanup(v bool) *CreateInstanceProfileInput {
+	s.PackageCleanup = &v
+	return s
+}
+
+// SetRebootAfterUse sets the RebootAfterUse field's value.
+func (s *CreateInstanceProfileInput) SetRebootAfterUse(v bool) *CreateInstanceProfileInput {
+	s.RebootAfterUse = &v
+	return s
+}
+
+type CreateInstanceProfileOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your instance profile.
+	InstanceProfile *InstanceProfile `locationName:"instanceProfile" type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateInstanceProfileOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateInstanceProfileOutput) GoString() string {
+	return s.String()
+}
+
+// SetInstanceProfile sets the InstanceProfile field's value.
+func (s *CreateInstanceProfileOutput) SetInstanceProfile(v *InstanceProfile) *CreateInstanceProfileOutput {
+	s.InstanceProfile = v
+	return s
+}
+
 type CreateNetworkProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5841,12 +7099,11 @@ func (s *CreateProjectOutput) SetProject(v *Project) *CreateProjectOutput {
 	return s
 }
 
-// Creates the configuration settings for a remote access session, including
-// the device model and type.
+// Configuration settings for a remote access session, including billing method.
 type CreateRemoteAccessSessionConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Returns the billing method for purposes of configuring a remote access session.
+	// The billing method for the remote access session.
 	BillingMethod *string `locationName:"billingMethod" type:"string" enum:"BillingMethod"`
 }
 
@@ -5885,6 +7142,10 @@ type CreateRemoteAccessSessionInput struct {
 	// DeviceArn is a required field
 	DeviceArn *string `locationName:"deviceArn" min:"32" type:"string" required:"true"`
 
+	// The Amazon Resource Name (ARN) of the device instance for which you want
+	// to create a remote access session.
+	InstanceArn *string `locationName:"instanceArn" min:"32" type:"string"`
+
 	// The interaction mode of the remote access session. Valid values are:
 	//
 	//    * INTERACTIVE: You can interact with the iOS device by viewing, touching,
@@ -5919,6 +7180,15 @@ type CreateRemoteAccessSessionInput struct {
 	// Set to true to enable remote recording for the remote access session.
 	RemoteRecordEnabled *bool `locationName:"remoteRecordEnabled" type:"boolean"`
 
+	// When set to true, for private devices, Device Farm will not sign your app
+	// again. For public devices, Device Farm always signs your apps again and this
+	// parameter has no effect.
+	//
+	// For more information about how Device Farm re-signs your app(s), see Do you
+	// modify my app? (https://aws.amazon.com/device-farm/faq/) in the AWS Device
+	// Farm FAQs.
+	SkipAppResign *bool `locationName:"skipAppResign" type:"boolean"`
+
 	// The public key of the ssh key pair you want to use for connecting to remote
 	// devices in your remote debugging session. This is only required if remoteDebugEnabled
 	// is set to true.
@@ -5943,6 +7213,9 @@ func (s *CreateRemoteAccessSessionInput) Validate() error {
 	}
 	if s.DeviceArn != nil && len(*s.DeviceArn) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("DeviceArn", 32))
+	}
+	if s.InstanceArn != nil && len(*s.InstanceArn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("InstanceArn", 32))
 	}
 	if s.ProjectArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("ProjectArn"))
@@ -5975,6 +7248,12 @@ func (s *CreateRemoteAccessSessionInput) SetConfiguration(v *CreateRemoteAccessS
 // SetDeviceArn sets the DeviceArn field's value.
 func (s *CreateRemoteAccessSessionInput) SetDeviceArn(v string) *CreateRemoteAccessSessionInput {
 	s.DeviceArn = &v
+	return s
+}
+
+// SetInstanceArn sets the InstanceArn field's value.
+func (s *CreateRemoteAccessSessionInput) SetInstanceArn(v string) *CreateRemoteAccessSessionInput {
+	s.InstanceArn = &v
 	return s
 }
 
@@ -6011,6 +7290,12 @@ func (s *CreateRemoteAccessSessionInput) SetRemoteRecordAppArn(v string) *Create
 // SetRemoteRecordEnabled sets the RemoteRecordEnabled field's value.
 func (s *CreateRemoteAccessSessionInput) SetRemoteRecordEnabled(v bool) *CreateRemoteAccessSessionInput {
 	s.RemoteRecordEnabled = &v
+	return s
+}
+
+// SetSkipAppResign sets the SkipAppResign field's value.
+func (s *CreateRemoteAccessSessionInput) SetSkipAppResign(v bool) *CreateRemoteAccessSessionInput {
+	s.SkipAppResign = &v
 	return s
 }
 
@@ -6191,6 +7476,107 @@ func (s *CreateUploadOutput) SetUpload(v *Upload) *CreateUploadOutput {
 	return s
 }
 
+type CreateVPCEConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The DNS name of the service running in your VPC that you want Device Farm
+	// to test.
+	//
+	// ServiceDnsName is a required field
+	ServiceDnsName *string `locationName:"serviceDnsName" type:"string" required:"true"`
+
+	// An optional description, providing more details about your VPC endpoint configuration.
+	VpceConfigurationDescription *string `locationName:"vpceConfigurationDescription" type:"string"`
+
+	// The friendly name you give to your VPC endpoint configuration, to manage
+	// your configurations more easily.
+	//
+	// VpceConfigurationName is a required field
+	VpceConfigurationName *string `locationName:"vpceConfigurationName" type:"string" required:"true"`
+
+	// The name of the VPC endpoint service running inside your AWS account that
+	// you want Device Farm to test.
+	//
+	// VpceServiceName is a required field
+	VpceServiceName *string `locationName:"vpceServiceName" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateVPCEConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVPCEConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateVPCEConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateVPCEConfigurationInput"}
+	if s.ServiceDnsName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceDnsName"))
+	}
+	if s.VpceConfigurationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VpceConfigurationName"))
+	}
+	if s.VpceServiceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VpceServiceName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetServiceDnsName sets the ServiceDnsName field's value.
+func (s *CreateVPCEConfigurationInput) SetServiceDnsName(v string) *CreateVPCEConfigurationInput {
+	s.ServiceDnsName = &v
+	return s
+}
+
+// SetVpceConfigurationDescription sets the VpceConfigurationDescription field's value.
+func (s *CreateVPCEConfigurationInput) SetVpceConfigurationDescription(v string) *CreateVPCEConfigurationInput {
+	s.VpceConfigurationDescription = &v
+	return s
+}
+
+// SetVpceConfigurationName sets the VpceConfigurationName field's value.
+func (s *CreateVPCEConfigurationInput) SetVpceConfigurationName(v string) *CreateVPCEConfigurationInput {
+	s.VpceConfigurationName = &v
+	return s
+}
+
+// SetVpceServiceName sets the VpceServiceName field's value.
+func (s *CreateVPCEConfigurationInput) SetVpceServiceName(v string) *CreateVPCEConfigurationInput {
+	s.VpceServiceName = &v
+	return s
+}
+
+type CreateVPCEConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your VPC endpoint configuration.
+	VpceConfiguration *VPCEConfiguration `locationName:"vpceConfiguration" type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateVPCEConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVPCEConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetVpceConfiguration sets the VpceConfiguration field's value.
+func (s *CreateVPCEConfigurationOutput) SetVpceConfiguration(v *VPCEConfiguration) *CreateVPCEConfigurationOutput {
+	s.VpceConfiguration = v
+	return s
+}
+
 // A JSON object specifying the paths where the artifacts generated by the customer's
 // tests, on the device or in the test environment, will be pulled from.
 //
@@ -6296,6 +7682,62 @@ func (s DeleteDevicePoolOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteDevicePoolOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteInstanceProfileInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the instance profile you are requesting
+	// to delete.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteInstanceProfileInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInstanceProfileInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteInstanceProfileInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteInstanceProfileInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *DeleteInstanceProfileInput) SetArn(v string) *DeleteInstanceProfileInput {
+	s.Arn = &v
+	return s
+}
+
+type DeleteInstanceProfileOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteInstanceProfileOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteInstanceProfileOutput) GoString() string {
 	return s.String()
 }
 
@@ -6586,6 +8028,62 @@ func (s DeleteUploadOutput) GoString() string {
 	return s.String()
 }
 
+type DeleteVPCEConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the VPC endpoint configuration you want
+	// to delete.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteVPCEConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVPCEConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteVPCEConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteVPCEConfigurationInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *DeleteVPCEConfigurationInput) SetArn(v string) *DeleteVPCEConfigurationInput {
+	s.Arn = &v
+	return s
+}
+
+type DeleteVPCEConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteVPCEConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVPCEConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 // Represents a device type that an app is tested against.
 type Device struct {
 	_ struct{} `type:"structure"`
@@ -6620,6 +8118,9 @@ type Device struct {
 
 	// The device's image name.
 	Image *string `locationName:"image" type:"string"`
+
+	// The instances belonging to this device.
+	Instances []*DeviceInstance `locationName:"instances" type:"list"`
 
 	// The device's manufacturer name.
 	Manufacturer *string `locationName:"manufacturer" type:"string"`
@@ -6719,6 +8220,12 @@ func (s *Device) SetImage(v string) *Device {
 	return s
 }
 
+// SetInstances sets the Instances field's value.
+func (s *Device) SetInstances(v []*DeviceInstance) *Device {
+	s.Instances = v
+	return s
+}
+
 // SetManufacturer sets the Manufacturer field's value.
 func (s *Device) SetManufacturer(v string) *Device {
 	s.Manufacturer = &v
@@ -6782,6 +8289,75 @@ func (s *Device) SetRemoteDebugEnabled(v bool) *Device {
 // SetResolution sets the Resolution field's value.
 func (s *Device) SetResolution(v *Resolution) *Device {
 	s.Resolution = v
+	return s
+}
+
+// Represents the device instance.
+type DeviceInstance struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the device instance.
+	Arn *string `locationName:"arn" min:"32" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the device.
+	DeviceArn *string `locationName:"deviceArn" min:"32" type:"string"`
+
+	// A object containing information about the instance profile.
+	InstanceProfile *InstanceProfile `locationName:"instanceProfile" type:"structure"`
+
+	// An array of strings describing the device instance.
+	Labels []*string `locationName:"labels" type:"list"`
+
+	// The status of the device instance. Valid values are listed below.
+	Status *string `locationName:"status" type:"string" enum:"InstanceStatus"`
+
+	// Unique device identifier for the device instance.
+	Udid *string `locationName:"udid" type:"string"`
+}
+
+// String returns the string representation
+func (s DeviceInstance) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeviceInstance) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *DeviceInstance) SetArn(v string) *DeviceInstance {
+	s.Arn = &v
+	return s
+}
+
+// SetDeviceArn sets the DeviceArn field's value.
+func (s *DeviceInstance) SetDeviceArn(v string) *DeviceInstance {
+	s.DeviceArn = &v
+	return s
+}
+
+// SetInstanceProfile sets the InstanceProfile field's value.
+func (s *DeviceInstance) SetInstanceProfile(v *InstanceProfile) *DeviceInstance {
+	s.InstanceProfile = v
+	return s
+}
+
+// SetLabels sets the Labels field's value.
+func (s *DeviceInstance) SetLabels(v []*string) *DeviceInstance {
+	s.Labels = v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DeviceInstance) SetStatus(v string) *DeviceInstance {
+	s.Status = &v
+	return s
+}
+
+// SetUdid sets the Udid field's value.
+func (s *DeviceInstance) SetUdid(v string) *DeviceInstance {
+	s.Udid = &v
 	return s
 }
 
@@ -6955,6 +8531,15 @@ type ExecutionConfiguration struct {
 
 	// The number of minutes a test run will execute before it times out.
 	JobTimeoutMinutes *int64 `locationName:"jobTimeoutMinutes" type:"integer"`
+
+	// When set to true, for private devices, Device Farm will not sign your app
+	// again. For public devices, Device Farm always signs your apps again and this
+	// parameter has no effect.
+	//
+	// For more information about how Device Farm re-signs your app(s), see Do you
+	// modify my app? (https://aws.amazon.com/device-farm/faq/) in the AWS Device
+	// Farm FAQs.
+	SkipAppResign *bool `locationName:"skipAppResign" type:"boolean"`
 }
 
 // String returns the string representation
@@ -6982,6 +8567,12 @@ func (s *ExecutionConfiguration) SetAppPackagesCleanup(v bool) *ExecutionConfigu
 // SetJobTimeoutMinutes sets the JobTimeoutMinutes field's value.
 func (s *ExecutionConfiguration) SetJobTimeoutMinutes(v int64) *ExecutionConfiguration {
 	s.JobTimeoutMinutes = &v
+	return s
+}
+
+// SetSkipAppResign sets the SkipAppResign field's value.
+func (s *ExecutionConfiguration) SetSkipAppResign(v bool) *ExecutionConfiguration {
+	s.SkipAppResign = &v
 	return s
 }
 
@@ -7067,6 +8658,71 @@ func (s *GetDeviceInput) SetArn(v string) *GetDeviceInput {
 	return s
 }
 
+type GetDeviceInstanceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the instance you're requesting information
+	// about.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetDeviceInstanceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetDeviceInstanceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDeviceInstanceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDeviceInstanceInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *GetDeviceInstanceInput) SetArn(v string) *GetDeviceInstanceInput {
+	s.Arn = &v
+	return s
+}
+
+type GetDeviceInstanceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your device instance.
+	DeviceInstance *DeviceInstance `locationName:"deviceInstance" type:"structure"`
+}
+
+// String returns the string representation
+func (s GetDeviceInstanceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetDeviceInstanceOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeviceInstance sets the DeviceInstance field's value.
+func (s *GetDeviceInstanceOutput) SetDeviceInstance(v *DeviceInstance) *GetDeviceInstanceOutput {
+	s.DeviceInstance = v
+	return s
+}
+
 // Represents the result of a get device request.
 type GetDeviceOutput struct {
 	_ struct{} `type:"structure"`
@@ -7097,6 +8753,9 @@ type GetDevicePoolCompatibilityInput struct {
 
 	// The ARN of the app that is associated with the specified device pool.
 	AppArn *string `locationName:"appArn" min:"32" type:"string"`
+
+	// An object containing information about the settings for a run.
+	Configuration *ScheduleRunConfiguration `locationName:"configuration" type:"structure"`
 
 	// The device pool's ARN.
 	//
@@ -7164,6 +8823,11 @@ func (s *GetDevicePoolCompatibilityInput) Validate() error {
 	if s.DevicePoolArn != nil && len(*s.DevicePoolArn) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("DevicePoolArn", 32))
 	}
+	if s.Configuration != nil {
+		if err := s.Configuration.Validate(); err != nil {
+			invalidParams.AddNested("Configuration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Test != nil {
 		if err := s.Test.Validate(); err != nil {
 			invalidParams.AddNested("Test", err.(request.ErrInvalidParams))
@@ -7179,6 +8843,12 @@ func (s *GetDevicePoolCompatibilityInput) Validate() error {
 // SetAppArn sets the AppArn field's value.
 func (s *GetDevicePoolCompatibilityInput) SetAppArn(v string) *GetDevicePoolCompatibilityInput {
 	s.AppArn = &v
+	return s
+}
+
+// SetConfiguration sets the Configuration field's value.
+func (s *GetDevicePoolCompatibilityInput) SetConfiguration(v *ScheduleRunConfiguration) *GetDevicePoolCompatibilityInput {
+	s.Configuration = v
 	return s
 }
 
@@ -7296,6 +8966,70 @@ func (s GetDevicePoolOutput) GoString() string {
 // SetDevicePool sets the DevicePool field's value.
 func (s *GetDevicePoolOutput) SetDevicePool(v *DevicePool) *GetDevicePoolOutput {
 	s.DevicePool = v
+	return s
+}
+
+type GetInstanceProfileInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of your instance profile.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetInstanceProfileInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetInstanceProfileInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetInstanceProfileInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetInstanceProfileInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *GetInstanceProfileInput) SetArn(v string) *GetInstanceProfileInput {
+	s.Arn = &v
+	return s
+}
+
+type GetInstanceProfileOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your instance profile.
+	InstanceProfile *InstanceProfile `locationName:"instanceProfile" type:"structure"`
+}
+
+// String returns the string representation
+func (s GetInstanceProfileOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetInstanceProfileOutput) GoString() string {
+	return s.String()
+}
+
+// SetInstanceProfile sets the InstanceProfile field's value.
+func (s *GetInstanceProfileOutput) SetInstanceProfile(v *InstanceProfile) *GetInstanceProfileOutput {
+	s.InstanceProfile = v
 	return s
 }
 
@@ -7911,6 +9645,71 @@ func (s *GetUploadOutput) SetUpload(v *Upload) *GetUploadOutput {
 	return s
 }
 
+type GetVPCEConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the VPC endpoint configuration you want
+	// to describe.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetVPCEConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetVPCEConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetVPCEConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetVPCEConfigurationInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *GetVPCEConfigurationInput) SetArn(v string) *GetVPCEConfigurationInput {
+	s.Arn = &v
+	return s
+}
+
+type GetVPCEConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your VPC endpoint configuration.
+	VpceConfiguration *VPCEConfiguration `locationName:"vpceConfiguration" type:"structure"`
+}
+
+// String returns the string representation
+func (s GetVPCEConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetVPCEConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetVpceConfiguration sets the VpceConfiguration field's value.
+func (s *GetVPCEConfigurationOutput) SetVpceConfiguration(v *VPCEConfiguration) *GetVPCEConfigurationOutput {
+	s.VpceConfiguration = v
+	return s
+}
+
 // Represents information about incompatibility.
 type IncompatibilityMessage struct {
 	_ struct{} `type:"structure"`
@@ -8045,6 +9844,80 @@ func (s *InstallToRemoteAccessSessionOutput) SetAppUpload(v *Upload) *InstallToR
 	return s
 }
 
+// Represents the instance profile.
+type InstanceProfile struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the instance profile.
+	Arn *string `locationName:"arn" min:"32" type:"string"`
+
+	// The description of the instance profile.
+	Description *string `locationName:"description" type:"string"`
+
+	// An array of strings specifying the list of app packages that should not be
+	// cleaned up from the device after a test run is over.
+	//
+	// The list of packages is only considered if you set packageCleanup to true.
+	ExcludeAppPackagesFromCleanup []*string `locationName:"excludeAppPackagesFromCleanup" type:"list"`
+
+	// The name of the instance profile.
+	Name *string `locationName:"name" type:"string"`
+
+	// When set to true, Device Farm will remove app packages after a test run.
+	// The default value is false for private devices.
+	PackageCleanup *bool `locationName:"packageCleanup" type:"boolean"`
+
+	// When set to true, Device Farm will reboot the instance after a test run.
+	// The default value is true.
+	RebootAfterUse *bool `locationName:"rebootAfterUse" type:"boolean"`
+}
+
+// String returns the string representation
+func (s InstanceProfile) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InstanceProfile) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *InstanceProfile) SetArn(v string) *InstanceProfile {
+	s.Arn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *InstanceProfile) SetDescription(v string) *InstanceProfile {
+	s.Description = &v
+	return s
+}
+
+// SetExcludeAppPackagesFromCleanup sets the ExcludeAppPackagesFromCleanup field's value.
+func (s *InstanceProfile) SetExcludeAppPackagesFromCleanup(v []*string) *InstanceProfile {
+	s.ExcludeAppPackagesFromCleanup = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *InstanceProfile) SetName(v string) *InstanceProfile {
+	s.Name = &v
+	return s
+}
+
+// SetPackageCleanup sets the PackageCleanup field's value.
+func (s *InstanceProfile) SetPackageCleanup(v bool) *InstanceProfile {
+	s.PackageCleanup = &v
+	return s
+}
+
+// SetRebootAfterUse sets the RebootAfterUse field's value.
+func (s *InstanceProfile) SetRebootAfterUse(v bool) *InstanceProfile {
+	s.RebootAfterUse = &v
+	return s
+}
+
 // Represents a device.
 type Job struct {
 	_ struct{} `type:"structure"`
@@ -8063,6 +9936,9 @@ type Job struct {
 
 	// Represents the total (metered or unmetered) minutes used by the job.
 	DeviceMinutes *DeviceMinutes `locationName:"deviceMinutes" type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the instance.
+	InstanceArn *string `locationName:"instanceArn" min:"32" type:"string"`
 
 	// A message about the job's result.
 	Message *string `locationName:"message" type:"string"`
@@ -8191,6 +10067,12 @@ func (s *Job) SetDevice(v *Device) *Job {
 // SetDeviceMinutes sets the DeviceMinutes field's value.
 func (s *Job) SetDeviceMinutes(v *DeviceMinutes) *Job {
 	s.DeviceMinutes = v
+	return s
+}
+
+// SetInstanceArn sets the InstanceArn field's value.
+func (s *Job) SetInstanceArn(v string) *Job {
+	s.InstanceArn = &v
 	return s
 }
 
@@ -8344,6 +10226,86 @@ func (s *ListArtifactsOutput) SetArtifacts(v []*Artifact) *ListArtifactsOutput {
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListArtifactsOutput) SetNextToken(v string) *ListArtifactsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDeviceInstancesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An integer specifying the maximum number of items you want to return in the
+	// API response.
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// An identifier that was returned from the previous call to this operation,
+	// which can be used to return the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s ListDeviceInstancesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDeviceInstancesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDeviceInstancesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDeviceInstancesInput"}
+	if s.NextToken != nil && len(*s.NextToken) < 4 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 4))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDeviceInstancesInput) SetMaxResults(v int64) *ListDeviceInstancesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDeviceInstancesInput) SetNextToken(v string) *ListDeviceInstancesInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDeviceInstancesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your device instances.
+	DeviceInstances []*DeviceInstance `locationName:"deviceInstances" type:"list"`
+
+	// An identifier that can be used in the next call to this operation to return
+	// the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s ListDeviceInstancesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDeviceInstancesOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeviceInstances sets the DeviceInstances field's value.
+func (s *ListDeviceInstancesOutput) SetDeviceInstances(v []*DeviceInstance) *ListDeviceInstancesOutput {
+	s.DeviceInstances = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDeviceInstancesOutput) SetNextToken(v string) *ListDeviceInstancesOutput {
 	s.NextToken = &v
 	return s
 }
@@ -8535,6 +10497,86 @@ func (s *ListDevicesOutput) SetDevices(v []*Device) *ListDevicesOutput {
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListDevicesOutput) SetNextToken(v string) *ListDevicesOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListInstanceProfilesInput struct {
+	_ struct{} `type:"structure"`
+
+	// An integer specifying the maximum number of items you want to return in the
+	// API response.
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// An identifier that was returned from the previous call to this operation,
+	// which can be used to return the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s ListInstanceProfilesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListInstanceProfilesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListInstanceProfilesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListInstanceProfilesInput"}
+	if s.NextToken != nil && len(*s.NextToken) < 4 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 4))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListInstanceProfilesInput) SetMaxResults(v int64) *ListInstanceProfilesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListInstanceProfilesInput) SetNextToken(v string) *ListInstanceProfilesInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListInstanceProfilesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your instance profiles.
+	InstanceProfiles []*InstanceProfile `locationName:"instanceProfiles" type:"list"`
+
+	// An identifier that can be used in the next call to this operation to return
+	// the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s ListInstanceProfilesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListInstanceProfilesOutput) GoString() string {
+	return s.String()
+}
+
+// SetInstanceProfiles sets the InstanceProfiles field's value.
+func (s *ListInstanceProfilesOutput) SetInstanceProfiles(v []*InstanceProfile) *ListInstanceProfilesOutput {
+	s.InstanceProfiles = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListInstanceProfilesOutput) SetNextToken(v string) *ListInstanceProfilesOutput {
 	s.NextToken = &v
 	return s
 }
@@ -9680,6 +11722,87 @@ func (s *ListUploadsOutput) SetUploads(v []*Upload) *ListUploadsOutput {
 	return s
 }
 
+type ListVPCEConfigurationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// An integer specifying the maximum number of items you want to return in the
+	// API response.
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// An identifier that was returned from the previous call to this operation,
+	// which can be used to return the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+}
+
+// String returns the string representation
+func (s ListVPCEConfigurationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVPCEConfigurationsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListVPCEConfigurationsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListVPCEConfigurationsInput"}
+	if s.NextToken != nil && len(*s.NextToken) < 4 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 4))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListVPCEConfigurationsInput) SetMaxResults(v int64) *ListVPCEConfigurationsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVPCEConfigurationsInput) SetNextToken(v string) *ListVPCEConfigurationsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListVPCEConfigurationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An identifier that was returned from the previous call to this operation,
+	// which can be used to return the next set of items in the list.
+	NextToken *string `locationName:"nextToken" min:"4" type:"string"`
+
+	// An array of VPCEConfiguration objects containing information about your VPC
+	// endpoint configuration.
+	VpceConfigurations []*VPCEConfiguration `locationName:"vpceConfigurations" type:"list"`
+}
+
+// String returns the string representation
+func (s ListVPCEConfigurationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVPCEConfigurationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVPCEConfigurationsOutput) SetNextToken(v string) *ListVPCEConfigurationsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetVpceConfigurations sets the VpceConfigurations field's value.
+func (s *ListVPCEConfigurationsOutput) SetVpceConfigurations(v []*VPCEConfiguration) *ListVPCEConfigurationsOutput {
+	s.VpceConfigurations = v
+	return s
+}
+
 // Represents a latitude and longitude pair, expressed in geographic coordinate
 // system degrees (for example 47.6204, -122.3491).
 //
@@ -10484,6 +12607,9 @@ type RemoteAccessSession struct {
 	// Only returned if remote debugging is enabled for the remote access session.
 	HostAddress *string `locationName:"hostAddress" type:"string"`
 
+	// The Amazon Resource Name (ARN) of the instance.
+	InstanceArn *string `locationName:"instanceArn" min:"32" type:"string"`
+
 	// The interaction mode of the remote access session. Valid values are:
 	//
 	//    * INTERACTIVE: You can interact with the iOS device by viewing, touching,
@@ -10532,6 +12658,15 @@ type RemoteAccessSession struct {
 	//
 	//    * STOPPED: A stopped condition.
 	Result *string `locationName:"result" type:"string" enum:"ExecutionResult"`
+
+	// When set to true, for private devices, Device Farm will not sign your app
+	// again. For public devices, Device Farm always signs your apps again and this
+	// parameter has no effect.
+	//
+	// For more information about how Device Farm re-signs your app(s), see Do you
+	// modify my app? (https://aws.amazon.com/device-farm/faq/) in the AWS Device
+	// Farm FAQs.
+	SkipAppResign *bool `locationName:"skipAppResign" type:"boolean"`
 
 	// The date and time the remote access session was started.
 	Started *time.Time `locationName:"started" type:"timestamp" timestampFormat:"unix"`
@@ -10625,6 +12760,12 @@ func (s *RemoteAccessSession) SetHostAddress(v string) *RemoteAccessSession {
 	return s
 }
 
+// SetInstanceArn sets the InstanceArn field's value.
+func (s *RemoteAccessSession) SetInstanceArn(v string) *RemoteAccessSession {
+	s.InstanceArn = &v
+	return s
+}
+
 // SetInteractionMode sets the InteractionMode field's value.
 func (s *RemoteAccessSession) SetInteractionMode(v string) *RemoteAccessSession {
 	s.InteractionMode = &v
@@ -10664,6 +12805,12 @@ func (s *RemoteAccessSession) SetRemoteRecordEnabled(v bool) *RemoteAccessSessio
 // SetResult sets the Result field's value.
 func (s *RemoteAccessSession) SetResult(v string) *RemoteAccessSession {
 	s.Result = &v
+	return s
+}
+
+// SetSkipAppResign sets the SkipAppResign field's value.
+func (s *RemoteAccessSession) SetSkipAppResign(v bool) *RemoteAccessSession {
+	s.SkipAppResign = &v
 	return s
 }
 
@@ -10808,6 +12955,10 @@ type Rule struct {
 	//    * REMOTE_ACCESS_ENABLED: Whether the device is enabled for remote access.
 	//
 	//    * APPIUM_VERSION: The Appium version for the test.
+	//
+	//    * INSTANCE_ARN: The Amazon Resource Name (ARN) of the device instance.
+	//
+	//    * INSTANCE_LABELS: The label of the device instance.
 	Attribute *string `locationName:"attribute" type:"string" enum:"DeviceAttribute"`
 
 	// The rule's operator.
@@ -10956,6 +13107,15 @@ type Run struct {
 	// the same seed value between tests ensures identical event sequences.
 	Seed *int64 `locationName:"seed" type:"integer"`
 
+	// When set to true, for private devices, Device Farm will not sign your app
+	// again. For public devices, Device Farm always signs your apps again and this
+	// parameter has no effect.
+	//
+	// For more information about how Device Farm re-signs your app(s), see Do you
+	// modify my app? (https://aws.amazon.com/device-farm/faq/) in the AWS Device
+	// Farm FAQs.
+	SkipAppResign *bool `locationName:"skipAppResign" type:"boolean"`
+
 	// The run's start time.
 	Started *time.Time `locationName:"started" type:"timestamp" timestampFormat:"unix"`
 
@@ -11023,8 +13183,7 @@ type Run struct {
 	//    * XCTEST_UI: The XCode UI test type.
 	Type *string `locationName:"type" type:"string" enum:"TestType"`
 
-	// A pre-signed Amazon S3 URL that can be used with a corresponding GET request
-	// to download the symbol file for the run.
+	// The Device Farm console URL for the recording of the run.
 	WebUrl *string `locationName:"webUrl" type:"string"`
 }
 
@@ -11167,6 +13326,12 @@ func (s *Run) SetResultCode(v string) *Run {
 // SetSeed sets the Seed field's value.
 func (s *Run) SetSeed(v int64) *Run {
 	s.Seed = &v
+	return s
+}
+
+// SetSkipAppResign sets the SkipAppResign field's value.
+func (s *Run) SetSkipAppResign(v bool) *Run {
+	s.SkipAppResign = &v
 	return s
 }
 
@@ -11321,6 +13486,9 @@ type ScheduleRunConfiguration struct {
 
 	// Information about the radio states for the run.
 	Radios *Radios `locationName:"radios" type:"structure"`
+
+	// An array of Amazon Resource Names (ARNs) for your VPC endpoint configurations.
+	VpceConfigurationArns []*string `locationName:"vpceConfigurationArns" type:"list"`
 }
 
 // String returns the string representation
@@ -11399,6 +13567,12 @@ func (s *ScheduleRunConfiguration) SetNetworkProfileArn(v string) *ScheduleRunCo
 // SetRadios sets the Radios field's value.
 func (s *ScheduleRunConfiguration) SetRadios(v *Radios) *ScheduleRunConfiguration {
 	s.Radios = v
+	return s
+}
+
+// SetVpceConfigurationArns sets the VpceConfigurationArns field's value.
+func (s *ScheduleRunConfiguration) SetVpceConfigurationArns(v []*string) *ScheduleRunConfiguration {
+	s.VpceConfigurationArns = v
 	return s
 }
 
@@ -12287,6 +14461,92 @@ func (s *UniqueProblem) SetProblems(v []*Problem) *UniqueProblem {
 	return s
 }
 
+type UpdateDeviceInstanceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the device instance.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+
+	// An array of strings that you want to associate with the device instance.
+	Labels []*string `locationName:"labels" type:"list"`
+
+	// The Amazon Resource Name (ARN) of the profile that you want to associate
+	// with the device instance.
+	ProfileArn *string `locationName:"profileArn" min:"32" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateDeviceInstanceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateDeviceInstanceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateDeviceInstanceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateDeviceInstanceInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+	if s.ProfileArn != nil && len(*s.ProfileArn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("ProfileArn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *UpdateDeviceInstanceInput) SetArn(v string) *UpdateDeviceInstanceInput {
+	s.Arn = &v
+	return s
+}
+
+// SetLabels sets the Labels field's value.
+func (s *UpdateDeviceInstanceInput) SetLabels(v []*string) *UpdateDeviceInstanceInput {
+	s.Labels = v
+	return s
+}
+
+// SetProfileArn sets the ProfileArn field's value.
+func (s *UpdateDeviceInstanceInput) SetProfileArn(v string) *UpdateDeviceInstanceInput {
+	s.ProfileArn = &v
+	return s
+}
+
+type UpdateDeviceInstanceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your device instance.
+	DeviceInstance *DeviceInstance `locationName:"deviceInstance" type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateDeviceInstanceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateDeviceInstanceOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeviceInstance sets the DeviceInstance field's value.
+func (s *UpdateDeviceInstanceOutput) SetDeviceInstance(v *DeviceInstance) *UpdateDeviceInstanceOutput {
+	s.DeviceInstance = v
+	return s
+}
+
 // Represents a request to the update device pool operation.
 type UpdateDevicePoolInput struct {
 	_ struct{} `type:"structure"`
@@ -12380,6 +14640,120 @@ func (s UpdateDevicePoolOutput) GoString() string {
 // SetDevicePool sets the DevicePool field's value.
 func (s *UpdateDevicePoolOutput) SetDevicePool(v *DevicePool) *UpdateDevicePoolOutput {
 	s.DevicePool = v
+	return s
+}
+
+type UpdateInstanceProfileInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the instance profile.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+
+	// The updated description for your instance profile.
+	Description *string `locationName:"description" type:"string"`
+
+	// An array of strings specifying the list of app packages that should not be
+	// cleaned up from the device after a test run is over.
+	//
+	// The list of packages is only considered if you set packageCleanup to true.
+	ExcludeAppPackagesFromCleanup []*string `locationName:"excludeAppPackagesFromCleanup" type:"list"`
+
+	// The updated name for your instance profile.
+	Name *string `locationName:"name" type:"string"`
+
+	// The updated choice for whether you want to specify package cleanup. The default
+	// value is false for private devices.
+	PackageCleanup *bool `locationName:"packageCleanup" type:"boolean"`
+
+	// The updated choice for whether you want to reboot the device after use. The
+	// default value is true.
+	RebootAfterUse *bool `locationName:"rebootAfterUse" type:"boolean"`
+}
+
+// String returns the string representation
+func (s UpdateInstanceProfileInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateInstanceProfileInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateInstanceProfileInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateInstanceProfileInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *UpdateInstanceProfileInput) SetArn(v string) *UpdateInstanceProfileInput {
+	s.Arn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateInstanceProfileInput) SetDescription(v string) *UpdateInstanceProfileInput {
+	s.Description = &v
+	return s
+}
+
+// SetExcludeAppPackagesFromCleanup sets the ExcludeAppPackagesFromCleanup field's value.
+func (s *UpdateInstanceProfileInput) SetExcludeAppPackagesFromCleanup(v []*string) *UpdateInstanceProfileInput {
+	s.ExcludeAppPackagesFromCleanup = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateInstanceProfileInput) SetName(v string) *UpdateInstanceProfileInput {
+	s.Name = &v
+	return s
+}
+
+// SetPackageCleanup sets the PackageCleanup field's value.
+func (s *UpdateInstanceProfileInput) SetPackageCleanup(v bool) *UpdateInstanceProfileInput {
+	s.PackageCleanup = &v
+	return s
+}
+
+// SetRebootAfterUse sets the RebootAfterUse field's value.
+func (s *UpdateInstanceProfileInput) SetRebootAfterUse(v bool) *UpdateInstanceProfileInput {
+	s.RebootAfterUse = &v
+	return s
+}
+
+type UpdateInstanceProfileOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your instance profile.
+	InstanceProfile *InstanceProfile `locationName:"instanceProfile" type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateInstanceProfileOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateInstanceProfileOutput) GoString() string {
+	return s.String()
+}
+
+// SetInstanceProfile sets the InstanceProfile field's value.
+func (s *UpdateInstanceProfileOutput) SetInstanceProfile(v *InstanceProfile) *UpdateInstanceProfileOutput {
+	s.InstanceProfile = v
 	return s
 }
 
@@ -12637,6 +15011,110 @@ func (s *UpdateProjectOutput) SetProject(v *Project) *UpdateProjectOutput {
 	return s
 }
 
+type UpdateVPCEConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the VPC endpoint configuration you want
+	// to update.
+	//
+	// Arn is a required field
+	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
+
+	// The DNS (domain) name used to connect to your private service in your Amazon
+	// VPC. The DNS name must not already be in use on the Internet.
+	ServiceDnsName *string `locationName:"serviceDnsName" type:"string"`
+
+	// An optional description, providing more details about your VPC endpoint configuration.
+	VpceConfigurationDescription *string `locationName:"vpceConfigurationDescription" type:"string"`
+
+	// The friendly name you give to your VPC endpoint configuration, to manage
+	// your configurations more easily.
+	VpceConfigurationName *string `locationName:"vpceConfigurationName" type:"string"`
+
+	// The name of the VPC endpoint service running inside your AWS account that
+	// you want Device Farm to test.
+	VpceServiceName *string `locationName:"vpceServiceName" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateVPCEConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateVPCEConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateVPCEConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateVPCEConfigurationInput"}
+	if s.Arn == nil {
+		invalidParams.Add(request.NewErrParamRequired("Arn"))
+	}
+	if s.Arn != nil && len(*s.Arn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("Arn", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetArn sets the Arn field's value.
+func (s *UpdateVPCEConfigurationInput) SetArn(v string) *UpdateVPCEConfigurationInput {
+	s.Arn = &v
+	return s
+}
+
+// SetServiceDnsName sets the ServiceDnsName field's value.
+func (s *UpdateVPCEConfigurationInput) SetServiceDnsName(v string) *UpdateVPCEConfigurationInput {
+	s.ServiceDnsName = &v
+	return s
+}
+
+// SetVpceConfigurationDescription sets the VpceConfigurationDescription field's value.
+func (s *UpdateVPCEConfigurationInput) SetVpceConfigurationDescription(v string) *UpdateVPCEConfigurationInput {
+	s.VpceConfigurationDescription = &v
+	return s
+}
+
+// SetVpceConfigurationName sets the VpceConfigurationName field's value.
+func (s *UpdateVPCEConfigurationInput) SetVpceConfigurationName(v string) *UpdateVPCEConfigurationInput {
+	s.VpceConfigurationName = &v
+	return s
+}
+
+// SetVpceServiceName sets the VpceServiceName field's value.
+func (s *UpdateVPCEConfigurationInput) SetVpceServiceName(v string) *UpdateVPCEConfigurationInput {
+	s.VpceServiceName = &v
+	return s
+}
+
+type UpdateVPCEConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An object containing information about your VPC endpoint configuration.
+	VpceConfiguration *VPCEConfiguration `locationName:"vpceConfiguration" type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateVPCEConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateVPCEConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetVpceConfiguration sets the VpceConfiguration field's value.
+func (s *UpdateVPCEConfigurationOutput) SetVpceConfiguration(v *VPCEConfiguration) *UpdateVPCEConfigurationOutput {
+	s.VpceConfiguration = v
+	return s
+}
+
 // An app or a set of one or more tests to upload or that have been uploaded.
 type Upload struct {
 	_ struct{} `type:"structure"`
@@ -12783,6 +15261,69 @@ func (s *Upload) SetUrl(v string) *Upload {
 	return s
 }
 
+// Represents an Amazon Virtual Private Cloud (VPC) endpoint configuration.
+type VPCEConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the VPC endpoint configuration.
+	Arn *string `locationName:"arn" min:"32" type:"string"`
+
+	// The DNS name that maps to the private IP address of the service you want
+	// to access.
+	ServiceDnsName *string `locationName:"serviceDnsName" type:"string"`
+
+	// An optional description, providing more details about your VPC endpoint configuration.
+	VpceConfigurationDescription *string `locationName:"vpceConfigurationDescription" type:"string"`
+
+	// The friendly name you give to your VPC endpoint configuration, to manage
+	// your configurations more easily.
+	VpceConfigurationName *string `locationName:"vpceConfigurationName" type:"string"`
+
+	// The name of the VPC endpoint service running inside your AWS account that
+	// you want Device Farm to test.
+	VpceServiceName *string `locationName:"vpceServiceName" type:"string"`
+}
+
+// String returns the string representation
+func (s VPCEConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s VPCEConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *VPCEConfiguration) SetArn(v string) *VPCEConfiguration {
+	s.Arn = &v
+	return s
+}
+
+// SetServiceDnsName sets the ServiceDnsName field's value.
+func (s *VPCEConfiguration) SetServiceDnsName(v string) *VPCEConfiguration {
+	s.ServiceDnsName = &v
+	return s
+}
+
+// SetVpceConfigurationDescription sets the VpceConfigurationDescription field's value.
+func (s *VPCEConfiguration) SetVpceConfigurationDescription(v string) *VPCEConfiguration {
+	s.VpceConfigurationDescription = &v
+	return s
+}
+
+// SetVpceConfigurationName sets the VpceConfigurationName field's value.
+func (s *VPCEConfiguration) SetVpceConfigurationName(v string) *VPCEConfiguration {
+	s.VpceConfigurationName = &v
+	return s
+}
+
+// SetVpceServiceName sets the VpceServiceName field's value.
+func (s *VPCEConfiguration) SetVpceServiceName(v string) *VPCEConfiguration {
+	s.VpceServiceName = &v
+	return s
+}
+
 const (
 	// ArtifactCategoryScreenshot is a ArtifactCategory enum value
 	ArtifactCategoryScreenshot = "SCREENSHOT"
@@ -12911,6 +15452,15 @@ const (
 
 	// DeviceAttributeAppiumVersion is a DeviceAttribute enum value
 	DeviceAttributeAppiumVersion = "APPIUM_VERSION"
+
+	// DeviceAttributeInstanceArn is a DeviceAttribute enum value
+	DeviceAttributeInstanceArn = "INSTANCE_ARN"
+
+	// DeviceAttributeInstanceLabels is a DeviceAttribute enum value
+	DeviceAttributeInstanceLabels = "INSTANCE_LABELS"
+
+	// DeviceAttributeFleetType is a DeviceAttribute enum value
+	DeviceAttributeFleetType = "FLEET_TYPE"
 )
 
 const (
@@ -12963,6 +15513,9 @@ const (
 const (
 	// ExecutionResultCodeParsingFailed is a ExecutionResultCode enum value
 	ExecutionResultCodeParsingFailed = "PARSING_FAILED"
+
+	// ExecutionResultCodeVpcEndpointSetupFailed is a ExecutionResultCode enum value
+	ExecutionResultCodeVpcEndpointSetupFailed = "VPC_ENDPOINT_SETUP_FAILED"
 )
 
 const (
@@ -12992,6 +15545,20 @@ const (
 
 	// ExecutionStatusStopping is a ExecutionStatus enum value
 	ExecutionStatusStopping = "STOPPING"
+)
+
+const (
+	// InstanceStatusInUse is a InstanceStatus enum value
+	InstanceStatusInUse = "IN_USE"
+
+	// InstanceStatusPreparing is a InstanceStatus enum value
+	InstanceStatusPreparing = "PREPARING"
+
+	// InstanceStatusAvailable is a InstanceStatus enum value
+	InstanceStatusAvailable = "AVAILABLE"
+
+	// InstanceStatusNotAvailable is a InstanceStatus enum value
+	InstanceStatusNotAvailable = "NOT_AVAILABLE"
 )
 
 const (

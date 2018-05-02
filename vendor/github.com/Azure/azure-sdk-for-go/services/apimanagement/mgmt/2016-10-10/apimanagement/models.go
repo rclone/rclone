@@ -37,6 +37,11 @@ const (
 	HTTPS APIProtocolContract = "Https"
 )
 
+// PossibleAPIProtocolContractValues returns an array of possible values for the APIProtocolContract const type.
+func PossibleAPIProtocolContractValues() []APIProtocolContract {
+	return []APIProtocolContract{HTTP, HTTPS}
+}
+
 // APITypeContract enumerates the values for api type contract.
 type APITypeContract string
 
@@ -46,6 +51,11 @@ const (
 	// APITypeContractSoap ...
 	APITypeContractSoap APITypeContract = "Soap"
 )
+
+// PossibleAPITypeContractValues returns an array of possible values for the APITypeContract const type.
+func PossibleAPITypeContractValues() []APITypeContract {
+	return []APITypeContract{APITypeContractHTTP, APITypeContractSoap}
+}
 
 // AsyncOperationState enumerates the values for async operation state.
 type AsyncOperationState string
@@ -61,6 +71,11 @@ const (
 	Succeeded AsyncOperationState = "Succeeded"
 )
 
+// PossibleAsyncOperationStateValues returns an array of possible values for the AsyncOperationState const type.
+func PossibleAsyncOperationStateValues() []AsyncOperationState {
+	return []AsyncOperationState{Failed, InProgress, Started, Succeeded}
+}
+
 // BackendProtocol enumerates the values for backend protocol.
 type BackendProtocol string
 
@@ -70,6 +85,11 @@ const (
 	// BackendProtocolSoap ...
 	BackendProtocolSoap BackendProtocol = "soap"
 )
+
+// PossibleBackendProtocolValues returns an array of possible values for the BackendProtocol const type.
+func PossibleBackendProtocolValues() []BackendProtocol {
+	return []BackendProtocol{BackendProtocolHTTP, BackendProtocolSoap}
+}
 
 // BearerTokenSendingMethodsContract enumerates the values for bearer token sending methods contract.
 type BearerTokenSendingMethodsContract string
@@ -81,6 +101,11 @@ const (
 	Query BearerTokenSendingMethodsContract = "query"
 )
 
+// PossibleBearerTokenSendingMethodsContractValues returns an array of possible values for the BearerTokenSendingMethodsContract const type.
+func PossibleBearerTokenSendingMethodsContractValues() []BearerTokenSendingMethodsContract {
+	return []BearerTokenSendingMethodsContract{AuthorizationHeader, Query}
+}
+
 // ClientAuthenticationMethodContract enumerates the values for client authentication method contract.
 type ClientAuthenticationMethodContract string
 
@@ -90,6 +115,11 @@ const (
 	// Body ...
 	Body ClientAuthenticationMethodContract = "Body"
 )
+
+// PossibleClientAuthenticationMethodContractValues returns an array of possible values for the ClientAuthenticationMethodContract const type.
+func PossibleClientAuthenticationMethodContractValues() []ClientAuthenticationMethodContract {
+	return []ClientAuthenticationMethodContract{Basic, Body}
+}
 
 // ConnectivityStatusType enumerates the values for connectivity status type.
 type ConnectivityStatusType string
@@ -102,6 +132,11 @@ const (
 	// Success ...
 	Success ConnectivityStatusType = "success"
 )
+
+// PossibleConnectivityStatusTypeValues returns an array of possible values for the ConnectivityStatusType const type.
+func PossibleConnectivityStatusTypeValues() []ConnectivityStatusType {
+	return []ConnectivityStatusType{Failure, Initializing, Success}
+}
 
 // GrantTypesContract enumerates the values for grant types contract.
 type GrantTypesContract string
@@ -117,6 +152,11 @@ const (
 	ResourceOwnerPassword GrantTypesContract = "resourceOwnerPassword"
 )
 
+// PossibleGrantTypesContractValues returns an array of possible values for the GrantTypesContract const type.
+func PossibleGrantTypesContractValues() []GrantTypesContract {
+	return []GrantTypesContract{AuthorizationCode, ClientCredentials, Implicit, ResourceOwnerPassword}
+}
+
 // GroupTypeContract enumerates the values for group type contract.
 type GroupTypeContract string
 
@@ -128,6 +168,11 @@ const (
 	// System ...
 	System GroupTypeContract = "System"
 )
+
+// PossibleGroupTypeContractValues returns an array of possible values for the GroupTypeContract const type.
+func PossibleGroupTypeContractValues() []GroupTypeContract {
+	return []GroupTypeContract{Custom, External, System}
+}
 
 // HostnameType enumerates the values for hostname type.
 type HostnameType string
@@ -142,6 +187,11 @@ const (
 	// Scm ...
 	Scm HostnameType = "Scm"
 )
+
+// PossibleHostnameTypeValues returns an array of possible values for the HostnameType const type.
+func PossibleHostnameTypeValues() []HostnameType {
+	return []HostnameType{Management, Portal, Proxy, Scm}
+}
 
 // HTTPStatusCode enumerates the values for http status code.
 type HTTPStatusCode string
@@ -161,6 +211,11 @@ const (
 	OK HTTPStatusCode = "OK"
 )
 
+// PossibleHTTPStatusCodeValues returns an array of possible values for the HTTPStatusCode const type.
+func PossibleHTTPStatusCodeValues() []HTTPStatusCode {
+	return []HTTPStatusCode{Accepted, Conflict, Continue, Created, NotFound, OK}
+}
+
 // IdentityProviderNameType enumerates the values for identity provider name type.
 type IdentityProviderNameType string
 
@@ -179,6 +234,11 @@ const (
 	Twitter IdentityProviderNameType = "twitter"
 )
 
+// PossibleIdentityProviderNameTypeValues returns an array of possible values for the IdentityProviderNameType const type.
+func PossibleIdentityProviderNameTypeValues() []IdentityProviderNameType {
+	return []IdentityProviderNameType{Aad, AadB2C, Facebook, Google, Microsoft, Twitter}
+}
+
 // KeyTypeContract enumerates the values for key type contract.
 type KeyTypeContract string
 
@@ -188,6 +248,11 @@ const (
 	// Secondary ...
 	Secondary KeyTypeContract = "secondary"
 )
+
+// PossibleKeyTypeContractValues returns an array of possible values for the KeyTypeContract const type.
+func PossibleKeyTypeContractValues() []KeyTypeContract {
+	return []KeyTypeContract{Primary, Secondary}
+}
 
 // MethodContract enumerates the values for method contract.
 type MethodContract string
@@ -211,6 +276,11 @@ const (
 	TRACE MethodContract = "TRACE"
 )
 
+// PossibleMethodContractValues returns an array of possible values for the MethodContract const type.
+func PossibleMethodContractValues() []MethodContract {
+	return []MethodContract{DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE}
+}
+
 // NameAvailabilityReason enumerates the values for name availability reason.
 type NameAvailabilityReason string
 
@@ -222,6 +292,11 @@ const (
 	// Valid ...
 	Valid NameAvailabilityReason = "Valid"
 )
+
+// PossibleNameAvailabilityReasonValues returns an array of possible values for the NameAvailabilityReason const type.
+func PossibleNameAvailabilityReasonValues() []NameAvailabilityReason {
+	return []NameAvailabilityReason{AlreadyExists, Invalid, Valid}
+}
 
 // PolicyScopeContract enumerates the values for policy scope contract.
 type PolicyScopeContract string
@@ -239,6 +314,11 @@ const (
 	PolicyScopeContractTenant PolicyScopeContract = "Tenant"
 )
 
+// PossiblePolicyScopeContractValues returns an array of possible values for the PolicyScopeContract const type.
+func PossiblePolicyScopeContractValues() []PolicyScopeContract {
+	return []PolicyScopeContract{PolicyScopeContractAll, PolicyScopeContractAPI, PolicyScopeContractOperation, PolicyScopeContractProduct, PolicyScopeContractTenant}
+}
+
 // ProductStateContract enumerates the values for product state contract.
 type ProductStateContract string
 
@@ -248,6 +328,11 @@ const (
 	// Published ...
 	Published ProductStateContract = "Published"
 )
+
+// PossibleProductStateContractValues returns an array of possible values for the ProductStateContract const type.
+func PossibleProductStateContractValues() []ProductStateContract {
+	return []ProductStateContract{NotPublished, Published}
+}
 
 // ReportsAggregation enumerates the values for reports aggregation.
 type ReportsAggregation string
@@ -269,6 +354,11 @@ const (
 	ByUser ReportsAggregation = "byUser"
 )
 
+// PossibleReportsAggregationValues returns an array of possible values for the ReportsAggregation const type.
+func PossibleReportsAggregationValues() []ReportsAggregation {
+	return []ReportsAggregation{ByAPI, ByGeo, ByOperation, ByProduct, BySubscription, ByTime, ByUser}
+}
+
 // SkuType enumerates the values for sku type.
 type SkuType string
 
@@ -280,6 +370,11 @@ const (
 	// Standard ...
 	Standard SkuType = "Standard"
 )
+
+// PossibleSkuTypeValues returns an array of possible values for the SkuType const type.
+func PossibleSkuTypeValues() []SkuType {
+	return []SkuType{Developer, Premium, Standard}
+}
 
 // SubscriptionStateContract enumerates the values for subscription state contract.
 type SubscriptionStateContract string
@@ -299,6 +394,11 @@ const (
 	Suspended SubscriptionStateContract = "Suspended"
 )
 
+// PossibleSubscriptionStateContractValues returns an array of possible values for the SubscriptionStateContract const type.
+func PossibleSubscriptionStateContractValues() []SubscriptionStateContract {
+	return []SubscriptionStateContract{Active, Cancelled, Expired, Rejected, Submitted, Suspended}
+}
+
 // UserStateContract enumerates the values for user state contract.
 type UserStateContract string
 
@@ -308,6 +408,11 @@ const (
 	// UserStateContractBlocked ...
 	UserStateContractBlocked UserStateContract = "Blocked"
 )
+
+// PossibleUserStateContractValues returns an array of possible values for the UserStateContract const type.
+func PossibleUserStateContractValues() []UserStateContract {
+	return []UserStateContract{UserStateContractActive, UserStateContractBlocked}
+}
 
 // VirtualNetworkType enumerates the values for virtual network type.
 type VirtualNetworkType string
@@ -320,6 +425,11 @@ const (
 	// VirtualNetworkTypeNone ...
 	VirtualNetworkTypeNone VirtualNetworkType = "None"
 )
+
+// PossibleVirtualNetworkTypeValues returns an array of possible values for the VirtualNetworkType const type.
+func PossibleVirtualNetworkTypeValues() []VirtualNetworkType {
+	return []VirtualNetworkType{VirtualNetworkTypeExternal, VirtualNetworkTypeInternal, VirtualNetworkTypeNone}
+}
 
 // AccessInformationContract tenant access information contract of the API Management service.
 type AccessInformationContract struct {
@@ -944,7 +1054,9 @@ func (bc BackendContract) MarshalJSON() ([]byte, error) {
 	if bc.ID != nil {
 		objectMap["id"] = bc.ID
 	}
-	objectMap["protocol"] = bc.Protocol
+	if bc.Protocol != "" {
+		objectMap["protocol"] = bc.Protocol
+	}
 	if bc.Certificate != nil {
 		objectMap["certificate"] = bc.Certificate
 	}
@@ -1066,7 +1178,9 @@ func (br BackendResponse) MarshalJSON() ([]byte, error) {
 	if br.ID != nil {
 		objectMap["id"] = br.ID
 	}
-	objectMap["protocol"] = br.Protocol
+	if br.Protocol != "" {
+		objectMap["protocol"] = br.Protocol
+	}
 	if br.Certificate != nil {
 		objectMap["certificate"] = br.Certificate
 	}
@@ -1128,7 +1242,9 @@ type BackendUpdateParameters struct {
 // MarshalJSON is the custom marshaler for BackendUpdateParameters.
 func (bup BackendUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["protocol"] = bup.Protocol
+	if bup.Protocol != "" {
+		objectMap["protocol"] = bup.Protocol
+	}
 	if bup.Certificate != nil {
 		objectMap["certificate"] = bup.Certificate
 	}
@@ -3131,7 +3247,9 @@ func (sp ServiceProperties) MarshalJSON() ([]byte, error) {
 	if sp.CustomProperties != nil {
 		objectMap["customProperties"] = sp.CustomProperties
 	}
-	objectMap["vpnType"] = sp.VpnType
+	if sp.VpnType != "" {
+		objectMap["vpnType"] = sp.VpnType
+	}
 	return json.Marshal(objectMap)
 }
 

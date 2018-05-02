@@ -29,17 +29,20 @@ const (
 	DefaultAdlaJobDNSSuffix = "azuredatalakeanalytics.net"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-11-01-preview/job instead.
 // BaseClient is the base client for Job.
 type BaseClient struct {
 	autorest.Client
 	AdlaJobDNSSuffix string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-11-01-preview/job instead.
 // New creates an instance of the BaseClient client.
 func New() BaseClient {
 	return NewWithoutDefaults(DefaultAdlaJobDNSSuffix)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-11-01-preview/job instead.
 // NewWithoutDefaults creates an instance of the BaseClient client.
 func NewWithoutDefaults(adlaJobDNSSuffix string) BaseClient {
 	return BaseClient{

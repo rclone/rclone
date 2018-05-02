@@ -1,4 +1,4 @@
-// Package servicecontrol provides access to the Google Service Control API.
+// Package servicecontrol provides access to the Service Control API.
 //
 // See https://cloud.google.com/service-control/
 //
@@ -1429,6 +1429,7 @@ type Operation struct {
 	ResourceContainer string `json:"resourceContainer,omitempty"`
 
 	// Resources: The resources that are involved in the operation.
+	// The maximum supported number of entries in this field is 100.
 	Resources []*ResourceInfo `json:"resources,omitempty"`
 
 	// StartTime: Required. Start time of the operation.

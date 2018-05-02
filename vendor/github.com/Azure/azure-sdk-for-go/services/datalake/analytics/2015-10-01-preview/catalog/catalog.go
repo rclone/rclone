@@ -25,16 +25,19 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Client is the creates an Azure Data Lake Analytics catalog client.
 type Client struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NewClient creates an instance of the Client client.
 func NewClient() Client {
 	return Client{New()}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // CreateSecret creates the specified secret for use with external data sources in the specified database.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -68,6 +71,7 @@ func (client Client) CreateSecret(ctx context.Context, accountName string, datab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // CreateSecretPreparer prepares the CreateSecret request.
 func (client Client) CreateSecretPreparer(ctx context.Context, accountName string, databaseName string, secretName string, parameters DataLakeAnalyticsCatalogSecretCreateOrUpdateParameters) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -86,7 +90,7 @@ func (client Client) CreateSecretPreparer(ctx context.Context, accountName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaCatalogDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/catalog/usql/databases/{databaseName}/secrets/{secretName}", pathParameters),
@@ -95,6 +99,7 @@ func (client Client) CreateSecretPreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // CreateSecretSender sends the CreateSecret request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateSecretSender(req *http.Request) (*http.Response, error) {
@@ -102,6 +107,7 @@ func (client Client) CreateSecretSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // CreateSecretResponder handles the response to the CreateSecret request. The method always
 // closes the http.Response Body.
 func (client Client) CreateSecretResponder(resp *http.Response) (result USQLSecret, err error) {
@@ -115,6 +121,7 @@ func (client Client) CreateSecretResponder(resp *http.Response) (result USQLSecr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteAllSecrets deletes all secrets in the specified database
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -141,6 +148,7 @@ func (client Client) DeleteAllSecrets(ctx context.Context, accountName string, d
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteAllSecretsPreparer prepares the DeleteAllSecrets request.
 func (client Client) DeleteAllSecretsPreparer(ctx context.Context, accountName string, databaseName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -165,6 +173,7 @@ func (client Client) DeleteAllSecretsPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteAllSecretsSender sends the DeleteAllSecrets request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteAllSecretsSender(req *http.Request) (*http.Response, error) {
@@ -172,6 +181,7 @@ func (client Client) DeleteAllSecretsSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteAllSecretsResponder handles the response to the DeleteAllSecrets request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteAllSecretsResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -184,6 +194,7 @@ func (client Client) DeleteAllSecretsResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteSecret deletes the specified secret in the specified database
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -210,6 +221,7 @@ func (client Client) DeleteSecret(ctx context.Context, accountName string, datab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteSecretPreparer prepares the DeleteSecret request.
 func (client Client) DeleteSecretPreparer(ctx context.Context, accountName string, databaseName string, secretName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -235,6 +247,7 @@ func (client Client) DeleteSecretPreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteSecretSender sends the DeleteSecret request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteSecretSender(req *http.Request) (*http.Response, error) {
@@ -242,6 +255,7 @@ func (client Client) DeleteSecretSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DeleteSecretResponder handles the response to the DeleteSecret request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteSecretResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -254,6 +268,7 @@ func (client Client) DeleteSecretResponder(resp *http.Response) (result autorest
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetAssembly retrieves the specified assembly from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -280,6 +295,7 @@ func (client Client) GetAssembly(ctx context.Context, accountName string, databa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetAssemblyPreparer prepares the GetAssembly request.
 func (client Client) GetAssemblyPreparer(ctx context.Context, accountName string, databaseName string, assemblyName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -305,6 +321,7 @@ func (client Client) GetAssemblyPreparer(ctx context.Context, accountName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetAssemblySender sends the GetAssembly request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetAssemblySender(req *http.Request) (*http.Response, error) {
@@ -312,6 +329,7 @@ func (client Client) GetAssemblySender(req *http.Request) (*http.Response, error
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetAssemblyResponder handles the response to the GetAssembly request. The method always
 // closes the http.Response Body.
 func (client Client) GetAssemblyResponder(resp *http.Response) (result USQLAssembly, err error) {
@@ -325,6 +343,7 @@ func (client Client) GetAssemblyResponder(resp *http.Response) (result USQLAssem
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetCredential retrieves the specified credential from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -351,6 +370,7 @@ func (client Client) GetCredential(ctx context.Context, accountName string, data
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetCredentialPreparer prepares the GetCredential request.
 func (client Client) GetCredentialPreparer(ctx context.Context, accountName string, databaseName string, credentialName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -376,6 +396,7 @@ func (client Client) GetCredentialPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetCredentialSender sends the GetCredential request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetCredentialSender(req *http.Request) (*http.Response, error) {
@@ -383,6 +404,7 @@ func (client Client) GetCredentialSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetCredentialResponder handles the response to the GetCredential request. The method always
 // closes the http.Response Body.
 func (client Client) GetCredentialResponder(resp *http.Response) (result USQLCredential, err error) {
@@ -396,6 +418,7 @@ func (client Client) GetCredentialResponder(resp *http.Response) (result USQLCre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetDatabase retrieves the specified database from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -422,6 +445,7 @@ func (client Client) GetDatabase(ctx context.Context, accountName string, databa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetDatabasePreparer prepares the GetDatabase request.
 func (client Client) GetDatabasePreparer(ctx context.Context, accountName string, databaseName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -446,6 +470,7 @@ func (client Client) GetDatabasePreparer(ctx context.Context, accountName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetDatabaseSender sends the GetDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetDatabaseSender(req *http.Request) (*http.Response, error) {
@@ -453,6 +478,7 @@ func (client Client) GetDatabaseSender(req *http.Request) (*http.Response, error
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetDatabaseResponder handles the response to the GetDatabase request. The method always
 // closes the http.Response Body.
 func (client Client) GetDatabaseResponder(resp *http.Response) (result USQLDatabase, err error) {
@@ -466,6 +492,7 @@ func (client Client) GetDatabaseResponder(resp *http.Response) (result USQLDatab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetExternalDataSource retrieves the specified external data source from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -493,6 +520,7 @@ func (client Client) GetExternalDataSource(ctx context.Context, accountName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetExternalDataSourcePreparer prepares the GetExternalDataSource request.
 func (client Client) GetExternalDataSourcePreparer(ctx context.Context, accountName string, databaseName string, externalDataSourceName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -518,6 +546,7 @@ func (client Client) GetExternalDataSourcePreparer(ctx context.Context, accountN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetExternalDataSourceSender sends the GetExternalDataSource request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetExternalDataSourceSender(req *http.Request) (*http.Response, error) {
@@ -525,6 +554,7 @@ func (client Client) GetExternalDataSourceSender(req *http.Request) (*http.Respo
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetExternalDataSourceResponder handles the response to the GetExternalDataSource request. The method always
 // closes the http.Response Body.
 func (client Client) GetExternalDataSourceResponder(resp *http.Response) (result USQLExternalDataSource, err error) {
@@ -538,6 +568,7 @@ func (client Client) GetExternalDataSourceResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetProcedure retrieves the specified procedure from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -565,6 +596,7 @@ func (client Client) GetProcedure(ctx context.Context, accountName string, datab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetProcedurePreparer prepares the GetProcedure request.
 func (client Client) GetProcedurePreparer(ctx context.Context, accountName string, databaseName string, schemaName string, procedureName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -591,6 +623,7 @@ func (client Client) GetProcedurePreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetProcedureSender sends the GetProcedure request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetProcedureSender(req *http.Request) (*http.Response, error) {
@@ -598,6 +631,7 @@ func (client Client) GetProcedureSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetProcedureResponder handles the response to the GetProcedure request. The method always
 // closes the http.Response Body.
 func (client Client) GetProcedureResponder(resp *http.Response) (result USQLProcedure, err error) {
@@ -611,6 +645,7 @@ func (client Client) GetProcedureResponder(resp *http.Response) (result USQLProc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSchema retrieves the specified schema from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -637,6 +672,7 @@ func (client Client) GetSchema(ctx context.Context, accountName string, database
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSchemaPreparer prepares the GetSchema request.
 func (client Client) GetSchemaPreparer(ctx context.Context, accountName string, databaseName string, schemaName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -662,6 +698,7 @@ func (client Client) GetSchemaPreparer(ctx context.Context, accountName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSchemaSender sends the GetSchema request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetSchemaSender(req *http.Request) (*http.Response, error) {
@@ -669,6 +706,7 @@ func (client Client) GetSchemaSender(req *http.Request) (*http.Response, error) 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSchemaResponder handles the response to the GetSchema request. The method always
 // closes the http.Response Body.
 func (client Client) GetSchemaResponder(resp *http.Response) (result USQLSchema, err error) {
@@ -682,6 +720,7 @@ func (client Client) GetSchemaResponder(resp *http.Response) (result USQLSchema,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSecret gets the specified secret in the specified database
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -708,6 +747,7 @@ func (client Client) GetSecret(ctx context.Context, accountName string, database
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSecretPreparer prepares the GetSecret request.
 func (client Client) GetSecretPreparer(ctx context.Context, accountName string, databaseName string, secretName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -733,6 +773,7 @@ func (client Client) GetSecretPreparer(ctx context.Context, accountName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSecretSender sends the GetSecret request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetSecretSender(req *http.Request) (*http.Response, error) {
@@ -740,6 +781,7 @@ func (client Client) GetSecretSender(req *http.Request) (*http.Response, error) 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetSecretResponder handles the response to the GetSecret request. The method always
 // closes the http.Response Body.
 func (client Client) GetSecretResponder(resp *http.Response) (result USQLSecret, err error) {
@@ -753,6 +795,7 @@ func (client Client) GetSecretResponder(resp *http.Response) (result USQLSecret,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTable retrieves the specified table from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -780,6 +823,7 @@ func (client Client) GetTable(ctx context.Context, accountName string, databaseN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTablePreparer prepares the GetTable request.
 func (client Client) GetTablePreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -806,6 +850,7 @@ func (client Client) GetTablePreparer(ctx context.Context, accountName string, d
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableSender sends the GetTable request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetTableSender(req *http.Request) (*http.Response, error) {
@@ -813,6 +858,7 @@ func (client Client) GetTableSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableResponder handles the response to the GetTable request. The method always
 // closes the http.Response Body.
 func (client Client) GetTableResponder(resp *http.Response) (result USQLTable, err error) {
@@ -826,6 +872,7 @@ func (client Client) GetTableResponder(resp *http.Response) (result USQLTable, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTablePartition retrieves the specified table partition from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -853,6 +900,7 @@ func (client Client) GetTablePartition(ctx context.Context, accountName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTablePartitionPreparer prepares the GetTablePartition request.
 func (client Client) GetTablePartitionPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, partitionName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -880,6 +928,7 @@ func (client Client) GetTablePartitionPreparer(ctx context.Context, accountName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTablePartitionSender sends the GetTablePartition request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetTablePartitionSender(req *http.Request) (*http.Response, error) {
@@ -887,6 +936,7 @@ func (client Client) GetTablePartitionSender(req *http.Request) (*http.Response,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTablePartitionResponder handles the response to the GetTablePartition request. The method always
 // closes the http.Response Body.
 func (client Client) GetTablePartitionResponder(resp *http.Response) (result USQLTablePartition, err error) {
@@ -900,6 +950,7 @@ func (client Client) GetTablePartitionResponder(resp *http.Response) (result USQ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableStatistic retrieves the specified table statistics from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -928,6 +979,7 @@ func (client Client) GetTableStatistic(ctx context.Context, accountName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableStatisticPreparer prepares the GetTableStatistic request.
 func (client Client) GetTableStatisticPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, statisticsName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -955,6 +1007,7 @@ func (client Client) GetTableStatisticPreparer(ctx context.Context, accountName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableStatisticSender sends the GetTableStatistic request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetTableStatisticSender(req *http.Request) (*http.Response, error) {
@@ -962,6 +1015,7 @@ func (client Client) GetTableStatisticSender(req *http.Request) (*http.Response,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableStatisticResponder handles the response to the GetTableStatistic request. The method always
 // closes the http.Response Body.
 func (client Client) GetTableStatisticResponder(resp *http.Response) (result USQLTableStatistics, err error) {
@@ -975,6 +1029,7 @@ func (client Client) GetTableStatisticResponder(resp *http.Response) (result USQ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableType retrieves the specified table type from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1002,6 +1057,7 @@ func (client Client) GetTableType(ctx context.Context, accountName string, datab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableTypePreparer prepares the GetTableType request.
 func (client Client) GetTableTypePreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableTypeName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1028,6 +1084,7 @@ func (client Client) GetTableTypePreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableTypeSender sends the GetTableType request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetTableTypeSender(req *http.Request) (*http.Response, error) {
@@ -1035,6 +1092,7 @@ func (client Client) GetTableTypeSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableTypeResponder handles the response to the GetTableType request. The method always
 // closes the http.Response Body.
 func (client Client) GetTableTypeResponder(resp *http.Response) (result USQLTableType, err error) {
@@ -1048,6 +1106,7 @@ func (client Client) GetTableTypeResponder(resp *http.Response) (result USQLTabl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableValuedFunction retrieves the specified table valued function from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1075,6 +1134,7 @@ func (client Client) GetTableValuedFunction(ctx context.Context, accountName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableValuedFunctionPreparer prepares the GetTableValuedFunction request.
 func (client Client) GetTableValuedFunctionPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableValuedFunctionName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1101,6 +1161,7 @@ func (client Client) GetTableValuedFunctionPreparer(ctx context.Context, account
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableValuedFunctionSender sends the GetTableValuedFunction request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetTableValuedFunctionSender(req *http.Request) (*http.Response, error) {
@@ -1108,6 +1169,7 @@ func (client Client) GetTableValuedFunctionSender(req *http.Request) (*http.Resp
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetTableValuedFunctionResponder handles the response to the GetTableValuedFunction request. The method always
 // closes the http.Response Body.
 func (client Client) GetTableValuedFunctionResponder(resp *http.Response) (result USQLTableValuedFunction, err error) {
@@ -1121,6 +1183,7 @@ func (client Client) GetTableValuedFunctionResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetView retrieves the specified view from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1148,6 +1211,7 @@ func (client Client) GetView(ctx context.Context, accountName string, databaseNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetViewPreparer prepares the GetView request.
 func (client Client) GetViewPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, viewName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1174,6 +1238,7 @@ func (client Client) GetViewPreparer(ctx context.Context, accountName string, da
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetViewSender sends the GetView request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetViewSender(req *http.Request) (*http.Response, error) {
@@ -1181,6 +1246,7 @@ func (client Client) GetViewSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // GetViewResponder handles the response to the GetView request. The method always
 // closes the http.Response Body.
 func (client Client) GetViewResponder(resp *http.Response) (result USQLView, err error) {
@@ -1194,6 +1260,7 @@ func (client Client) GetViewResponder(resp *http.Response) (result USQLView, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListAssemblies retrieves the list of assemblies from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1229,6 +1296,7 @@ func (client Client) ListAssemblies(ctx context.Context, accountName string, dat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListAssembliesPreparer prepares the ListAssemblies request.
 func (client Client) ListAssembliesPreparer(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1274,6 +1342,7 @@ func (client Client) ListAssembliesPreparer(ctx context.Context, accountName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListAssembliesSender sends the ListAssemblies request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListAssembliesSender(req *http.Request) (*http.Response, error) {
@@ -1281,6 +1350,7 @@ func (client Client) ListAssembliesSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListAssembliesResponder handles the response to the ListAssemblies request. The method always
 // closes the http.Response Body.
 func (client Client) ListAssembliesResponder(resp *http.Response) (result USQLAssemblyList, err error) {
@@ -1315,12 +1385,14 @@ func (client Client) listAssembliesNextResults(lastResults USQLAssemblyList) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListAssembliesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListAssembliesComplete(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLAssemblyListIterator, err error) {
 	result.page, err = client.ListAssemblies(ctx, accountName, databaseName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListCredentials retrieves the list of credentials from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1356,6 +1428,7 @@ func (client Client) ListCredentials(ctx context.Context, accountName string, da
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListCredentialsPreparer prepares the ListCredentials request.
 func (client Client) ListCredentialsPreparer(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1401,6 +1474,7 @@ func (client Client) ListCredentialsPreparer(ctx context.Context, accountName st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListCredentialsSender sends the ListCredentials request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListCredentialsSender(req *http.Request) (*http.Response, error) {
@@ -1408,6 +1482,7 @@ func (client Client) ListCredentialsSender(req *http.Request) (*http.Response, e
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListCredentialsResponder handles the response to the ListCredentials request. The method always
 // closes the http.Response Body.
 func (client Client) ListCredentialsResponder(resp *http.Response) (result USQLCredentialList, err error) {
@@ -1442,12 +1517,14 @@ func (client Client) listCredentialsNextResults(lastResults USQLCredentialList) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListCredentialsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListCredentialsComplete(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLCredentialListIterator, err error) {
 	result.page, err = client.ListCredentials(ctx, accountName, databaseName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListDatabases retrieves the list of databases from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. filter is oData filter.
@@ -1483,6 +1560,7 @@ func (client Client) ListDatabases(ctx context.Context, accountName string, filt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListDatabasesPreparer prepares the ListDatabases request.
 func (client Client) ListDatabasesPreparer(ctx context.Context, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1524,6 +1602,7 @@ func (client Client) ListDatabasesPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListDatabasesSender sends the ListDatabases request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListDatabasesSender(req *http.Request) (*http.Response, error) {
@@ -1531,6 +1610,7 @@ func (client Client) ListDatabasesSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListDatabasesResponder handles the response to the ListDatabases request. The method always
 // closes the http.Response Body.
 func (client Client) ListDatabasesResponder(resp *http.Response) (result USQLDatabaseList, err error) {
@@ -1565,12 +1645,14 @@ func (client Client) listDatabasesNextResults(lastResults USQLDatabaseList) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListDatabasesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListDatabasesComplete(ctx context.Context, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLDatabaseListIterator, err error) {
 	result.page, err = client.ListDatabases(ctx, accountName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListExternalDataSources retrieves the list of external data sources from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1607,6 +1689,7 @@ func (client Client) ListExternalDataSources(ctx context.Context, accountName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListExternalDataSourcesPreparer prepares the ListExternalDataSources request.
 func (client Client) ListExternalDataSourcesPreparer(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1652,6 +1735,7 @@ func (client Client) ListExternalDataSourcesPreparer(ctx context.Context, accoun
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListExternalDataSourcesSender sends the ListExternalDataSources request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListExternalDataSourcesSender(req *http.Request) (*http.Response, error) {
@@ -1659,6 +1743,7 @@ func (client Client) ListExternalDataSourcesSender(req *http.Request) (*http.Res
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListExternalDataSourcesResponder handles the response to the ListExternalDataSources request. The method always
 // closes the http.Response Body.
 func (client Client) ListExternalDataSourcesResponder(resp *http.Response) (result USQLExternalDataSourceList, err error) {
@@ -1693,12 +1778,14 @@ func (client Client) listExternalDataSourcesNextResults(lastResults USQLExternal
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListExternalDataSourcesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListExternalDataSourcesComplete(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLExternalDataSourceListIterator, err error) {
 	result.page, err = client.ListExternalDataSources(ctx, accountName, databaseName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListProcedures retrieves the list of procedures from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1735,6 +1822,7 @@ func (client Client) ListProcedures(ctx context.Context, accountName string, dat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListProceduresPreparer prepares the ListProcedures request.
 func (client Client) ListProceduresPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1781,6 +1869,7 @@ func (client Client) ListProceduresPreparer(ctx context.Context, accountName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListProceduresSender sends the ListProcedures request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListProceduresSender(req *http.Request) (*http.Response, error) {
@@ -1788,6 +1877,7 @@ func (client Client) ListProceduresSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListProceduresResponder handles the response to the ListProcedures request. The method always
 // closes the http.Response Body.
 func (client Client) ListProceduresResponder(resp *http.Response) (result USQLProcedureList, err error) {
@@ -1822,12 +1912,14 @@ func (client Client) listProceduresNextResults(lastResults USQLProcedureList) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListProceduresComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListProceduresComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLProcedureListIterator, err error) {
 	result.page, err = client.ListProcedures(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListSchemas retrieves the list of schemas from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1863,6 +1955,7 @@ func (client Client) ListSchemas(ctx context.Context, accountName string, databa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListSchemasPreparer prepares the ListSchemas request.
 func (client Client) ListSchemasPreparer(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1908,6 +2001,7 @@ func (client Client) ListSchemasPreparer(ctx context.Context, accountName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListSchemasSender sends the ListSchemas request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListSchemasSender(req *http.Request) (*http.Response, error) {
@@ -1915,6 +2009,7 @@ func (client Client) ListSchemasSender(req *http.Request) (*http.Response, error
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListSchemasResponder handles the response to the ListSchemas request. The method always
 // closes the http.Response Body.
 func (client Client) ListSchemasResponder(resp *http.Response) (result USQLSchemaList, err error) {
@@ -1949,12 +2044,14 @@ func (client Client) listSchemasNextResults(lastResults USQLSchemaList) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListSchemasComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListSchemasComplete(ctx context.Context, accountName string, databaseName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLSchemaListIterator, err error) {
 	result.page, err = client.ListSchemas(ctx, accountName, databaseName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablePartitions retrieves the list of table partitions from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -1992,6 +2089,7 @@ func (client Client) ListTablePartitions(ctx context.Context, accountName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablePartitionsPreparer prepares the ListTablePartitions request.
 func (client Client) ListTablePartitionsPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2039,6 +2137,7 @@ func (client Client) ListTablePartitionsPreparer(ctx context.Context, accountNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablePartitionsSender sends the ListTablePartitions request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTablePartitionsSender(req *http.Request) (*http.Response, error) {
@@ -2046,6 +2145,7 @@ func (client Client) ListTablePartitionsSender(req *http.Request) (*http.Respons
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablePartitionsResponder handles the response to the ListTablePartitions request. The method always
 // closes the http.Response Body.
 func (client Client) ListTablePartitionsResponder(resp *http.Response) (result USQLTablePartitionList, err error) {
@@ -2080,12 +2180,14 @@ func (client Client) listTablePartitionsNextResults(lastResults USQLTablePartiti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablePartitionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTablePartitionsComplete(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTablePartitionListIterator, err error) {
 	result.page, err = client.ListTablePartitions(ctx, accountName, databaseName, schemaName, tableName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTables retrieves the list of tables from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2122,6 +2224,7 @@ func (client Client) ListTables(ctx context.Context, accountName string, databas
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablesPreparer prepares the ListTables request.
 func (client Client) ListTablesPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2168,6 +2271,7 @@ func (client Client) ListTablesPreparer(ctx context.Context, accountName string,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablesSender sends the ListTables request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTablesSender(req *http.Request) (*http.Response, error) {
@@ -2175,6 +2279,7 @@ func (client Client) ListTablesSender(req *http.Request) (*http.Response, error)
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablesResponder handles the response to the ListTables request. The method always
 // closes the http.Response Body.
 func (client Client) ListTablesResponder(resp *http.Response) (result USQLTableList, err error) {
@@ -2209,12 +2314,14 @@ func (client Client) listTablesNextResults(lastResults USQLTableList) (result US
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTablesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTablesComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTableListIterator, err error) {
 	result.page, err = client.ListTables(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableStatistics retrieves the list of table statistics from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2252,6 +2359,7 @@ func (client Client) ListTableStatistics(ctx context.Context, accountName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableStatisticsPreparer prepares the ListTableStatistics request.
 func (client Client) ListTableStatisticsPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2299,6 +2407,7 @@ func (client Client) ListTableStatisticsPreparer(ctx context.Context, accountNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableStatisticsSender sends the ListTableStatistics request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTableStatisticsSender(req *http.Request) (*http.Response, error) {
@@ -2306,6 +2415,7 @@ func (client Client) ListTableStatisticsSender(req *http.Request) (*http.Respons
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableStatisticsResponder handles the response to the ListTableStatistics request. The method always
 // closes the http.Response Body.
 func (client Client) ListTableStatisticsResponder(resp *http.Response) (result USQLTableStatisticsList, err error) {
@@ -2340,12 +2450,14 @@ func (client Client) listTableStatisticsNextResults(lastResults USQLTableStatist
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableStatisticsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTableStatisticsComplete(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTableStatisticsListIterator, err error) {
 	result.page, err = client.ListTableStatistics(ctx, accountName, databaseName, schemaName, tableName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableTypes retrieves the list of table types from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2382,6 +2494,7 @@ func (client Client) ListTableTypes(ctx context.Context, accountName string, dat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableTypesPreparer prepares the ListTableTypes request.
 func (client Client) ListTableTypesPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2428,6 +2541,7 @@ func (client Client) ListTableTypesPreparer(ctx context.Context, accountName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableTypesSender sends the ListTableTypes request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTableTypesSender(req *http.Request) (*http.Response, error) {
@@ -2435,6 +2549,7 @@ func (client Client) ListTableTypesSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableTypesResponder handles the response to the ListTableTypes request. The method always
 // closes the http.Response Body.
 func (client Client) ListTableTypesResponder(resp *http.Response) (result USQLTableTypeList, err error) {
@@ -2469,12 +2584,14 @@ func (client Client) listTableTypesNextResults(lastResults USQLTableTypeList) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableTypesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTableTypesComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTableTypeListIterator, err error) {
 	result.page, err = client.ListTableTypes(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableValuedFunctions retrieves the list of table valued functions from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2511,6 +2628,7 @@ func (client Client) ListTableValuedFunctions(ctx context.Context, accountName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableValuedFunctionsPreparer prepares the ListTableValuedFunctions request.
 func (client Client) ListTableValuedFunctionsPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2557,6 +2675,7 @@ func (client Client) ListTableValuedFunctionsPreparer(ctx context.Context, accou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableValuedFunctionsSender sends the ListTableValuedFunctions request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTableValuedFunctionsSender(req *http.Request) (*http.Response, error) {
@@ -2564,6 +2683,7 @@ func (client Client) ListTableValuedFunctionsSender(req *http.Request) (*http.Re
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableValuedFunctionsResponder handles the response to the ListTableValuedFunctions request. The method always
 // closes the http.Response Body.
 func (client Client) ListTableValuedFunctionsResponder(resp *http.Response) (result USQLTableValuedFunctionList, err error) {
@@ -2598,12 +2718,14 @@ func (client Client) listTableValuedFunctionsNextResults(lastResults USQLTableVa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTableValuedFunctionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTableValuedFunctionsComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTableValuedFunctionListIterator, err error) {
 	result.page, err = client.ListTableValuedFunctions(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTypes retrieves the list of types within the specified database and schema from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2640,6 +2762,7 @@ func (client Client) ListTypes(ctx context.Context, accountName string, database
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTypesPreparer prepares the ListTypes request.
 func (client Client) ListTypesPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2686,6 +2809,7 @@ func (client Client) ListTypesPreparer(ctx context.Context, accountName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTypesSender sends the ListTypes request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListTypesSender(req *http.Request) (*http.Response, error) {
@@ -2693,6 +2817,7 @@ func (client Client) ListTypesSender(req *http.Request) (*http.Response, error) 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTypesResponder handles the response to the ListTypes request. The method always
 // closes the http.Response Body.
 func (client Client) ListTypesResponder(resp *http.Response) (result USQLTypeList, err error) {
@@ -2727,12 +2852,14 @@ func (client Client) listTypesNextResults(lastResults USQLTypeList) (result USQL
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListTypesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListTypesComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLTypeListIterator, err error) {
 	result.page, err = client.ListTypes(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListViews retrieves the list of views from the Data Lake Analytics catalog.
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2769,6 +2896,7 @@ func (client Client) ListViews(ctx context.Context, accountName string, database
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListViewsPreparer prepares the ListViews request.
 func (client Client) ListViewsPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2815,6 +2943,7 @@ func (client Client) ListViewsPreparer(ctx context.Context, accountName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListViewsSender sends the ListViews request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListViewsSender(req *http.Request) (*http.Response, error) {
@@ -2822,6 +2951,7 @@ func (client Client) ListViewsSender(req *http.Request) (*http.Response, error) 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListViewsResponder handles the response to the ListViews request. The method always
 // closes the http.Response Body.
 func (client Client) ListViewsResponder(resp *http.Response) (result USQLViewList, err error) {
@@ -2856,12 +2986,14 @@ func (client Client) listViewsNextResults(lastResults USQLViewList) (result USQL
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ListViewsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListViewsComplete(ctx context.Context, accountName string, databaseName string, schemaName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool) (result USQLViewListIterator, err error) {
 	result.page, err = client.ListViews(ctx, accountName, databaseName, schemaName, filter, top, skip, expand, selectParameter, orderby, count)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // UpdateSecret modifies the specified secret for use with external data sources in the specified database
 //
 // accountName is the Azure Data Lake Analytics account to execute catalog operations on. databaseName is the name
@@ -2889,6 +3021,7 @@ func (client Client) UpdateSecret(ctx context.Context, accountName string, datab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // UpdateSecretPreparer prepares the UpdateSecret request.
 func (client Client) UpdateSecretPreparer(ctx context.Context, accountName string, databaseName string, secretName string, parameters DataLakeAnalyticsCatalogSecretCreateOrUpdateParameters) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -2907,7 +3040,7 @@ func (client Client) UpdateSecretPreparer(ctx context.Context, accountName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaCatalogDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/catalog/usql/databases/{databaseName}/secrets/{secretName}", pathParameters),
@@ -2916,6 +3049,7 @@ func (client Client) UpdateSecretPreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // UpdateSecretSender sends the UpdateSecret request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) UpdateSecretSender(req *http.Request) (*http.Response, error) {
@@ -2923,6 +3057,7 @@ func (client Client) UpdateSecretSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // UpdateSecretResponder handles the response to the UpdateSecret request. The method always
 // closes the http.Response Body.
 func (client Client) UpdateSecretResponder(resp *http.Response) (result USQLSecret, err error) {

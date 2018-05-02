@@ -107,6 +107,7 @@ message MsgWithOneof {
     int64 salary = 2;
     string Country = 3;
     string home_address = 4;
+    MsgWithRequired msg_with_required = 5;
   }
 }
 
@@ -144,4 +145,27 @@ message KnownTypes {
   optional google.protobuf.BoolValue bool = 9;
   optional google.protobuf.StringValue str = 10;
   optional google.protobuf.BytesValue bytes = 11;
+}
+
+// Test messages for marshaling/unmarshaling required fields.
+message MsgWithRequired {
+  required string str = 1;
+}
+
+message MsgWithIndirectRequired {
+  optional MsgWithRequired subm = 1;
+  map<string, MsgWithRequired> map_field = 2;
+  repeated MsgWithRequired slice_field = 3;
+}
+
+message MsgWithRequiredBytes {
+  required bytes byts = 1;
+}
+
+message MsgWithRequiredWKT {
+  required google.protobuf.StringValue str = 1;
+}
+
+extend Real {
+  optional MsgWithRequired extm = 125;
 }

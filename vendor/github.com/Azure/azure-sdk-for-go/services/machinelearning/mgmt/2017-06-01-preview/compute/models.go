@@ -126,6 +126,11 @@ const (
 	StandardGS5 AgentVMSizeTypes = "Standard_GS5"
 )
 
+// PossibleAgentVMSizeTypesValues returns an array of possible values for the AgentVMSizeTypes const type.
+func PossibleAgentVMSizeTypesValues() []AgentVMSizeTypes {
+	return []AgentVMSizeTypes{StandardA0, StandardA1, StandardA10, StandardA11, StandardA2, StandardA3, StandardA4, StandardA5, StandardA6, StandardA7, StandardA8, StandardA9, StandardD1, StandardD11, StandardD11V2, StandardD12, StandardD12V2, StandardD13, StandardD13V2, StandardD14, StandardD14V2, StandardD1V2, StandardD2, StandardD2V2, StandardD3, StandardD3V2, StandardD4, StandardD4V2, StandardD5V2, StandardDS1, StandardDS11, StandardDS12, StandardDS13, StandardDS14, StandardDS2, StandardDS3, StandardDS4, StandardG1, StandardG2, StandardG3, StandardG4, StandardG5, StandardGS1, StandardGS2, StandardGS3, StandardGS4, StandardGS5}
+}
+
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -142,6 +147,11 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, Failed, Succeeded, Unknown, Updating}
+}
+
 // Status enumerates the values for status.
 type Status string
 
@@ -151,6 +161,11 @@ const (
 	// Enabled ...
 	Enabled Status = "Enabled"
 )
+
+// PossibleStatusValues returns an array of possible values for the Status const type.
+func PossibleStatusValues() []Status {
+	return []Status{Disabled, Enabled}
+}
 
 // SystemServices enumerates the values for system services.
 type SystemServices string
@@ -162,6 +177,11 @@ const (
 	Scoring SystemServices = "Scoring"
 )
 
+// PossibleSystemServicesValues returns an array of possible values for the SystemServices const type.
+func PossibleSystemServicesValues() []SystemServices {
+	return []SystemServices{Batch, Scoring}
+}
+
 // UpdatesAvailable enumerates the values for updates available.
 type UpdatesAvailable string
 
@@ -172,6 +192,11 @@ const (
 	Yes UpdatesAvailable = "Yes"
 )
 
+// PossibleUpdatesAvailableValues returns an array of possible values for the UpdatesAvailable const type.
+func PossibleUpdatesAvailableValues() []UpdatesAvailable {
+	return []UpdatesAvailable{No, Yes}
+}
+
 // UpdateStatus enumerates the values for update status.
 type UpdateStatus string
 
@@ -181,6 +206,11 @@ const (
 	// InProgress ...
 	InProgress UpdateStatus = "InProgress"
 )
+
+// PossibleUpdateStatusValues returns an array of possible values for the UpdateStatus const type.
+func PossibleUpdateStatusValues() []UpdateStatus {
+	return []UpdateStatus{Completed, InProgress}
+}
 
 // AcsClusterProperties information about the container service backing the cluster
 type AcsClusterProperties struct {

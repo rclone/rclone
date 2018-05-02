@@ -26,32 +26,8 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type EndpointsClient = original.EndpointsClient
-
-func NewEndpointsClient(subscriptionID string) EndpointsClient {
-	return original.NewEndpointsClient(subscriptionID)
-}
-func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) EndpointsClient {
-	return original.NewEndpointsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type GeographicHierarchiesClient = original.GeographicHierarchiesClient
-
-func NewGeographicHierarchiesClient(subscriptionID string) GeographicHierarchiesClient {
-	return original.NewGeographicHierarchiesClient(subscriptionID)
-}
-func NewGeographicHierarchiesClientWithBaseURI(baseURI string, subscriptionID string) GeographicHierarchiesClient {
-	return original.NewGeographicHierarchiesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type EndpointMonitorStatus = original.EndpointMonitorStatus
 
 const (
@@ -124,6 +100,42 @@ type Resource = original.Resource
 type TrackedResource = original.TrackedResource
 type ProfilesClient = original.ProfilesClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewEndpointsClient(subscriptionID string) EndpointsClient {
+	return original.NewEndpointsClient(subscriptionID)
+}
+func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) EndpointsClient {
+	return original.NewEndpointsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewGeographicHierarchiesClient(subscriptionID string) GeographicHierarchiesClient {
+	return original.NewGeographicHierarchiesClient(subscriptionID)
+}
+func NewGeographicHierarchiesClientWithBaseURI(baseURI string, subscriptionID string) GeographicHierarchiesClient {
+	return original.NewGeographicHierarchiesClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleEndpointMonitorStatusValues() []EndpointMonitorStatus {
+	return original.PossibleEndpointMonitorStatusValues()
+}
+func PossibleEndpointStatusValues() []EndpointStatus {
+	return original.PossibleEndpointStatusValues()
+}
+func PossibleMonitorProtocolValues() []MonitorProtocol {
+	return original.PossibleMonitorProtocolValues()
+}
+func PossibleProfileMonitorStatusValues() []ProfileMonitorStatus {
+	return original.PossibleProfileMonitorStatusValues()
+}
+func PossibleProfileStatusValues() []ProfileStatus {
+	return original.PossibleProfileStatusValues()
+}
+func PossibleTrafficRoutingMethodValues() []TrafficRoutingMethod {
+	return original.PossibleTrafficRoutingMethodValues()
+}
 func NewProfilesClient(subscriptionID string) ProfilesClient {
 	return original.NewProfilesClient(subscriptionID)
 }

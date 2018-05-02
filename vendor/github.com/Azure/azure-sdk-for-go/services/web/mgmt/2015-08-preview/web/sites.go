@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SitesClient is the webSite Management Client
 type SitesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewSitesClient creates an instance of the SitesClient client.
 func NewSitesClient(subscriptionID string) SitesClient {
 	return NewSitesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewSitesClientWithBaseURI creates an instance of the SitesClient client.
 func NewSitesClientWithBaseURI(baseURI string, subscriptionID string) SitesClient {
 	return SitesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOn sends the add site premier add on request.
 //
 func (client SitesClient) AddSitePremierAddOn(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, premierAddOn PremierAddOnRequest) (result SetObject, err error) {
@@ -63,6 +67,7 @@ func (client SitesClient) AddSitePremierAddOn(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnPreparer prepares the AddSitePremierAddOn request.
 func (client SitesClient) AddSitePremierAddOnPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, premierAddOn PremierAddOnRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -78,7 +83,7 @@ func (client SitesClient) AddSitePremierAddOnPreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/premieraddons/{premierAddOnName}", pathParameters),
@@ -87,6 +92,7 @@ func (client SitesClient) AddSitePremierAddOnPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnSender sends the AddSitePremierAddOn request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) AddSitePremierAddOnSender(req *http.Request) (*http.Response, error) {
@@ -94,6 +100,7 @@ func (client SitesClient) AddSitePremierAddOnSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnResponder handles the response to the AddSitePremierAddOn request. The method always
 // closes the http.Response Body.
 func (client SitesClient) AddSitePremierAddOnResponder(resp *http.Response) (result SetObject, err error) {
@@ -107,6 +114,7 @@ func (client SitesClient) AddSitePremierAddOnResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnSlot sends the add site premier add on slot request.
 //
 func (client SitesClient) AddSitePremierAddOnSlot(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, premierAddOn PremierAddOnRequest, slot string) (result SetObject, err error) {
@@ -131,6 +139,7 @@ func (client SitesClient) AddSitePremierAddOnSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnSlotPreparer prepares the AddSitePremierAddOnSlot request.
 func (client SitesClient) AddSitePremierAddOnSlotPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, premierAddOn PremierAddOnRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -147,7 +156,7 @@ func (client SitesClient) AddSitePremierAddOnSlotPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/premieraddons/{premierAddOnName}", pathParameters),
@@ -156,6 +165,7 @@ func (client SitesClient) AddSitePremierAddOnSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnSlotSender sends the AddSitePremierAddOnSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) AddSitePremierAddOnSlotSender(req *http.Request) (*http.Response, error) {
@@ -163,6 +173,7 @@ func (client SitesClient) AddSitePremierAddOnSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // AddSitePremierAddOnSlotResponder handles the response to the AddSitePremierAddOnSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) AddSitePremierAddOnSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -176,6 +187,7 @@ func (client SitesClient) AddSitePremierAddOnSlotResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigSlot sends the apply slot config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -203,6 +215,7 @@ func (client SitesClient) ApplySlotConfigSlot(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigSlotPreparer prepares the ApplySlotConfigSlot request.
 func (client SitesClient) ApplySlotConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -218,7 +231,7 @@ func (client SitesClient) ApplySlotConfigSlotPreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/applySlotConfig", pathParameters),
@@ -227,6 +240,7 @@ func (client SitesClient) ApplySlotConfigSlotPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigSlotSender sends the ApplySlotConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ApplySlotConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -234,6 +248,7 @@ func (client SitesClient) ApplySlotConfigSlotSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigSlotResponder handles the response to the ApplySlotConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ApplySlotConfigSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -247,6 +262,7 @@ func (client SitesClient) ApplySlotConfigSlotResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigToProduction sends the apply slot config to production request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -273,6 +289,7 @@ func (client SitesClient) ApplySlotConfigToProduction(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigToProductionPreparer prepares the ApplySlotConfigToProduction request.
 func (client SitesClient) ApplySlotConfigToProductionPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -287,7 +304,7 @@ func (client SitesClient) ApplySlotConfigToProductionPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/applySlotConfig", pathParameters),
@@ -296,6 +313,7 @@ func (client SitesClient) ApplySlotConfigToProductionPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigToProductionSender sends the ApplySlotConfigToProduction request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ApplySlotConfigToProductionSender(req *http.Request) (*http.Response, error) {
@@ -303,6 +321,7 @@ func (client SitesClient) ApplySlotConfigToProductionSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ApplySlotConfigToProductionResponder handles the response to the ApplySlotConfigToProduction request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ApplySlotConfigToProductionResponder(resp *http.Response) (result SetObject, err error) {
@@ -316,6 +335,7 @@ func (client SitesClient) ApplySlotConfigToProductionResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSite sends the backup site request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on backup request
@@ -341,6 +361,7 @@ func (client SitesClient) BackupSite(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSitePreparer prepares the BackupSite request.
 func (client SitesClient) BackupSitePreparer(ctx context.Context, resourceGroupName string, name string, request BackupRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -355,7 +376,7 @@ func (client SitesClient) BackupSitePreparer(ctx context.Context, resourceGroupN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/backup", pathParameters),
@@ -364,6 +385,7 @@ func (client SitesClient) BackupSitePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteSender sends the BackupSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) BackupSiteSender(req *http.Request) (*http.Response, error) {
@@ -371,6 +393,7 @@ func (client SitesClient) BackupSiteSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteResponder handles the response to the BackupSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) BackupSiteResponder(resp *http.Response) (result BackupItem, err error) {
@@ -384,6 +407,7 @@ func (client SitesClient) BackupSiteResponder(resp *http.Response) (result Backu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteSlot sends the backup site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on backup request
@@ -410,6 +434,7 @@ func (client SitesClient) BackupSiteSlot(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteSlotPreparer prepares the BackupSiteSlot request.
 func (client SitesClient) BackupSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, request BackupRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -425,7 +450,7 @@ func (client SitesClient) BackupSiteSlotPreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/backup", pathParameters),
@@ -434,6 +459,7 @@ func (client SitesClient) BackupSiteSlotPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteSlotSender sends the BackupSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) BackupSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -441,6 +467,7 @@ func (client SitesClient) BackupSiteSlotSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // BackupSiteSlotResponder handles the response to the BackupSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) BackupSiteSlotResponder(resp *http.Response) (result BackupItem, err error) {
@@ -454,6 +481,7 @@ func (client SitesClient) BackupSiteSlotResponder(resp *http.Response) (result B
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeployment sends the create deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment deployment is
@@ -480,6 +508,7 @@ func (client SitesClient) CreateDeployment(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentPreparer prepares the CreateDeployment request.
 func (client SitesClient) CreateDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string, deployment Deployment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -495,7 +524,7 @@ func (client SitesClient) CreateDeploymentPreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/deployments/{id}", pathParameters),
@@ -504,6 +533,7 @@ func (client SitesClient) CreateDeploymentPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentSender sends the CreateDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -511,6 +541,7 @@ func (client SitesClient) CreateDeploymentSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentResponder handles the response to the CreateDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateDeploymentResponder(resp *http.Response) (result Deployment, err error) {
@@ -524,6 +555,7 @@ func (client SitesClient) CreateDeploymentResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentSlot sends the create deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -550,6 +582,7 @@ func (client SitesClient) CreateDeploymentSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentSlotPreparer prepares the CreateDeploymentSlot request.
 func (client SitesClient) CreateDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string, deployment Deployment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -566,7 +599,7 @@ func (client SitesClient) CreateDeploymentSlotPreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/deployments/{id}", pathParameters),
@@ -575,6 +608,7 @@ func (client SitesClient) CreateDeploymentSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentSlotSender sends the CreateDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -582,6 +616,7 @@ func (client SitesClient) CreateDeploymentSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateDeploymentSlotResponder handles the response to the CreateDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateDeploymentSlotResponder(resp *http.Response) (result Deployment, err error) {
@@ -595,6 +630,7 @@ func (client SitesClient) CreateDeploymentSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeployment sends the create instance deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
@@ -621,6 +657,7 @@ func (client SitesClient) CreateInstanceDeployment(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentPreparer prepares the CreateInstanceDeployment request.
 func (client SitesClient) CreateInstanceDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string, deployment Deployment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -637,7 +674,7 @@ func (client SitesClient) CreateInstanceDeploymentPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/instances/{instanceId}/deployments/{id}", pathParameters),
@@ -646,6 +683,7 @@ func (client SitesClient) CreateInstanceDeploymentPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentSender sends the CreateInstanceDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateInstanceDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -653,6 +691,7 @@ func (client SitesClient) CreateInstanceDeploymentSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentResponder handles the response to the CreateInstanceDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateInstanceDeploymentResponder(resp *http.Response) (result Deployment, err error) {
@@ -666,6 +705,7 @@ func (client SitesClient) CreateInstanceDeploymentResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentSlot sends the create instance deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -693,6 +733,7 @@ func (client SitesClient) CreateInstanceDeploymentSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentSlotPreparer prepares the CreateInstanceDeploymentSlot request.
 func (client SitesClient) CreateInstanceDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string, deployment Deployment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -710,7 +751,7 @@ func (client SitesClient) CreateInstanceDeploymentSlotPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/instances/{instanceId}/deployments/{id}", pathParameters),
@@ -719,6 +760,7 @@ func (client SitesClient) CreateInstanceDeploymentSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentSlotSender sends the CreateInstanceDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateInstanceDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -726,6 +768,7 @@ func (client SitesClient) CreateInstanceDeploymentSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateInstanceDeploymentSlotResponder handles the response to the CreateInstanceDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateInstanceDeploymentSlotResponder(resp *http.Response) (result Deployment, err error) {
@@ -739,6 +782,7 @@ func (client SitesClient) CreateInstanceDeploymentSlotResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSite sends the create or update site request.
 //
 // resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app
@@ -763,6 +807,7 @@ func (client SitesClient) CreateOrUpdateSite(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSitePreparer prepares the CreateOrUpdateSite request.
 func (client SitesClient) CreateOrUpdateSitePreparer(ctx context.Context, resourceGroupName string, name string, siteEnvelope Site, skipDNSRegistration string, skipCustomDomainVerification string, forceDNSRegistration string, TTLInSeconds string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -789,7 +834,7 @@ func (client SitesClient) CreateOrUpdateSitePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}", pathParameters),
@@ -798,6 +843,7 @@ func (client SitesClient) CreateOrUpdateSitePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSender sends the CreateOrUpdateSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSender(req *http.Request) (future SitesCreateOrUpdateSiteFuture, err error) {
@@ -813,6 +859,7 @@ func (client SitesClient) CreateOrUpdateSiteSender(req *http.Request) (future Si
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteResponder handles the response to the CreateOrUpdateSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteResponder(resp *http.Response) (result Site, err error) {
@@ -826,6 +873,7 @@ func (client SitesClient) CreateOrUpdateSiteResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfig sends the create or update site config request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
@@ -852,6 +900,7 @@ func (client SitesClient) CreateOrUpdateSiteConfig(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigPreparer prepares the CreateOrUpdateSiteConfig request.
 func (client SitesClient) CreateOrUpdateSiteConfigPreparer(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -866,7 +915,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/web", pathParameters),
@@ -875,6 +924,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigSender sends the CreateOrUpdateSiteConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteConfigSender(req *http.Request) (*http.Response, error) {
@@ -882,6 +932,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigResponder handles the response to the CreateOrUpdateSiteConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteConfigResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -895,6 +946,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigSlot sends the create or update site config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
@@ -922,6 +974,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigSlotPreparer prepares the CreateOrUpdateSiteConfigSlot request.
 func (client SitesClient) CreateOrUpdateSiteConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -937,7 +990,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlotPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/web", pathParameters),
@@ -946,6 +999,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigSlotSender sends the CreateOrUpdateSiteConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -953,6 +1007,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteConfigSlotResponder handles the response to the CreateOrUpdateSiteConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteConfigSlotResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -966,6 +1021,7 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlotResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBinding sends the create or update site host name binding request.
 //
 // resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is
@@ -992,6 +1048,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBinding(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingPreparer prepares the CreateOrUpdateSiteHostNameBinding request.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingPreparer(ctx context.Context, resourceGroupName string, name string, hostName string, hostNameBinding HostNameBinding) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1007,7 +1064,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/hostNameBindings/{hostName}", pathParameters),
@@ -1016,6 +1073,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingSender sends the CreateOrUpdateSiteHostNameBinding request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingSender(req *http.Request) (*http.Response, error) {
@@ -1023,6 +1081,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingResponder handles the response to the CreateOrUpdateSiteHostNameBinding request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingResponder(resp *http.Response) (result HostNameBinding, err error) {
@@ -1036,6 +1095,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingSlot sends the create or update site host name binding slot request.
 //
 // resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is
@@ -1063,6 +1123,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlot(ctx context.Cont
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingSlotPreparer prepares the CreateOrUpdateSiteHostNameBindingSlot request.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotPreparer(ctx context.Context, resourceGroupName string, name string, hostName string, hostNameBinding HostNameBinding, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1079,7 +1140,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotPreparer(ctx cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/hostNameBindings/{hostName}", pathParameters),
@@ -1088,6 +1149,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotPreparer(ctx cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingSlotSender sends the CreateOrUpdateSiteHostNameBindingSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotSender(req *http.Request) (*http.Response, error) {
@@ -1095,6 +1157,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotSender(req *http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteHostNameBindingSlotResponder handles the response to the CreateOrUpdateSiteHostNameBindingSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotResponder(resp *http.Response) (result HostNameBinding, err error) {
@@ -1108,6 +1171,7 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlotResponder(resp *h
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnection sends the create or update site relay service connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -1134,6 +1198,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnection(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionPreparer prepares the CreateOrUpdateSiteRelayServiceConnection request.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1149,7 +1214,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionPreparer(ctx c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/hybridconnection/{entityName}", pathParameters),
@@ -1158,6 +1223,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionSender sends the CreateOrUpdateSiteRelayServiceConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSender(req *http.Request) (*http.Response, error) {
@@ -1165,6 +1231,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSender(req *ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionResponder handles the response to the CreateOrUpdateSiteRelayServiceConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -1178,6 +1245,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionResponder(resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionSlot sends the create or update site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -1205,6 +1273,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlot(ctx conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionSlotPreparer prepares the CreateOrUpdateSiteRelayServiceConnectionSlot request.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1221,7 +1290,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotPreparer(c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/hybridconnection/{entityName}", pathParameters),
@@ -1230,6 +1299,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotPreparer(c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionSlotSender sends the CreateOrUpdateSiteRelayServiceConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -1237,6 +1307,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotSender(req
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteRelayServiceConnectionSlotResponder handles the response to the CreateOrUpdateSiteRelayServiceConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -1250,6 +1321,7 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotResponder(
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSlot sends the create or update site slot request.
 //
 // resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app
@@ -1274,6 +1346,7 @@ func (client SitesClient) CreateOrUpdateSiteSlot(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSlotPreparer prepares the CreateOrUpdateSiteSlot request.
 func (client SitesClient) CreateOrUpdateSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteEnvelope Site, slot string, skipDNSRegistration string, skipCustomDomainVerification string, forceDNSRegistration string, TTLInSeconds string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1301,7 +1374,7 @@ func (client SitesClient) CreateOrUpdateSiteSlotPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}", pathParameters),
@@ -1310,6 +1383,7 @@ func (client SitesClient) CreateOrUpdateSiteSlotPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSlotSender sends the CreateOrUpdateSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSlotSender(req *http.Request) (future SitesCreateOrUpdateSiteSlotFuture, err error) {
@@ -1325,6 +1399,7 @@ func (client SitesClient) CreateOrUpdateSiteSlotSender(req *http.Request) (futur
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSlotResponder handles the response to the CreateOrUpdateSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteSlotResponder(resp *http.Response) (result Site, err error) {
@@ -1338,6 +1413,7 @@ func (client SitesClient) CreateOrUpdateSiteSlotResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControl sends the create or update site source control request.
 //
 // resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
@@ -1364,6 +1440,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControl(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlPreparer prepares the CreateOrUpdateSiteSourceControl request.
 func (client SitesClient) CreateOrUpdateSiteSourceControlPreparer(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1378,7 +1455,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web", pathParameters),
@@ -1387,6 +1464,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlSender sends the CreateOrUpdateSiteSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -1394,6 +1472,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlResponder handles the response to the CreateOrUpdateSiteSourceControl request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteSourceControlResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -1407,6 +1486,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlSlot sends the create or update site source control slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
@@ -1434,6 +1514,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSlot(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlSlotPreparer prepares the CreateOrUpdateSiteSourceControlSlot request.
 func (client SitesClient) CreateOrUpdateSiteSourceControlSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1449,7 +1530,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSlotPreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/sourcecontrols/web", pathParameters),
@@ -1458,6 +1539,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSlotPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlSlotSender sends the CreateOrUpdateSiteSourceControlSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSourceControlSlotSender(req *http.Request) (*http.Response, error) {
@@ -1465,6 +1547,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSlotSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteSourceControlSlotResponder handles the response to the CreateOrUpdateSiteSourceControlSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteSourceControlSlotResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -1478,6 +1561,7 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlSlotResponder(resp *htt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnection sends the create or update site vnet connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -1504,6 +1588,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnection(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionPreparer prepares the CreateOrUpdateSiteVNETConnection request.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, connectionEnvelope VnetInfo) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1519,7 +1604,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/virtualNetworkConnections/{vnetName}", pathParameters),
@@ -1528,6 +1613,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionSender sends the CreateOrUpdateSiteVNETConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionSender(req *http.Request) (*http.Response, error) {
@@ -1535,6 +1621,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionResponder handles the response to the CreateOrUpdateSiteVNETConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -1548,6 +1635,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGateway sends the create or update site vnet connection gateway request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -1575,6 +1663,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGateway(ctx context.Co
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewayPreparer prepares the CreateOrUpdateSiteVNETConnectionGateway request.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewayPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1591,7 +1680,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewayPreparer(ctx co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -1600,6 +1689,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewayPreparer(ctx co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewaySender sends the CreateOrUpdateSiteVNETConnectionGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySender(req *http.Request) (*http.Response, error) {
@@ -1607,6 +1697,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySender(req *htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewayResponder handles the response to the CreateOrUpdateSiteVNETConnectionGateway request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewayResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -1620,6 +1711,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewayResponder(resp 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewaySlot sends the create or update site vnet connection gateway slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -1647,6 +1739,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlot(ctx contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewaySlotPreparer prepares the CreateOrUpdateSiteVNETConnectionGatewaySlot request.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1664,7 +1757,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotPreparer(ct
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -1673,6 +1766,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotPreparer(ct
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewaySlotSender sends the CreateOrUpdateSiteVNETConnectionGatewaySlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotSender(req *http.Request) (*http.Response, error) {
@@ -1680,6 +1774,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotSender(req 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionGatewaySlotResponder handles the response to the CreateOrUpdateSiteVNETConnectionGatewaySlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -1693,6 +1788,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionGatewaySlotResponder(r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionSlot sends the create or update site vnet connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -1720,6 +1816,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlot(ctx context.Conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionSlotPreparer prepares the CreateOrUpdateSiteVNETConnectionSlot request.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, connectionEnvelope VnetInfo, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1736,7 +1833,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotPreparer(ctx conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/virtualNetworkConnections/{vnetName}", pathParameters),
@@ -1745,6 +1842,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotPreparer(ctx conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionSlotSender sends the CreateOrUpdateSiteVNETConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -1752,6 +1850,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotSender(req *http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateSiteVNETConnectionSlotResponder handles the response to the CreateOrUpdateSiteVNETConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -1765,6 +1864,7 @@ func (client SitesClient) CreateOrUpdateSiteVNETConnectionSlotResponder(resp *ht
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackup sends the delete backup request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup
@@ -1790,6 +1890,7 @@ func (client SitesClient) DeleteBackup(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupPreparer prepares the DeleteBackup request.
 func (client SitesClient) DeleteBackupPreparer(ctx context.Context, resourceGroupName string, name string, backupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1812,6 +1913,7 @@ func (client SitesClient) DeleteBackupPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupSender sends the DeleteBackup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteBackupSender(req *http.Request) (*http.Response, error) {
@@ -1819,6 +1921,7 @@ func (client SitesClient) DeleteBackupSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupResponder handles the response to the DeleteBackup request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteBackupResponder(resp *http.Response) (result BackupItem, err error) {
@@ -1832,6 +1935,7 @@ func (client SitesClient) DeleteBackupResponder(resp *http.Response) (result Bac
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupSlot sends the delete backup slot request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web
@@ -1858,6 +1962,7 @@ func (client SitesClient) DeleteBackupSlot(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupSlotPreparer prepares the DeleteBackupSlot request.
 func (client SitesClient) DeleteBackupSlotPreparer(ctx context.Context, resourceGroupName string, name string, backupID string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1881,6 +1986,7 @@ func (client SitesClient) DeleteBackupSlotPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupSlotSender sends the DeleteBackupSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteBackupSlotSender(req *http.Request) (*http.Response, error) {
@@ -1888,6 +1994,7 @@ func (client SitesClient) DeleteBackupSlotSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteBackupSlotResponder handles the response to the DeleteBackupSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteBackupSlotResponder(resp *http.Response) (result BackupItem, err error) {
@@ -1901,6 +2008,7 @@ func (client SitesClient) DeleteBackupSlotResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeployment sends the delete deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment
@@ -1926,6 +2034,7 @@ func (client SitesClient) DeleteDeployment(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentPreparer prepares the DeleteDeployment request.
 func (client SitesClient) DeleteDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1948,6 +2057,7 @@ func (client SitesClient) DeleteDeploymentPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentSender sends the DeleteDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -1955,6 +2065,7 @@ func (client SitesClient) DeleteDeploymentSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentResponder handles the response to the DeleteDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteDeploymentResponder(resp *http.Response) (result SetObject, err error) {
@@ -1968,6 +2079,7 @@ func (client SitesClient) DeleteDeploymentResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentSlot sends the delete deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -1994,6 +2106,7 @@ func (client SitesClient) DeleteDeploymentSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentSlotPreparer prepares the DeleteDeploymentSlot request.
 func (client SitesClient) DeleteDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2017,6 +2130,7 @@ func (client SitesClient) DeleteDeploymentSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentSlotSender sends the DeleteDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -2024,6 +2138,7 @@ func (client SitesClient) DeleteDeploymentSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteDeploymentSlotResponder handles the response to the DeleteDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteDeploymentSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2037,6 +2152,7 @@ func (client SitesClient) DeleteDeploymentSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeployment sends the delete instance deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
@@ -2063,6 +2179,7 @@ func (client SitesClient) DeleteInstanceDeployment(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentPreparer prepares the DeleteInstanceDeployment request.
 func (client SitesClient) DeleteInstanceDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2086,6 +2203,7 @@ func (client SitesClient) DeleteInstanceDeploymentPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentSender sends the DeleteInstanceDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteInstanceDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -2093,6 +2211,7 @@ func (client SitesClient) DeleteInstanceDeploymentSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentResponder handles the response to the DeleteInstanceDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteInstanceDeploymentResponder(resp *http.Response) (result SetObject, err error) {
@@ -2106,6 +2225,7 @@ func (client SitesClient) DeleteInstanceDeploymentResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentSlot sends the delete instance deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -2132,6 +2252,7 @@ func (client SitesClient) DeleteInstanceDeploymentSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentSlotPreparer prepares the DeleteInstanceDeploymentSlot request.
 func (client SitesClient) DeleteInstanceDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2156,6 +2277,7 @@ func (client SitesClient) DeleteInstanceDeploymentSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentSlotSender sends the DeleteInstanceDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteInstanceDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -2163,6 +2285,7 @@ func (client SitesClient) DeleteInstanceDeploymentSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteInstanceDeploymentSlotResponder handles the response to the DeleteInstanceDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteInstanceDeploymentSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2176,6 +2299,7 @@ func (client SitesClient) DeleteInstanceDeploymentSlotResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSite sends the delete site request.
 //
 // resourceGroupName is name of resource group name is name of web app deleteMetrics is if true, web app metrics
@@ -2204,6 +2328,7 @@ func (client SitesClient) DeleteSite(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePreparer prepares the DeleteSite request.
 func (client SitesClient) DeleteSitePreparer(ctx context.Context, resourceGroupName string, name string, deleteMetrics string, deleteEmptyServerFarm string, skipDNSRegistration string, deleteAllSlots string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2237,6 +2362,7 @@ func (client SitesClient) DeleteSitePreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSender sends the DeleteSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteSender(req *http.Request) (*http.Response, error) {
@@ -2244,6 +2370,7 @@ func (client SitesClient) DeleteSiteSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteResponder handles the response to the DeleteSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteResponder(resp *http.Response) (result SetObject, err error) {
@@ -2257,6 +2384,7 @@ func (client SitesClient) DeleteSiteResponder(resp *http.Response) (result SetOb
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBinding sends the delete site host name binding request.
 //
 // resourceGroupName is name of resource group name is name of web app hostName is name of host
@@ -2282,6 +2410,7 @@ func (client SitesClient) DeleteSiteHostNameBinding(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingPreparer prepares the DeleteSiteHostNameBinding request.
 func (client SitesClient) DeleteSiteHostNameBindingPreparer(ctx context.Context, resourceGroupName string, name string, hostName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2304,6 +2433,7 @@ func (client SitesClient) DeleteSiteHostNameBindingPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingSender sends the DeleteSiteHostNameBinding request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteHostNameBindingSender(req *http.Request) (*http.Response, error) {
@@ -2311,6 +2441,7 @@ func (client SitesClient) DeleteSiteHostNameBindingSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingResponder handles the response to the DeleteSiteHostNameBinding request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteHostNameBindingResponder(resp *http.Response) (result SetObject, err error) {
@@ -2324,6 +2455,7 @@ func (client SitesClient) DeleteSiteHostNameBindingResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingSlot sends the delete site host name binding slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -2350,6 +2482,7 @@ func (client SitesClient) DeleteSiteHostNameBindingSlot(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingSlotPreparer prepares the DeleteSiteHostNameBindingSlot request.
 func (client SitesClient) DeleteSiteHostNameBindingSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, hostName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2373,6 +2506,7 @@ func (client SitesClient) DeleteSiteHostNameBindingSlotPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingSlotSender sends the DeleteSiteHostNameBindingSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteHostNameBindingSlotSender(req *http.Request) (*http.Response, error) {
@@ -2380,6 +2514,7 @@ func (client SitesClient) DeleteSiteHostNameBindingSlotSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteHostNameBindingSlotResponder handles the response to the DeleteSiteHostNameBindingSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteHostNameBindingSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2393,6 +2528,7 @@ func (client SitesClient) DeleteSiteHostNameBindingSlotResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOn sends the delete site premier add on request.
 //
 func (client SitesClient) DeleteSitePremierAddOn(ctx context.Context, resourceGroupName string, name string, premierAddOnName string) (result SetObject, err error) {
@@ -2417,6 +2553,7 @@ func (client SitesClient) DeleteSitePremierAddOn(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnPreparer prepares the DeleteSitePremierAddOn request.
 func (client SitesClient) DeleteSitePremierAddOnPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2439,6 +2576,7 @@ func (client SitesClient) DeleteSitePremierAddOnPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnSender sends the DeleteSitePremierAddOn request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSitePremierAddOnSender(req *http.Request) (*http.Response, error) {
@@ -2446,6 +2584,7 @@ func (client SitesClient) DeleteSitePremierAddOnSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnResponder handles the response to the DeleteSitePremierAddOn request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSitePremierAddOnResponder(resp *http.Response) (result SetObject, err error) {
@@ -2459,6 +2598,7 @@ func (client SitesClient) DeleteSitePremierAddOnResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnSlot sends the delete site premier add on slot request.
 //
 func (client SitesClient) DeleteSitePremierAddOnSlot(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, slot string) (result SetObject, err error) {
@@ -2483,6 +2623,7 @@ func (client SitesClient) DeleteSitePremierAddOnSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnSlotPreparer prepares the DeleteSitePremierAddOnSlot request.
 func (client SitesClient) DeleteSitePremierAddOnSlotPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2506,6 +2647,7 @@ func (client SitesClient) DeleteSitePremierAddOnSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnSlotSender sends the DeleteSitePremierAddOnSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSitePremierAddOnSlotSender(req *http.Request) (*http.Response, error) {
@@ -2513,6 +2655,7 @@ func (client SitesClient) DeleteSitePremierAddOnSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSitePremierAddOnSlotResponder handles the response to the DeleteSitePremierAddOnSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSitePremierAddOnSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2526,6 +2669,7 @@ func (client SitesClient) DeleteSitePremierAddOnSlotResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnection sends the delete site relay service connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -2552,6 +2696,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnection(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionPreparer prepares the DeleteSiteRelayServiceConnection request.
 func (client SitesClient) DeleteSiteRelayServiceConnectionPreparer(ctx context.Context, resourceGroupName string, name string, entityName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2574,6 +2719,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionSender sends the DeleteSiteRelayServiceConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteRelayServiceConnectionSender(req *http.Request) (*http.Response, error) {
@@ -2581,6 +2727,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionResponder handles the response to the DeleteSiteRelayServiceConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteRelayServiceConnectionResponder(resp *http.Response) (result SetObject, err error) {
@@ -2594,6 +2741,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionSlot sends the delete site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -2620,6 +2768,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSlot(ctx context.Conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionSlotPreparer prepares the DeleteSiteRelayServiceConnectionSlot request.
 func (client SitesClient) DeleteSiteRelayServiceConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2643,6 +2792,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSlotPreparer(ctx conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionSlotSender sends the DeleteSiteRelayServiceConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteRelayServiceConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -2650,6 +2800,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSlotSender(req *http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteRelayServiceConnectionSlotResponder handles the response to the DeleteSiteRelayServiceConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteRelayServiceConnectionSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2663,6 +2814,7 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSlotResponder(resp *ht
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSlot sends the delete site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -2692,6 +2844,7 @@ func (client SitesClient) DeleteSiteSlot(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSlotPreparer prepares the DeleteSiteSlot request.
 func (client SitesClient) DeleteSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, deleteMetrics string, deleteEmptyServerFarm string, skipDNSRegistration string, deleteAllSlots string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2726,6 +2879,7 @@ func (client SitesClient) DeleteSiteSlotPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSlotSender sends the DeleteSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -2733,6 +2887,7 @@ func (client SitesClient) DeleteSiteSlotSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSlotResponder handles the response to the DeleteSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2746,6 +2901,7 @@ func (client SitesClient) DeleteSiteSlotResponder(resp *http.Response) (result S
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControl sends the delete site source control request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -2771,6 +2927,7 @@ func (client SitesClient) DeleteSiteSourceControl(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlPreparer prepares the DeleteSiteSourceControl request.
 func (client SitesClient) DeleteSiteSourceControlPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2792,6 +2949,7 @@ func (client SitesClient) DeleteSiteSourceControlPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlSender sends the DeleteSiteSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -2799,6 +2957,7 @@ func (client SitesClient) DeleteSiteSourceControlSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlResponder handles the response to the DeleteSiteSourceControl request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteSourceControlResponder(resp *http.Response) (result SetObject, err error) {
@@ -2812,6 +2971,7 @@ func (client SitesClient) DeleteSiteSourceControlResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlSlot sends the delete site source control slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -2838,6 +2998,7 @@ func (client SitesClient) DeleteSiteSourceControlSlot(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlSlotPreparer prepares the DeleteSiteSourceControlSlot request.
 func (client SitesClient) DeleteSiteSourceControlSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2860,6 +3021,7 @@ func (client SitesClient) DeleteSiteSourceControlSlotPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlSlotSender sends the DeleteSiteSourceControlSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteSourceControlSlotSender(req *http.Request) (*http.Response, error) {
@@ -2867,6 +3029,7 @@ func (client SitesClient) DeleteSiteSourceControlSlotSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteSourceControlSlotResponder handles the response to the DeleteSiteSourceControlSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteSourceControlSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -2880,6 +3043,7 @@ func (client SitesClient) DeleteSiteSourceControlSlotResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnection sends the delete site vnet connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -2906,6 +3070,7 @@ func (client SitesClient) DeleteSiteVNETConnection(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionPreparer prepares the DeleteSiteVNETConnection request.
 func (client SitesClient) DeleteSiteVNETConnectionPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2928,6 +3093,7 @@ func (client SitesClient) DeleteSiteVNETConnectionPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionSender sends the DeleteSiteVNETConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteVNETConnectionSender(req *http.Request) (*http.Response, error) {
@@ -2935,6 +3101,7 @@ func (client SitesClient) DeleteSiteVNETConnectionSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionResponder handles the response to the DeleteSiteVNETConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteVNETConnectionResponder(resp *http.Response) (result SetObject, err error) {
@@ -2948,6 +3115,7 @@ func (client SitesClient) DeleteSiteVNETConnectionResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionSlot sends the delete site vnet connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -2974,6 +3142,7 @@ func (client SitesClient) DeleteSiteVNETConnectionSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionSlotPreparer prepares the DeleteSiteVNETConnectionSlot request.
 func (client SitesClient) DeleteSiteVNETConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -2997,6 +3166,7 @@ func (client SitesClient) DeleteSiteVNETConnectionSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionSlotSender sends the DeleteSiteVNETConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DeleteSiteVNETConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -3004,6 +3174,7 @@ func (client SitesClient) DeleteSiteVNETConnectionSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteSiteVNETConnectionSlotResponder handles the response to the DeleteSiteVNETConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DeleteSiteVNETConnectionSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -3017,6 +3188,7 @@ func (client SitesClient) DeleteSiteVNETConnectionSlotResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestore sends the discover site restore request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on restore request
@@ -3042,6 +3214,7 @@ func (client SitesClient) DiscoverSiteRestore(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestorePreparer prepares the DiscoverSiteRestore request.
 func (client SitesClient) DiscoverSiteRestorePreparer(ctx context.Context, resourceGroupName string, name string, request RestoreRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3056,7 +3229,7 @@ func (client SitesClient) DiscoverSiteRestorePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/backups/discover", pathParameters),
@@ -3065,6 +3238,7 @@ func (client SitesClient) DiscoverSiteRestorePreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreSender sends the DiscoverSiteRestore request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DiscoverSiteRestoreSender(req *http.Request) (*http.Response, error) {
@@ -3072,6 +3246,7 @@ func (client SitesClient) DiscoverSiteRestoreSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreResponder handles the response to the DiscoverSiteRestore request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DiscoverSiteRestoreResponder(resp *http.Response) (result RestoreRequest, err error) {
@@ -3085,6 +3260,7 @@ func (client SitesClient) DiscoverSiteRestoreResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreSlot sends the discover site restore slot request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on restore request
@@ -3111,6 +3287,7 @@ func (client SitesClient) DiscoverSiteRestoreSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreSlotPreparer prepares the DiscoverSiteRestoreSlot request.
 func (client SitesClient) DiscoverSiteRestoreSlotPreparer(ctx context.Context, resourceGroupName string, name string, request RestoreRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3126,7 +3303,7 @@ func (client SitesClient) DiscoverSiteRestoreSlotPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/backups/discover", pathParameters),
@@ -3135,6 +3312,7 @@ func (client SitesClient) DiscoverSiteRestoreSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreSlotSender sends the DiscoverSiteRestoreSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) DiscoverSiteRestoreSlotSender(req *http.Request) (*http.Response, error) {
@@ -3142,6 +3320,7 @@ func (client SitesClient) DiscoverSiteRestoreSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DiscoverSiteRestoreSlotResponder handles the response to the DiscoverSiteRestoreSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) DiscoverSiteRestoreSlotResponder(resp *http.Response) (result RestoreRequest, err error) {
@@ -3155,6 +3334,7 @@ func (client SitesClient) DiscoverSiteRestoreSlotResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPassword sends the generate new site publishing password request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -3180,6 +3360,7 @@ func (client SitesClient) GenerateNewSitePublishingPassword(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordPreparer prepares the GenerateNewSitePublishingPassword request.
 func (client SitesClient) GenerateNewSitePublishingPasswordPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3201,6 +3382,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordSender sends the GenerateNewSitePublishingPassword request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GenerateNewSitePublishingPasswordSender(req *http.Request) (*http.Response, error) {
@@ -3208,6 +3390,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordResponder handles the response to the GenerateNewSitePublishingPassword request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GenerateNewSitePublishingPasswordResponder(resp *http.Response) (result SetObject, err error) {
@@ -3221,6 +3404,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordSlot sends the generate new site publishing password slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -3247,6 +3431,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordSlot(ctx context.Cont
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordSlotPreparer prepares the GenerateNewSitePublishingPasswordSlot request.
 func (client SitesClient) GenerateNewSitePublishingPasswordSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3269,6 +3454,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordSlotPreparer(ctx cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordSlotSender sends the GenerateNewSitePublishingPasswordSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GenerateNewSitePublishingPasswordSlotSender(req *http.Request) (*http.Response, error) {
@@ -3276,6 +3462,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordSlotSender(req *http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GenerateNewSitePublishingPasswordSlotResponder handles the response to the GenerateNewSitePublishingPasswordSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GenerateNewSitePublishingPasswordSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -3289,6 +3476,7 @@ func (client SitesClient) GenerateNewSitePublishingPasswordSlotResponder(resp *h
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeletedSites sends the get deleted sites request.
 //
 // resourceGroupName is name of resource group propertiesToInclude is additional web app properties included in the
@@ -3316,6 +3504,7 @@ func (client SitesClient) GetDeletedSites(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeletedSitesPreparer prepares the GetDeletedSites request.
 func (client SitesClient) GetDeletedSitesPreparer(ctx context.Context, resourceGroupName string, propertiesToInclude string, includeSiteTypes string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3342,6 +3531,7 @@ func (client SitesClient) GetDeletedSitesPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeletedSitesSender sends the GetDeletedSites request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetDeletedSitesSender(req *http.Request) (*http.Response, error) {
@@ -3349,6 +3539,7 @@ func (client SitesClient) GetDeletedSitesSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeletedSitesResponder handles the response to the GetDeletedSites request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetDeletedSitesResponder(resp *http.Response) (result DeletedSiteCollection, err error) {
@@ -3383,12 +3574,14 @@ func (client SitesClient) getDeletedSitesNextResults(lastResults DeletedSiteColl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeletedSitesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetDeletedSitesComplete(ctx context.Context, resourceGroupName string, propertiesToInclude string, includeSiteTypes string) (result DeletedSiteCollectionIterator, err error) {
 	result.page, err = client.GetDeletedSites(ctx, resourceGroupName, propertiesToInclude, includeSiteTypes)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeployment sends the get deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment
@@ -3414,6 +3607,7 @@ func (client SitesClient) GetDeployment(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentPreparer prepares the GetDeployment request.
 func (client SitesClient) GetDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3436,6 +3630,7 @@ func (client SitesClient) GetDeploymentPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentSender sends the GetDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -3443,6 +3638,7 @@ func (client SitesClient) GetDeploymentSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentResponder handles the response to the GetDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetDeploymentResponder(resp *http.Response) (result Deployment, err error) {
@@ -3456,6 +3652,7 @@ func (client SitesClient) GetDeploymentResponder(resp *http.Response) (result De
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeployments sends the get deployments request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -3482,6 +3679,7 @@ func (client SitesClient) GetDeployments(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsPreparer prepares the GetDeployments request.
 func (client SitesClient) GetDeploymentsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3503,6 +3701,7 @@ func (client SitesClient) GetDeploymentsPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSender sends the GetDeployments request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetDeploymentsSender(req *http.Request) (*http.Response, error) {
@@ -3510,6 +3709,7 @@ func (client SitesClient) GetDeploymentsSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsResponder handles the response to the GetDeployments request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetDeploymentsResponder(resp *http.Response) (result DeploymentCollection, err error) {
@@ -3544,12 +3744,14 @@ func (client SitesClient) getDeploymentsNextResults(lastResults DeploymentCollec
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetDeploymentsComplete(ctx context.Context, resourceGroupName string, name string) (result DeploymentCollectionIterator, err error) {
 	result.page, err = client.GetDeployments(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentSlot sends the get deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -3576,6 +3778,7 @@ func (client SitesClient) GetDeploymentSlot(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentSlotPreparer prepares the GetDeploymentSlot request.
 func (client SitesClient) GetDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3599,6 +3802,7 @@ func (client SitesClient) GetDeploymentSlotPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentSlotSender sends the GetDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -3606,6 +3810,7 @@ func (client SitesClient) GetDeploymentSlotSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentSlotResponder handles the response to the GetDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetDeploymentSlotResponder(resp *http.Response) (result Deployment, err error) {
@@ -3619,6 +3824,7 @@ func (client SitesClient) GetDeploymentSlotResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSlot sends the get deployments slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -3646,6 +3852,7 @@ func (client SitesClient) GetDeploymentsSlot(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSlotPreparer prepares the GetDeploymentsSlot request.
 func (client SitesClient) GetDeploymentsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3668,6 +3875,7 @@ func (client SitesClient) GetDeploymentsSlotPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSlotSender sends the GetDeploymentsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetDeploymentsSlotSender(req *http.Request) (*http.Response, error) {
@@ -3675,6 +3883,7 @@ func (client SitesClient) GetDeploymentsSlotSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSlotResponder handles the response to the GetDeploymentsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetDeploymentsSlotResponder(resp *http.Response) (result DeploymentCollection, err error) {
@@ -3709,12 +3918,14 @@ func (client SitesClient) getDeploymentsSlotNextResults(lastResults DeploymentCo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetDeploymentsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetDeploymentsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string) (result DeploymentCollectionIterator, err error) {
 	result.page, err = client.GetDeploymentsSlot(ctx, resourceGroupName, name, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeployment sends the get instance deployment request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
@@ -3741,6 +3952,7 @@ func (client SitesClient) GetInstanceDeployment(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentPreparer prepares the GetInstanceDeployment request.
 func (client SitesClient) GetInstanceDeploymentPreparer(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3764,6 +3976,7 @@ func (client SitesClient) GetInstanceDeploymentPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentSender sends the GetInstanceDeployment request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetInstanceDeploymentSender(req *http.Request) (*http.Response, error) {
@@ -3771,6 +3984,7 @@ func (client SitesClient) GetInstanceDeploymentSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentResponder handles the response to the GetInstanceDeployment request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetInstanceDeploymentResponder(resp *http.Response) (result Deployment, err error) {
@@ -3784,6 +3998,7 @@ func (client SitesClient) GetInstanceDeploymentResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeployments sends the get instance deployments request.
 //
 // resourceGroupName is name of resource group name is name of web app instanceID is id of web app instance
@@ -3810,6 +4025,7 @@ func (client SitesClient) GetInstanceDeployments(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsPreparer prepares the GetInstanceDeployments request.
 func (client SitesClient) GetInstanceDeploymentsPreparer(ctx context.Context, resourceGroupName string, name string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3832,6 +4048,7 @@ func (client SitesClient) GetInstanceDeploymentsPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSender sends the GetInstanceDeployments request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetInstanceDeploymentsSender(req *http.Request) (*http.Response, error) {
@@ -3839,6 +4056,7 @@ func (client SitesClient) GetInstanceDeploymentsSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsResponder handles the response to the GetInstanceDeployments request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetInstanceDeploymentsResponder(resp *http.Response) (result DeploymentCollection, err error) {
@@ -3873,12 +4091,14 @@ func (client SitesClient) getInstanceDeploymentsNextResults(lastResults Deployme
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetInstanceDeploymentsComplete(ctx context.Context, resourceGroupName string, name string, instanceID string) (result DeploymentCollectionIterator, err error) {
 	result.page, err = client.GetInstanceDeployments(ctx, resourceGroupName, name, instanceID)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentSlot sends the get instance deployment slot request.
 //
 // resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
@@ -3905,6 +4125,7 @@ func (client SitesClient) GetInstanceDeploymentSlot(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentSlotPreparer prepares the GetInstanceDeploymentSlot request.
 func (client SitesClient) GetInstanceDeploymentSlotPreparer(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3929,6 +4150,7 @@ func (client SitesClient) GetInstanceDeploymentSlotPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentSlotSender sends the GetInstanceDeploymentSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetInstanceDeploymentSlotSender(req *http.Request) (*http.Response, error) {
@@ -3936,6 +4158,7 @@ func (client SitesClient) GetInstanceDeploymentSlotSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentSlotResponder handles the response to the GetInstanceDeploymentSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetInstanceDeploymentSlotResponder(resp *http.Response) (result Deployment, err error) {
@@ -3949,6 +4172,7 @@ func (client SitesClient) GetInstanceDeploymentSlotResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSlot sends the get instance deployments slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -3976,6 +4200,7 @@ func (client SitesClient) GetInstanceDeploymentsSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSlotPreparer prepares the GetInstanceDeploymentsSlot request.
 func (client SitesClient) GetInstanceDeploymentsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, instanceID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -3999,6 +4224,7 @@ func (client SitesClient) GetInstanceDeploymentsSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSlotSender sends the GetInstanceDeploymentsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetInstanceDeploymentsSlotSender(req *http.Request) (*http.Response, error) {
@@ -4006,6 +4232,7 @@ func (client SitesClient) GetInstanceDeploymentsSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSlotResponder handles the response to the GetInstanceDeploymentsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetInstanceDeploymentsSlotResponder(resp *http.Response) (result DeploymentCollection, err error) {
@@ -4040,12 +4267,14 @@ func (client SitesClient) getInstanceDeploymentsSlotNextResults(lastResults Depl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetInstanceDeploymentsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetInstanceDeploymentsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string, instanceID string) (result DeploymentCollectionIterator, err error) {
 	result.page, err = client.GetInstanceDeploymentsSlot(ctx, resourceGroupName, name, slot, instanceID)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSite sends the get site request.
 //
 // resourceGroupName is name of resource group name is name of web app propertiesToInclude is additional web app
@@ -4072,6 +4301,7 @@ func (client SitesClient) GetSite(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePreparer prepares the GetSite request.
 func (client SitesClient) GetSitePreparer(ctx context.Context, resourceGroupName string, name string, propertiesToInclude string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4096,6 +4326,7 @@ func (client SitesClient) GetSitePreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSender sends the GetSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSender(req *http.Request) (*http.Response, error) {
@@ -4103,6 +4334,7 @@ func (client SitesClient) GetSiteSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteResponder handles the response to the GetSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteResponder(resp *http.Response) (result Site, err error) {
@@ -4116,6 +4348,7 @@ func (client SitesClient) GetSiteResponder(resp *http.Response) (result Site, er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfiguration sends the get site backup configuration request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -4141,6 +4374,7 @@ func (client SitesClient) GetSiteBackupConfiguration(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationPreparer prepares the GetSiteBackupConfiguration request.
 func (client SitesClient) GetSiteBackupConfigurationPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4162,6 +4396,7 @@ func (client SitesClient) GetSiteBackupConfigurationPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationSender sends the GetSiteBackupConfiguration request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupConfigurationSender(req *http.Request) (*http.Response, error) {
@@ -4169,6 +4404,7 @@ func (client SitesClient) GetSiteBackupConfigurationSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationResponder handles the response to the GetSiteBackupConfiguration request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupConfigurationResponder(resp *http.Response) (result BackupRequest, err error) {
@@ -4182,6 +4418,7 @@ func (client SitesClient) GetSiteBackupConfigurationResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationSlot sends the get site backup configuration slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -4208,6 +4445,7 @@ func (client SitesClient) GetSiteBackupConfigurationSlot(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationSlotPreparer prepares the GetSiteBackupConfigurationSlot request.
 func (client SitesClient) GetSiteBackupConfigurationSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4230,6 +4468,7 @@ func (client SitesClient) GetSiteBackupConfigurationSlotPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationSlotSender sends the GetSiteBackupConfigurationSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupConfigurationSlotSender(req *http.Request) (*http.Response, error) {
@@ -4237,6 +4476,7 @@ func (client SitesClient) GetSiteBackupConfigurationSlotSender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupConfigurationSlotResponder handles the response to the GetSiteBackupConfigurationSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupConfigurationSlotResponder(resp *http.Response) (result BackupRequest, err error) {
@@ -4250,6 +4490,7 @@ func (client SitesClient) GetSiteBackupConfigurationSlotResponder(resp *http.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatus sends the get site backup status request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup
@@ -4275,6 +4516,7 @@ func (client SitesClient) GetSiteBackupStatus(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusPreparer prepares the GetSiteBackupStatus request.
 func (client SitesClient) GetSiteBackupStatusPreparer(ctx context.Context, resourceGroupName string, name string, backupID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4297,6 +4539,7 @@ func (client SitesClient) GetSiteBackupStatusPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSender sends the GetSiteBackupStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupStatusSender(req *http.Request) (*http.Response, error) {
@@ -4304,6 +4547,7 @@ func (client SitesClient) GetSiteBackupStatusSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusResponder handles the response to the GetSiteBackupStatus request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupStatusResponder(resp *http.Response) (result BackupItem, err error) {
@@ -4317,6 +4561,7 @@ func (client SitesClient) GetSiteBackupStatusResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecrets sends the get site backup status secrets request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup request is
@@ -4343,6 +4588,7 @@ func (client SitesClient) GetSiteBackupStatusSecrets(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsPreparer prepares the GetSiteBackupStatusSecrets request.
 func (client SitesClient) GetSiteBackupStatusSecretsPreparer(ctx context.Context, resourceGroupName string, name string, backupID string, request BackupRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4358,7 +4604,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/backups/{backupId}/list", pathParameters),
@@ -4367,6 +4613,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsSender sends the GetSiteBackupStatusSecrets request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupStatusSecretsSender(req *http.Request) (*http.Response, error) {
@@ -4374,6 +4621,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsResponder handles the response to the GetSiteBackupStatusSecrets request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupStatusSecretsResponder(resp *http.Response) (result BackupItem, err error) {
@@ -4387,6 +4635,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsSlot sends the get site backup status secrets slot request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup request is
@@ -4414,6 +4663,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlot(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsSlotPreparer prepares the GetSiteBackupStatusSecretsSlot request.
 func (client SitesClient) GetSiteBackupStatusSecretsSlotPreparer(ctx context.Context, resourceGroupName string, name string, backupID string, request BackupRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4430,7 +4680,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlotPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/backups/{backupId}/list", pathParameters),
@@ -4439,6 +4689,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlotPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsSlotSender sends the GetSiteBackupStatusSecretsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupStatusSecretsSlotSender(req *http.Request) (*http.Response, error) {
@@ -4446,6 +4697,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlotSender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSecretsSlotResponder handles the response to the GetSiteBackupStatusSecretsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupStatusSecretsSlotResponder(resp *http.Response) (result BackupItem, err error) {
@@ -4459,6 +4711,7 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlotResponder(resp *http.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSlot sends the get site backup status slot request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web
@@ -4485,6 +4738,7 @@ func (client SitesClient) GetSiteBackupStatusSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSlotPreparer prepares the GetSiteBackupStatusSlot request.
 func (client SitesClient) GetSiteBackupStatusSlotPreparer(ctx context.Context, resourceGroupName string, name string, backupID string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4508,6 +4762,7 @@ func (client SitesClient) GetSiteBackupStatusSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSlotSender sends the GetSiteBackupStatusSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteBackupStatusSlotSender(req *http.Request) (*http.Response, error) {
@@ -4515,6 +4770,7 @@ func (client SitesClient) GetSiteBackupStatusSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteBackupStatusSlotResponder handles the response to the GetSiteBackupStatusSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteBackupStatusSlotResponder(resp *http.Response) (result BackupItem, err error) {
@@ -4528,6 +4784,7 @@ func (client SitesClient) GetSiteBackupStatusSlotResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfig sends the get site config request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -4553,6 +4810,7 @@ func (client SitesClient) GetSiteConfig(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigPreparer prepares the GetSiteConfig request.
 func (client SitesClient) GetSiteConfigPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4574,6 +4832,7 @@ func (client SitesClient) GetSiteConfigPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigSender sends the GetSiteConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteConfigSender(req *http.Request) (*http.Response, error) {
@@ -4581,6 +4840,7 @@ func (client SitesClient) GetSiteConfigSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigResponder handles the response to the GetSiteConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteConfigResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -4594,6 +4854,7 @@ func (client SitesClient) GetSiteConfigResponder(resp *http.Response) (result Si
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigSlot sends the get site config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -4620,6 +4881,7 @@ func (client SitesClient) GetSiteConfigSlot(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigSlotPreparer prepares the GetSiteConfigSlot request.
 func (client SitesClient) GetSiteConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4642,6 +4904,7 @@ func (client SitesClient) GetSiteConfigSlotPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigSlotSender sends the GetSiteConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -4649,6 +4912,7 @@ func (client SitesClient) GetSiteConfigSlotSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteConfigSlotResponder handles the response to the GetSiteConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteConfigSlotResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -4662,6 +4926,7 @@ func (client SitesClient) GetSiteConfigSlotResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBinding sends the get site host name binding request.
 //
 // resourceGroupName is name of resource group name is name of web app hostName is name of host
@@ -4687,6 +4952,7 @@ func (client SitesClient) GetSiteHostNameBinding(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingPreparer prepares the GetSiteHostNameBinding request.
 func (client SitesClient) GetSiteHostNameBindingPreparer(ctx context.Context, resourceGroupName string, name string, hostName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4709,6 +4975,7 @@ func (client SitesClient) GetSiteHostNameBindingPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingSender sends the GetSiteHostNameBinding request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteHostNameBindingSender(req *http.Request) (*http.Response, error) {
@@ -4716,6 +4983,7 @@ func (client SitesClient) GetSiteHostNameBindingSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingResponder handles the response to the GetSiteHostNameBinding request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteHostNameBindingResponder(resp *http.Response) (result HostNameBinding, err error) {
@@ -4729,6 +4997,7 @@ func (client SitesClient) GetSiteHostNameBindingResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindings sends the get site host name bindings request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -4755,6 +5024,7 @@ func (client SitesClient) GetSiteHostNameBindings(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsPreparer prepares the GetSiteHostNameBindings request.
 func (client SitesClient) GetSiteHostNameBindingsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4776,6 +5046,7 @@ func (client SitesClient) GetSiteHostNameBindingsPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSender sends the GetSiteHostNameBindings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteHostNameBindingsSender(req *http.Request) (*http.Response, error) {
@@ -4783,6 +5054,7 @@ func (client SitesClient) GetSiteHostNameBindingsSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsResponder handles the response to the GetSiteHostNameBindings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteHostNameBindingsResponder(resp *http.Response) (result HostNameBindingCollection, err error) {
@@ -4817,12 +5089,14 @@ func (client SitesClient) getSiteHostNameBindingsNextResults(lastResults HostNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteHostNameBindingsComplete(ctx context.Context, resourceGroupName string, name string) (result HostNameBindingCollectionIterator, err error) {
 	result.page, err = client.GetSiteHostNameBindings(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingSlot sends the get site host name binding slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -4849,6 +5123,7 @@ func (client SitesClient) GetSiteHostNameBindingSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingSlotPreparer prepares the GetSiteHostNameBindingSlot request.
 func (client SitesClient) GetSiteHostNameBindingSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, hostName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4872,6 +5147,7 @@ func (client SitesClient) GetSiteHostNameBindingSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingSlotSender sends the GetSiteHostNameBindingSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteHostNameBindingSlotSender(req *http.Request) (*http.Response, error) {
@@ -4879,6 +5155,7 @@ func (client SitesClient) GetSiteHostNameBindingSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingSlotResponder handles the response to the GetSiteHostNameBindingSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteHostNameBindingSlotResponder(resp *http.Response) (result HostNameBinding, err error) {
@@ -4892,6 +5169,7 @@ func (client SitesClient) GetSiteHostNameBindingSlotResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSlot sends the get site host name bindings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -4919,6 +5197,7 @@ func (client SitesClient) GetSiteHostNameBindingsSlot(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSlotPreparer prepares the GetSiteHostNameBindingsSlot request.
 func (client SitesClient) GetSiteHostNameBindingsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -4941,6 +5220,7 @@ func (client SitesClient) GetSiteHostNameBindingsSlotPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSlotSender sends the GetSiteHostNameBindingsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteHostNameBindingsSlotSender(req *http.Request) (*http.Response, error) {
@@ -4948,6 +5228,7 @@ func (client SitesClient) GetSiteHostNameBindingsSlotSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSlotResponder handles the response to the GetSiteHostNameBindingsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteHostNameBindingsSlotResponder(resp *http.Response) (result HostNameBindingCollection, err error) {
@@ -4982,12 +5263,14 @@ func (client SitesClient) getSiteHostNameBindingsSlotNextResults(lastResults Hos
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteHostNameBindingsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteHostNameBindingsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string) (result HostNameBindingCollectionIterator, err error) {
 	result.page, err = client.GetSiteHostNameBindingsSlot(ctx, resourceGroupName, name, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiers sends the get site instance identifiers request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -5014,6 +5297,7 @@ func (client SitesClient) GetSiteInstanceIdentifiers(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersPreparer prepares the GetSiteInstanceIdentifiers request.
 func (client SitesClient) GetSiteInstanceIdentifiersPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5035,6 +5319,7 @@ func (client SitesClient) GetSiteInstanceIdentifiersPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSender sends the GetSiteInstanceIdentifiers request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteInstanceIdentifiersSender(req *http.Request) (*http.Response, error) {
@@ -5042,6 +5327,7 @@ func (client SitesClient) GetSiteInstanceIdentifiersSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersResponder handles the response to the GetSiteInstanceIdentifiers request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteInstanceIdentifiersResponder(resp *http.Response) (result SiteInstanceCollection, err error) {
@@ -5076,12 +5362,14 @@ func (client SitesClient) getSiteInstanceIdentifiersNextResults(lastResults Site
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteInstanceIdentifiersComplete(ctx context.Context, resourceGroupName string, name string) (result SiteInstanceCollectionIterator, err error) {
 	result.page, err = client.GetSiteInstanceIdentifiers(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSlot sends the get site instance identifiers slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -5109,6 +5397,7 @@ func (client SitesClient) GetSiteInstanceIdentifiersSlot(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSlotPreparer prepares the GetSiteInstanceIdentifiersSlot request.
 func (client SitesClient) GetSiteInstanceIdentifiersSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5131,6 +5420,7 @@ func (client SitesClient) GetSiteInstanceIdentifiersSlotPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSlotSender sends the GetSiteInstanceIdentifiersSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteInstanceIdentifiersSlotSender(req *http.Request) (*http.Response, error) {
@@ -5138,6 +5428,7 @@ func (client SitesClient) GetSiteInstanceIdentifiersSlotSender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSlotResponder handles the response to the GetSiteInstanceIdentifiersSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteInstanceIdentifiersSlotResponder(resp *http.Response) (result SiteInstanceCollection, err error) {
@@ -5172,12 +5463,14 @@ func (client SitesClient) getSiteInstanceIdentifiersSlotNextResults(lastResults 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteInstanceIdentifiersSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteInstanceIdentifiersSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteInstanceCollectionIterator, err error) {
 	result.page, err = client.GetSiteInstanceIdentifiersSlot(ctx, resourceGroupName, name, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfig sends the get site logs config request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -5203,6 +5496,7 @@ func (client SitesClient) GetSiteLogsConfig(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigPreparer prepares the GetSiteLogsConfig request.
 func (client SitesClient) GetSiteLogsConfigPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5224,6 +5518,7 @@ func (client SitesClient) GetSiteLogsConfigPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigSender sends the GetSiteLogsConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteLogsConfigSender(req *http.Request) (*http.Response, error) {
@@ -5231,6 +5526,7 @@ func (client SitesClient) GetSiteLogsConfigSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigResponder handles the response to the GetSiteLogsConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteLogsConfigResponder(resp *http.Response) (result SiteLogsConfig, err error) {
@@ -5244,6 +5540,7 @@ func (client SitesClient) GetSiteLogsConfigResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigSlot sends the get site logs config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -5270,6 +5567,7 @@ func (client SitesClient) GetSiteLogsConfigSlot(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigSlotPreparer prepares the GetSiteLogsConfigSlot request.
 func (client SitesClient) GetSiteLogsConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5292,6 +5590,7 @@ func (client SitesClient) GetSiteLogsConfigSlotPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigSlotSender sends the GetSiteLogsConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteLogsConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -5299,6 +5598,7 @@ func (client SitesClient) GetSiteLogsConfigSlotSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteLogsConfigSlotResponder handles the response to the GetSiteLogsConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteLogsConfigSlotResponder(resp *http.Response) (result SiteLogsConfig, err error) {
@@ -5312,6 +5612,7 @@ func (client SitesClient) GetSiteLogsConfigSlotResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitions sends the get site metric definitions request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -5338,6 +5639,7 @@ func (client SitesClient) GetSiteMetricDefinitions(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsPreparer prepares the GetSiteMetricDefinitions request.
 func (client SitesClient) GetSiteMetricDefinitionsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5359,6 +5661,7 @@ func (client SitesClient) GetSiteMetricDefinitionsPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSender sends the GetSiteMetricDefinitions request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteMetricDefinitionsSender(req *http.Request) (*http.Response, error) {
@@ -5366,6 +5669,7 @@ func (client SitesClient) GetSiteMetricDefinitionsSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsResponder handles the response to the GetSiteMetricDefinitions request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteMetricDefinitionsResponder(resp *http.Response) (result MetricDefinitionCollection, err error) {
@@ -5400,12 +5704,14 @@ func (client SitesClient) getSiteMetricDefinitionsNextResults(lastResults Metric
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteMetricDefinitionsComplete(ctx context.Context, resourceGroupName string, name string) (result MetricDefinitionCollectionIterator, err error) {
 	result.page, err = client.GetSiteMetricDefinitions(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSlot sends the get site metric definitions slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -5433,6 +5739,7 @@ func (client SitesClient) GetSiteMetricDefinitionsSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSlotPreparer prepares the GetSiteMetricDefinitionsSlot request.
 func (client SitesClient) GetSiteMetricDefinitionsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5455,6 +5762,7 @@ func (client SitesClient) GetSiteMetricDefinitionsSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSlotSender sends the GetSiteMetricDefinitionsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteMetricDefinitionsSlotSender(req *http.Request) (*http.Response, error) {
@@ -5462,6 +5770,7 @@ func (client SitesClient) GetSiteMetricDefinitionsSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSlotResponder handles the response to the GetSiteMetricDefinitionsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteMetricDefinitionsSlotResponder(resp *http.Response) (result MetricDefinitionCollection, err error) {
@@ -5496,12 +5805,14 @@ func (client SitesClient) getSiteMetricDefinitionsSlotNextResults(lastResults Me
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricDefinitionsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteMetricDefinitionsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string) (result MetricDefinitionCollectionIterator, err error) {
 	result.page, err = client.GetSiteMetricDefinitionsSlot(ctx, resourceGroupName, name, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetrics sends the get site metrics request.
 //
 // resourceGroupName is name of resource group name is name of web app details is if true, metric details are
@@ -5531,6 +5842,7 @@ func (client SitesClient) GetSiteMetrics(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsPreparer prepares the GetSiteMetrics request.
 func (client SitesClient) GetSiteMetricsPreparer(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5558,6 +5870,7 @@ func (client SitesClient) GetSiteMetricsPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSender sends the GetSiteMetrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteMetricsSender(req *http.Request) (*http.Response, error) {
@@ -5565,6 +5878,7 @@ func (client SitesClient) GetSiteMetricsSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsResponder handles the response to the GetSiteMetrics request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteMetricsResponder(resp *http.Response) (result ResourceMetricCollection, err error) {
@@ -5599,12 +5913,14 @@ func (client SitesClient) getSiteMetricsNextResults(lastResults ResourceMetricCo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteMetricsComplete(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionIterator, err error) {
 	result.page, err = client.GetSiteMetrics(ctx, resourceGroupName, name, details, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSlot sends the get site metrics slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -5635,6 +5951,7 @@ func (client SitesClient) GetSiteMetricsSlot(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSlotPreparer prepares the GetSiteMetricsSlot request.
 func (client SitesClient) GetSiteMetricsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, details *bool, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5663,6 +5980,7 @@ func (client SitesClient) GetSiteMetricsSlotPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSlotSender sends the GetSiteMetricsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteMetricsSlotSender(req *http.Request) (*http.Response, error) {
@@ -5670,6 +5988,7 @@ func (client SitesClient) GetSiteMetricsSlotSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSlotResponder handles the response to the GetSiteMetricsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteMetricsSlotResponder(resp *http.Response) (result ResourceMetricCollection, err error) {
@@ -5704,12 +6023,14 @@ func (client SitesClient) getSiteMetricsSlotNextResults(lastResults ResourceMetr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteMetricsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteMetricsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string, details *bool, filter string) (result ResourceMetricCollectionIterator, err error) {
 	result.page, err = client.GetSiteMetricsSlot(ctx, resourceGroupName, name, slot, details, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeatures sends the get site network features request.
 //
 // resourceGroupName is the resource group name name is the name of the web app view is the type of view. This can
@@ -5736,6 +6057,7 @@ func (client SitesClient) GetSiteNetworkFeatures(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesPreparer prepares the GetSiteNetworkFeatures request.
 func (client SitesClient) GetSiteNetworkFeaturesPreparer(ctx context.Context, resourceGroupName string, name string, view string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5758,6 +6080,7 @@ func (client SitesClient) GetSiteNetworkFeaturesPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesSender sends the GetSiteNetworkFeatures request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteNetworkFeaturesSender(req *http.Request) (*http.Response, error) {
@@ -5765,6 +6088,7 @@ func (client SitesClient) GetSiteNetworkFeaturesSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesResponder handles the response to the GetSiteNetworkFeatures request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteNetworkFeaturesResponder(resp *http.Response) (result NetworkFeatures, err error) {
@@ -5778,6 +6102,7 @@ func (client SitesClient) GetSiteNetworkFeaturesResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesSlot sends the get site network features slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app view is the type of view. This can
@@ -5804,6 +6129,7 @@ func (client SitesClient) GetSiteNetworkFeaturesSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesSlotPreparer prepares the GetSiteNetworkFeaturesSlot request.
 func (client SitesClient) GetSiteNetworkFeaturesSlotPreparer(ctx context.Context, resourceGroupName string, name string, view string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5827,6 +6153,7 @@ func (client SitesClient) GetSiteNetworkFeaturesSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesSlotSender sends the GetSiteNetworkFeaturesSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteNetworkFeaturesSlotSender(req *http.Request) (*http.Response, error) {
@@ -5834,6 +6161,7 @@ func (client SitesClient) GetSiteNetworkFeaturesSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteNetworkFeaturesSlotResponder handles the response to the GetSiteNetworkFeaturesSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteNetworkFeaturesSlotResponder(resp *http.Response) (result NetworkFeatures, err error) {
@@ -5847,6 +6175,7 @@ func (client SitesClient) GetSiteNetworkFeaturesSlotResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperation sends the get site operation request.
 //
 // resourceGroupName is name of resource group name is name of web app operationID is id of an operation
@@ -5872,6 +6201,7 @@ func (client SitesClient) GetSiteOperation(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationPreparer prepares the GetSiteOperation request.
 func (client SitesClient) GetSiteOperationPreparer(ctx context.Context, resourceGroupName string, name string, operationID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5894,6 +6224,7 @@ func (client SitesClient) GetSiteOperationPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationSender sends the GetSiteOperation request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteOperationSender(req *http.Request) (*http.Response, error) {
@@ -5901,6 +6232,7 @@ func (client SitesClient) GetSiteOperationSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationResponder handles the response to the GetSiteOperation request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteOperationResponder(resp *http.Response) (result SetObject, err error) {
@@ -5914,6 +6246,7 @@ func (client SitesClient) GetSiteOperationResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationSlot sends the get site operation slot request.
 //
 // resourceGroupName is name of resource group name is name of web app operationID is id of an operation slot is
@@ -5940,6 +6273,7 @@ func (client SitesClient) GetSiteOperationSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationSlotPreparer prepares the GetSiteOperationSlot request.
 func (client SitesClient) GetSiteOperationSlotPreparer(ctx context.Context, resourceGroupName string, name string, operationID string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -5963,6 +6297,7 @@ func (client SitesClient) GetSiteOperationSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationSlotSender sends the GetSiteOperationSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteOperationSlotSender(req *http.Request) (*http.Response, error) {
@@ -5970,6 +6305,7 @@ func (client SitesClient) GetSiteOperationSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteOperationSlotResponder handles the response to the GetSiteOperationSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteOperationSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -5983,6 +6319,7 @@ func (client SitesClient) GetSiteOperationSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOn sends the get site premier add on request.
 //
 func (client SitesClient) GetSitePremierAddOn(ctx context.Context, resourceGroupName string, name string, premierAddOnName string) (result SetObject, err error) {
@@ -6007,6 +6344,7 @@ func (client SitesClient) GetSitePremierAddOn(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnPreparer prepares the GetSitePremierAddOn request.
 func (client SitesClient) GetSitePremierAddOnPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6029,6 +6367,7 @@ func (client SitesClient) GetSitePremierAddOnPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnSender sends the GetSitePremierAddOn request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSitePremierAddOnSender(req *http.Request) (*http.Response, error) {
@@ -6036,6 +6375,7 @@ func (client SitesClient) GetSitePremierAddOnSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnResponder handles the response to the GetSitePremierAddOn request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSitePremierAddOnResponder(resp *http.Response) (result SetObject, err error) {
@@ -6049,6 +6389,7 @@ func (client SitesClient) GetSitePremierAddOnResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnSlot sends the get site premier add on slot request.
 //
 func (client SitesClient) GetSitePremierAddOnSlot(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, slot string) (result SetObject, err error) {
@@ -6073,6 +6414,7 @@ func (client SitesClient) GetSitePremierAddOnSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnSlotPreparer prepares the GetSitePremierAddOnSlot request.
 func (client SitesClient) GetSitePremierAddOnSlotPreparer(ctx context.Context, resourceGroupName string, name string, premierAddOnName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6096,6 +6438,7 @@ func (client SitesClient) GetSitePremierAddOnSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnSlotSender sends the GetSitePremierAddOnSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSitePremierAddOnSlotSender(req *http.Request) (*http.Response, error) {
@@ -6103,6 +6446,7 @@ func (client SitesClient) GetSitePremierAddOnSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitePremierAddOnSlotResponder handles the response to the GetSitePremierAddOnSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSitePremierAddOnSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -6116,6 +6460,7 @@ func (client SitesClient) GetSitePremierAddOnSlotResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnection sends the get site relay service connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -6142,6 +6487,7 @@ func (client SitesClient) GetSiteRelayServiceConnection(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionPreparer prepares the GetSiteRelayServiceConnection request.
 func (client SitesClient) GetSiteRelayServiceConnectionPreparer(ctx context.Context, resourceGroupName string, name string, entityName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6164,6 +6510,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionSender sends the GetSiteRelayServiceConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteRelayServiceConnectionSender(req *http.Request) (*http.Response, error) {
@@ -6171,6 +6518,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionResponder handles the response to the GetSiteRelayServiceConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteRelayServiceConnectionResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -6184,6 +6532,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionSlot sends the get site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -6210,6 +6559,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionSlot(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionSlotPreparer prepares the GetSiteRelayServiceConnectionSlot request.
 func (client SitesClient) GetSiteRelayServiceConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6233,6 +6583,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionSlotPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionSlotSender sends the GetSiteRelayServiceConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteRelayServiceConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -6240,6 +6591,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionSlotSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteRelayServiceConnectionSlotResponder handles the response to the GetSiteRelayServiceConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteRelayServiceConnectionSlotResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -6253,6 +6605,7 @@ func (client SitesClient) GetSiteRelayServiceConnectionSlotResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSites sends the get sites request.
 //
 // resourceGroupName is name of resource group propertiesToInclude is additional web app properties included in the
@@ -6281,6 +6634,7 @@ func (client SitesClient) GetSites(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitesPreparer prepares the GetSites request.
 func (client SitesClient) GetSitesPreparer(ctx context.Context, resourceGroupName string, propertiesToInclude string, includeSiteTypes string, includeSlots *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6310,6 +6664,7 @@ func (client SitesClient) GetSitesPreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitesSender sends the GetSites request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSitesSender(req *http.Request) (*http.Response, error) {
@@ -6317,6 +6672,7 @@ func (client SitesClient) GetSitesSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitesResponder handles the response to the GetSites request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSitesResponder(resp *http.Response) (result SiteCollection, err error) {
@@ -6351,12 +6707,14 @@ func (client SitesClient) getSitesNextResults(lastResults SiteCollection) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSitesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSitesComplete(ctx context.Context, resourceGroupName string, propertiesToInclude string, includeSiteTypes string, includeSlots *bool) (result SiteCollectionIterator, err error) {
 	result.page, err = client.GetSites(ctx, resourceGroupName, propertiesToInclude, includeSiteTypes, includeSlots)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlot sends the get site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -6384,6 +6742,7 @@ func (client SitesClient) GetSiteSlot(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotPreparer prepares the GetSiteSlot request.
 func (client SitesClient) GetSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, propertiesToInclude string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6409,6 +6768,7 @@ func (client SitesClient) GetSiteSlotPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotSender sends the GetSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -6416,6 +6776,7 @@ func (client SitesClient) GetSiteSlotSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotResponder handles the response to the GetSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSlotResponder(resp *http.Response) (result Site, err error) {
@@ -6429,6 +6790,7 @@ func (client SitesClient) GetSiteSlotResponder(resp *http.Response) (result Site
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlots sends the get site slots request.
 //
 // resourceGroupName is name of resource group name is name of web app propertiesToInclude is list of app
@@ -6456,6 +6818,7 @@ func (client SitesClient) GetSiteSlots(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotsPreparer prepares the GetSiteSlots request.
 func (client SitesClient) GetSiteSlotsPreparer(ctx context.Context, resourceGroupName string, name string, propertiesToInclude string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6480,6 +6843,7 @@ func (client SitesClient) GetSiteSlotsPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotsSender sends the GetSiteSlots request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSlotsSender(req *http.Request) (*http.Response, error) {
@@ -6487,6 +6851,7 @@ func (client SitesClient) GetSiteSlotsSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotsResponder handles the response to the GetSiteSlots request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSlotsResponder(resp *http.Response) (result SiteCollection, err error) {
@@ -6521,12 +6886,14 @@ func (client SitesClient) getSiteSlotsNextResults(lastResults SiteCollection) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSlotsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteSlotsComplete(ctx context.Context, resourceGroupName string, name string, propertiesToInclude string) (result SiteCollectionIterator, err error) {
 	result.page, err = client.GetSiteSlots(ctx, resourceGroupName, name, propertiesToInclude)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshots sends the get site snapshots request.
 //
 // resourceGroupName is webspace name is website Name
@@ -6552,6 +6919,7 @@ func (client SitesClient) GetSiteSnapshots(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsPreparer prepares the GetSiteSnapshots request.
 func (client SitesClient) GetSiteSnapshotsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6573,6 +6941,7 @@ func (client SitesClient) GetSiteSnapshotsPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsSender sends the GetSiteSnapshots request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSnapshotsSender(req *http.Request) (*http.Response, error) {
@@ -6580,6 +6949,7 @@ func (client SitesClient) GetSiteSnapshotsSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsResponder handles the response to the GetSiteSnapshots request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSnapshotsResponder(resp *http.Response) (result SetObject, err error) {
@@ -6593,6 +6963,7 @@ func (client SitesClient) GetSiteSnapshotsResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsSlot sends the get site snapshots slot request.
 //
 // resourceGroupName is webspace name is website Name slot is website Slot
@@ -6618,6 +6989,7 @@ func (client SitesClient) GetSiteSnapshotsSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsSlotPreparer prepares the GetSiteSnapshotsSlot request.
 func (client SitesClient) GetSiteSnapshotsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6640,6 +7012,7 @@ func (client SitesClient) GetSiteSnapshotsSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsSlotSender sends the GetSiteSnapshotsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSnapshotsSlotSender(req *http.Request) (*http.Response, error) {
@@ -6647,6 +7020,7 @@ func (client SitesClient) GetSiteSnapshotsSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSnapshotsSlotResponder handles the response to the GetSiteSnapshotsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSnapshotsSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -6660,6 +7034,7 @@ func (client SitesClient) GetSiteSnapshotsSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControl sends the get site source control request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -6685,6 +7060,7 @@ func (client SitesClient) GetSiteSourceControl(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlPreparer prepares the GetSiteSourceControl request.
 func (client SitesClient) GetSiteSourceControlPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6706,6 +7082,7 @@ func (client SitesClient) GetSiteSourceControlPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlSender sends the GetSiteSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -6713,6 +7090,7 @@ func (client SitesClient) GetSiteSourceControlSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlResponder handles the response to the GetSiteSourceControl request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSourceControlResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -6726,6 +7104,7 @@ func (client SitesClient) GetSiteSourceControlResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlSlot sends the get site source control slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -6752,6 +7131,7 @@ func (client SitesClient) GetSiteSourceControlSlot(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlSlotPreparer prepares the GetSiteSourceControlSlot request.
 func (client SitesClient) GetSiteSourceControlSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6774,6 +7154,7 @@ func (client SitesClient) GetSiteSourceControlSlotPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlSlotSender sends the GetSiteSourceControlSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteSourceControlSlotSender(req *http.Request) (*http.Response, error) {
@@ -6781,6 +7162,7 @@ func (client SitesClient) GetSiteSourceControlSlotSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteSourceControlSlotResponder handles the response to the GetSiteSourceControlSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteSourceControlSlotResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -6794,6 +7176,7 @@ func (client SitesClient) GetSiteSourceControlSlotResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsages sends the get site usages request.
 //
 // resourceGroupName is name of resource group name is name of web app filter is return only usages specified in
@@ -6823,6 +7206,7 @@ func (client SitesClient) GetSiteUsages(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesPreparer prepares the GetSiteUsages request.
 func (client SitesClient) GetSiteUsagesPreparer(ctx context.Context, resourceGroupName string, name string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6847,6 +7231,7 @@ func (client SitesClient) GetSiteUsagesPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSender sends the GetSiteUsages request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteUsagesSender(req *http.Request) (*http.Response, error) {
@@ -6854,6 +7239,7 @@ func (client SitesClient) GetSiteUsagesSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesResponder handles the response to the GetSiteUsages request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteUsagesResponder(resp *http.Response) (result CsmUsageQuotaCollection, err error) {
@@ -6888,12 +7274,14 @@ func (client SitesClient) getSiteUsagesNextResults(lastResults CsmUsageQuotaColl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteUsagesComplete(ctx context.Context, resourceGroupName string, name string, filter string) (result CsmUsageQuotaCollectionIterator, err error) {
 	result.page, err = client.GetSiteUsages(ctx, resourceGroupName, name, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSlot sends the get site usages slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -6924,6 +7312,7 @@ func (client SitesClient) GetSiteUsagesSlot(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSlotPreparer prepares the GetSiteUsagesSlot request.
 func (client SitesClient) GetSiteUsagesSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -6949,6 +7338,7 @@ func (client SitesClient) GetSiteUsagesSlotPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSlotSender sends the GetSiteUsagesSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteUsagesSlotSender(req *http.Request) (*http.Response, error) {
@@ -6956,6 +7346,7 @@ func (client SitesClient) GetSiteUsagesSlotSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSlotResponder handles the response to the GetSiteUsagesSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteUsagesSlotResponder(resp *http.Response) (result CsmUsageQuotaCollection, err error) {
@@ -6990,12 +7381,14 @@ func (client SitesClient) getSiteUsagesSlotNextResults(lastResults CsmUsageQuota
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteUsagesSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSiteUsagesSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string, filter string) (result CsmUsageQuotaCollectionIterator, err error) {
 	result.page, err = client.GetSiteUsagesSlot(ctx, resourceGroupName, name, slot, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnection sends the get site vnet connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -7022,6 +7415,7 @@ func (client SitesClient) GetSiteVNETConnection(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionPreparer prepares the GetSiteVNETConnection request.
 func (client SitesClient) GetSiteVNETConnectionPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7044,6 +7438,7 @@ func (client SitesClient) GetSiteVNETConnectionPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionSender sends the GetSiteVNETConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVNETConnectionSender(req *http.Request) (*http.Response, error) {
@@ -7051,6 +7446,7 @@ func (client SitesClient) GetSiteVNETConnectionSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionResponder handles the response to the GetSiteVNETConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVNETConnectionResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -7064,6 +7460,7 @@ func (client SitesClient) GetSiteVNETConnectionResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnections sends the get site vnet connections request.
 //
 // resourceGroupName is the resource group name name is the name of the web app
@@ -7089,6 +7486,7 @@ func (client SitesClient) GetSiteVNETConnections(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsPreparer prepares the GetSiteVNETConnections request.
 func (client SitesClient) GetSiteVNETConnectionsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7110,6 +7508,7 @@ func (client SitesClient) GetSiteVNETConnectionsPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsSender sends the GetSiteVNETConnections request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVNETConnectionsSender(req *http.Request) (*http.Response, error) {
@@ -7117,6 +7516,7 @@ func (client SitesClient) GetSiteVNETConnectionsSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsResponder handles the response to the GetSiteVNETConnections request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVNETConnectionsResponder(resp *http.Response) (result ListVnetInfo, err error) {
@@ -7130,6 +7530,7 @@ func (client SitesClient) GetSiteVNETConnectionsResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionSlot sends the get site vnet connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -7156,6 +7557,7 @@ func (client SitesClient) GetSiteVNETConnectionSlot(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionSlotPreparer prepares the GetSiteVNETConnectionSlot request.
 func (client SitesClient) GetSiteVNETConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7179,6 +7581,7 @@ func (client SitesClient) GetSiteVNETConnectionSlotPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionSlotSender sends the GetSiteVNETConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVNETConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -7186,6 +7589,7 @@ func (client SitesClient) GetSiteVNETConnectionSlotSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionSlotResponder handles the response to the GetSiteVNETConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVNETConnectionSlotResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -7199,6 +7603,7 @@ func (client SitesClient) GetSiteVNETConnectionSlotResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsSlot sends the get site vnet connections slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for
@@ -7225,6 +7630,7 @@ func (client SitesClient) GetSiteVNETConnectionsSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsSlotPreparer prepares the GetSiteVNETConnectionsSlot request.
 func (client SitesClient) GetSiteVNETConnectionsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7247,6 +7653,7 @@ func (client SitesClient) GetSiteVNETConnectionsSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsSlotSender sends the GetSiteVNETConnectionsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVNETConnectionsSlotSender(req *http.Request) (*http.Response, error) {
@@ -7254,6 +7661,7 @@ func (client SitesClient) GetSiteVNETConnectionsSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVNETConnectionsSlotResponder handles the response to the GetSiteVNETConnectionsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVNETConnectionsSlotResponder(resp *http.Response) (result ListVnetInfo, err error) {
@@ -7267,6 +7675,7 @@ func (client SitesClient) GetSiteVNETConnectionsSlotResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGateway sends the get site vnet gateway request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -7293,6 +7702,7 @@ func (client SitesClient) GetSiteVnetGateway(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewayPreparer prepares the GetSiteVnetGateway request.
 func (client SitesClient) GetSiteVnetGatewayPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7316,6 +7726,7 @@ func (client SitesClient) GetSiteVnetGatewayPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewaySender sends the GetSiteVnetGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVnetGatewaySender(req *http.Request) (*http.Response, error) {
@@ -7323,6 +7734,7 @@ func (client SitesClient) GetSiteVnetGatewaySender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewayResponder handles the response to the GetSiteVnetGateway request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVnetGatewayResponder(resp *http.Response) (result SetObject, err error) {
@@ -7336,6 +7748,7 @@ func (client SitesClient) GetSiteVnetGatewayResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewaySlot sends the get site vnet gateway slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -7363,6 +7776,7 @@ func (client SitesClient) GetSiteVnetGatewaySlot(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewaySlotPreparer prepares the GetSiteVnetGatewaySlot request.
 func (client SitesClient) GetSiteVnetGatewaySlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7387,6 +7801,7 @@ func (client SitesClient) GetSiteVnetGatewaySlotPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewaySlotSender sends the GetSiteVnetGatewaySlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSiteVnetGatewaySlotSender(req *http.Request) (*http.Response, error) {
@@ -7394,6 +7809,7 @@ func (client SitesClient) GetSiteVnetGatewaySlotSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSiteVnetGatewaySlotResponder handles the response to the GetSiteVnetGatewaySlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSiteVnetGatewaySlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -7407,6 +7823,7 @@ func (client SitesClient) GetSiteVnetGatewaySlotResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotConfigNames sends the get slot config names request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -7432,6 +7849,7 @@ func (client SitesClient) GetSlotConfigNames(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotConfigNamesPreparer prepares the GetSlotConfigNames request.
 func (client SitesClient) GetSlotConfigNamesPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7453,6 +7871,7 @@ func (client SitesClient) GetSlotConfigNamesPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotConfigNamesSender sends the GetSlotConfigNames request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSlotConfigNamesSender(req *http.Request) (*http.Response, error) {
@@ -7460,6 +7879,7 @@ func (client SitesClient) GetSlotConfigNamesSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotConfigNamesResponder handles the response to the GetSlotConfigNames request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSlotConfigNamesResponder(resp *http.Response) (result SlotConfigNamesResource, err error) {
@@ -7473,6 +7893,7 @@ func (client SitesClient) GetSlotConfigNamesResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesFromProduction sends the get slots differences from production request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -7500,6 +7921,7 @@ func (client SitesClient) GetSlotsDifferencesFromProduction(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesFromProductionPreparer prepares the GetSlotsDifferencesFromProduction request.
 func (client SitesClient) GetSlotsDifferencesFromProductionPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7514,7 +7936,7 @@ func (client SitesClient) GetSlotsDifferencesFromProductionPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slotsdiffs", pathParameters),
@@ -7523,6 +7945,7 @@ func (client SitesClient) GetSlotsDifferencesFromProductionPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesFromProductionSender sends the GetSlotsDifferencesFromProduction request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSlotsDifferencesFromProductionSender(req *http.Request) (*http.Response, error) {
@@ -7530,6 +7953,7 @@ func (client SitesClient) GetSlotsDifferencesFromProductionSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesFromProductionResponder handles the response to the GetSlotsDifferencesFromProduction request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSlotsDifferencesFromProductionResponder(resp *http.Response) (result SlotDifferenceCollection, err error) {
@@ -7564,12 +7988,14 @@ func (client SitesClient) getSlotsDifferencesFromProductionNextResults(lastResul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesFromProductionComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSlotsDifferencesFromProductionComplete(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (result SlotDifferenceCollectionIterator, err error) {
 	result.page, err = client.GetSlotsDifferencesFromProduction(ctx, resourceGroupName, name, slotSwapEntity)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesSlot sends the get slots differences slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -7597,6 +8023,7 @@ func (client SitesClient) GetSlotsDifferencesSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesSlotPreparer prepares the GetSlotsDifferencesSlot request.
 func (client SitesClient) GetSlotsDifferencesSlotPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7612,7 +8039,7 @@ func (client SitesClient) GetSlotsDifferencesSlotPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/slotsdiffs", pathParameters),
@@ -7621,6 +8048,7 @@ func (client SitesClient) GetSlotsDifferencesSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesSlotSender sends the GetSlotsDifferencesSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) GetSlotsDifferencesSlotSender(req *http.Request) (*http.Response, error) {
@@ -7628,6 +8056,7 @@ func (client SitesClient) GetSlotsDifferencesSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesSlotResponder handles the response to the GetSlotsDifferencesSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) GetSlotsDifferencesSlotResponder(resp *http.Response) (result SlotDifferenceCollection, err error) {
@@ -7662,12 +8091,14 @@ func (client SitesClient) getSlotsDifferencesSlotNextResults(lastResults SlotDif
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSlotsDifferencesSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) GetSlotsDifferencesSlotComplete(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (result SlotDifferenceCollectionIterator, err error) {
 	result.page, err = client.GetSlotsDifferencesSlot(ctx, resourceGroupName, name, slotSwapEntity, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneable sends the is site cloneable request.
 //
 // resourceGroupName is name of the resource group name is name of the web app
@@ -7693,6 +8124,7 @@ func (client SitesClient) IsSiteCloneable(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneablePreparer prepares the IsSiteCloneable request.
 func (client SitesClient) IsSiteCloneablePreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7714,6 +8146,7 @@ func (client SitesClient) IsSiteCloneablePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableSender sends the IsSiteCloneable request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) IsSiteCloneableSender(req *http.Request) (*http.Response, error) {
@@ -7721,6 +8154,7 @@ func (client SitesClient) IsSiteCloneableSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableResponder handles the response to the IsSiteCloneable request. The method always
 // closes the http.Response Body.
 func (client SitesClient) IsSiteCloneableResponder(resp *http.Response) (result SiteCloneability, err error) {
@@ -7734,6 +8168,7 @@ func (client SitesClient) IsSiteCloneableResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableSlot sends the is site cloneable slot request.
 //
 // resourceGroupName is name of the resource group name is name of the web app slot is name of web app slot. If not
@@ -7760,6 +8195,7 @@ func (client SitesClient) IsSiteCloneableSlot(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableSlotPreparer prepares the IsSiteCloneableSlot request.
 func (client SitesClient) IsSiteCloneableSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7782,6 +8218,7 @@ func (client SitesClient) IsSiteCloneableSlotPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableSlotSender sends the IsSiteCloneableSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) IsSiteCloneableSlotSender(req *http.Request) (*http.Response, error) {
@@ -7789,6 +8226,7 @@ func (client SitesClient) IsSiteCloneableSlotSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // IsSiteCloneableSlotResponder handles the response to the IsSiteCloneableSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) IsSiteCloneableSlotResponder(resp *http.Response) (result SiteCloneability, err error) {
@@ -7802,6 +8240,7 @@ func (client SitesClient) IsSiteCloneableSlotResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettings sends the list site app settings request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -7827,6 +8266,7 @@ func (client SitesClient) ListSiteAppSettings(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsPreparer prepares the ListSiteAppSettings request.
 func (client SitesClient) ListSiteAppSettingsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7848,6 +8288,7 @@ func (client SitesClient) ListSiteAppSettingsPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsSender sends the ListSiteAppSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteAppSettingsSender(req *http.Request) (*http.Response, error) {
@@ -7855,6 +8296,7 @@ func (client SitesClient) ListSiteAppSettingsSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsResponder handles the response to the ListSiteAppSettings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteAppSettingsResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -7868,6 +8310,7 @@ func (client SitesClient) ListSiteAppSettingsResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsSlot sends the list site app settings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -7894,6 +8337,7 @@ func (client SitesClient) ListSiteAppSettingsSlot(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsSlotPreparer prepares the ListSiteAppSettingsSlot request.
 func (client SitesClient) ListSiteAppSettingsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7916,6 +8360,7 @@ func (client SitesClient) ListSiteAppSettingsSlotPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsSlotSender sends the ListSiteAppSettingsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteAppSettingsSlotSender(req *http.Request) (*http.Response, error) {
@@ -7923,6 +8368,7 @@ func (client SitesClient) ListSiteAppSettingsSlotSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAppSettingsSlotResponder handles the response to the ListSiteAppSettingsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteAppSettingsSlotResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -7936,6 +8382,7 @@ func (client SitesClient) ListSiteAppSettingsSlotResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettings sends the list site auth settings request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -7961,6 +8408,7 @@ func (client SitesClient) ListSiteAuthSettings(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsPreparer prepares the ListSiteAuthSettings request.
 func (client SitesClient) ListSiteAuthSettingsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -7982,6 +8430,7 @@ func (client SitesClient) ListSiteAuthSettingsPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsSender sends the ListSiteAuthSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteAuthSettingsSender(req *http.Request) (*http.Response, error) {
@@ -7989,6 +8438,7 @@ func (client SitesClient) ListSiteAuthSettingsSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsResponder handles the response to the ListSiteAuthSettings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteAuthSettingsResponder(resp *http.Response) (result SiteAuthSettings, err error) {
@@ -8002,6 +8452,7 @@ func (client SitesClient) ListSiteAuthSettingsResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsSlot sends the list site auth settings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -8028,6 +8479,7 @@ func (client SitesClient) ListSiteAuthSettingsSlot(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsSlotPreparer prepares the ListSiteAuthSettingsSlot request.
 func (client SitesClient) ListSiteAuthSettingsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8050,6 +8502,7 @@ func (client SitesClient) ListSiteAuthSettingsSlotPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsSlotSender sends the ListSiteAuthSettingsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteAuthSettingsSlotSender(req *http.Request) (*http.Response, error) {
@@ -8057,6 +8510,7 @@ func (client SitesClient) ListSiteAuthSettingsSlotSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteAuthSettingsSlotResponder handles the response to the ListSiteAuthSettingsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteAuthSettingsSlotResponder(resp *http.Response) (result SiteAuthSettings, err error) {
@@ -8070,6 +8524,7 @@ func (client SitesClient) ListSiteAuthSettingsSlotResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackups sends the list site backups request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -8096,6 +8551,7 @@ func (client SitesClient) ListSiteBackups(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsPreparer prepares the ListSiteBackups request.
 func (client SitesClient) ListSiteBackupsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8117,6 +8573,7 @@ func (client SitesClient) ListSiteBackupsPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSender sends the ListSiteBackups request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteBackupsSender(req *http.Request) (*http.Response, error) {
@@ -8124,6 +8581,7 @@ func (client SitesClient) ListSiteBackupsSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsResponder handles the response to the ListSiteBackups request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteBackupsResponder(resp *http.Response) (result BackupItemCollection, err error) {
@@ -8158,12 +8616,14 @@ func (client SitesClient) listSiteBackupsNextResults(lastResults BackupItemColle
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) ListSiteBackupsComplete(ctx context.Context, resourceGroupName string, name string) (result BackupItemCollectionIterator, err error) {
 	result.page, err = client.ListSiteBackups(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSlot sends the list site backups slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -8191,6 +8651,7 @@ func (client SitesClient) ListSiteBackupsSlot(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSlotPreparer prepares the ListSiteBackupsSlot request.
 func (client SitesClient) ListSiteBackupsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8213,6 +8674,7 @@ func (client SitesClient) ListSiteBackupsSlotPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSlotSender sends the ListSiteBackupsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteBackupsSlotSender(req *http.Request) (*http.Response, error) {
@@ -8220,6 +8682,7 @@ func (client SitesClient) ListSiteBackupsSlotSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSlotResponder handles the response to the ListSiteBackupsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteBackupsSlotResponder(resp *http.Response) (result BackupItemCollection, err error) {
@@ -8254,12 +8717,14 @@ func (client SitesClient) listSiteBackupsSlotNextResults(lastResults BackupItemC
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteBackupsSlotComplete enumerates all values, automatically crossing page boundaries as required.
 func (client SitesClient) ListSiteBackupsSlotComplete(ctx context.Context, resourceGroupName string, name string, slot string) (result BackupItemCollectionIterator, err error) {
 	result.page, err = client.ListSiteBackupsSlot(ctx, resourceGroupName, name, slot)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStrings sends the list site connection strings request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -8285,6 +8750,7 @@ func (client SitesClient) ListSiteConnectionStrings(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsPreparer prepares the ListSiteConnectionStrings request.
 func (client SitesClient) ListSiteConnectionStringsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8306,6 +8772,7 @@ func (client SitesClient) ListSiteConnectionStringsPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsSender sends the ListSiteConnectionStrings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteConnectionStringsSender(req *http.Request) (*http.Response, error) {
@@ -8313,6 +8780,7 @@ func (client SitesClient) ListSiteConnectionStringsSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsResponder handles the response to the ListSiteConnectionStrings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteConnectionStringsResponder(resp *http.Response) (result ConnectionStringDictionary, err error) {
@@ -8326,6 +8794,7 @@ func (client SitesClient) ListSiteConnectionStringsResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsSlot sends the list site connection strings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -8352,6 +8821,7 @@ func (client SitesClient) ListSiteConnectionStringsSlot(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsSlotPreparer prepares the ListSiteConnectionStringsSlot request.
 func (client SitesClient) ListSiteConnectionStringsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8374,6 +8844,7 @@ func (client SitesClient) ListSiteConnectionStringsSlotPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsSlotSender sends the ListSiteConnectionStringsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteConnectionStringsSlotSender(req *http.Request) (*http.Response, error) {
@@ -8381,6 +8852,7 @@ func (client SitesClient) ListSiteConnectionStringsSlotSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteConnectionStringsSlotResponder handles the response to the ListSiteConnectionStringsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteConnectionStringsSlotResponder(resp *http.Response) (result ConnectionStringDictionary, err error) {
@@ -8394,6 +8866,7 @@ func (client SitesClient) ListSiteConnectionStringsSlotResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadata sends the list site metadata request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -8419,6 +8892,7 @@ func (client SitesClient) ListSiteMetadata(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataPreparer prepares the ListSiteMetadata request.
 func (client SitesClient) ListSiteMetadataPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8440,6 +8914,7 @@ func (client SitesClient) ListSiteMetadataPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataSender sends the ListSiteMetadata request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteMetadataSender(req *http.Request) (*http.Response, error) {
@@ -8447,6 +8922,7 @@ func (client SitesClient) ListSiteMetadataSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataResponder handles the response to the ListSiteMetadata request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteMetadataResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -8460,6 +8936,7 @@ func (client SitesClient) ListSiteMetadataResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataSlot sends the list site metadata slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -8486,6 +8963,7 @@ func (client SitesClient) ListSiteMetadataSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataSlotPreparer prepares the ListSiteMetadataSlot request.
 func (client SitesClient) ListSiteMetadataSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8508,6 +8986,7 @@ func (client SitesClient) ListSiteMetadataSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataSlotSender sends the ListSiteMetadataSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteMetadataSlotSender(req *http.Request) (*http.Response, error) {
@@ -8515,6 +8994,7 @@ func (client SitesClient) ListSiteMetadataSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteMetadataSlotResponder handles the response to the ListSiteMetadataSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteMetadataSlotResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -8528,6 +9008,7 @@ func (client SitesClient) ListSiteMetadataSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOns sends the list site premier add ons request.
 //
 func (client SitesClient) ListSitePremierAddOns(ctx context.Context, resourceGroupName string, name string) (result SetObject, err error) {
@@ -8552,6 +9033,7 @@ func (client SitesClient) ListSitePremierAddOns(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsPreparer prepares the ListSitePremierAddOns request.
 func (client SitesClient) ListSitePremierAddOnsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8573,6 +9055,7 @@ func (client SitesClient) ListSitePremierAddOnsPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsSender sends the ListSitePremierAddOns request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePremierAddOnsSender(req *http.Request) (*http.Response, error) {
@@ -8580,6 +9063,7 @@ func (client SitesClient) ListSitePremierAddOnsSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsResponder handles the response to the ListSitePremierAddOns request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePremierAddOnsResponder(resp *http.Response) (result SetObject, err error) {
@@ -8593,6 +9077,7 @@ func (client SitesClient) ListSitePremierAddOnsResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsSlot sends the list site premier add ons slot request.
 //
 func (client SitesClient) ListSitePremierAddOnsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
@@ -8617,6 +9102,7 @@ func (client SitesClient) ListSitePremierAddOnsSlot(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsSlotPreparer prepares the ListSitePremierAddOnsSlot request.
 func (client SitesClient) ListSitePremierAddOnsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8639,6 +9125,7 @@ func (client SitesClient) ListSitePremierAddOnsSlotPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsSlotSender sends the ListSitePremierAddOnsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePremierAddOnsSlotSender(req *http.Request) (*http.Response, error) {
@@ -8646,6 +9133,7 @@ func (client SitesClient) ListSitePremierAddOnsSlotSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePremierAddOnsSlotResponder handles the response to the ListSitePremierAddOnsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePremierAddOnsSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -8659,6 +9147,7 @@ func (client SitesClient) ListSitePremierAddOnsSlotResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentials sends the list site publishing credentials request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -8678,6 +9167,7 @@ func (client SitesClient) ListSitePublishingCredentials(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsPreparer prepares the ListSitePublishingCredentials request.
 func (client SitesClient) ListSitePublishingCredentialsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8699,6 +9189,7 @@ func (client SitesClient) ListSitePublishingCredentialsPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsSender sends the ListSitePublishingCredentials request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingCredentialsSender(req *http.Request) (future SitesListSitePublishingCredentialsFuture, err error) {
@@ -8714,6 +9205,7 @@ func (client SitesClient) ListSitePublishingCredentialsSender(req *http.Request)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsResponder handles the response to the ListSitePublishingCredentials request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePublishingCredentialsResponder(resp *http.Response) (result User, err error) {
@@ -8727,6 +9219,7 @@ func (client SitesClient) ListSitePublishingCredentialsResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsSlot sends the list site publishing credentials slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -8747,6 +9240,7 @@ func (client SitesClient) ListSitePublishingCredentialsSlot(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsSlotPreparer prepares the ListSitePublishingCredentialsSlot request.
 func (client SitesClient) ListSitePublishingCredentialsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8769,6 +9263,7 @@ func (client SitesClient) ListSitePublishingCredentialsSlotPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsSlotSender sends the ListSitePublishingCredentialsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingCredentialsSlotSender(req *http.Request) (future SitesListSitePublishingCredentialsSlotFuture, err error) {
@@ -8784,6 +9279,7 @@ func (client SitesClient) ListSitePublishingCredentialsSlotSender(req *http.Requ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingCredentialsSlotResponder handles the response to the ListSitePublishingCredentialsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePublishingCredentialsSlotResponder(resp *http.Response) (result User, err error) {
@@ -8797,6 +9293,7 @@ func (client SitesClient) ListSitePublishingCredentialsSlotResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXML sends the list site publishing profile xml request.
 //
 // resourceGroupName is name of resource group name is name of web app options is specifies options for publishing
@@ -8823,6 +9320,7 @@ func (client SitesClient) ListSitePublishingProfileXML(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLPreparer prepares the ListSitePublishingProfileXML request.
 func (client SitesClient) ListSitePublishingProfileXMLPreparer(ctx context.Context, resourceGroupName string, name string, options CsmPublishingProfileOptions) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8837,7 +9335,7 @@ func (client SitesClient) ListSitePublishingProfileXMLPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/publishxml", pathParameters),
@@ -8846,6 +9344,7 @@ func (client SitesClient) ListSitePublishingProfileXMLPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLSender sends the ListSitePublishingProfileXML request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingProfileXMLSender(req *http.Request) (*http.Response, error) {
@@ -8853,6 +9352,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLResponder handles the response to the ListSitePublishingProfileXML request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePublishingProfileXMLResponder(resp *http.Response) (result ReadCloser, err error) {
@@ -8865,6 +9365,7 @@ func (client SitesClient) ListSitePublishingProfileXMLResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLSlot sends the list site publishing profile xml slot request.
 //
 // resourceGroupName is name of resource group name is name of web app options is specifies options for publishing
@@ -8892,6 +9393,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSlot(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLSlotPreparer prepares the ListSitePublishingProfileXMLSlot request.
 func (client SitesClient) ListSitePublishingProfileXMLSlotPreparer(ctx context.Context, resourceGroupName string, name string, options CsmPublishingProfileOptions, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8907,7 +9409,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSlotPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/publishxml", pathParameters),
@@ -8916,6 +9418,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSlotPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLSlotSender sends the ListSitePublishingProfileXMLSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingProfileXMLSlotSender(req *http.Request) (*http.Response, error) {
@@ -8923,6 +9426,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSlotSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSitePublishingProfileXMLSlotResponder handles the response to the ListSitePublishingProfileXMLSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSitePublishingProfileXMLSlotResponder(resp *http.Response) (result ReadCloser, err error) {
@@ -8935,6 +9439,7 @@ func (client SitesClient) ListSitePublishingProfileXMLSlotResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnections sends the list site relay service connections request.
 //
 // resourceGroupName is the resource group name name is the name of the web app
@@ -8960,6 +9465,7 @@ func (client SitesClient) ListSiteRelayServiceConnections(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsPreparer prepares the ListSiteRelayServiceConnections request.
 func (client SitesClient) ListSiteRelayServiceConnectionsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -8981,6 +9487,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsSender sends the ListSiteRelayServiceConnections request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteRelayServiceConnectionsSender(req *http.Request) (*http.Response, error) {
@@ -8988,6 +9495,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsResponder handles the response to the ListSiteRelayServiceConnections request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteRelayServiceConnectionsResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -9001,6 +9509,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsSlot sends the list site relay service connections slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for
@@ -9027,6 +9536,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSlot(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsSlotPreparer prepares the ListSiteRelayServiceConnectionsSlot request.
 func (client SitesClient) ListSiteRelayServiceConnectionsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9049,6 +9559,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSlotPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsSlotSender sends the ListSiteRelayServiceConnectionsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSiteRelayServiceConnectionsSlotSender(req *http.Request) (*http.Response, error) {
@@ -9056,6 +9567,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSlotSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListSiteRelayServiceConnectionsSlotResponder handles the response to the ListSiteRelayServiceConnectionsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ListSiteRelayServiceConnectionsSlotResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -9069,6 +9581,7 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSlotResponder(resp *htt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSite sends the recover site request.
 //
 // resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web
@@ -9089,6 +9602,7 @@ func (client SitesClient) RecoverSite(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSitePreparer prepares the RecoverSite request.
 func (client SitesClient) RecoverSitePreparer(ctx context.Context, resourceGroupName string, name string, recoveryEntity CsmSiteRecoveryEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9103,7 +9617,7 @@ func (client SitesClient) RecoverSitePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/recover", pathParameters),
@@ -9112,6 +9626,7 @@ func (client SitesClient) RecoverSitePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteSender sends the RecoverSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RecoverSiteSender(req *http.Request) (future SitesRecoverSiteFuture, err error) {
@@ -9127,6 +9642,7 @@ func (client SitesClient) RecoverSiteSender(req *http.Request) (future SitesReco
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteResponder handles the response to the RecoverSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RecoverSiteResponder(resp *http.Response) (result Site, err error) {
@@ -9140,6 +9656,7 @@ func (client SitesClient) RecoverSiteResponder(resp *http.Response) (result Site
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteSlot sends the recover site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web
@@ -9161,6 +9678,7 @@ func (client SitesClient) RecoverSiteSlot(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteSlotPreparer prepares the RecoverSiteSlot request.
 func (client SitesClient) RecoverSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, recoveryEntity CsmSiteRecoveryEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9176,7 +9694,7 @@ func (client SitesClient) RecoverSiteSlotPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/recover", pathParameters),
@@ -9185,6 +9703,7 @@ func (client SitesClient) RecoverSiteSlotPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteSlotSender sends the RecoverSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RecoverSiteSlotSender(req *http.Request) (future SitesRecoverSiteSlotFuture, err error) {
@@ -9200,6 +9719,7 @@ func (client SitesClient) RecoverSiteSlotSender(req *http.Request) (future Sites
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecoverSiteSlotResponder handles the response to the RecoverSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RecoverSiteSlotResponder(resp *http.Response) (result Site, err error) {
@@ -9213,6 +9733,7 @@ func (client SitesClient) RecoverSiteSlotResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetProductionSlotConfig sends the reset production slot config request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -9238,6 +9759,7 @@ func (client SitesClient) ResetProductionSlotConfig(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetProductionSlotConfigPreparer prepares the ResetProductionSlotConfig request.
 func (client SitesClient) ResetProductionSlotConfigPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9259,6 +9781,7 @@ func (client SitesClient) ResetProductionSlotConfigPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetProductionSlotConfigSender sends the ResetProductionSlotConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ResetProductionSlotConfigSender(req *http.Request) (*http.Response, error) {
@@ -9266,6 +9789,7 @@ func (client SitesClient) ResetProductionSlotConfigSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetProductionSlotConfigResponder handles the response to the ResetProductionSlotConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ResetProductionSlotConfigResponder(resp *http.Response) (result SetObject, err error) {
@@ -9279,6 +9803,7 @@ func (client SitesClient) ResetProductionSlotConfigResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetSlotConfigSlot sends the reset slot config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -9305,6 +9830,7 @@ func (client SitesClient) ResetSlotConfigSlot(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetSlotConfigSlotPreparer prepares the ResetSlotConfigSlot request.
 func (client SitesClient) ResetSlotConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9327,6 +9853,7 @@ func (client SitesClient) ResetSlotConfigSlotPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetSlotConfigSlotSender sends the ResetSlotConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ResetSlotConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -9334,6 +9861,7 @@ func (client SitesClient) ResetSlotConfigSlotSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ResetSlotConfigSlotResponder handles the response to the ResetSlotConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) ResetSlotConfigSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -9347,6 +9875,7 @@ func (client SitesClient) ResetSlotConfigSlotResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSite sends the restart site request.
 //
 // resourceGroupName is name of resource group name is name of web app softRestart is soft restart applies the
@@ -9374,6 +9903,7 @@ func (client SitesClient) RestartSite(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSitePreparer prepares the RestartSite request.
 func (client SitesClient) RestartSitePreparer(ctx context.Context, resourceGroupName string, name string, softRestart *bool, synchronous *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9401,6 +9931,7 @@ func (client SitesClient) RestartSitePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteSender sends the RestartSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestartSiteSender(req *http.Request) (*http.Response, error) {
@@ -9408,6 +9939,7 @@ func (client SitesClient) RestartSiteSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteResponder handles the response to the RestartSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RestartSiteResponder(resp *http.Response) (result SetObject, err error) {
@@ -9421,6 +9953,7 @@ func (client SitesClient) RestartSiteResponder(resp *http.Response) (result SetO
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteSlot sends the restart site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -9449,6 +9982,7 @@ func (client SitesClient) RestartSiteSlot(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteSlotPreparer prepares the RestartSiteSlot request.
 func (client SitesClient) RestartSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string, softRestart *bool, synchronous *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9477,6 +10011,7 @@ func (client SitesClient) RestartSiteSlotPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteSlotSender sends the RestartSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestartSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -9484,6 +10019,7 @@ func (client SitesClient) RestartSiteSlotSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSiteSlotResponder handles the response to the RestartSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RestartSiteSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -9497,6 +10033,7 @@ func (client SitesClient) RestartSiteSlotResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSite sends the restore site request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request
@@ -9517,6 +10054,7 @@ func (client SitesClient) RestoreSite(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSitePreparer prepares the RestoreSite request.
 func (client SitesClient) RestoreSitePreparer(ctx context.Context, resourceGroupName string, name string, backupID string, request RestoreRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9532,7 +10070,7 @@ func (client SitesClient) RestoreSitePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/backups/{backupId}/restore", pathParameters),
@@ -9541,6 +10079,7 @@ func (client SitesClient) RestoreSitePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteSender sends the RestoreSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestoreSiteSender(req *http.Request) (future SitesRestoreSiteFuture, err error) {
@@ -9556,6 +10095,7 @@ func (client SitesClient) RestoreSiteSender(req *http.Request) (future SitesRest
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteResponder handles the response to the RestoreSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RestoreSiteResponder(resp *http.Response) (result RestoreResponse, err error) {
@@ -9569,6 +10109,7 @@ func (client SitesClient) RestoreSiteResponder(resp *http.Response) (result Rest
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteSlot sends the restore site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request
@@ -9590,6 +10131,7 @@ func (client SitesClient) RestoreSiteSlot(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteSlotPreparer prepares the RestoreSiteSlot request.
 func (client SitesClient) RestoreSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, backupID string, request RestoreRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9606,7 +10148,7 @@ func (client SitesClient) RestoreSiteSlotPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/backups/{backupId}/restore", pathParameters),
@@ -9615,6 +10157,7 @@ func (client SitesClient) RestoreSiteSlotPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteSlotSender sends the RestoreSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestoreSiteSlotSender(req *http.Request) (future SitesRestoreSiteSlotFuture, err error) {
@@ -9630,6 +10173,7 @@ func (client SitesClient) RestoreSiteSlotSender(req *http.Request) (future Sites
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestoreSiteSlotResponder handles the response to the RestoreSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) RestoreSiteSlotResponder(resp *http.Response) (result RestoreResponse, err error) {
@@ -9643,6 +10187,7 @@ func (client SitesClient) RestoreSiteSlotResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSite sends the start site request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -9668,6 +10213,7 @@ func (client SitesClient) StartSite(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSitePreparer prepares the StartSite request.
 func (client SitesClient) StartSitePreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9689,6 +10235,7 @@ func (client SitesClient) StartSitePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteSender sends the StartSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) StartSiteSender(req *http.Request) (*http.Response, error) {
@@ -9696,6 +10243,7 @@ func (client SitesClient) StartSiteSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteResponder handles the response to the StartSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) StartSiteResponder(resp *http.Response) (result SetObject, err error) {
@@ -9709,6 +10257,7 @@ func (client SitesClient) StartSiteResponder(resp *http.Response) (result SetObj
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteSlot sends the start site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -9735,6 +10284,7 @@ func (client SitesClient) StartSiteSlot(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteSlotPreparer prepares the StartSiteSlot request.
 func (client SitesClient) StartSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9757,6 +10307,7 @@ func (client SitesClient) StartSiteSlotPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteSlotSender sends the StartSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) StartSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -9764,6 +10315,7 @@ func (client SitesClient) StartSiteSlotSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StartSiteSlotResponder handles the response to the StartSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) StartSiteSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -9777,6 +10329,7 @@ func (client SitesClient) StartSiteSlotResponder(resp *http.Response) (result Se
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSite sends the stop site request.
 //
 // resourceGroupName is name of resource group name is name of web app
@@ -9802,6 +10355,7 @@ func (client SitesClient) StopSite(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSitePreparer prepares the StopSite request.
 func (client SitesClient) StopSitePreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9823,6 +10377,7 @@ func (client SitesClient) StopSitePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteSender sends the StopSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) StopSiteSender(req *http.Request) (*http.Response, error) {
@@ -9830,6 +10385,7 @@ func (client SitesClient) StopSiteSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteResponder handles the response to the StopSite request. The method always
 // closes the http.Response Body.
 func (client SitesClient) StopSiteResponder(resp *http.Response) (result SetObject, err error) {
@@ -9843,6 +10399,7 @@ func (client SitesClient) StopSiteResponder(resp *http.Response) (result SetObje
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteSlot sends the stop site slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
@@ -9869,6 +10426,7 @@ func (client SitesClient) StopSiteSlot(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteSlotPreparer prepares the StopSiteSlot request.
 func (client SitesClient) StopSiteSlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9891,6 +10449,7 @@ func (client SitesClient) StopSiteSlotPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteSlotSender sends the StopSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) StopSiteSlotSender(req *http.Request) (*http.Response, error) {
@@ -9898,6 +10457,7 @@ func (client SitesClient) StopSiteSlotSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // StopSiteSlotResponder handles the response to the StopSiteSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) StopSiteSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -9911,6 +10471,7 @@ func (client SitesClient) StopSiteSlotResponder(resp *http.Response) (result Set
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotsSlot sends the swap slots slot request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -9931,6 +10492,7 @@ func (client SitesClient) SwapSlotsSlot(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotsSlotPreparer prepares the SwapSlotsSlot request.
 func (client SitesClient) SwapSlotsSlotPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -9946,7 +10508,7 @@ func (client SitesClient) SwapSlotsSlotPreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/slotsswap", pathParameters),
@@ -9955,6 +10517,7 @@ func (client SitesClient) SwapSlotsSlotPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotsSlotSender sends the SwapSlotsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SwapSlotsSlotSender(req *http.Request) (future SitesSwapSlotsSlotFuture, err error) {
@@ -9970,6 +10533,7 @@ func (client SitesClient) SwapSlotsSlotSender(req *http.Request) (future SitesSw
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotsSlotResponder handles the response to the SwapSlotsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) SwapSlotsSlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -9983,6 +10547,7 @@ func (client SitesClient) SwapSlotsSlotResponder(resp *http.Response) (result Se
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotWithProduction sends the swap slot with production request.
 //
 // resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
@@ -10003,6 +10568,7 @@ func (client SitesClient) SwapSlotWithProduction(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotWithProductionPreparer prepares the SwapSlotWithProduction request.
 func (client SitesClient) SwapSlotWithProductionPreparer(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10017,7 +10583,7 @@ func (client SitesClient) SwapSlotWithProductionPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slotsswap", pathParameters),
@@ -10026,6 +10592,7 @@ func (client SitesClient) SwapSlotWithProductionPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotWithProductionSender sends the SwapSlotWithProduction request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SwapSlotWithProductionSender(req *http.Request) (future SitesSwapSlotWithProductionFuture, err error) {
@@ -10041,6 +10608,7 @@ func (client SitesClient) SwapSlotWithProductionSender(req *http.Request) (futur
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SwapSlotWithProductionResponder handles the response to the SwapSlotWithProduction request. The method always
 // closes the http.Response Body.
 func (client SitesClient) SwapSlotWithProductionResponder(resp *http.Response) (result SetObject, err error) {
@@ -10054,6 +10622,7 @@ func (client SitesClient) SwapSlotWithProductionResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepository sends the sync site repository request.
 //
 func (client SitesClient) SyncSiteRepository(ctx context.Context, resourceGroupName string, name string) (result SetObject, err error) {
@@ -10078,6 +10647,7 @@ func (client SitesClient) SyncSiteRepository(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositoryPreparer prepares the SyncSiteRepository request.
 func (client SitesClient) SyncSiteRepositoryPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10099,6 +10669,7 @@ func (client SitesClient) SyncSiteRepositoryPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositorySender sends the SyncSiteRepository request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SyncSiteRepositorySender(req *http.Request) (*http.Response, error) {
@@ -10106,6 +10677,7 @@ func (client SitesClient) SyncSiteRepositorySender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositoryResponder handles the response to the SyncSiteRepository request. The method always
 // closes the http.Response Body.
 func (client SitesClient) SyncSiteRepositoryResponder(resp *http.Response) (result SetObject, err error) {
@@ -10119,6 +10691,7 @@ func (client SitesClient) SyncSiteRepositoryResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositorySlot sends the sync site repository slot request.
 //
 func (client SitesClient) SyncSiteRepositorySlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
@@ -10143,6 +10716,7 @@ func (client SitesClient) SyncSiteRepositorySlot(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositorySlotPreparer prepares the SyncSiteRepositorySlot request.
 func (client SitesClient) SyncSiteRepositorySlotPreparer(ctx context.Context, resourceGroupName string, name string, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10165,6 +10739,7 @@ func (client SitesClient) SyncSiteRepositorySlotPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositorySlotSender sends the SyncSiteRepositorySlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SyncSiteRepositorySlotSender(req *http.Request) (*http.Response, error) {
@@ -10172,6 +10747,7 @@ func (client SitesClient) SyncSiteRepositorySlotSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // SyncSiteRepositorySlotResponder handles the response to the SyncSiteRepositorySlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) SyncSiteRepositorySlotResponder(resp *http.Response) (result SetObject, err error) {
@@ -10185,6 +10761,7 @@ func (client SitesClient) SyncSiteRepositorySlotResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettings sends the update site app settings request.
 //
 // resourceGroupName is name of resource group name is name of web app appSettings is application settings of web
@@ -10211,6 +10788,7 @@ func (client SitesClient) UpdateSiteAppSettings(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsPreparer prepares the UpdateSiteAppSettings request.
 func (client SitesClient) UpdateSiteAppSettingsPreparer(ctx context.Context, resourceGroupName string, name string, appSettings StringDictionary) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10225,7 +10803,7 @@ func (client SitesClient) UpdateSiteAppSettingsPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/appsettings", pathParameters),
@@ -10234,6 +10812,7 @@ func (client SitesClient) UpdateSiteAppSettingsPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsSender sends the UpdateSiteAppSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteAppSettingsSender(req *http.Request) (*http.Response, error) {
@@ -10241,6 +10820,7 @@ func (client SitesClient) UpdateSiteAppSettingsSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsResponder handles the response to the UpdateSiteAppSettings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteAppSettingsResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -10254,6 +10834,7 @@ func (client SitesClient) UpdateSiteAppSettingsResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsSlot sends the update site app settings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app appSettings is application settings of web
@@ -10280,6 +10861,7 @@ func (client SitesClient) UpdateSiteAppSettingsSlot(ctx context.Context, resourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsSlotPreparer prepares the UpdateSiteAppSettingsSlot request.
 func (client SitesClient) UpdateSiteAppSettingsSlotPreparer(ctx context.Context, resourceGroupName string, name string, appSettings StringDictionary, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10295,7 +10877,7 @@ func (client SitesClient) UpdateSiteAppSettingsSlotPreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/appsettings", pathParameters),
@@ -10304,6 +10886,7 @@ func (client SitesClient) UpdateSiteAppSettingsSlotPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsSlotSender sends the UpdateSiteAppSettingsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteAppSettingsSlotSender(req *http.Request) (*http.Response, error) {
@@ -10311,6 +10894,7 @@ func (client SitesClient) UpdateSiteAppSettingsSlotSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAppSettingsSlotResponder handles the response to the UpdateSiteAppSettingsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteAppSettingsSlotResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -10324,6 +10908,7 @@ func (client SitesClient) UpdateSiteAppSettingsSlotResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettings sends the update site auth settings request.
 //
 // resourceGroupName is name of resource group name is name of web app siteAuthSettings is auth settings associated
@@ -10350,6 +10935,7 @@ func (client SitesClient) UpdateSiteAuthSettings(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsPreparer prepares the UpdateSiteAuthSettings request.
 func (client SitesClient) UpdateSiteAuthSettingsPreparer(ctx context.Context, resourceGroupName string, name string, siteAuthSettings SiteAuthSettings) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10364,7 +10950,7 @@ func (client SitesClient) UpdateSiteAuthSettingsPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/authsettings", pathParameters),
@@ -10373,6 +10959,7 @@ func (client SitesClient) UpdateSiteAuthSettingsPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsSender sends the UpdateSiteAuthSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteAuthSettingsSender(req *http.Request) (*http.Response, error) {
@@ -10380,6 +10967,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsResponder handles the response to the UpdateSiteAuthSettings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteAuthSettingsResponder(resp *http.Response) (result SiteAuthSettings, err error) {
@@ -10393,6 +10981,7 @@ func (client SitesClient) UpdateSiteAuthSettingsResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsSlot sends the update site auth settings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteAuthSettings is auth settings associated
@@ -10419,6 +11008,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSlot(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsSlotPreparer prepares the UpdateSiteAuthSettingsSlot request.
 func (client SitesClient) UpdateSiteAuthSettingsSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteAuthSettings SiteAuthSettings, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10434,7 +11024,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSlotPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/authsettings", pathParameters),
@@ -10443,6 +11033,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSlotPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsSlotSender sends the UpdateSiteAuthSettingsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteAuthSettingsSlotSender(req *http.Request) (*http.Response, error) {
@@ -10450,6 +11041,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSlotSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteAuthSettingsSlotResponder handles the response to the UpdateSiteAuthSettingsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteAuthSettingsSlotResponder(resp *http.Response) (result SiteAuthSettings, err error) {
@@ -10463,6 +11055,7 @@ func (client SitesClient) UpdateSiteAuthSettingsSlotResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfiguration sends the update site backup configuration request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on backup request
@@ -10488,6 +11081,7 @@ func (client SitesClient) UpdateSiteBackupConfiguration(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationPreparer prepares the UpdateSiteBackupConfiguration request.
 func (client SitesClient) UpdateSiteBackupConfigurationPreparer(ctx context.Context, resourceGroupName string, name string, request BackupRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10502,7 +11096,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationPreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/backup", pathParameters),
@@ -10511,6 +11105,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationSender sends the UpdateSiteBackupConfiguration request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteBackupConfigurationSender(req *http.Request) (*http.Response, error) {
@@ -10518,6 +11113,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationResponder handles the response to the UpdateSiteBackupConfiguration request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteBackupConfigurationResponder(resp *http.Response) (result BackupRequest, err error) {
@@ -10531,6 +11127,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationSlot sends the update site backup configuration slot request.
 //
 // resourceGroupName is name of resource group name is name of web app request is information on backup request
@@ -10557,6 +11154,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSlot(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationSlotPreparer prepares the UpdateSiteBackupConfigurationSlot request.
 func (client SitesClient) UpdateSiteBackupConfigurationSlotPreparer(ctx context.Context, resourceGroupName string, name string, request BackupRequest, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10572,7 +11170,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSlotPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/backup", pathParameters),
@@ -10581,6 +11179,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSlotPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationSlotSender sends the UpdateSiteBackupConfigurationSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteBackupConfigurationSlotSender(req *http.Request) (*http.Response, error) {
@@ -10588,6 +11187,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSlotSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteBackupConfigurationSlotResponder handles the response to the UpdateSiteBackupConfigurationSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteBackupConfigurationSlotResponder(resp *http.Response) (result BackupRequest, err error) {
@@ -10601,6 +11201,7 @@ func (client SitesClient) UpdateSiteBackupConfigurationSlotResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfig sends the update site config request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
@@ -10627,6 +11228,7 @@ func (client SitesClient) UpdateSiteConfig(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigPreparer prepares the UpdateSiteConfig request.
 func (client SitesClient) UpdateSiteConfigPreparer(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10641,7 +11243,7 @@ func (client SitesClient) UpdateSiteConfigPreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/web", pathParameters),
@@ -10650,6 +11252,7 @@ func (client SitesClient) UpdateSiteConfigPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigSender sends the UpdateSiteConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteConfigSender(req *http.Request) (*http.Response, error) {
@@ -10657,6 +11260,7 @@ func (client SitesClient) UpdateSiteConfigSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigResponder handles the response to the UpdateSiteConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteConfigResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -10670,6 +11274,7 @@ func (client SitesClient) UpdateSiteConfigResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigSlot sends the update site config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
@@ -10697,6 +11302,7 @@ func (client SitesClient) UpdateSiteConfigSlot(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigSlotPreparer prepares the UpdateSiteConfigSlot request.
 func (client SitesClient) UpdateSiteConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10712,7 +11318,7 @@ func (client SitesClient) UpdateSiteConfigSlotPreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/web", pathParameters),
@@ -10721,6 +11327,7 @@ func (client SitesClient) UpdateSiteConfigSlotPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigSlotSender sends the UpdateSiteConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -10728,6 +11335,7 @@ func (client SitesClient) UpdateSiteConfigSlotSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConfigSlotResponder handles the response to the UpdateSiteConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteConfigSlotResponder(resp *http.Response) (result SiteConfig, err error) {
@@ -10741,6 +11349,7 @@ func (client SitesClient) UpdateSiteConfigSlotResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStrings sends the update site connection strings request.
 //
 // resourceGroupName is name of resource group name is name of web app connectionStrings is connection strings
@@ -10767,6 +11376,7 @@ func (client SitesClient) UpdateSiteConnectionStrings(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsPreparer prepares the UpdateSiteConnectionStrings request.
 func (client SitesClient) UpdateSiteConnectionStringsPreparer(ctx context.Context, resourceGroupName string, name string, connectionStrings ConnectionStringDictionary) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10781,7 +11391,7 @@ func (client SitesClient) UpdateSiteConnectionStringsPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/connectionstrings", pathParameters),
@@ -10790,6 +11400,7 @@ func (client SitesClient) UpdateSiteConnectionStringsPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsSender sends the UpdateSiteConnectionStrings request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteConnectionStringsSender(req *http.Request) (*http.Response, error) {
@@ -10797,6 +11408,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsResponder handles the response to the UpdateSiteConnectionStrings request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteConnectionStringsResponder(resp *http.Response) (result ConnectionStringDictionary, err error) {
@@ -10810,6 +11422,7 @@ func (client SitesClient) UpdateSiteConnectionStringsResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsSlot sends the update site connection strings slot request.
 //
 // resourceGroupName is name of resource group name is name of web app connectionStrings is connection strings
@@ -10836,6 +11449,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSlot(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsSlotPreparer prepares the UpdateSiteConnectionStringsSlot request.
 func (client SitesClient) UpdateSiteConnectionStringsSlotPreparer(ctx context.Context, resourceGroupName string, name string, connectionStrings ConnectionStringDictionary, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10851,7 +11465,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSlotPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/connectionstrings", pathParameters),
@@ -10860,6 +11474,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSlotPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsSlotSender sends the UpdateSiteConnectionStringsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteConnectionStringsSlotSender(req *http.Request) (*http.Response, error) {
@@ -10867,6 +11482,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSlotSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteConnectionStringsSlotResponder handles the response to the UpdateSiteConnectionStringsSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteConnectionStringsSlotResponder(resp *http.Response) (result ConnectionStringDictionary, err error) {
@@ -10880,6 +11496,7 @@ func (client SitesClient) UpdateSiteConnectionStringsSlotResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfig sends the update site logs config request.
 //
 // resourceGroupName is name of resource group name is name of web app siteLogsConfig is site logs configuration
@@ -10905,6 +11522,7 @@ func (client SitesClient) UpdateSiteLogsConfig(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigPreparer prepares the UpdateSiteLogsConfig request.
 func (client SitesClient) UpdateSiteLogsConfigPreparer(ctx context.Context, resourceGroupName string, name string, siteLogsConfig SiteLogsConfig) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10919,7 +11537,7 @@ func (client SitesClient) UpdateSiteLogsConfigPreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/logs", pathParameters),
@@ -10928,6 +11546,7 @@ func (client SitesClient) UpdateSiteLogsConfigPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigSender sends the UpdateSiteLogsConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteLogsConfigSender(req *http.Request) (*http.Response, error) {
@@ -10935,6 +11554,7 @@ func (client SitesClient) UpdateSiteLogsConfigSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigResponder handles the response to the UpdateSiteLogsConfig request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteLogsConfigResponder(resp *http.Response) (result SiteLogsConfig, err error) {
@@ -10948,6 +11568,7 @@ func (client SitesClient) UpdateSiteLogsConfigResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigSlot sends the update site logs config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteLogsConfig is site logs configuration
@@ -10974,6 +11595,7 @@ func (client SitesClient) UpdateSiteLogsConfigSlot(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigSlotPreparer prepares the UpdateSiteLogsConfigSlot request.
 func (client SitesClient) UpdateSiteLogsConfigSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteLogsConfig SiteLogsConfig, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -10989,7 +11611,7 @@ func (client SitesClient) UpdateSiteLogsConfigSlotPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/logs", pathParameters),
@@ -10998,6 +11620,7 @@ func (client SitesClient) UpdateSiteLogsConfigSlotPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigSlotSender sends the UpdateSiteLogsConfigSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteLogsConfigSlotSender(req *http.Request) (*http.Response, error) {
@@ -11005,6 +11628,7 @@ func (client SitesClient) UpdateSiteLogsConfigSlotSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteLogsConfigSlotResponder handles the response to the UpdateSiteLogsConfigSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteLogsConfigSlotResponder(resp *http.Response) (result SiteLogsConfig, err error) {
@@ -11018,6 +11642,7 @@ func (client SitesClient) UpdateSiteLogsConfigSlotResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadata sends the update site metadata request.
 //
 // resourceGroupName is name of resource group name is name of web app metadata is meta data of web app
@@ -11043,6 +11668,7 @@ func (client SitesClient) UpdateSiteMetadata(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataPreparer prepares the UpdateSiteMetadata request.
 func (client SitesClient) UpdateSiteMetadataPreparer(ctx context.Context, resourceGroupName string, name string, metadata StringDictionary) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11057,7 +11683,7 @@ func (client SitesClient) UpdateSiteMetadataPreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/metadata", pathParameters),
@@ -11066,6 +11692,7 @@ func (client SitesClient) UpdateSiteMetadataPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataSender sends the UpdateSiteMetadata request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteMetadataSender(req *http.Request) (*http.Response, error) {
@@ -11073,6 +11700,7 @@ func (client SitesClient) UpdateSiteMetadataSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataResponder handles the response to the UpdateSiteMetadata request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteMetadataResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -11086,6 +11714,7 @@ func (client SitesClient) UpdateSiteMetadataResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataSlot sends the update site metadata slot request.
 //
 // resourceGroupName is name of resource group name is name of web app metadata is meta data of web app slot is
@@ -11112,6 +11741,7 @@ func (client SitesClient) UpdateSiteMetadataSlot(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataSlotPreparer prepares the UpdateSiteMetadataSlot request.
 func (client SitesClient) UpdateSiteMetadataSlotPreparer(ctx context.Context, resourceGroupName string, name string, metadata StringDictionary, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11127,7 +11757,7 @@ func (client SitesClient) UpdateSiteMetadataSlotPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/config/metadata", pathParameters),
@@ -11136,6 +11766,7 @@ func (client SitesClient) UpdateSiteMetadataSlotPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataSlotSender sends the UpdateSiteMetadataSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteMetadataSlotSender(req *http.Request) (*http.Response, error) {
@@ -11143,6 +11774,7 @@ func (client SitesClient) UpdateSiteMetadataSlotSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteMetadataSlotResponder handles the response to the UpdateSiteMetadataSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteMetadataSlotResponder(resp *http.Response) (result StringDictionary, err error) {
@@ -11156,6 +11788,7 @@ func (client SitesClient) UpdateSiteMetadataSlotResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnection sends the update site relay service connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -11182,6 +11815,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnection(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionPreparer prepares the UpdateSiteRelayServiceConnection request.
 func (client SitesClient) UpdateSiteRelayServiceConnectionPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11197,7 +11831,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/hybridconnection/{entityName}", pathParameters),
@@ -11206,6 +11840,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionSender sends the UpdateSiteRelayServiceConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteRelayServiceConnectionSender(req *http.Request) (*http.Response, error) {
@@ -11213,6 +11848,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionResponder handles the response to the UpdateSiteRelayServiceConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteRelayServiceConnectionResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -11226,6 +11862,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionResponder(resp *http.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionSlot sends the update site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
@@ -11253,6 +11890,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlot(ctx context.Conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionSlotPreparer prepares the UpdateSiteRelayServiceConnectionSlot request.
 func (client SitesClient) UpdateSiteRelayServiceConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11269,7 +11907,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlotPreparer(ctx conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/hybridconnection/{entityName}", pathParameters),
@@ -11278,6 +11916,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlotPreparer(ctx conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionSlotSender sends the UpdateSiteRelayServiceConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteRelayServiceConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -11285,6 +11924,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlotSender(req *http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteRelayServiceConnectionSlotResponder handles the response to the UpdateSiteRelayServiceConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteRelayServiceConnectionSlotResponder(resp *http.Response) (result RelayServiceConnectionEntity, err error) {
@@ -11298,6 +11938,7 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlotResponder(resp *ht
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControl sends the update site source control request.
 //
 // resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
@@ -11324,6 +11965,7 @@ func (client SitesClient) UpdateSiteSourceControl(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlPreparer prepares the UpdateSiteSourceControl request.
 func (client SitesClient) UpdateSiteSourceControlPreparer(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11338,7 +11980,7 @@ func (client SitesClient) UpdateSiteSourceControlPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web", pathParameters),
@@ -11347,6 +11989,7 @@ func (client SitesClient) UpdateSiteSourceControlPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlSender sends the UpdateSiteSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -11354,6 +11997,7 @@ func (client SitesClient) UpdateSiteSourceControlSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlResponder handles the response to the UpdateSiteSourceControl request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteSourceControlResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -11367,6 +12011,7 @@ func (client SitesClient) UpdateSiteSourceControlResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlSlot sends the update site source control slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
@@ -11394,6 +12039,7 @@ func (client SitesClient) UpdateSiteSourceControlSlot(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlSlotPreparer prepares the UpdateSiteSourceControlSlot request.
 func (client SitesClient) UpdateSiteSourceControlSlotPreparer(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11409,7 +12055,7 @@ func (client SitesClient) UpdateSiteSourceControlSlotPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/sourcecontrols/web", pathParameters),
@@ -11418,6 +12064,7 @@ func (client SitesClient) UpdateSiteSourceControlSlotPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlSlotSender sends the UpdateSiteSourceControlSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteSourceControlSlotSender(req *http.Request) (*http.Response, error) {
@@ -11425,6 +12072,7 @@ func (client SitesClient) UpdateSiteSourceControlSlotSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteSourceControlSlotResponder handles the response to the UpdateSiteSourceControlSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteSourceControlSlotResponder(resp *http.Response) (result SiteSourceControl, err error) {
@@ -11438,6 +12086,7 @@ func (client SitesClient) UpdateSiteSourceControlSlotResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnection sends the update site vnet connection request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -11464,6 +12113,7 @@ func (client SitesClient) UpdateSiteVNETConnection(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionPreparer prepares the UpdateSiteVNETConnection request.
 func (client SitesClient) UpdateSiteVNETConnectionPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, connectionEnvelope VnetInfo) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11479,7 +12129,7 @@ func (client SitesClient) UpdateSiteVNETConnectionPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/virtualNetworkConnections/{vnetName}", pathParameters),
@@ -11488,6 +12138,7 @@ func (client SitesClient) UpdateSiteVNETConnectionPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionSender sends the UpdateSiteVNETConnection request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteVNETConnectionSender(req *http.Request) (*http.Response, error) {
@@ -11495,6 +12146,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionResponder handles the response to the UpdateSiteVNETConnection request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteVNETConnectionResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -11508,6 +12160,7 @@ func (client SitesClient) UpdateSiteVNETConnectionResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGateway sends the update site vnet connection gateway request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -11535,6 +12188,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGateway(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewayPreparer prepares the UpdateSiteVNETConnectionGateway request.
 func (client SitesClient) UpdateSiteVNETConnectionGatewayPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11551,7 +12205,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewayPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -11560,6 +12214,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewayPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewaySender sends the UpdateSiteVNETConnectionGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteVNETConnectionGatewaySender(req *http.Request) (*http.Response, error) {
@@ -11567,6 +12222,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewayResponder handles the response to the UpdateSiteVNETConnectionGateway request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteVNETConnectionGatewayResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -11580,6 +12236,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewayResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewaySlot sends the update site vnet connection gateway slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -11607,6 +12264,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySlot(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewaySlotPreparer prepares the UpdateSiteVNETConnectionGatewaySlot request.
 func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11624,7 +12282,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotPreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -11633,6 +12291,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewaySlotSender sends the UpdateSiteVNETConnectionGatewaySlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotSender(req *http.Request) (*http.Response, error) {
@@ -11640,6 +12299,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionGatewaySlotResponder handles the response to the UpdateSiteVNETConnectionGatewaySlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -11653,6 +12313,7 @@ func (client SitesClient) UpdateSiteVNETConnectionGatewaySlotResponder(resp *htt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionSlot sends the update site vnet connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
@@ -11680,6 +12341,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSlot(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionSlotPreparer prepares the UpdateSiteVNETConnectionSlot request.
 func (client SitesClient) UpdateSiteVNETConnectionSlotPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, connectionEnvelope VnetInfo, slot string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11696,7 +12358,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSlotPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/virtualNetworkConnections/{vnetName}", pathParameters),
@@ -11705,6 +12367,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSlotPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionSlotSender sends the UpdateSiteVNETConnectionSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSiteVNETConnectionSlotSender(req *http.Request) (*http.Response, error) {
@@ -11712,6 +12375,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSlotSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSiteVNETConnectionSlotResponder handles the response to the UpdateSiteVNETConnectionSlot request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSiteVNETConnectionSlotResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -11725,6 +12389,7 @@ func (client SitesClient) UpdateSiteVNETConnectionSlotResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSlotConfigNames sends the update slot config names request.
 //
 // resourceGroupName is name of resource group name is name of web app slotConfigNames is request body containing
@@ -11751,6 +12416,7 @@ func (client SitesClient) UpdateSlotConfigNames(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSlotConfigNamesPreparer prepares the UpdateSlotConfigNames request.
 func (client SitesClient) UpdateSlotConfigNamesPreparer(ctx context.Context, resourceGroupName string, name string, slotConfigNames SlotConfigNamesResource) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -11765,7 +12431,7 @@ func (client SitesClient) UpdateSlotConfigNamesPreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/config/slotConfigNames", pathParameters),
@@ -11774,6 +12440,7 @@ func (client SitesClient) UpdateSlotConfigNamesPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSlotConfigNamesSender sends the UpdateSlotConfigNames request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) UpdateSlotConfigNamesSender(req *http.Request) (*http.Response, error) {
@@ -11781,6 +12448,7 @@ func (client SitesClient) UpdateSlotConfigNamesSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSlotConfigNamesResponder handles the response to the UpdateSlotConfigNames request. The method always
 // closes the http.Response Body.
 func (client SitesClient) UpdateSlotConfigNamesResponder(resp *http.Response) (result SlotConfigNamesResource, err error) {

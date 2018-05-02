@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/testutil"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
@@ -135,7 +136,7 @@ type alwaysFailPublish struct {
 }
 
 func (s *alwaysFailPublish) Publish(ctx context.Context, req *pubsubpb.PublishRequest) (*pubsubpb.PublishResponse, error) {
-	return nil, grpc.Errorf(codes.Unavailable, "try again")
+	return nil, status.Errorf(codes.Unavailable, "try again")
 }
 
 func mustCreateTopic(t *testing.T, c *Client, id string) *Topic {

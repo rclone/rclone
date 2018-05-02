@@ -40,9 +40,9 @@ func NewServiceTypesClientWithBaseURI(baseURI string, timeout *int32) ServiceTyp
 }
 
 // Get get service types
-//
-// applicationTypeName is the name of the application type applicationTypeVersion is the version of the application
-// type
+// Parameters:
+// applicationTypeName - the name of the application type
+// applicationTypeVersion - the version of the application type
 func (client ServiceTypesClient) Get(ctx context.Context, applicationTypeName string, applicationTypeVersion string) (result ListServiceType, err error) {
 	req, err := client.GetPreparer(ctx, applicationTypeName, applicationTypeVersion)
 	if err != nil {

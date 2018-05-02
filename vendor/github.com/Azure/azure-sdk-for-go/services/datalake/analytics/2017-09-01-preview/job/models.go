@@ -27,6 +27,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CompileMode enumerates the values for compile mode.
 type CompileMode string
 
@@ -39,6 +40,13 @@ const (
 	SingleBox CompileMode = "SingleBox"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleCompileModeValues returns an array of possible values for the CompileMode const type.
+func PossibleCompileModeValues() []CompileMode {
+	return []CompileMode{Full, Semantic, SingleBox}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ResourceType enumerates the values for resource type.
 type ResourceType string
 
@@ -57,6 +65,13 @@ const (
 	VertexResourceInUserFolder ResourceType = "VertexResourceInUserFolder"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleResourceTypeValues returns an array of possible values for the ResourceType const type.
+func PossibleResourceTypeValues() []ResourceType {
+	return []ResourceType{JobManagerResource, JobManagerResourceInUserFolder, StatisticsResource, StatisticsResourceInUserFolder, VertexResource, VertexResourceInUserFolder}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Result enumerates the values for result.
 type Result string
 
@@ -71,6 +86,13 @@ const (
 	Succeeded Result = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleResultValues returns an array of possible values for the Result const type.
+func PossibleResultValues() []Result {
+	return []Result{Cancelled, Failed, None, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // SeverityTypes enumerates the values for severity types.
 type SeverityTypes string
 
@@ -89,6 +111,13 @@ const (
 	Warning SeverityTypes = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleSeverityTypesValues returns an array of possible values for the SeverityTypes const type.
+func PossibleSeverityTypesValues() []SeverityTypes {
+	return []SeverityTypes{Deprecated, Error, Info, SevereWarning, UserWarning, Warning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // State enumerates the values for state.
 type State string
 
@@ -115,6 +144,13 @@ const (
 	StateWaitingForCapacity State = "WaitingForCapacity"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleStateValues returns an array of possible values for the State const type.
+func PossibleStateValues() []State {
+	return []State{StateAccepted, StateCompiling, StateEnded, StateNew, StatePaused, StateQueued, StateRunning, StateScheduling, StateStarting, StateWaitingForCapacity}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Type enumerates the values for type.
 type Type string
 
@@ -129,6 +165,13 @@ const (
 	TypeUSQL Type = "USql"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeHive, TypeJobProperties, TypeScope, TypeUSQL}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // TypeBasicCreateJobProperties enumerates the values for type basic create job properties.
 type TypeBasicCreateJobProperties string
 
@@ -141,6 +184,13 @@ const (
 	TypeBasicCreateJobPropertiesTypeUSQL TypeBasicCreateJobProperties = "USql"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleTypeBasicCreateJobPropertiesValues returns an array of possible values for the TypeBasicCreateJobProperties const type.
+func PossibleTypeBasicCreateJobPropertiesValues() []TypeBasicCreateJobProperties {
+	return []TypeBasicCreateJobProperties{TypeBasicCreateJobPropertiesTypeCreateJobProperties, TypeBasicCreateJobPropertiesTypeScope, TypeBasicCreateJobPropertiesTypeUSQL}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // TypeEnum enumerates the values for type enum.
 type TypeEnum string
 
@@ -153,14 +203,22 @@ const (
 	USQL TypeEnum = "USql"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// PossibleTypeEnumValues returns an array of possible values for the TypeEnum const type.
+func PossibleTypeEnumValues() []TypeEnum {
+	return []TypeEnum{Hive, Scope, USQL}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BaseJobParameters data Lake Analytics Job Parameters base class for build and submit.
 type BaseJobParameters struct {
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Properties - the job specific properties.
+	// Properties - The job specific properties.
 	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UnmarshalJSON is the custom unmarshaler for BaseJobParameters struct.
 func (bjp *BaseJobParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -193,16 +251,18 @@ func (bjp *BaseJobParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BuildJobParameters the parameters used to build a new Data Lake Analytics job.
 type BuildJobParameters struct {
-	// Name - the friendly name of the job to build.
+	// Name - The friendly name of the job to build.
 	Name *string `json:"name,omitempty"`
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Properties - the job specific properties.
+	// Properties - The job specific properties.
 	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UnmarshalJSON is the custom unmarshaler for BuildJobParameters struct.
 func (bjp *BuildJobParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -244,12 +304,14 @@ func (bjp *BuildJobParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CancelFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CancelFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CancelFuture) Result(client Client) (ar autorest.Response, err error) {
@@ -292,24 +354,26 @@ func (future CancelFuture) Result(client Client) (ar autorest.Response, err erro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateJobParameters the parameters used to submit a new Data Lake Analytics job.
 type CreateJobParameters struct {
-	// Name - the friendly name of the job to submit.
+	// Name - The friendly name of the job to submit.
 	Name *string `json:"name,omitempty"`
-	// DegreeOfParallelism - the degree of parallelism to use for this job. This must be greater than 0, if set to less than 0 it will default to 1.
+	// DegreeOfParallelism - The degree of parallelism to use for this job. This must be greater than 0, if set to less than 0 it will default to 1.
 	DegreeOfParallelism *int32 `json:"degreeOfParallelism,omitempty"`
-	// Priority - the priority value to use for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
+	// Priority - The priority value to use for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
 	Priority *int32 `json:"priority,omitempty"`
-	// LogFilePatterns - the list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
+	// LogFilePatterns - The list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
-	// Related - the recurring job relationship information properties.
+	// Related - The recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Properties - the job specific properties.
+	// Properties - The job specific properties.
 	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UnmarshalJSON is the custom unmarshaler for CreateJobParameters struct.
 func (cjp *CreateJobParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -387,6 +451,7 @@ func (cjp *CreateJobParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BasicCreateJobProperties the common Data Lake Analytics job properties for job submission.
 type BasicCreateJobProperties interface {
 	AsCreateUSQLJobProperties() (*CreateUSQLJobProperties, bool)
@@ -394,11 +459,12 @@ type BasicCreateJobProperties interface {
 	AsCreateJobProperties() (*CreateJobProperties, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateJobProperties the common Data Lake Analytics job properties for job submission.
 type CreateJobProperties struct {
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
 	// Type - Possible values include: 'TypeBasicCreateJobPropertiesTypeCreateJobProperties', 'TypeBasicCreateJobPropertiesTypeUSQL', 'TypeBasicCreateJobPropertiesTypeScope'
 	Type TypeBasicCreateJobProperties `json:"type,omitempty"`
@@ -445,6 +511,7 @@ func unmarshalBasicCreateJobPropertiesArray(body []byte) ([]BasicCreateJobProper
 	return cjpArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for CreateJobProperties.
 func (cjp CreateJobProperties) MarshalJSON() ([]byte, error) {
 	cjp.Type = TypeBasicCreateJobPropertiesTypeCreateJobProperties
@@ -455,51 +522,59 @@ func (cjp CreateJobProperties) MarshalJSON() ([]byte, error) {
 	if cjp.Script != nil {
 		objectMap["script"] = cjp.Script
 	}
-	objectMap["type"] = cjp.Type
+	if cjp.Type != "" {
+		objectMap["type"] = cjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateUSQLJobProperties is the BasicCreateJobProperties implementation for CreateJobProperties.
 func (cjp CreateJobProperties) AsCreateUSQLJobProperties() (*CreateUSQLJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateScopeJobProperties is the BasicCreateJobProperties implementation for CreateJobProperties.
 func (cjp CreateJobProperties) AsCreateScopeJobProperties() (*CreateScopeJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateJobProperties is the BasicCreateJobProperties implementation for CreateJobProperties.
 func (cjp CreateJobProperties) AsCreateJobProperties() (*CreateJobProperties, bool) {
 	return &cjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicCreateJobProperties is the BasicCreateJobProperties implementation for CreateJobProperties.
 func (cjp CreateJobProperties) AsBasicCreateJobProperties() (BasicCreateJobProperties, bool) {
 	return &cjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateScopeJobParameters the parameters used to submit a new Data Lake Analytics Scope job. (Only for use
 // internally with Scope job type.)
 type CreateScopeJobParameters struct {
-	// Tags - the key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
+	// Tags - The key-value pairs used to add additional metadata to the job information.
 	Tags map[string]*string `json:"tags"`
-	// Name - the friendly name of the job to submit.
+	// Name - The friendly name of the job to submit.
 	Name *string `json:"name,omitempty"`
-	// DegreeOfParallelism - the degree of parallelism to use for this job. This must be greater than 0, if set to less than 0 it will default to 1.
+	// DegreeOfParallelism - The degree of parallelism to use for this job. This must be greater than 0, if set to less than 0 it will default to 1.
 	DegreeOfParallelism *int32 `json:"degreeOfParallelism,omitempty"`
-	// Priority - the priority value to use for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
+	// Priority - The priority value to use for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
 	Priority *int32 `json:"priority,omitempty"`
-	// LogFilePatterns - the list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
+	// LogFilePatterns - The list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
-	// Related - the recurring job relationship information properties.
+	// Related - The recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Properties - the job specific properties.
+	// Properties - The job specific properties.
 	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for CreateScopeJobParameters.
 func (csjp CreateScopeJobParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -521,11 +596,14 @@ func (csjp CreateScopeJobParameters) MarshalJSON() ([]byte, error) {
 	if csjp.Related != nil {
 		objectMap["related"] = csjp.Related
 	}
-	objectMap["type"] = csjp.Type
+	if csjp.Type != "" {
+		objectMap["type"] = csjp.Type
+	}
 	objectMap["properties"] = csjp.Properties
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UnmarshalJSON is the custom unmarshaler for CreateScopeJobParameters struct.
 func (csjp *CreateScopeJobParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -612,20 +690,23 @@ func (csjp *CreateScopeJobParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// CreateScopeJobProperties scope job properties used when submitting Scope jobs.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// CreateScopeJobProperties scope job properties used when submitting Scope jobs. (Only for use internally with
+// Scope job type.)
 type CreateScopeJobProperties struct {
-	// Resources - the list of resources that are required by the job.
+	// Resources - The list of resources that are required by the job.
 	Resources *[]ScopeJobResource `json:"resources,omitempty"`
-	// Notifier - the list of email addresses, separated by semi-colons, to notify when the job reaches a terminal state.
+	// Notifier - The list of email addresses, separated by semi-colons, to notify when the job reaches a terminal state.
 	Notifier *string `json:"notifier,omitempty"`
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
 	// Type - Possible values include: 'TypeBasicCreateJobPropertiesTypeCreateJobProperties', 'TypeBasicCreateJobPropertiesTypeUSQL', 'TypeBasicCreateJobPropertiesTypeScope'
 	Type TypeBasicCreateJobProperties `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for CreateScopeJobProperties.
 func (csjp CreateScopeJobProperties) MarshalJSON() ([]byte, error) {
 	csjp.Type = TypeBasicCreateJobPropertiesTypeScope
@@ -642,154 +723,175 @@ func (csjp CreateScopeJobProperties) MarshalJSON() ([]byte, error) {
 	if csjp.Script != nil {
 		objectMap["script"] = csjp.Script
 	}
-	objectMap["type"] = csjp.Type
+	if csjp.Type != "" {
+		objectMap["type"] = csjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateUSQLJobProperties is the BasicCreateJobProperties implementation for CreateScopeJobProperties.
 func (csjp CreateScopeJobProperties) AsCreateUSQLJobProperties() (*CreateUSQLJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateScopeJobProperties is the BasicCreateJobProperties implementation for CreateScopeJobProperties.
 func (csjp CreateScopeJobProperties) AsCreateScopeJobProperties() (*CreateScopeJobProperties, bool) {
 	return &csjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateJobProperties is the BasicCreateJobProperties implementation for CreateScopeJobProperties.
 func (csjp CreateScopeJobProperties) AsCreateJobProperties() (*CreateJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicCreateJobProperties is the BasicCreateJobProperties implementation for CreateScopeJobProperties.
 func (csjp CreateScopeJobProperties) AsBasicCreateJobProperties() (BasicCreateJobProperties, bool) {
 	return &csjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // CreateUSQLJobProperties u-SQL job properties used when submitting U-SQL jobs.
 type CreateUSQLJobProperties struct {
-	// CompileMode - the specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
+	// CompileMode - The specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
 	CompileMode CompileMode `json:"compileMode,omitempty"`
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
 	// Type - Possible values include: 'TypeBasicCreateJobPropertiesTypeCreateJobProperties', 'TypeBasicCreateJobPropertiesTypeUSQL', 'TypeBasicCreateJobPropertiesTypeScope'
 	Type TypeBasicCreateJobProperties `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) MarshalJSON() ([]byte, error) {
 	cusjp.Type = TypeBasicCreateJobPropertiesTypeUSQL
 	objectMap := make(map[string]interface{})
-	objectMap["compileMode"] = cusjp.CompileMode
+	if cusjp.CompileMode != "" {
+		objectMap["compileMode"] = cusjp.CompileMode
+	}
 	if cusjp.RuntimeVersion != nil {
 		objectMap["runtimeVersion"] = cusjp.RuntimeVersion
 	}
 	if cusjp.Script != nil {
 		objectMap["script"] = cusjp.Script
 	}
-	objectMap["type"] = cusjp.Type
+	if cusjp.Type != "" {
+		objectMap["type"] = cusjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateUSQLJobProperties is the BasicCreateJobProperties implementation for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) AsCreateUSQLJobProperties() (*CreateUSQLJobProperties, bool) {
 	return &cusjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateScopeJobProperties is the BasicCreateJobProperties implementation for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) AsCreateScopeJobProperties() (*CreateScopeJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsCreateJobProperties is the BasicCreateJobProperties implementation for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) AsCreateJobProperties() (*CreateJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicCreateJobProperties is the BasicCreateJobProperties implementation for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) AsBasicCreateJobProperties() (BasicCreateJobProperties, bool) {
 	return &cusjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // DataPath a Data Lake Analytics job data path item.
 type DataPath struct {
 	autorest.Response `json:"-"`
-	// JobID - the id of the job this data is for.
+	// JobID - The ID of the job this data is for.
 	JobID *uuid.UUID `json:"jobId,omitempty"`
-	// Command - the command that this job data relates to.
+	// Command - The command that this job data relates to.
 	Command *string `json:"command,omitempty"`
-	// Paths - the list of paths to all of the job data.
+	// Paths - The list of paths to all of the job data.
 	Paths *[]string `json:"paths,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Diagnostics error diagnostic information for failed jobs.
 type Diagnostics struct {
-	// ColumnNumber - the column where the error occured.
-	ColumnNumber *int32 `json:"columnNumber,omitempty"`
-	// End - the ending index of the error.
-	End *int32 `json:"end,omitempty"`
-	// LineNumber - the line number the error occured on.
-	LineNumber *int32 `json:"lineNumber,omitempty"`
-	// Message - the error message.
+	// Message - The error message.
 	Message *string `json:"message,omitempty"`
-	// Severity - the severity of the error. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
+	// Severity - The severity of the error. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
 	Severity SeverityTypes `json:"severity,omitempty"`
-	// Start - the starting index of the error.
+	// LineNumber - The line number the error occured on.
+	LineNumber *int32 `json:"lineNumber,omitempty"`
+	// ColumnNumber - The column where the error occured.
+	ColumnNumber *int32 `json:"columnNumber,omitempty"`
+	// Start - The starting index of the error.
 	Start *int32 `json:"start,omitempty"`
+	// End - The ending index of the error.
+	End *int32 `json:"end,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ErrorDetails the Data Lake Analytics job error details.
 type ErrorDetails struct {
-	// Description - the error message description
-	Description *string `json:"description,omitempty"`
-	// Details - the details of the error message.
-	Details *string `json:"details,omitempty"`
-	// EndOffset - the end offset in the job where the error was found.
-	EndOffset *int32 `json:"endOffset,omitempty"`
-	// ErrorID - the specific identifier for the type of error encountered in the job.
+	// ErrorID - The specific identifier for the type of error encountered in the job.
 	ErrorID *string `json:"errorId,omitempty"`
-	// FilePath - the path to any supplemental error files, if any.
-	FilePath *string `json:"filePath,omitempty"`
-	// HelpLink - the link to MSDN or Azure help for this type of error, if any.
-	HelpLink *string `json:"helpLink,omitempty"`
-	// InternalDiagnostics - the internal diagnostic stack trace if the user requesting the job error details has sufficient permissions it will be retrieved, otherwise it will be empty.
-	InternalDiagnostics *string `json:"internalDiagnostics,omitempty"`
-	// LineNumber - the specific line number in the job where the error occured.
-	LineNumber *int32 `json:"lineNumber,omitempty"`
-	// Message - the user friendly error message for the failure.
-	Message *string `json:"message,omitempty"`
-	// Resolution - the recommended resolution for the failure, if any.
-	Resolution *string `json:"resolution,omitempty"`
-	// InnerError - the inner error of this specific job error message, if any.
-	InnerError *InnerError `json:"innerError,omitempty"`
-	// Severity - the severity level of the failure. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
+	// Severity - The severity level of the failure. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
 	Severity SeverityTypes `json:"severity,omitempty"`
-	// Source - the ultimate source of the failure (usually either SYSTEM or USER).
+	// Source - The ultimate source of the failure (usually either SYSTEM or USER).
 	Source *string `json:"source,omitempty"`
-	// StartOffset - the start offset in the job where the error was found
+	// Message - The user friendly error message for the failure.
+	Message *string `json:"message,omitempty"`
+	// Description - The error message description.
+	Description *string `json:"description,omitempty"`
+	// Details - The details of the error message.
+	Details *string `json:"details,omitempty"`
+	// LineNumber - The specific line number in the job where the error occured.
+	LineNumber *int32 `json:"lineNumber,omitempty"`
+	// StartOffset - The start offset in the job where the error was found
 	StartOffset *int32 `json:"startOffset,omitempty"`
+	// EndOffset - The end offset in the job where the error was found.
+	EndOffset *int32 `json:"endOffset,omitempty"`
+	// Resolution - The recommended resolution for the failure, if any.
+	Resolution *string `json:"resolution,omitempty"`
+	// FilePath - The path to any supplemental error files, if any.
+	FilePath *string `json:"filePath,omitempty"`
+	// HelpLink - The link to MSDN or Azure help for this type of error, if any.
+	HelpLink *string `json:"helpLink,omitempty"`
+	// InternalDiagnostics - The internal diagnostic stack trace if the user requesting the job error details has sufficient permissions it will be retrieved, otherwise it will be empty.
+	InternalDiagnostics *string `json:"internalDiagnostics,omitempty"`
+	// InnerError - The inner error of this specific job error message, if any.
+	InnerError *InnerError `json:"innerError,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // HiveJobProperties hive job properties used when retrieving Hive jobs.
 type HiveJobProperties struct {
-	// LogsLocation - the Hive logs location
+	// LogsLocation - The Hive logs location.
 	LogsLocation *string `json:"logsLocation,omitempty"`
-	// OutputLocation - the location of Hive job output files (both execution output and results)
+	// OutputLocation - The location of Hive job output files (both execution output and results).
 	OutputLocation *string `json:"outputLocation,omitempty"`
-	// StatementCount - the number of statements that will be run based on the script
+	// StatementCount - The number of statements that will be run based on the script.
 	StatementCount *int32 `json:"statementCount,omitempty"`
-	// ExecutedStatementCount - the number of statements that have been run based on the script
+	// ExecutedStatementCount - The number of statements that have been run based on the script.
 	ExecutedStatementCount *int32 `json:"executedStatementCount,omitempty"`
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeScope', 'TypeHive'
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive', 'TypeScope'
 	Type Type `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for HiveJobProperties.
 func (hjp HiveJobProperties) MarshalJSON() ([]byte, error) {
 	hjp.Type = TypeHive
@@ -812,50 +914,60 @@ func (hjp HiveJobProperties) MarshalJSON() ([]byte, error) {
 	if hjp.Script != nil {
 		objectMap["script"] = hjp.Script
 	}
-	objectMap["type"] = hjp.Type
+	if hjp.Type != "" {
+		objectMap["type"] = hjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsUSQLJobProperties is the BasicProperties implementation for HiveJobProperties.
 func (hjp HiveJobProperties) AsUSQLJobProperties() (*USQLJobProperties, bool) {
 	return nil, false
 }
 
-// AsScopeJobProperties is the BasicProperties implementation for HiveJobProperties.
-func (hjp HiveJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsHiveJobProperties is the BasicProperties implementation for HiveJobProperties.
 func (hjp HiveJobProperties) AsHiveJobProperties() (*HiveJobProperties, bool) {
 	return &hjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// AsScopeJobProperties is the BasicProperties implementation for HiveJobProperties.
+func (hjp HiveJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
+	return nil, false
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsProperties is the BasicProperties implementation for HiveJobProperties.
 func (hjp HiveJobProperties) AsProperties() (*Properties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicProperties is the BasicProperties implementation for HiveJobProperties.
 func (hjp HiveJobProperties) AsBasicProperties() (BasicProperties, bool) {
 	return &hjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // InfoListResult list of JobInfo items.
 type InfoListResult struct {
 	autorest.Response `json:"-"`
-	// Value - the list of JobInfo items.
+	// Value - The list of JobInfo items.
 	Value *[]InformationBasic `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
+	// NextLink - The link (url) to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // InfoListResultIterator provides access to a complete listing of InformationBasic values.
 type InfoListResultIterator struct {
 	i    int
 	page InfoListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *InfoListResultIterator) Next() error {
@@ -872,16 +984,19 @@ func (iter *InfoListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter InfoListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (iter InfoListResultIterator) Response() InfoListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter InfoListResultIterator) Value() InformationBasic {
@@ -891,6 +1006,7 @@ func (iter InfoListResultIterator) Value() InformationBasic {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ilr InfoListResult) IsEmpty() bool {
 	return ilr.Value == nil || len(*ilr.Value) == 0
@@ -908,12 +1024,14 @@ func (ilr InfoListResult) infoListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // InfoListResultPage contains a page of InformationBasic values.
 type InfoListResultPage struct {
 	fn  func(InfoListResult) (InfoListResult, error)
 	ilr InfoListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *InfoListResultPage) Next() error {
@@ -925,16 +1043,19 @@ func (page *InfoListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page InfoListResultPage) NotDone() bool {
 	return !page.ilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (page InfoListResultPage) Response() InfoListResult {
 	return page.ilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page InfoListResultPage) Values() []InformationBasic {
 	if page.ilr.IsEmpty() {
@@ -943,47 +1064,49 @@ func (page InfoListResultPage) Values() []InformationBasic {
 	return *page.ilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Information the extended Data Lake Analytics job information properties returned when retrieving a specific job.
 type Information struct {
 	autorest.Response `json:"-"`
-	// ErrorMessage - the error message details for the job, if the job failed.
+	// ErrorMessage - The error message details for the job, if the job failed.
 	ErrorMessage *[]ErrorDetails `json:"errorMessage,omitempty"`
-	// StateAuditRecords - the job state audit records, indicating when various operations have been performed on this job.
+	// StateAuditRecords - The job state audit records, indicating when various operations have been performed on this job.
 	StateAuditRecords *[]StateAuditRecord `json:"stateAuditRecords,omitempty"`
-	// Properties - the job specific properties.
+	// Properties - The job specific properties.
 	Properties BasicProperties `json:"properties,omitempty"`
-	// JobID - the job's unique identifier (a GUID).
+	// JobID - The job's unique identifier (a GUID).
 	JobID *uuid.UUID `json:"jobId,omitempty"`
-	// Name - the friendly name of the job.
+	// Name - The friendly name of the job.
 	Name *string `json:"name,omitempty"`
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Submitter - the user or account that submitted the job.
+	// Submitter - The user or account that submitted the job.
 	Submitter *string `json:"submitter,omitempty"`
-	// DegreeOfParallelism - the degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
+	// DegreeOfParallelism - The degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
 	DegreeOfParallelism *int32 `json:"degreeOfParallelism,omitempty"`
-	// Priority - the priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
+	// Priority - The priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
 	Priority *int32 `json:"priority,omitempty"`
-	// SubmitTime - the time the job was submitted to the service.
+	// SubmitTime - The time the job was submitted to the service.
 	SubmitTime *date.Time `json:"submitTime,omitempty"`
-	// StartTime - the start time of the job.
+	// StartTime - The start time of the job.
 	StartTime *date.Time `json:"startTime,omitempty"`
-	// EndTime - the completion time of the job.
+	// EndTime - The completion time of the job.
 	EndTime *date.Time `json:"endTime,omitempty"`
-	// State - the job state. When the job is in the Ended state, refer to Result and ErrorMessage for details. Possible values include: 'StateAccepted', 'StateCompiling', 'StateEnded', 'StateNew', 'StateQueued', 'StateRunning', 'StateScheduling', 'StateStarting', 'StatePaused', 'StateWaitingForCapacity'
+	// State - The job state. When the job is in the Ended state, refer to Result and ErrorMessage for details. Possible values include: 'StateAccepted', 'StateCompiling', 'StateEnded', 'StateNew', 'StateQueued', 'StateRunning', 'StateScheduling', 'StateStarting', 'StatePaused', 'StateWaitingForCapacity'
 	State State `json:"state,omitempty"`
-	// Result - the result of job execution or the current result of the running job. Possible values include: 'None', 'Succeeded', 'Cancelled', 'Failed'
+	// Result - The result of job execution or the current result of the running job. Possible values include: 'None', 'Succeeded', 'Cancelled', 'Failed'
 	Result Result `json:"result,omitempty"`
-	// LogFolder - the log folder path to use in the following format: adl://<accountName>.azuredatalakestore.net/system/jobservice/jobs/Usql/2016/03/13/17/18/5fe51957-93bc-4de0-8ddc-c5a4753b068b/logs/.
+	// LogFolder - The log folder path to use in the following format: adl://<accountName>.azuredatalakestore.net/system/jobservice/jobs/Usql/2016/03/13/17/18/5fe51957-93bc-4de0-8ddc-c5a4753b068b/logs/.
 	LogFolder *string `json:"logFolder,omitempty"`
-	// LogFilePatterns - the list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
+	// LogFilePatterns - The list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
-	// Related - the recurring job relationship information properties.
+	// Related - The recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
-	// Tags - the key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
+	// Tags - The key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for Information.
 func (i Information) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1000,7 +1123,9 @@ func (i Information) MarshalJSON() ([]byte, error) {
 	if i.Name != nil {
 		objectMap["name"] = i.Name
 	}
-	objectMap["type"] = i.Type
+	if i.Type != "" {
+		objectMap["type"] = i.Type
+	}
 	if i.Submitter != nil {
 		objectMap["submitter"] = i.Submitter
 	}
@@ -1019,8 +1144,12 @@ func (i Information) MarshalJSON() ([]byte, error) {
 	if i.EndTime != nil {
 		objectMap["endTime"] = i.EndTime
 	}
-	objectMap["state"] = i.State
-	objectMap["result"] = i.Result
+	if i.State != "" {
+		objectMap["state"] = i.State
+	}
+	if i.Result != "" {
+		objectMap["result"] = i.Result
+	}
 	if i.LogFolder != nil {
 		objectMap["logFolder"] = i.LogFolder
 	}
@@ -1036,6 +1165,7 @@ func (i Information) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UnmarshalJSON is the custom unmarshaler for Information struct.
 func (i *Information) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1212,40 +1342,42 @@ func (i *Information) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // InformationBasic the common Data Lake Analytics job information properties.
 type InformationBasic struct {
-	// JobID - the job's unique identifier (a GUID).
+	// JobID - The job's unique identifier (a GUID).
 	JobID *uuid.UUID `json:"jobId,omitempty"`
-	// Name - the friendly name of the job.
+	// Name - The friendly name of the job.
 	Name *string `json:"name,omitempty"`
-	// Type - the job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
+	// Type - The job type of the current job (Hive, USql, or Scope (for internal use only)). Possible values include: 'USQL', 'Hive', 'Scope'
 	Type TypeEnum `json:"type,omitempty"`
-	// Submitter - the user or account that submitted the job.
+	// Submitter - The user or account that submitted the job.
 	Submitter *string `json:"submitter,omitempty"`
-	// DegreeOfParallelism - the degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
+	// DegreeOfParallelism - The degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
 	DegreeOfParallelism *int32 `json:"degreeOfParallelism,omitempty"`
-	// Priority - the priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
+	// Priority - The priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
 	Priority *int32 `json:"priority,omitempty"`
-	// SubmitTime - the time the job was submitted to the service.
+	// SubmitTime - The time the job was submitted to the service.
 	SubmitTime *date.Time `json:"submitTime,omitempty"`
-	// StartTime - the start time of the job.
+	// StartTime - The start time of the job.
 	StartTime *date.Time `json:"startTime,omitempty"`
-	// EndTime - the completion time of the job.
+	// EndTime - The completion time of the job.
 	EndTime *date.Time `json:"endTime,omitempty"`
-	// State - the job state. When the job is in the Ended state, refer to Result and ErrorMessage for details. Possible values include: 'StateAccepted', 'StateCompiling', 'StateEnded', 'StateNew', 'StateQueued', 'StateRunning', 'StateScheduling', 'StateStarting', 'StatePaused', 'StateWaitingForCapacity'
+	// State - The job state. When the job is in the Ended state, refer to Result and ErrorMessage for details. Possible values include: 'StateAccepted', 'StateCompiling', 'StateEnded', 'StateNew', 'StateQueued', 'StateRunning', 'StateScheduling', 'StateStarting', 'StatePaused', 'StateWaitingForCapacity'
 	State State `json:"state,omitempty"`
-	// Result - the result of job execution or the current result of the running job. Possible values include: 'None', 'Succeeded', 'Cancelled', 'Failed'
+	// Result - The result of job execution or the current result of the running job. Possible values include: 'None', 'Succeeded', 'Cancelled', 'Failed'
 	Result Result `json:"result,omitempty"`
-	// LogFolder - the log folder path to use in the following format: adl://<accountName>.azuredatalakestore.net/system/jobservice/jobs/Usql/2016/03/13/17/18/5fe51957-93bc-4de0-8ddc-c5a4753b068b/logs/.
+	// LogFolder - The log folder path to use in the following format: adl://<accountName>.azuredatalakestore.net/system/jobservice/jobs/Usql/2016/03/13/17/18/5fe51957-93bc-4de0-8ddc-c5a4753b068b/logs/.
 	LogFolder *string `json:"logFolder,omitempty"`
-	// LogFilePatterns - the list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
+	// LogFilePatterns - The list of log file name patterns to find in the logFolder. '*' is the only matching character allowed. Example format: jobExecution*.log or *mylog*.txt
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
-	// Related - the recurring job relationship information properties.
+	// Related - The recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
-	// Tags - the key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
+	// Tags - The key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for InformationBasic.
 func (ib InformationBasic) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1255,7 +1387,9 @@ func (ib InformationBasic) MarshalJSON() ([]byte, error) {
 	if ib.Name != nil {
 		objectMap["name"] = ib.Name
 	}
-	objectMap["type"] = ib.Type
+	if ib.Type != "" {
+		objectMap["type"] = ib.Type
+	}
 	if ib.Submitter != nil {
 		objectMap["submitter"] = ib.Submitter
 	}
@@ -1274,8 +1408,12 @@ func (ib InformationBasic) MarshalJSON() ([]byte, error) {
 	if ib.EndTime != nil {
 		objectMap["endTime"] = ib.EndTime
 	}
-	objectMap["state"] = ib.State
-	objectMap["result"] = ib.Result
+	if ib.State != "" {
+		objectMap["state"] = ib.State
+	}
+	if ib.Result != "" {
+		objectMap["result"] = ib.Result
+	}
 	if ib.LogFolder != nil {
 		objectMap["logFolder"] = ib.LogFolder
 	}
@@ -1291,79 +1429,84 @@ func (ib InformationBasic) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // InnerError the Data Lake Analytics job error details.
 type InnerError struct {
-	// DiagnosticCode - the diagnostic error code.
-	DiagnosticCode *int32 `json:"diagnosticCode,omitempty"`
-	// Severity - the severity level of the failure. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
-	Severity SeverityTypes `json:"severity,omitempty"`
-	// Details - the details of the error message.
-	Details *string `json:"details,omitempty"`
-	// Component - the component that failed.
-	Component *string `json:"component,omitempty"`
-	// ErrorID - the specific identifier for the type of error encountered in the job.
+	// ErrorID - The specific identifier for the type of error encountered in the job.
 	ErrorID *string `json:"errorId,omitempty"`
-	// HelpLink - the link to MSDN or Azure help for this type of error, if any.
-	HelpLink *string `json:"helpLink,omitempty"`
-	// InternalDiagnostics - the internal diagnostic stack trace if the user requesting the job error details has sufficient permissions it will be retrieved, otherwise it will be empty.
-	InternalDiagnostics *string `json:"internalDiagnostics,omitempty"`
-	// Message - the user friendly error message for the failure.
-	Message *string `json:"message,omitempty"`
-	// Resolution - the recommended resolution for the failure, if any.
-	Resolution *string `json:"resolution,omitempty"`
-	// Source - the ultimate source of the failure (usually either SYSTEM or USER).
+	// Severity - The severity level of the failure. Possible values include: 'Warning', 'Error', 'Info', 'SevereWarning', 'Deprecated', 'UserWarning'
+	Severity SeverityTypes `json:"severity,omitempty"`
+	// Source - The ultimate source of the failure (usually either SYSTEM or USER).
 	Source *string `json:"source,omitempty"`
-	// Description - the error message description
+	// Message - The user friendly error message for the failure.
+	Message *string `json:"message,omitempty"`
+	// Description - The error message description.
 	Description *string `json:"description,omitempty"`
-	// InnerError - the inner error of this specific job error message, if any.
+	// Details - The details of the error message.
+	Details *string `json:"details,omitempty"`
+	// DiagnosticCode - The diagnostic error code.
+	DiagnosticCode *int32 `json:"diagnosticCode,omitempty"`
+	// Component - The component that failed.
+	Component *string `json:"component,omitempty"`
+	// Resolution - The recommended resolution for the failure, if any.
+	Resolution *string `json:"resolution,omitempty"`
+	// HelpLink - The link to MSDN or Azure help for this type of error, if any.
+	HelpLink *string `json:"helpLink,omitempty"`
+	// InternalDiagnostics - The internal diagnostic stack trace if the user requesting the job error details has sufficient permissions it will be retrieved, otherwise it will be empty.
+	InternalDiagnostics *string `json:"internalDiagnostics,omitempty"`
+	// InnerError - The inner error of this specific job error message, if any.
 	InnerError *InnerError `json:"innerError,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineInformation job Pipeline Information, showing the relationship of jobs and recurrences of those jobs in
 // a pipeline.
 type PipelineInformation struct {
 	autorest.Response `json:"-"`
-	// PipelineID - the job relationship pipeline identifier (a GUID).
+	// PipelineID - The job relationship pipeline identifier (a GUID).
 	PipelineID *uuid.UUID `json:"pipelineId,omitempty"`
-	// PipelineName - the friendly name of the job relationship pipeline, which does not need to be unique.
+	// PipelineName - The friendly name of the job relationship pipeline, which does not need to be unique.
 	PipelineName *string `json:"pipelineName,omitempty"`
-	// PipelineURI - the pipeline uri, unique, links to the originating service for this pipeline.
+	// PipelineURI - The pipeline uri, unique, links to the originating service for this pipeline.
 	PipelineURI *string `json:"pipelineUri,omitempty"`
-	// NumJobsFailed - the number of jobs in this pipeline that have failed.
+	// NumJobsFailed - The number of jobs in this pipeline that have failed.
 	NumJobsFailed *int32 `json:"numJobsFailed,omitempty"`
-	// NumJobsCanceled - the number of jobs in this pipeline that have been canceled.
+	// NumJobsCanceled - The number of jobs in this pipeline that have been canceled.
 	NumJobsCanceled *int32 `json:"numJobsCanceled,omitempty"`
-	// NumJobsSucceeded - the number of jobs in this pipeline that have succeeded.
+	// NumJobsSucceeded - The number of jobs in this pipeline that have succeeded.
 	NumJobsSucceeded *int32 `json:"numJobsSucceeded,omitempty"`
-	// AuHoursFailed - the number of job execution hours that resulted in failed jobs.
+	// AuHoursFailed - The number of job execution hours that resulted in failed jobs.
 	AuHoursFailed *float64 `json:"auHoursFailed,omitempty"`
-	// AuHoursCanceled - the number of job execution hours that resulted in canceled jobs.
+	// AuHoursCanceled - The number of job execution hours that resulted in canceled jobs.
 	AuHoursCanceled *float64 `json:"auHoursCanceled,omitempty"`
-	// AuHoursSucceeded - the number of job execution hours that resulted in successful jobs.
+	// AuHoursSucceeded - The number of job execution hours that resulted in successful jobs.
 	AuHoursSucceeded *float64 `json:"auHoursSucceeded,omitempty"`
-	// LastSubmitTime - the last time a job in this pipeline was submitted.
+	// LastSubmitTime - The last time a job in this pipeline was submitted.
 	LastSubmitTime *date.Time `json:"lastSubmitTime,omitempty"`
-	// Runs - the list of recurrence identifiers representing each run of this pipeline.
+	// Runs - The list of recurrence identifiers representing each run of this pipeline.
 	Runs *[]PipelineRunInformation `json:"runs,omitempty"`
-	// Recurrences - the list of recurrence identifiers representing each run of this pipeline.
+	// Recurrences - The list of recurrence identifiers representing each run of this pipeline.
 	Recurrences *[]uuid.UUID `json:"recurrences,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineInformationListResult list of job pipeline information items.
 type PipelineInformationListResult struct {
 	autorest.Response `json:"-"`
-	// Value - the list of job pipeline information items.
+	// Value - The list of job pipeline information items.
 	Value *[]PipelineInformation `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
+	// NextLink - The link (url) to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineInformationListResultIterator provides access to a complete listing of PipelineInformation values.
 type PipelineInformationListResultIterator struct {
 	i    int
 	page PipelineInformationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *PipelineInformationListResultIterator) Next() error {
@@ -1380,16 +1523,19 @@ func (iter *PipelineInformationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter PipelineInformationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (iter PipelineInformationListResultIterator) Response() PipelineInformationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter PipelineInformationListResultIterator) Value() PipelineInformation {
@@ -1399,6 +1545,7 @@ func (iter PipelineInformationListResultIterator) Value() PipelineInformation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (pilr PipelineInformationListResult) IsEmpty() bool {
 	return pilr.Value == nil || len(*pilr.Value) == 0
@@ -1416,12 +1563,14 @@ func (pilr PipelineInformationListResult) pipelineInformationListResultPreparer(
 		autorest.WithBaseURL(to.String(pilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineInformationListResultPage contains a page of PipelineInformation values.
 type PipelineInformationListResultPage struct {
 	fn   func(PipelineInformationListResult) (PipelineInformationListResult, error)
 	pilr PipelineInformationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *PipelineInformationListResultPage) Next() error {
@@ -1433,16 +1582,19 @@ func (page *PipelineInformationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page PipelineInformationListResultPage) NotDone() bool {
 	return !page.pilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (page PipelineInformationListResultPage) Response() PipelineInformationListResult {
 	return page.pilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page PipelineInformationListResultPage) Values() []PipelineInformation {
 	if page.pilr.IsEmpty() {
@@ -1451,29 +1603,32 @@ func (page PipelineInformationListResultPage) Values() []PipelineInformation {
 	return *page.pilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineRunInformation run info for a specific job pipeline.
 type PipelineRunInformation struct {
-	// RunID - the run identifier of an instance of pipeline executions (a GUID).
+	// RunID - The run identifier of an instance of pipeline executions (a GUID).
 	RunID *uuid.UUID `json:"runId,omitempty"`
-	// LastSubmitTime - the time this instance was last submitted.
+	// LastSubmitTime - The time this instance was last submitted.
 	LastSubmitTime *date.Time `json:"lastSubmitTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // BasicProperties the common Data Lake Analytics job properties.
 type BasicProperties interface {
 	AsUSQLJobProperties() (*USQLJobProperties, bool)
-	AsScopeJobProperties() (*ScopeJobProperties, bool)
 	AsHiveJobProperties() (*HiveJobProperties, bool)
+	AsScopeJobProperties() (*ScopeJobProperties, bool)
 	AsProperties() (*Properties, bool)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Properties the common Data Lake Analytics job properties.
 type Properties struct {
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeScope', 'TypeHive'
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive', 'TypeScope'
 	Type Type `json:"type,omitempty"`
 }
 
@@ -1489,14 +1644,14 @@ func unmarshalBasicProperties(body []byte) (BasicProperties, error) {
 		var usjp USQLJobProperties
 		err := json.Unmarshal(body, &usjp)
 		return usjp, err
-	case string(TypeScope):
-		var sjp ScopeJobProperties
-		err := json.Unmarshal(body, &sjp)
-		return sjp, err
 	case string(TypeHive):
 		var hjp HiveJobProperties
 		err := json.Unmarshal(body, &hjp)
 		return hjp, err
+	case string(TypeScope):
+		var sjp ScopeJobProperties
+		err := json.Unmarshal(body, &sjp)
+		return sjp, err
 	default:
 		var p Properties
 		err := json.Unmarshal(body, &p)
@@ -1522,6 +1677,7 @@ func unmarshalBasicPropertiesArray(body []byte) ([]BasicProperties, error) {
 	return pArray, nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for Properties.
 func (p Properties) MarshalJSON() ([]byte, error) {
 	p.Type = TypeJobProperties
@@ -1532,73 +1688,84 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 	if p.Script != nil {
 		objectMap["script"] = p.Script
 	}
-	objectMap["type"] = p.Type
+	if p.Type != "" {
+		objectMap["type"] = p.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsUSQLJobProperties is the BasicProperties implementation for Properties.
 func (p Properties) AsUSQLJobProperties() (*USQLJobProperties, bool) {
 	return nil, false
 }
 
-// AsScopeJobProperties is the BasicProperties implementation for Properties.
-func (p Properties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsHiveJobProperties is the BasicProperties implementation for Properties.
 func (p Properties) AsHiveJobProperties() (*HiveJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// AsScopeJobProperties is the BasicProperties implementation for Properties.
+func (p Properties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
+	return nil, false
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsProperties is the BasicProperties implementation for Properties.
 func (p Properties) AsProperties() (*Properties, bool) {
 	return &p, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicProperties is the BasicProperties implementation for Properties.
 func (p Properties) AsBasicProperties() (BasicProperties, bool) {
 	return &p, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RecurrenceInformation recurrence job information for a specific recurrence.
 type RecurrenceInformation struct {
 	autorest.Response `json:"-"`
-	// RecurrenceID - the recurrence identifier (a GUID), unique per activity/script, regardless of iterations. This is something to link different occurrences of the same job together.
+	// RecurrenceID - The recurrence identifier (a GUID), unique per activity/script, regardless of iterations. This is something to link different occurrences of the same job together.
 	RecurrenceID *uuid.UUID `json:"recurrenceId,omitempty"`
-	// RecurrenceName - the recurrence name, user friendly name for the correlation between jobs.
+	// RecurrenceName - The recurrence name, user friendly name for the correlation between jobs.
 	RecurrenceName *string `json:"recurrenceName,omitempty"`
-	// NumJobsFailed - the number of jobs in this recurrence that have failed.
+	// NumJobsFailed - The number of jobs in this recurrence that have failed.
 	NumJobsFailed *int32 `json:"numJobsFailed,omitempty"`
-	// NumJobsCanceled - the number of jobs in this recurrence that have been canceled.
+	// NumJobsCanceled - The number of jobs in this recurrence that have been canceled.
 	NumJobsCanceled *int32 `json:"numJobsCanceled,omitempty"`
-	// NumJobsSucceeded - the number of jobs in this recurrence that have succeeded.
+	// NumJobsSucceeded - The number of jobs in this recurrence that have succeeded.
 	NumJobsSucceeded *int32 `json:"numJobsSucceeded,omitempty"`
-	// AuHoursFailed - the number of job execution hours that resulted in failed jobs.
+	// AuHoursFailed - The number of job execution hours that resulted in failed jobs.
 	AuHoursFailed *float64 `json:"auHoursFailed,omitempty"`
-	// AuHoursCanceled - the number of job execution hours that resulted in canceled jobs.
+	// AuHoursCanceled - The number of job execution hours that resulted in canceled jobs.
 	AuHoursCanceled *float64 `json:"auHoursCanceled,omitempty"`
-	// AuHoursSucceeded - the number of job execution hours that resulted in successful jobs.
+	// AuHoursSucceeded - The number of job execution hours that resulted in successful jobs.
 	AuHoursSucceeded *float64 `json:"auHoursSucceeded,omitempty"`
-	// LastSubmitTime - the last time a job in this recurrence was submitted.
+	// LastSubmitTime - The last time a job in this recurrence was submitted.
 	LastSubmitTime *date.Time `json:"lastSubmitTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RecurrenceInformationListResult list of job recurrence information items.
 type RecurrenceInformationListResult struct {
 	autorest.Response `json:"-"`
-	// Value - the list of job recurrence information items.
+	// Value - The list of job recurrence information items.
 	Value *[]RecurrenceInformation `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
+	// NextLink - The link (url) to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RecurrenceInformationListResultIterator provides access to a complete listing of RecurrenceInformation values.
 type RecurrenceInformationListResultIterator struct {
 	i    int
 	page RecurrenceInformationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *RecurrenceInformationListResultIterator) Next() error {
@@ -1615,16 +1782,19 @@ func (iter *RecurrenceInformationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter RecurrenceInformationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (iter RecurrenceInformationListResultIterator) Response() RecurrenceInformationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter RecurrenceInformationListResultIterator) Value() RecurrenceInformation {
@@ -1634,6 +1804,7 @@ func (iter RecurrenceInformationListResultIterator) Value() RecurrenceInformatio
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rilr RecurrenceInformationListResult) IsEmpty() bool {
 	return rilr.Value == nil || len(*rilr.Value) == 0
@@ -1651,12 +1822,14 @@ func (rilr RecurrenceInformationListResult) recurrenceInformationListResultPrepa
 		autorest.WithBaseURL(to.String(rilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RecurrenceInformationListResultPage contains a page of RecurrenceInformation values.
 type RecurrenceInformationListResultPage struct {
 	fn   func(RecurrenceInformationListResult) (RecurrenceInformationListResult, error)
 	rilr RecurrenceInformationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *RecurrenceInformationListResultPage) Next() error {
@@ -1668,16 +1841,19 @@ func (page *RecurrenceInformationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page RecurrenceInformationListResultPage) NotDone() bool {
 	return !page.rilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Response returns the raw server response from the last page request.
 func (page RecurrenceInformationListResultPage) Response() RecurrenceInformationListResult {
 	return page.rilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page RecurrenceInformationListResultPage) Values() []RecurrenceInformation {
 	if page.rilr.IsEmpty() {
@@ -1686,72 +1862,77 @@ func (page RecurrenceInformationListResultPage) Values() []RecurrenceInformation
 	return *page.rilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // RelationshipProperties job relationship information properties including pipeline information, correlation
 // information, etc.
 type RelationshipProperties struct {
-	// PipelineID - the job relationship pipeline identifier (a GUID).
+	// PipelineID - The job relationship pipeline identifier (a GUID).
 	PipelineID *uuid.UUID `json:"pipelineId,omitempty"`
-	// PipelineName - the friendly name of the job relationship pipeline, which does not need to be unique.
+	// PipelineName - The friendly name of the job relationship pipeline, which does not need to be unique.
 	PipelineName *string `json:"pipelineName,omitempty"`
-	// PipelineURI - the pipeline uri, unique, links to the originating service for this pipeline.
+	// PipelineURI - The pipeline uri, unique, links to the originating service for this pipeline.
 	PipelineURI *string `json:"pipelineUri,omitempty"`
-	// RunID - the run identifier (a GUID), unique identifier of the iteration of this pipeline.
+	// RunID - The run identifier (a GUID), unique identifier of the iteration of this pipeline.
 	RunID *uuid.UUID `json:"runId,omitempty"`
-	// RecurrenceID - the recurrence identifier (a GUID), unique per activity/script, regardless of iterations. This is something to link different occurrences of the same job together.
+	// RecurrenceID - The recurrence identifier (a GUID), unique per activity/script, regardless of iterations. This is something to link different occurrences of the same job together.
 	RecurrenceID *uuid.UUID `json:"recurrenceId,omitempty"`
-	// RecurrenceName - the recurrence name, user friendly name for the correlation between jobs.
+	// RecurrenceName - The recurrence name, user friendly name for the correlation between jobs.
 	RecurrenceName *string `json:"recurrenceName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Resource the Data Lake Analytics job resources.
 type Resource struct {
-	// Name - the name of the resource.
+	// Name - The name of the resource.
 	Name *string `json:"name,omitempty"`
-	// ResourcePath - the path to the resource.
+	// ResourcePath - The path to the resource.
 	ResourcePath *string `json:"resourcePath,omitempty"`
-	// Type - the job resource type. Possible values include: 'VertexResource', 'JobManagerResource', 'StatisticsResource', 'VertexResourceInUserFolder', 'JobManagerResourceInUserFolder', 'StatisticsResourceInUserFolder'
+	// Type - The job resource type. Possible values include: 'VertexResource', 'JobManagerResource', 'StatisticsResource', 'VertexResourceInUserFolder', 'JobManagerResourceInUserFolder', 'StatisticsResourceInUserFolder'
 	Type ResourceType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ResourceUsageStatistics the statistics information for resource usage.
 type ResourceUsageStatistics struct {
-	// Average - the average value.
+	// Average - The average value.
 	Average *float64 `json:"average,omitempty"`
-	// Minimum - the minimum value.
+	// Minimum - The minimum value.
 	Minimum *int64 `json:"minimum,omitempty"`
-	// Maximum - the maximum value.
+	// Maximum - The maximum value.
 	Maximum *int64 `json:"maximum,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ScopeJobProperties scope job properties used when submitting and retrieving Scope jobs. (Only for use internally
 // with Scope job type.)
 type ScopeJobProperties struct {
-	// Resources - the list of resources that are required by the job
+	// Resources - The list of resources that are required by the job.
 	Resources *[]ScopeJobResource `json:"resources,omitempty"`
-	// UserAlgebraPath - the algebra file path after the job has completed
+	// UserAlgebraPath - The algebra file path after the job has completed.
 	UserAlgebraPath *string `json:"userAlgebraPath,omitempty"`
-	// Notifier - the list of email addresses, separated by semi-colons, to notify when the job reaches a terminal state.
+	// Notifier - The list of email addresses, separated by semi-colons, to notify when the job reaches a terminal state.
 	Notifier *string `json:"notifier,omitempty"`
-	// TotalCompilationTime - the total time this job spent compiling. This value should not be set by the user and will be ignored if it is.
+	// TotalCompilationTime - The total time this job spent compiling. This value should not be set by the user and will be ignored if it is.
 	TotalCompilationTime *string `json:"totalCompilationTime,omitempty"`
-	// TotalPausedTime - the total time this job spent paused. This value should not be set by the user and will be ignored if it is.
-	TotalPausedTime *string `json:"totalPausedTime,omitempty"`
-	// TotalQueuedTime - the total time this job spent queued. This value should not be set by the user and will be ignored if it is.
+	// TotalQueuedTime - The total time this job spent queued. This value should not be set by the user and will be ignored if it is.
 	TotalQueuedTime *string `json:"totalQueuedTime,omitempty"`
-	// TotalRunningTime - the total time this job spent executing. This value should not be set by the user and will be ignored if it is.
+	// TotalRunningTime - The total time this job spent executing. This value should not be set by the user and will be ignored if it is.
 	TotalRunningTime *string `json:"totalRunningTime,omitempty"`
-	// RootProcessNodeID - the ID used to identify the job manager coordinating job execution. This value should not be set by the user and will be ignored if it is.
+	// TotalPausedTime - The total time this job spent paused. This value should not be set by the user and will be ignored if it is.
+	TotalPausedTime *string `json:"totalPausedTime,omitempty"`
+	// RootProcessNodeID - The ID used to identify the job manager coordinating job execution. This value should not be set by the user and will be ignored if it is.
 	RootProcessNodeID *string `json:"rootProcessNodeId,omitempty"`
-	// YarnApplicationID - the ID used to identify the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
+	// YarnApplicationID - The ID used to identify the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
 	YarnApplicationID *string `json:"yarnApplicationId,omitempty"`
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeScope', 'TypeHive'
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive', 'TypeScope'
 	Type Type `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for ScopeJobProperties.
 func (sjp ScopeJobProperties) MarshalJSON() ([]byte, error) {
 	sjp.Type = TypeScope
@@ -1768,14 +1949,14 @@ func (sjp ScopeJobProperties) MarshalJSON() ([]byte, error) {
 	if sjp.TotalCompilationTime != nil {
 		objectMap["totalCompilationTime"] = sjp.TotalCompilationTime
 	}
-	if sjp.TotalPausedTime != nil {
-		objectMap["totalPausedTime"] = sjp.TotalPausedTime
-	}
 	if sjp.TotalQueuedTime != nil {
 		objectMap["totalQueuedTime"] = sjp.TotalQueuedTime
 	}
 	if sjp.TotalRunningTime != nil {
 		objectMap["totalRunningTime"] = sjp.TotalRunningTime
+	}
+	if sjp.TotalPausedTime != nil {
+		objectMap["totalPausedTime"] = sjp.TotalPausedTime
 	}
 	if sjp.RootProcessNodeID != nil {
 		objectMap["rootProcessNodeId"] = sjp.RootProcessNodeID
@@ -1789,125 +1970,137 @@ func (sjp ScopeJobProperties) MarshalJSON() ([]byte, error) {
 	if sjp.Script != nil {
 		objectMap["script"] = sjp.Script
 	}
-	objectMap["type"] = sjp.Type
+	if sjp.Type != "" {
+		objectMap["type"] = sjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsUSQLJobProperties is the BasicProperties implementation for ScopeJobProperties.
 func (sjp ScopeJobProperties) AsUSQLJobProperties() (*USQLJobProperties, bool) {
 	return nil, false
 }
 
-// AsScopeJobProperties is the BasicProperties implementation for ScopeJobProperties.
-func (sjp ScopeJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
-	return &sjp, true
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsHiveJobProperties is the BasicProperties implementation for ScopeJobProperties.
 func (sjp ScopeJobProperties) AsHiveJobProperties() (*HiveJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// AsScopeJobProperties is the BasicProperties implementation for ScopeJobProperties.
+func (sjp ScopeJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
+	return &sjp, true
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsProperties is the BasicProperties implementation for ScopeJobProperties.
 func (sjp ScopeJobProperties) AsProperties() (*Properties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicProperties is the BasicProperties implementation for ScopeJobProperties.
 func (sjp ScopeJobProperties) AsBasicProperties() (BasicProperties, bool) {
 	return &sjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ScopeJobResource the Scope job resources. (Only for use internally with Scope job type.)
 type ScopeJobResource struct {
-	// Name - the name of the resource.
+	// Name - The name of the resource.
 	Name *string `json:"name,omitempty"`
-	// Path - the path to the resource.
+	// Path - The path to the resource.
 	Path *string `json:"path,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // StateAuditRecord the Data Lake Analytics job state audit records for tracking the lifecycle of a job.
 type StateAuditRecord struct {
-	// NewState - the new state the job is in.
+	// NewState - The new state the job is in.
 	NewState *string `json:"newState,omitempty"`
-	// TimeStamp - the time stamp that the state change took place.
+	// TimeStamp - The time stamp that the state change took place.
 	TimeStamp *date.Time `json:"timeStamp,omitempty"`
-	// RequestedByUser - the user who requests the change.
+	// RequestedByUser - The user who requests the change.
 	RequestedByUser *string `json:"requestedByUser,omitempty"`
-	// Details - the details of the audit log.
+	// Details - The details of the audit log.
 	Details *string `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Statistics the Data Lake Analytics job execution statistics.
 type Statistics struct {
 	autorest.Response `json:"-"`
-	// LastUpdateTimeUtc - the last update time for the statistics.
+	// LastUpdateTimeUtc - The last update time for the statistics.
 	LastUpdateTimeUtc *date.Time `json:"lastUpdateTimeUtc,omitempty"`
-	// FinalizingTimeUtc - the job finalizing start time.
+	// FinalizingTimeUtc - The job finalizing start time.
 	FinalizingTimeUtc *date.Time `json:"finalizingTimeUtc,omitempty"`
-	// Stages - the list of stages for the job.
+	// Stages - The list of stages for the job.
 	Stages *[]StatisticsVertexStage `json:"stages,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // StatisticsVertex the detailed information for a vertex.
 type StatisticsVertex struct {
-	// Name - the name of the vertex.
+	// Name - The name of the vertex.
 	Name *string `json:"name,omitempty"`
-	// VertexID - the id of the vertex.
+	// VertexID - The id of the vertex.
 	VertexID *uuid.UUID `json:"vertexId,omitempty"`
-	// ExecutionTime - the amount of execution time of the vertex.
+	// ExecutionTime - The amount of execution time of the vertex.
 	ExecutionTime *string `json:"executionTime,omitempty"`
-	// DataRead - the amount of data read of the vertex, in bytes.
+	// DataRead - The amount of data read of the vertex, in bytes.
 	DataRead *int64 `json:"dataRead,omitempty"`
-	// PeakMemUsage - the amount of peak memory usage of the vertex, in bytes.
+	// PeakMemUsage - The amount of peak memory usage of the vertex, in bytes.
 	PeakMemUsage *int64 `json:"peakMemUsage,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // StatisticsVertexStage the Data Lake Analytics job statistics vertex stage information.
 type StatisticsVertexStage struct {
-	// DataRead - the amount of data read, in bytes.
+	// DataRead - The amount of data read, in bytes.
 	DataRead *int64 `json:"dataRead,omitempty"`
-	// DataReadCrossPod - the amount of data read across multiple pods, in bytes.
+	// DataReadCrossPod - The amount of data read across multiple pods, in bytes.
 	DataReadCrossPod *int64 `json:"dataReadCrossPod,omitempty"`
-	// DataReadIntraPod - the amount of data read in one pod, in bytes.
+	// DataReadIntraPod - The amount of data read in one pod, in bytes.
 	DataReadIntraPod *int64 `json:"dataReadIntraPod,omitempty"`
-	// DataToRead - the amount of data remaining to be read, in bytes.
+	// DataToRead - The amount of data remaining to be read, in bytes.
 	DataToRead *int64 `json:"dataToRead,omitempty"`
-	// DataWritten - the amount of data written, in bytes.
+	// DataWritten - The amount of data written, in bytes.
 	DataWritten *int64 `json:"dataWritten,omitempty"`
-	// DuplicateDiscardCount - the number of duplicates that were discarded.
+	// DuplicateDiscardCount - The number of duplicates that were discarded.
 	DuplicateDiscardCount *int32 `json:"duplicateDiscardCount,omitempty"`
-	// FailedCount - the number of failures that occured in this stage.
+	// FailedCount - The number of failures that occured in this stage.
 	FailedCount *int32 `json:"failedCount,omitempty"`
-	// MaxVertexDataRead - the maximum amount of data read in a single vertex, in bytes.
+	// MaxVertexDataRead - The maximum amount of data read in a single vertex, in bytes.
 	MaxVertexDataRead *int64 `json:"maxVertexDataRead,omitempty"`
-	// MinVertexDataRead - the minimum amount of data read in a single vertex, in bytes.
+	// MinVertexDataRead - The minimum amount of data read in a single vertex, in bytes.
 	MinVertexDataRead *int64 `json:"minVertexDataRead,omitempty"`
-	// ReadFailureCount - the number of read failures in this stage.
+	// ReadFailureCount - The number of read failures in this stage.
 	ReadFailureCount *int32 `json:"readFailureCount,omitempty"`
-	// RevocationCount - the number of vertices that were revoked during this stage.
+	// RevocationCount - The number of vertices that were revoked during this stage.
 	RevocationCount *int32 `json:"revocationCount,omitempty"`
-	// RunningCount - the number of currently running vertices in this stage.
+	// RunningCount - The number of currently running vertices in this stage.
 	RunningCount *int32 `json:"runningCount,omitempty"`
-	// ScheduledCount - the number of currently scheduled vertices in this stage
+	// ScheduledCount - The number of currently scheduled vertices in this stage.
 	ScheduledCount *int32 `json:"scheduledCount,omitempty"`
-	// StageName - the name of this stage in job execution.
+	// StageName - The name of this stage in job execution.
 	StageName *string `json:"stageName,omitempty"`
-	// SucceededCount - the number of vertices that succeeded in this stage.
+	// SucceededCount - The number of vertices that succeeded in this stage.
 	SucceededCount *int32 `json:"succeededCount,omitempty"`
-	// TempDataWritten - the amount of temporary data written, in bytes.
+	// TempDataWritten - The amount of temporary data written, in bytes.
 	TempDataWritten *int64 `json:"tempDataWritten,omitempty"`
-	// TotalCount - the total vertex count for this stage.
+	// TotalCount - The total vertex count for this stage.
 	TotalCount *int32 `json:"totalCount,omitempty"`
-	// TotalFailedTime - the amount of time that failed vertices took up in this stage.
+	// TotalFailedTime - The amount of time that failed vertices took up in this stage.
 	TotalFailedTime *string `json:"totalFailedTime,omitempty"`
-	// TotalProgress - the current progress of this stage, as a percentage.
+	// TotalProgress - The current progress of this stage, as a percentage.
 	TotalProgress *int32 `json:"totalProgress,omitempty"`
-	// TotalSucceededTime - the amount of time all successful vertices took in this stage.
+	// TotalSucceededTime - The amount of time all successful vertices took in this stage.
 	TotalSucceededTime *string `json:"totalSucceededTime,omitempty"`
-	// TotalPeakMemUsage - the sum of the peak memory usage of all the vertices in the stage, in bytes.
+	// TotalPeakMemUsage - The sum of the peak memory usage of all the vertices in the stage, in bytes.
 	TotalPeakMemUsage *int64 `json:"totalPeakMemUsage,omitempty"`
-	// TotalExecutionTime - the sum of the total execution time of all the vertices in the stage.
+	// TotalExecutionTime - The sum of the total execution time of all the vertices in the stage.
 	TotalExecutionTime *string `json:"totalExecutionTime,omitempty"`
 	// MaxDataReadVertex - the vertex with the maximum amount of data read.
 	MaxDataReadVertex *StatisticsVertex `json:"maxDataReadVertex,omitempty"`
@@ -1915,28 +2108,30 @@ type StatisticsVertexStage struct {
 	MaxExecutionTimeVertex *StatisticsVertex `json:"maxExecutionTimeVertex,omitempty"`
 	// MaxPeakMemUsageVertex - the vertex with the maximum peak memory usage.
 	MaxPeakMemUsageVertex *StatisticsVertex `json:"maxPeakMemUsageVertex,omitempty"`
-	// EstimatedVertexCPUCoreCount - the estimated vertex CPU core count.
+	// EstimatedVertexCPUCoreCount - The estimated vertex CPU core count.
 	EstimatedVertexCPUCoreCount *int32 `json:"estimatedVertexCpuCoreCount,omitempty"`
-	// EstimatedVertexPeakCPUCoreCount - the estimated vertex peak CPU core count.
+	// EstimatedVertexPeakCPUCoreCount - The estimated vertex peak CPU core count.
 	EstimatedVertexPeakCPUCoreCount *int32 `json:"estimatedVertexPeakCpuCoreCount,omitempty"`
-	// EstimatedVertexMemSize - the estimated vertex memory size, in bytes.
+	// EstimatedVertexMemSize - The estimated vertex memory size, in bytes.
 	EstimatedVertexMemSize *int64 `json:"estimatedVertexMemSize,omitempty"`
-	// AllocatedContainerCPUCoreCount - the statistics information for the allocated container CPU core count.
+	// AllocatedContainerCPUCoreCount - The statistics information for the allocated container CPU core count.
 	AllocatedContainerCPUCoreCount *ResourceUsageStatistics `json:"allocatedContainerCpuCoreCount,omitempty"`
-	// AllocatedContainerMemSize - the statistics information for the allocated container memory size.
+	// AllocatedContainerMemSize - The statistics information for the allocated container memory size.
 	AllocatedContainerMemSize *ResourceUsageStatistics `json:"allocatedContainerMemSize,omitempty"`
-	// UsedVertexCPUCoreCount - the statistics information for the used vertex CPU core count.
+	// UsedVertexCPUCoreCount - The statistics information for the used vertex CPU core count.
 	UsedVertexCPUCoreCount *ResourceUsageStatistics `json:"usedVertexCpuCoreCount,omitempty"`
-	// UsedVertexPeakMemSize - the statistics information for the used vertex peak memory size.
+	// UsedVertexPeakMemSize - The statistics information for the used vertex peak memory size.
 	UsedVertexPeakMemSize *ResourceUsageStatistics `json:"usedVertexPeakMemSize,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type UpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future UpdateFuture) Result(client Client) (i Information, err error) {
@@ -1979,17 +2174,19 @@ func (future UpdateFuture) Result(client Client) (i Information, err error) {
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // UpdateJobParameters the parameters that can be used to update existing Data Lake Analytics job information
 // properties. (Only for use internally with Scope job type.)
 type UpdateJobParameters struct {
-	// DegreeOfParallelism - the degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
+	// DegreeOfParallelism - The degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
 	DegreeOfParallelism *int32 `json:"degreeOfParallelism,omitempty"`
-	// Priority - the priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
+	// Priority - The priority value for the current job. Lower numbers have a higher priority. By default, a job has a priority of 1000. This must be greater than 0.
 	Priority *int32 `json:"priority,omitempty"`
-	// Tags - the key-value pairs used to add additional metadata to the job information. (Only for use internally with Scope job type.)
+	// Tags - The key-value pairs used to add additional metadata to the job information.
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for UpdateJobParameters.
 func (ujp UpdateJobParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2005,42 +2202,44 @@ func (ujp UpdateJobParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // USQLJobProperties u-SQL job properties used when retrieving U-SQL jobs.
 type USQLJobProperties struct {
-	// Resources - the list of resources that are required by the job
+	// Resources - The list of resources that are required by the job.
 	Resources *[]Resource `json:"resources,omitempty"`
-	// Statistics - the job specific statistics.
+	// Statistics - The job specific statistics.
 	Statistics *Statistics `json:"statistics,omitempty"`
-	// DebugData - the job specific debug data locations.
+	// DebugData - The job specific debug data locations.
 	DebugData *DataPath `json:"debugData,omitempty"`
-	// Diagnostics - the diagnostics for the job.
+	// Diagnostics - The diagnostics for the job.
 	Diagnostics *[]Diagnostics `json:"diagnostics,omitempty"`
-	// AlgebraFilePath - the algebra file path after the job has completed
+	// AlgebraFilePath - The algebra file path after the job has completed.
 	AlgebraFilePath *string `json:"algebraFilePath,omitempty"`
-	// TotalCompilationTime - the total time this job spent compiling. This value should not be set by the user and will be ignored if it is.
+	// TotalCompilationTime - The total time this job spent compiling. This value should not be set by the user and will be ignored if it is.
 	TotalCompilationTime *string `json:"totalCompilationTime,omitempty"`
-	// TotalPausedTime - the total time this job spent paused. This value should not be set by the user and will be ignored if it is.
-	TotalPausedTime *string `json:"totalPausedTime,omitempty"`
-	// TotalQueuedTime - the total time this job spent queued. This value should not be set by the user and will be ignored if it is.
+	// TotalQueuedTime - The total time this job spent queued. This value should not be set by the user and will be ignored if it is.
 	TotalQueuedTime *string `json:"totalQueuedTime,omitempty"`
-	// TotalRunningTime - the total time this job spent executing. This value should not be set by the user and will be ignored if it is.
+	// TotalRunningTime - The total time this job spent executing. This value should not be set by the user and will be ignored if it is.
 	TotalRunningTime *string `json:"totalRunningTime,omitempty"`
-	// RootProcessNodeID - the ID used to identify the job manager coordinating job execution. This value should not be set by the user and will be ignored if it is.
+	// TotalPausedTime - The total time this job spent paused. This value should not be set by the user and will be ignored if it is.
+	TotalPausedTime *string `json:"totalPausedTime,omitempty"`
+	// RootProcessNodeID - The ID used to identify the job manager coordinating job execution. This value should not be set by the user and will be ignored if it is.
 	RootProcessNodeID *string `json:"rootProcessNodeId,omitempty"`
-	// YarnApplicationID - the ID used to identify the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
+	// YarnApplicationID - The ID used to identify the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
 	YarnApplicationID *string `json:"yarnApplicationId,omitempty"`
-	// YarnApplicationTimeStamp - the timestamp (in ticks) for the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
+	// YarnApplicationTimeStamp - The timestamp (in ticks) for the yarn application executing the job. This value should not be set by the user and will be ignored if it is.
 	YarnApplicationTimeStamp *int64 `json:"yarnApplicationTimeStamp,omitempty"`
-	// CompileMode - the specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
+	// CompileMode - The specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
 	CompileMode CompileMode `json:"compileMode,omitempty"`
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	// RuntimeVersion - The runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	// Script - The script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeScope', 'TypeHive'
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive', 'TypeScope'
 	Type Type `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // MarshalJSON is the custom marshaler for USQLJobProperties.
 func (usjp USQLJobProperties) MarshalJSON() ([]byte, error) {
 	usjp.Type = TypeUSQL
@@ -2063,14 +2262,14 @@ func (usjp USQLJobProperties) MarshalJSON() ([]byte, error) {
 	if usjp.TotalCompilationTime != nil {
 		objectMap["totalCompilationTime"] = usjp.TotalCompilationTime
 	}
-	if usjp.TotalPausedTime != nil {
-		objectMap["totalPausedTime"] = usjp.TotalPausedTime
-	}
 	if usjp.TotalQueuedTime != nil {
 		objectMap["totalQueuedTime"] = usjp.TotalQueuedTime
 	}
 	if usjp.TotalRunningTime != nil {
 		objectMap["totalRunningTime"] = usjp.TotalRunningTime
+	}
+	if usjp.TotalPausedTime != nil {
+		objectMap["totalPausedTime"] = usjp.TotalPausedTime
 	}
 	if usjp.RootProcessNodeID != nil {
 		objectMap["rootProcessNodeId"] = usjp.RootProcessNodeID
@@ -2081,48 +2280,59 @@ func (usjp USQLJobProperties) MarshalJSON() ([]byte, error) {
 	if usjp.YarnApplicationTimeStamp != nil {
 		objectMap["yarnApplicationTimeStamp"] = usjp.YarnApplicationTimeStamp
 	}
-	objectMap["compileMode"] = usjp.CompileMode
+	if usjp.CompileMode != "" {
+		objectMap["compileMode"] = usjp.CompileMode
+	}
 	if usjp.RuntimeVersion != nil {
 		objectMap["runtimeVersion"] = usjp.RuntimeVersion
 	}
 	if usjp.Script != nil {
 		objectMap["script"] = usjp.Script
 	}
-	objectMap["type"] = usjp.Type
+	if usjp.Type != "" {
+		objectMap["type"] = usjp.Type
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsUSQLJobProperties is the BasicProperties implementation for USQLJobProperties.
 func (usjp USQLJobProperties) AsUSQLJobProperties() (*USQLJobProperties, bool) {
 	return &usjp, true
 }
 
-// AsScopeJobProperties is the BasicProperties implementation for USQLJobProperties.
-func (usjp USQLJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
-	return nil, false
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsHiveJobProperties is the BasicProperties implementation for USQLJobProperties.
 func (usjp USQLJobProperties) AsHiveJobProperties() (*HiveJobProperties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
+// AsScopeJobProperties is the BasicProperties implementation for USQLJobProperties.
+func (usjp USQLJobProperties) AsScopeJobProperties() (*ScopeJobProperties, bool) {
+	return nil, false
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsProperties is the BasicProperties implementation for USQLJobProperties.
 func (usjp USQLJobProperties) AsProperties() (*Properties, bool) {
 	return nil, false
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // AsBasicProperties is the BasicProperties implementation for USQLJobProperties.
 func (usjp USQLJobProperties) AsBasicProperties() (BasicProperties, bool) {
 	return &usjp, true
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // YieldFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type YieldFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future YieldFuture) Result(client Client) (ar autorest.Response, err error) {

@@ -41,9 +41,11 @@ func NewBandwidthSettingsClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate creates or updates the bandwidth setting
-//
-// bandwidthSettingName is the bandwidth setting name. parameters is the bandwidth setting to be added or updated.
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// bandwidthSettingName - the bandwidth setting name.
+// parameters - the bandwidth setting to be added or updated.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BandwidthSettingsClient) CreateOrUpdate(ctx context.Context, bandwidthSettingName string, parameters BandwidthSetting, resourceGroupName string, managerName string) (result BandwidthSettingsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -85,7 +87,7 @@ func (client BandwidthSettingsClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/bandwidthSettings/{bandwidthSettingName}", pathParameters),
@@ -123,9 +125,10 @@ func (client BandwidthSettingsClient) CreateOrUpdateResponder(resp *http.Respons
 }
 
 // Delete deletes the bandwidth setting
-//
-// bandwidthSettingName is the name of the bandwidth setting. resourceGroupName is the resource group name
-// managerName is the manager name
+// Parameters:
+// bandwidthSettingName - the name of the bandwidth setting.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BandwidthSettingsClient) Delete(ctx context.Context, bandwidthSettingName string, resourceGroupName string, managerName string) (result BandwidthSettingsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -199,9 +202,10 @@ func (client BandwidthSettingsClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get returns the properties of the specified bandwidth setting name.
-//
-// bandwidthSettingName is the name of bandwidth setting to be fetched. resourceGroupName is the resource group
-// name managerName is the manager name
+// Parameters:
+// bandwidthSettingName - the name of bandwidth setting to be fetched.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BandwidthSettingsClient) Get(ctx context.Context, bandwidthSettingName string, resourceGroupName string, managerName string) (result BandwidthSetting, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -274,8 +278,9 @@ func (client BandwidthSettingsClient) GetResponder(resp *http.Response) (result 
 }
 
 // ListByManager retrieves all the bandwidth setting in a manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client BandwidthSettingsClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string) (result BandwidthSettingList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

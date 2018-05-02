@@ -16,6 +16,13 @@ const (
 	// The image does not support storage connectors.
 	ErrCodeIncompatibleImageException = "IncompatibleImageException"
 
+	// ErrCodeInvalidAccountStatusException for service response error code
+	// "InvalidAccountStatusException".
+	//
+	// The resource cannot be created because your AWS account is suspended. For
+	// assistance, contact AWS Support.
+	ErrCodeInvalidAccountStatusException = "InvalidAccountStatusException"
+
 	// ErrCodeInvalidParameterCombinationException for service response error code
 	// "InvalidParameterCombinationException".
 	//

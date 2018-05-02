@@ -1,154 +1,20 @@
-
-## Gopkg.toml example (these lines may be deleted)
-
-## "required" lists a set of packages (not projects) that must be included in
-## Gopkg.lock. This list is merged with the set of packages imported by the current
-## project. Use it when your project needs a package it doesn't explicitly import -
-## including "main" packages.
-# required = ["github.com/user/thing/cmd/thing"]
-
-## "ignored" lists a set of packages (not projects) that are ignored when
-## dep statically analyzes source code. Ignored packages can be in this project,
-## or in a dependency.
-# ignored = ["github.com/user/project/badpkg"]
-
-## Dependencies define constraints on dependent projects. They are respected by
-## dep whether coming from the Gopkg.toml of the current project or a dependency.
-# [[constraint]]
-## Required: the root import path of the project being constrained.
-# name = "github.com/user/project"
+# github.com/yunify/qingstor-sdk-go depends on an old version of
+# github.com/pengsrc/go-shared - pin the version here
 #
-## Recommended: the version constraint to enforce for the project.
-## Only one of "branch", "version" or "revision" can be specified.
-# version = "1.0.0"
-# branch = "master"
-# revision = "abc123"
-#
-## Optional: an alternate location (URL or import path) for the project's source.
-# source = "https://github.com/myfork/package.git"
+# When the version here moves on, we can unpin
+# https://github.com/yunify/qingstor-sdk-go/blob/master/glide.yaml
+[[override]]
+  version = "=v0.1.1"
+  name = "github.com/pengsrc/go-shared"
 
-## Overrides have the same structure as [[constraint]], but supercede all
-## [[constraint]] declarations from all projects. Only the current project's
-## [[override]] are applied.
-##
-## Overrides are a sledgehammer. Use them only as a last resort.
-# [[override]]
-## Required: the root import path of the project being constrained.
-# name = "github.com/user/project"
-#
-## Optional: specifying a version constraint override will cause all other
-## constraints on this project to be ignored; only the overriden constraint
-## need be satisfied.
-## Again, only one of "branch", "version" or "revision" can be specified.
-# version = "1.0.0"
-# branch = "master"
-# revision = "abc123"
-#
-## Optional: specifying an alternate source location as an override will
-## enforce that the alternate location is used for that project, regardless of
-## what source location any dependent projects specify.
-# source = "https://github.com/myfork/package.git"
-
-[[constraint]]
-  branch = "master"
-  name = "bazil.org/fuse"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/Unknwon/goconfig"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/VividCortex/ewma"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/aws/aws-sdk-go"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/ncw/go-acd"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/ncw/swift"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/pkg/errors"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/pkg/sftp"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/rfjakob/eme"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/skratchdot/open-golang"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/spf13/cobra"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/spf13/pflag"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/stretchr/testify"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/crypto"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/oauth2"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/sys"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/text"
-
-[[constraint]]
-  branch = "master"
-  name = "google.golang.org/api"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/dropbox/dropbox-sdk-go-unofficial"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/yunify/qingstor-sdk-go"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/coreos/bbolt"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/patrickmn/go-cache"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/okzk/sdnotify"
-
-[[constraint]]
+# pin this to master to pull in the macOS changes
+# can likely remove for 1.42
+[[override]]
   branch = "master"
   name = "github.com/sevlyar/go-daemon"
 
-[[constraint]]
+# pin this to master to pull in the fix for linux/mips
+# can likely remove for 1.42
+[[override]]
   branch = "master"
-  name = "github.com/t3rm1n4l/go-mega"
+  name = "github.com/coreos/bbolt"

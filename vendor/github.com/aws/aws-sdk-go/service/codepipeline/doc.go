@@ -11,10 +11,10 @@
 // see the AWS CodePipeline User Guide (http://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html).
 //
 // You can use the AWS CodePipeline API to work with pipelines, stages, actions,
-// gates, and transitions, as described below.
+// and transitions, as described below.
 //
 // Pipelines are models of automated release processes. Each pipeline is uniquely
-// named, and consists of actions, gates, and stages.
+// named, and consists of stages, actions, and transitions.
 //
 // You can work with pipelines by calling:
 //
@@ -43,24 +43,37 @@
 //    * UpdatePipeline, which updates a pipeline with edits or changes to the
 //    structure of the pipeline.
 //
-// Pipelines include stages, which are logical groupings of gates and actions.
-// Each stage contains one or more actions that must complete before the next
-// stage begins. A stage will result in success or failure. If a stage fails,
-// then the pipeline stops at that stage and will remain stopped until either
-// a new version of an artifact appears in the source location, or a user takes
-// action to re-run the most recent artifact through the pipeline. You can call
-// GetPipelineState, which displays the status of a pipeline, including the
-// status of stages in the pipeline, or GetPipeline, which returns the entire
-// structure of the pipeline, including the stages of that pipeline. For more
-// information about the structure of stages and actions, also refer to the
-// AWS CodePipeline Pipeline Structure Reference (http://docs.aws.amazon.com/codepipeline/latest/userguide/pipeline-structure.html).
+// Pipelines include stages. Each stage contains one or more actions that must
+// complete before the next stage begins. A stage will result in success or
+// failure. If a stage fails, then the pipeline stops at that stage and will
+// remain stopped until either a new version of an artifact appears in the source
+// location, or a user takes action to re-run the most recent artifact through
+// the pipeline. You can call GetPipelineState, which displays the status of
+// a pipeline, including the status of stages in the pipeline, or GetPipeline,
+// which returns the entire structure of the pipeline, including the stages
+// of that pipeline. For more information about the structure of stages and
+// actions, also refer to the AWS CodePipeline Pipeline Structure Reference
+// (http://docs.aws.amazon.com/codepipeline/latest/userguide/pipeline-structure.html).
 //
 // Pipeline stages include actions, which are categorized into categories such
 // as source or build actions performed within a stage of a pipeline. For example,
 // you can use a source action to import artifacts into a pipeline from a source
 // such as Amazon S3. Like stages, you do not work with actions directly in
 // most cases, but you do define and interact with actions when working with
-// pipeline operations such as CreatePipeline and GetPipelineState.
+// pipeline operations such as CreatePipeline and GetPipelineState. Valid action
+// categories are:
+//
+//    * Source
+//
+//    * Build
+//
+//    * Test
+//
+//    * Deploy
+//
+//    * Approval
+//
+//    * Invoke
 //
 // Pipelines also include transitions, which allow the transition of artifacts
 // from one stage to the next in a pipeline after the actions in one stage complete.

@@ -120,6 +120,7 @@ func (ds *DefaultSender) Send(c *Client, req *http.Request) (resp *http.Response
 		if err != nil || !autorest.ResponseHasStatusCode(resp, ds.ValidStatusCodes...) {
 			return resp, err
 		}
+		drainRespBody(resp)
 		autorest.DelayForBackoff(ds.RetryDuration, attempts, req.Cancel)
 		ds.attempts = attempts
 	}
@@ -592,15 +593,11 @@ func (c Client) GetAccountSASToken(options AccountSASTokenOptions) (url.Values, 
 	// build start time, if exists
 	start := ""
 	if options.Start != (time.Time{}) {
-		start = options.Start.Format(time.RFC3339)
-		// For some reason I don't understand, it fails when the rest of the string is included
-		start = start[:10]
+		start = options.Start.UTC().Format(time.RFC3339)
 	}
 
 	// build expiry time
-	expiry := options.Expiry.Format(time.RFC3339)
-	// For some reason I don't understand, it fails when the rest of the string is included
-	expiry = expiry[:10]
+	expiry := options.Expiry.UTC().Format(time.RFC3339)
 
 	protocol := "https,http"
 	if options.UseHTTPS {
@@ -882,6 +879,12 @@ func readAndCloseBody(body io.ReadCloser) ([]byte, error) {
 		err = nil
 	}
 	return out, err
+}
+
+// reads the response body then closes it
+func drainRespBody(resp *http.Response) {
+	io.Copy(ioutil.Discard, resp.Body)
+	resp.Body.Close()
 }
 
 func serviceErrFromXML(body []byte, storageErr *AzureStorageServiceError) error {

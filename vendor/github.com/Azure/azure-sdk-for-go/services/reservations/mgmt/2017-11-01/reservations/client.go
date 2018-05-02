@@ -52,8 +52,8 @@ func NewWithBaseURI(baseURI string) BaseClient {
 }
 
 // GetAppliedReservationList get applicable `Reservation`s that are applied to this subscription.
-//
-// subscriptionID is id of the subscription
+// Parameters:
+// subscriptionID - id of the subscription
 func (client BaseClient) GetAppliedReservationList(ctx context.Context, subscriptionID string) (result AppliedReservations, err error) {
 	req, err := client.GetAppliedReservationListPreparer(ctx, subscriptionID)
 	if err != nil {
@@ -116,8 +116,8 @@ func (client BaseClient) GetAppliedReservationListResponder(resp *http.Response)
 }
 
 // GetCatalog sends the get catalog request.
-//
-// subscriptionID is id of the subscription
+// Parameters:
+// subscriptionID - id of the subscription
 func (client BaseClient) GetCatalog(ctx context.Context, subscriptionID string) (result ListCatalog, err error) {
 	req, err := client.GetCatalogPreparer(ctx, subscriptionID)
 	if err != nil {

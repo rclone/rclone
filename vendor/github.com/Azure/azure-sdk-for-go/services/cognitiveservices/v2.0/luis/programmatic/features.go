@@ -37,10 +37,11 @@ func NewFeaturesClient(azureRegion AzureRegions) FeaturesClient {
 }
 
 // AddPhraseList creates a new phraselist feature.
-//
-// appID is the application ID. versionID is the version ID. phraselistCreateObject is a Phraselist object
-// containing Name, comma-separated Phrases and the isExchangeable boolean. Default value for isExchangeable is
-// true.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// phraselistCreateObject - a Phraselist object containing Name, comma-separated Phrases and the isExchangeable
+// boolean. Default value for isExchangeable is true.
 func (client FeaturesClient) AddPhraseList(ctx context.Context, appID uuid.UUID, versionID string, phraselistCreateObject PhraselistCreateObject) (result Int32, err error) {
 	req, err := client.AddPhraseListPreparer(ctx, appID, versionID, phraselistCreateObject)
 	if err != nil {
@@ -75,7 +76,7 @@ func (client FeaturesClient) AddPhraseListPreparer(ctx context.Context, appID uu
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/phraselists", pathParameters),
@@ -104,8 +105,10 @@ func (client FeaturesClient) AddPhraseListResponder(resp *http.Response) (result
 }
 
 // DeletePhraseList deletes a phraselist feature.
-//
-// appID is the application ID. versionID is the version ID. phraselistID is the ID of the feature to be deleted.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// phraselistID - the ID of the feature to be deleted.
 func (client FeaturesClient) DeletePhraseList(ctx context.Context, appID uuid.UUID, versionID string, phraselistID int32) (result OperationStatus, err error) {
 	req, err := client.DeletePhraseListPreparer(ctx, appID, versionID, phraselistID)
 	if err != nil {
@@ -168,8 +171,10 @@ func (client FeaturesClient) DeletePhraseListResponder(resp *http.Response) (res
 }
 
 // GetPhraseList gets phraselist feature info.
-//
-// appID is the application ID. versionID is the version ID. phraselistID is the ID of the feature to be retrieved.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// phraselistID - the ID of the feature to be retrieved.
 func (client FeaturesClient) GetPhraseList(ctx context.Context, appID uuid.UUID, versionID string, phraselistID int32) (result PhraseListFeatureInfo, err error) {
 	req, err := client.GetPhraseListPreparer(ctx, appID, versionID, phraselistID)
 	if err != nil {
@@ -232,9 +237,11 @@ func (client FeaturesClient) GetPhraseListResponder(resp *http.Response) (result
 }
 
 // List gets all the extraction features for the specified application version.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client FeaturesClient) List(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result FeaturesResponseObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -321,9 +328,11 @@ func (client FeaturesClient) ListResponder(resp *http.Response) (result Features
 }
 
 // ListPhraseLists gets all the phraselist features.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client FeaturesClient) ListPhraseLists(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListPhraseListFeatureInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -410,10 +419,12 @@ func (client FeaturesClient) ListPhraseListsResponder(resp *http.Response) (resu
 }
 
 // UpdatePhraseList updates the phrases, the state and the name of the phraselist feature.
-//
-// appID is the application ID. versionID is the version ID. phraselistID is the ID of the feature to be updated.
-// phraselistUpdateObject is the new values for: - Just a boolean called IsActive, in which case the status of the
-// feature will be changed. - Name, Pattern, Mode, and a boolean called IsActive to update the feature.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// phraselistID - the ID of the feature to be updated.
+// phraselistUpdateObject - the new values for: - Just a boolean called IsActive, in which case the status of
+// the feature will be changed. - Name, Pattern, Mode, and a boolean called IsActive to update the feature.
 func (client FeaturesClient) UpdatePhraseList(ctx context.Context, appID uuid.UUID, versionID string, phraselistID int32, phraselistUpdateObject *PhraselistUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdatePhraseListPreparer(ctx, appID, versionID, phraselistID, phraselistUpdateObject)
 	if err != nil {
@@ -449,7 +460,7 @@ func (client FeaturesClient) UpdatePhraseListPreparer(ctx context.Context, appID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/phraselists/{phraselistId}", pathParameters))

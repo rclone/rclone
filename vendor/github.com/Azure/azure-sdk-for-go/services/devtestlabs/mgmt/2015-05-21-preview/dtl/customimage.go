@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CustomImageClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type CustomImageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewCustomImageClient creates an instance of the CustomImageClient client.
 func NewCustomImageClient(subscriptionID string) CustomImageClient {
 	return NewCustomImageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewCustomImageClientWithBaseURI creates an instance of the CustomImageClient client.
 func NewCustomImageClientWithBaseURI(baseURI string, subscriptionID string) CustomImageClient {
 	return CustomImageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResource create or replace an existing custom image. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -59,6 +63,7 @@ func (client CustomImageClient) CreateOrUpdateResource(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourcePreparer prepares the CreateOrUpdateResource request.
 func (client CustomImageClient) CreateOrUpdateResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, customImage CustomImage) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -74,7 +79,7 @@ func (client CustomImageClient) CreateOrUpdateResourcePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/customimages/{name}", pathParameters),
@@ -83,6 +88,7 @@ func (client CustomImageClient) CreateOrUpdateResourcePreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceSender sends the CreateOrUpdateResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImageClient) CreateOrUpdateResourceSender(req *http.Request) (future CustomImageCreateOrUpdateResourceFuture, err error) {
@@ -98,6 +104,7 @@ func (client CustomImageClient) CreateOrUpdateResourceSender(req *http.Request) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceResponder handles the response to the CreateOrUpdateResource request. The method always
 // closes the http.Response Body.
 func (client CustomImageClient) CreateOrUpdateResourceResponder(resp *http.Response) (result CustomImage, err error) {
@@ -111,6 +118,7 @@ func (client CustomImageClient) CreateOrUpdateResourceResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResource delete custom image. This operation can take a while to complete.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -131,6 +139,7 @@ func (client CustomImageClient) DeleteResource(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourcePreparer prepares the DeleteResource request.
 func (client CustomImageClient) DeleteResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -153,6 +162,7 @@ func (client CustomImageClient) DeleteResourcePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceSender sends the DeleteResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImageClient) DeleteResourceSender(req *http.Request) (future CustomImageDeleteResourceFuture, err error) {
@@ -168,6 +178,7 @@ func (client CustomImageClient) DeleteResourceSender(req *http.Request) (future 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceResponder handles the response to the DeleteResource request. The method always
 // closes the http.Response Body.
 func (client CustomImageClient) DeleteResourceResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -180,6 +191,7 @@ func (client CustomImageClient) DeleteResourceResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResource get custom image.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -206,6 +218,7 @@ func (client CustomImageClient) GetResource(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourcePreparer prepares the GetResource request.
 func (client CustomImageClient) GetResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -228,6 +241,7 @@ func (client CustomImageClient) GetResourcePreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceSender sends the GetResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImageClient) GetResourceSender(req *http.Request) (*http.Response, error) {
@@ -235,6 +249,7 @@ func (client CustomImageClient) GetResourceSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceResponder handles the response to the GetResource request. The method always
 // closes the http.Response Body.
 func (client CustomImageClient) GetResourceResponder(resp *http.Response) (result CustomImage, err error) {
@@ -248,6 +263,7 @@ func (client CustomImageClient) GetResourceResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list custom images.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
@@ -275,6 +291,7 @@ func (client CustomImageClient) List(ctx context.Context, resourceGroupName stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client CustomImageClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -305,6 +322,7 @@ func (client CustomImageClient) ListPreparer(ctx context.Context, resourceGroupN
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImageClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -312,6 +330,7 @@ func (client CustomImageClient) ListSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client CustomImageClient) ListResponder(resp *http.Response) (result ResponseWithContinuationCustomImage, err error) {
@@ -346,6 +365,7 @@ func (client CustomImageClient) listNextResults(lastResults ResponseWithContinua
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client CustomImageClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationCustomImageIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, filter, top, orderBy)

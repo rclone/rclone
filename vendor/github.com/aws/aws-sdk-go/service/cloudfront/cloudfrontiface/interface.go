@@ -72,9 +72,21 @@ type CloudFrontAPI interface {
 	CreateDistributionWithTagsWithContext(aws.Context, *cloudfront.CreateDistributionWithTagsInput, ...request.Option) (*cloudfront.CreateDistributionWithTagsOutput, error)
 	CreateDistributionWithTagsRequest(*cloudfront.CreateDistributionWithTagsInput) (*request.Request, *cloudfront.CreateDistributionWithTagsOutput)
 
+	CreateFieldLevelEncryptionConfig(*cloudfront.CreateFieldLevelEncryptionConfigInput) (*cloudfront.CreateFieldLevelEncryptionConfigOutput, error)
+	CreateFieldLevelEncryptionConfigWithContext(aws.Context, *cloudfront.CreateFieldLevelEncryptionConfigInput, ...request.Option) (*cloudfront.CreateFieldLevelEncryptionConfigOutput, error)
+	CreateFieldLevelEncryptionConfigRequest(*cloudfront.CreateFieldLevelEncryptionConfigInput) (*request.Request, *cloudfront.CreateFieldLevelEncryptionConfigOutput)
+
+	CreateFieldLevelEncryptionProfile(*cloudfront.CreateFieldLevelEncryptionProfileInput) (*cloudfront.CreateFieldLevelEncryptionProfileOutput, error)
+	CreateFieldLevelEncryptionProfileWithContext(aws.Context, *cloudfront.CreateFieldLevelEncryptionProfileInput, ...request.Option) (*cloudfront.CreateFieldLevelEncryptionProfileOutput, error)
+	CreateFieldLevelEncryptionProfileRequest(*cloudfront.CreateFieldLevelEncryptionProfileInput) (*request.Request, *cloudfront.CreateFieldLevelEncryptionProfileOutput)
+
 	CreateInvalidation(*cloudfront.CreateInvalidationInput) (*cloudfront.CreateInvalidationOutput, error)
 	CreateInvalidationWithContext(aws.Context, *cloudfront.CreateInvalidationInput, ...request.Option) (*cloudfront.CreateInvalidationOutput, error)
 	CreateInvalidationRequest(*cloudfront.CreateInvalidationInput) (*request.Request, *cloudfront.CreateInvalidationOutput)
+
+	CreatePublicKey(*cloudfront.CreatePublicKeyInput) (*cloudfront.CreatePublicKeyOutput, error)
+	CreatePublicKeyWithContext(aws.Context, *cloudfront.CreatePublicKeyInput, ...request.Option) (*cloudfront.CreatePublicKeyOutput, error)
+	CreatePublicKeyRequest(*cloudfront.CreatePublicKeyInput) (*request.Request, *cloudfront.CreatePublicKeyOutput)
 
 	CreateStreamingDistribution(*cloudfront.CreateStreamingDistributionInput) (*cloudfront.CreateStreamingDistributionOutput, error)
 	CreateStreamingDistributionWithContext(aws.Context, *cloudfront.CreateStreamingDistributionInput, ...request.Option) (*cloudfront.CreateStreamingDistributionOutput, error)
@@ -91,6 +103,18 @@ type CloudFrontAPI interface {
 	DeleteDistribution(*cloudfront.DeleteDistributionInput) (*cloudfront.DeleteDistributionOutput, error)
 	DeleteDistributionWithContext(aws.Context, *cloudfront.DeleteDistributionInput, ...request.Option) (*cloudfront.DeleteDistributionOutput, error)
 	DeleteDistributionRequest(*cloudfront.DeleteDistributionInput) (*request.Request, *cloudfront.DeleteDistributionOutput)
+
+	DeleteFieldLevelEncryptionConfig(*cloudfront.DeleteFieldLevelEncryptionConfigInput) (*cloudfront.DeleteFieldLevelEncryptionConfigOutput, error)
+	DeleteFieldLevelEncryptionConfigWithContext(aws.Context, *cloudfront.DeleteFieldLevelEncryptionConfigInput, ...request.Option) (*cloudfront.DeleteFieldLevelEncryptionConfigOutput, error)
+	DeleteFieldLevelEncryptionConfigRequest(*cloudfront.DeleteFieldLevelEncryptionConfigInput) (*request.Request, *cloudfront.DeleteFieldLevelEncryptionConfigOutput)
+
+	DeleteFieldLevelEncryptionProfile(*cloudfront.DeleteFieldLevelEncryptionProfileInput) (*cloudfront.DeleteFieldLevelEncryptionProfileOutput, error)
+	DeleteFieldLevelEncryptionProfileWithContext(aws.Context, *cloudfront.DeleteFieldLevelEncryptionProfileInput, ...request.Option) (*cloudfront.DeleteFieldLevelEncryptionProfileOutput, error)
+	DeleteFieldLevelEncryptionProfileRequest(*cloudfront.DeleteFieldLevelEncryptionProfileInput) (*request.Request, *cloudfront.DeleteFieldLevelEncryptionProfileOutput)
+
+	DeletePublicKey(*cloudfront.DeletePublicKeyInput) (*cloudfront.DeletePublicKeyOutput, error)
+	DeletePublicKeyWithContext(aws.Context, *cloudfront.DeletePublicKeyInput, ...request.Option) (*cloudfront.DeletePublicKeyOutput, error)
+	DeletePublicKeyRequest(*cloudfront.DeletePublicKeyInput) (*request.Request, *cloudfront.DeletePublicKeyOutput)
 
 	DeleteServiceLinkedRole(*cloudfront.DeleteServiceLinkedRoleInput) (*cloudfront.DeleteServiceLinkedRoleOutput, error)
 	DeleteServiceLinkedRoleWithContext(aws.Context, *cloudfront.DeleteServiceLinkedRoleInput, ...request.Option) (*cloudfront.DeleteServiceLinkedRoleOutput, error)
@@ -116,9 +140,33 @@ type CloudFrontAPI interface {
 	GetDistributionConfigWithContext(aws.Context, *cloudfront.GetDistributionConfigInput, ...request.Option) (*cloudfront.GetDistributionConfigOutput, error)
 	GetDistributionConfigRequest(*cloudfront.GetDistributionConfigInput) (*request.Request, *cloudfront.GetDistributionConfigOutput)
 
+	GetFieldLevelEncryption(*cloudfront.GetFieldLevelEncryptionInput) (*cloudfront.GetFieldLevelEncryptionOutput, error)
+	GetFieldLevelEncryptionWithContext(aws.Context, *cloudfront.GetFieldLevelEncryptionInput, ...request.Option) (*cloudfront.GetFieldLevelEncryptionOutput, error)
+	GetFieldLevelEncryptionRequest(*cloudfront.GetFieldLevelEncryptionInput) (*request.Request, *cloudfront.GetFieldLevelEncryptionOutput)
+
+	GetFieldLevelEncryptionConfig(*cloudfront.GetFieldLevelEncryptionConfigInput) (*cloudfront.GetFieldLevelEncryptionConfigOutput, error)
+	GetFieldLevelEncryptionConfigWithContext(aws.Context, *cloudfront.GetFieldLevelEncryptionConfigInput, ...request.Option) (*cloudfront.GetFieldLevelEncryptionConfigOutput, error)
+	GetFieldLevelEncryptionConfigRequest(*cloudfront.GetFieldLevelEncryptionConfigInput) (*request.Request, *cloudfront.GetFieldLevelEncryptionConfigOutput)
+
+	GetFieldLevelEncryptionProfile(*cloudfront.GetFieldLevelEncryptionProfileInput) (*cloudfront.GetFieldLevelEncryptionProfileOutput, error)
+	GetFieldLevelEncryptionProfileWithContext(aws.Context, *cloudfront.GetFieldLevelEncryptionProfileInput, ...request.Option) (*cloudfront.GetFieldLevelEncryptionProfileOutput, error)
+	GetFieldLevelEncryptionProfileRequest(*cloudfront.GetFieldLevelEncryptionProfileInput) (*request.Request, *cloudfront.GetFieldLevelEncryptionProfileOutput)
+
+	GetFieldLevelEncryptionProfileConfig(*cloudfront.GetFieldLevelEncryptionProfileConfigInput) (*cloudfront.GetFieldLevelEncryptionProfileConfigOutput, error)
+	GetFieldLevelEncryptionProfileConfigWithContext(aws.Context, *cloudfront.GetFieldLevelEncryptionProfileConfigInput, ...request.Option) (*cloudfront.GetFieldLevelEncryptionProfileConfigOutput, error)
+	GetFieldLevelEncryptionProfileConfigRequest(*cloudfront.GetFieldLevelEncryptionProfileConfigInput) (*request.Request, *cloudfront.GetFieldLevelEncryptionProfileConfigOutput)
+
 	GetInvalidation(*cloudfront.GetInvalidationInput) (*cloudfront.GetInvalidationOutput, error)
 	GetInvalidationWithContext(aws.Context, *cloudfront.GetInvalidationInput, ...request.Option) (*cloudfront.GetInvalidationOutput, error)
 	GetInvalidationRequest(*cloudfront.GetInvalidationInput) (*request.Request, *cloudfront.GetInvalidationOutput)
+
+	GetPublicKey(*cloudfront.GetPublicKeyInput) (*cloudfront.GetPublicKeyOutput, error)
+	GetPublicKeyWithContext(aws.Context, *cloudfront.GetPublicKeyInput, ...request.Option) (*cloudfront.GetPublicKeyOutput, error)
+	GetPublicKeyRequest(*cloudfront.GetPublicKeyInput) (*request.Request, *cloudfront.GetPublicKeyOutput)
+
+	GetPublicKeyConfig(*cloudfront.GetPublicKeyConfigInput) (*cloudfront.GetPublicKeyConfigOutput, error)
+	GetPublicKeyConfigWithContext(aws.Context, *cloudfront.GetPublicKeyConfigInput, ...request.Option) (*cloudfront.GetPublicKeyConfigOutput, error)
+	GetPublicKeyConfigRequest(*cloudfront.GetPublicKeyConfigInput) (*request.Request, *cloudfront.GetPublicKeyConfigOutput)
 
 	GetStreamingDistribution(*cloudfront.GetStreamingDistributionInput) (*cloudfront.GetStreamingDistributionOutput, error)
 	GetStreamingDistributionWithContext(aws.Context, *cloudfront.GetStreamingDistributionInput, ...request.Option) (*cloudfront.GetStreamingDistributionOutput, error)
@@ -146,12 +194,24 @@ type CloudFrontAPI interface {
 	ListDistributionsByWebACLIdWithContext(aws.Context, *cloudfront.ListDistributionsByWebACLIdInput, ...request.Option) (*cloudfront.ListDistributionsByWebACLIdOutput, error)
 	ListDistributionsByWebACLIdRequest(*cloudfront.ListDistributionsByWebACLIdInput) (*request.Request, *cloudfront.ListDistributionsByWebACLIdOutput)
 
+	ListFieldLevelEncryptionConfigs(*cloudfront.ListFieldLevelEncryptionConfigsInput) (*cloudfront.ListFieldLevelEncryptionConfigsOutput, error)
+	ListFieldLevelEncryptionConfigsWithContext(aws.Context, *cloudfront.ListFieldLevelEncryptionConfigsInput, ...request.Option) (*cloudfront.ListFieldLevelEncryptionConfigsOutput, error)
+	ListFieldLevelEncryptionConfigsRequest(*cloudfront.ListFieldLevelEncryptionConfigsInput) (*request.Request, *cloudfront.ListFieldLevelEncryptionConfigsOutput)
+
+	ListFieldLevelEncryptionProfiles(*cloudfront.ListFieldLevelEncryptionProfilesInput) (*cloudfront.ListFieldLevelEncryptionProfilesOutput, error)
+	ListFieldLevelEncryptionProfilesWithContext(aws.Context, *cloudfront.ListFieldLevelEncryptionProfilesInput, ...request.Option) (*cloudfront.ListFieldLevelEncryptionProfilesOutput, error)
+	ListFieldLevelEncryptionProfilesRequest(*cloudfront.ListFieldLevelEncryptionProfilesInput) (*request.Request, *cloudfront.ListFieldLevelEncryptionProfilesOutput)
+
 	ListInvalidations(*cloudfront.ListInvalidationsInput) (*cloudfront.ListInvalidationsOutput, error)
 	ListInvalidationsWithContext(aws.Context, *cloudfront.ListInvalidationsInput, ...request.Option) (*cloudfront.ListInvalidationsOutput, error)
 	ListInvalidationsRequest(*cloudfront.ListInvalidationsInput) (*request.Request, *cloudfront.ListInvalidationsOutput)
 
 	ListInvalidationsPages(*cloudfront.ListInvalidationsInput, func(*cloudfront.ListInvalidationsOutput, bool) bool) error
 	ListInvalidationsPagesWithContext(aws.Context, *cloudfront.ListInvalidationsInput, func(*cloudfront.ListInvalidationsOutput, bool) bool, ...request.Option) error
+
+	ListPublicKeys(*cloudfront.ListPublicKeysInput) (*cloudfront.ListPublicKeysOutput, error)
+	ListPublicKeysWithContext(aws.Context, *cloudfront.ListPublicKeysInput, ...request.Option) (*cloudfront.ListPublicKeysOutput, error)
+	ListPublicKeysRequest(*cloudfront.ListPublicKeysInput) (*request.Request, *cloudfront.ListPublicKeysOutput)
 
 	ListStreamingDistributions(*cloudfront.ListStreamingDistributionsInput) (*cloudfront.ListStreamingDistributionsOutput, error)
 	ListStreamingDistributionsWithContext(aws.Context, *cloudfront.ListStreamingDistributionsInput, ...request.Option) (*cloudfront.ListStreamingDistributionsOutput, error)
@@ -179,6 +239,18 @@ type CloudFrontAPI interface {
 	UpdateDistribution(*cloudfront.UpdateDistributionInput) (*cloudfront.UpdateDistributionOutput, error)
 	UpdateDistributionWithContext(aws.Context, *cloudfront.UpdateDistributionInput, ...request.Option) (*cloudfront.UpdateDistributionOutput, error)
 	UpdateDistributionRequest(*cloudfront.UpdateDistributionInput) (*request.Request, *cloudfront.UpdateDistributionOutput)
+
+	UpdateFieldLevelEncryptionConfig(*cloudfront.UpdateFieldLevelEncryptionConfigInput) (*cloudfront.UpdateFieldLevelEncryptionConfigOutput, error)
+	UpdateFieldLevelEncryptionConfigWithContext(aws.Context, *cloudfront.UpdateFieldLevelEncryptionConfigInput, ...request.Option) (*cloudfront.UpdateFieldLevelEncryptionConfigOutput, error)
+	UpdateFieldLevelEncryptionConfigRequest(*cloudfront.UpdateFieldLevelEncryptionConfigInput) (*request.Request, *cloudfront.UpdateFieldLevelEncryptionConfigOutput)
+
+	UpdateFieldLevelEncryptionProfile(*cloudfront.UpdateFieldLevelEncryptionProfileInput) (*cloudfront.UpdateFieldLevelEncryptionProfileOutput, error)
+	UpdateFieldLevelEncryptionProfileWithContext(aws.Context, *cloudfront.UpdateFieldLevelEncryptionProfileInput, ...request.Option) (*cloudfront.UpdateFieldLevelEncryptionProfileOutput, error)
+	UpdateFieldLevelEncryptionProfileRequest(*cloudfront.UpdateFieldLevelEncryptionProfileInput) (*request.Request, *cloudfront.UpdateFieldLevelEncryptionProfileOutput)
+
+	UpdatePublicKey(*cloudfront.UpdatePublicKeyInput) (*cloudfront.UpdatePublicKeyOutput, error)
+	UpdatePublicKeyWithContext(aws.Context, *cloudfront.UpdatePublicKeyInput, ...request.Option) (*cloudfront.UpdatePublicKeyOutput, error)
+	UpdatePublicKeyRequest(*cloudfront.UpdatePublicKeyInput) (*request.Request, *cloudfront.UpdatePublicKeyOutput)
 
 	UpdateStreamingDistribution(*cloudfront.UpdateStreamingDistributionInput) (*cloudfront.UpdateStreamingDistributionOutput, error)
 	UpdateStreamingDistributionWithContext(aws.Context, *cloudfront.UpdateStreamingDistributionInput, ...request.Option) (*cloudfront.UpdateStreamingDistributionOutput, error)

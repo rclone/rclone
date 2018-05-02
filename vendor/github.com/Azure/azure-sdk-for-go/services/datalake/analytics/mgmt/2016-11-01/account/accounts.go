@@ -41,9 +41,9 @@ func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) Account
 }
 
 // CheckNameAvailability checks whether the specified account name is available or taken.
-//
-// location is the resource location without whitespace. parameters is parameters supplied to check the Data Lake
-// Analytics account name availability.
+// Parameters:
+// location - the resource location without whitespace.
+// parameters - parameters supplied to check the Data Lake Analytics account name availability.
 func (client AccountsClient) CheckNameAvailability(ctx context.Context, location string, parameters CheckNameAvailabilityParameters) (result NameAvailabilityInformation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -86,7 +86,7 @@ func (client AccountsClient) CheckNameAvailabilityPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.DataLakeAnalytics/locations/{location}/checkNameAvailability", pathParameters),
@@ -117,9 +117,10 @@ func (client AccountsClient) CheckNameAvailabilityResponder(resp *http.Response)
 
 // Create creates the specified Data Lake Analytics account. This supplies the user with computation services for Data
 // Lake Analytics workloads.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. parameters is parameters supplied to create a new Data Lake Analytics account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// parameters - parameters supplied to create a new Data Lake Analytics account.
 func (client AccountsClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters CreateDataLakeAnalyticsAccountParameters) (result AccountsCreateFutureType, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -172,7 +173,7 @@ func (client AccountsClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}", pathParameters),
@@ -210,9 +211,9 @@ func (client AccountsClient) CreateResponder(resp *http.Response) (result DataLa
 }
 
 // Delete begins the delete process for the Data Lake Analytics account object specified by the account name.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
 func (client AccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountsDeleteFutureType, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -278,9 +279,9 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get gets details of the specified Data Lake Analytics account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
 func (client AccountsClient) Get(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeAnalyticsAccount, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -346,14 +347,17 @@ func (client AccountsClient) GetResponder(resp *http.Response) (result DataLakeA
 
 // List gets the first page of Data Lake Analytics accounts, if any, within the current subscription. This includes a
 // link to the next page, if any.
-//
-// filter is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to
-// skip over before returning elements. Optional. selectParameter is oData Select statement. Limits the properties
-// on each entry to just those requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is
-// orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or "desc" depending
-// on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the
-// Boolean value of true or false to request a count of the matching resources included with the resources in the
-// response, e.g. Categories?$count=true. Optional.
+// Parameters:
+// filter - oData filter. Optional.
+// top - the number of items to return. Optional.
+// skip - the number of items to skip over before returning elements. Optional.
+// selectParameter - oData Select statement. Limits the properties on each entry to just those requested, e.g.
+// Categories?$select=CategoryName,Description. Optional.
+// orderby - orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or
+// "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc.
+// Optional.
+// count - the Boolean value of true or false to request a count of the matching resources included with the
+// resources in the response, e.g. Categories?$count=true. Optional.
 func (client AccountsClient) List(ctx context.Context, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result DataLakeAnalyticsAccountListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -473,15 +477,18 @@ func (client AccountsClient) ListComplete(ctx context.Context, filter string, to
 
 // ListByResourceGroup gets the first page of Data Lake Analytics accounts, if any, within a specific resource group.
 // This includes a link to the next page, if any.
-//
-// resourceGroupName is the name of the Azure resource group. filter is oData filter. Optional. top is the number
-// of items to return. Optional. skip is the number of items to skip over before returning elements. Optional.
-// selectParameter is oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted,
-// e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a
-// count of the matching resources included with the resources in the response, e.g. Categories?$count=true.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// filter - oData filter. Optional.
+// top - the number of items to return. Optional.
+// skip - the number of items to skip over before returning elements. Optional.
+// selectParameter - oData Select statement. Limits the properties on each entry to just those requested, e.g.
+// Categories?$select=CategoryName,Description. Optional.
+// orderby - orderBy clause. One or more comma-separated expressions with an optional "asc" (the default) or
+// "desc" depending on the order you'd like the values sorted, e.g. Categories?$orderby=CategoryName desc.
 // Optional.
+// count - the Boolean value of true or false to request a count of the matching resources included with the
+// resources in the response, e.g. Categories?$count=true. Optional.
 func (client AccountsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result DataLakeAnalyticsAccountListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -602,9 +609,10 @@ func (client AccountsClient) ListByResourceGroupComplete(ctx context.Context, re
 
 // Update updates the Data Lake Analytics account object specified by the accountName with the contents of the account
 // object.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
-// account. parameters is parameters supplied to the update Data Lake Analytics account operation.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Analytics account.
+// parameters - parameters supplied to the update Data Lake Analytics account operation.
 func (client AccountsClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters *UpdateDataLakeAnalyticsAccountParameters) (result AccountsUpdateFutureType, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)
 	if err != nil {
@@ -635,7 +643,7 @@ func (client AccountsClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeAnalytics/accounts/{accountName}", pathParameters),

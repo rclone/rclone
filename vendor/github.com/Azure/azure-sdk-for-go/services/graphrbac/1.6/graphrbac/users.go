@@ -42,8 +42,8 @@ func NewUsersClientWithBaseURI(baseURI string, tenantID string) UsersClient {
 }
 
 // Create create a new user.
-//
-// parameters is parameters to create a user.
+// Parameters:
+// parameters - parameters to create a user.
 func (client UsersClient) Create(ctx context.Context, parameters UserCreateParameters) (result User, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -89,7 +89,7 @@ func (client UsersClient) CreatePreparer(ctx context.Context, parameters UserCre
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/users", pathParameters),
@@ -119,8 +119,8 @@ func (client UsersClient) CreateResponder(resp *http.Response) (result User, err
 }
 
 // Delete delete a user.
-//
-// upnOrObjectID is the object ID or principal name of the user to delete.
+// Parameters:
+// upnOrObjectID - the object ID or principal name of the user to delete.
 func (client UsersClient) Delete(ctx context.Context, upnOrObjectID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, upnOrObjectID)
 	if err != nil {
@@ -183,8 +183,8 @@ func (client UsersClient) DeleteResponder(resp *http.Response) (result autorest.
 }
 
 // Get gets user information from the directory.
-//
-// upnOrObjectID is the object ID or principal name of the user for which to get information.
+// Parameters:
+// upnOrObjectID - the object ID or principal name of the user for which to get information.
 func (client UsersClient) Get(ctx context.Context, upnOrObjectID string) (result User, err error) {
 	req, err := client.GetPreparer(ctx, upnOrObjectID)
 	if err != nil {
@@ -248,9 +248,9 @@ func (client UsersClient) GetResponder(resp *http.Response) (result User, err er
 }
 
 // GetMemberGroups gets a collection that contains the object IDs of the groups of which the user is a member.
-//
-// objectID is the object ID of the user for which to get group membership. parameters is user filtering
-// parameters.
+// Parameters:
+// objectID - the object ID of the user for which to get group membership.
+// parameters - user filtering parameters.
 func (client UsersClient) GetMemberGroups(ctx context.Context, objectID string, parameters UserGetMemberGroupsParameters) (result UserGetMemberGroupsResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -292,7 +292,7 @@ func (client UsersClient) GetMemberGroupsPreparer(ctx context.Context, objectID 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/users/{objectId}/getMemberGroups", pathParameters),
@@ -322,8 +322,8 @@ func (client UsersClient) GetMemberGroupsResponder(resp *http.Response) (result 
 }
 
 // List gets list of users for the current tenant.
-//
-// filter is the filter to apply to the operation.
+// Parameters:
+// filter - the filter to apply to the operation.
 func (client UsersClient) List(ctx context.Context, filter string) (result UserListResultPage, err error) {
 	result.fn = func(lastResult UserListResult) (UserListResult, error) {
 		if lastResult.OdataNextLink == nil || len(to.String(lastResult.OdataNextLink)) < 1 {
@@ -401,8 +401,8 @@ func (client UsersClient) ListComplete(ctx context.Context, filter string) (resu
 }
 
 // ListNext gets a list of users for the current tenant.
-//
-// nextLink is next link for the list operation.
+// Parameters:
+// nextLink - next link for the list operation.
 func (client UsersClient) ListNext(ctx context.Context, nextLink string) (result UserListResult, err error) {
 	req, err := client.ListNextPreparer(ctx, nextLink)
 	if err != nil {
@@ -466,9 +466,9 @@ func (client UsersClient) ListNextResponder(resp *http.Response) (result UserLis
 }
 
 // Update updates a user.
-//
-// upnOrObjectID is the object ID or principal name of the user to update. parameters is parameters to update an
-// existing user.
+// Parameters:
+// upnOrObjectID - the object ID or principal name of the user to update.
+// parameters - parameters to update an existing user.
 func (client UsersClient) Update(ctx context.Context, upnOrObjectID string, parameters UserUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdatePreparer(ctx, upnOrObjectID, parameters)
 	if err != nil {
@@ -504,7 +504,7 @@ func (client UsersClient) UpdatePreparer(ctx context.Context, upnOrObjectID stri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/users/{upnOrObjectId}", pathParameters),

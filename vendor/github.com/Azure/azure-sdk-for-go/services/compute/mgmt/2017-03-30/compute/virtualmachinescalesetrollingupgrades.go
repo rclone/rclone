@@ -42,8 +42,9 @@ func NewVirtualMachineScaleSetRollingUpgradesClientWithBaseURI(baseURI string, s
 }
 
 // Cancel cancels the current virtual machine scale set rolling upgrade.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
 func (client VirtualMachineScaleSetRollingUpgradesClient) Cancel(ctx context.Context, resourceGroupName string, VMScaleSetName string) (result VirtualMachineScaleSetRollingUpgradesCancelFuture, err error) {
 	req, err := client.CancelPreparer(ctx, resourceGroupName, VMScaleSetName)
 	if err != nil {
@@ -110,8 +111,9 @@ func (client VirtualMachineScaleSetRollingUpgradesClient) CancelResponder(resp *
 }
 
 // GetLatest gets the status of the latest virtual machine scale set rolling upgrade.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
 func (client VirtualMachineScaleSetRollingUpgradesClient) GetLatest(ctx context.Context, resourceGroupName string, VMScaleSetName string) (result RollingUpgradeStatusInfo, err error) {
 	req, err := client.GetLatestPreparer(ctx, resourceGroupName, VMScaleSetName)
 	if err != nil {
@@ -177,8 +179,9 @@ func (client VirtualMachineScaleSetRollingUpgradesClient) GetLatestResponder(res
 
 // StartOSUpgrade starts a rolling upgrade to move all virtual machine scale set instances to the latest available
 // Platform Image OS version. Instances which are already running the latest available OS version are not affected.
-//
-// resourceGroupName is the name of the resource group. VMScaleSetName is the name of the VM scale set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// VMScaleSetName - the name of the VM scale set.
 func (client VirtualMachineScaleSetRollingUpgradesClient) StartOSUpgrade(ctx context.Context, resourceGroupName string, VMScaleSetName string) (result VirtualMachineScaleSetRollingUpgradesStartOSUpgradeFuture, err error) {
 	req, err := client.StartOSUpgradePreparer(ctx, resourceGroupName, VMScaleSetName)
 	if err != nil {

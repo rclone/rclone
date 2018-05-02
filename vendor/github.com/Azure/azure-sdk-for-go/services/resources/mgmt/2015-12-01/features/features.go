@@ -43,9 +43,9 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 }
 
 // Get gets the preview feature with the specified name.
-//
-// resourceProviderNamespace is the resource provider namespace for the feature. featureName is the name of the
-// feature to get.
+// Parameters:
+// resourceProviderNamespace - the resource provider namespace for the feature.
+// featureName - the name of the feature to get.
 func (client Client) Get(ctx context.Context, resourceProviderNamespace string, featureName string) (result Result, err error) {
 	req, err := client.GetPreparer(ctx, resourceProviderNamespace, featureName)
 	if err != nil {
@@ -110,8 +110,8 @@ func (client Client) GetResponder(resp *http.Response) (result Result, err error
 }
 
 // List gets all the preview features in a provider namespace that are available through AFEC for the subscription.
-//
-// resourceProviderNamespace is the namespace of the resource provider for getting features.
+// Parameters:
+// resourceProviderNamespace - the namespace of the resource provider for getting features.
 func (client Client) List(ctx context.Context, resourceProviderNamespace string) (result OperationsListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceProviderNamespace)
@@ -293,9 +293,9 @@ func (client Client) ListAllComplete(ctx context.Context) (result OperationsList
 }
 
 // Register registers the preview feature for the subscription.
-//
-// resourceProviderNamespace is the namespace of the resource provider. featureName is the name of the feature to
-// register.
+// Parameters:
+// resourceProviderNamespace - the namespace of the resource provider.
+// featureName - the name of the feature to register.
 func (client Client) Register(ctx context.Context, resourceProviderNamespace string, featureName string) (result Result, err error) {
 	req, err := client.RegisterPreparer(ctx, resourceProviderNamespace, featureName)
 	if err != nil {

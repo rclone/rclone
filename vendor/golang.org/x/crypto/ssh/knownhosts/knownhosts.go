@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package knownhosts implements a parser for the OpenSSH
-// known_hosts host key database.
+// Package knownhosts implements a parser for the OpenSSH known_hosts
+// host key database, and provides utility functions for writing
+// OpenSSH compliant known_hosts files.
 package knownhosts
 
 import (
@@ -38,7 +39,7 @@ func (a *addr) String() string {
 }
 
 type matcher interface {
-	match([]addr) bool
+	match(addr) bool
 }
 
 type hostPattern struct {
@@ -57,19 +58,16 @@ func (p *hostPattern) String() string {
 
 type hostPatterns []hostPattern
 
-func (ps hostPatterns) match(addrs []addr) bool {
+func (ps hostPatterns) match(a addr) bool {
 	matched := false
 	for _, p := range ps {
-		for _, a := range addrs {
-			m := p.match(a)
-			if !m {
-				continue
-			}
-			if p.negate {
-				return false
-			}
-			matched = true
+		if !p.match(a) {
+			continue
 		}
+		if p.negate {
+			return false
+		}
+		matched = true
 	}
 	return matched
 }
@@ -122,8 +120,8 @@ func serialize(k ssh.PublicKey) string {
 	return k.Type() + " " + base64.StdEncoding.EncodeToString(k.Marshal())
 }
 
-func (l *keyDBLine) match(addrs []addr) bool {
-	return l.matcher.match(addrs)
+func (l *keyDBLine) match(a addr) bool {
+	return l.matcher.match(a)
 }
 
 type hostKeyDB struct {
@@ -153,7 +151,7 @@ func (db *hostKeyDB) IsHostAuthority(remote ssh.PublicKey, address string) bool 
 	a := addr{host: h, port: p}
 
 	for _, l := range db.lines {
-		if l.cert && keyEq(l.knownKey.Key, remote) && l.match([]addr{a}) {
+		if l.cert && keyEq(l.knownKey.Key, remote) && l.match(a) {
 			return true
 		}
 	}
@@ -338,26 +336,24 @@ func (db *hostKeyDB) check(address string, remote net.Addr, remoteKey ssh.Public
 		return fmt.Errorf("knownhosts: SplitHostPort(%s): %v", remote, err)
 	}
 
-	addrs := []addr{
-		{host, port},
-	}
-
+	hostToCheck := addr{host, port}
 	if address != "" {
+		// Give preference to the hostname if available.
 		host, port, err := net.SplitHostPort(address)
 		if err != nil {
 			return fmt.Errorf("knownhosts: SplitHostPort(%s): %v", address, err)
 		}
 
-		addrs = append(addrs, addr{host, port})
+		hostToCheck = addr{host, port}
 	}
 
-	return db.checkAddrs(addrs, remoteKey)
+	return db.checkAddr(hostToCheck, remoteKey)
 }
 
 // checkAddrs checks if we can find the given public key for any of
 // the given addresses.  If we only find an entry for the IP address,
 // or only the hostname, then this still succeeds.
-func (db *hostKeyDB) checkAddrs(addrs []addr, remoteKey ssh.PublicKey) error {
+func (db *hostKeyDB) checkAddr(a addr, remoteKey ssh.PublicKey) error {
 	// TODO(hanwen): are these the right semantics? What if there
 	// is just a key for the IP address, but not for the
 	// hostname?
@@ -365,7 +361,7 @@ func (db *hostKeyDB) checkAddrs(addrs []addr, remoteKey ssh.PublicKey) error {
 	// Algorithm => key.
 	knownKeys := map[string]KnownKey{}
 	for _, l := range db.lines {
-		if l.match(addrs) {
+		if l.match(a) {
 			typ := l.knownKey.Key.Type()
 			if _, ok := knownKeys[typ]; !ok {
 				knownKeys[typ] = l.knownKey
@@ -414,7 +410,10 @@ func (db *hostKeyDB) Read(r io.Reader, filename string) error {
 
 // New creates a host key callback from the given OpenSSH host key
 // files. The returned callback is for use in
-// ssh.ClientConfig.HostKeyCallback.
+// ssh.ClientConfig.HostKeyCallback. By preference, the key check
+// operates on the hostname if available, i.e. if a server changes its
+// IP address, the host key check will still succeed, even though a
+// record of the new IP address is not available.
 func New(files ...string) (ssh.HostKeyCallback, error) {
 	db := newHostKeyDB()
 	for _, fn := range files {
@@ -536,11 +535,6 @@ func newHashedHost(encoded string) (*hashedHost, error) {
 	return &hashedHost{salt: salt, hash: hash}, nil
 }
 
-func (h *hashedHost) match(addrs []addr) bool {
-	for _, a := range addrs {
-		if bytes.Equal(hashHost(Normalize(a.String()), h.salt), h.hash) {
-			return true
-		}
-	}
-	return false
+func (h *hashedHost) match(a addr) bool {
+	return bytes.Equal(hashHost(Normalize(a.String()), h.salt), h.hash)
 }

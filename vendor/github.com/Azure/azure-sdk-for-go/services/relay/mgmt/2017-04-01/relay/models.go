@@ -38,6 +38,11 @@ const (
 	Send AccessRights = "Send"
 )
 
+// PossibleAccessRightsValues returns an array of possible values for the AccessRights const type.
+func PossibleAccessRightsValues() []AccessRights {
+	return []AccessRights{Listen, Manage, Send}
+}
+
 // KeyType enumerates the values for key type.
 type KeyType string
 
@@ -47,6 +52,11 @@ const (
 	// SecondaryKey ...
 	SecondaryKey KeyType = "SecondaryKey"
 )
+
+// PossibleKeyTypeValues returns an array of possible values for the KeyType const type.
+func PossibleKeyTypeValues() []KeyType {
+	return []KeyType{PrimaryKey, SecondaryKey}
+}
 
 // ProvisioningStateEnum enumerates the values for provisioning state enum.
 type ProvisioningStateEnum string
@@ -66,6 +76,11 @@ const (
 	Updating ProvisioningStateEnum = "Updating"
 )
 
+// PossibleProvisioningStateEnumValues returns an array of possible values for the ProvisioningStateEnum const type.
+func PossibleProvisioningStateEnumValues() []ProvisioningStateEnum {
+	return []ProvisioningStateEnum{Created, Deleted, Failed, Succeeded, Unknown, Updating}
+}
+
 // RelaytypeEnum enumerates the values for relaytype enum.
 type RelaytypeEnum string
 
@@ -76,6 +91,11 @@ const (
 	NetTCP RelaytypeEnum = "NetTcp"
 )
 
+// PossibleRelaytypeEnumValues returns an array of possible values for the RelaytypeEnum const type.
+func PossibleRelaytypeEnumValues() []RelaytypeEnum {
+	return []RelaytypeEnum{HTTP, NetTCP}
+}
+
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -83,6 +103,11 @@ const (
 	// Standard ...
 	Standard SkuTier = "Standard"
 )
+
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Standard}
+}
 
 // UnavailableReason enumerates the values for unavailable reason.
 type UnavailableReason string
@@ -101,6 +126,11 @@ const (
 	// TooManyNamespaceInCurrentSubscription ...
 	TooManyNamespaceInCurrentSubscription UnavailableReason = "TooManyNamespaceInCurrentSubscription"
 )
+
+// PossibleUnavailableReasonValues returns an array of possible values for the UnavailableReason const type.
+func PossibleUnavailableReasonValues() []UnavailableReason {
+	return []UnavailableReason{InvalidName, NameInLockdown, NameInUse, None, SubscriptionIsDisabled, TooManyNamespaceInCurrentSubscription}
+}
 
 // AccessKeys namespace/Relay Connection String
 type AccessKeys struct {
@@ -128,6 +158,24 @@ type AuthorizationRule struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AuthorizationRule.
+func (ar AuthorizationRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ar.AuthorizationRuleProperties != nil {
+		objectMap["properties"] = ar.AuthorizationRuleProperties
+	}
+	if ar.ID != nil {
+		objectMap["id"] = ar.ID
+	}
+	if ar.Name != nil {
+		objectMap["name"] = ar.Name
+	}
+	if ar.Type != nil {
+		objectMap["type"] = ar.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AuthorizationRule struct.
@@ -326,6 +374,24 @@ type HybridConnection struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for HybridConnection.
+func (hc HybridConnection) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hc.HybridConnectionProperties != nil {
+		objectMap["properties"] = hc.HybridConnectionProperties
+	}
+	if hc.ID != nil {
+		objectMap["id"] = hc.ID
+	}
+	if hc.Name != nil {
+		objectMap["name"] = hc.Name
+	}
+	if hc.Type != nil {
+		objectMap["type"] = hc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for HybridConnection struct.
@@ -1165,6 +1231,24 @@ type WcfRelay struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WcfRelay.
+func (wr WcfRelay) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wr.WcfRelayProperties != nil {
+		objectMap["properties"] = wr.WcfRelayProperties
+	}
+	if wr.ID != nil {
+		objectMap["id"] = wr.ID
+	}
+	if wr.Name != nil {
+		objectMap["name"] = wr.Name
+	}
+	if wr.Type != nil {
+		objectMap["type"] = wr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WcfRelay struct.

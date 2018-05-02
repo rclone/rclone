@@ -34,6 +34,11 @@ const (
 	Standard SkuType = "Standard"
 )
 
+// PossibleSkuTypeValues returns an array of possible values for the SkuType const type.
+func PossibleSkuTypeValues() []SkuType {
+	return []SkuType{Free, Standard}
+}
+
 // ADCCatalog azure Data Catalog.
 type ADCCatalog struct {
 	autorest.Response `json:"-"`

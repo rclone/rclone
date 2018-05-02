@@ -144,6 +144,7 @@ package fuse
 import "C"
 import (
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -417,7 +418,7 @@ type Lock_t struct {
 }
 */
 
-// FileSystemInterface is the interface that a user mode interface must implement.
+// FileSystemInterface is the interface that a user mode file system must implement.
 //
 // The file system will receive an Init() call when the file system is created;
 // the Init() call will happen prior to receiving any other file system calls.
@@ -567,8 +568,33 @@ type FileSystemSetchgtime interface {
 // to the OS.
 type Error int
 
+var errorStringMap map[Error]string
+var errorStringOnce sync.Once
+
 func (self Error) Error() string {
-	return "fuse.Error(" + strconv.Itoa(int(self)) + ")"
+	errorStringOnce.Do(func() {
+		errorStringMap = make(map[Error]string)
+		for _, i := range errorStrings {
+			errorStringMap[Error(-i.errc)] = i.errs
+		}
+	})
+
+	if 0 <= self {
+		return strconv.Itoa(int(self))
+	} else {
+		if errs, ok := errorStringMap[self]; ok {
+			return "-fuse." + errs
+		}
+		return "fuse.Error(" + strconv.Itoa(int(self)) + ")"
+	}
+}
+
+func (self Error) String() string {
+	return self.Error()
+}
+
+func (self Error) GoString() string {
+	return self.Error()
 }
 
 var _ error = (*Error)(nil)

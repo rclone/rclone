@@ -41,9 +41,10 @@ func NewTopicsClientWithBaseURI(baseURI string, subscriptionID string) TopicsCli
 }
 
 // CreateOrUpdate asynchronously creates a new topic with the specified parameters.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic topicInfo is topic information
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
+// topicInfo - topic information
 func (client TopicsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, topicName string, topicInfo Topic) (result TopicsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, topicName, topicInfo)
 	if err != nil {
@@ -74,7 +75,7 @@ func (client TopicsClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}", pathParameters),
@@ -112,9 +113,9 @@ func (client TopicsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete delete existing topic
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
 func (client TopicsClient) Delete(ctx context.Context, resourceGroupName string, topicName string) (result TopicsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -180,9 +181,9 @@ func (client TopicsClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // Get get properties of a topic
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
 func (client TopicsClient) Get(ctx context.Context, resourceGroupName string, topicName string) (result Topic, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -247,8 +248,8 @@ func (client TopicsClient) GetResponder(resp *http.Response) (result Topic, err 
 }
 
 // ListByResourceGroup list all the topics under a resource group
-//
-// resourceGroupName is the name of the resource group within the user's subscription.
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
 func (client TopicsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result TopicsListResult, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -374,10 +375,11 @@ func (client TopicsClient) ListBySubscriptionResponder(resp *http.Response) (res
 }
 
 // ListEventTypes list event types for a topic
-//
-// resourceGroupName is the name of the resource group within the user's subscription. providerNamespace is
-// namespace of the provider of the topic resourceTypeName is name of the topic type resourceName is name of the
-// topic
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// providerNamespace - namespace of the provider of the topic
+// resourceTypeName - name of the topic type
+// resourceName - name of the topic
 func (client TopicsClient) ListEventTypes(ctx context.Context, resourceGroupName string, providerNamespace string, resourceTypeName string, resourceName string) (result EventTypesListResult, err error) {
 	req, err := client.ListEventTypesPreparer(ctx, resourceGroupName, providerNamespace, resourceTypeName, resourceName)
 	if err != nil {
@@ -444,9 +446,9 @@ func (client TopicsClient) ListEventTypesResponder(resp *http.Response) (result 
 }
 
 // ListSharedAccessKeys list the two keys used to publish to a topic
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
 func (client TopicsClient) ListSharedAccessKeys(ctx context.Context, resourceGroupName string, topicName string) (result TopicSharedAccessKeys, err error) {
 	req, err := client.ListSharedAccessKeysPreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -511,9 +513,10 @@ func (client TopicsClient) ListSharedAccessKeysResponder(resp *http.Response) (r
 }
 
 // RegenerateKey regenerate a shared access key for a topic
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic regenerateKeyRequest is request body to regenerate key
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
+// regenerateKeyRequest - request body to regenerate key
 func (client TopicsClient) RegenerateKey(ctx context.Context, resourceGroupName string, topicName string, regenerateKeyRequest TopicRegenerateKeyRequest) (result TopicSharedAccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: regenerateKeyRequest,
@@ -556,7 +559,7 @@ func (client TopicsClient) RegenerateKeyPreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/regenerateKey", pathParameters),
@@ -586,9 +589,10 @@ func (client TopicsClient) RegenerateKeyResponder(resp *http.Response) (result T
 }
 
 // Update asynchronously updates a topic with the specified parameters.
-//
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
-// topic topicUpdateParameters is topic update information
+// Parameters:
+// resourceGroupName - the name of the resource group within the user's subscription.
+// topicName - name of the topic
+// topicUpdateParameters - topic update information
 func (client TopicsClient) Update(ctx context.Context, resourceGroupName string, topicName string, topicUpdateParameters TopicUpdateParameters) (result TopicsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, topicName, topicUpdateParameters)
 	if err != nil {
@@ -619,7 +623,7 @@ func (client TopicsClient) UpdatePreparer(ctx context.Context, resourceGroupName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}", pathParameters),

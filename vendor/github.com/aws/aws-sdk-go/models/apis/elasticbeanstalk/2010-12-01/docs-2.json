@@ -17,7 +17,7 @@
     "DeleteConfigurationTemplate": "<p>Deletes the specified configuration template.</p> <note> <p>When you launch an environment using a configuration template, the environment gets a copy of the template. You can delete or modify the environment's copy of the template without affecting the running environment.</p> </note>",
     "DeleteEnvironmentConfiguration": "<p>Deletes the draft configuration associated with the running environment.</p> <p>Updating a running environment with any configuration changes creates a draft configuration set. You can get the draft configuration using <a>DescribeConfigurationSettings</a> while the update is in progress or if the update fails. The <code>DeploymentStatus</code> for the draft configuration indicates whether the deployment is in process or has failed. The draft configuration remains in existence until it is deleted with this action.</p>",
     "DeletePlatformVersion": "<p>Deletes the specified version of a custom platform.</p>",
-    "DescribeAccountAttributes": null,
+    "DescribeAccountAttributes": "<p>Returns attributes related to AWS Elastic Beanstalk that are associated with the calling AWS account.</p> <p>The result currently has one set of attributes—resource quotas.</p>",
     "DescribeApplicationVersions": "<p>Retrieve a list of application versions.</p>",
     "DescribeApplications": "<p>Returns the descriptions of existing applications.</p>",
     "DescribeConfigurationOptions": "<p>Describes the configuration options that are used in a particular configuration template or environment, or that a specified solution stack defines. The description includes the values the options, their default values, and an indication of the required action on a running environment if an option value is changed.</p>",
@@ -84,6 +84,12 @@
         "ApplyEnvironmentManagedActionResult$ActionType": "<p>The type of managed action.</p>",
         "ManagedAction$ActionType": "<p>The type of managed action.</p>",
         "ManagedActionHistoryItem$ActionType": "<p>The type of the managed action.</p>"
+      }
+    },
+    "ApplicationArn": {
+      "base": null,
+      "refs": {
+        "ApplicationDescription$ApplicationArn": "<p>The Amazon Resource Name (ARN) of the application.</p>"
       }
     },
     "ApplicationDescription": {
@@ -167,6 +173,12 @@
     "ApplicationResourceLifecycleDescriptionMessage": {
       "base": null,
       "refs": {
+      }
+    },
+    "ApplicationVersionArn": {
+      "base": null,
+      "refs": {
+        "ApplicationVersionDescription$ApplicationVersionArn": "<p>The Amazon Resource Name (ARN) of the application version.</p>"
       }
     },
     "ApplicationVersionDescription": {
@@ -265,7 +277,7 @@
         "BuildConfiguration$TimeoutInMinutes": "<p>How long in minutes, from 5 to 480 (8 hours), for AWS CodeBuild to wait until timing out any related build that does not get marked as completed. The default is 60 minutes.</p>",
         "MaxAgeRule$MaxAgeInDays": "<p>Specify the number of days to retain an application versions.</p>",
         "MaxCountRule$MaxCount": "<p>Specify the maximum number of application versions to retain.</p>",
-        "ResourceQuota$Maximum": null
+        "ResourceQuota$Maximum": "<p>The maximum number of instances of this Elastic Beanstalk resource type that an AWS account can use.</p>"
       }
     },
     "BuildConfiguration": {
@@ -711,7 +723,7 @@
     "EnvironmentArn": {
       "base": null,
       "refs": {
-        "EnvironmentDescription$EnvironmentArn": "<p>The environment's Amazon Resource Name (ARN), which can be used in other API reuqests that require an ARN.</p>"
+        "EnvironmentDescription$EnvironmentArn": "<p>The environment's Amazon Resource Name (ARN), which can be used in other API requests that require an ARN.</p>"
       }
     },
     "EnvironmentDescription": {
@@ -1013,7 +1025,7 @@
       }
     },
     "InsufficientPrivilegesException": {
-      "base": "<p>The specified account does not have sufficient privileges for one of more AWS services.</p>",
+      "base": "<p>The specified account does not have sufficient privileges for one or more AWS services.</p>",
       "refs": {
       }
     },
@@ -1530,19 +1542,19 @@
       }
     },
     "ResourceQuota": {
-      "base": null,
+      "base": "<p>The AWS Elastic Beanstalk quota information for a single resource type in an AWS account. It reflects the resource's limits for this account.</p>",
       "refs": {
-        "ResourceQuotas$ApplicationQuota": null,
-        "ResourceQuotas$ApplicationVersionQuota": null,
-        "ResourceQuotas$EnvironmentQuota": null,
-        "ResourceQuotas$ConfigurationTemplateQuota": null,
-        "ResourceQuotas$CustomPlatformQuota": null
+        "ResourceQuotas$ApplicationQuota": "<p>The quota for applications in the AWS account.</p>",
+        "ResourceQuotas$ApplicationVersionQuota": "<p>The quota for application versions in the AWS account.</p>",
+        "ResourceQuotas$EnvironmentQuota": "<p>The quota for environments in the AWS account.</p>",
+        "ResourceQuotas$ConfigurationTemplateQuota": "<p>The quota for configuration templates in the AWS account.</p>",
+        "ResourceQuotas$CustomPlatformQuota": "<p>The quota for custom platforms in the AWS account.</p>"
       }
     },
     "ResourceQuotas": {
-      "base": null,
+      "base": "<p>A set of per-resource AWS Elastic Beanstalk quotas associated with an AWS account. They reflect Elastic Beanstalk resource limits for this account.</p>",
       "refs": {
-        "DescribeAccountAttributesResult$ResourceQuotas": null
+        "DescribeAccountAttributesResult$ResourceQuotas": "<p>The Elastic Beanstalk resource quotas associated with the calling AWS account.</p>"
       }
     },
     "ResourceTagsDescriptionMessage": {

@@ -236,7 +236,7 @@
       }
     }
   },
-  "revision": "20180226",
+  "revision": "20180322",
   "rootUrl": "https://language.googleapis.com/",
   "schemas": {
     "AnalyzeEntitiesRequest": {
@@ -514,7 +514,7 @@
           "type": "number"
         },
         "name": {
-          "description": "The name of the category representing the document.",
+          "description": "The name of the category representing the document, from the [predefined\ntaxonomy](/natural-language/docs/categories).",
           "type": "string"
         }
       },

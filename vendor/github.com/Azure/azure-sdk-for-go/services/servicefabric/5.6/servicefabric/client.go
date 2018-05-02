@@ -73,12 +73,14 @@ func NewWithBaseURI(baseURI string) BaseClient {
 // It will not restore the target partition's data, if the command progressed far enough to cause data loss.
 //
 // Important note:  if this API is invoked with force==true, internal state may be left behind.
-//
-// operationID is a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress API
-// force is indicates whether to gracefully rollback and clean up internal system state modified by executing the
-// user-induced operation. timeout is the server timeout for performing the operation in seconds. This specifies
-// the time duration that the client is willing to wait for the requested operation to complete. The default value
-// for this parameter is 60 seconds.
+// Parameters:
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// force - indicates whether to gracefully rollback and clean up internal system state modified by executing
+// the user-induced operation.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CancelOperation(ctx context.Context, operationID uuid.UUID, force bool, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -153,10 +155,11 @@ func (client BaseClient) CancelOperationResponder(resp *http.Response) (result a
 
 // CopyImageStoreContent copies the image store content from the source image store relative path to the destination
 // image store relative path.
-//
-// imageStoreCopyDescription is describes the copy description for the image store. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// imageStoreCopyDescription - describes the copy description for the image store.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CopyImageStoreContent(ctx context.Context, imageStoreCopyDescription ImageStoreCopyDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageStoreCopyDescription,
@@ -204,7 +207,7 @@ func (client BaseClient) CopyImageStoreContentPreparer(ctx context.Context, imag
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/ImageStore/$/Copy"),
@@ -233,10 +236,11 @@ func (client BaseClient) CopyImageStoreContentResponder(resp *http.Response) (re
 }
 
 // CreateApplication creates a Service Fabric application using the specified description.
-//
-// applicationDescription is describes the application to be created. timeout is the server timeout for performing
-// the operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// applicationDescription - describes the application to be created.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CreateApplication(ctx context.Context, applicationDescription ApplicationDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationDescription,
@@ -291,7 +295,7 @@ func (client BaseClient) CreateApplicationPreparer(ctx context.Context, applicat
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/Applications/$/Create"),
@@ -320,10 +324,11 @@ func (client BaseClient) CreateApplicationResponder(resp *http.Response) (result
 }
 
 // CreateComposeApplication creates a Service Fabric compose application.
-//
-// createComposeApplicationDescription is describes the compose application that needs to be created. timeout is
-// the server timeout for performing the operation in seconds. This specifies the time duration that the client is
-// willing to wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// createComposeApplicationDescription - describes the compose application that needs to be created.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CreateComposeApplication(ctx context.Context, createComposeApplicationDescription CreateComposeApplicationDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: createComposeApplicationDescription,
@@ -371,7 +376,7 @@ func (client BaseClient) CreateComposeApplicationPreparer(ctx context.Context, c
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/ComposeDeployments/$/Create"),
@@ -400,11 +405,13 @@ func (client BaseClient) CreateComposeApplicationResponder(resp *http.Response) 
 }
 
 // CreateService creates the specified service.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. serviceDescription is the configuration for the service. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceDescription - the configuration for the service.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CreateService(ctx context.Context, applicationID string, serviceDescription BasicServiceDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceDescription,
@@ -457,7 +464,7 @@ func (client BaseClient) CreateServicePreparer(ctx context.Context, applicationI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/GetServices/$/Create", pathParameters),
@@ -487,12 +494,14 @@ func (client BaseClient) CreateServiceResponder(resp *http.Response) (result aut
 
 // CreateServiceFromTemplate creates a Service Fabric service from the service template defined in the application
 // manifest.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. serviceFromTemplateDescription is describes the service that needs to be created from the
-// template defined in the application manifest. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceFromTemplateDescription - describes the service that needs to be created from the template defined in
+// the application manifest.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) CreateServiceFromTemplate(ctx context.Context, applicationID string, serviceFromTemplateDescription ServiceFromTemplateDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceFromTemplateDescription,
@@ -545,7 +554,7 @@ func (client BaseClient) CreateServiceFromTemplatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/GetServices/$/CreateFromTemplate", pathParameters),
@@ -579,14 +588,15 @@ func (client BaseClient) CreateServiceFromTemplateResponder(resp *http.Response)
 // having issues closing the replica gracefully, the delete operation may take a long time or get stuck. Use the
 // optional ForceRemove flag to skip the graceful close sequence and forcefully delete the application and all of the
 // its services.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. forceRemove is remove a Service Fabric application or service forcefully without going
-// through the graceful shutdown sequence. This parameter can be used to forcefully delete an application or
-// service for which delete is timing out due to issues in the service code that prevents graceful close of
-// replicas. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// forceRemove - remove a Service Fabric application or service forcefully without going through the graceful
+// shutdown sequence. This parameter can be used to forcefully delete an application or service for which
+// delete is timing out due to issues in the service code that prevents graceful close of replicas.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) DeleteApplication(ctx context.Context, applicationID string, forceRemove *bool, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -666,10 +676,11 @@ func (client BaseClient) DeleteApplicationResponder(resp *http.Response) (result
 
 // DeleteImageStoreContent deletes existing image store content being found within the given image store relative path.
 // This can be used to delete uploaded application packages once they are provisioned.
-//
-// contentPath is relative path to file or folder in the image store from its root. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// contentPath - relative path to file or folder in the image store from its root.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) DeleteImageStoreContent(ctx context.Context, contentPath string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -748,13 +759,15 @@ func (client BaseClient) DeleteImageStoreContentResponder(resp *http.Response) (
 // default Service Fabric will try to close service replicas in a graceful manner and then delete the service. However
 // if service is having issues closing the replica gracefully, the delete operation may take a long time or get stuck.
 // Use the optional ForceRemove flag to skip the graceful close sequence and forcefully delete the service.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. forceRemove is remove a Service Fabric application or service forcefully without going through the
-// graceful shutdown sequence. This parameter can be used to forcefully delete an application or service for which
-// delete is timing out due to issues in the service code that prevents graceful close of replicas. timeout is the
-// server timeout for performing the operation in seconds. This specifies the time duration that the client is
-// willing to wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// forceRemove - remove a Service Fabric application or service forcefully without going through the graceful
+// shutdown sequence. This parameter can be used to forcefully delete an application or service for which
+// delete is timing out due to issues in the service code that prevents graceful close of replicas.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) DeleteService(ctx context.Context, serviceID string, forceRemove *bool, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -834,11 +847,13 @@ func (client BaseClient) DeleteServiceResponder(resp *http.Response) (result aut
 
 // DeployedServicePackageToNode downloads packages associated with specified service manifest to image cache on
 // specified node.
-//
-// nodeName is the name of the node. deployServicePackageToNodeDescription is describes information for deploying a
-// service package to a Service Fabric node. timeout is the server timeout for performing the operation in seconds.
-// This specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// deployServicePackageToNodeDescription - describes information for deploying a service package to a Service
+// Fabric node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) DeployedServicePackageToNode(ctx context.Context, nodeName string, deployServicePackageToNodeDescription DeployServicePackageToNodeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: deployServicePackageToNodeDescription,
@@ -892,7 +907,7 @@ func (client BaseClient) DeployedServicePackageToNodePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/DeployServicePackage", pathParameters),
@@ -926,11 +941,12 @@ func (client BaseClient) DeployedServicePackageToNodeResponder(resp *http.Respon
 // be reactivated using the Activate a node operation any time after they are deactivated. If the deactivation is not
 // complete this will cancel the deactivation. A node which goes down and comes back up while deactivated will still
 // need to be reactivated before services will be placed on that node.
-//
-// nodeName is the name of the node. deactivationIntentDescription is describes the intent or reason for
-// deactivating the node. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// deactivationIntentDescription - describes the intent or reason for deactivating the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) DisableNode(ctx context.Context, nodeName string, deactivationIntentDescription DeactivationIntentDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -979,7 +995,7 @@ func (client BaseClient) DisableNodePreparer(ctx context.Context, nodeName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/Deactivate", pathParameters),
@@ -1010,10 +1026,11 @@ func (client BaseClient) DisableNodeResponder(resp *http.Response) (result autor
 // EnableNode activates a Service Fabric cluster node which is currently deactivated. Once activated, the node will
 // again become a viable target for placing new replicas, and any deactivated replicas remaining on the node will be
 // reactivated.
-//
-// nodeName is the name of the node. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) EnableNode(ctx context.Context, nodeName string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1091,10 +1108,10 @@ func (client BaseClient) EnableNodeResponder(resp *http.Response) (result autore
 // GetAadMetadata gets the Azure Active Directory metadata used for secured connection to cluster.
 // This API is not supposed to be called separately. It provides information needed to set up an Azure Active Directory
 // secured connection with a Service Fabric cluster.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetAadMetadata(ctx context.Context, timeout *int64) (result AadMetadataObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1168,15 +1185,16 @@ func (client BaseClient) GetAadMetadataResponder(resp *http.Response) (result Aa
 
 // GetApplicationHealth returns the heath state of the service fabric application. The response reports either Ok,
 // Error or Warning health state. If the entity is not found in the helath store, it will return Error.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned
-// based on health state.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -1185,16 +1203,16 @@ func (client BaseClient) GetAadMetadataResponder(resp *http.Response) (result Aa
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
 // - All - Filter that matches input with any HealthState value. The value is 65535.
-// deployedApplicationsHealthStateFilter is allows filtering of the deployed applications health state objects
+// deployedApplicationsHealthStateFilter - allows filtering of the deployed applications health state objects
 // returned in the result of application health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states. Only
 // deployed applications that match the filter will be returned.\
-// All deployed applications are used to evaluate the aggregated health state. If not specified, all entries are
-// returned.
-// The state values are flag based enumeration, so the value could be a combination of these value obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of deployed applications with HealthState value of OK
-// (2) and Warning (4) are returned.
+// All deployed applications are used to evaluate the aggregated health state. If not specified, all entries
+// are returned.
+// The state values are flag based enumeration, so the value could be a combination of these value obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of deployed applications with HealthState value of
+// OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn't match any HealthState value. Used in order to return no results on a given
@@ -1202,15 +1220,16 @@ func (client BaseClient) GetAadMetadataResponder(resp *http.Response) (result Aa
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. servicesHealthStateFilter is
-// allows filtering of the services health state objects returned in the result of services health query based on
-// their health state.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// servicesHealthStateFilter - allows filtering of the services health state objects returned in the result of
+// services health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
-// Only services that match the filter are returned. All services are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value
-// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of services with
-// HealthState value of OK (2) and Warning (4) will be returned.
+// Only services that match the filter are returned. All services are used to evaluate the aggregated health
+// state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value
+// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of services
+// with HealthState value of OK (2) and Warning (4) will be returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn�t match any HealthState value. Used in order to return no results on a given
@@ -1218,9 +1237,10 @@ func (client BaseClient) GetAadMetadataResponder(resp *http.Response) (result Aa
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationHealth(ctx context.Context, applicationID string, eventsHealthStateFilter *int32, deployedApplicationsHealthStateFilter *int32, servicesHealthStateFilter *int32, timeout *int64) (result ApplicationHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1314,15 +1334,16 @@ func (client BaseClient) GetApplicationHealthResponder(resp *http.Response) (res
 // GetApplicationHealthUsingPolicy gets the health of a Service Fabric application. Use EventsHealthStateFilter to
 // filter the collection of health events reported on the node based on the health state. Use ClusterHealthPolicies to
 // override the health policies used to evaluate the health.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned
-// based on health state.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -1331,16 +1352,16 @@ func (client BaseClient) GetApplicationHealthResponder(resp *http.Response) (res
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
 // - All - Filter that matches input with any HealthState value. The value is 65535.
-// deployedApplicationsHealthStateFilter is allows filtering of the deployed applications health state objects
+// deployedApplicationsHealthStateFilter - allows filtering of the deployed applications health state objects
 // returned in the result of application health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states. Only
 // deployed applications that match the filter will be returned.\
-// All deployed applications are used to evaluate the aggregated health state. If not specified, all entries are
-// returned.
-// The state values are flag based enumeration, so the value could be a combination of these value obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of deployed applications with HealthState value of OK
-// (2) and Warning (4) are returned.
+// All deployed applications are used to evaluate the aggregated health state. If not specified, all entries
+// are returned.
+// The state values are flag based enumeration, so the value could be a combination of these value obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of deployed applications with HealthState value of
+// OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn't match any HealthState value. Used in order to return no results on a given
@@ -1348,15 +1369,16 @@ func (client BaseClient) GetApplicationHealthResponder(resp *http.Response) (res
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. servicesHealthStateFilter is
-// allows filtering of the services health state objects returned in the result of services health query based on
-// their health state.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// servicesHealthStateFilter - allows filtering of the services health state objects returned in the result of
+// services health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
-// Only services that match the filter are returned. All services are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value
-// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of services with
-// HealthState value of OK (2) and Warning (4) will be returned.
+// Only services that match the filter are returned. All services are used to evaluate the aggregated health
+// state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value
+// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of services
+// with HealthState value of OK (2) and Warning (4) will be returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn�t match any HealthState value. Used in order to return no results on a given
@@ -1364,11 +1386,13 @@ func (client BaseClient) GetApplicationHealthResponder(resp *http.Response) (res
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetApplicationHealthUsingPolicy(ctx context.Context, applicationID string, eventsHealthStateFilter *int32, deployedApplicationsHealthStateFilter *int32, servicesHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result ApplicationHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -1433,7 +1457,7 @@ func (client BaseClient) GetApplicationHealthUsingPolicyPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/GetHealth", pathParameters),
@@ -1468,12 +1492,14 @@ func (client BaseClient) GetApplicationHealthUsingPolicyResponder(resp *http.Res
 // GetApplicationInfo returns the information about the application that was created or in the process of being created
 // in the Service Fabric cluster and whose name matches the one specified as the parameter. The response includes the
 // name, type, status, parameters and other details about the application.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. excludeApplicationParameters is the flag that specifies whether application parameters
-// will be excluded from the result. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// excludeApplicationParameters - the flag that specifies whether application parameters will be excluded from
+// the result.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationInfo(ctx context.Context, applicationID string, excludeApplicationParameters *bool, timeout *int64) (result ApplicationInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1558,16 +1584,19 @@ func (client BaseClient) GetApplicationInfoResponder(resp *http.Response) (resul
 // created in the Service Fabric cluster and match filters specified as the parameter. The response includes the name,
 // type, status, parameters and other details about the application. If the applications do not fit in a page, one page
 // of results is returned as well as a continuation token which can be used to get the next page.
-//
-// applicationTypeName is the application type name used to filter the applications to query for. This value should
-// not contain the application type version. excludeApplicationParameters is the flag that specifies whether
-// application parameters will be excluded from the result. continuationToken is the continuation token parameter
-// is used to obtain next set of results. A continuation token with a non empty value is included in the response
-// of the API when the results from the system do not fit in a single response. When this value is passed to the
-// next API call, the API returns next set of results. If there are no further results then the continuation token
-// does not contain a value. The value of this parameter should not be URL encoded. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// applicationTypeName - the application type name used to filter the applications to query for. This value
+// should not contain the application type version.
+// excludeApplicationParameters - the flag that specifies whether application parameters will be excluded from
+// the result.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationInfoList(ctx context.Context, applicationTypeName string, excludeApplicationParameters *bool, continuationToken string, timeout *int64) (result PagedApplicationInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1652,11 +1681,12 @@ func (client BaseClient) GetApplicationInfoListResponder(resp *http.Response) (r
 
 // GetApplicationManifest gets the manifest describing an application type. The response contains the application
 // manifest XML as a string.
-//
-// applicationTypeName is the name of the application type. applicationTypeVersion is the version of the
-// application type. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// applicationTypeName - the name of the application type.
+// applicationTypeVersion - the version of the application type.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationManifest(ctx context.Context, applicationTypeName string, applicationTypeVersion string, timeout *int64) (result ApplicationTypeManifest, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1735,11 +1765,12 @@ func (client BaseClient) GetApplicationManifestResponder(resp *http.Response) (r
 
 // GetApplicationNameInfo the GetApplicationName endpoint returns the name of the application for the specified
 // service.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationNameInfo(ctx context.Context, serviceID string, timeout *int64) (result ApplicationNameInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -1823,19 +1854,22 @@ func (client BaseClient) GetApplicationNameInfoResponder(resp *http.Response) (r
 // but a page only fits the first 3 application types, or if max results is set to 3, then 3 is returned. To access the
 // rest of the results, retrieve subsequent pages by using the returned continuation token in the next query. An empty
 // continuation token is returned if there are no subsequent pages.
-//
-// excludeApplicationParameters is the flag that specifies whether application parameters will be excluded from the
-// result. continuationToken is the continuation token parameter is used to obtain next set of results. A
-// continuation token with a non empty value is included in the response of the API when the results from the
-// system do not fit in a single response. When this value is passed to the next API call, the API returns next set
-// of results. If there are no further results then the continuation token does not contain a value. The value of
-// this parameter should not be URL encoded. maxResults is the maximum number of results to be returned as part of
-// the paged queries. This parameter defines the upper bound on the number of results returned. The results
-// returned can be less than the specified maximum results if they do not fit in the message as per the max message
-// size restrictions defined in the configuration. If this parameter is zero or not specified, the paged queries
-// includes as much results as possible that fit in the return message. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// excludeApplicationParameters - the flag that specifies whether application parameters will be excluded from
+// the result.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// maxResults - the maximum number of results to be returned as part of the paged queries. This parameter
+// defines the upper bound on the number of results returned. The results returned can be less than the
+// specified maximum results if they do not fit in the message as per the max message size restrictions defined
+// in the configuration. If this parameter is zero or not specified, the paged queries includes as much results
+// as possible that fit in the return message.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationTypeInfoList(ctx context.Context, excludeApplicationParameters *bool, continuationToken string, maxResults *int64, timeout *int64) (result PagedApplicationTypeInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -1933,20 +1967,23 @@ func (client BaseClient) GetApplicationTypeInfoListResponder(resp *http.Response
 // only fits the first 3 application types, or if max results is set to 3, then 3 is returned. To access the rest of
 // the results, retrieve subsequent pages by using the returned continuation token in the next query. An empty
 // continuation token is returned if there are no subsequent pages.
-//
-// applicationTypeName is the name of the application type. excludeApplicationParameters is the flag that specifies
-// whether application parameters will be excluded from the result. continuationToken is the continuation token
-// parameter is used to obtain next set of results. A continuation token with a non empty value is included in the
-// response of the API when the results from the system do not fit in a single response. When this value is passed
-// to the next API call, the API returns next set of results. If there are no further results then the continuation
-// token does not contain a value. The value of this parameter should not be URL encoded. maxResults is the maximum
-// number of results to be returned as part of the paged queries. This parameter defines the upper bound on the
-// number of results returned. The results returned can be less than the specified maximum results if they do not
-// fit in the message as per the max message size restrictions defined in the configuration. If this parameter is
-// zero or not specified, the paged queries includes as much results as possible that fit in the return message.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// applicationTypeName - the name of the application type.
+// excludeApplicationParameters - the flag that specifies whether application parameters will be excluded from
+// the result.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// maxResults - the maximum number of results to be returned as part of the paged queries. This parameter
+// defines the upper bound on the number of results returned. The results returned can be less than the
+// specified maximum results if they do not fit in the message as per the max message size restrictions defined
+// in the configuration. If this parameter is zero or not specified, the paged queries includes as much results
+// as possible that fit in the return message.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationTypeInfoListByName(ctx context.Context, applicationTypeName string, excludeApplicationParameters *bool, continuationToken string, maxResults *int64, timeout *int64) (result PagedApplicationTypeInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -2040,11 +2077,12 @@ func (client BaseClient) GetApplicationTypeInfoListByNameResponder(resp *http.Re
 
 // GetApplicationUpgrade returns information about the state of the latest application upgrade along with details to
 // aid debugging application health issues.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetApplicationUpgrade(ctx context.Context, applicationID string, timeout *int64) (result ApplicationUpgradeProgressInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2126,20 +2164,23 @@ func (client BaseClient) GetApplicationUpgradeResponder(resp *http.Response) (re
 // same call.
 // When there are more than 100 Chaos events, the Chaos report is returned in segments where a segment contains no more
 // than 100 Chaos events.
-//
-// continuationToken is the continuation token parameter is used to obtain next set of results. A continuation
-// token with a non empty value is included in the response of the API when the results from the system do not fit
-// in a single response. When this value is passed to the next API call, the API returns next set of results. If
-// there are no further results then the continuation token does not contain a value. The value of this parameter
-// should not be URL encoded. startTimeUtc is the count of ticks representing the start time of the time range for
-// which a Chaos report is to be generated. Please consult [DateTime.Ticks
-// Property](https://msdn.microsoft.com/en-us/library/system.datetime.ticks%28v=vs.110%29) for details about tick.
-// endTimeUtc is the count of ticks representing the end time of the time range for which a Chaos report is to be
-// generated. Please consult [DateTime.Ticks
-// Property](https://msdn.microsoft.com/en-us/library/system.datetime.ticks%28v=vs.110%29) for details about tick.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// startTimeUtc - the count of ticks representing the start time of the time range for which a Chaos report is
+// to be generated. Please consult [DateTime.Ticks
+// Property](https://msdn.microsoft.com/en-us/library/system.datetime.ticks%28v=vs.110%29) for details about
+// tick.
+// endTimeUtc - the count of ticks representing the end time of the time range for which a Chaos report is to
+// be generated. Please consult [DateTime.Ticks
+// Property](https://msdn.microsoft.com/en-us/library/system.datetime.ticks%28v=vs.110%29) for details about
+// tick.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetChaosReport(ctx context.Context, continuationToken string, startTimeUtc string, endTimeUtc string, timeout *int64) (result ChaosReport, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2225,33 +2266,16 @@ func (client BaseClient) GetChaosReportResponder(resp *http.Response) (result Ch
 // state.
 // Similarly, use NodesHealthStateFilter and ApplicationsHealthStateFilter to filter the collection of nodes and
 // applications returned based on their aggregated health state.
-//
-// nodesHealthStateFilter is allows filtering of the node health state objects returned in the result of cluster
+// Parameters:
+// nodesHealthStateFilter - allows filtering of the node health state objects returned in the result of cluster
 // health query
 // based on their health state. The possible values for this parameter include integer value of one of the
 // following health states. Only nodes that match the filter are returned. All nodes are used to evaluate the
 // aggregated health state.
 // If not specified, all entries are returned.
-// The state values are flag based enumeration, so the value could be a combination of these values obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of nodes with HealthState value of OK (2) and Warning
-// (4) are returned.
-//
-// - Default - Default value. Matches any HealthState. The value is zero.
-// - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
-// collection of states. The value is 1.
-// - Ok - Filter that matches input with HealthState value Ok. The value is 2.
-// - Warning - Filter that matches input with HealthState value Warning. The value is 4.
-// - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationsHealthStateFilter
-// is allows filtering of the application health state objects returned in the result of cluster health
-// query based on their health state.
-// The possible values for this parameter include integer value obtained from members or bitwise operations
-// on members of HealthStateFilter enumeration. Only applications that match the filter are returned.
-// All applications are used to evaluate the aggregated health state. If not specified, all entries are returned.
-// The state values are flag based enumeration, so the value could be a combination of these values obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of applications with HealthState value of OK (2) and
+// The state values are flag based enumeration, so the value could be a combination of these values obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of nodes with HealthState value of OK (2) and
 // Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
@@ -2260,13 +2284,18 @@ func (client BaseClient) GetChaosReportResponder(resp *http.Response) (result Ch
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. eventsHealthStateFilter is
-// allows filtering the collection of HealthEvent objects returned based on health state.
-// The possible values for this parameter include integer value of one of the following health states.
-// Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationsHealthStateFilter - allows filtering of the application health state objects returned in the
+// result of cluster health
+// query based on their health state.
+// The possible values for this parameter include integer value obtained from members or bitwise operations
+// on members of HealthStateFilter enumeration. Only applications that match the filter are returned.
+// All applications are used to evaluate the aggregated health state. If not specified, all entries are
+// returned.
+// The state values are flag based enumeration, so the value could be a combination of these values obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of applications with HealthState value of OK (2)
+// and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -2274,9 +2303,25 @@ func (client BaseClient) GetChaosReportResponder(resp *http.Response) (result Ch
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
+// The possible values for this parameter include integer value of one of the following health states.
+// Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
+//
+// - Default - Default value. Matches any HealthState. The value is zero.
+// - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
+// collection of states. The value is 1.
+// - Ok - Filter that matches input with HealthState value Ok. The value is 2.
+// - Warning - Filter that matches input with HealthState value Warning. The value is 4.
+// - Error - Filter that matches input with HealthState value Error. The value is 8.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterHealth(ctx context.Context, nodesHealthStateFilter *int32, applicationsHealthStateFilter *int32, eventsHealthStateFilter *int32, timeout *int64) (result ClusterHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2367,10 +2412,10 @@ func (client BaseClient) GetClusterHealthResponder(resp *http.Response) (result 
 // health state of the cluster, but none of the cluster entities.
 // To expand the cluster health and get the health state of all or some of the entities, use the POST URI and specify
 // the cluster health chunk query description.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterHealthChunk(ctx context.Context, timeout *int64) (result ClusterHealthChunk, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2450,24 +2495,25 @@ func (client BaseClient) GetClusterHealthChunkResponder(resp *http.Response) (re
 // The query can return multi-level children of the entities based on the specified filters. For example, it can return
 // one application with a specified name, and for this application, return
 // only services that are in Error or Warning, and all partitions and replicas for one of these services.
-//
-// clusterHealthChunkQueryDescription is describes the cluster and application health policies used to evaluate the
-// cluster health and the filters to select which cluster entities to be returned.
-// If the cluster health policy is present, it is used to evaluate the cluster events and the cluster nodes. If not
-// present, the health evaluation uses the cluster health policy defined in the cluster manifest or the default
-// cluster health policy.
+// Parameters:
+// clusterHealthChunkQueryDescription - describes the cluster and application health policies used to evaluate
+// the cluster health and the filters to select which cluster entities to be returned.
+// If the cluster health policy is present, it is used to evaluate the cluster events and the cluster nodes. If
+// not present, the health evaluation uses the cluster health policy defined in the cluster manifest or the
+// default cluster health policy.
 // By default, each application is evaluated using its specific application health policy, defined in the
 // application manifest, or the default health policy, if no policy is defined in manifest.
 // If the application health policy map is specified, and it has an entry for an application, the specified
 // application health policy
 // is used to evaluate the application health.
-// Users can specify very flexible filters to select which cluster entities to include in response. The selection
-// can be done based on the entities health state and based on the hierarchy.
-// The query can return multi-level children of the entities based on the specified filters. For example, it can
-// return one application with a specified name, and for this application, return
-// only services that are in Error or Warning, and all partitions and replicas for one of these services. timeout
-// is the server timeout for performing the operation in seconds. This specifies the time duration that the client
-// is willing to wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Users can specify very flexible filters to select which cluster entities to include in response. The
+// selection can be done based on the entities health state and based on the hierarchy.
+// The query can return multi-level children of the entities based on the specified filters. For example, it
+// can return one application with a specified name, and for this application, return
+// only services that are in Error or Warning, and all partitions and replicas for one of these services.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFilters(ctx context.Context, clusterHealthChunkQueryDescription *ClusterHealthChunkQueryDescription, timeout *int64) (result ClusterHealthChunk, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2512,7 +2558,7 @@ func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFiltersPrepa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/$/GetClusterHealthChunk"),
@@ -2550,33 +2596,16 @@ func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFiltersRespo
 // Similarly, use NodesHealthStateFilter and ApplicationsHealthStateFilter to filter the collection of nodes and
 // applications returned based on their aggregated health state.
 // Use ClusterHealthPolicies to override the health policies used to evaluate the health.
-//
-// nodesHealthStateFilter is allows filtering of the node health state objects returned in the result of cluster
+// Parameters:
+// nodesHealthStateFilter - allows filtering of the node health state objects returned in the result of cluster
 // health query
 // based on their health state. The possible values for this parameter include integer value of one of the
 // following health states. Only nodes that match the filter are returned. All nodes are used to evaluate the
 // aggregated health state.
 // If not specified, all entries are returned.
-// The state values are flag based enumeration, so the value could be a combination of these values obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of nodes with HealthState value of OK (2) and Warning
-// (4) are returned.
-//
-// - Default - Default value. Matches any HealthState. The value is zero.
-// - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
-// collection of states. The value is 1.
-// - Ok - Filter that matches input with HealthState value Ok. The value is 2.
-// - Warning - Filter that matches input with HealthState value Warning. The value is 4.
-// - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationsHealthStateFilter
-// is allows filtering of the application health state objects returned in the result of cluster health
-// query based on their health state.
-// The possible values for this parameter include integer value obtained from members or bitwise operations
-// on members of HealthStateFilter enumeration. Only applications that match the filter are returned.
-// All applications are used to evaluate the aggregated health state. If not specified, all entries are returned.
-// The state values are flag based enumeration, so the value could be a combination of these values obtained using
-// bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of applications with HealthState value of OK (2) and
+// The state values are flag based enumeration, so the value could be a combination of these values obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of nodes with HealthState value of OK (2) and
 // Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
@@ -2585,13 +2614,18 @@ func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFiltersRespo
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. eventsHealthStateFilter is
-// allows filtering the collection of HealthEvent objects returned based on health state.
-// The possible values for this parameter include integer value of one of the following health states.
-// Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationsHealthStateFilter - allows filtering of the application health state objects returned in the
+// result of cluster health
+// query based on their health state.
+// The possible values for this parameter include integer value obtained from members or bitwise operations
+// on members of HealthStateFilter enumeration. Only applications that match the filter are returned.
+// All applications are used to evaluate the aggregated health state. If not specified, all entries are
+// returned.
+// The state values are flag based enumeration, so the value could be a combination of these values obtained
+// using bitwise 'OR' operator.
+// For example, if the provided value is 6 then health state of applications with HealthState value of OK (2)
+// and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -2599,17 +2633,33 @@ func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFiltersRespo
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. clusterHealthPolicies is
-// describes the health policies used to evaluate the cluster health.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
+// The possible values for this parameter include integer value of one of the following health states.
+// Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
+//
+// - Default - Default value. Matches any HealthState. The value is zero.
+// - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
+// collection of states. The value is 1.
+// - Ok - Filter that matches input with HealthState value Ok. The value is 2.
+// - Warning - Filter that matches input with HealthState value Warning. The value is 4.
+// - Error - Filter that matches input with HealthState value Error. The value is 8.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// clusterHealthPolicies - describes the health policies used to evaluate the cluster health.
 // If not present, the health evaluation uses the cluster health policy defined in the cluster manifest or the
 // default cluster health policy.
 // By default, each application is evaluated using its specific application health policy, defined in the
 // application manifest, or the default health policy, if no policy is defined in manifest.
 // If the application health policy map is specified, and it has an entry for an application, the specified
 // application health policy
-// is used to evaluate the application health. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// is used to evaluate the application health.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterHealthUsingPolicy(ctx context.Context, nodesHealthStateFilter *int32, applicationsHealthStateFilter *int32, eventsHealthStateFilter *int32, clusterHealthPolicies *ClusterHealthPolicies, timeout *int64) (result ClusterHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2669,7 +2719,7 @@ func (client BaseClient) GetClusterHealthUsingPolicyPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/$/GetClusterHealth"),
@@ -2712,10 +2762,10 @@ func (client BaseClient) GetClusterHealthUsingPolicyResponder(resp *http.Respons
 //
 // The contents of the cluster manifest are for informational purposes only and users are not expected to take a
 // dependency on the format of the file contents or its interpretation.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterManifest(ctx context.Context, timeout *int64) (result ClusterManifest, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2789,10 +2839,10 @@ func (client BaseClient) GetClusterManifestResponder(resp *http.Response) (resul
 
 // GetClusterUpgradeProgress gets the current progress of the ongoing cluster upgrade. If no upgrade is currently in
 // progress, gets the last state of the previous cluster upgrade.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetClusterUpgradeProgress(ctx context.Context, timeout *int64) (result ClusterUpgradeProgressObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2867,11 +2917,12 @@ func (client BaseClient) GetClusterUpgradeProgressResponder(resp *http.Response)
 // GetComposeApplicationStatus returns the status of compose application that was created or in the process of being
 // created in the Service Fabric cluster and whose name matches the one specified as the parameter. The response
 // includes the name, status and other details about the application.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetComposeApplicationStatus(ctx context.Context, applicationID string, timeout *int64) (result ComposeApplicationStatusInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -2951,18 +3002,20 @@ func (client BaseClient) GetComposeApplicationStatusResponder(resp *http.Respons
 // of being created in the Service Fabric cluster. The response includes the name, status and other details about the
 // compose application. If the applications do not fit in a page, one page of results is returned as well as a
 // continuation token which can be used to get the next page.
-//
-// continuationToken is the continuation token parameter is used to obtain next set of results. A continuation
-// token with a non empty value is included in the response of the API when the results from the system do not fit
-// in a single response. When this value is passed to the next API call, the API returns next set of results. If
-// there are no further results then the continuation token does not contain a value. The value of this parameter
-// should not be URL encoded. maxResults is the maximum number of results to be returned as part of the paged
-// queries. This parameter defines the upper bound on the number of results returned. The results returned can be
-// less than the specified maximum results if they do not fit in the message as per the max message size
-// restrictions defined in the configuration. If this parameter is zero or not specified, the paged queries
-// includes as much results as possible that fit in the return message. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// maxResults - the maximum number of results to be returned as part of the paged queries. This parameter
+// defines the upper bound on the number of results returned. The results returned can be less than the
+// specified maximum results if they do not fit in the message as per the max message size restrictions defined
+// in the configuration. If this parameter is zero or not specified, the paged queries includes as much results
+// as possible that fit in the return message.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetComposeApplicationStatusList(ctx context.Context, continuationToken string, maxResults *int64, timeout *int64) (result PagedComposeApplicationStatusInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -3046,12 +3099,15 @@ func (client BaseClient) GetComposeApplicationStatusListResponder(resp *http.Res
 }
 
 // GetDataLossProgress gets the progress of a data loss operation started with StartDataLoss, using the OperationId.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDataLossProgress(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, timeout *int64) (result PartitionDataLossProgress, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3133,15 +3189,17 @@ func (client BaseClient) GetDataLossProgressResponder(resp *http.Response) (resu
 // Use EventsHealthStateFilter to optionally filter for the collection of HealthEvent objects reported on the deployed
 // application based on health state. Use DeployedServicePackagesHealthStateFilter to optionally filter for
 // DeployedServicePackageHealth children based on health state.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. eventsHealthStateFilter is allows filtering the
-// collection of HealthEvent objects returned based on health state.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3150,7 +3208,7 @@ func (client BaseClient) GetDataLossProgressResponder(resp *http.Response) (resu
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
 // - All - Filter that matches input with any HealthState value. The value is 65535.
-// deployedServicePackagesHealthStateFilter is allows filtering of the deployed service package health state
+// deployedServicePackagesHealthStateFilter - allows filtering of the deployed service package health state
 // objects returned in the result of deployed application health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only deployed service packages that match the filter are returned. All deployed service packages are used to
@@ -3158,8 +3216,8 @@ func (client BaseClient) GetDataLossProgressResponder(resp *http.Response) (resu
 // If not specified, all entries are returned.
 // The state values are flag based enumeration, so the value can be a combination of these value obtained using
 // bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of service packages with HealthState value of OK (2)
-// and Warning (4) are returned.
+// For example, if the provided value is 6 then health state of service packages with HealthState value of OK
+// (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3167,9 +3225,10 @@ func (client BaseClient) GetDataLossProgressResponder(resp *http.Response) (resu
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedApplicationHealth(ctx context.Context, nodeName string, applicationID string, eventsHealthStateFilter *int32, deployedServicePackagesHealthStateFilter *int32, timeout *int64) (result DeployedApplicationHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3263,15 +3322,17 @@ func (client BaseClient) GetDeployedApplicationHealthResponder(resp *http.Respon
 // health state. Use ApplicationHealthPolicy to optionally override the health policies used to evaluate the health.
 // This API only uses 'ConsiderWarningAsError' field of the ApplicationHealthPolicy. The rest of the fields are ignored
 // while evaluating the health of the deployed application.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. eventsHealthStateFilter is allows filtering the
-// collection of HealthEvent objects returned based on health state.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3280,7 +3341,7 @@ func (client BaseClient) GetDeployedApplicationHealthResponder(resp *http.Respon
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
 // - All - Filter that matches input with any HealthState value. The value is 65535.
-// deployedServicePackagesHealthStateFilter is allows filtering of the deployed service package health state
+// deployedServicePackagesHealthStateFilter - allows filtering of the deployed service package health state
 // objects returned in the result of deployed application health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only deployed service packages that match the filter are returned. All deployed service packages are used to
@@ -3288,8 +3349,8 @@ func (client BaseClient) GetDeployedApplicationHealthResponder(resp *http.Respon
 // If not specified, all entries are returned.
 // The state values are flag based enumeration, so the value can be a combination of these value obtained using
 // bitwise 'OR' operator.
-// For example, if the provided value is 6 then health state of service packages with HealthState value of OK (2)
-// and Warning (4) are returned.
+// For example, if the provided value is 6 then health state of service packages with HealthState value of OK
+// (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3297,11 +3358,13 @@ func (client BaseClient) GetDeployedApplicationHealthResponder(resp *http.Respon
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetDeployedApplicationHealthUsingPolicy(ctx context.Context, nodeName string, applicationID string, eventsHealthStateFilter *int32, deployedServicePackagesHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result DeployedApplicationHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -3362,7 +3425,7 @@ func (client BaseClient) GetDeployedApplicationHealthUsingPolicyPreparer(ctx con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationId}/$/GetHealth", pathParameters),
@@ -3395,11 +3458,13 @@ func (client BaseClient) GetDeployedApplicationHealthUsingPolicyResponder(resp *
 }
 
 // GetDeployedApplicationInfo gets the information about an application deployed on a Service Fabric node.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedApplicationInfo(ctx context.Context, nodeName string, applicationID string, timeout *int64) (result DeployedApplicationInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3477,10 +3542,11 @@ func (client BaseClient) GetDeployedApplicationInfoResponder(resp *http.Response
 }
 
 // GetDeployedApplicationInfoList gets the list of applications deployed on a Service Fabric node.
-//
-// nodeName is the name of the node. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedApplicationInfoList(ctx context.Context, nodeName string, timeout *int64) (result ListDeployedApplicationInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3558,14 +3624,17 @@ func (client BaseClient) GetDeployedApplicationInfoListResponder(resp *http.Resp
 
 // GetDeployedCodePackageInfoList gets the list of code packages deployed on a Service Fabric node for the given
 // application.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. serviceManifestName is the name of a service manifest
-// registered as part of an application type in a Service Fabric cluster. codePackageName is the name of code
-// package specified in service manifest registered as part of an application type in a Service Fabric cluster.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceManifestName - the name of a service manifest registered as part of an application type in a Service
+// Fabric cluster.
+// codePackageName - the name of code package specified in service manifest registered as part of an
+// application type in a Service Fabric cluster.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedCodePackageInfoList(ctx context.Context, nodeName string, applicationID string, serviceManifestName string, codePackageName string, timeout *int64) (result ListDeployedCodePackageInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3651,16 +3720,18 @@ func (client BaseClient) GetDeployedCodePackageInfoListResponder(resp *http.Resp
 // GetDeployedServicePackageHealth gets the information about health of service package for a specific application
 // deployed on a Service Fabric node. Use EventsHealthStateFilter to optionally filter for the collection of
 // HealthEvent objects reported on the deployed service package based on health state.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. servicePackageName is the name of the service package.
-// eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on health
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// servicePackageName - the name of the service package.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
 // state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3668,9 +3739,10 @@ func (client BaseClient) GetDeployedCodePackageInfoListResponder(resp *http.Resp
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServicePackageHealth(ctx context.Context, nodeName string, applicationID string, servicePackageName string, eventsHealthStateFilter *int32, timeout *int64) (result DeployedServicePackageHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3759,16 +3831,18 @@ func (client BaseClient) GetDeployedServicePackageHealthResponder(resp *http.Res
 // ApplicationHealthPolicy to optionally override the health policies used to evaluate the health. This API only uses
 // 'ConsiderWarningAsError' field of the ApplicationHealthPolicy. The rest of the fields are ignored while evaluating
 // the health of the deployed service package.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. servicePackageName is the name of the service package.
-// eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on health
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// servicePackageName - the name of the service package.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
 // state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -3776,11 +3850,13 @@ func (client BaseClient) GetDeployedServicePackageHealthResponder(resp *http.Res
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetDeployedServicePackageHealthUsingPolicy(ctx context.Context, nodeName string, applicationID string, servicePackageName string, eventsHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result DeployedServicePackageHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -3837,7 +3913,7 @@ func (client BaseClient) GetDeployedServicePackageHealthUsingPolicyPreparer(ctx 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationId}/$/GetServicePackages/{servicePackageName}/$/GetHealth", pathParameters),
@@ -3871,11 +3947,13 @@ func (client BaseClient) GetDeployedServicePackageHealthUsingPolicyResponder(res
 
 // GetDeployedServicePackageInfoList returns the information about the service packages deployed on a Service Fabric
 // node for the given application.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServicePackageInfoList(ctx context.Context, nodeName string, applicationID string, timeout *int64) (result ListDeployedServicePackageInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -3955,12 +4033,14 @@ func (client BaseClient) GetDeployedServicePackageInfoListResponder(resp *http.R
 // GetDeployedServicePackageInfoListByName returns the information about the service packages deployed on a Service
 // Fabric node for the given application. These results are of service packages whose name match exactly the service
 // package name specified as the parameter.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. servicePackageName is the name of the service package.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// servicePackageName - the name of the service package.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServicePackageInfoListByName(ctx context.Context, nodeName string, applicationID string, servicePackageName string, timeout *int64) (result ListDeployedServicePackageInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4041,11 +4121,13 @@ func (client BaseClient) GetDeployedServicePackageInfoListByNameResponder(resp *
 // GetDeployedServiceReplicaDetailInfo gets the details of the replica deployed on a Service Fabric node. The
 // information include service kind, service name, current service operation, current service operation start date
 // time, partition id, replica/instance id, reported load and other information.
-//
-// nodeName is the name of the node. partitionID is the identity of the partition. replicaID is the identifier of
-// the replica. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServiceReplicaDetailInfo(ctx context.Context, nodeName string, partitionID uuid.UUID, replicaID string, timeout *int64) (result DeployedServiceReplicaDetailInfoModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4127,13 +4209,16 @@ func (client BaseClient) GetDeployedServiceReplicaDetailInfoResponder(resp *http
 // Fabric node. The information include partition id, replica id, status of the replica, name of the service, name of
 // the service type and other information. Use PartitionId or ServiceManifestName query parameters to return
 // information about the deployed replicas matching the specified values for those parameters.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. partitionID is the identity of the partition.
-// serviceManifestName is the name of a service manifest registered as part of an application type in a Service
-// Fabric cluster. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// serviceManifestName - the name of a service manifest registered as part of an application type in a Service
+// Fabric cluster.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServiceReplicaInfoList(ctx context.Context, nodeName string, applicationID string, partitionID *uuid.UUID, serviceManifestName string, timeout *int64) (result ListDeployedServiceReplicaInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4219,14 +4304,17 @@ func (client BaseClient) GetDeployedServiceReplicaInfoListResponder(resp *http.R
 // GetDeployedServiceTypeInfoByName gets the information about a specified service type of the application deployed on
 // a node in a Service Fabric cluster. The response includes the name of the service type, its registration status, the
 // code package that registered it and activation id of the service package.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. serviceTypeName is specifies the name of a Service
-// Fabric service type. serviceManifestName is the name of the service manifest to filter the list of deployed
-// service type information. If specified, the response will only contain the information about service types that
-// are defined in this service manifest. timeout is the server timeout for performing the operation in seconds.
-// This specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceTypeName - specifies the name of a Service Fabric service type.
+// serviceManifestName - the name of the service manifest to filter the list of deployed service type
+// information. If specified, the response will only contain the information about service types that are
+// defined in this service manifest.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServiceTypeInfoByName(ctx context.Context, nodeName string, applicationID string, serviceTypeName string, serviceManifestName string, timeout *int64) (result DeployedServiceTypeInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4310,13 +4398,16 @@ func (client BaseClient) GetDeployedServiceTypeInfoByNameResponder(resp *http.Re
 // GetDeployedServiceTypeInfoList gets the list containing the information about service types from the applications
 // deployed on a node in a Service Fabric cluster. The response includes the name of the service type, its registration
 // status, the code package that registered it and activation id of the service package.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. serviceManifestName is the name of the service
-// manifest to filter the list of deployed service type information. If specified, the response will only contain
-// the information about service types that are defined in this service manifest. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceManifestName - the name of the service manifest to filter the list of deployed service type
+// information. If specified, the response will only contain the information about service types that are
+// defined in this service manifest.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetDeployedServiceTypeInfoList(ctx context.Context, nodeName string, applicationID string, serviceManifestName string, timeout *int64) (result ListDeployedServiceTypeInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4397,22 +4488,24 @@ func (client BaseClient) GetDeployedServiceTypeInfoListResponder(resp *http.Resp
 }
 
 // GetFaultOperationList gets the a list of user-induced fault operations filtered by provided input.
-//
-// typeFilter is used to filter on OperationType for user-induced operations.
+// Parameters:
+// typeFilter - used to filter on OperationType for user-induced operations.
 // 65535 - select all
 // 1     - select PartitionDataLoss.
 // 2     - select PartitionQuorumLoss.
 // 4     - select PartitionRestart.
-// 8     - select NodeTransition. stateFilter is used to filter on OperationState's for user-induced operations.
+// 8     - select NodeTransition.
+// stateFilter - used to filter on OperationState's for user-induced operations.
 // 65535 - select All
 // 1     - select Running
 // 2     - select RollingBack
 // 8     - select Completed
 // 16    - select Faulted
 // 32    - select Cancelled
-// 64    - select ForceCancelled timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// 64    - select ForceCancelled
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetFaultOperationList(ctx context.Context, typeFilter int32, stateFilter int32, timeout *int64) (result ListOperationStatus, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4488,10 +4581,11 @@ func (client BaseClient) GetFaultOperationListResponder(resp *http.Response) (re
 
 // GetImageStoreContent returns the information about the image store content at the specified contentPath relative to
 // the root of the image store.
-//
-// contentPath is relative path to file or folder in the image store from its root. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// contentPath - relative path to file or folder in the image store from its root.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetImageStoreContent(ctx context.Context, contentPath string, timeout *int64) (result ImageStoreContent, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4568,10 +4662,10 @@ func (client BaseClient) GetImageStoreContentResponder(resp *http.Response) (res
 }
 
 // GetImageStoreRootContent returns the information about the image store content at the root of the image store.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetImageStoreRootContent(ctx context.Context, timeout *int64) (result ImageStoreContent, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4646,14 +4740,15 @@ func (client BaseClient) GetImageStoreRootContentResponder(resp *http.Response) 
 // GetNodeHealth gets the health of a Service Fabric node. Use EventsHealthStateFilter to filter the collection of
 // health events reported on the node based on the health state. If the node that you specify by name does not exist in
 // the health store, this returns an error.
-//
-// nodeName is the name of the node. eventsHealthStateFilter is allows filtering the collection of HealthEvent
-// objects returned based on health state.
+// Parameters:
+// nodeName - the name of the node.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -4661,9 +4756,10 @@ func (client BaseClient) GetImageStoreRootContentResponder(resp *http.Response) 
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeHealth(ctx context.Context, nodeName string, eventsHealthStateFilter *int32, timeout *int64) (result NodeHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4748,14 +4844,15 @@ func (client BaseClient) GetNodeHealthResponder(resp *http.Response) (result Nod
 // collection of health events reported on the node based on the health state. Use ClusterHealthPolicy in the POST body
 // to override the health policies used to evaluate the health. If the node that you specify by name does not exist in
 // the health store, this returns an error.
-//
-// nodeName is the name of the node. eventsHealthStateFilter is allows filtering the collection of HealthEvent
-// objects returned based on health state.
+// Parameters:
+// nodeName - the name of the node.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -4763,11 +4860,12 @@ func (client BaseClient) GetNodeHealthResponder(resp *http.Response) (result Nod
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. clusterHealthPolicy is
-// describes the health policies used to evaluate the health of a cluster or node. If not present, the health
-// evaluation uses the health policy from cluster manifest or the default health policy. timeout is the server
-// timeout for performing the operation in seconds. This specifies the time duration that the client is willing to
-// wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// clusterHealthPolicy - describes the health policies used to evaluate the health of a cluster or node. If not
+// present, the health evaluation uses the health policy from cluster manifest or the default health policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeHealthUsingPolicy(ctx context.Context, nodeName string, eventsHealthStateFilter *int32, clusterHealthPolicy *ClusterHealthPolicy, timeout *int64) (result NodeHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4821,7 +4919,7 @@ func (client BaseClient) GetNodeHealthUsingPolicyPreparer(ctx context.Context, n
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetHealth", pathParameters),
@@ -4855,10 +4953,11 @@ func (client BaseClient) GetNodeHealthUsingPolicyResponder(resp *http.Response) 
 
 // GetNodeInfo gets the information about a specific node in the Service Fabric Cluster.The respons include the name,
 // status, id, health, uptime and other details about the node.
-//
-// nodeName is the name of the node. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeInfo(ctx context.Context, nodeName string, timeout *int64) (result NodeInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -4936,14 +5035,14 @@ func (client BaseClient) GetNodeInfoResponder(resp *http.Response) (result NodeI
 
 // GetNodeInfoList the Nodes endpoint returns information about the nodes in the Service Fabric Cluster. The respons
 // include the name, status, id, health, uptime and other details about the node.
-//
-// continuationToken is the continuation token parameter is used to obtain next set of results. A continuation
-// token with a non empty value is included in the response of the API when the results from the system do not fit
-// in a single response. When this value is passed to the next API call, the API returns next set of results. If
-// there are no further results then the continuation token does not contain a value. The value of this parameter
-// should not be URL encoded. nodeStatusFilter is allows filtering the nodes based on the NodeStatus. Only the
-// nodes that are matching the specified filter value will be returned. The filter value can be one of the
-// following.
+// Parameters:
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// nodeStatusFilter - allows filtering the nodes based on the NodeStatus. Only the nodes that are matching the
+// specified filter value will be returned. The filter value can be one of the following.
 //
 // - default - This filter value will match all of the nodes excepts the ones with with status as Unknown or
 // Removed.
@@ -4959,9 +5058,10 @@ func (client BaseClient) GetNodeInfoResponder(resp *http.Response) (result NodeI
 // Service Fabric does not have authoritative information about that node. This can happen if the system learns
 // about a node at runtime.
 // - removed - This filter value will match nodes whose status is Removed. These are the nodes that are removed
-// from the cluster using the RemoveNodeState API. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// from the cluster using the RemoveNodeState API.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeInfoList(ctx context.Context, continuationToken string, nodeStatusFilter string, timeout *int64) (result PagedNodeInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5042,10 +5142,11 @@ func (client BaseClient) GetNodeInfoListResponder(resp *http.Response) (result P
 }
 
 // GetNodeLoadInfo gets the load information of a Service Fabric node.
-//
-// nodeName is the name of the node. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeLoadInfo(ctx context.Context, nodeName string, timeout *int64) (result NodeLoadInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5123,11 +5224,13 @@ func (client BaseClient) GetNodeLoadInfoResponder(resp *http.Response) (result N
 
 // GetNodeTransitionProgress gets the progress of an operation started with StartNodeTransition using the provided
 // OperationId.
-//
-// nodeName is the name of the node. operationID is a GUID that identifies a call of this API.  This is passed into
-// the corresponding GetProgress API timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetNodeTransitionProgress(ctx context.Context, nodeName string, operationID uuid.UUID, timeout *int64) (result NodeTransitionProgress, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5209,14 +5312,15 @@ func (client BaseClient) GetNodeTransitionProgressResponder(resp *http.Response)
 // state.
 // Use ReplicasHealthStateFilter to filter the collection of ReplicaHealthState objects on the partition.
 // If you specify a partition that does not exist in the health store, this cmdlet returns an error.
-//
-// partitionID is the identity of the partition. eventsHealthStateFilter is allows filtering the collection of
-// HealthEvent objects returned based on health state.
+// Parameters:
+// partitionID - the identity of the partition.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -5224,14 +5328,14 @@ func (client BaseClient) GetNodeTransitionProgressResponder(resp *http.Response)
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. replicasHealthStateFilter is
-// allows filtering the collection of ReplicaHealthState objects on the partition. The value can be obtained from
-// members or bitwise operations on members of HealthStateFilter. Only replicas that match the filter will be
-// returned. All replicas will be used to evaluate the aggregated health state. If not specified, all entries will
-// be returned.The state values are flag based enumeration, so the value could be a combination of these value
-// obtained using bitwise 'OR' operator. For example, If the provided value is 6 then all of the events with
-// HealthState value of OK (2) and Warning (4) will be returned. The possible values for this parameter include
-// integer value of one of the following health states.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// replicasHealthStateFilter - allows filtering the collection of ReplicaHealthState objects on the partition.
+// The value can be obtained from members or bitwise operations on members of HealthStateFilter. Only replicas
+// that match the filter will be returned. All replicas will be used to evaluate the aggregated health state.
+// If not specified, all entries will be returned.The state values are flag based enumeration, so the value
+// could be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided
+// value is 6 then all of the events with HealthState value of OK (2) and Warning (4) will be returned. The
+// possible values for this parameter include integer value of one of the following health states.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -5239,9 +5343,10 @@ func (client BaseClient) GetNodeTransitionProgressResponder(resp *http.Response)
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetPartitionHealth(ctx context.Context, partitionID uuid.UUID, eventsHealthStateFilter *int32, replicasHealthStateFilter *int32, timeout *int64) (result PartitionHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5336,14 +5441,15 @@ func (client BaseClient) GetPartitionHealthResponder(resp *http.Response) (resul
 // Use ReplicasHealthStateFilter to filter the collection of ReplicaHealthState objects on the partition. Use
 // ApplicationHealthPolicy in the POST body to override the health policies used to evaluate the health.
 // If you specify a partition that does not exist in the health store, this cmdlet returns an error.
-//
-// partitionID is the identity of the partition. eventsHealthStateFilter is allows filtering the collection of
-// HealthEvent objects returned based on health state.
+// Parameters:
+// partitionID - the identity of the partition.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -5351,14 +5457,14 @@ func (client BaseClient) GetPartitionHealthResponder(resp *http.Response) (resul
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. replicasHealthStateFilter is
-// allows filtering the collection of ReplicaHealthState objects on the partition. The value can be obtained from
-// members or bitwise operations on members of HealthStateFilter. Only replicas that match the filter will be
-// returned. All replicas will be used to evaluate the aggregated health state. If not specified, all entries will
-// be returned.The state values are flag based enumeration, so the value could be a combination of these value
-// obtained using bitwise 'OR' operator. For example, If the provided value is 6 then all of the events with
-// HealthState value of OK (2) and Warning (4) will be returned. The possible values for this parameter include
-// integer value of one of the following health states.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// replicasHealthStateFilter - allows filtering the collection of ReplicaHealthState objects on the partition.
+// The value can be obtained from members or bitwise operations on members of HealthStateFilter. Only replicas
+// that match the filter will be returned. All replicas will be used to evaluate the aggregated health state.
+// If not specified, all entries will be returned.The state values are flag based enumeration, so the value
+// could be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided
+// value is 6 then all of the events with HealthState value of OK (2) and Warning (4) will be returned. The
+// possible values for this parameter include integer value of one of the following health states.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -5366,11 +5472,13 @@ func (client BaseClient) GetPartitionHealthResponder(resp *http.Response) (resul
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetPartitionHealthUsingPolicy(ctx context.Context, partitionID uuid.UUID, eventsHealthStateFilter *int32, replicasHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result PartitionHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -5430,7 +5538,7 @@ func (client BaseClient) GetPartitionHealthUsingPolicyPreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Partitions/{partitionId}/$/GetHealth", pathParameters),
@@ -5465,10 +5573,11 @@ func (client BaseClient) GetPartitionHealthUsingPolicyResponder(resp *http.Respo
 // GetPartitionInfo the Partitions endpoint returns information about the specified partition. The response include the
 // partition id, partitioning scheme information, keys supported by the partition, status, health and other details
 // about the partition.
-//
-// partitionID is the identity of the partition. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetPartitionInfo(ctx context.Context, partitionID uuid.UUID, timeout *int64) (result ServicePartitionInfoModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5547,15 +5656,17 @@ func (client BaseClient) GetPartitionInfoResponder(resp *http.Response) (result 
 // GetPartitionInfoList gets the list of partitions of a Service Fabric service. The response include the partition id,
 // partitioning scheme information, keys supported by the partition, status, health and other details about the
 // partition.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. continuationToken is the continuation token parameter is used to obtain next set of results. A
-// continuation token with a non empty value is included in the response of the API when the results from the
-// system do not fit in a single response. When this value is passed to the next API call, the API returns next set
-// of results. If there are no further results then the continuation token does not contain a value. The value of
-// this parameter should not be URL encoded. timeout is the server timeout for performing the operation in seconds.
-// This specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetPartitionInfoList(ctx context.Context, serviceID string, continuationToken string, timeout *int64) (result PagedServicePartitionInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5637,10 +5748,11 @@ func (client BaseClient) GetPartitionInfoListResponder(resp *http.Response) (res
 // GetPartitionLoadInformation returns information about the specified partition.
 // The response includes a list of load information.
 // Each information includes load metric name, value and last reported time in UTC.
-//
-// partitionID is the identity of the partition. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetPartitionLoadInformation(ctx context.Context, partitionID uuid.UUID, timeout *int64) (result PartitionLoadInformation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5718,12 +5830,15 @@ func (client BaseClient) GetPartitionLoadInformationResponder(resp *http.Respons
 
 // GetPartitionRestartProgress gets the progress of a PartitionRestart started with StartPartitionRestart using the
 // provided OperationId.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetPartitionRestartProgress(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, timeout *int64) (result PartitionRestartProgress, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5804,10 +5919,11 @@ func (client BaseClient) GetPartitionRestartProgressResponder(resp *http.Respons
 // GetProvisionedFabricCodeVersionInfoList gets a list of information about fabric code versions that are provisioned
 // in the cluster. The parameter CodeVersion can be used to optionally filter the output to only that particular
 // version.
-//
-// codeVersion is the product version of Service Fabric. timeout is the server timeout for performing the operation
-// in seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// codeVersion - the product version of Service Fabric.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetProvisionedFabricCodeVersionInfoList(ctx context.Context, codeVersion string, timeout *int64) (result ListFabricCodeVersionInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5885,10 +6001,11 @@ func (client BaseClient) GetProvisionedFabricCodeVersionInfoListResponder(resp *
 // GetProvisionedFabricConfigVersionInfoList gets a list of information about fabric config versions that are
 // provisioned in the cluster. The parameter ConfigVersion can be used to optionally filter the output to only that
 // particular version.
-//
-// configVersion is the config version of Service Fabric. timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// configVersion - the config version of Service Fabric.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetProvisionedFabricConfigVersionInfoList(ctx context.Context, configVersion string, timeout *int64) (result ListFabricConfigVersionInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -5965,12 +6082,15 @@ func (client BaseClient) GetProvisionedFabricConfigVersionInfoListResponder(resp
 
 // GetQuorumLossProgress gets the progress of a quorum loss operation started with StartQuorumLoss, using the provided
 // OperationId.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetQuorumLossProgress(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, timeout *int64) (result PartitionQuorumLossProgress, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6051,15 +6171,16 @@ func (client BaseClient) GetQuorumLossProgressResponder(resp *http.Response) (re
 // GetReplicaHealth gets the health of a Service Fabric replica.
 // Use EventsHealthStateFilter to filter the collection of health events reported on the replica based on the health
 // state.
-//
-// partitionID is the identity of the partition. replicaID is the identifier of the replica.
-// eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on health
+// Parameters:
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
 // state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -6067,9 +6188,10 @@ func (client BaseClient) GetQuorumLossProgressResponder(resp *http.Response) (re
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetReplicaHealth(ctx context.Context, partitionID uuid.UUID, replicaID string, eventsHealthStateFilter *int32, timeout *int64) (result ReplicaHealthModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6158,15 +6280,16 @@ func (client BaseClient) GetReplicaHealthResponder(resp *http.Response) (result 
 // Use ApplicationHealthPolicy to optionally override the health policies used to evaluate the health. This API only
 // uses 'ConsiderWarningAsError' field of the ApplicationHealthPolicy. The rest of the fields are ignored while
 // evaluating the health of the replica.
-//
-// partitionID is the identity of the partition. replicaID is the identifier of the replica.
-// eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on health
+// Parameters:
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
 // state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -6174,11 +6297,13 @@ func (client BaseClient) GetReplicaHealthResponder(resp *http.Response) (result 
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetReplicaHealthUsingPolicy(ctx context.Context, partitionID uuid.UUID, replicaID string, eventsHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result ReplicaHealthModel, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -6234,7 +6359,7 @@ func (client BaseClient) GetReplicaHealthUsingPolicyPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Partitions/{partitionId}/$/GetReplicas/{replicaId}/$/GetHealth", pathParameters),
@@ -6268,14 +6393,16 @@ func (client BaseClient) GetReplicaHealthUsingPolicyResponder(resp *http.Respons
 
 // GetReplicaInfo the respons include the id, role, status, health, node name, uptime, and other details about the
 // replica.
-//
-// partitionID is the identity of the partition. replicaID is the identifier of the replica. continuationToken is
-// the continuation token parameter is used to obtain next set of results. A continuation token with a non empty
-// value is included in the response of the API when the results from the system do not fit in a single response.
-// When this value is passed to the next API call, the API returns next set of results. If there are no further
-// results then the continuation token does not contain a value. The value of this parameter should not be URL
-// encoded. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// Parameters:
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetReplicaInfo(ctx context.Context, partitionID uuid.UUID, replicaID string, continuationToken string, timeout *int64) (result ReplicaInfoModel, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -6358,14 +6485,16 @@ func (client BaseClient) GetReplicaInfoResponder(resp *http.Response) (result Re
 
 // GetReplicaInfoList the GetReplicas endpoint returns information about the replicas of the specified partition. The
 // respons include the id, role, status, health, node name, uptime, and other details about the replica.
-//
-// partitionID is the identity of the partition. continuationToken is the continuation token parameter is used to
-// obtain next set of results. A continuation token with a non empty value is included in the response of the API
-// when the results from the system do not fit in a single response. When this value is passed to the next API
-// call, the API returns next set of results. If there are no further results then the continuation token does not
-// contain a value. The value of this parameter should not be URL encoded. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetReplicaInfoList(ctx context.Context, partitionID uuid.UUID, continuationToken string, timeout *int64) (result PagedReplicaInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6446,11 +6575,12 @@ func (client BaseClient) GetReplicaInfoListResponder(resp *http.Response) (resul
 
 // GetServiceDescription gets the description of an existing Service Fabric service. A service must be created before
 // its description can be obtained.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceDescription(ctx context.Context, serviceID string, timeout *int64) (result ServiceDescriptionModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6531,15 +6661,16 @@ func (client BaseClient) GetServiceDescriptionResponder(resp *http.Response) (re
 // state.
 // Use PartitionsHealthStateFilter to filter the collection of partitions returned.
 // If you specify a service that does not exist in the health store, this cmdlet returns an error.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on
-// health state.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -6547,16 +6678,16 @@ func (client BaseClient) GetServiceDescriptionResponder(resp *http.Response) (re
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. partitionsHealthStateFilter is
-// allows filtering of the partitions health state objects returned in the result of service health query based on
-// their health state.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// partitionsHealthStateFilter - allows filtering of the partitions health state objects returned in the result
+// of service health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
-// Only partitions that match the filter are returned. All partitions are used to evaluate the aggregated health
-// state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value
-// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of partitions
-// with HealthState value of OK (2) and Warning (4) will be returned.
+// Only partitions that match the filter are returned. All partitions are used to evaluate the aggregated
+// health state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value
+// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of
+// partitions with HealthState value of OK (2) and Warning (4) will be returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn't match any HealthState value. Used in order to return no results on a given
@@ -6564,9 +6695,10 @@ func (client BaseClient) GetServiceDescriptionResponder(resp *http.Response) (re
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceHealth(ctx context.Context, serviceID string, eventsHealthStateFilter *int32, partitionsHealthStateFilter *int32, timeout *int64) (result ServiceHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6660,15 +6792,16 @@ func (client BaseClient) GetServiceHealthResponder(resp *http.Response) (result 
 // state.
 // Use PartitionsHealthStateFilter to filter the collection of partitions returned.
 // If you specify a service that does not exist in the health store, this cmdlet returns an error.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. eventsHealthStateFilter is allows filtering the collection of HealthEvent objects returned based on
-// health state.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// eventsHealthStateFilter - allows filtering the collection of HealthEvent objects returned based on health
+// state.
 // The possible values for this parameter include integer value of one of the following health states.
 // Only events that match the filter are returned. All events are used to evaluate the aggregated health state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is 6 then
-// all of the events with HealthState value of OK (2) and Warning (4) are returned.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value obtained using bitwise 'OR' operator. For example, If the provided value is
+// 6 then all of the events with HealthState value of OK (2) and Warning (4) are returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn’t match any HealthState value. Used in order to return no results on a given
@@ -6676,16 +6809,16 @@ func (client BaseClient) GetServiceHealthResponder(resp *http.Response) (result 
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. partitionsHealthStateFilter is
-// allows filtering of the partitions health state objects returned in the result of service health query based on
-// their health state.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// partitionsHealthStateFilter - allows filtering of the partitions health state objects returned in the result
+// of service health query based on their health state.
 // The possible values for this parameter include integer value of one of the following health states.
-// Only partitions that match the filter are returned. All partitions are used to evaluate the aggregated health
-// state.
-// If not specified, all entries are returned. The state values are flag based enumeration, so the value could be a
-// combination of these value
-// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of partitions
-// with HealthState value of OK (2) and Warning (4) will be returned.
+// Only partitions that match the filter are returned. All partitions are used to evaluate the aggregated
+// health state.
+// If not specified, all entries are returned. The state values are flag based enumeration, so the value could
+// be a combination of these value
+// obtained using bitwise 'OR' operator. For example, if the provided value is 6 then health state of
+// partitions with HealthState value of OK (2) and Warning (4) will be returned.
 //
 // - Default - Default value. Matches any HealthState. The value is zero.
 // - None - Filter that doesn't match any HealthState value. Used in order to return no results on a given
@@ -6693,11 +6826,13 @@ func (client BaseClient) GetServiceHealthResponder(resp *http.Response) (result 
 // - Ok - Filter that matches input with HealthState value Ok. The value is 2.
 // - Warning - Filter that matches input with HealthState value Warning. The value is 4.
 // - Error - Filter that matches input with HealthState value Error. The value is 8.
-// - All - Filter that matches input with any HealthState value. The value is 65535. applicationHealthPolicy is
-// describes the health policies used to evaluate the health of an application or one of its children.
+// - All - Filter that matches input with any HealthState value. The value is 65535.
+// applicationHealthPolicy - describes the health policies used to evaluate the health of an application or one
+// of its children.
 // If not present, the health evaluation uses the health policy from application manifest or the default health
-// policy. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// policy.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) GetServiceHealthUsingPolicy(ctx context.Context, serviceID string, eventsHealthStateFilter *int32, partitionsHealthStateFilter *int32, applicationHealthPolicy *ApplicationHealthPolicy, timeout *int64) (result ServiceHealth, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -6757,7 +6892,7 @@ func (client BaseClient) GetServiceHealthUsingPolicyPreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Services/{serviceId}/$/GetHealth", pathParameters),
@@ -6791,12 +6926,14 @@ func (client BaseClient) GetServiceHealthUsingPolicyResponder(resp *http.Respons
 
 // GetServiceInfo returns the information about specified service belonging to the specified Service Fabric
 // application.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. serviceID is the identity of the service. This is typically the full name of the service
-// without the 'fabric:' URI scheme. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceInfo(ctx context.Context, applicationID string, serviceID string, timeout *int64) (result ServiceInfoModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6875,16 +7012,18 @@ func (client BaseClient) GetServiceInfoResponder(resp *http.Response) (result Se
 
 // GetServiceInfoList returns the information about all services belonging to the application specified by the
 // application id.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. serviceTypeName is the service type name used to filter the services to query for.
-// continuationToken is the continuation token parameter is used to obtain next set of results. A continuation
-// token with a non empty value is included in the response of the API when the results from the system do not fit
-// in a single response. When this value is passed to the next API call, the API returns next set of results. If
-// there are no further results then the continuation token does not contain a value. The value of this parameter
-// should not be URL encoded. timeout is the server timeout for performing the operation in seconds. This specifies
-// the time duration that the client is willing to wait for the requested operation to complete. The default value
-// for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// serviceTypeName - the service type name used to filter the services to query for.
+// continuationToken - the continuation token parameter is used to obtain next set of results. A continuation
+// token with a non empty value is included in the response of the API when the results from the system do not
+// fit in a single response. When this value is passed to the next API call, the API returns next set of
+// results. If there are no further results then the continuation token does not contain a value. The value of
+// this parameter should not be URL encoded.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceInfoList(ctx context.Context, applicationID string, serviceTypeName string, continuationToken string, timeout *int64) (result PagedServiceInfoList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -6968,12 +7107,14 @@ func (client BaseClient) GetServiceInfoListResponder(resp *http.Response) (resul
 
 // GetServiceManifest gets the manifest describing a service type. The response contains the service manifest XML as a
 // string.
-//
-// applicationTypeName is the name of the application type. applicationTypeVersion is the version of the
-// application type. serviceManifestName is the name of a service manifest registered as part of an application
-// type in a Service Fabric cluster. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// applicationTypeName - the name of the application type.
+// applicationTypeVersion - the version of the application type.
+// serviceManifestName - the name of a service manifest registered as part of an application type in a Service
+// Fabric cluster.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceManifest(ctx context.Context, applicationTypeName string, applicationTypeVersion string, serviceManifestName string, timeout *int64) (result ServiceTypeManifest, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7052,10 +7193,11 @@ func (client BaseClient) GetServiceManifestResponder(resp *http.Response) (resul
 }
 
 // GetServiceNameInfo the GetServiceName endpoint returns the name of the service for the specified partition.
-//
-// partitionID is the identity of the partition. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceNameInfo(ctx context.Context, partitionID uuid.UUID, timeout *int64) (result ServiceNameInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7135,11 +7277,12 @@ func (client BaseClient) GetServiceNameInfoResponder(resp *http.Response) (resul
 // provisioned application type in a Service Fabric cluster. The response includes the name of the service type, the
 // name and version of the service manifest the type is defined in, kind (stateless or stateless) of the service type
 // and other information about it.
-//
-// applicationTypeName is the name of the application type. applicationTypeVersion is the version of the
-// application type. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// applicationTypeName - the name of the application type.
+// applicationTypeVersion - the version of the application type.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) GetServiceTypeInfoList(ctx context.Context, applicationTypeName string, applicationTypeVersion string, timeout *int64) (result ListServiceTypeInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7224,13 +7367,14 @@ func (client BaseClient) GetServiceTypeInfoListResponder(resp *http.Response) (r
 // the infrastructure on which the cluster is running.
 //
 // This API supports the Service Fabric platform; it is not meant to be used directly from your code.
-//
-// command is the text of the command to be invoked. The content of the command is infrastructure-specific.
-// serviceID is the identity of the infrastructure service. This is  the full name of the infrastructure service
-// without the 'fabric:' URI scheme. This parameter required only for the cluster that have more than one instance
-// of infrastructure service running. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// command - the text of the command to be invoked. The content of the command is infrastructure-specific.
+// serviceID - the identity of the infrastructure service. This is  the full name of the infrastructure service
+// without the 'fabric:' URI scheme. This parameter required only for the cluster that have more than one
+// instance of infrastructure service running.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) InvokeInfrastructureCommand(ctx context.Context, command string, serviceID string, timeout *int64) (result ReadCloser, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7313,13 +7457,14 @@ func (client BaseClient) InvokeInfrastructureCommandResponder(resp *http.Respons
 // the infrastructure on which the cluster is running.
 //
 // This API supports the Service Fabric platform; it is not meant to be used directly from your code.
-//
-// command is the text of the command to be invoked. The content of the command is infrastructure-specific.
-// serviceID is the identity of the infrastructure service. This is  the full name of the infrastructure service
-// without the 'fabric:' URI scheme. This parameter required only for the cluster that have more than one instance
-// of infrastructure service running. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// command - the text of the command to be invoked. The content of the command is infrastructure-specific.
+// serviceID - the identity of the infrastructure service. This is  the full name of the infrastructure service
+// without the 'fabric:' URI scheme. This parameter required only for the cluster that have more than one
+// instance of infrastructure service running.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) InvokeInfrastructureQuery(ctx context.Context, command string, serviceID string, timeout *int64) (result ReadCloser, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7396,11 +7541,12 @@ func (client BaseClient) InvokeInfrastructureQueryResponder(resp *http.Response)
 
 // ProvisionApplicationType provisions or registers a Service Fabric application type with the cluster. This is
 // required before any new applications can be instantiated.
-//
-// applicationTypeImageStorePath is the relative path for the application package in the image store specified
-// during the prior copy operation. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// applicationTypeImageStorePath - the relative path for the application package in the image store specified
+// during the prior copy operation.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ProvisionApplicationType(ctx context.Context, applicationTypeImageStorePath ApplicationTypeImageStorePath, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationTypeImageStorePath,
@@ -7447,7 +7593,7 @@ func (client BaseClient) ProvisionApplicationTypePreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/ApplicationTypes/$/Provision"),
@@ -7479,10 +7625,10 @@ func (client BaseClient) ProvisionApplicationTypeResponder(resp *http.Response) 
 // (including system services) which are currently stuck in quorum loss. This operation should only be performed if it
 // is known that the replicas that are down cannot be recovered. Incorrect use of this API can cause potential data
 // loss.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RecoverAllPartitions(ctx context.Context, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7556,10 +7702,11 @@ func (client BaseClient) RecoverAllPartitionsResponder(resp *http.Response) (res
 // RecoverPartition indicates to the Service Fabric cluster that it should attempt to recover a specific partition
 // which is currently stuck in quorum loss. This operation should only be performed if it is known that the replicas
 // that are down cannot be recovered. Incorrect use of this API can cause potential data loss.
-//
-// partitionID is the identity of the partition. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RecoverPartition(ctx context.Context, partitionID uuid.UUID, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7637,11 +7784,12 @@ func (client BaseClient) RecoverPartitionResponder(resp *http.Response) (result 
 // RecoverServicePartitions indicates to the Service Fabric cluster that it should attempt to recover the specified
 // service which is currently stuck in quorum loss. This operation should only be performed if it is known that the
 // replicas that are down cannot be recovered. Incorrect use of this API can cause potential data loss.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RecoverServicePartitions(ctx context.Context, serviceID string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7719,10 +7867,10 @@ func (client BaseClient) RecoverServicePartitionsResponder(resp *http.Response) 
 // RecoverSystemPartitions indicates to the Service Fabric cluster that it should attempt to recover the system
 // services which are currently stuck in quorum loss. This operation should only be performed if it is known that the
 // replicas that are down cannot be recovered. Incorrect use of this API can cause potential data loss.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RecoverSystemPartitions(ctx context.Context, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7795,11 +7943,12 @@ func (client BaseClient) RecoverSystemPartitionsResponder(resp *http.Response) (
 
 // RemoveComposeApplication deletes an existing Service Fabric compose application. An application must be created
 // before it can be deleted.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RemoveComposeApplication(ctx context.Context, applicationID string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7880,10 +8029,11 @@ func (client BaseClient) RemoveComposeApplicationResponder(resp *http.Response) 
 // This operation lets Service Fabric know that the replicas on that node no longer exist, and that Service Fabric
 // should stop waiting for those replicas to come back up. Do not run this cmdlet if the state on the node has not been
 // removed and the node can comes back up with its state intact.
-//
-// nodeName is the name of the node. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RemoveNodeState(ctx context.Context, nodeName string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -7964,13 +8114,16 @@ func (client BaseClient) RemoveNodeStateResponder(resp *http.Response) (result a
 // fault permanent path through client APIs. Warning - There are no safety checks performed when this API is used.
 // Incorrect use of this API can lead to data loss for stateful services.In addition, the forceRemove flag impacts all
 // other replicas hosted in the same process.
-//
-// nodeName is the name of the node. partitionID is the identity of the partition. replicaID is the identifier of
-// the replica. forceRemove is remove a Service Fabric application or service forcefully without going through the
-// graceful shutdown sequence. This parameter can be used to forcefully delete an application or service for which
-// delete is timing out due to issues in the service code that prevents graceful close of replicas. timeout is the
-// server timeout for performing the operation in seconds. This specifies the time duration that the client is
-// willing to wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// forceRemove - remove a Service Fabric application or service forcefully without going through the graceful
+// shutdown sequence. This parameter can be used to forcefully delete an application or service for which
+// delete is timing out due to issues in the service code that prevents graceful close of replicas.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RemoveReplica(ctx context.Context, nodeName string, partitionID uuid.UUID, replicaID string, forceRemove *bool, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -8057,12 +8210,14 @@ func (client BaseClient) RemoveReplicaResponder(resp *http.Response) (result aut
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetApplicationHealth and check that the report
 // appears in the HealthEvents section.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. healthInformation is describes the health information for the health report. This
-// information needs to be present in all of the health reports sent to the health manager. timeout is the server
-// timeout for performing the operation in seconds. This specifies the time duration that the client is willing to
-// wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportApplicationHealth(ctx context.Context, applicationID string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8114,7 +8269,7 @@ func (client BaseClient) ReportApplicationHealthPreparer(ctx context.Context, ap
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/ReportHealth", pathParameters),
@@ -8149,11 +8304,12 @@ func (client BaseClient) ReportApplicationHealthResponder(resp *http.Response) (
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetClusterHealth and check that the report appears in
 // the HealthEvents section.
-//
-// healthInformation is describes the health information for the health report. This information needs to be
-// present in all of the health reports sent to the health manager. timeout is the server timeout for performing
-// the operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportClusterHealth(ctx context.Context, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8201,7 +8357,7 @@ func (client BaseClient) ReportClusterHealthPreparer(ctx context.Context, health
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/$/ReportClusterHealth"),
@@ -8236,12 +8392,14 @@ func (client BaseClient) ReportClusterHealthResponder(resp *http.Response) (resu
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, get deployed application health and check that the report
 // appears in the HealthEvents section.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. healthInformation is describes the health information
-// for the health report. This information needs to be present in all of the health reports sent to the health
-// manager. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) ReportDeployedApplicationHealth(ctx context.Context, nodeName string, applicationID string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -8295,7 +8453,7 @@ func (client BaseClient) ReportDeployedApplicationHealthPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationId}/$/ReportHealth", pathParameters),
@@ -8331,13 +8489,16 @@ func (client BaseClient) ReportDeployedApplicationHealthResponder(resp *http.Res
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, get deployed service package health and check that the
 // report appears in the HealthEvents section.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. servicePackageName is the name of the service package.
-// healthInformation is describes the health information for the health report. This information needs to be
-// present in all of the health reports sent to the health manager. timeout is the server timeout for performing
-// the operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// servicePackageName - the name of the service package.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportDeployedServicePackageHealth(ctx context.Context, nodeName string, applicationID string, servicePackageName string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8391,7 +8552,7 @@ func (client BaseClient) ReportDeployedServicePackageHealthPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationId}/$/GetServicePackages/{servicePackageName}/$/ReportHealth", pathParameters),
@@ -8426,11 +8587,13 @@ func (client BaseClient) ReportDeployedServicePackageHealthResponder(resp *http.
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetNodeHealth and check that the report appears in
 // the HealthEvents section.
-//
-// nodeName is the name of the node. healthInformation is describes the health information for the health report.
-// This information needs to be present in all of the health reports sent to the health manager. timeout is the
-// server timeout for performing the operation in seconds. This specifies the time duration that the client is
-// willing to wait for the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportNodeHealth(ctx context.Context, nodeName string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8482,7 +8645,7 @@ func (client BaseClient) ReportNodeHealthPreparer(ctx context.Context, nodeName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/ReportHealth", pathParameters),
@@ -8517,12 +8680,13 @@ func (client BaseClient) ReportNodeHealthResponder(resp *http.Response) (result 
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetPartitionHealth and check that the report appears
 // in the HealthEvents section.
-//
-// partitionID is the identity of the partition. healthInformation is describes the health information for the
-// health report. This information needs to be present in all of the health reports sent to the health manager.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportPartitionHealth(ctx context.Context, partitionID uuid.UUID, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8574,7 +8738,7 @@ func (client BaseClient) ReportPartitionHealthPreparer(ctx context.Context, part
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Partitions/{partitionId}/$/ReportHealth", pathParameters),
@@ -8609,16 +8773,19 @@ func (client BaseClient) ReportPartitionHealthResponder(resp *http.Response) (re
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetReplicaHealth and check that the report appears in
 // the HealthEvents section.
-//
-// partitionID is the identity of the partition. replicaID is the identifier of the replica. serviceKind is the
-// kind of service replica (Stateless or Stateful) for which the health is being reported. Following are the
-// possible values.
+// Parameters:
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// serviceKind - the kind of service replica (Stateless or Stateful) for which the health is being reported.
+// Following are the possible values.
 // - Stateless - Does not use Service Fabric to make its state highly available or reliable. The value is 1
-// - Stateful - Uses Service Fabric to make its state or part of its state highly available and reliable. The value
-// is 2. healthInformation is describes the health information for the health report. This information needs to be
-// present in all of the health reports sent to the health manager. timeout is the server timeout for performing
-// the operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// - Stateful - Uses Service Fabric to make its state or part of its state highly available and reliable. The
+// value is 2.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportReplicaHealth(ctx context.Context, partitionID uuid.UUID, replicaID string, serviceKind string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8672,7 +8839,7 @@ func (client BaseClient) ReportReplicaHealthPreparer(ctx context.Context, partit
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Partitions/{partitionId}/$/GetReplicas/{replicaId}/$/ReportHealth", pathParameters),
@@ -8707,12 +8874,14 @@ func (client BaseClient) ReportReplicaHealthResponder(resp *http.Response) (resu
 // For example, the health store may reject the report because of an invalid parameter, like a stale sequence number.
 // To see whether the report was applied in the health store, run GetServiceHealth and check that the report appears in
 // the HealthEvents section.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. healthInformation is describes the health information for the health report. This information needs
-// to be present in all of the health reports sent to the health manager. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// healthInformation - describes the health information for the health report. This information needs to be
+// present in all of the health reports sent to the health manager.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ReportServiceHealth(ctx context.Context, serviceID string, healthInformation HealthInformation, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: healthInformation,
@@ -8764,7 +8933,7 @@ func (client BaseClient) ReportServiceHealthPreparer(ctx context.Context, servic
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Services/{serviceId}/$/ReportHealth", pathParameters),
@@ -8793,10 +8962,11 @@ func (client BaseClient) ReportServiceHealthResponder(resp *http.Response) (resu
 }
 
 // ResetPartitionLoad resets the current load of a Service Fabric partition to the default load for the service.
-//
-// partitionID is the identity of the partition. timeout is the server timeout for performing the operation in
-// seconds. This specifies the time duration that the client is willing to wait for the requested operation to
-// complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// partitionID - the identity of the partition.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ResetPartitionLoad(ctx context.Context, partitionID uuid.UUID, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -8872,21 +9042,24 @@ func (client BaseClient) ResetPartitionLoadResponder(resp *http.Response) (resul
 }
 
 // ResolveService resolve a Service Fabric service partition, to get the endpoints of the service replicas.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionKeyType is key type for the partition. This parameter is required if the partition scheme
-// for the service is Int64Range or Named. The possible values are following.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionKeyType - key type for the partition. This parameter is required if the partition scheme for the
+// service is Int64Range or Named. The possible values are following.
 // - None (1) - Indicates that the the PartitionKeyValue parameter is not specified. This is valid for the
 // partitions with partitioning scheme as Singleton. This is the default value. The value is 1.
-// - Int64Range (2) - Indicates that the the PartitionKeyValue parameter is an int64 partition key. This is valid
-// for the partitions with partitioning scheme as Int64Range. The value is 2.
-// - Named (3) - Indicates that the the PartitionKeyValue parameter is a name of the partition. This is valid for
-// the partitions with partitioning scheme as Named. The value is 3. partitionKeyValue is partition key. This is
-// required if the partition scheme for the service is Int64Range or Named. previousRspVersion is the value in the
-// Version field of the response that was received previously. This is required if the user knows that the result
-// that was got previously is stale. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// - Int64Range (2) - Indicates that the the PartitionKeyValue parameter is an int64 partition key. This is
+// valid for the partitions with partitioning scheme as Int64Range. The value is 2.
+// - Named (3) - Indicates that the the PartitionKeyValue parameter is a name of the partition. This is valid
+// for the partitions with partitioning scheme as Named. The value is 3.
+// partitionKeyValue - partition key. This is required if the partition scheme for the service is Int64Range or
+// Named.
+// previousRspVersion - the value in the Version field of the response that was received previously. This is
+// required if the user knows that the result that was got previously is stale.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ResolveService(ctx context.Context, serviceID string, partitionKeyType *int32, partitionKeyValue string, previousRspVersion string, timeout *int64) (result ResolvedServicePartition, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -8973,12 +9146,15 @@ func (client BaseClient) ResolveServiceResponder(resp *http.Response) (result Re
 
 // RestartDeployedCodePackage restarts a code package deployed on a Service Fabric node in a cluster. This aborts the
 // code package process, which will restart all the user service replicas hosted in that process.
-//
-// nodeName is the name of the node. applicationID is the identity of the application. This is typically the full
-// name of the application without the 'fabric:' URI scheme. restartDeployedCodePackageDescription is describes the
-// deployed code package on Service Fabric node to restart. timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// restartDeployedCodePackageDescription - describes the deployed code package on Service Fabric node to
+// restart.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RestartDeployedCodePackage(ctx context.Context, nodeName string, applicationID string, restartDeployedCodePackageDescription RestartDeployedCodePackageDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -9028,7 +9204,7 @@ func (client BaseClient) RestartDeployedCodePackagePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/GetApplications/{applicationId}/$/GetCodePackages/$/Restart", pathParameters),
@@ -9057,11 +9233,13 @@ func (client BaseClient) RestartDeployedCodePackageResponder(resp *http.Response
 }
 
 // RestartNode restarts a Service Fabric cluster node that is already started.
-//
-// nodeName is the name of the node. restartNodeDescription is the instance of the node to be restarted and a flag
-// indicating the need to take dump of the fabric process. timeout is the server timeout for performing the
-// operation in seconds. This specifies the time duration that the client is willing to wait for the requested
-// operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// restartNodeDescription - the instance of the node to be restarted and a flag indicating the need to take
+// dump of the fabric process.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RestartNode(ctx context.Context, nodeName string, restartNodeDescription RestartNodeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: restartNodeDescription,
@@ -9112,7 +9290,7 @@ func (client BaseClient) RestartNodePreparer(ctx context.Context, nodeName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/Restart", pathParameters),
@@ -9143,11 +9321,13 @@ func (client BaseClient) RestartNodeResponder(resp *http.Response) (result autor
 // RestartReplica restarts a service replica of a persisted service running on a node. Warning - There are no safety
 // checks performed when this API is used. Incorrect use of this API can lead to availability loss for stateful
 // services.
-//
-// nodeName is the name of the node. partitionID is the identity of the partition. replicaID is the identifier of
-// the replica. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// Parameters:
+// nodeName - the name of the node.
+// partitionID - the identity of the partition.
+// replicaID - the identifier of the replica.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RestartReplica(ctx context.Context, nodeName string, partitionID uuid.UUID, replicaID string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -9227,12 +9407,13 @@ func (client BaseClient) RestartReplicaResponder(resp *http.Response) (result au
 // ResumeApplicationUpgrade resumes an unmonitored manual Service Fabric application upgrade. Service Fabric upgrades
 // one upgrade domain at a time. For unmonitored manual upgrades, after Service Fabric finishes an upgrade domain, it
 // waits for you to call this API before proceeding to the next upgrade domain.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. resumeApplicationUpgradeDescription is describes the parameters for resuming an
-// application upgrade. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// resumeApplicationUpgradeDescription - describes the parameters for resuming an application upgrade.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) ResumeApplicationUpgrade(ctx context.Context, applicationID string, resumeApplicationUpgradeDescription ResumeApplicationUpgradeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resumeApplicationUpgradeDescription,
@@ -9283,7 +9464,7 @@ func (client BaseClient) ResumeApplicationUpgradePreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/MoveToNextUpgradeDomain", pathParameters),
@@ -9315,11 +9496,12 @@ func (client BaseClient) ResumeApplicationUpgradeResponder(resp *http.Response) 
 // only be used to rollback the current in-progress upgrade that is rolling forward to new version. If the application
 // is not currently being upgraded use StartApplicationUpgrade API to upgrade it to desired version including rolling
 // back to a previous version.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) RollbackApplicationUpgrade(ctx context.Context, applicationID string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -9396,12 +9578,13 @@ func (client BaseClient) RollbackApplicationUpgradeResponder(resp *http.Response
 
 // StartApplicationUpgrade validates the supplied application upgrade parameters and starts upgrading the application
 // if the parameters are valid.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. applicationUpgradeDescription is describes the parameters for an application upgrade.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// applicationUpgradeDescription - describes the parameters for an application upgrade.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartApplicationUpgrade(ctx context.Context, applicationID string, applicationUpgradeDescription ApplicationUpgradeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationUpgradeDescription,
@@ -9454,7 +9637,7 @@ func (client BaseClient) StartApplicationUpgradePreparer(ctx context.Context, ap
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/Upgrade", pathParameters),
@@ -9487,10 +9670,11 @@ func (client BaseClient) StartApplicationUpgradeResponder(resp *http.Response) (
 // FABRIC_E_CHAOS_ALREADY_RUNNING.
 // Please refer to the article [Induce controlled Chaos in Service Fabric
 // clusters](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-controlled-chaos) for more details.
-//
-// chaosParameters is describes all the parameters to configure a Chaos run. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// chaosParameters - describes all the parameters to configure a Chaos run.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartChaos(ctx context.Context, chaosParameters ChaosParameters, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: chaosParameters,
@@ -9552,7 +9736,7 @@ func (client BaseClient) StartChaosPreparer(ctx context.Context, chaosParameters
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/Tools/Chaos/$/Start"),
@@ -9597,18 +9781,20 @@ func (client BaseClient) StartChaosResponder(resp *http.Response) (result autore
 //
 // Call the GetDataLossProgress API with the same OperationId to return information on the operation started with this
 // API.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API dataLossMode is this enum is passed to the
-// StartDataLoss API to indicate what type of data loss to induce.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// dataLossMode - this enum is passed to the StartDataLoss API to indicate what type of data loss to induce.
 // - Invalid - Reserved.  Do not pass into API.
-// - PartialDataLoss - PartialDataLoss option will cause a quorum of replicas to go down, triggering an OnDataLoss
-// event in the system for the given partition.
+// - PartialDataLoss - PartialDataLoss option will cause a quorum of replicas to go down, triggering an
+// OnDataLoss event in the system for the given partition.
 // - FullDataLoss - FullDataLoss option will drop all the replicas which means that all the data will be lost.
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartDataLoss(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, dataLossMode string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -9687,10 +9873,11 @@ func (client BaseClient) StartDataLossResponder(resp *http.Response) (result aut
 }
 
 // StartNode starts a Service Fabric cluster node that is already stopped.
-//
-// nodeName is the name of the node. startNodeDescription is the instance id of the stopped node that needs to be
-// started. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// Parameters:
+// nodeName - the name of the node.
+// startNodeDescription - the instance id of the stopped node that needs to be started.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) StartNode(ctx context.Context, nodeName string, startNodeDescription StartNodeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -9742,7 +9929,7 @@ func (client BaseClient) StartNodePreparer(ctx context.Context, nodeName string,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/Start", pathParameters),
@@ -9775,18 +9962,21 @@ func (client BaseClient) StartNodeResponder(resp *http.Response) (result autores
 // To stop a node, pass in "Stop" for the NodeTransitionType parameter.  This API starts the operation - when the API
 // returns the node may not have finished transitioning yet.
 // Call GetNodeTransitionProgress with the same OperationId to get the progress of the operation.
-//
-// nodeName is the name of the node. operationID is a GUID that identifies a call of this API.  This is passed into
-// the corresponding GetProgress API nodeTransitionType is indicates the type of transition to perform.
-// NodeTransitionType.Start will start a stopped node.  NodeTransitionType.Stop will stop a node that is up.
+// Parameters:
+// nodeName - the name of the node.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// nodeTransitionType - indicates the type of transition to perform.  NodeTransitionType.Start will start a
+// stopped node.  NodeTransitionType.Stop will stop a node that is up.
 // - Invalid - Reserved.  Do not pass into API.
 // - Start - Transition a stopped node to up.
-// - Stop - Transition an up node to stopped. nodeInstanceID is the node instance ID of the target node.  This can
-// be determined through GetNodeInfo API. stopDurationInSeconds is the duration, in seconds, to keep the node
-// stopped.  The minimum value is 600, the maximum is 14400.  After this time expires, the node will automatically
-// come back up. timeout is the server timeout for performing the operation in seconds. This specifies the time
-// duration that the client is willing to wait for the requested operation to complete. The default value for this
-// parameter is 60 seconds.
+// - Stop - Transition an up node to stopped.
+// nodeInstanceID - the node instance ID of the target node.  This can be determined through GetNodeInfo API.
+// stopDurationInSeconds - the duration, in seconds, to keep the node stopped.  The minimum value is 600, the
+// maximum is 14400.  After this time expires, the node will automatically come back up.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartNodeTransition(ctx context.Context, nodeName string, operationID uuid.UUID, nodeTransitionType string, nodeInstanceID string, stopDurationInSeconds int32, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: stopDurationInSeconds,
@@ -9872,15 +10062,18 @@ func (client BaseClient) StartNodeTransitionResponder(resp *http.Response) (resu
 // If used to target a stateless service partition, RestartPartitionMode must be AllReplicasOrInstances.
 //
 // Call the GetPartitionRestartProgress API using the same OperationId to get the progress.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API restartPartitionMode is - Invalid - Reserved.  Do
-// not pass into API.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// restartPartitionMode - - Invalid - Reserved.  Do not pass into API.
 // - AllReplicasOrInstances - All replicas or instances in the partition are restarted at once.
-// - OnlyActiveSecondaries - Only the secondary replicas are restarted. timeout is the server timeout for
-// performing the operation in seconds. This specifies the time duration that the client is willing to wait for the
-// requested operation to complete. The default value for this parameter is 60 seconds.
+// - OnlyActiveSecondaries - Only the secondary replicas are restarted.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartPartitionRestart(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, restartPartitionMode string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -9966,19 +10159,24 @@ func (client BaseClient) StartPartitionRestartResponder(resp *http.Response) (re
 //
 // This can only be called on stateful persisted (HasPersistedState==true) services.  Do not use this API on stateless
 // services or stateful in-memory only services.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. partitionID is the identity of the partition. operationID is a GUID that identifies a call of this
-// API.  This is passed into the corresponding GetProgress API quorumLossMode is this enum is passed to the
-// StartQuorumLoss API to indicate what type of quorum loss to induce.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// partitionID - the identity of the partition.
+// operationID - a GUID that identifies a call of this API.  This is passed into the corresponding GetProgress
+// API
+// quorumLossMode - this enum is passed to the StartQuorumLoss API to indicate what type of quorum loss to
+// induce.
 // - Invalid - Reserved.  Do not pass into API.
-// - QuorumReplicas - Partial Quorum loss mode : Minimum number of replicas for a partition will be down that will
-// cause a quorum loss.
-// - AllReplicas- Full Quorum loss mode : All replicas for a partition will be down that will cause a quorum loss.
-// quorumLossDuration is the amount of time for which the partition will be kept in quorum loss.  This must be
-// specified in seconds. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// - QuorumReplicas - Partial Quorum loss mode : Minimum number of replicas for a partition will be down that
+// will cause a quorum loss.
+// - AllReplicas- Full Quorum loss mode : All replicas for a partition will be down that will cause a quorum
+// loss.
+// quorumLossDuration - the amount of time for which the partition will be kept in quorum loss.  This must be
+// specified in seconds.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StartQuorumLoss(ctx context.Context, serviceID string, partitionID uuid.UUID, operationID uuid.UUID, quorumLossMode string, quorumLossDuration int32, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -10058,10 +10256,10 @@ func (client BaseClient) StartQuorumLossResponder(resp *http.Response) (result a
 }
 
 // StopChaos stops Chaos from scheduling further faults; but, the in-flight faults are not affected.
-//
-// timeout is the server timeout for performing the operation in seconds. This specifies the time duration that the
-// client is willing to wait for the requested operation to complete. The default value for this parameter is 60
-// seconds.
+// Parameters:
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) StopChaos(ctx context.Context, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -10134,10 +10332,11 @@ func (client BaseClient) StopChaosResponder(resp *http.Response) (result autores
 
 // StopNode stops a Service Fabric cluster node that is in a started state. The node will stay down until start node is
 // called.
-//
-// nodeName is the name of the node. stopNodeDescription is the instance id of the stopped node that needs to be
-// stopped. timeout is the server timeout for performing the operation in seconds. This specifies the time duration
-// that the client is willing to wait for the requested operation to complete. The default value for this parameter
+// Parameters:
+// nodeName - the name of the node.
+// stopNodeDescription - the instance id of the stopped node that needs to be stopped.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
 // is 60 seconds.
 func (client BaseClient) StopNode(ctx context.Context, nodeName string, stopNodeDescription StopNodeDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -10189,7 +10388,7 @@ func (client BaseClient) StopNodePreparer(ctx context.Context, nodeName string, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Nodes/{nodeName}/$/Stop", pathParameters),
@@ -10220,11 +10419,12 @@ func (client BaseClient) StopNodeResponder(resp *http.Response) (result autorest
 // UnprovisionApplicationType removes or unregisters a Service Fabric application type from the cluster. This operation
 // can only be performed if all application instance of the application type has been deleted. Once the application
 // type is unregistered, no new application instance can be created for this particular application type.
-//
-// applicationTypeName is the name of the application type. applicationTypeImageStoreVersion is the version of the
-// application type in the image store. timeout is the server timeout for performing the operation in seconds. This
-// specifies the time duration that the client is willing to wait for the requested operation to complete. The
-// default value for this parameter is 60 seconds.
+// Parameters:
+// applicationTypeName - the name of the application type.
+// applicationTypeImageStoreVersion - the version of the application type in the image store.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) UnprovisionApplicationType(ctx context.Context, applicationTypeName string, applicationTypeImageStoreVersion ApplicationTypeImageStoreVersion, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationTypeImageStoreVersion,
@@ -10275,7 +10475,7 @@ func (client BaseClient) UnprovisionApplicationTypePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/ApplicationTypes/{applicationTypeName}/$/Unprovision", pathParameters),
@@ -10306,12 +10506,13 @@ func (client BaseClient) UnprovisionApplicationTypeResponder(resp *http.Response
 // UpdateApplicationUpgrade updates the parameters of an ongoing application upgrade from the ones specified at the
 // time of starting the application upgrade. This may be required to mitigate stuck application upgrades due to
 // incorrect parameters or issues in the application to make progress.
-//
-// applicationID is the identity of the application. This is typically the full name of the application without the
-// 'fabric:' URI scheme. applicationUpgradeUpdateDescription is describes the parameters for updating an existing
-// application upgrade. timeout is the server timeout for performing the operation in seconds. This specifies the
-// time duration that the client is willing to wait for the requested operation to complete. The default value for
-// this parameter is 60 seconds.
+// Parameters:
+// applicationID - the identity of the application. This is typically the full name of the application without
+// the 'fabric:' URI scheme.
+// applicationUpgradeUpdateDescription - describes the parameters for updating an existing application upgrade.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) UpdateApplicationUpgrade(ctx context.Context, applicationID string, applicationUpgradeUpdateDescription ApplicationUpgradeUpdateDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationUpgradeUpdateDescription,
@@ -10362,7 +10563,7 @@ func (client BaseClient) UpdateApplicationUpgradePreparer(ctx context.Context, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationId}/$/UpdateUpgrade", pathParameters),
@@ -10391,11 +10592,13 @@ func (client BaseClient) UpdateApplicationUpgradeResponder(resp *http.Response) 
 }
 
 // UpdateService updates the specified service using the given update description.
-//
-// serviceID is the identity of the service. This is typically the full name of the service without the 'fabric:'
-// URI scheme. serviceUpdateDescription is the updated configuration for the service. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// serviceID - the identity of the service. This is typically the full name of the service without the
+// 'fabric:' URI scheme.
+// serviceUpdateDescription - the updated configuration for the service.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) UpdateService(ctx context.Context, serviceID string, serviceUpdateDescription BasicServiceUpdateDescription, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
@@ -10444,7 +10647,7 @@ func (client BaseClient) UpdateServicePreparer(ctx context.Context, serviceID st
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Services/{serviceId}/$/Update", pathParameters),
@@ -10475,10 +10678,11 @@ func (client BaseClient) UpdateServiceResponder(resp *http.Response) (result aut
 // UploadFile uploads contents of the file to the image store. Use this API if the file is small enough to upload again
 // if the connection fails. The file's data needs to be added to the request body. The contents will be uploaded to the
 // specified path.
-//
-// contentPath is relative path to file or folder in the image store from its root. timeout is the server timeout
-// for performing the operation in seconds. This specifies the time duration that the client is willing to wait for
-// the requested operation to complete. The default value for this parameter is 60 seconds.
+// Parameters:
+// contentPath - relative path to file or folder in the image store from its root.
+// timeout - the server timeout for performing the operation in seconds. This specifies the time duration that
+// the client is willing to wait for the requested operation to complete. The default value for this parameter
+// is 60 seconds.
 func (client BaseClient) UploadFile(ctx context.Context, contentPath string, timeout *int64) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,

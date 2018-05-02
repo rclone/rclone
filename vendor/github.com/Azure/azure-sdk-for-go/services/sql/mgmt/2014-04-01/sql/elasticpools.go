@@ -42,11 +42,12 @@ func NewElasticPoolsClientWithBaseURI(baseURI string, subscriptionID string) Ela
 }
 
 // CreateOrUpdate creates a new elastic pool or updates an existing elastic pool.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
-// of the elastic pool to be operated on (updated or created). parameters is the required parameters for creating
-// or updating an elastic pool.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// elasticPoolName - the name of the elastic pool to be operated on (updated or created).
+// parameters - the required parameters for creating or updating an elastic pool.
 func (client ElasticPoolsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string, parameters ElasticPool) (result ElasticPoolsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, elasticPoolName, parameters)
 	if err != nil {
@@ -78,7 +79,7 @@ func (client ElasticPoolsClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}", pathParameters),
@@ -116,10 +117,11 @@ func (client ElasticPoolsClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete deletes the elastic pool.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
-// of the elastic pool to be deleted.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// elasticPoolName - the name of the elastic pool to be deleted.
 func (client ElasticPoolsClient) Delete(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, elasticPoolName)
 	if err != nil {
@@ -184,10 +186,11 @@ func (client ElasticPoolsClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get gets an elastic pool.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
-// of the elastic pool to be retrieved.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// elasticPoolName - the name of the elastic pool to be retrieved.
 func (client ElasticPoolsClient) Get(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (result ElasticPool, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, elasticPoolName)
 	if err != nil {
@@ -253,9 +256,10 @@ func (client ElasticPoolsClient) GetResponder(resp *http.Response) (result Elast
 }
 
 // ListByServer returns a list of elastic pools in a server.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
 func (client ElasticPoolsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ElasticPoolListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
@@ -320,10 +324,12 @@ func (client ElasticPoolsClient) ListByServerResponder(resp *http.Response) (res
 }
 
 // Update updates an existing elastic pool.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
-// of the elastic pool to be updated. parameters is the required parameters for updating an elastic pool.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// elasticPoolName - the name of the elastic pool to be updated.
+// parameters - the required parameters for updating an elastic pool.
 func (client ElasticPoolsClient) Update(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string, parameters ElasticPoolUpdate) (result ElasticPoolsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, elasticPoolName, parameters)
 	if err != nil {
@@ -355,7 +361,7 @@ func (client ElasticPoolsClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}", pathParameters),

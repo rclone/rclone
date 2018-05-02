@@ -49,6 +49,11 @@ const (
 	Weekend DayOfWeek = "Weekend"
 )
 
+// PossibleDayOfWeekValues returns an array of possible values for the DayOfWeek const type.
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return []DayOfWeek{Everyday, Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday, Weekend}
+}
+
 // KeyType enumerates the values for key type.
 type KeyType string
 
@@ -58,6 +63,11 @@ const (
 	// Secondary ...
 	Secondary KeyType = "Secondary"
 )
+
+// PossibleKeyTypeValues returns an array of possible values for the KeyType const type.
+func PossibleKeyTypeValues() []KeyType {
+	return []KeyType{Primary, Secondary}
+}
 
 // RebootType enumerates the values for reboot type.
 type RebootType string
@@ -71,6 +81,11 @@ const (
 	SecondaryNode RebootType = "SecondaryNode"
 )
 
+// PossibleRebootTypeValues returns an array of possible values for the RebootType const type.
+func PossibleRebootTypeValues() []RebootType {
+	return []RebootType{AllNodes, PrimaryNode, SecondaryNode}
+}
+
 // ReplicationRole enumerates the values for replication role.
 type ReplicationRole string
 
@@ -81,6 +96,11 @@ const (
 	ReplicationRoleSecondary ReplicationRole = "Secondary"
 )
 
+// PossibleReplicationRoleValues returns an array of possible values for the ReplicationRole const type.
+func PossibleReplicationRoleValues() []ReplicationRole {
+	return []ReplicationRole{ReplicationRolePrimary, ReplicationRoleSecondary}
+}
+
 // SkuFamily enumerates the values for sku family.
 type SkuFamily string
 
@@ -90,6 +110,11 @@ const (
 	// P ...
 	P SkuFamily = "P"
 )
+
+// PossibleSkuFamilyValues returns an array of possible values for the SkuFamily const type.
+func PossibleSkuFamilyValues() []SkuFamily {
+	return []SkuFamily{C, P}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -102,6 +127,11 @@ const (
 	// Standard ...
 	Standard SkuName = "Standard"
 )
+
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Basic, Premium, Standard}
+}
 
 // AccessKeys redis cache access keys.
 type AccessKeys struct {
@@ -434,6 +464,24 @@ type FirewallRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
 func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -718,6 +766,15 @@ type LinkedServerCreateParameters struct {
 	*LinkedServerCreateProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for LinkedServerCreateParameters.
+func (lscp LinkedServerCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lscp.LinkedServerCreateProperties != nil {
+		objectMap["properties"] = lscp.LinkedServerCreateProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for LinkedServerCreateParameters struct.
 func (lscp *LinkedServerCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -781,6 +838,24 @@ type LinkedServerWithProperties struct {
 	Type *string `json:"type,omitempty"`
 	// LinkedServerProperties - Properties of the linked server.
 	*LinkedServerProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for LinkedServerWithProperties.
+func (lswp LinkedServerWithProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lswp.ID != nil {
+		objectMap["id"] = lswp.ID
+	}
+	if lswp.Name != nil {
+		objectMap["name"] = lswp.Name
+	}
+	if lswp.Type != nil {
+		objectMap["type"] = lswp.Type
+	}
+	if lswp.LinkedServerProperties != nil {
+		objectMap["properties"] = lswp.LinkedServerProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for LinkedServerWithProperties struct.
@@ -1079,6 +1154,27 @@ type PatchSchedule struct {
 	Location *string `json:"location,omitempty"`
 	// ScheduleEntries - List of patch schedules for a Redis cache.
 	*ScheduleEntries `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PatchSchedule.
+func (ps PatchSchedule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ps.ID != nil {
+		objectMap["id"] = ps.ID
+	}
+	if ps.Name != nil {
+		objectMap["name"] = ps.Name
+	}
+	if ps.Type != nil {
+		objectMap["type"] = ps.Type
+	}
+	if ps.Location != nil {
+		objectMap["location"] = ps.Location
+	}
+	if ps.ScheduleEntries != nil {
+		objectMap["properties"] = ps.ScheduleEntries
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for PatchSchedule struct.

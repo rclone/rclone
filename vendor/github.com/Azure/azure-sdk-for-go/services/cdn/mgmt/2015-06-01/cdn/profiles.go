@@ -43,9 +43,10 @@ func NewProfilesClientWithBaseURI(baseURI string, subscriptionID string) Profile
 }
 
 // Create sends the create request.
-//
-// profileName is name of the CDN profile within the resource group. profileProperties is profile properties needed
-// for creation. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// profileProperties - profile properties needed for creation.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) Create(ctx context.Context, profileName string, profileProperties ProfileCreateParameters, resourceGroupName string) (result ProfilesCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: profileProperties,
@@ -84,7 +85,7 @@ func (client ProfilesClient) CreatePreparer(ctx context.Context, profileName str
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}", pathParameters),
@@ -122,9 +123,9 @@ func (client ProfilesClient) CreateResponder(resp *http.Response) (result Profil
 }
 
 // DeleteIfExists sends the delete if exists request.
-//
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) DeleteIfExists(ctx context.Context, profileName string, resourceGroupName string) (result ProfilesDeleteIfExistsFuture, err error) {
 	req, err := client.DeleteIfExistsPreparer(ctx, profileName, resourceGroupName)
 	if err != nil {
@@ -190,9 +191,9 @@ func (client ProfilesClient) DeleteIfExistsResponder(resp *http.Response) (resul
 }
 
 // GenerateSsoURI sends the generate sso uri request.
-//
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) GenerateSsoURI(ctx context.Context, profileName string, resourceGroupName string) (result SsoURI, err error) {
 	req, err := client.GenerateSsoURIPreparer(ctx, profileName, resourceGroupName)
 	if err != nil {
@@ -257,9 +258,9 @@ func (client ProfilesClient) GenerateSsoURIResponder(resp *http.Response) (resul
 }
 
 // Get sends the get request.
-//
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
-// group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) Get(ctx context.Context, profileName string, resourceGroupName string) (result Profile, err error) {
 	req, err := client.GetPreparer(ctx, profileName, resourceGroupName)
 	if err != nil {
@@ -324,8 +325,8 @@ func (client ProfilesClient) GetResponder(resp *http.Response) (result Profile, 
 }
 
 // ListByResourceGroup sends the list by resource group request.
-//
-// resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ProfileListResult, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -451,9 +452,10 @@ func (client ProfilesClient) ListBySubscriptionIDResponder(resp *http.Response) 
 }
 
 // Update sends the update request.
-//
-// profileName is name of the CDN profile within the resource group. profileProperties is profile properties needed
-// for update. resourceGroupName is name of the resource group within the Azure subscription.
+// Parameters:
+// profileName - name of the CDN profile within the resource group.
+// profileProperties - profile properties needed for update.
+// resourceGroupName - name of the resource group within the Azure subscription.
 func (client ProfilesClient) Update(ctx context.Context, profileName string, profileProperties ProfileUpdateParameters, resourceGroupName string) (result ProfilesUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, profileName, profileProperties, resourceGroupName)
 	if err != nil {
@@ -484,7 +486,7 @@ func (client ProfilesClient) UpdatePreparer(ctx context.Context, profileName str
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}", pathParameters),

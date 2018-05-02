@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // NodeClient is the REST API for Azure Server Management Service.
 type NodeClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // NewNodeClient creates an instance of the NodeClient client.
 func NewNodeClient(subscriptionID string) NodeClient {
 	return NewNodeClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // NewNodeClientWithBaseURI creates an instance of the NodeClient client.
 func NewNodeClientWithBaseURI(baseURI string, subscriptionID string) NodeClient {
 	return NodeClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Create creates or updates a management node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -72,6 +76,7 @@ func (client NodeClient) Create(ctx context.Context, resourceGroupName string, n
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreatePreparer prepares the Create request.
 func (client NodeClient) CreatePreparer(ctx context.Context, resourceGroupName string, nodeName string, gatewayParameters NodeParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -86,7 +91,7 @@ func (client NodeClient) CreatePreparer(ctx context.Context, resourceGroupName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServerManagement/nodes/{nodeName}", pathParameters),
@@ -95,6 +100,7 @@ func (client NodeClient) CreatePreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) CreateSender(req *http.Request) (future NodeCreateFuture, err error) {
@@ -110,6 +116,7 @@ func (client NodeClient) CreateSender(req *http.Request) (future NodeCreateFutur
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client NodeClient) CreateResponder(resp *http.Response) (result NodeResource, err error) {
@@ -123,6 +130,7 @@ func (client NodeClient) CreateResponder(resp *http.Response) (result NodeResour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Delete deletes a management node
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -160,6 +168,7 @@ func (client NodeClient) Delete(ctx context.Context, resourceGroupName string, n
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeletePreparer prepares the Delete request.
 func (client NodeClient) DeletePreparer(ctx context.Context, resourceGroupName string, nodeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -181,6 +190,7 @@ func (client NodeClient) DeletePreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -188,6 +198,7 @@ func (client NodeClient) DeleteSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client NodeClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -200,6 +211,7 @@ func (client NodeClient) DeleteResponder(resp *http.Response) (result autorest.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Get gets a management node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -237,6 +249,7 @@ func (client NodeClient) Get(ctx context.Context, resourceGroupName string, node
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetPreparer prepares the Get request.
 func (client NodeClient) GetPreparer(ctx context.Context, resourceGroupName string, nodeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -258,6 +271,7 @@ func (client NodeClient) GetPreparer(ctx context.Context, resourceGroupName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -265,6 +279,7 @@ func (client NodeClient) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client NodeClient) GetResponder(resp *http.Response) (result NodeResource, err error) {
@@ -278,6 +293,7 @@ func (client NodeClient) GetResponder(resp *http.Response) (result NodeResource,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // List lists nodes in a subscription.
 func (client NodeClient) List(ctx context.Context) (result NodeResourcesPage, err error) {
 	result.fn = client.listNextResults
@@ -302,6 +318,7 @@ func (client NodeClient) List(ctx context.Context) (result NodeResourcesPage, er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListPreparer prepares the List request.
 func (client NodeClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -321,6 +338,7 @@ func (client NodeClient) ListPreparer(ctx context.Context) (*http.Request, error
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -328,6 +346,7 @@ func (client NodeClient) ListSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client NodeClient) ListResponder(resp *http.Response) (result NodeResources, err error) {
@@ -362,12 +381,14 @@ func (client NodeClient) listNextResults(lastResults NodeResources) (result Node
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client NodeClient) ListComplete(ctx context.Context) (result NodeResourcesIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroup lists nodes in a resource group.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -402,6 +423,7 @@ func (client NodeClient) ListForResourceGroup(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupPreparer prepares the ListForResourceGroup request.
 func (client NodeClient) ListForResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -422,6 +444,7 @@ func (client NodeClient) ListForResourceGroupPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -429,6 +452,7 @@ func (client NodeClient) ListForResourceGroupSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
 // closes the http.Response Body.
 func (client NodeClient) ListForResourceGroupResponder(resp *http.Response) (result NodeResources, err error) {
@@ -463,12 +487,14 @@ func (client NodeClient) listForResourceGroupNextResults(lastResults NodeResourc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // ListForResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client NodeClient) ListForResourceGroupComplete(ctx context.Context, resourceGroupName string) (result NodeResourcesIterator, err error) {
 	result.page, err = client.ListForResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // Update updates a management node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -501,6 +527,7 @@ func (client NodeClient) Update(ctx context.Context, resourceGroupName string, n
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdatePreparer prepares the Update request.
 func (client NodeClient) UpdatePreparer(ctx context.Context, resourceGroupName string, nodeName string, nodeParameters NodeParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -515,7 +542,7 @@ func (client NodeClient) UpdatePreparer(ctx context.Context, resourceGroupName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServerManagement/nodes/{nodeName}", pathParameters),
@@ -524,6 +551,7 @@ func (client NodeClient) UpdatePreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeClient) UpdateSender(req *http.Request) (future NodeUpdateFuture, err error) {
@@ -539,6 +567,7 @@ func (client NodeClient) UpdateSender(req *http.Request) (future NodeUpdateFutur
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2016-07-01-preview/servermanagement instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client NodeClient) UpdateResponder(resp *http.Response) (result NodeResource, err error) {

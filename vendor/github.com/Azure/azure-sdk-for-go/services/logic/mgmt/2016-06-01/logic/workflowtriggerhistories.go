@@ -40,10 +40,12 @@ func NewWorkflowTriggerHistoriesClientWithBaseURI(baseURI string, subscriptionID
 }
 
 // Get gets a workflow trigger history.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
-// trigger name. historyName is the workflow trigger history name. Corresponds to the run name for triggers that
-// resulted in a run.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+// historyName - the workflow trigger history name. Corresponds to the run name for triggers that resulted in a
+// run.
 func (client WorkflowTriggerHistoriesClient) Get(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, historyName string) (result WorkflowTriggerHistory, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, workflowName, triggerName, historyName)
 	if err != nil {
@@ -110,10 +112,12 @@ func (client WorkflowTriggerHistoriesClient) GetResponder(resp *http.Response) (
 }
 
 // List gets a list of workflow trigger histories.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
-// trigger name. top is the number of items to be included in the result. filter is the filter to apply on the
-// operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client WorkflowTriggerHistoriesClient) List(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, top *int32, filter string) (result WorkflowTriggerHistoryListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, triggerName, top, filter)
@@ -213,10 +217,12 @@ func (client WorkflowTriggerHistoriesClient) ListComplete(ctx context.Context, r
 }
 
 // Resubmit resubmits a workflow run based on the trigger history.
-//
-// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
-// trigger name. historyName is the workflow trigger history name. Corresponds to the run name for triggers that
-// resulted in a run.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+// historyName - the workflow trigger history name. Corresponds to the run name for triggers that resulted in a
+// run.
 func (client WorkflowTriggerHistoriesClient) Resubmit(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, historyName string) (result autorest.Response, err error) {
 	req, err := client.ResubmitPreparer(ctx, resourceGroupName, workflowName, triggerName, historyName)
 	if err != nil {

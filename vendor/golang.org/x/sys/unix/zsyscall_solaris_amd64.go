@@ -128,6 +128,7 @@ import (
 //go:cgo_import_dynamic libc___xnet_connect __xnet_connect "libsocket.so"
 //go:cgo_import_dynamic libc_mmap mmap "libc.so"
 //go:cgo_import_dynamic libc_munmap munmap "libc.so"
+//go:cgo_import_dynamic libc_sendfile sendfile "libsendfile.so"
 //go:cgo_import_dynamic libc___xnet_sendto __xnet_sendto "libsocket.so"
 //go:cgo_import_dynamic libc___xnet_socket __xnet_socket "libsocket.so"
 //go:cgo_import_dynamic libc___xnet_socketpair __xnet_socketpair "libsocket.so"
@@ -255,6 +256,7 @@ import (
 //go:linkname proc__xnet_connect libc___xnet_connect
 //go:linkname procmmap libc_mmap
 //go:linkname procmunmap libc_munmap
+//go:linkname procsendfile libc_sendfile
 //go:linkname proc__xnet_sendto libc___xnet_sendto
 //go:linkname proc__xnet_socket libc___xnet_socket
 //go:linkname proc__xnet_socketpair libc___xnet_socketpair
@@ -383,6 +385,7 @@ var (
 	proc__xnet_connect,
 	procmmap,
 	procmunmap,
+	procsendfile,
 	proc__xnet_sendto,
 	proc__xnet_socket,
 	proc__xnet_socketpair,
@@ -1583,6 +1586,15 @@ func mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (
 
 func munmap(addr uintptr, length uintptr) (err error) {
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&procmunmap)), 2, uintptr(addr), uintptr(length), 0, 0, 0, 0)
+	if e1 != 0 {
+		err = e1
+	}
+	return
+}
+
+func sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
+	r0, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&procsendfile)), 4, uintptr(outfd), uintptr(infd), uintptr(unsafe.Pointer(offset)), uintptr(count), 0, 0)
+	written = int(r0)
 	if e1 != 0 {
 		err = e1
 	}

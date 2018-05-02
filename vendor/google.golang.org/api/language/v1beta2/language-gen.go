@@ -589,7 +589,9 @@ type ClassificationCategory struct {
 	// the classifier is that this category represents the given text.
 	Confidence float64 `json:"confidence,omitempty"`
 
-	// Name: The name of the category representing the document.
+	// Name: The name of the category representing the document, from the
+	// [predefined
+	// taxonomy](/natural-language/docs/categories).
 	Name string `json:"name,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Confidence") to

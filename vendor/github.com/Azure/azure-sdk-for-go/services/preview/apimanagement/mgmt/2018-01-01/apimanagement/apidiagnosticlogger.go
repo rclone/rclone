@@ -41,11 +41,12 @@ func NewAPIDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // CheckEntityExists checks that logger entity specified by identifier is associated with the diagnostics entity.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. diagnosticID is
-// diagnostic identifier. Must be unique in the current API Management service instance. loggerid is logger
-// identifier. Must be unique in the API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// diagnosticID - diagnostic identifier. Must be unique in the current API Management service instance.
+// loggerid - logger identifier. Must be unique in the API Management service instance.
 func (client APIDiagnosticLoggerClient) CheckEntityExists(ctx context.Context, resourceGroupName string, serviceName string, apiid string, diagnosticID string, loggerid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -131,11 +132,12 @@ func (client APIDiagnosticLoggerClient) CheckEntityExistsResponder(resp *http.Re
 }
 
 // CreateOrUpdate attaches a logger to a dignostic for an API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. diagnosticID is
-// diagnostic identifier. Must be unique in the current API Management service instance. loggerid is logger
-// identifier. Must be unique in the API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// diagnosticID - diagnostic identifier. Must be unique in the current API Management service instance.
+// loggerid - logger identifier. Must be unique in the API Management service instance.
 func (client APIDiagnosticLoggerClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, diagnosticID string, loggerid string) (result LoggerContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -222,11 +224,12 @@ func (client APIDiagnosticLoggerClient) CreateOrUpdateResponder(resp *http.Respo
 }
 
 // Delete deletes the specified Logger from Diagnostic for an API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. diagnosticID is
-// diagnostic identifier. Must be unique in the current API Management service instance. loggerid is logger
-// identifier. Must be unique in the API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// diagnosticID - diagnostic identifier. Must be unique in the current API Management service instance.
+// loggerid - logger identifier. Must be unique in the API Management service instance.
 func (client APIDiagnosticLoggerClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, diagnosticID string, loggerid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -312,15 +315,17 @@ func (client APIDiagnosticLoggerClient) DeleteResponder(resp *http.Response) (re
 }
 
 // ListByService lists all loggers assosiated with the specified Diagnostic of an API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. diagnosticID is
-// diagnostic identifier. Must be unique in the current API Management service instance. filter is | Field       |
-// Supported operators    | Supported functions               |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// diagnosticID - diagnostic identifier. Must be unique in the current API Management service instance.
+// filter - | Field       | Supported operators    | Supported functions               |
 // |-------------|------------------------|-----------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
-// | type        | eq                     |                                   | top is number of records to return.
-// skip is number of records to skip.
+// | type        | eq                     |                                   |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client APIDiagnosticLoggerClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, apiid string, diagnosticID string, filter string, top *int32, skip *int32) (result LoggerCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

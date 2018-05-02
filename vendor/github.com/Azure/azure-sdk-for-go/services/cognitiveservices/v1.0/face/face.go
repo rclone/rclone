@@ -38,14 +38,15 @@ func NewClient(azureRegion AzureRegions) Client {
 
 // DetectWithStream detect human faces in an image and returns face locations, and optionally with faceIds, landmarks,
 // and attributes.
-//
-// imageParameter is an image stream. imageParameter will be closed upon successful return. Callers should ensure
-// closure when receiving an error.returnFaceID is a value indicating whether the operation should return faceIds
-// of detected faces. returnFaceLandmarks is a value indicating whether the operation should return landmarks of
-// the detected faces. returnFaceAttributes is analyze and return the one or more specified face attributes in the
-// comma-separated string like "returnFaceAttributes=age,gender". Supported face attributes include age, gender,
-// headPose, smile, facialHair, glasses and emotion. Note that each face attribute analysis has additional
-// computational and time cost.
+// Parameters:
+// imageParameter - an image stream.
+// returnFaceID - a value indicating whether the operation should return faceIds of detected faces.
+// returnFaceLandmarks - a value indicating whether the operation should return landmarks of the detected
+// faces.
+// returnFaceAttributes - analyze and return the one or more specified face attributes in the comma-separated
+// string like "returnFaceAttributes=age,gender". Supported face attributes include age, gender, headPose,
+// smile, facialHair, glasses and emotion. Note that each face attribute analysis has additional computational
+// and time cost.
 func (client Client) DetectWithStream(ctx context.Context, imageParameter io.ReadCloser, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (result ListDetectedFace, err error) {
 	req, err := client.DetectWithStreamPreparer(ctx, imageParameter, returnFaceID, returnFaceLandmarks, returnFaceAttributes)
 	if err != nil {
@@ -90,7 +91,7 @@ func (client Client) DetectWithStreamPreparer(ctx context.Context, imageParamete
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/detect"),
@@ -121,13 +122,15 @@ func (client Client) DetectWithStreamResponder(resp *http.Response) (result List
 
 // DetectWithURL detect human faces in an image and returns face locations, and optionally with faceIds, landmarks, and
 // attributes.
-//
-// imageURL is a JSON document with a URL pointing to the image that is to be analyzed. returnFaceID is a value
-// indicating whether the operation should return faceIds of detected faces. returnFaceLandmarks is a value
-// indicating whether the operation should return landmarks of the detected faces. returnFaceAttributes is analyze
-// and return the one or more specified face attributes in the comma-separated string like
-// "returnFaceAttributes=age,gender". Supported face attributes include age, gender, headPose, smile, facialHair,
-// glasses and emotion. Note that each face attribute analysis has additional computational and time cost.
+// Parameters:
+// imageURL - a JSON document with a URL pointing to the image that is to be analyzed.
+// returnFaceID - a value indicating whether the operation should return faceIds of detected faces.
+// returnFaceLandmarks - a value indicating whether the operation should return landmarks of the detected
+// faces.
+// returnFaceAttributes - analyze and return the one or more specified face attributes in the comma-separated
+// string like "returnFaceAttributes=age,gender". Supported face attributes include age, gender, headPose,
+// smile, facialHair, glasses and emotion. Note that each face attribute analysis has additional computational
+// and time cost.
 func (client Client) DetectWithURL(ctx context.Context, imageURL ImageURL, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (result ListDetectedFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageURL,
@@ -178,7 +181,7 @@ func (client Client) DetectWithURLPreparer(ctx context.Context, imageURL ImageUR
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/detect"),
@@ -208,8 +211,8 @@ func (client Client) DetectWithURLResponder(resp *http.Response) (result ListDet
 }
 
 // FindSimilar given query face's faceId, find the similar-looking faces from a faceId array or a faceListId.
-//
-// body is request body for Find Similar.
+// Parameters:
+// body - request body for Find Similar.
 func (client Client) FindSimilar(ctx context.Context, body FindSimilarRequest) (result ListSimilarFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -255,7 +258,7 @@ func (client Client) FindSimilarPreparer(ctx context.Context, body FindSimilarRe
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/findsimilars"),
@@ -284,8 +287,8 @@ func (client Client) FindSimilarResponder(resp *http.Response) (result ListSimil
 }
 
 // Group divide candidate faces into groups based on face similarity.
-//
-// body is request body for grouping.
+// Parameters:
+// body - request body for grouping.
 func (client Client) Group(ctx context.Context, body GroupRequest) (result GroupResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -322,7 +325,7 @@ func (client Client) GroupPreparer(ctx context.Context, body GroupRequest) (*htt
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/group"),
@@ -351,8 +354,8 @@ func (client Client) GroupResponder(resp *http.Response) (result GroupResult, er
 }
 
 // Identify identify unknown faces from a person group.
-//
-// body is request body for identify operation.
+// Parameters:
+// body - request body for identify operation.
 func (client Client) Identify(ctx context.Context, body IdentifyRequest) (result ListIdentifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -397,7 +400,7 @@ func (client Client) IdentifyPreparer(ctx context.Context, body IdentifyRequest)
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/identify"),
@@ -426,8 +429,8 @@ func (client Client) IdentifyResponder(resp *http.Response) (result ListIdentify
 }
 
 // VerifyFaceToFace verify whether two faces belong to a same person or whether one face belongs to a person.
-//
-// body is request body for verify operation.
+// Parameters:
+// body - request body for verify operation.
 func (client Client) VerifyFaceToFace(ctx context.Context, body VerifyFaceToFaceRequest) (result VerifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -464,7 +467,7 @@ func (client Client) VerifyFaceToFacePreparer(ctx context.Context, body VerifyFa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/verify"),
@@ -493,8 +496,8 @@ func (client Client) VerifyFaceToFaceResponder(resp *http.Response) (result Veri
 }
 
 // VerifyFaceToPerson verify whether two faces belong to a same person. Compares a face Id with a Person Id
-//
-// body is request body for verifying two faces in a person group
+// Parameters:
+// body - request body for verifying two faces in a person group
 func (client Client) VerifyFaceToPerson(ctx context.Context, body VerifyFaceToPersonRequest) (result VerifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -535,7 +538,7 @@ func (client Client) VerifyFaceToPersonPreparer(ctx context.Context, body Verify
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPath("/verify"),

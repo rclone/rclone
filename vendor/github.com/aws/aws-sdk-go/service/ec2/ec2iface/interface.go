@@ -208,6 +208,10 @@ type EC2API interface {
 	CreateEgressOnlyInternetGatewayWithContext(aws.Context, *ec2.CreateEgressOnlyInternetGatewayInput, ...request.Option) (*ec2.CreateEgressOnlyInternetGatewayOutput, error)
 	CreateEgressOnlyInternetGatewayRequest(*ec2.CreateEgressOnlyInternetGatewayInput) (*request.Request, *ec2.CreateEgressOnlyInternetGatewayOutput)
 
+	CreateFleet(*ec2.CreateFleetInput) (*ec2.CreateFleetOutput, error)
+	CreateFleetWithContext(aws.Context, *ec2.CreateFleetInput, ...request.Option) (*ec2.CreateFleetOutput, error)
+	CreateFleetRequest(*ec2.CreateFleetInput) (*request.Request, *ec2.CreateFleetOutput)
+
 	CreateFlowLogs(*ec2.CreateFlowLogsInput) (*ec2.CreateFlowLogsOutput, error)
 	CreateFlowLogsWithContext(aws.Context, *ec2.CreateFlowLogsInput, ...request.Option) (*ec2.CreateFlowLogsOutput, error)
 	CreateFlowLogsRequest(*ec2.CreateFlowLogsInput) (*request.Request, *ec2.CreateFlowLogsOutput)
@@ -343,6 +347,10 @@ type EC2API interface {
 	DeleteEgressOnlyInternetGateway(*ec2.DeleteEgressOnlyInternetGatewayInput) (*ec2.DeleteEgressOnlyInternetGatewayOutput, error)
 	DeleteEgressOnlyInternetGatewayWithContext(aws.Context, *ec2.DeleteEgressOnlyInternetGatewayInput, ...request.Option) (*ec2.DeleteEgressOnlyInternetGatewayOutput, error)
 	DeleteEgressOnlyInternetGatewayRequest(*ec2.DeleteEgressOnlyInternetGatewayInput) (*request.Request, *ec2.DeleteEgressOnlyInternetGatewayOutput)
+
+	DeleteFleets(*ec2.DeleteFleetsInput) (*ec2.DeleteFleetsOutput, error)
+	DeleteFleetsWithContext(aws.Context, *ec2.DeleteFleetsInput, ...request.Option) (*ec2.DeleteFleetsOutput, error)
+	DeleteFleetsRequest(*ec2.DeleteFleetsInput) (*request.Request, *ec2.DeleteFleetsOutput)
 
 	DeleteFlowLogs(*ec2.DeleteFlowLogsInput) (*ec2.DeleteFlowLogsOutput, error)
 	DeleteFlowLogsWithContext(aws.Context, *ec2.DeleteFlowLogsInput, ...request.Option) (*ec2.DeleteFlowLogsOutput, error)
@@ -507,6 +515,18 @@ type EC2API interface {
 	DescribeExportTasks(*ec2.DescribeExportTasksInput) (*ec2.DescribeExportTasksOutput, error)
 	DescribeExportTasksWithContext(aws.Context, *ec2.DescribeExportTasksInput, ...request.Option) (*ec2.DescribeExportTasksOutput, error)
 	DescribeExportTasksRequest(*ec2.DescribeExportTasksInput) (*request.Request, *ec2.DescribeExportTasksOutput)
+
+	DescribeFleetHistory(*ec2.DescribeFleetHistoryInput) (*ec2.DescribeFleetHistoryOutput, error)
+	DescribeFleetHistoryWithContext(aws.Context, *ec2.DescribeFleetHistoryInput, ...request.Option) (*ec2.DescribeFleetHistoryOutput, error)
+	DescribeFleetHistoryRequest(*ec2.DescribeFleetHistoryInput) (*request.Request, *ec2.DescribeFleetHistoryOutput)
+
+	DescribeFleetInstances(*ec2.DescribeFleetInstancesInput) (*ec2.DescribeFleetInstancesOutput, error)
+	DescribeFleetInstancesWithContext(aws.Context, *ec2.DescribeFleetInstancesInput, ...request.Option) (*ec2.DescribeFleetInstancesOutput, error)
+	DescribeFleetInstancesRequest(*ec2.DescribeFleetInstancesInput) (*request.Request, *ec2.DescribeFleetInstancesOutput)
+
+	DescribeFleets(*ec2.DescribeFleetsInput) (*ec2.DescribeFleetsOutput, error)
+	DescribeFleetsWithContext(aws.Context, *ec2.DescribeFleetsInput, ...request.Option) (*ec2.DescribeFleetsOutput, error)
+	DescribeFleetsRequest(*ec2.DescribeFleetsInput) (*request.Request, *ec2.DescribeFleetsOutput)
 
 	DescribeFlowLogs(*ec2.DescribeFlowLogsInput) (*ec2.DescribeFlowLogsOutput, error)
 	DescribeFlowLogsWithContext(aws.Context, *ec2.DescribeFlowLogsInput, ...request.Option) (*ec2.DescribeFlowLogsOutput, error)
@@ -924,6 +944,10 @@ type EC2API interface {
 	ImportVolume(*ec2.ImportVolumeInput) (*ec2.ImportVolumeOutput, error)
 	ImportVolumeWithContext(aws.Context, *ec2.ImportVolumeInput, ...request.Option) (*ec2.ImportVolumeOutput, error)
 	ImportVolumeRequest(*ec2.ImportVolumeInput) (*request.Request, *ec2.ImportVolumeOutput)
+
+	ModifyFleet(*ec2.ModifyFleetInput) (*ec2.ModifyFleetOutput, error)
+	ModifyFleetWithContext(aws.Context, *ec2.ModifyFleetInput, ...request.Option) (*ec2.ModifyFleetOutput, error)
+	ModifyFleetRequest(*ec2.ModifyFleetInput) (*request.Request, *ec2.ModifyFleetOutput)
 
 	ModifyFpgaImageAttribute(*ec2.ModifyFpgaImageAttributeInput) (*ec2.ModifyFpgaImageAttributeOutput, error)
 	ModifyFpgaImageAttributeWithContext(aws.Context, *ec2.ModifyFpgaImageAttributeInput, ...request.Option) (*ec2.ModifyFpgaImageAttributeOutput, error)

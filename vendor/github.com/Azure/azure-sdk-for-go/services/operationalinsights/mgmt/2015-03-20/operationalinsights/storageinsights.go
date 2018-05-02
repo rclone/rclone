@@ -31,20 +31,21 @@ type StorageInsightsClient struct {
 }
 
 // NewStorageInsightsClient creates an instance of the StorageInsightsClient client.
-func NewStorageInsightsClient(subscriptionID string) StorageInsightsClient {
-	return NewStorageInsightsClientWithBaseURI(DefaultBaseURI, subscriptionID)
+func NewStorageInsightsClient(subscriptionID string, purgeID string) StorageInsightsClient {
+	return NewStorageInsightsClientWithBaseURI(DefaultBaseURI, subscriptionID, purgeID)
 }
 
 // NewStorageInsightsClientWithBaseURI creates an instance of the StorageInsightsClient client.
-func NewStorageInsightsClientWithBaseURI(baseURI string, subscriptionID string) StorageInsightsClient {
-	return StorageInsightsClient{NewWithBaseURI(baseURI, subscriptionID)}
+func NewStorageInsightsClientWithBaseURI(baseURI string, subscriptionID string, purgeID string) StorageInsightsClient {
+	return StorageInsightsClient{NewWithBaseURI(baseURI, subscriptionID, purgeID)}
 }
 
 // CreateOrUpdate create or update a storage insight.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics Workspace name that will contain the storageInsightsConfigs resource storageInsightName is name of the
-// storageInsightsConfigs resource parameters is the parameters required to create or update a storage insight.
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics Workspace name that will contain the storageInsightsConfigs resource
+// storageInsightName - name of the storageInsightsConfigs resource
+// parameters - the parameters required to create or update a storage insight.
 func (client StorageInsightsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, workspaceName string, storageInsightName string, parameters StorageInsight) (result StorageInsight, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -97,7 +98,7 @@ func (client StorageInsightsClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/storageInsightConfigs/{storageInsightName}", pathParameters),
@@ -127,10 +128,10 @@ func (client StorageInsightsClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // Delete deletes a storageInsightsConfigs resource
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics Workspace name that contains the storageInsightsConfigs resource storageInsightName is name of the
-// storageInsightsConfigs resource
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics Workspace name that contains the storageInsightsConfigs resource
+// storageInsightName - name of the storageInsightsConfigs resource
 func (client StorageInsightsClient) Delete(ctx context.Context, resourceGroupName string, workspaceName string, storageInsightName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -203,10 +204,10 @@ func (client StorageInsightsClient) DeleteResponder(resp *http.Response) (result
 }
 
 // Get gets a storage insight instance.
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics Workspace name that contains the storageInsightsConfigs resource storageInsightName is name of the
-// storageInsightsConfigs resource
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics Workspace name that contains the storageInsightsConfigs resource
+// storageInsightName - name of the storageInsightsConfigs resource
 func (client StorageInsightsClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, storageInsightName string) (result StorageInsight, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -280,9 +281,9 @@ func (client StorageInsightsClient) GetResponder(resp *http.Response) (result St
 }
 
 // ListByWorkspace lists the storage insight instances within a workspace
-//
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is log
-// Analytics Workspace name that will contain the storageInsightsConfigs resource
+// Parameters:
+// resourceGroupName - the name of the resource group to get. The name is case insensitive.
+// workspaceName - log Analytics Workspace name that will contain the storageInsightsConfigs resource
 func (client StorageInsightsClient) ListByWorkspace(ctx context.Context, resourceGroupName string, workspaceName string) (result StorageInsightListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

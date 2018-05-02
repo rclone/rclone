@@ -49,6 +49,8 @@ func GetAuthorizer(env azure.Environment) (*autorest.BearerAuthorizer, error) {
 }
 
 // GetEnvVarOrExit returns the value of specified environment variable or terminates if it's not defined.
+//
+// Deprecated: This has been supreseeded by the github.com/Azure/go-autorest/autorest/azure/auth package.
 func GetEnvVarOrExit(varName string) string {
 	value := os.Getenv(varName)
 	if value == "" {

@@ -17,7 +17,7 @@ const opActivatePipeline = "ActivatePipeline"
 
 // ActivatePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the ActivatePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -115,7 +115,7 @@ const opAddTags = "AddTags"
 
 // AddTagsRequest generates a "aws/request.Request" representing the
 // client's request for the AddTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -206,7 +206,7 @@ const opCreatePipeline = "CreatePipeline"
 
 // CreatePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -291,7 +291,7 @@ const opDeactivatePipeline = "DeactivatePipeline"
 
 // DeactivatePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the DeactivatePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -387,7 +387,7 @@ const opDeletePipeline = "DeletePipeline"
 
 // DeletePipelineRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePipeline operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -484,7 +484,7 @@ const opDescribeObjects = "DescribeObjects"
 
 // DescribeObjectsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeObjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -633,7 +633,7 @@ const opDescribePipelines = "DescribePipelines"
 
 // DescribePipelinesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePipelines operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -732,7 +732,7 @@ const opEvaluateExpression = "EvaluateExpression"
 
 // EvaluateExpressionRequest generates a "aws/request.Request" representing the
 // client's request for the EvaluateExpression operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -828,7 +828,7 @@ const opGetPipelineDefinition = "GetPipelineDefinition"
 
 // GetPipelineDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the GetPipelineDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -920,7 +920,7 @@ const opListPipelines = "ListPipelines"
 
 // ListPipelinesRequest generates a "aws/request.Request" representing the
 // client's request for the ListPipelines operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1061,7 +1061,7 @@ const opPollForTask = "PollForTask"
 
 // PollForTaskRequest generates a "aws/request.Request" representing the
 // client's request for the PollForTask operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1161,7 +1161,7 @@ const opPutPipelineDefinition = "PutPipelineDefinition"
 
 // PutPipelineDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the PutPipelineDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1265,7 +1265,7 @@ const opQueryObjects = "QueryObjects"
 
 // QueryObjectsRequest generates a "aws/request.Request" representing the
 // client's request for the QueryObjects operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1413,7 +1413,7 @@ const opRemoveTags = "RemoveTags"
 
 // RemoveTagsRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1504,7 +1504,7 @@ const opReportTaskProgress = "ReportTaskProgress"
 
 // ReportTaskProgressRequest generates a "aws/request.Request" representing the
 // client's request for the ReportTaskProgress operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1609,7 +1609,7 @@ const opReportTaskRunnerHeartbeat = "ReportTaskRunnerHeartbeat"
 
 // ReportTaskRunnerHeartbeatRequest generates a "aws/request.Request" representing the
 // client's request for the ReportTaskRunnerHeartbeat operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1697,7 +1697,7 @@ const opSetStatus = "SetStatus"
 
 // SetStatusRequest generates a "aws/request.Request" representing the
 // client's request for the SetStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1794,7 +1794,7 @@ const opSetTaskStatus = "SetTaskStatus"
 
 // SetTaskStatusRequest generates a "aws/request.Request" representing the
 // client's request for the SetTaskStatus operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1892,7 +1892,7 @@ const opValidatePipelineDefinition = "ValidatePipelineDefinition"
 
 // ValidatePipelineDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the ValidatePipelineDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

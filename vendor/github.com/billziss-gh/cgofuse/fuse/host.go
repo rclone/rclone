@@ -200,10 +200,12 @@ typedef dev_t fuse_dev_t;
 typedef uid_t fuse_uid_t;
 typedef gid_t fuse_gid_t;
 typedef off_t fuse_off_t;
+typedef unsigned long fuse_opt_offset_t;
 #elif defined(_WIN32)
 typedef struct fuse_stat fuse_stat_t;
 typedef struct fuse_statvfs fuse_statvfs_t;
 typedef struct fuse_timespec fuse_timespec_t;
+typedef unsigned int fuse_opt_offset_t;
 #endif
 
 extern int hostGetattr(char *path, fuse_stat_t *stbuf);
@@ -532,12 +534,32 @@ static int hostUnmount(struct fuse *fuse, char *mountpoint)
 	return 1;
 #endif
 }
+
+static int hostOptParseOptProc(void *opt_data, const char *arg, int key,
+	struct fuse_args *outargs)
+{
+	switch (key)
+	{
+	default:
+		return 0;
+	case FUSE_OPT_KEY_NONOPT:
+		return 1;
+	}
+}
+
+static int hostOptParse(struct fuse_args *args, void *data, const struct fuse_opt opts[],
+	bool nonopts)
+{
+	return fuse_opt_parse(args, data, opts, nonopts ? hostOptParseOptProc : 0);
+}
 */
 import "C"
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -1225,6 +1247,249 @@ func Getcontext() (uid uint32, gid uint32, pid int) {
 	uid = uint32(C.fuse_get_context().uid)
 	gid = uint32(C.fuse_get_context().gid)
 	pid = int(C.fuse_get_context().pid)
+	return
+}
+
+func optNormBool(opt string) string {
+	if i := strings.Index(opt, "=%"); -1 != i {
+		switch opt[i+2:] {
+		case "d", "o", "x", "X":
+			return opt
+		case "v":
+			return opt[:i+1]
+		default:
+			panic("unknown format " + opt[i+1:])
+		}
+	} else {
+		return opt
+	}
+}
+
+func optNormInt(opt string, modf string) string {
+	if i := strings.Index(opt, "=%"); -1 != i {
+		switch opt[i+2:] {
+		case "d", "o", "x", "X":
+			return opt[:i+2] + modf + opt[i+2:]
+		case "v":
+			return opt[:i+2] + modf + "i"
+		default:
+			panic("unknown format " + opt[i+1:])
+		}
+	} else if strings.HasSuffix(opt, "=") {
+		return opt + "%" + modf + "i"
+	} else {
+		return opt + "=%" + modf + "i"
+	}
+}
+
+func optNormStr(opt string) string {
+	if i := strings.Index(opt, "=%"); -1 != i {
+		switch opt[i+2:] {
+		case "s", "v":
+			return opt[:i+2] + "s"
+		default:
+			panic("unknown format " + opt[i+1:])
+		}
+	} else if strings.HasSuffix(opt, "=") {
+		return opt + "%s"
+	} else {
+		return opt + "=%s"
+	}
+}
+
+// OptParse parses the FUSE command line arguments in args as determined by format
+// and stores the resulting values in vals, which must be pointers. It returns a
+// list of unparsed arguments or nil if an error happens.
+//
+// The format may be empty or non-empty. An empty format is taken as a special
+// instruction to OptParse to only return all non-option arguments in outargs.
+//
+// A non-empty format is a space separated list of acceptable FUSE options. Each
+// option is matched with a corresponding pointer value in vals. The combination
+// of the option and the type of the corresponding pointer value, determines how
+// the option is used. The allowed pointer types are pointer to bool, pointer to
+// an integer type and pointer to string.
+//
+// For pointer to bool types:
+//
+//     -x                       Match -x without parameter.
+//     -foo --foo               As above for -foo or --foo.
+//     foo                      Match "-o foo".
+//     -x= -foo= --foo= foo=    Match option with parameter.
+//     -x=%VERB ... foo=%VERB   Match option with parameter of syntax.
+//                              Allowed verbs: d,o,x,X,v
+//                              - d,o,x,X: set to true if parameter non-0.
+//                              - v: set to true if parameter present.
+//
+//     The formats -x=, and -x=%v are equivalent.
+//
+// For pointer to other types:
+//
+//     -x                       Match -x with parameter (-x=PARAM).
+//     -foo --foo               As above for -foo or --foo.
+//     foo                      Match "-o foo=PARAM".
+//     -x= -foo= --foo= foo=    Match option with parameter.
+//     -x=%VERB ... foo=%VERB   Match option with parameter of syntax.
+//                              Allowed verbs for pointer to int types: d,o,x,X,v
+//                              Allowed verbs for pointer to string types: s,v
+//
+//     The formats -x, -x=, and -x=%v are equivalent.
+//
+// For example:
+//
+//     var f bool
+//     var set_attr_timeout bool
+//     var attr_timeout int
+//     var umask uint32
+//     outargs, err := OptParse(args, "-f attr_timeout= attr_timeout umask=%o",
+//         &f, &set_attr_timeout, &attr_timeout, &umask)
+//
+// Will accept a command line of:
+//
+//     $ program -f -o attr_timeout=42,umask=077
+//
+// And will set variables as follows:
+//
+//     f == true
+//     set_attr_timeout == true
+//     attr_timeout == 42
+//     umask == 077
+//
+func OptParse(args []string, format string, vals ...interface{}) (outargs []string, err error) {
+	if 0 == C.hostFuseInit() {
+		panic("cgofuse: cannot find winfsp")
+	}
+
+	defer func() {
+		if r := recover(); nil != r {
+			if s, ok := r.(string); ok {
+				outargs = nil
+				err = errors.New("OptParse: " + s)
+			} else {
+				panic(r)
+			}
+		}
+	}()
+
+	var opts []string
+	var nonopts bool
+	if "" == format {
+		opts = make([]string, 0)
+		nonopts = true
+	} else {
+		opts = strings.Split(format, " ")
+	}
+
+	align := int(2 * unsafe.Sizeof(C.size_t(0))) // match malloc alignment (usually 8 or 16)
+
+	fuse_opts := make([]C.struct_fuse_opt, len(opts)+1)
+	for i := 0; len(opts) > i; i++ {
+		switch vals[i].(type) {
+		case *bool:
+			fuse_opts[i].templ = C.CString(optNormBool(opts[i]))
+		case *int:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], ""))
+		case *int8:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "hh"))
+		case *int16:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "h"))
+		case *int32:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], ""))
+		case *int64:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "ll"))
+		case *uint:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], ""))
+		case *uint8:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "hh"))
+		case *uint16:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "h"))
+		case *uint32:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], ""))
+		case *uint64:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "ll"))
+		case *uintptr:
+			fuse_opts[i].templ = C.CString(optNormInt(opts[i], "ll"))
+		case *string:
+			fuse_opts[i].templ = C.CString(optNormStr(opts[i]))
+		}
+		defer C.free(unsafe.Pointer(fuse_opts[i].templ))
+
+		// Work around Go pre-1.10 limitation. See golang issue:
+		// https://github.com/golang/go/issues/21809
+		*(*C.fuse_opt_offset_t)(unsafe.Pointer(&fuse_opts[i].offset)) =
+			C.fuse_opt_offset_t(i * align)
+
+		fuse_opts[i].value = 1
+	}
+
+	fuse_args := C.struct_fuse_args{}
+	defer C.fuse_opt_free_args(&fuse_args)
+	argc := 1 + len(args)
+	argp := C.calloc(C.size_t(argc+1), C.size_t(unsafe.Sizeof((*C.char)(nil))))
+	defer C.free(argp)
+	argv := (*[1 << 16]*C.char)(argp)
+	argv[0] = C.CString("<UNKNOWN>")
+	defer C.free(unsafe.Pointer(argv[0]))
+	for i := 0; len(args) > i; i++ {
+		argv[1+i] = C.CString(args[i])
+		defer C.free(unsafe.Pointer(argv[1+i]))
+	}
+	fuse_args.argc = C.int(argc)
+	fuse_args.argv = (**C.char)(&argv[0])
+
+	data := C.calloc(C.size_t(len(opts)), C.size_t(align))
+	defer C.free(data)
+
+	if -1 == C.hostOptParse(&fuse_args, data, &fuse_opts[0], C.bool(nonopts)) {
+		panic("failed")
+	}
+
+	for i := 0; len(opts) > i; i++ {
+		switch v := vals[i].(type) {
+		case *bool:
+			*v = 0 != int(*(*C.int)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *int:
+			*v = int(*(*C.int)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *int8:
+			*v = int8(*(*C.int8_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *int16:
+			*v = int16(*(*C.int16_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *int32:
+			*v = int32(*(*C.int32_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *int64:
+			*v = int64(*(*C.int64_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uint:
+			*v = uint(*(*C.unsigned)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uint8:
+			*v = uint8(*(*C.uint8_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uint16:
+			*v = uint16(*(*C.uint16_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uint32:
+			*v = uint32(*(*C.uint32_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uint64:
+			*v = uint64(*(*C.uint64_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *uintptr:
+			*v = uintptr(*(*C.uintptr_t)(unsafe.Pointer(uintptr(data) + uintptr(i*align))))
+		case *string:
+			s := *(**C.char)(unsafe.Pointer(uintptr(data) + uintptr(i*align)))
+			*v = C.GoString(s)
+			C.free(unsafe.Pointer(s))
+		}
+	}
+
+	if 1 >= fuse_args.argc {
+		outargs = make([]string, 0)
+	} else {
+		outargs = make([]string, fuse_args.argc-1)
+		for i := 1; int(fuse_args.argc) > i; i++ {
+			outargs[i-1] = C.GoString((*[1 << 16]*C.char)(unsafe.Pointer(fuse_args.argv))[i])
+		}
+	}
+
+	if nonopts && 1 <= len(outargs) && "--" == outargs[0] {
+		outargs = outargs[1:]
+	}
+
 	return
 }
 

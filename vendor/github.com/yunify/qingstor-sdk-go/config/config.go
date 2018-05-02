@@ -67,14 +67,14 @@ type HTTPClientSettings struct {
 	// IdleConnTimeout affects the time limit to re-use http connections
 	IdleConnTimeout time.Duration `yaml:"idle_timeout"`
 
-	TCPKeepAlive    time.Duration `yaml:"tcp_keepalive_time"`
+	TCPKeepAlive time.Duration `yaml:"tcp_keepalive_time"`
 
-	DualStack       bool          `yaml:"dual_stack"`
+	DualStack bool `yaml:"dual_stack"`
 
 	// MaxIdleConns affects the idle connections kept for re-use
-	MaxIdleConns          int           `yaml:"max_idle_conns"`
+	MaxIdleConns int `yaml:"max_idle_conns"`
 
-	MaxIdleConnsPerHost   int           `yaml:"max_idle_conns_per_host"`
+	MaxIdleConnsPerHost int `yaml:"max_idle_conns_per_host"`
 
 	ExpectContinueTimeout time.Duration `yaml:"expect_continue_timeout"`
 }

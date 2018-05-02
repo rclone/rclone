@@ -41,8 +41,8 @@ func NewVirtualMachineSizesClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // List lists all available virtual machine sizes for a subscription in a location.
-//
-// location is the location upon which virtual-machine-sizes is queried.
+// Parameters:
+// location - the location upon which virtual-machine-sizes is queried.
 func (client VirtualMachineSizesClient) List(ctx context.Context, location string) (result VirtualMachineSizeListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: location,

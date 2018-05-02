@@ -41,11 +41,14 @@ func NewPartitionKeyRangeIDRegionClientWithBaseURI(baseURI string, subscriptionI
 }
 
 // ListMetrics retrieves the metrics determined by the given filter for the given partition key range id and region.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name. region is
-// cosmos DB region, with spaces between words and each word capitalized. databaseRid is cosmos DB database rid.
-// collectionRid is cosmos DB collection rid. partitionKeyRangeID is partition Key Range Id for which to get data.
-// filter is an OData filter expression that describes a subset of metrics to return. The parameters that can be
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// region - cosmos DB region, with spaces between words and each word capitalized.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
+// partitionKeyRangeID - partition Key Range Id for which to get data.
+// filter - an OData filter expression that describes a subset of metrics to return. The parameters that can be
 // filtered are name.value (name of the metric, can have an or of multiple names), startTime, endTime, and
 // timeGrain. The supported operator is eq.
 func (client PartitionKeyRangeIDRegionClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, region string, databaseRid string, collectionRid string, partitionKeyRangeID string, filter string) (result PartitionMetricListResult, err error) {

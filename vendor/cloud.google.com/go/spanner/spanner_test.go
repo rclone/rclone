@@ -93,6 +93,26 @@ var (
 		`CREATE INDEX TestTableByValue ON TestTable(StringValue)`,
 		`CREATE INDEX TestTableByValueDesc ON TestTable(StringValue DESC)`,
 	}
+
+	simpleDBStatements = []string{
+		`CREATE TABLE test (
+				a	STRING(1024),
+				b	STRING(1024),
+			) PRIMARY KEY (a)`,
+	}
+	simpleDBTableColumns = []string{"a", "b"}
+
+	ctsDBStatements = []string{
+		`CREATE TABLE TestTable (
+		    Key  STRING(MAX) NOT NULL,
+		    Ts   TIMESTAMP OPTIONS (allow_commit_timestamp = true),
+	    ) PRIMARY KEY (Key)`,
+	}
+)
+
+const (
+	str1 = "alice"
+	str2 = "a@example.com"
 )
 
 type testTableRow struct{ Key, StringValue string }
@@ -119,8 +139,7 @@ func initIntegrationTest() {
 	}
 	var err error
 	// Create Admin client and Data client.
-	// TODO: Remove the EndPoint option once this is the default.
-	admin, err = database.NewDatabaseAdminClient(ctx, option.WithTokenSource(ts), option.WithEndpoint("spanner.googleapis.com:443"))
+	admin, err = database.NewDatabaseAdminClient(ctx, option.WithTokenSource(ts), option.WithEndpoint(endpoint))
 	if err != nil {
 		log.Fatalf("cannot create admin client: %v", err)
 	}
@@ -158,16 +177,16 @@ func prepare(ctx context.Context, t *testing.T, statements []string) (client *Cl
 	}
 	client, err = NewClientWithConfig(ctx, dbPath, ClientConfig{
 		SessionPoolConfig: SessionPoolConfig{WriteSessions: 0.2},
-	}, option.WithTokenSource(testutil.TokenSource(ctx, Scope)))
+	}, option.WithTokenSource(testutil.TokenSource(ctx, Scope)), option.WithEndpoint(endpoint))
 	if err != nil {
 		t.Fatalf("cannot create data client on DB %v: %v", dbPath, err)
 	}
 	return client, dbPath, func() {
+		client.Close()
 		if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{dbPath}); err != nil {
 			t.Logf("failed to drop database %s (error %v), might need a manual removal",
 				dbPath, err)
 		}
-		client.Close()
 	}
 }
 
@@ -959,8 +978,11 @@ func TestDbRemovalRecovery(t *testing.T) {
 			) PRIMARY KEY (SingerId)`,
 		},
 	})
+	if err != nil {
+		t.Fatalf("cannot recreate testing DB %v: %v", dbPath, err)
+	}
 	if _, err := op.Wait(ctx); err != nil {
-		t.Errorf("cannot recreate testing DB %v: %v", dbPath, err)
+		t.Fatalf("cannot recreate testing DB %v: %v", dbPath, err)
 	}
 
 	// Now, send the query again.
@@ -968,7 +990,7 @@ func TestDbRemovalRecovery(t *testing.T) {
 	defer iter.Stop()
 	_, err = iter.Next()
 	if err != nil && err != iterator.Done {
-		t.Fatalf("failed to send query to database %v: %v", dbPath, err)
+		t.Errorf("failed to send query to database %v: %v", dbPath, err)
 	}
 }
 
@@ -1434,7 +1456,7 @@ func readAllTestTable(iter *RowIterator) ([]testTableRow, error) {
 // Test TransactionRunner. Test that transactions are aborted and retried as expected.
 func TestTransactionRunner(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	client, _, tearDown := prepare(ctx, t, singerDBStatements)
 	defer tearDown()
@@ -1557,5 +1579,301 @@ func TestTransactionRunner(t *testing.T) {
 		} else if b != i {
 			t.Errorf("Balance for key %d, got %d, want %d.", i, b, i)
 		}
+	}
+}
+
+// createClient creates Cloud Spanner data client.
+func createClient(ctx context.Context, dbPath string) (client *Client, err error) {
+	client, err = NewClientWithConfig(ctx, dbPath, ClientConfig{
+		SessionPoolConfig: SessionPoolConfig{WriteSessions: 0.2},
+	}, option.WithTokenSource(testutil.TokenSource(ctx, Scope)), option.WithEndpoint(endpoint))
+	if err != nil {
+		return nil, fmt.Errorf("cannot create data client on DB %v: %v", dbPath, err)
+	}
+	return client, nil
+}
+
+// populate prepares the database with some data.
+func populate(ctx context.Context, client *Client) error {
+	// Populate data
+	var err error
+	m := InsertMap("test", map[string]interface{}{
+		"a": str1,
+		"b": str2,
+	})
+	_, err = client.Apply(ctx, []*Mutation{m})
+	return err
+}
+
+// Test PartitionQuery of BatchReadOnlyTransaction, create partitions then
+// serialize and deserialize both transaction and partition to be used in
+// execution on another client, and compare results.
+func TestBatchQuery(t *testing.T) {
+	t.Parallel()
+	// Set up testing environment.
+	var (
+		client2 *Client
+		err     error
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	client, dbPath, tearDown := prepare(ctx, t, simpleDBStatements)
+	defer tearDown()
+	if err = populate(ctx, client); err != nil {
+		t.Fatal(err)
+	}
+	if client2, err = createClient(ctx, dbPath); err != nil {
+		t.Fatal(err)
+	}
+	defer client2.Close()
+
+	// PartitionQuery
+	var (
+		txn        *BatchReadOnlyTransaction
+		partitions []*Partition
+		stmt       = Statement{SQL: "SELECT * FROM test;"}
+	)
+
+	if txn, err = client.BatchReadOnlyTransaction(ctx, StrongRead()); err != nil {
+		t.Fatal(err)
+	}
+	defer txn.Cleanup(ctx)
+	if partitions, err = txn.PartitionQuery(ctx, stmt, PartitionOptions{0, 3}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reconstruct BatchReadOnlyTransactionID and execute partitions
+	var (
+		tid2      BatchReadOnlyTransactionID
+		data      []byte
+		gotResult bool // if we get matching result from two separate txns
+	)
+	if data, err = txn.ID.MarshalBinary(); err != nil {
+		t.Fatalf("encoding failed %v", err)
+	}
+	if err = tid2.UnmarshalBinary(data); err != nil {
+		t.Fatalf("decoding failed %v", err)
+	}
+	txn2 := client2.BatchReadOnlyTransactionFromID(tid2)
+
+	// Execute Partitions and compare results
+	for i, p := range partitions {
+		iter := txn.Execute(ctx, p)
+		defer iter.Stop()
+		p2 := serdesPartition(t, i, p)
+		iter2 := txn2.Execute(ctx, &p2)
+		defer iter2.Stop()
+
+		row1, err1 := iter.Next()
+		row2, err2 := iter2.Next()
+		if err1 != err2 {
+			t.Fatalf("execution failed for different reasons: %v, %v", err1, err2)
+			continue
+		}
+		if !testEqual(row1, row2) {
+			t.Fatalf("execution returned different values: %v, %v", row1, row2)
+			continue
+		}
+		if row1 == nil {
+			continue
+		}
+		var a, b string
+		if err = row1.Columns(&a, &b); err != nil {
+			t.Fatalf("failed to parse row %v", err)
+			continue
+		}
+		if a == str1 && b == str2 {
+			gotResult = true
+		}
+	}
+	if !gotResult {
+		t.Fatalf("execution didn't return expected values")
+	}
+}
+
+// Test PartitionRead of BatchReadOnlyTransaction, similar to TestBatchQuery
+func TestBatchRead(t *testing.T) {
+	t.Parallel()
+	// Set up testing environment.
+	var (
+		client2 *Client
+		err     error
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	client, dbPath, tearDown := prepare(ctx, t, simpleDBStatements)
+	defer tearDown()
+	if err = populate(ctx, client); err != nil {
+		t.Fatal(err)
+	}
+	if client2, err = createClient(ctx, dbPath); err != nil {
+		t.Fatal(err)
+	}
+	defer client2.Close()
+
+	// PartitionRead
+	var (
+		txn        *BatchReadOnlyTransaction
+		partitions []*Partition
+	)
+
+	if txn, err = client.BatchReadOnlyTransaction(ctx, StrongRead()); err != nil {
+		t.Fatal(err)
+	}
+	defer txn.Cleanup(ctx)
+	if partitions, err = txn.PartitionRead(ctx, "test", AllKeys(), simpleDBTableColumns, PartitionOptions{0, 3}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reconstruct BatchReadOnlyTransactionID and execute partitions
+	var (
+		tid2      BatchReadOnlyTransactionID
+		data      []byte
+		gotResult bool // if we get matching result from two separate txns
+	)
+	if data, err = txn.ID.MarshalBinary(); err != nil {
+		t.Fatalf("encoding failed %v", err)
+	}
+	if err = tid2.UnmarshalBinary(data); err != nil {
+		t.Fatalf("decoding failed %v", err)
+	}
+	txn2 := client2.BatchReadOnlyTransactionFromID(tid2)
+
+	// Execute Partitions and compare results
+	for i, p := range partitions {
+		iter := txn.Execute(ctx, p)
+		defer iter.Stop()
+		p2 := serdesPartition(t, i, p)
+		iter2 := txn2.Execute(ctx, &p2)
+		defer iter2.Stop()
+
+		row1, err1 := iter.Next()
+		row2, err2 := iter2.Next()
+		if err1 != err2 {
+			t.Fatalf("execution failed for different reasons: %v, %v", err1, err2)
+			continue
+		}
+		if !testEqual(row1, row2) {
+			t.Fatalf("execution returned different values: %v, %v", row1, row2)
+			continue
+		}
+		if row1 == nil {
+			continue
+		}
+		var a, b string
+		if err = row1.Columns(&a, &b); err != nil {
+			t.Fatalf("failed to parse row %v", err)
+			continue
+		}
+		if a == str1 && b == str2 {
+			gotResult = true
+		}
+	}
+	if !gotResult {
+		t.Fatalf("execution didn't return expected values")
+	}
+}
+
+// Test normal txReadEnv method on BatchReadOnlyTransaction.
+func TestBROTNormal(t *testing.T) {
+	t.Parallel()
+	// Set up testing environment and create txn.
+	var (
+		txn *BatchReadOnlyTransaction
+		err error
+		row *Row
+		i   int64
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	client, _, tearDown := prepare(ctx, t, simpleDBStatements)
+	defer tearDown()
+
+	if txn, err = client.BatchReadOnlyTransaction(ctx, StrongRead()); err != nil {
+		t.Fatal(err)
+	}
+	defer txn.Cleanup(ctx)
+	if _, err := txn.PartitionRead(ctx, "test", AllKeys(), simpleDBTableColumns, PartitionOptions{0, 3}); err != nil {
+		t.Fatal(err)
+	}
+	// Normal query should work with BatchReadOnlyTransaction
+	stmt2 := Statement{SQL: "SELECT 1"}
+	iter := txn.Query(ctx, stmt2)
+	defer iter.Stop()
+
+	row, err = iter.Next()
+	if err != nil {
+		t.Errorf("query failed with %v", err)
+	}
+	if err = row.Columns(&i); err != nil {
+		t.Errorf("failed to parse row %v", err)
+	}
+}
+
+func TestCommitTimestamp(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+	client, _, tearDown := prepare(ctx, t, ctsDBStatements)
+	defer tearDown()
+
+	type testTableRow struct {
+		Key string
+		Ts  NullTime
+	}
+
+	var (
+		cts1, cts2, ts1, ts2 time.Time
+		err                  error
+	)
+
+	// Apply mutation in sequence, expect to see commit timestamp in good order, check also the commit timestamp returned
+	for _, it := range []struct {
+		k string
+		t *time.Time
+	}{
+		{"a", &cts1},
+		{"b", &cts2},
+	} {
+		tt := testTableRow{Key: it.k, Ts: NullTime{CommitTimestamp, true}}
+		m, err := InsertStruct("TestTable", tt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		*it.t, err = client.Apply(ctx, []*Mutation{m}, ApplyAtLeastOnce())
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	txn := client.ReadOnlyTransaction()
+	for _, it := range []struct {
+		k string
+		t *time.Time
+	}{
+		{"a", &ts1},
+		{"b", &ts2},
+	} {
+		if r, e := txn.ReadRow(ctx, "TestTable", Key{it.k}, []string{"Ts"}); e != nil {
+			t.Fatal(err)
+		} else {
+			var got testTableRow
+			if err := r.ToStruct(&got); err != nil {
+				t.Fatal(err)
+			}
+			*it.t = got.Ts.Time
+		}
+	}
+	if !cts1.Equal(ts1) {
+		t.Errorf("Expect commit timestamp returned and read to match for txn1, got %v and %v.", cts1, ts1)
+	}
+	if !cts2.Equal(ts2) {
+		t.Errorf("Expect commit timestamp returned and read to match for txn2, got %v and %v.", cts2, ts2)
+	}
+
+	// Try writing a timestamp in the future to commit timestamp, expect error
+	_, err = client.Apply(ctx, []*Mutation{InsertOrUpdate("TestTable", []string{"Key", "Ts"}, []interface{}{"a", time.Now().Add(time.Hour)})}, ApplyAtLeastOnce())
+	if msg, ok := matchError(err, codes.FailedPrecondition, "Cannot write timestamps in the future"); !ok {
+		t.Error(msg)
 	}
 }

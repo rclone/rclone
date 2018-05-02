@@ -28,7 +28,13 @@ help:
 all: check build unit release
 
 .PHONY: check
-check: vet lint
+check: vet lint format
+
+.PHONY: format
+format:
+	@echo "go fmt, skipping vendor packages"
+	@for pkg in ${PKGS_TO_CHECK}; do go fmt $${pkg}; done;
+	@echo "ok"
 
 .PHONY: vet
 vet:
@@ -59,7 +65,7 @@ generate:
 	@echo "Done"
 
 .PHONY: build
-build:
+build: format
 	@echo "Build the SDK"
 	go build ${PKGS_TO_RELEASE}
 	@echo "Done"

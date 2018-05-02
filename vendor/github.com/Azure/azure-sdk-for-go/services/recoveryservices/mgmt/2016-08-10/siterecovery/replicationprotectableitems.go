@@ -41,9 +41,10 @@ func NewReplicationProtectableItemsClientWithBaseURI(baseURI string, subscriptio
 }
 
 // Get the operation to get the details of a protectable item.
-//
-// fabricName is fabric name. protectionContainerName is protection container name. protectableItemName is
-// protectable item name.
+// Parameters:
+// fabricName - fabric name.
+// protectionContainerName - protection container name.
+// protectableItemName - protectable item name.
 func (client ReplicationProtectableItemsClient) Get(ctx context.Context, fabricName string, protectionContainerName string, protectableItemName string) (result ProtectableItem, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, protectionContainerName, protectableItemName)
 	if err != nil {
@@ -111,8 +112,9 @@ func (client ReplicationProtectableItemsClient) GetResponder(resp *http.Response
 }
 
 // ListByReplicationProtectionContainers lists the protectable items in a protection container.
-//
-// fabricName is fabric name. protectionContainerName is protection container name.
+// Parameters:
+// fabricName - fabric name.
+// protectionContainerName - protection container name.
 func (client ReplicationProtectableItemsClient) ListByReplicationProtectionContainers(ctx context.Context, fabricName string, protectionContainerName string) (result ProtectableItemCollectionPage, err error) {
 	result.fn = client.listByReplicationProtectionContainersNextResults
 	req, err := client.ListByReplicationProtectionContainersPreparer(ctx, fabricName, protectionContainerName)

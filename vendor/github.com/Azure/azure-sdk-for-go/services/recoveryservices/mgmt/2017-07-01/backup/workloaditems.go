@@ -41,10 +41,13 @@ func NewWorkloadItemsClientWithBaseURI(baseURI string, subscriptionID string) Wo
 
 // List provides a pageable list of workload item of a specific container according to the query filter and the
 // pagination parameters.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the container. containerName
-// is name of the container. filter is oData filter options. skipToken is skipToken Filter.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the container.
+// containerName - name of the container.
+// filter - oData filter options.
+// skipToken - skipToken Filter.
 func (client WorkloadItemsClient) List(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, filter string, skipToken string) (result WorkloadItemResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, filter, skipToken)

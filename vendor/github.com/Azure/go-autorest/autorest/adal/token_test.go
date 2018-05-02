@@ -15,6 +15,7 @@ package adal
 //  limitations under the License.
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -24,10 +25,10 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -148,7 +149,7 @@ func TestServicePrincipalTokenRefreshUsesPOST(t *testing.T) {
 	}
 }
 
-func TestServicePrincipalTokenFromMSIRefreshUsesPOST(t *testing.T) {
+func TestServicePrincipalTokenFromMSIRefreshUsesGET(t *testing.T) {
 	resource := "https://resource"
 	cb := func(token Token) error { return nil }
 
@@ -165,8 +166,8 @@ func TestServicePrincipalTokenFromMSIRefreshUsesPOST(t *testing.T) {
 		(func() SendDecorator {
 			return func(s Sender) Sender {
 				return SenderFunc(func(r *http.Request) (*http.Response, error) {
-					if r.Method != "POST" {
-						t.Fatalf("adal: ServicePrincipalToken#Refresh did not correctly set HTTP method -- expected %v, received %v", "POST", r.Method)
+					if r.Method != "GET" {
+						t.Fatalf("adal: ServicePrincipalToken#Refresh did not correctly set HTTP method -- expected %v, received %v", "GET", r.Method)
 					}
 					if h := r.Header.Get("Metadata"); h != "true" {
 						t.Fatalf("adal: ServicePrincipalToken#Refresh did not correctly set Metadata header for MSI")
@@ -183,6 +184,39 @@ func TestServicePrincipalTokenFromMSIRefreshUsesPOST(t *testing.T) {
 
 	if body.IsOpen() {
 		t.Fatalf("the response was not closed!")
+	}
+}
+
+func TestServicePrincipalTokenFromMSIRefreshCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	endpoint, _ := GetMSIVMEndpoint()
+
+	spt, err := NewServicePrincipalTokenFromMSI(endpoint, "https://resource")
+	if err != nil {
+		t.Fatalf("Failed to get MSI SPT: %v", err)
+	}
+
+	c := mocks.NewSender()
+	c.AppendAndRepeatResponse(mocks.NewResponseWithStatus("Internal server error", http.StatusInternalServerError), 5)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	start := time.Now()
+	end := time.Now()
+
+	go func() {
+		spt.SetSender(c)
+		err = spt.RefreshWithContext(ctx)
+		end = time.Now()
+		wg.Done()
+	}()
+
+	cancel()
+	wg.Wait()
+	time.Sleep(5 * time.Millisecond)
+
+	if end.Sub(start) >= time.Second {
+		t.Fatalf("TestServicePrincipalTokenFromMSIRefreshCancel failed to cancel")
 	}
 }
 
@@ -484,6 +518,23 @@ func TestServicePrincipalTokenEnsureFreshRefreshes(t *testing.T) {
 	}
 }
 
+func TestServicePrincipalTokenEnsureFreshFails(t *testing.T) {
+	spt := newServicePrincipalToken()
+	expireToken(&spt.token)
+
+	c := mocks.NewSender()
+	c.SetError(fmt.Errorf("some failure"))
+
+	spt.SetSender(c)
+	err := spt.EnsureFresh()
+	if err == nil {
+		t.Fatal("adal: ServicePrincipalToken#EnsureFresh didn't return an error")
+	}
+	if _, ok := err.(TokenRefreshError); !ok {
+		t.Fatal("adal: ServicePrincipalToken#EnsureFresh didn't return a TokenRefreshError")
+	}
+}
+
 func TestServicePrincipalTokenEnsureFreshSkipsIfFresh(t *testing.T) {
 	spt := newServicePrincipalToken()
 	setTokenToExpireIn(&spt.token, 1000*time.Second)
@@ -612,26 +663,12 @@ func TestNewServicePrincipalTokenFromMSIWithUserAssignedID(t *testing.T) {
 }
 
 func TestGetVMEndpoint(t *testing.T) {
-	tempSettingsFile, err := ioutil.TempFile("", "ManagedIdentity-Settings")
-	if err != nil {
-		t.Fatal("Couldn't write temp settings file")
-	}
-	defer os.Remove(tempSettingsFile.Name())
-
-	settingsContents := []byte(`{
-		"url": "http://msiendpoint/"
-	}`)
-
-	if _, err := tempSettingsFile.Write(settingsContents); err != nil {
-		t.Fatal("Couldn't fill temp settings file")
-	}
-
-	endpoint, err := getMSIVMEndpoint(tempSettingsFile.Name())
+	endpoint, err := GetMSIVMEndpoint()
 	if err != nil {
 		t.Fatal("Coudn't get VM endpoint")
 	}
 
-	if endpoint != "http://msiendpoint/" {
+	if endpoint != msiEndpoint {
 		t.Fatal("Didn't get correct endpoint")
 	}
 }

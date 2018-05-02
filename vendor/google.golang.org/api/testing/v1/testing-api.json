@@ -281,7 +281,7 @@
       }
     }
   },
-  "revision": "20180316",
+  "revision": "20180406",
   "rootUrl": "https://testing.googleapis.com/",
   "schemas": {
     "Account": {
@@ -794,7 +794,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -1544,6 +1544,6 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Testing API",
+  "title": "Cloud Testing API",
   "version": "v1"
 }

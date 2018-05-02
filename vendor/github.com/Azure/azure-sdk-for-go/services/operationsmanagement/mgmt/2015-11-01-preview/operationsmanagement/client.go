@@ -29,6 +29,7 @@ const (
 	DefaultBaseURI = "https://management.azure.com"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // BaseClient is the base client for Operationsmanagement.
 type BaseClient struct {
 	autorest.Client
@@ -39,11 +40,13 @@ type BaseClient struct {
 	ResourceName   string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // New creates an instance of the BaseClient client.
 func New(subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
 	return NewWithBaseURI(DefaultBaseURI, subscriptionID, providerName, resourceType, resourceName)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // NewWithBaseURI creates an instance of the BaseClient client.
 func NewWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) BaseClient {
 	return BaseClient{

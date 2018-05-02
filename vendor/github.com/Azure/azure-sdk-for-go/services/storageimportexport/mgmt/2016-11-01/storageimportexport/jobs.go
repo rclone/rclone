@@ -41,10 +41,12 @@ func NewJobsClientWithBaseURI(baseURI string, subscriptionID string, acceptLangu
 }
 
 // Create creates a new job or updates an existing job in the specified subscription.
-//
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
-// the resource group within the user subscription. body is the parameters used for creating the job clientTenantID
-// is the tenant ID of the client making the request.
+// Parameters:
+// jobName - the name of the import/export job.
+// resourceGroupName - the resource group name uniquely identifies the resource group within the user
+// subscription.
+// body - the parameters used for creating the job
+// clientTenantID - the tenant ID of the client making the request.
 func (client JobsClient) Create(ctx context.Context, jobName string, resourceGroupName string, body PutJobParameters, clientTenantID string) (result JobResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -121,7 +123,7 @@ func (client JobsClient) CreatePreparer(ctx context.Context, jobName string, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ImportExport/jobs/{jobName}", pathParameters),
@@ -159,9 +161,10 @@ func (client JobsClient) CreateResponder(resp *http.Response) (result JobRespons
 }
 
 // Delete deletes an existing job. Only jobs in the Creating or Completed states can be deleted.
-//
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
-// the resource group within the user subscription.
+// Parameters:
+// jobName - the name of the import/export job.
+// resourceGroupName - the resource group name uniquely identifies the resource group within the user
+// subscription.
 func (client JobsClient) Delete(ctx context.Context, jobName string, resourceGroupName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, jobName, resourceGroupName)
 	if err != nil {
@@ -229,9 +232,10 @@ func (client JobsClient) DeleteResponder(resp *http.Response) (result autorest.R
 }
 
 // Get gets information about an existing job.
-//
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
-// the resource group within the user subscription.
+// Parameters:
+// jobName - the name of the import/export job.
+// resourceGroupName - the resource group name uniquely identifies the resource group within the user
+// subscription.
 func (client JobsClient) Get(ctx context.Context, jobName string, resourceGroupName string) (result JobResponse, err error) {
 	req, err := client.GetPreparer(ctx, jobName, resourceGroupName)
 	if err != nil {
@@ -300,10 +304,11 @@ func (client JobsClient) GetResponder(resp *http.Response) (result JobResponse, 
 }
 
 // ListByResourceGroup returns all active and completed jobs in a resource group.
-//
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user
-// subscription. top is an integer value that specifies how many jobs at most should be returned. The value cannot
-// exceed 100. filter is can be used to restrict the results to certain conditions.
+// Parameters:
+// resourceGroupName - the resource group name uniquely identifies the resource group within the user
+// subscription.
+// top - an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100.
+// filter - can be used to restrict the results to certain conditions.
 func (client JobsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result ListJobsResponsePage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -405,9 +410,9 @@ func (client JobsClient) ListByResourceGroupComplete(ctx context.Context, resour
 }
 
 // ListBySubscription returns all active and completed jobs in a subscription.
-//
-// top is an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100.
-// filter is can be used to restrict the results to certain conditions.
+// Parameters:
+// top - an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100.
+// filter - can be used to restrict the results to certain conditions.
 func (client JobsClient) ListBySubscription(ctx context.Context, top *int32, filter string) (result ListJobsResponsePage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, top, filter)
@@ -510,9 +515,11 @@ func (client JobsClient) ListBySubscriptionComplete(ctx context.Context, top *in
 // Update updates specific properties of a job. You can call this operation to notify the Import/Export service that
 // the hard drives comprising the import or export job have been shipped to the Microsoft data center. It can also be
 // used to cancel an existing job.
-//
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
-// the resource group within the user subscription. body is the parameters to update in the job
+// Parameters:
+// jobName - the name of the import/export job.
+// resourceGroupName - the resource group name uniquely identifies the resource group within the user
+// subscription.
+// body - the parameters to update in the job
 func (client JobsClient) Update(ctx context.Context, jobName string, resourceGroupName string, body UpdateJobParameters) (result JobResponse, err error) {
 	req, err := client.UpdatePreparer(ctx, jobName, resourceGroupName, body)
 	if err != nil {
@@ -549,7 +556,7 @@ func (client JobsClient) UpdatePreparer(ctx context.Context, jobName string, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ImportExport/jobs/{jobName}", pathParameters),

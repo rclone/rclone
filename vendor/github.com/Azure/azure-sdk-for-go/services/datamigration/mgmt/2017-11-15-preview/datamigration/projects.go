@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ProjectsClient is the data Migration Client
 type ProjectsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewProjectsClient creates an instance of the ProjectsClient client.
 func NewProjectsClient(subscriptionID string) ProjectsClient {
 	return NewProjectsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // NewProjectsClientWithBaseURI creates an instance of the ProjectsClient client.
 func NewProjectsClientWithBaseURI(baseURI string, subscriptionID string) ProjectsClient {
 	return ProjectsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdate the project resource is a nested resource representing a stored migration project. The PUT method
 // creates a new project or updates an existing one.
 //
@@ -66,6 +70,7 @@ func (client ProjectsClient) CreateOrUpdate(ctx context.Context, parameters Proj
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ProjectsClient) CreateOrUpdatePreparer(ctx context.Context, parameters Project, groupName string, serviceName string, projectName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,7 +86,7 @@ func (client ProjectsClient) CreateOrUpdatePreparer(ctx context.Context, paramet
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.DataMigration/services/{serviceName}/projects/{projectName}", pathParameters),
@@ -90,6 +95,7 @@ func (client ProjectsClient) CreateOrUpdatePreparer(ctx context.Context, paramet
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client ProjectsClient) CreateOrUpdateSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) CreateOrUpdateResponder(resp *http.Response) (result Project, err error) {
@@ -110,6 +117,7 @@ func (client ProjectsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Delete the project resource is a nested resource representing a stored migration project. The DELETE method deletes
 // a project.
 //
@@ -137,6 +145,7 @@ func (client ProjectsClient) Delete(ctx context.Context, groupName string, servi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeletePreparer prepares the Delete request.
 func (client ProjectsClient) DeletePreparer(ctx context.Context, groupName string, serviceName string, projectName string, deleteRunningTasks *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -162,6 +171,7 @@ func (client ProjectsClient) DeletePreparer(ctx context.Context, groupName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -169,6 +179,7 @@ func (client ProjectsClient) DeleteSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -181,6 +192,7 @@ func (client ProjectsClient) DeleteResponder(resp *http.Response) (result autore
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Get the project resource is a nested resource representing a stored migration project. The GET method retrieves
 // information about a project.
 //
@@ -207,6 +219,7 @@ func (client ProjectsClient) Get(ctx context.Context, groupName string, serviceN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetPreparer prepares the Get request.
 func (client ProjectsClient) GetPreparer(ctx context.Context, groupName string, serviceName string, projectName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -229,6 +242,7 @@ func (client ProjectsClient) GetPreparer(ctx context.Context, groupName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -236,6 +250,7 @@ func (client ProjectsClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) GetResponder(resp *http.Response) (result Project, err error) {
@@ -249,6 +264,7 @@ func (client ProjectsClient) GetResponder(resp *http.Response) (result Project, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // List the project resource is a nested resource representing a stored migration project. This method returns a list
 // of projects owned by a service resource.
 //
@@ -276,6 +292,7 @@ func (client ProjectsClient) List(ctx context.Context, groupName string, service
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListPreparer prepares the List request.
 func (client ProjectsClient) ListPreparer(ctx context.Context, groupName string, serviceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -297,6 +314,7 @@ func (client ProjectsClient) ListPreparer(ctx context.Context, groupName string,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -304,6 +322,7 @@ func (client ProjectsClient) ListSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) ListResponder(resp *http.Response) (result ProjectList, err error) {
@@ -338,12 +357,14 @@ func (client ProjectsClient) listNextResults(lastResults ProjectList) (result Pr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ProjectsClient) ListComplete(ctx context.Context, groupName string, serviceName string) (result ProjectListIterator, err error) {
 	result.page, err = client.List(ctx, groupName, serviceName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // Update the project resource is a nested resource representing a stored migration project. The PATCH method updates
 // an existing project.
 //
@@ -371,6 +392,7 @@ func (client ProjectsClient) Update(ctx context.Context, parameters Project, gro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdatePreparer prepares the Update request.
 func (client ProjectsClient) UpdatePreparer(ctx context.Context, parameters Project, groupName string, serviceName string, projectName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -386,7 +408,7 @@ func (client ProjectsClient) UpdatePreparer(ctx context.Context, parameters Proj
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.DataMigration/services/{serviceName}/projects/{projectName}", pathParameters),
@@ -395,6 +417,7 @@ func (client ProjectsClient) UpdatePreparer(ctx context.Context, parameters Proj
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProjectsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -402,6 +425,7 @@ func (client ProjectsClient) UpdateSender(req *http.Request) (*http.Response, er
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datamigration/mgmt/2017-11-15-preview/datamigration instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client ProjectsClient) UpdateResponder(resp *http.Response) (result Project, err error) {

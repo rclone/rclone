@@ -200,6 +200,20 @@
         {"shape":"InvalidInputException"},
         {"shape":"ResourceNotFoundException"}
       ]
+    },
+    "UpdateWebhook":{
+      "name":"UpdateWebhook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateWebhookInput"},
+      "output":{"shape":"UpdateWebhookOutput"},
+      "errors":[
+        {"shape":"InvalidInputException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"OAuthProviderException"}
+      ]
     }
   },
   "shapes":{
@@ -405,7 +419,8 @@
       "type":"structure",
       "required":["projectName"],
       "members":{
-        "projectName":{"shape":"ProjectName"}
+        "projectName":{"shape":"ProjectName"},
+        "branchFilter":{"shape":"String"}
       }
     },
     "CreateWebhookOutput":{
@@ -889,6 +904,21 @@
         "project":{"shape":"Project"}
       }
     },
+    "UpdateWebhookInput":{
+      "type":"structure",
+      "required":["projectName"],
+      "members":{
+        "projectName":{"shape":"ProjectName"},
+        "branchFilter":{"shape":"String"},
+        "rotateSecret":{"shape":"Boolean"}
+      }
+    },
+    "UpdateWebhookOutput":{
+      "type":"structure",
+      "members":{
+        "webhook":{"shape":"Webhook"}
+      }
+    },
     "ValueInput":{
       "type":"string",
       "max":255,
@@ -908,7 +938,9 @@
       "members":{
         "url":{"shape":"NonEmptyString"},
         "payloadUrl":{"shape":"NonEmptyString"},
-        "secret":{"shape":"NonEmptyString"}
+        "secret":{"shape":"NonEmptyString"},
+        "branchFilter":{"shape":"String"},
+        "lastModifiedSecret":{"shape":"Timestamp"}
       }
     },
     "WrapperBoolean":{"type":"boolean"},

@@ -22,38 +22,10 @@ package programmatic
 import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/v2.0/luis/programmatic"
 
 type AppsClient = original.AppsClient
-
-func NewAppsClient(azureRegion AzureRegions) AppsClient {
-	return original.NewAppsClient(azureRegion)
-}
-
 type BaseClient = original.BaseClient
-
-func New(azureRegion AzureRegions) BaseClient {
-	return original.New(azureRegion)
-}
-func NewWithoutDefaults(azureRegion AzureRegions) BaseClient {
-	return original.NewWithoutDefaults(azureRegion)
-}
-
 type ExamplesClient = original.ExamplesClient
-
-func NewExamplesClient(azureRegion AzureRegions) ExamplesClient {
-	return original.NewExamplesClient(azureRegion)
-}
-
 type FeaturesClient = original.FeaturesClient
-
-func NewFeaturesClient(azureRegion AzureRegions) FeaturesClient {
-	return original.NewFeaturesClient(azureRegion)
-}
-
 type ModelClient = original.ModelClient
-
-func NewModelClient(azureRegion AzureRegions) ModelClient {
-	return original.NewModelClient(azureRegion)
-}
-
 type AzureRegions = original.AzureRegions
 
 const (
@@ -259,13 +231,57 @@ type VersionInfo = original.VersionInfo
 type WordListBaseUpdateObject = original.WordListBaseUpdateObject
 type WordListObject = original.WordListObject
 type PermissionsClient = original.PermissionsClient
+type TrainClient = original.TrainClient
+type VersionsClient = original.VersionsClient
 
+func NewAppsClient(azureRegion AzureRegions) AppsClient {
+	return original.NewAppsClient(azureRegion)
+}
+func New(azureRegion AzureRegions) BaseClient {
+	return original.New(azureRegion)
+}
+func NewWithoutDefaults(azureRegion AzureRegions) BaseClient {
+	return original.NewWithoutDefaults(azureRegion)
+}
+func NewExamplesClient(azureRegion AzureRegions) ExamplesClient {
+	return original.NewExamplesClient(azureRegion)
+}
+func NewFeaturesClient(azureRegion AzureRegions) FeaturesClient {
+	return original.NewFeaturesClient(azureRegion)
+}
+func NewModelClient(azureRegion AzureRegions) ModelClient {
+	return original.NewModelClient(azureRegion)
+}
+func PossibleAzureRegionsValues() []AzureRegions {
+	return original.PossibleAzureRegionsValues()
+}
+func PossibleOperationStatusTypeValues() []OperationStatusType {
+	return original.PossibleOperationStatusTypeValues()
+}
+func PossibleReadableTypeValues() []ReadableType {
+	return original.PossibleReadableTypeValues()
+}
+func PossibleReadableType1Values() []ReadableType1 {
+	return original.PossibleReadableType1Values()
+}
+func PossibleReadableType2Values() []ReadableType2 {
+	return original.PossibleReadableType2Values()
+}
+func PossibleReadableType3Values() []ReadableType3 {
+	return original.PossibleReadableType3Values()
+}
+func PossibleStatusValues() []Status {
+	return original.PossibleStatusValues()
+}
+func PossibleStatus1Values() []Status1 {
+	return original.PossibleStatus1Values()
+}
+func PossibleTrainingStatusValues() []TrainingStatus {
+	return original.PossibleTrainingStatusValues()
+}
 func NewPermissionsClient(azureRegion AzureRegions) PermissionsClient {
 	return original.NewPermissionsClient(azureRegion)
 }
-
-type TrainClient = original.TrainClient
-
 func NewTrainClient(azureRegion AzureRegions) TrainClient {
 	return original.NewTrainClient(azureRegion)
 }
@@ -275,9 +291,6 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type VersionsClient = original.VersionsClient
-
 func NewVersionsClient(azureRegion AzureRegions) VersionsClient {
 	return original.NewVersionsClient(azureRegion)
 }

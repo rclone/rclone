@@ -1,4 +1,4 @@
-// Package pubsub provides access to the Google Cloud Pub/Sub API.
+// Package pubsub provides access to the Cloud Pub/Sub API.
 //
 // See https://cloud.google.com/pubsub/docs
 //

@@ -100,7 +100,7 @@ func (c *Copier) Run(ctx context.Context) (*Job, error) {
 
 func (c *Copier) newJob() *bq.Job {
 	return &bq.Job{
-		JobReference:  c.JobIDConfig.createJobRef(c.c.projectID),
+		JobReference:  c.JobIDConfig.createJobRef(c.c),
 		Configuration: c.CopyConfig.toBQ(),
 	}
 }

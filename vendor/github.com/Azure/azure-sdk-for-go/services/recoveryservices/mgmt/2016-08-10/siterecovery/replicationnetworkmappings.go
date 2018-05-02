@@ -41,9 +41,11 @@ func NewReplicationNetworkMappingsClientWithBaseURI(baseURI string, subscription
 }
 
 // Create the operation to create an ASR network mapping.
-//
-// fabricName is primary fabric name. networkName is primary network name. networkMappingName is network mapping
-// name. input is create network mapping input.
+// Parameters:
+// fabricName - primary fabric name.
+// networkName - primary network name.
+// networkMappingName - network mapping name.
+// input - create network mapping input.
 func (client ReplicationNetworkMappingsClient) Create(ctx context.Context, fabricName string, networkName string, networkMappingName string, input CreateNetworkMappingInput) (result ReplicationNetworkMappingsCreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, fabricName, networkName, networkMappingName, input)
 	if err != nil {
@@ -77,7 +79,7 @@ func (client ReplicationNetworkMappingsClient) CreatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}/replicationNetworks/{networkName}/replicationNetworkMappings/{networkMappingName}", pathParameters),
@@ -115,9 +117,10 @@ func (client ReplicationNetworkMappingsClient) CreateResponder(resp *http.Respon
 }
 
 // Delete the operation to delete a network mapping.
-//
-// fabricName is primary fabric name. networkName is primary network name. networkMappingName is ARM Resource Name
-// for network mapping.
+// Parameters:
+// fabricName - primary fabric name.
+// networkName - primary network name.
+// networkMappingName - ARM Resource Name for network mapping.
 func (client ReplicationNetworkMappingsClient) Delete(ctx context.Context, fabricName string, networkName string, networkMappingName string) (result ReplicationNetworkMappingsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, fabricName, networkName, networkMappingName)
 	if err != nil {
@@ -186,9 +189,10 @@ func (client ReplicationNetworkMappingsClient) DeleteResponder(resp *http.Respon
 }
 
 // Get gets the details of an ASR network mapping
-//
-// fabricName is primary fabric name. networkName is primary network name. networkMappingName is network mapping
-// name.
+// Parameters:
+// fabricName - primary fabric name.
+// networkName - primary network name.
+// networkMappingName - network mapping name.
 func (client ReplicationNetworkMappingsClient) Get(ctx context.Context, fabricName string, networkName string, networkMappingName string) (result NetworkMapping, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, networkName, networkMappingName)
 	if err != nil {
@@ -348,8 +352,9 @@ func (client ReplicationNetworkMappingsClient) ListComplete(ctx context.Context)
 }
 
 // ListByReplicationNetworks lists all ASR network mappings for the specified network.
-//
-// fabricName is primary fabric name. networkName is primary network name.
+// Parameters:
+// fabricName - primary fabric name.
+// networkName - primary network name.
 func (client ReplicationNetworkMappingsClient) ListByReplicationNetworks(ctx context.Context, fabricName string, networkName string) (result NetworkMappingCollectionPage, err error) {
 	result.fn = client.listByReplicationNetworksNextResults
 	req, err := client.ListByReplicationNetworksPreparer(ctx, fabricName, networkName)
@@ -444,9 +449,11 @@ func (client ReplicationNetworkMappingsClient) ListByReplicationNetworksComplete
 }
 
 // Update the operation to update an ASR network mapping.
-//
-// fabricName is primary fabric name. networkName is primary network name. networkMappingName is network mapping
-// name. input is update network mapping input.
+// Parameters:
+// fabricName - primary fabric name.
+// networkName - primary network name.
+// networkMappingName - network mapping name.
+// input - update network mapping input.
 func (client ReplicationNetworkMappingsClient) Update(ctx context.Context, fabricName string, networkName string, networkMappingName string, input UpdateNetworkMappingInput) (result ReplicationNetworkMappingsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, fabricName, networkName, networkMappingName, input)
 	if err != nil {
@@ -480,7 +487,7 @@ func (client ReplicationNetworkMappingsClient) UpdatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}/replicationNetworks/{networkName}/replicationNetworkMappings/{networkMappingName}", pathParameters),

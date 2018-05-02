@@ -33,16 +33,14 @@
 
 package testdata
 
-/*
-
 import (
 	"bytes"
 	"regexp"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	base "extension_base.pb"
-	user "extension_user.pb"
+	base "github.com/golang/protobuf/protoc-gen-go/testdata/extension_base"
+	user "github.com/golang/protobuf/protoc-gen-go/testdata/extension_user"
 )
 
 func TestSingleFieldExtension(t *testing.T) {
@@ -206,5 +204,3 @@ func main() {
 		[]testing.InternalBenchmark{},
 		[]testing.InternalExample{})
 }
-
-*/

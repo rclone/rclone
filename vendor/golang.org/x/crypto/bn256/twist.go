@@ -219,8 +219,17 @@ func (c *twistPoint) Mul(a *twistPoint, scalar *big.Int, pool *bnPool) *twistPoi
 	return c
 }
 
+// MakeAffine converts c to affine form and returns c. If c is ∞, then it sets
+// c to 0 : 1 : 0.
 func (c *twistPoint) MakeAffine(pool *bnPool) *twistPoint {
 	if c.z.IsOne() {
+		return c
+	}
+	if c.IsInfinity() {
+		c.x.SetZero()
+		c.y.SetOne()
+		c.z.SetZero()
+		c.t.SetZero()
 		return c
 	}
 

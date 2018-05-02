@@ -21,6 +21,7 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ArmTemplateParameter parameter to pass to ARM template
 type ArmTemplateParameter struct {
 	// Name - name of the parameter.
@@ -29,12 +30,14 @@ type ArmTemplateParameter struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CodeMessageError the error body contract.
 type CodeMessageError struct {
 	// Error - The error details for a failed request.
 	Error *CodeMessageErrorError `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CodeMessageErrorError the error details for a failed request.
 type CodeMessageErrorError struct {
 	// Code - The error type.
@@ -43,6 +46,7 @@ type CodeMessageErrorError struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementAssociation the container for solution.
 type ManagementAssociation struct {
 	autorest.Response `json:"-"`
@@ -58,6 +62,7 @@ type ManagementAssociation struct {
 	Properties *ManagementAssociationProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementAssociationProperties managementAssociation properties supported by the OperationsManagement resource
 // provider.
 type ManagementAssociationProperties struct {
@@ -65,6 +70,7 @@ type ManagementAssociationProperties struct {
 	ApplicationID *string `json:"applicationId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementAssociationPropertiesList the list of ManagementAssociation response
 type ManagementAssociationPropertiesList struct {
 	autorest.Response `json:"-"`
@@ -72,6 +78,7 @@ type ManagementAssociationPropertiesList struct {
 	Value *[]ManagementAssociation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementConfiguration the container for solution.
 type ManagementConfiguration struct {
 	autorest.Response `json:"-"`
@@ -87,6 +94,7 @@ type ManagementConfiguration struct {
 	Properties *ManagementConfigurationProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementConfigurationProperties managementConfiguration properties supported by the OperationsManagement
 // resource provider.
 type ManagementConfigurationProperties struct {
@@ -102,6 +110,7 @@ type ManagementConfigurationProperties struct {
 	Template interface{} `json:"template,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementConfigurationPropertiesList the list of ManagementConfiguration response
 type ManagementConfigurationPropertiesList struct {
 	autorest.Response `json:"-"`
@@ -109,6 +118,7 @@ type ManagementConfigurationPropertiesList struct {
 	Value *[]ManagementConfiguration `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // Operation supported operation of OperationsManagement resource provider.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}
@@ -117,6 +127,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // OperationDisplay display metadata associated with the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft OperationsManagement.
@@ -127,6 +138,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // OperationListResult result of the request to list solution operations.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
@@ -134,6 +146,7 @@ type OperationListResult struct {
 	Value *[]Operation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // Solution the container for solution.
 type Solution struct {
 	autorest.Response `json:"-"`
@@ -151,6 +164,7 @@ type Solution struct {
 	Properties *SolutionProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // SolutionPlan plan for solution object supported by the OperationsManagement resource provider.
 type SolutionPlan struct {
 	// Name - name of the solution to be created. For Microsoft published solution it should be in the format of solutionType(workspaceName). SolutionType part is case sensitive. For third party solution, it can be anything.
@@ -163,6 +177,7 @@ type SolutionPlan struct {
 	Product *string `json:"product,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // SolutionProperties solution properties supported by the OperationsManagement resource provider.
 type SolutionProperties struct {
 	// WorkspaceResourceID - The azure resourceId for the workspace where the solution will be deployed/enabled.
@@ -175,6 +190,7 @@ type SolutionProperties struct {
 	ReferencedResources *[]string `json:"referencedResources,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // SolutionPropertiesList the list of solution response
 type SolutionPropertiesList struct {
 	autorest.Response `json:"-"`

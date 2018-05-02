@@ -26,16 +26,19 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // PipelineClient is the creates an Azure Data Lake Analytics job client.
 type PipelineClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // NewPipelineClient creates an instance of the PipelineClient client.
 func NewPipelineClient() PipelineClient {
 	return PipelineClient{New()}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // Get gets the Pipeline information for the specified pipeline ID.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. pipelineIdentity is pipeline
@@ -64,6 +67,7 @@ func (client PipelineClient) Get(ctx context.Context, accountName string, pipeli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetPreparer prepares the Get request.
 func (client PipelineClient) GetPreparer(ctx context.Context, accountName string, pipelineIdentity uuid.UUID, startDateTime *date.Time, endDateTime *date.Time) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -94,6 +98,7 @@ func (client PipelineClient) GetPreparer(ctx context.Context, accountName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PipelineClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -101,6 +106,7 @@ func (client PipelineClient) GetSender(req *http.Request) (*http.Response, error
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client PipelineClient) GetResponder(resp *http.Response) (result PipelineInformation, err error) {
@@ -114,6 +120,7 @@ func (client PipelineClient) GetResponder(resp *http.Response) (result PipelineI
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // List lists all pipelines.
 //
 // accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start
@@ -143,6 +150,7 @@ func (client PipelineClient) List(ctx context.Context, accountName string, start
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListPreparer prepares the List request.
 func (client PipelineClient) ListPreparer(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -169,6 +177,7 @@ func (client PipelineClient) ListPreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client PipelineClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -176,6 +185,7 @@ func (client PipelineClient) ListSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client PipelineClient) ListResponder(resp *http.Response) (result PipelineInformationListResult, err error) {
@@ -210,6 +220,7 @@ func (client PipelineClient) listNextResults(lastResults PipelineInformationList
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2017-09-01-preview/job instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PipelineClient) ListComplete(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (result PipelineInformationListResultIterator, err error) {
 	result.page, err = client.List(ctx, accountName, startDateTime, endDateTime)

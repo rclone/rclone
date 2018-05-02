@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AgentVMSizeTypes enumerates the values for agent vm size types.
 type AgentVMSizeTypes string
 
@@ -126,6 +127,13 @@ const (
 	StandardGS5 AgentVMSizeTypes = "Standard_GS5"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleAgentVMSizeTypesValues returns an array of possible values for the AgentVMSizeTypes const type.
+func PossibleAgentVMSizeTypesValues() []AgentVMSizeTypes {
+	return []AgentVMSizeTypes{StandardA0, StandardA1, StandardA10, StandardA11, StandardA2, StandardA3, StandardA4, StandardA5, StandardA6, StandardA7, StandardA8, StandardA9, StandardD1, StandardD11, StandardD11V2, StandardD12, StandardD12V2, StandardD13, StandardD13V2, StandardD14, StandardD14V2, StandardD1V2, StandardD2, StandardD2V2, StandardD3, StandardD3V2, StandardD4, StandardD4V2, StandardD5V2, StandardDS1, StandardDS11, StandardDS12, StandardDS13, StandardDS14, StandardDS2, StandardDS3, StandardDS4, StandardG1, StandardG2, StandardG3, StandardG4, StandardG5, StandardGS1, StandardGS2, StandardGS3, StandardGS4, StandardGS5}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ClusterType enumerates the values for cluster type.
 type ClusterType string
 
@@ -136,6 +144,13 @@ const (
 	Local ClusterType = "Local"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleClusterTypeValues returns an array of possible values for the ClusterType const type.
+func PossibleClusterTypeValues() []ClusterType {
+	return []ClusterType{ACS, Local}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
 
@@ -156,6 +171,13 @@ const (
 	Updating OperationStatus = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{Canceled, Creating, Deleting, Failed, Succeeded, Unknown, Updating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OrchestratorType enumerates the values for orchestrator type.
 type OrchestratorType string
 
@@ -166,6 +188,13 @@ const (
 	None OrchestratorType = "None"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleOrchestratorTypeValues returns an array of possible values for the OrchestratorType const type.
+func PossibleOrchestratorTypeValues() []OrchestratorType {
+	return []OrchestratorType{Kubernetes, None}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Status enumerates the values for status.
 type Status string
 
@@ -176,6 +205,13 @@ const (
 	Enabled Status = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleStatusValues returns an array of possible values for the Status const type.
+func PossibleStatusValues() []Status {
+	return []Status{Disabled, Enabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // SystemServiceType enumerates the values for system service type.
 type SystemServiceType string
 
@@ -188,6 +224,13 @@ const (
 	SystemServiceTypeScoringFrontEnd SystemServiceType = "ScoringFrontEnd"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleSystemServiceTypeValues returns an array of possible values for the SystemServiceType const type.
+func PossibleSystemServiceTypeValues() []SystemServiceType {
+	return []SystemServiceType{SystemServiceTypeBatchFrontEnd, SystemServiceTypeNone, SystemServiceTypeScoringFrontEnd}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdatesAvailable enumerates the values for updates available.
 type UpdatesAvailable string
 
@@ -198,6 +241,13 @@ const (
 	Yes UpdatesAvailable = "Yes"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
+// PossibleUpdatesAvailableValues returns an array of possible values for the UpdatesAvailable const type.
+func PossibleUpdatesAvailableValues() []UpdatesAvailable {
+	return []UpdatesAvailable{No, Yes}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AcsClusterProperties information about the container service backing the cluster
 type AcsClusterProperties struct {
 	// ClusterFqdn - The FQDN of the cluster.
@@ -216,6 +266,7 @@ type AcsClusterProperties struct {
 	AgentVMSize AgentVMSizeTypes `json:"agentVmSize,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AppInsightsCredentials appInsights credentials.
 type AppInsightsCredentials struct {
 	// AppID - The AppInsights application ID.
@@ -224,12 +275,14 @@ type AppInsightsCredentials struct {
 	InstrumentationKey *string `json:"instrumentationKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AppInsightsProperties properties of App Insights.
 type AppInsightsProperties struct {
 	// ResourceID - ARM resource ID of the App Insights.
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AutoScaleConfiguration autoScale configuration properties.
 type AutoScaleConfiguration struct {
 	// Status - If auto-scale is enabled for all services. Each service can turn it off individually. Possible values include: 'Enabled', 'Disabled'
@@ -244,6 +297,7 @@ type AutoScaleConfiguration struct {
 	RefreshPeriodInSeconds *int32 `json:"refreshPeriodInSeconds,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // AvailableOperations available operation list.
 type AvailableOperations struct {
 	autorest.Response `json:"-"`
@@ -251,6 +305,7 @@ type AvailableOperations struct {
 	Value *[]ResourceOperation `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CheckSystemServicesUpdatesAvailableResponse information about updates available for system services in a
 // cluster.
 type CheckSystemServicesUpdatesAvailableResponse struct {
@@ -259,6 +314,7 @@ type CheckSystemServicesUpdatesAvailableResponse struct {
 	UpdatesAvailable UpdatesAvailable `json:"updatesAvailable,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ContainerRegistryCredentials information about the Azure Container Registry which contains the images deployed
 // to the cluster.
 type ContainerRegistryCredentials struct {
@@ -272,12 +328,14 @@ type ContainerRegistryCredentials struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ContainerRegistryProperties properties of Azure Container Registry.
 type ContainerRegistryProperties struct {
 	// ResourceID - ARM resource ID of the Azure Container Registry used to store Docker images for web services in the cluster. If not provided one will be created. This cannot be changed once the cluster is created.
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ContainerServiceCredentials information about the Azure Container Registry which contains the images deployed to
 // the cluster.
 type ContainerServiceCredentials struct {
@@ -289,6 +347,7 @@ type ContainerServiceCredentials struct {
 	ImagePullSecretName *string `json:"imagePullSecretName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ErrorDetail error detail information.
 type ErrorDetail struct {
 	// Code - Error code.
@@ -297,6 +356,7 @@ type ErrorDetail struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ErrorResponse error response information.
 type ErrorResponse struct {
 	// Code - Error code.
@@ -307,12 +367,14 @@ type ErrorResponse struct {
 	Details *[]ErrorDetail `json:"details,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ErrorResponseWrapper wrapper for error response to follow ARM guidelines.
 type ErrorResponseWrapper struct {
 	// Error - The error response.
 	Error *ErrorResponse `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // GlobalServiceConfiguration global configuration for services in the cluster.
 type GlobalServiceConfiguration struct {
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
@@ -327,6 +389,7 @@ type GlobalServiceConfiguration struct {
 	AutoScale *AutoScaleConfiguration `json:"autoScale,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // MarshalJSON is the custom marshaler for GlobalServiceConfiguration.
 func (gsc GlobalServiceConfiguration) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -348,12 +411,14 @@ func (gsc GlobalServiceConfiguration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // KubernetesClusterProperties kubernetes cluster specific properties
 type KubernetesClusterProperties struct {
 	// ServicePrincipal - The Azure Service Principal used by Kubernetes
 	ServicePrincipal *ServicePrincipalProperties `json:"servicePrincipal,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationCluster instance of an Azure ML Operationalization Cluster resource.
 type OperationalizationCluster struct {
 	autorest.Response `json:"-"`
@@ -371,6 +436,7 @@ type OperationalizationCluster struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // MarshalJSON is the custom marshaler for OperationalizationCluster.
 func (oc OperationalizationCluster) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -395,6 +461,7 @@ func (oc OperationalizationCluster) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UnmarshalJSON is the custom unmarshaler for OperationalizationCluster struct.
 func (oc *OperationalizationCluster) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -464,6 +531,7 @@ func (oc *OperationalizationCluster) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClusterCredentials credentials to resources in the cluster.
 type OperationalizationClusterCredentials struct {
 	autorest.Response `json:"-"`
@@ -481,6 +549,7 @@ type OperationalizationClusterCredentials struct {
 	SslConfiguration *SslConfiguration `json:"sslConfiguration,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClusterProperties properties of an operationalization cluster
 type OperationalizationClusterProperties struct {
 	// Description - The description of the cluster.
@@ -507,6 +576,7 @@ type OperationalizationClusterProperties struct {
 	GlobalServiceConfiguration *GlobalServiceConfiguration `json:"globalServiceConfiguration,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClustersCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type OperationalizationClustersCreateOrUpdateFuture struct {
@@ -514,6 +584,7 @@ type OperationalizationClustersCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future OperationalizationClustersCreateOrUpdateFuture) Result(client OperationalizationClustersClient) (oc OperationalizationCluster, err error) {
@@ -556,6 +627,7 @@ func (future OperationalizationClustersCreateOrUpdateFuture) Result(client Opera
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClustersDeleteFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type OperationalizationClustersDeleteFuture struct {
@@ -563,6 +635,7 @@ type OperationalizationClustersDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future OperationalizationClustersDeleteFuture) Result(client OperationalizationClustersClient) (ar autorest.Response, err error) {
@@ -605,6 +678,7 @@ func (future OperationalizationClustersDeleteFuture) Result(client Operationaliz
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClustersUpdateSystemServicesFuture an abstraction for monitoring and retrieving the results of
 // a long-running operation.
 type OperationalizationClustersUpdateSystemServicesFuture struct {
@@ -612,6 +686,7 @@ type OperationalizationClustersUpdateSystemServicesFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future OperationalizationClustersUpdateSystemServicesFuture) Result(client OperationalizationClustersClient) (ussr UpdateSystemServicesResponse, err error) {
@@ -654,12 +729,14 @@ func (future OperationalizationClustersUpdateSystemServicesFuture) Result(client
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClusterUpdateParameters parameters for PATCH operation on an operationalization cluster
 type OperationalizationClusterUpdateParameters struct {
 	// Tags - Gets or sets a list of key value pairs that describe the resource. These tags can be used in viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key no greater in length than 128 characters and a value no greater in length than 256 characters.
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // MarshalJSON is the custom marshaler for OperationalizationClusterUpdateParameters.
 func (ocup OperationalizationClusterUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -669,6 +746,7 @@ func (ocup OperationalizationClusterUpdateParameters) MarshalJSON() ([]byte, err
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // PaginatedOperationalizationClustersList paginated list of operationalization clusters.
 type PaginatedOperationalizationClustersList struct {
 	autorest.Response `json:"-"`
@@ -678,6 +756,7 @@ type PaginatedOperationalizationClustersList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // PaginatedOperationalizationClustersListIterator provides access to a complete listing of
 // OperationalizationCluster values.
 type PaginatedOperationalizationClustersListIterator struct {
@@ -685,6 +764,7 @@ type PaginatedOperationalizationClustersListIterator struct {
 	page PaginatedOperationalizationClustersListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *PaginatedOperationalizationClustersListIterator) Next() error {
@@ -701,16 +781,19 @@ func (iter *PaginatedOperationalizationClustersListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter PaginatedOperationalizationClustersListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Response returns the raw server response from the last page request.
 func (iter PaginatedOperationalizationClustersListIterator) Response() PaginatedOperationalizationClustersList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter PaginatedOperationalizationClustersListIterator) Value() OperationalizationCluster {
@@ -720,6 +803,7 @@ func (iter PaginatedOperationalizationClustersListIterator) Value() Operationali
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (pocl PaginatedOperationalizationClustersList) IsEmpty() bool {
 	return pocl.Value == nil || len(*pocl.Value) == 0
@@ -737,12 +821,14 @@ func (pocl PaginatedOperationalizationClustersList) paginatedOperationalizationC
 		autorest.WithBaseURL(to.String(pocl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // PaginatedOperationalizationClustersListPage contains a page of OperationalizationCluster values.
 type PaginatedOperationalizationClustersListPage struct {
 	fn   func(PaginatedOperationalizationClustersList) (PaginatedOperationalizationClustersList, error)
 	pocl PaginatedOperationalizationClustersList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *PaginatedOperationalizationClustersListPage) Next() error {
@@ -754,16 +840,19 @@ func (page *PaginatedOperationalizationClustersListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page PaginatedOperationalizationClustersListPage) NotDone() bool {
 	return !page.pocl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Response returns the raw server response from the last page request.
 func (page PaginatedOperationalizationClustersListPage) Response() PaginatedOperationalizationClustersList {
 	return page.pocl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page PaginatedOperationalizationClustersListPage) Values() []OperationalizationCluster {
 	if page.pocl.IsEmpty() {
@@ -772,6 +861,7 @@ func (page PaginatedOperationalizationClustersListPage) Values() []Operationaliz
 	return *page.pocl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Resource azure resource
 type Resource struct {
 	// ID - Specifies the resource ID.
@@ -786,6 +876,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -807,6 +898,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ResourceOperation resource operation.
 type ResourceOperation struct {
 	// Name - Name of this operation.
@@ -817,6 +909,7 @@ type ResourceOperation struct {
 	Origin *string `json:"origin,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ResourceOperationDisplay display of the operation.
 type ResourceOperationDisplay struct {
 	// Provider - The resource provider name.
@@ -829,6 +922,7 @@ type ResourceOperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ServiceAuthConfiguration global service auth configuration properties. These are the data-plane authorization
 // keys and are used if a service doesn't define it's own.
 type ServiceAuthConfiguration struct {
@@ -838,6 +932,7 @@ type ServiceAuthConfiguration struct {
 	SecondaryAuthKeyHash *string `json:"secondaryAuthKeyHash,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ServicePrincipalProperties the Azure service principal used by Kubernetes for configuring load balancers
 type ServicePrincipalProperties struct {
 	// ClientID - The service principal client ID
@@ -846,6 +941,7 @@ type ServicePrincipalProperties struct {
 	Secret *string `json:"secret,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // SslConfiguration SSL configuration. If configured data-plane calls to user services will be exposed over SSL
 // only.
 type SslConfiguration struct {
@@ -859,6 +955,7 @@ type SslConfiguration struct {
 	Cname *string `json:"cname,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // StorageAccountCredentials access information for the storage account.
 type StorageAccountCredentials struct {
 	// ResourceID - The ARM resource ID of the storage account.
@@ -869,12 +966,14 @@ type StorageAccountCredentials struct {
 	SecondaryKey *string `json:"secondaryKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // StorageAccountProperties properties of Storage Account.
 type StorageAccountProperties struct {
 	// ResourceID - ARM resource ID of the Azure Storage Account to store CLI specific files. If not provided one will be created. This cannot be changed once the cluster is created.
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // SystemService information about a system service deployed in the cluster
 type SystemService struct {
 	// SystemServiceType - The system service type. Possible values include: 'SystemServiceTypeNone', 'SystemServiceTypeScoringFrontEnd', 'SystemServiceTypeBatchFrontEnd'
@@ -885,6 +984,7 @@ type SystemService struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSystemServicesResponse response of the update system services API
 type UpdateSystemServicesResponse struct {
 	autorest.Response `json:"-"`

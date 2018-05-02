@@ -26,6 +26,12 @@ const (
 )
 
 type BaseClient = original.BaseClient
+type Client = original.Client
+type OperationsListResult = original.OperationsListResult
+type OperationsListResultIterator = original.OperationsListResultIterator
+type OperationsListResultPage = original.OperationsListResultPage
+type Properties = original.Properties
+type Result = original.Result
 
 func New(subscriptionID string) BaseClient {
 	return original.New(subscriptionID)
@@ -33,22 +39,12 @@ func New(subscriptionID string) BaseClient {
 func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return original.NewWithBaseURI(baseURI, subscriptionID)
 }
-
-type Client = original.Client
-
 func NewClient(subscriptionID string) Client {
 	return original.NewClient(subscriptionID)
 }
 func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return original.NewClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OperationsListResult = original.OperationsListResult
-type OperationsListResultIterator = original.OperationsListResultIterator
-type OperationsListResultPage = original.OperationsListResultPage
-type Properties = original.Properties
-type Result = original.Result
-
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"
 }

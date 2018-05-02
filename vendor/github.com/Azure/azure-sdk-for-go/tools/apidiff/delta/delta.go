@@ -19,6 +19,7 @@ import (
 )
 
 // GetExports returns a exports.Content struct containing all exports in rhs that aren't in lhs.
+// This includes any new fields added to structs or methods added to interfaces.
 func GetExports(lhs, rhs exports.Content) exports.Content {
 	nc := exports.NewContent()
 
@@ -43,6 +44,20 @@ func GetExports(lhs, rhs exports.Content) exports.Content {
 	for n, v := range rhs.Structs {
 		if _, ok := lhs.Structs[n]; !ok {
 			nc.Structs[n] = v
+		}
+	}
+
+	structFields := GetStructFields(lhs, rhs)
+	if len(structFields) > 0 {
+		for k, v := range structFields {
+			nc.Structs[k] = v
+		}
+	}
+
+	intMethods := GetInterfaceMethods(lhs, rhs)
+	if len(intMethods) > 0 {
+		for k, v := range intMethods {
+			nc.Interfaces[k] = v
 		}
 	}
 

@@ -40,8 +40,8 @@ func NewNodeStatesClientWithBaseURI(baseURI string, timeout *int32) NodeStatesCl
 }
 
 // Remove remove node states
-//
-// nodeName is the name of the node
+// Parameters:
+// nodeName - the name of the node
 func (client NodeStatesClient) Remove(ctx context.Context, nodeName string) (result String, err error) {
 	req, err := client.RemovePreparer(ctx, nodeName)
 	if err != nil {

@@ -73,6 +73,7 @@
     "Boolean": {
       "base": null,
       "refs": {
+        "CognitoOptions$Enabled": "<p>Specifies the option to enable Cognito for Kibana authentication.</p>",
         "EBSOptions$EBSEnabled": "<p>Specifies whether EBS-based storage is enabled.</p>",
         "ElasticsearchClusterConfig$DedicatedMasterEnabled": "<p>A boolean value to indicate whether a dedicated master node is enabled. See <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains.html#es-managedomains-dedicatedmasternodes\" target=\"_blank\">About Dedicated Master Nodes</a> for more information.</p>",
         "ElasticsearchClusterConfig$ZoneAwarenessEnabled": "<p>A boolean value to indicate whether zone awareness is enabled. See <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains.html#es-managedomains-zoneawareness\" target=\"_blank\">About Zone Awareness</a> for more information.</p>",
@@ -88,6 +89,21 @@
       "base": "<p>ARN of the Cloudwatch log group to which log needs to be published.</p>",
       "refs": {
         "LogPublishingOption$CloudWatchLogsLogGroupArn": null
+      }
+    },
+    "CognitoOptions": {
+      "base": "<p>Options to specify the Cognito user and identity pools for Kibana authentication. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html\" target=\"_blank\">Amazon Cognito Authentication for Kibana</a>.</p>",
+      "refs": {
+        "CognitoOptionsStatus$Options": "<p>Specifies the Cognito options for the specified Elasticsearch domain.</p>",
+        "CreateElasticsearchDomainRequest$CognitoOptions": "<p>Options to specify the Cognito user and identity pools for Kibana authentication. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html\" target=\"_blank\">Amazon Cognito Authentication for Kibana</a>.</p>",
+        "ElasticsearchDomainStatus$CognitoOptions": "<p>The <code>CognitoOptions</code> for the specified domain. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html\" target=\"_blank\">Amazon Cognito Authentication for Kibana</a>.</p>",
+        "UpdateElasticsearchDomainConfigRequest$CognitoOptions": "<p>Options to specify the Cognito user and identity pools for Kibana authentication. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html\" target=\"_blank\">Amazon Cognito Authentication for Kibana</a>.</p>"
+      }
+    },
+    "CognitoOptionsStatus": {
+      "base": "<p>Status of the Cognito options for the specified Elasticsearch domain.</p>",
+      "refs": {
+        "ElasticsearchDomainConfig$CognitoOptions": "<p>The <code>CognitoOptions</code> for the specified domain. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-cognito-auth.html\" target=\"_blank\">Amazon Cognito Authentication for Kibana</a>.</p>"
       }
     },
     "CreateElasticsearchDomainRequest": {
@@ -310,6 +326,12 @@
         "BaseException$message": "<p>A description of the error.</p>"
       }
     },
+    "IdentityPoolId": {
+      "base": null,
+      "refs": {
+        "CognitoOptions$IdentityPoolId": "<p>Specifies the Cognito identity pool ID for Kibana authentication.</p>"
+      }
+    },
     "InstanceCountLimits": {
       "base": "<p> InstanceCountLimits represents the limits on number of instances that be created in Amazon Elasticsearch for given InstanceType. </p>",
       "refs": {
@@ -492,6 +514,7 @@
       "refs": {
         "AccessPoliciesStatus$Status": "<p>The status of the access policy for the Elasticsearch domain. See <code>OptionStatus</code> for the status information that's included. </p>",
         "AdvancedOptionsStatus$Status": "<p> Specifies the status of <code>OptionStatus</code> for advanced options for the specified Elasticsearch domain.</p>",
+        "CognitoOptionsStatus$Status": "<p>Specifies the status of the Cognito options for the specified Elasticsearch domain.</p>",
         "EBSOptionsStatus$Status": "<p> Specifies the status of the EBS options for the specified Elasticsearch domain.</p>",
         "ElasticsearchClusterConfigStatus$Status": "<p> Specifies the status of the configuration for the specified Elasticsearch domain.</p>",
         "ElasticsearchVersionStatus$Status": "<p> Specifies the status of the Elasticsearch version options for the specified Elasticsearch domain.</p>",
@@ -523,6 +546,12 @@
     "ResourceNotFoundException": {
       "base": "<p>An exception for accessing or deleting a resource that does not exist. Gives http status code of 400.</p>",
       "refs": {
+      }
+    },
+    "RoleArn": {
+      "base": null,
+      "refs": {
+        "CognitoOptions$RoleArn": "<p>Specifies the role ARN that provides Elasticsearch permissions for accessing Cognito resources.</p>"
       }
     },
     "ServiceUrl": {
@@ -650,6 +679,12 @@
       "refs": {
         "OptionStatus$CreationDate": "<p>Timestamp which tells the creation date for the entity.</p>",
         "OptionStatus$UpdateDate": "<p>Timestamp which tells the last updated time for the entity.</p>"
+      }
+    },
+    "UserPoolId": {
+      "base": null,
+      "refs": {
+        "CognitoOptions$UserPoolId": "<p>Specifies the Cognito user pool ID for Kibana authentication.</p>"
       }
     },
     "VPCDerivedInfo": {

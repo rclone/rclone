@@ -294,7 +294,7 @@ func (c *Client) ListTransferConfigs(ctx context.Context, req *datatransferpb.Li
 	return it
 }
 
-// ScheduleTransferRuns creates transfer runs for a time range [range_start_time, range_end_time].
+// ScheduleTransferRuns creates transfer runs for a time range [start_time, end_time].
 // For each date - or whatever granularity the data source supports - in the
 // range, one transfer run is created.
 // Note that runs are created per UTC time in the time range.

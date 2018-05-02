@@ -18,6 +18,12 @@ const (
 	// "CNAMEAlreadyExists".
 	ErrCodeCNAMEAlreadyExists = "CNAMEAlreadyExists"
 
+	// ErrCodeCannotChangeImmutablePublicKeyFields for service response error code
+	// "CannotChangeImmutablePublicKeyFields".
+	//
+	// You can't change the value of a public key.
+	ErrCodeCannotChangeImmutablePublicKeyFields = "CannotChangeImmutablePublicKeyFields"
+
 	// ErrCodeDistributionAlreadyExists for service response error code
 	// "DistributionAlreadyExists".
 	//
@@ -28,6 +34,43 @@ const (
 	// ErrCodeDistributionNotDisabled for service response error code
 	// "DistributionNotDisabled".
 	ErrCodeDistributionNotDisabled = "DistributionNotDisabled"
+
+	// ErrCodeFieldLevelEncryptionConfigAlreadyExists for service response error code
+	// "FieldLevelEncryptionConfigAlreadyExists".
+	//
+	// The specified configuration for field-level encryption already exists.
+	ErrCodeFieldLevelEncryptionConfigAlreadyExists = "FieldLevelEncryptionConfigAlreadyExists"
+
+	// ErrCodeFieldLevelEncryptionConfigInUse for service response error code
+	// "FieldLevelEncryptionConfigInUse".
+	//
+	// The specified configuration for field-level encryption is in use.
+	ErrCodeFieldLevelEncryptionConfigInUse = "FieldLevelEncryptionConfigInUse"
+
+	// ErrCodeFieldLevelEncryptionProfileAlreadyExists for service response error code
+	// "FieldLevelEncryptionProfileAlreadyExists".
+	//
+	// The specified profile for field-level encryption already exists.
+	ErrCodeFieldLevelEncryptionProfileAlreadyExists = "FieldLevelEncryptionProfileAlreadyExists"
+
+	// ErrCodeFieldLevelEncryptionProfileInUse for service response error code
+	// "FieldLevelEncryptionProfileInUse".
+	//
+	// The specified profile for field-level encryption is in use.
+	ErrCodeFieldLevelEncryptionProfileInUse = "FieldLevelEncryptionProfileInUse"
+
+	// ErrCodeFieldLevelEncryptionProfileSizeExceeded for service response error code
+	// "FieldLevelEncryptionProfileSizeExceeded".
+	//
+	// The maximum size of a profile for field-level encryption was exceeded.
+	ErrCodeFieldLevelEncryptionProfileSizeExceeded = "FieldLevelEncryptionProfileSizeExceeded"
+
+	// ErrCodeIllegalFieldLevelEncryptionConfigAssociationWithCacheBehavior for service response error code
+	// "IllegalFieldLevelEncryptionConfigAssociationWithCacheBehavior".
+	//
+	// The specified configuration for field-level encryption can't be associated
+	// with the specified cache behavior.
+	ErrCodeIllegalFieldLevelEncryptionConfigAssociationWithCacheBehavior = "IllegalFieldLevelEncryptionConfigAssociationWithCacheBehavior"
 
 	// ErrCodeIllegalUpdate for service response error code
 	// "IllegalUpdate".
@@ -180,6 +223,18 @@ const (
 	// The specified distribution does not exist.
 	ErrCodeNoSuchDistribution = "NoSuchDistribution"
 
+	// ErrCodeNoSuchFieldLevelEncryptionConfig for service response error code
+	// "NoSuchFieldLevelEncryptionConfig".
+	//
+	// The specified configuration for field-level encryption doesn't exist.
+	ErrCodeNoSuchFieldLevelEncryptionConfig = "NoSuchFieldLevelEncryptionConfig"
+
+	// ErrCodeNoSuchFieldLevelEncryptionProfile for service response error code
+	// "NoSuchFieldLevelEncryptionProfile".
+	//
+	// The specified profile for field-level encryption doesn't exist.
+	ErrCodeNoSuchFieldLevelEncryptionProfile = "NoSuchFieldLevelEncryptionProfile"
+
 	// ErrCodeNoSuchInvalidation for service response error code
 	// "NoSuchInvalidation".
 	//
@@ -191,6 +246,12 @@ const (
 	//
 	// No origin exists with the specified Origin Id.
 	ErrCodeNoSuchOrigin = "NoSuchOrigin"
+
+	// ErrCodeNoSuchPublicKey for service response error code
+	// "NoSuchPublicKey".
+	//
+	// The specified public key doesn't exist.
+	ErrCodeNoSuchPublicKey = "NoSuchPublicKey"
 
 	// ErrCodeNoSuchResource for service response error code
 	// "NoSuchResource".
@@ -221,6 +282,24 @@ const (
 	// The precondition given in one or more of the request-header fields evaluated
 	// to false.
 	ErrCodePreconditionFailed = "PreconditionFailed"
+
+	// ErrCodePublicKeyAlreadyExists for service response error code
+	// "PublicKeyAlreadyExists".
+	//
+	// The specified public key already exists.
+	ErrCodePublicKeyAlreadyExists = "PublicKeyAlreadyExists"
+
+	// ErrCodePublicKeyInUse for service response error code
+	// "PublicKeyInUse".
+	//
+	// The specified public key is in use.
+	ErrCodePublicKeyInUse = "PublicKeyInUse"
+
+	// ErrCodeQueryArgProfileEmpty for service response error code
+	// "QueryArgProfileEmpty".
+	//
+	// No profile specified for the field-level encryption query argument.
+	ErrCodeQueryArgProfileEmpty = "QueryArgProfileEmpty"
 
 	// ErrCodeResourceInUse for service response error code
 	// "ResourceInUse".
@@ -273,12 +352,60 @@ const (
 	// allowed.
 	ErrCodeTooManyDistributions = "TooManyDistributions"
 
+	// ErrCodeTooManyDistributionsAssociatedToFieldLevelEncryptionConfig for service response error code
+	// "TooManyDistributionsAssociatedToFieldLevelEncryptionConfig".
+	//
+	// The maximum number of distributions have been associated with the specified
+	// configuration for field-level encryption.
+	ErrCodeTooManyDistributionsAssociatedToFieldLevelEncryptionConfig = "TooManyDistributionsAssociatedToFieldLevelEncryptionConfig"
+
 	// ErrCodeTooManyDistributionsWithLambdaAssociations for service response error code
 	// "TooManyDistributionsWithLambdaAssociations".
 	//
 	// Processing your request would cause the maximum number of distributions with
 	// Lambda function associations per owner to be exceeded.
 	ErrCodeTooManyDistributionsWithLambdaAssociations = "TooManyDistributionsWithLambdaAssociations"
+
+	// ErrCodeTooManyFieldLevelEncryptionConfigs for service response error code
+	// "TooManyFieldLevelEncryptionConfigs".
+	//
+	// The maximum number of configurations for field-level encryption have been
+	// created.
+	ErrCodeTooManyFieldLevelEncryptionConfigs = "TooManyFieldLevelEncryptionConfigs"
+
+	// ErrCodeTooManyFieldLevelEncryptionContentTypeProfiles for service response error code
+	// "TooManyFieldLevelEncryptionContentTypeProfiles".
+	//
+	// The maximum number of content type profiles for field-level encryption have
+	// been created.
+	ErrCodeTooManyFieldLevelEncryptionContentTypeProfiles = "TooManyFieldLevelEncryptionContentTypeProfiles"
+
+	// ErrCodeTooManyFieldLevelEncryptionEncryptionEntities for service response error code
+	// "TooManyFieldLevelEncryptionEncryptionEntities".
+	//
+	// The maximum number of encryption entities for field-level encryption have
+	// been created.
+	ErrCodeTooManyFieldLevelEncryptionEncryptionEntities = "TooManyFieldLevelEncryptionEncryptionEntities"
+
+	// ErrCodeTooManyFieldLevelEncryptionFieldPatterns for service response error code
+	// "TooManyFieldLevelEncryptionFieldPatterns".
+	//
+	// The maximum number of field patterns for field-level encryption have been
+	// created.
+	ErrCodeTooManyFieldLevelEncryptionFieldPatterns = "TooManyFieldLevelEncryptionFieldPatterns"
+
+	// ErrCodeTooManyFieldLevelEncryptionProfiles for service response error code
+	// "TooManyFieldLevelEncryptionProfiles".
+	//
+	// The maximum number of profiles for field-level encryption have been created.
+	ErrCodeTooManyFieldLevelEncryptionProfiles = "TooManyFieldLevelEncryptionProfiles"
+
+	// ErrCodeTooManyFieldLevelEncryptionQueryArgProfiles for service response error code
+	// "TooManyFieldLevelEncryptionQueryArgProfiles".
+	//
+	// The maximum number of query arg profiles for field-level encryption have
+	// been created.
+	ErrCodeTooManyFieldLevelEncryptionQueryArgProfiles = "TooManyFieldLevelEncryptionQueryArgProfiles"
 
 	// ErrCodeTooManyHeadersInForwardedValues for service response error code
 	// "TooManyHeadersInForwardedValues".
@@ -307,6 +434,13 @@ const (
 	//
 	// You cannot create more origins for the distribution.
 	ErrCodeTooManyOrigins = "TooManyOrigins"
+
+	// ErrCodeTooManyPublicKeys for service response error code
+	// "TooManyPublicKeys".
+	//
+	// The maximum number of public keys for field-level encryption have been created.
+	// To create a new public key, delete one of the existing keys.
+	ErrCodeTooManyPublicKeys = "TooManyPublicKeys"
 
 	// ErrCodeTooManyQueryStringParameters for service response error code
 	// "TooManyQueryStringParameters".

@@ -174,6 +174,16 @@ func (s *nodeStack) index(n *Node) int {
 	return -1
 }
 
+// contains returns whether a is within s.
+func (s *nodeStack) contains(a atom.Atom) bool {
+	for _, n := range *s {
+		if n.DataAtom == a {
+			return true
+		}
+	}
+	return false
+}
+
 // insert inserts a node at the given index.
 func (s *nodeStack) insert(i int, n *Node) {
 	(*s) = append(*s, nil)
@@ -191,4 +201,20 @@ func (s *nodeStack) remove(n *Node) {
 	j := len(*s) - 1
 	(*s)[j] = nil
 	*s = (*s)[:j]
+}
+
+type insertionModeStack []insertionMode
+
+func (s *insertionModeStack) pop() (im insertionMode) {
+	i := len(*s)
+	im = (*s)[i-1]
+	*s = (*s)[:i-1]
+	return im
+}
+
+func (s *insertionModeStack) top() insertionMode {
+	if i := len(*s); i > 0 {
+		return (*s)[i-1]
+	}
+	return nil
 }

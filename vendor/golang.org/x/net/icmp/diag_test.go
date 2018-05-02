@@ -71,8 +71,7 @@ func TestDiag(t *testing.T) {
 	})
 	t.Run("Ping/Privileged", func(t *testing.T) {
 		if m, ok := nettest.SupportsRawIPSocket(); !ok {
-			t.Log(m)
-			return
+			t.Skip(m)
 		}
 		for i, dt := range []diagTest{
 			{
@@ -93,6 +92,50 @@ func TestDiag(t *testing.T) {
 					Body: &icmp.Echo{
 						ID:   os.Getpid() & 0xffff,
 						Data: []byte("HELLO-R-U-THERE"),
+					},
+				},
+			},
+		} {
+			if err := doDiag(dt, i); err != nil {
+				t.Error(err)
+			}
+		}
+	})
+	t.Run("Probe/Privileged", func(t *testing.T) {
+		if m, ok := nettest.SupportsRawIPSocket(); !ok {
+			t.Skip(m)
+		}
+		for i, dt := range []diagTest{
+			{
+				"ip4:icmp", "0.0.0.0", iana.ProtocolICMP,
+				icmp.Message{
+					Type: ipv4.ICMPTypeExtendedEchoRequest, Code: 0,
+					Body: &icmp.ExtendedEchoRequest{
+						ID:    os.Getpid() & 0xffff,
+						Local: true,
+						Extensions: []icmp.Extension{
+							&icmp.InterfaceIdent{
+								Class: 3, Type: 1,
+								Name: "doesnotexist",
+							},
+						},
+					},
+				},
+			},
+
+			{
+				"ip6:ipv6-icmp", "::", iana.ProtocolIPv6ICMP,
+				icmp.Message{
+					Type: ipv6.ICMPTypeExtendedEchoRequest, Code: 0,
+					Body: &icmp.ExtendedEchoRequest{
+						ID:    os.Getpid() & 0xffff,
+						Local: true,
+						Extensions: []icmp.Extension{
+							&icmp.InterfaceIdent{
+								Class: 3, Type: 1,
+								Name: "doesnotexist",
+							},
+						},
 					},
 				},
 			},
@@ -124,6 +167,7 @@ func doDiag(dt diagTest, seq int) error {
 		f.Accept(ipv6.ICMPTypeTimeExceeded)
 		f.Accept(ipv6.ICMPTypeParameterProblem)
 		f.Accept(ipv6.ICMPTypeEchoReply)
+		f.Accept(ipv6.ICMPTypeExtendedEchoReply)
 		if err := c.IPv6PacketConn().SetICMPFilter(&f); err != nil {
 			return err
 		}
@@ -131,6 +175,8 @@ func doDiag(dt diagTest, seq int) error {
 
 	switch m := dt.m.Body.(type) {
 	case *icmp.Echo:
+		m.Seq = 1 << uint(seq)
+	case *icmp.ExtendedEchoRequest:
 		m.Seq = 1 << uint(seq)
 	}
 	wb, err := dt.m.Marshal(nil)
@@ -159,9 +205,13 @@ func doDiag(dt diagTest, seq int) error {
 	case dt.m.Type == ipv4.ICMPTypeEcho && rm.Type == ipv4.ICMPTypeEchoReply:
 		fallthrough
 	case dt.m.Type == ipv6.ICMPTypeEchoRequest && rm.Type == ipv6.ICMPTypeEchoReply:
+		fallthrough
+	case dt.m.Type == ipv4.ICMPTypeExtendedEchoRequest && rm.Type == ipv4.ICMPTypeExtendedEchoReply:
+		fallthrough
+	case dt.m.Type == ipv6.ICMPTypeExtendedEchoRequest && rm.Type == ipv6.ICMPTypeExtendedEchoReply:
 		return nil
 	default:
-		return fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
+		return fmt.Errorf("got %+v from %v; want echo reply or extended echo reply", rm, peer)
 	}
 }
 

@@ -12,7 +12,7 @@ const opGetCostAndUsage = "GetCostAndUsage"
 
 // GetCostAndUsageRequest generates a "aws/request.Request" representing the
 // client's request for the GetCostAndUsage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -52,12 +52,13 @@ func (c *CostExplorer) GetCostAndUsageRequest(input *GetCostAndUsageInput) (req 
 
 // GetCostAndUsage API operation for AWS Cost Explorer Service.
 //
-// Retrieve cost and usage metrics for your account. You can specify which cost
-// and usage-related metric, such as BlendedCosts or UsageQuantity, that you
-// want the request to return. You can also filter and group your data by various
-// dimensions, such as SERVICE or AZ, in a specific time range. See the GetDimensionValues
-// action for a complete list of the valid dimensions. Master accounts in an
-// organization have access to all member accounts.
+// Retrieves cost and usage metrics for your account. You can specify which
+// cost and usage-related metric, such as BlendedCosts or UsageQuantity, that
+// you want the request to return. You can also filter and group your data by
+// various dimensions, such as SERVICE or AZ, in a specific time range. For
+// a complete list of valid dimensions, see the GetDimensionValues (http://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_GetDimensionValues.html)
+// operation. Master accounts in an organization in AWS Organizations have access
+// to all member accounts.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -78,6 +79,10 @@ func (c *CostExplorer) GetCostAndUsageRequest(input *GetCostAndUsageInput) (req 
 //
 //   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
 //   The pagination token is invalid. Try again without a pagination token.
+//
+//   * ErrCodeRequestChangedException "RequestChangedException"
+//   Your request parameters changed between pages. Try again with the old parameters
+//   or without a pagination token.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ce-2017-10-25/GetCostAndUsage
 func (c *CostExplorer) GetCostAndUsage(input *GetCostAndUsageInput) (*GetCostAndUsageOutput, error) {
@@ -105,7 +110,7 @@ const opGetDimensionValues = "GetDimensionValues"
 
 // GetDimensionValuesRequest generates a "aws/request.Request" representing the
 // client's request for the GetDimensionValues operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -145,9 +150,8 @@ func (c *CostExplorer) GetDimensionValuesRequest(input *GetDimensionValuesInput)
 
 // GetDimensionValues API operation for AWS Cost Explorer Service.
 //
-// You can use GetDimensionValues to retrieve all available filter values for
-// a specific filter over a period of time. You can search the dimension values
-// for an arbitrary string.
+// Retrieves all available filter values for a specified filter over a period
+// of time. You can search the dimension values for an arbitrary string.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -163,8 +167,15 @@ func (c *CostExplorer) GetDimensionValuesRequest(input *GetDimensionValuesInput)
 //   * ErrCodeBillExpirationException "BillExpirationException"
 //   The requested report expired. Update the date interval and try again.
 //
+//   * ErrCodeDataUnavailableException "DataUnavailableException"
+//   The requested data is unavailable.
+//
 //   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
 //   The pagination token is invalid. Try again without a pagination token.
+//
+//   * ErrCodeRequestChangedException "RequestChangedException"
+//   Your request parameters changed between pages. Try again with the old parameters
+//   or without a pagination token.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ce-2017-10-25/GetDimensionValues
 func (c *CostExplorer) GetDimensionValues(input *GetDimensionValuesInput) (*GetDimensionValuesOutput, error) {
@@ -192,7 +203,7 @@ const opGetReservationCoverage = "GetReservationCoverage"
 
 // GetReservationCoverageRequest generates a "aws/request.Request" representing the
 // client's request for the GetReservationCoverage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -232,19 +243,34 @@ func (c *CostExplorer) GetReservationCoverageRequest(input *GetReservationCovera
 
 // GetReservationCoverage API operation for AWS Cost Explorer Service.
 //
-// Retrieve the reservation coverage for your account. An organization's master
-// account has access to the associated member accounts. For any time period,
-// you can filter data about reservation usage by the following dimensions.
+// Retrieves the reservation coverage for your account. This allows you to see
+// how much of your Amazon Elastic Compute Cloud, Amazon ElastiCache, Amazon
+// Relational Database Service, or Amazon Redshift usage is covered by a reservation.
+// An organization's master account can see the coverage of the associated member
+// accounts. For any time period, you can filter data about reservation usage
+// by the following dimensions:
 //
 //    * AZ
+//
+//    * CACHE_ENGINE
+//
+//    * DATABASE_ENGINE
+//
+//    * DEPLOYMENT_OPTION
 //
 //    * INSTANCE_TYPE
 //
 //    * LINKED_ACCOUNT
 //
+//    * OPERATING_SYSTEM
+//
 //    * PLATFORM
 //
 //    * REGION
+//
+//    * SERVICE
+//
+//    * TAG
 //
 //    * TENANCY
 //
@@ -289,11 +315,113 @@ func (c *CostExplorer) GetReservationCoverageWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opGetReservationPurchaseRecommendation = "GetReservationPurchaseRecommendation"
+
+// GetReservationPurchaseRecommendationRequest generates a "aws/request.Request" representing the
+// client's request for the GetReservationPurchaseRecommendation operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetReservationPurchaseRecommendation for more information on using the GetReservationPurchaseRecommendation
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetReservationPurchaseRecommendationRequest method.
+//    req, resp := client.GetReservationPurchaseRecommendationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ce-2017-10-25/GetReservationPurchaseRecommendation
+func (c *CostExplorer) GetReservationPurchaseRecommendationRequest(input *GetReservationPurchaseRecommendationInput) (req *request.Request, output *GetReservationPurchaseRecommendationOutput) {
+	op := &request.Operation{
+		Name:       opGetReservationPurchaseRecommendation,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetReservationPurchaseRecommendationInput{}
+	}
+
+	output = &GetReservationPurchaseRecommendationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetReservationPurchaseRecommendation API operation for AWS Cost Explorer Service.
+//
+// Gets recommendations for which reservations to purchase. These recommendations
+// could help you reduce your costs. Reservations provide a discounted hourly
+// rate (up to 75%) compared to On-Demand pricing.
+//
+// AWS generates your recommendations by identifying your On-Demand usage during
+// a specific time period and collecting your usage into categories that are
+// eligible for a reservation. After AWS has these categories, it simulates
+// every combination of reservations in each category of usage to identify the
+// best number of each type of RI to purchase to maximize your estimated savings.
+//
+// For example, AWS automatically aggregates your EC2 Linux, shared tenancy,
+// and c4 family usage in the US West (Oregon) Region and recommends that you
+// buy size-flexible regional reservations to apply to the c4 family usage.
+// AWS recommends the smallest size instance in an instance family. This makes
+// it easier to purchase a size-flexible RI. AWS also shows the equal number
+// of normalized units so that you can purchase any instance size that you want.
+// For this example, your RI recommendation would be for c4.large, because that
+// is the smallest size instance in the c4 instance family.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Cost Explorer Service's
+// API operation GetReservationPurchaseRecommendation for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   You made too many calls in a short period of time. Try again later.
+//
+//   * ErrCodeDataUnavailableException "DataUnavailableException"
+//   The requested data is unavailable.
+//
+//   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
+//   The pagination token is invalid. Try again without a pagination token.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ce-2017-10-25/GetReservationPurchaseRecommendation
+func (c *CostExplorer) GetReservationPurchaseRecommendation(input *GetReservationPurchaseRecommendationInput) (*GetReservationPurchaseRecommendationOutput, error) {
+	req, out := c.GetReservationPurchaseRecommendationRequest(input)
+	return out, req.Send()
+}
+
+// GetReservationPurchaseRecommendationWithContext is the same as GetReservationPurchaseRecommendation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetReservationPurchaseRecommendation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CostExplorer) GetReservationPurchaseRecommendationWithContext(ctx aws.Context, input *GetReservationPurchaseRecommendationInput, opts ...request.Option) (*GetReservationPurchaseRecommendationOutput, error) {
+	req, out := c.GetReservationPurchaseRecommendationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetReservationUtilization = "GetReservationUtilization"
 
 // GetReservationUtilizationRequest generates a "aws/request.Request" representing the
 // client's request for the GetReservationUtilization operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -333,11 +461,10 @@ func (c *CostExplorer) GetReservationUtilizationRequest(input *GetReservationUti
 
 // GetReservationUtilization API operation for AWS Cost Explorer Service.
 //
-// You can retrieve the Reservation utilization for your account. Master accounts
-// in an organization have access to their associated member accounts. You can
-// filter data by dimensions in a time period. You can use GetDimensionValues
-// to determine the possible dimension values. Currently, you can group only
-// by SUBSCRIPTION_ID.
+// Retrieves the reservation utilization for your account. Master accounts in
+// an organization have access to member accounts. You can filter data by dimensions
+// in a time period. You can use GetDimensionValues to determine the possible
+// dimension values. Currently, you can group only by SUBSCRIPTION_ID.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -382,7 +509,7 @@ const opGetTags = "GetTags"
 
 // GetTagsRequest generates a "aws/request.Request" representing the
 // client's request for the GetTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -422,8 +549,8 @@ func (c *CostExplorer) GetTagsRequest(input *GetTagsInput) (req *request.Request
 
 // GetTags API operation for AWS Cost Explorer Service.
 //
-// You can query for available tag keys and tag values for a specified period.
-// You can search the tag values for an arbitrary string.
+// Queries for available tag keys and tag values for a specified period. You
+// can search the tag values for an arbitrary string.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -439,8 +566,15 @@ func (c *CostExplorer) GetTagsRequest(input *GetTagsInput) (req *request.Request
 //   * ErrCodeBillExpirationException "BillExpirationException"
 //   The requested report expired. Update the date interval and try again.
 //
+//   * ErrCodeDataUnavailableException "DataUnavailableException"
+//   The requested data is unavailable.
+//
 //   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
 //   The pagination token is invalid. Try again without a pagination token.
+//
+//   * ErrCodeRequestChangedException "RequestChangedException"
+//   Your request parameters changed between pages. Try again with the old parameters
+//   or without a pagination token.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ce-2017-10-25/GetTags
 func (c *CostExplorer) GetTags(input *GetTagsInput) (*GetTagsOutput, error) {
@@ -488,11 +622,11 @@ func (s *Coverage) SetCoverageHours(v *CoverageHours) *Coverage {
 	return s
 }
 
-// Reservation coverage, in hours.
+// Reservation coverage for a specified period, in hours.
 type CoverageByTime struct {
 	_ struct{} `type:"structure"`
 
-	// The group of instances that a reservation covered.
+	// The groups of instances that are covered by a reservation.
 	Groups []*ReservationCoverageGroup `type:"list"`
 
 	// The period over which this coverage was used.
@@ -534,13 +668,13 @@ func (s *CoverageByTime) SetTotal(v *Coverage) *CoverageByTime {
 type CoverageHours struct {
 	_ struct{} `type:"structure"`
 
-	// The percentage of instance hours covered by a reservation.
+	// The percentage of instance hours that are covered by a reservation.
 	CoverageHoursPercentage *string `type:"string"`
 
-	// The number of instance running hours covered by On-Demand Instances.
+	// The number of instance running hours that are covered by On-Demand Instances.
 	OnDemandHours *string `type:"string"`
 
-	// The number of instance running hours covered by reservations.
+	// The number of instance running hours that are covered by reservations.
 	ReservedHours *string `type:"string"`
 
 	// The total instance usage, in hours.
@@ -586,15 +720,15 @@ type DateInterval struct {
 	_ struct{} `type:"structure"`
 
 	// The end of the time period that you want the usage and costs for. The end
-	// date is exclusive. For example, if the end is 2017-05-01, then the cost and
-	// usage data is retrieved from the start date but not including 2017-05-01.
+	// date is exclusive. For example, if end is 2017-05-01, AWS retrieves cost
+	// and usage data from the start date up to, but not including, 2017-05-01.
 	//
 	// End is a required field
 	End *string `type:"string" required:"true"`
 
 	// The beginning of the time period that you want the usage and costs for. The
-	// start date is inclusive. For example, if start is 2017-01-01, then the cost
-	// and usage data is retrieved starting at 2017-01-01 up to the end date.
+	// start date is inclusive. For example, if start is 2017-01-01, AWS retrieves
+	// cost and usage data starting at 2017-01-01 up to the end date.
 	//
 	// Start is a required field
 	Start *string `type:"string" required:"true"`
@@ -708,12 +842,125 @@ func (s *DimensionValuesWithAttributes) SetValue(v string) *DimensionValuesWithA
 	return s
 }
 
+// Details about the EC2 instances that AWS recommends that you purchase.
+type EC2InstanceDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The Availability Zone of the recommended reservation.
+	AvailabilityZone *string `type:"string"`
+
+	// Whether the recommendation is for a current generation instance.
+	CurrentGeneration *bool `type:"boolean"`
+
+	// The instance family of the recommended reservation.
+	Family *string `type:"string"`
+
+	// The type of instance that AWS recommends.
+	InstanceType *string `type:"string"`
+
+	// The platform of the recommended reservation. The platform is the specific
+	// combination of operating system, license model, and software on an instance.
+	Platform *string `type:"string"`
+
+	// The AWS Region of the recommended reservation.
+	Region *string `type:"string"`
+
+	// Whether the recommended reservation is size flexible.
+	SizeFlexEligible *bool `type:"boolean"`
+
+	// Whether the recommended reservation is dedicated or shared.
+	Tenancy *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EC2InstanceDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EC2InstanceDetails) GoString() string {
+	return s.String()
+}
+
+// SetAvailabilityZone sets the AvailabilityZone field's value.
+func (s *EC2InstanceDetails) SetAvailabilityZone(v string) *EC2InstanceDetails {
+	s.AvailabilityZone = &v
+	return s
+}
+
+// SetCurrentGeneration sets the CurrentGeneration field's value.
+func (s *EC2InstanceDetails) SetCurrentGeneration(v bool) *EC2InstanceDetails {
+	s.CurrentGeneration = &v
+	return s
+}
+
+// SetFamily sets the Family field's value.
+func (s *EC2InstanceDetails) SetFamily(v string) *EC2InstanceDetails {
+	s.Family = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *EC2InstanceDetails) SetInstanceType(v string) *EC2InstanceDetails {
+	s.InstanceType = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *EC2InstanceDetails) SetPlatform(v string) *EC2InstanceDetails {
+	s.Platform = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *EC2InstanceDetails) SetRegion(v string) *EC2InstanceDetails {
+	s.Region = &v
+	return s
+}
+
+// SetSizeFlexEligible sets the SizeFlexEligible field's value.
+func (s *EC2InstanceDetails) SetSizeFlexEligible(v bool) *EC2InstanceDetails {
+	s.SizeFlexEligible = &v
+	return s
+}
+
+// SetTenancy sets the Tenancy field's value.
+func (s *EC2InstanceDetails) SetTenancy(v string) *EC2InstanceDetails {
+	s.Tenancy = &v
+	return s
+}
+
+// The EC2 hardware specifications that you want AWS to provide recommendations
+// for.
+type EC2Specification struct {
+	_ struct{} `type:"structure"`
+
+	// Whether you want a recommendation for standard or convertible reservations.
+	OfferingClass *string `type:"string" enum:"OfferingClass"`
+}
+
+// String returns the string representation
+func (s EC2Specification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EC2Specification) GoString() string {
+	return s.String()
+}
+
+// SetOfferingClass sets the OfferingClass field's value.
+func (s *EC2Specification) SetOfferingClass(v string) *EC2Specification {
+	s.OfferingClass = &v
+	return s
+}
+
 // Use Expression to filter by cost or by usage. There are two patterns:
 //
 //    * Simple dimension values - You can set the dimension name and values
 //    for the filters that you plan to use. For example, you can filter for
 //    INSTANCE_TYPE==m4.xlarge OR INSTANCE_TYPE==c4.large. The Expression for
-//    that looks like this.
+//    that looks like this:
 //
 // { "Dimensions": { "Key": "INSTANCE_TYPE", "Values": [ "m4.xlarge", “c4.large”
 //    ] } }
@@ -727,7 +974,7 @@ func (s *DimensionValuesWithAttributes) SetValue(v string) *DimensionValuesWithA
 //    of one or more Expression objects. This allows you to filter on more advanced
 //    options. For example, you can filter on ((INSTANCE_TYPE == m4.large OR
 //    INSTANCE_TYPE == m3.large) OR (TAG.Type == Type1)) AND (USAGE_TYPE !=
-//    DataTransfer). The Expression for that looks like this.
+//    DataTransfer). The Expression for that looks like this:
 //
 // { "And": [ {"Or": [ {"Dimensions": { "Key": "INSTANCE_TYPE", "Values": [
 //    "m4.x.large", "c4.large" ] }}, {"Tag": { "Key": "TagName", "Values": ["Value1"]
@@ -736,7 +983,7 @@ func (s *DimensionValuesWithAttributes) SetValue(v string) *DimensionValuesWithA
 //
 // Because each Expression can have only one operator, the service returns an
 //    error if more than one is specified. The following example shows an Expression
-//    object that will create an error.
+//    object that creates an error.
 //
 //  { "And": [ ... ], "DimensionValues": { "Dimension": "USAGE_TYPE", "Values":
 //    [ "DataTransfer" ] } }
@@ -749,10 +996,10 @@ type Expression struct {
 	// The specific Dimension to use for Expression.
 	Dimensions *DimensionValues `type:"structure"`
 
-	// Return results that don't match Dimension.
+	// Return results that don't match a Dimension object.
 	Not *Expression `type:"structure"`
 
-	// Return results that match either Dimension.
+	// Return results that match either Dimension object.
 	Or []*Expression `type:"list"`
 
 	// The specific Tag to use for Expression.
@@ -803,8 +1050,8 @@ type GetCostAndUsageInput struct {
 	_ struct{} `type:"structure"`
 
 	// Filters AWS costs by different dimensions. For example, you can specify SERVICE
-	// and LINKED_ACCOUNT and get the costs associated with that account's usage
-	// of that service. You can nest Expression objects to define any combination
+	// and LINKED_ACCOUNT and get the costs that are associated with that account's
+	// usage of that service. You can nest Expression objects to define any combination
 	// of dimension filters. For more information, see Expression (http://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_Expression.html).
 	Filter *Expression `type:"structure"`
 
@@ -817,8 +1064,8 @@ type GetCostAndUsageInput struct {
 	//
 	// When you group by tag key, you get all tag values, including empty strings.
 	//
-	// Valid values are AZ, INSTANCE_TYPE, LINKED_ACCOUNT, OPERATION, PLATFORM,
-	// PURCHASE_TYPE, SERVICE, TAGS, TENANCY, and USAGE_TYPE.
+	// Valid values are AZ, INSTANCE_TYPE, LEGAL_ENTITY_NAME, LINKED_ACCOUNT, OPERATION,
+	// PLATFORM, PURCHASE_TYPE, SERVICE, TAGS, TENANCY, and USAGE_TYPE.
 	GroupBy []*GroupDefinition `type:"list"`
 
 	// Which metrics are returned in the query. For more information about blended
@@ -833,6 +1080,8 @@ type GetCostAndUsageInput struct {
 	// compute hours and data transfer are measured in different units (for example,
 	// hours vs. GB). To get more meaningful UsageQuantity metrics, filter by UsageType
 	// or UsageTypeGroups.
+	//
+	// Metrics is required for GetCostAndUsage requests.
 	Metrics []*string `type:"list"`
 
 	// The token to retrieve the next set of results. AWS provides the token when
@@ -911,7 +1160,8 @@ func (s *GetCostAndUsageInput) SetTimePeriod(v *DateInterval) *GetCostAndUsageIn
 type GetCostAndUsageOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The groups specified by the the Filter or GroupBy parameters in the request.
+	// The groups that are specified by the Filter or GroupBy parameters in the
+	// request.
 	GroupDefinitions []*GroupDefinition `type:"list"`
 
 	// The token for the next set of retrievable results. AWS provides the token
@@ -919,7 +1169,7 @@ type GetCostAndUsageOutput struct {
 	// page size.
 	NextPageToken *string `type:"string"`
 
-	// The time period covered by the results in the response.
+	// The time period that is covered by the results in the response.
 	ResultsByTime []*ResultByTime `type:"list"`
 }
 
@@ -957,34 +1207,44 @@ type GetDimensionValuesInput struct {
 	// The context for the call to GetDimensionValues. This can be RESERVATIONS
 	// or COST_AND_USAGE. The default value is COST_AND_USAGE. If the context is
 	// set to RESERVATIONS, the resulting dimension values can be used in the GetReservationUtilization
-	// action. If the context is set to COST_AND_USAGE, the resulting dimension
+	// operation. If the context is set to COST_AND_USAGE the resulting dimension
 	// values can be used in the GetCostAndUsage operation.
 	//
-	// If you set the context to CostAndUsage, you can use the following dimensions
+	// If you set the context to COST_AND_USAGE, you can use the following dimensions
 	// for searching:
 	//
 	//    * AZ - The Availability Zone. An example is us-east-1a.
 	//
+	//    * DATABASE_ENGINE - The Amazon Relational Database Service database. Examples
+	//    are Aurora or MySQL.
+	//
 	//    * INSTANCE_TYPE - The type of EC2 instance. An example is m4.xlarge.
+	//
+	//    * LEGAL_ENTITY_NAME - The name of the organization that sells you AWS
+	//    services, such as Amazon Web Services.
 	//
 	//    * LINKED_ACCOUNT - The description in the attribute map that includes
 	//    the full name of the member account. The value field contains the AWS
-	//    ID of the member account
+	//    ID of the member account.
+	//
+	//    * OPERATING_SYSTEM - The operating system. Examples are Windows or Linux.
 	//
 	//    * OPERATION - The action performed. Examples include RunInstance and CreateBucket.
 	//
-	//    * PURCHASE_TYPE - The reservation type of the purchase to which this usage
-	//    is related. Examples include: On Demand Instances and Standard Reserved
-	//    Instances
+	//    * PLATFORM - The EC2 operating system. Examples are Windows or Linux.
 	//
-	//    * SERVICE - The AWS service such as DynamoDB.
+	//    * PURCHASE_TYPE - The reservation type of the purchase to which this usage
+	//    is related. Examples include On-Demand Instances and Standard Reserved
+	//    Instances.
+	//
+	//    * SERVICE - The AWS service such as Amazon DynamoDB.
 	//
 	//    * USAGE_TYPE - The type of usage. An example is DataTransfer-In-Bytes.
-	//    The response for the GetDimensionValues action includes a unit attribute,
-	//    examples of which include GB and Hrs.
+	//    The response for the GetDimensionValues operation includes a unit attribute.
+	//    Examples include GB and Hrs.
 	//
 	//    * USAGE_TYPE_GROUP - The grouping of common usage types. An example is
-	//    EC2: CloudWatch – Alarms. The response for this action includes a unit
+	//    EC2: CloudWatch – Alarms. The response for this operation includes a unit
 	//    attribute.
 	//
 	//    * RECORD_TYPE - The different types of charges such as RI fees, usage
@@ -995,23 +1255,32 @@ type GetDimensionValuesInput struct {
 	//
 	//    * AZ - The Availability Zone. An example is us-east-1a.
 	//
+	//    * CACHE_ENGINE - The Amazon ElastiCache operating system. Examples are
+	//    Windows or Linux.
+	//
+	//    * DEPLOYMENT_OPTION - The scope of Amazon Relational Database Service
+	//    deployments. Valid values are SingleAZ and MultiAZ.
+	//
 	//    * INSTANCE_TYPE - The type of EC2 instance. An example is m4.xlarge.
 	//
 	//    * LINKED_ACCOUNT - The description in the attribute map that includes
 	//    the full name of the member account. The value field contains the AWS
-	//    ID of the member account
+	//    ID of the member account.
 	//
-	//    * PLATFORM - The operating system. Examples are Windows or Linux.
+	//    * PLATFORM - The EC2 operating system. Examples are Windows or Linux.
 	//
-	//    * REGION - The AWS region.
+	//    * REGION - The AWS Region.
 	//
-	//    * SCOPE - The scope of a reserved instance (RI). Values are regional or
-	//    a single availability zone.
+	//    * SCOPE (Utilization only) - The scope of a Reserved Instance (RI). Values
+	//    are regional or a single Availability Zone.
+	//
+	//    * TAG (Coverage only) - The tags that are associated with a Reserved Instance
+	//    (RI).
 	//
 	//    * TENANCY - The tenancy of a resource. Examples are shared or dedicated.
 	Context *string `type:"string" enum:"Context"`
 
-	// The name of the dimension. Each Dimensionsis available for different a Context.
+	// The name of the dimension. Each Dimension is available for different a Context.
 	// For more information, see Context.
 	//
 	// Dimension is a required field
@@ -1101,31 +1370,41 @@ type GetDimensionValuesOutput struct {
 	// The filters that you used to filter your request. Some dimensions are available
 	// only for a specific context:
 	//
-	// If you set the context to CostAndUsage, you can use the following dimensions
+	// If you set the context to COST_AND_USAGE, you can use the following dimensions
 	// for searching:
 	//
 	//    * AZ - The Availability Zone. An example is us-east-1a.
 	//
+	//    * DATABASE_ENGINE - The Amazon Relational Database Service database. Examples
+	//    are Aurora or MySQL.
+	//
 	//    * INSTANCE_TYPE - The type of EC2 instance. An example is m4.xlarge.
+	//
+	//    * LEGAL_ENTITY_NAME - The name of the organization that sells you AWS
+	//    services, such as Amazon Web Services.
 	//
 	//    * LINKED_ACCOUNT - The description in the attribute map that includes
 	//    the full name of the member account. The value field contains the AWS
-	//    ID of the member account
+	//    ID of the member account.
+	//
+	//    * OPERATING_SYSTEM - The operating system. Examples are Windows or Linux.
 	//
 	//    * OPERATION - The action performed. Examples include RunInstance and CreateBucket.
 	//
-	//    * PURCHASE_TYPE - The reservation type of the purchase to which this usage
-	//    is related. Examples include: On Demand Instances and Standard Reserved
-	//    Instances
+	//    * PLATFORM - The EC2 operating system. Examples are Windows or Linux.
 	//
-	//    * SERVICE - The AWS service such as DynamoDB.
+	//    * PURCHASE_TYPE - The reservation type of the purchase to which this usage
+	//    is related. Examples include On-Demand Instances and Standard Reserved
+	//    Instances.
+	//
+	//    * SERVICE - The AWS service such as Amazon DynamoDB.
 	//
 	//    * USAGE_TYPE - The type of usage. An example is DataTransfer-In-Bytes.
-	//    The response for the GetDimensionValues action includes a unit attribute,
-	//    examples of which include GB and Hrs.
+	//    The response for the GetDimensionValues operation includes a unit attribute.
+	//    Examples include GB and Hrs.
 	//
 	//    * USAGE_TYPE_GROUP - The grouping of common usage types. An example is
-	//    EC2: CloudWatch – Alarms. The response for this action includes a unit
+	//    EC2: CloudWatch – Alarms. The response for this operation includes a unit
 	//    attribute.
 	//
 	//    * RECORD_TYPE - The different types of charges such as RI fees, usage
@@ -1136,18 +1415,27 @@ type GetDimensionValuesOutput struct {
 	//
 	//    * AZ - The Availability Zone. An example is us-east-1a.
 	//
+	//    * CACHE_ENGINE - The Amazon ElastiCache operating system. Examples are
+	//    Windows or Linux.
+	//
+	//    * DEPLOYMENT_OPTION - The scope of Amazon Relational Database Service
+	//    deployments. Valid values are SingleAZ and MultiAZ.
+	//
 	//    * INSTANCE_TYPE - The type of EC2 instance. An example is m4.xlarge.
 	//
 	//    * LINKED_ACCOUNT - The description in the attribute map that includes
 	//    the full name of the member account. The value field contains the AWS
-	//    ID of the member account
+	//    ID of the member account.
 	//
-	//    * PLATFORM - The operating system. Examples are Windows or Linux.
+	//    * PLATFORM - The EC2 operating system. Examples are Windows or Linux.
 	//
-	//    * REGION - The AWS region.
+	//    * REGION - The AWS Region.
 	//
-	//    * SCOPE - The scope of a reserved instance (RI). Values are regional or
-	//    a single availability zone.
+	//    * SCOPE (Utilization only) - The scope of a Reserved Instance (RI). Values
+	//    are regional or a single Availability Zone.
+	//
+	//    * TAG (Coverage only) - The tags that are associated with a Reserved Instance
+	//    (RI).
 	//
 	//    * TENANCY - The tenancy of a resource. Examples are shared or dedicated.
 	//
@@ -1204,47 +1492,71 @@ func (s *GetDimensionValuesOutput) SetTotalSize(v int64) *GetDimensionValuesOutp
 	return s
 }
 
-// You can query for how much of your instance usage was covered by a reservation.
+// You can use the following request parameters to query for how much of your
+// instance usage is covered by a reservation.
 type GetReservationCoverageInput struct {
 	_ struct{} `type:"structure"`
 
-	// Filters utilization data by dimensions. You can filter by the following dimensions.
+	// Filters utilization data by dimensions. You can filter by the following dimensions:
 	//
 	//    * AZ
+	//
+	//    * CACHE_ENGINE
+	//
+	//    * DATABASE_ENGINE
+	//
+	//    * DEPLOYMENT_OPTION
 	//
 	//    * INSTANCE_TYPE
 	//
 	//    * LINKED_ACCOUNT
 	//
+	//    * OPERATING_SYSTEM
+	//
 	//    * PLATFORM
 	//
 	//    * REGION
 	//
+	//    * SERVICE
+	//
+	//    * TAG
+	//
 	//    * TENANCY
 	//
-	// GetReservationCoverage uses the same Expression object as the other operations,
-	// but only AND is supported among each dimension. You can nest only one level
-	// deep. If there are multiple values for a dimension, they are OR'd together.
+	// GetReservationCoverage uses the same Expression (http://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_Expression.html)
+	// object as the other operations, but only AND is supported among each dimension.
+	// You can nest only one level deep. If there are multiple values for a dimension,
+	// they are OR'd together.
 	Filter *Expression `type:"structure"`
 
 	// The granularity of the AWS cost data for the reservation. Valid values are
 	// MONTHLY and DAILY.
 	//
 	// If GroupBy is set, Granularity can't be set. If Granularity isn't set, the
-	// response object doesn't include the Granularity, either MONTHLY or DAILY.
+	// response object doesn't include Granularity, either MONTHLY or DAILY.
 	Granularity *string `type:"string" enum:"Granularity"`
 
-	// You can group the data by the following attributes.
+	// You can group the data by the following attributes:
 	//
 	//    * AZ
+	//
+	//    * CACHE_ENGINE
+	//
+	//    * DATABASE_ENGINE
+	//
+	//    * DEPLOYMENT_OPTION
 	//
 	//    * INSTANCE_TYPE
 	//
 	//    * LINKED_ACCOUNT
 	//
+	//    * OPERATING_SYSTEM
+	//
 	//    * PLATFORM
 	//
 	//    * REGION
+	//
+	//    * TAG
 	//
 	//    * TENANCY
 	GroupBy []*GroupDefinition `type:"list"`
@@ -1255,11 +1567,11 @@ type GetReservationCoverageInput struct {
 	NextPageToken *string `type:"string"`
 
 	// The start and end dates of the period for which you want to retrieve data
-	// about reservation coverage. You can retrieve data for a maximum of 13 months-the
-	// last 12 months and the current month. The start date is inclusive, but the
-	// end date is exclusive. For example, if start is 2017-01-01 and end is 2017-05-01,
-	// then the cost and usage data is retrieved from 2017-01-01 up to and including
-	// 2017-04-30 but not including 2017-05-01.
+	// about reservation coverage. You can retrieve data for a maximum of 13 months:
+	// the last 12 months and the current month. The start date is inclusive, but
+	// the end date is exclusive. For example, if start is 2017-01-01 and end is
+	// 2017-05-01, then the cost and usage data is retrieved from 2017-01-01 up
+	// to and including 2017-04-30 but not including 2017-05-01.
 	//
 	// TimePeriod is a required field
 	TimePeriod *DateInterval `type:"structure" required:"true"`
@@ -1336,7 +1648,7 @@ type GetReservationCoverageOutput struct {
 	// page size.
 	NextPageToken *string `type:"string"`
 
-	// The total amount of instance usage covered by a reservation.
+	// The total amount of instance usage that is covered by a reservation.
 	Total *Coverage `type:"structure"`
 }
 
@@ -1368,18 +1680,202 @@ func (s *GetReservationCoverageOutput) SetTotal(v *Coverage) *GetReservationCove
 	return s
 }
 
+type GetReservationPurchaseRecommendationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The account ID that is associated with the recommendation.
+	AccountId *string `type:"string"`
+
+	// The account scope that you want recommendations for. The only valid value
+	// is Payer. This means that AWS includes the master account and any member
+	// accounts when it calculates its recommendations.
+	AccountScope *string `type:"string" enum:"AccountScope"`
+
+	// The number of previous days that you want AWS to consider when it calculates
+	// your recommendations.
+	LookbackPeriodInDays *string `type:"string" enum:"LookbackPeriodInDays"`
+
+	// The pagination token that indicates the next set of results that you want
+	// to retrieve.
+	NextPageToken *string `type:"string"`
+
+	// The number of recommendations that you want returned in a single response
+	// object.
+	PageSize *int64 `type:"integer"`
+
+	// The reservation purchase option that you want recommendations for.
+	PaymentOption *string `type:"string" enum:"PaymentOption"`
+
+	// The specific service that you want recommendations for.
+	//
+	// Service is a required field
+	Service *string `type:"string" required:"true"`
+
+	// The hardware specifications for the service instances that you want recommendations
+	// for, such as standard or convertible EC2 instances.
+	ServiceSpecification *ServiceSpecification `type:"structure"`
+
+	// The reservation term that you want recommendations for.
+	TermInYears *string `type:"string" enum:"TermInYears"`
+}
+
+// String returns the string representation
+func (s GetReservationPurchaseRecommendationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetReservationPurchaseRecommendationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetReservationPurchaseRecommendationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetReservationPurchaseRecommendationInput"}
+	if s.Service == nil {
+		invalidParams.Add(request.NewErrParamRequired("Service"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetAccountId(v string) *GetReservationPurchaseRecommendationInput {
+	s.AccountId = &v
+	return s
+}
+
+// SetAccountScope sets the AccountScope field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetAccountScope(v string) *GetReservationPurchaseRecommendationInput {
+	s.AccountScope = &v
+	return s
+}
+
+// SetLookbackPeriodInDays sets the LookbackPeriodInDays field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetLookbackPeriodInDays(v string) *GetReservationPurchaseRecommendationInput {
+	s.LookbackPeriodInDays = &v
+	return s
+}
+
+// SetNextPageToken sets the NextPageToken field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetNextPageToken(v string) *GetReservationPurchaseRecommendationInput {
+	s.NextPageToken = &v
+	return s
+}
+
+// SetPageSize sets the PageSize field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetPageSize(v int64) *GetReservationPurchaseRecommendationInput {
+	s.PageSize = &v
+	return s
+}
+
+// SetPaymentOption sets the PaymentOption field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetPaymentOption(v string) *GetReservationPurchaseRecommendationInput {
+	s.PaymentOption = &v
+	return s
+}
+
+// SetService sets the Service field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetService(v string) *GetReservationPurchaseRecommendationInput {
+	s.Service = &v
+	return s
+}
+
+// SetServiceSpecification sets the ServiceSpecification field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetServiceSpecification(v *ServiceSpecification) *GetReservationPurchaseRecommendationInput {
+	s.ServiceSpecification = v
+	return s
+}
+
+// SetTermInYears sets the TermInYears field's value.
+func (s *GetReservationPurchaseRecommendationInput) SetTermInYears(v string) *GetReservationPurchaseRecommendationInput {
+	s.TermInYears = &v
+	return s
+}
+
+type GetReservationPurchaseRecommendationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about this specific recommendation call, such as the time stamp
+	// for when Cost Explorer generated this recommendation.
+	Metadata *ReservationPurchaseRecommendationMetadata `type:"structure"`
+
+	// The pagination token for the next set of retrievable results.
+	NextPageToken *string `type:"string"`
+
+	// Recommendations for reservations to purchase.
+	Recommendations []*ReservationPurchaseRecommendation `type:"list"`
+}
+
+// String returns the string representation
+func (s GetReservationPurchaseRecommendationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetReservationPurchaseRecommendationOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetadata sets the Metadata field's value.
+func (s *GetReservationPurchaseRecommendationOutput) SetMetadata(v *ReservationPurchaseRecommendationMetadata) *GetReservationPurchaseRecommendationOutput {
+	s.Metadata = v
+	return s
+}
+
+// SetNextPageToken sets the NextPageToken field's value.
+func (s *GetReservationPurchaseRecommendationOutput) SetNextPageToken(v string) *GetReservationPurchaseRecommendationOutput {
+	s.NextPageToken = &v
+	return s
+}
+
+// SetRecommendations sets the Recommendations field's value.
+func (s *GetReservationPurchaseRecommendationOutput) SetRecommendations(v []*ReservationPurchaseRecommendation) *GetReservationPurchaseRecommendationOutput {
+	s.Recommendations = v
+	return s
+}
+
 type GetReservationUtilizationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Filters utilization data by using different dimensions. GetReservationUtilization
-	// uses the same Expression object as the other operations, but only AND is
-	// supported among each dimension, and nesting is supported up to only one level
-	// deep. If there are multiple values for a dimension, they are OR'd together.
+	// Filters utilization data by dimensions. You can filter by the following dimensions:
+	//
+	//    * AZ
+	//
+	//    * CACHE_ENGINE
+	//
+	//    * DATABASE_ENGINE
+	//
+	//    * DEPLOYMENT_OPTION
+	//
+	//    * INSTANCE_TYPE
+	//
+	//    * LINKED_ACCOUNT
+	//
+	//    * OPERATING_SYSTEM
+	//
+	//    * PLATFORM
+	//
+	//    * REGION
+	//
+	//    * SERVICE
+	//
+	//    * SCOPE
+	//
+	//    * TENANCY
+	//
+	// GetReservationUtilization uses the same Expression (http://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_Expression.html)
+	// object as the other operations, but only AND is supported among each dimension,
+	// and nesting is supported up to only one level deep. If there are multiple
+	// values for a dimension, they are OR'd together.
 	Filter *Expression `type:"structure"`
 
 	// If GroupBy is set, Granularity can't be set. If Granularity isn't set, the
-	// response object doesn't include the Granularity, either MONTHLY or DAILY.
-	// If both GroupBy and Granularity aren't set, GetReservationUtilization defaults
+	// response object doesn't include Granularity, either MONTHLY or DAILY. If
+	// both GroupBy and Granularity aren't set, GetReservationUtilization defaults
 	// to DAILY.
 	Granularity *string `type:"string" enum:"Granularity"`
 
@@ -1391,7 +1887,7 @@ type GetReservationUtilizationInput struct {
 	// size.
 	NextPageToken *string `type:"string"`
 
-	// Sets the start and end dates for retrieving reserve instance (RI) utilization.
+	// Sets the start and end dates for retrieving Reserved Instance (RI) utilization.
 	// The start date is inclusive, but the end date is exclusive. For example,
 	// if start is 2017-01-01 and end is 2017-05-01, then the cost and usage data
 	// is retrieved from 2017-01-01 up to and including 2017-04-30 but not including
@@ -1641,10 +2137,10 @@ func (s *GetTagsOutput) SetTotalSize(v int64) *GetTagsOutput {
 type Group struct {
 	_ struct{} `type:"structure"`
 
-	// The keys included in this group.
+	// The keys that are included in this group.
 	Keys []*string `type:"list"`
 
-	// The metrics included in this group.
+	// The metrics that are included in this group.
 	Metrics map[string]*MetricValue `type:"map"`
 }
 
@@ -1704,6 +2200,39 @@ func (s *GroupDefinition) SetType(v string) *GroupDefinition {
 	return s
 }
 
+// Details about the instances that AWS recommends that you purchase.
+type InstanceDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The EC2 instances that AWS recommends that you purchase.
+	EC2InstanceDetails *EC2InstanceDetails `type:"structure"`
+
+	// The RDS instances that AWS recommends that you purchase.
+	RDSInstanceDetails *RDSInstanceDetails `type:"structure"`
+}
+
+// String returns the string representation
+func (s InstanceDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InstanceDetails) GoString() string {
+	return s.String()
+}
+
+// SetEC2InstanceDetails sets the EC2InstanceDetails field's value.
+func (s *InstanceDetails) SetEC2InstanceDetails(v *EC2InstanceDetails) *InstanceDetails {
+	s.EC2InstanceDetails = v
+	return s
+}
+
+// SetRDSInstanceDetails sets the RDSInstanceDetails field's value.
+func (s *InstanceDetails) SetRDSInstanceDetails(v *RDSInstanceDetails) *InstanceDetails {
+	s.RDSInstanceDetails = v
+	return s
+}
+
 // The aggregated value for a metric.
 type MetricValue struct {
 	_ struct{} `type:"structure"`
@@ -1737,11 +2266,99 @@ func (s *MetricValue) SetUnit(v string) *MetricValue {
 	return s
 }
 
+// Details about the RDS instances that AWS recommends that you purchase.
+type RDSInstanceDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Whether the recommendation is for a current generation instance.
+	CurrentGeneration *bool `type:"boolean"`
+
+	// The database engine that the recommended reservation supports.
+	DatabaseEngine *string `type:"string"`
+
+	// Whether the recommendation is for a reservation in a single availability
+	// zone or a reservation with a backup in a second availability zone.
+	DeploymentOption *string `type:"string"`
+
+	// The instance family of the recommended reservation.
+	Family *string `type:"string"`
+
+	// The type of instance that AWS recommends.
+	InstanceType *string `type:"string"`
+
+	// The license model that the recommended reservation supports.
+	LicenseModel *string `type:"string"`
+
+	// The AWS Region of the recommended reservation.
+	Region *string `type:"string"`
+
+	// Whether the recommended reservation is size flexible.
+	SizeFlexEligible *bool `type:"boolean"`
+}
+
+// String returns the string representation
+func (s RDSInstanceDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RDSInstanceDetails) GoString() string {
+	return s.String()
+}
+
+// SetCurrentGeneration sets the CurrentGeneration field's value.
+func (s *RDSInstanceDetails) SetCurrentGeneration(v bool) *RDSInstanceDetails {
+	s.CurrentGeneration = &v
+	return s
+}
+
+// SetDatabaseEngine sets the DatabaseEngine field's value.
+func (s *RDSInstanceDetails) SetDatabaseEngine(v string) *RDSInstanceDetails {
+	s.DatabaseEngine = &v
+	return s
+}
+
+// SetDeploymentOption sets the DeploymentOption field's value.
+func (s *RDSInstanceDetails) SetDeploymentOption(v string) *RDSInstanceDetails {
+	s.DeploymentOption = &v
+	return s
+}
+
+// SetFamily sets the Family field's value.
+func (s *RDSInstanceDetails) SetFamily(v string) *RDSInstanceDetails {
+	s.Family = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *RDSInstanceDetails) SetInstanceType(v string) *RDSInstanceDetails {
+	s.InstanceType = &v
+	return s
+}
+
+// SetLicenseModel sets the LicenseModel field's value.
+func (s *RDSInstanceDetails) SetLicenseModel(v string) *RDSInstanceDetails {
+	s.LicenseModel = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *RDSInstanceDetails) SetRegion(v string) *RDSInstanceDetails {
+	s.Region = &v
+	return s
+}
+
+// SetSizeFlexEligible sets the SizeFlexEligible field's value.
+func (s *RDSInstanceDetails) SetSizeFlexEligible(v bool) *RDSInstanceDetails {
+	s.SizeFlexEligible = &v
+	return s
+}
+
 // The aggregated numbers for your RI usage.
 type ReservationAggregates struct {
 	_ struct{} `type:"structure"`
 
-	// How many RI hours you purchased.
+	// How many RI hours that you purchased.
 	PurchasedHours *string `type:"string"`
 
 	// The total number of RI hours that you used.
@@ -1821,6 +2438,357 @@ func (s *ReservationCoverageGroup) SetCoverage(v *Coverage) *ReservationCoverage
 	return s
 }
 
+// A specific reservation that AWS recommends for purchase.
+type ReservationPurchaseRecommendation struct {
+	_ struct{} `type:"structure"`
+
+	// The account scope that AWS recommends that you purchase this instance for.
+	// For example, you can purchase this reservation for an entire organization
+	// in AWS Organizations.
+	AccountScope *string `type:"string" enum:"AccountScope"`
+
+	// How many days of previous usage that AWS takes into consideration when making
+	// this recommendation.
+	LookbackPeriodInDays *string `type:"string" enum:"LookbackPeriodInDays"`
+
+	// The payment option for the reservation. For example, AllUpfront or NoUpfront.
+	PaymentOption *string `type:"string" enum:"PaymentOption"`
+
+	// Details about the recommended purchases.
+	RecommendationDetails []*ReservationPurchaseRecommendationDetail `type:"list"`
+
+	// A summary about the recommended purchase.
+	RecommendationSummary *ReservationPurchaseRecommendationSummary `type:"structure"`
+
+	// Hardware specifications for the service that you want recommendations for.
+	ServiceSpecification *ServiceSpecification `type:"structure"`
+
+	// The term of the reservation that you want recommendations for, in years.
+	TermInYears *string `type:"string" enum:"TermInYears"`
+}
+
+// String returns the string representation
+func (s ReservationPurchaseRecommendation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservationPurchaseRecommendation) GoString() string {
+	return s.String()
+}
+
+// SetAccountScope sets the AccountScope field's value.
+func (s *ReservationPurchaseRecommendation) SetAccountScope(v string) *ReservationPurchaseRecommendation {
+	s.AccountScope = &v
+	return s
+}
+
+// SetLookbackPeriodInDays sets the LookbackPeriodInDays field's value.
+func (s *ReservationPurchaseRecommendation) SetLookbackPeriodInDays(v string) *ReservationPurchaseRecommendation {
+	s.LookbackPeriodInDays = &v
+	return s
+}
+
+// SetPaymentOption sets the PaymentOption field's value.
+func (s *ReservationPurchaseRecommendation) SetPaymentOption(v string) *ReservationPurchaseRecommendation {
+	s.PaymentOption = &v
+	return s
+}
+
+// SetRecommendationDetails sets the RecommendationDetails field's value.
+func (s *ReservationPurchaseRecommendation) SetRecommendationDetails(v []*ReservationPurchaseRecommendationDetail) *ReservationPurchaseRecommendation {
+	s.RecommendationDetails = v
+	return s
+}
+
+// SetRecommendationSummary sets the RecommendationSummary field's value.
+func (s *ReservationPurchaseRecommendation) SetRecommendationSummary(v *ReservationPurchaseRecommendationSummary) *ReservationPurchaseRecommendation {
+	s.RecommendationSummary = v
+	return s
+}
+
+// SetServiceSpecification sets the ServiceSpecification field's value.
+func (s *ReservationPurchaseRecommendation) SetServiceSpecification(v *ServiceSpecification) *ReservationPurchaseRecommendation {
+	s.ServiceSpecification = v
+	return s
+}
+
+// SetTermInYears sets the TermInYears field's value.
+func (s *ReservationPurchaseRecommendation) SetTermInYears(v string) *ReservationPurchaseRecommendation {
+	s.TermInYears = &v
+	return s
+}
+
+// Details about your recommended reservation purchase.
+type ReservationPurchaseRecommendationDetail struct {
+	_ struct{} `type:"structure"`
+
+	// The average number of normalized units that you used in an hour during the
+	// historical period. AWS uses this to calculate your recommended reservation
+	// purchases.
+	AverageNormalizedUnitsUsedPerHour *string `type:"string"`
+
+	// The average number of instances that you used in an hour during the historical
+	// period. AWS uses this to calculate your recommended reservation purchases.
+	AverageNumberOfInstancesUsedPerHour *string `type:"string"`
+
+	// The average utilization of your instances. AWS uses this to calculate your
+	// recommended reservation purchases.
+	AverageUtilization *string `type:"string"`
+
+	// The currency code that AWS used to calculate the costs for this instance.
+	CurrencyCode *string `type:"string"`
+
+	// How long AWS estimates that it takes for this instance to start saving you
+	// money, in months.
+	EstimatedBreakEvenInMonths *string `type:"string"`
+
+	// How much AWS estimates that you spend on On-Demand Instances in a month.
+	EstimatedMonthlyOnDemandCost *string `type:"string"`
+
+	// How much AWS estimates that this specific recommendation could save you in
+	// a month.
+	EstimatedMonthlySavingsAmount *string `type:"string"`
+
+	// How much AWS estimates that this specific recommendation could save you in
+	// a month, as a percentage of your overall costs.
+	EstimatedMonthlySavingsPercentage *string `type:"string"`
+
+	// How much AWS estimates that you would have spent for all usage during the
+	// specified historical period if you had had a reservation.
+	EstimatedReservationCostForLookbackPeriod *string `type:"string"`
+
+	// Details about the instances that AWS recommends that you purchase.
+	InstanceDetails *InstanceDetails `type:"structure"`
+
+	// The maximum number of normalized units that you used in an hour during the
+	// historical period. AWS uses this to calculate your recommended reservation
+	// purchases.
+	MaximumNormalizedUnitsUsedPerHour *string `type:"string"`
+
+	// The maximum number of instances that you used in an hour during the historical
+	// period. AWS uses this to calculate your recommended reservation purchases.
+	MaximumNumberOfInstancesUsedPerHour *string `type:"string"`
+
+	// The minimum number of hours that you used in an hour during the historical
+	// period. AWS uses this to calculate your recommended reservation purchases.
+	MinimumNormalizedUnitsUsedPerHour *string `type:"string"`
+
+	// The minimum number of instances that you used in an hour during the historical
+	// period. AWS uses this to calculate your recommended reservation purchases.
+	MinimumNumberOfInstancesUsedPerHour *string `type:"string"`
+
+	// The number of normalized units that AWS recommends that you purchase.
+	RecommendedNormalizedUnitsToPurchase *string `type:"string"`
+
+	// The number of instances that AWS recommends that you purchase.
+	RecommendedNumberOfInstancesToPurchase *string `type:"string"`
+
+	// How much purchasing this instance costs you on a monthly basis.
+	RecurringStandardMonthlyCost *string `type:"string"`
+
+	// How much purchasing this instance costs you upfront.
+	UpfrontCost *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ReservationPurchaseRecommendationDetail) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservationPurchaseRecommendationDetail) GoString() string {
+	return s.String()
+}
+
+// SetAverageNormalizedUnitsUsedPerHour sets the AverageNormalizedUnitsUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetAverageNormalizedUnitsUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.AverageNormalizedUnitsUsedPerHour = &v
+	return s
+}
+
+// SetAverageNumberOfInstancesUsedPerHour sets the AverageNumberOfInstancesUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetAverageNumberOfInstancesUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.AverageNumberOfInstancesUsedPerHour = &v
+	return s
+}
+
+// SetAverageUtilization sets the AverageUtilization field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetAverageUtilization(v string) *ReservationPurchaseRecommendationDetail {
+	s.AverageUtilization = &v
+	return s
+}
+
+// SetCurrencyCode sets the CurrencyCode field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetCurrencyCode(v string) *ReservationPurchaseRecommendationDetail {
+	s.CurrencyCode = &v
+	return s
+}
+
+// SetEstimatedBreakEvenInMonths sets the EstimatedBreakEvenInMonths field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetEstimatedBreakEvenInMonths(v string) *ReservationPurchaseRecommendationDetail {
+	s.EstimatedBreakEvenInMonths = &v
+	return s
+}
+
+// SetEstimatedMonthlyOnDemandCost sets the EstimatedMonthlyOnDemandCost field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetEstimatedMonthlyOnDemandCost(v string) *ReservationPurchaseRecommendationDetail {
+	s.EstimatedMonthlyOnDemandCost = &v
+	return s
+}
+
+// SetEstimatedMonthlySavingsAmount sets the EstimatedMonthlySavingsAmount field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetEstimatedMonthlySavingsAmount(v string) *ReservationPurchaseRecommendationDetail {
+	s.EstimatedMonthlySavingsAmount = &v
+	return s
+}
+
+// SetEstimatedMonthlySavingsPercentage sets the EstimatedMonthlySavingsPercentage field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetEstimatedMonthlySavingsPercentage(v string) *ReservationPurchaseRecommendationDetail {
+	s.EstimatedMonthlySavingsPercentage = &v
+	return s
+}
+
+// SetEstimatedReservationCostForLookbackPeriod sets the EstimatedReservationCostForLookbackPeriod field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetEstimatedReservationCostForLookbackPeriod(v string) *ReservationPurchaseRecommendationDetail {
+	s.EstimatedReservationCostForLookbackPeriod = &v
+	return s
+}
+
+// SetInstanceDetails sets the InstanceDetails field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetInstanceDetails(v *InstanceDetails) *ReservationPurchaseRecommendationDetail {
+	s.InstanceDetails = v
+	return s
+}
+
+// SetMaximumNormalizedUnitsUsedPerHour sets the MaximumNormalizedUnitsUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetMaximumNormalizedUnitsUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.MaximumNormalizedUnitsUsedPerHour = &v
+	return s
+}
+
+// SetMaximumNumberOfInstancesUsedPerHour sets the MaximumNumberOfInstancesUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetMaximumNumberOfInstancesUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.MaximumNumberOfInstancesUsedPerHour = &v
+	return s
+}
+
+// SetMinimumNormalizedUnitsUsedPerHour sets the MinimumNormalizedUnitsUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetMinimumNormalizedUnitsUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.MinimumNormalizedUnitsUsedPerHour = &v
+	return s
+}
+
+// SetMinimumNumberOfInstancesUsedPerHour sets the MinimumNumberOfInstancesUsedPerHour field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetMinimumNumberOfInstancesUsedPerHour(v string) *ReservationPurchaseRecommendationDetail {
+	s.MinimumNumberOfInstancesUsedPerHour = &v
+	return s
+}
+
+// SetRecommendedNormalizedUnitsToPurchase sets the RecommendedNormalizedUnitsToPurchase field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetRecommendedNormalizedUnitsToPurchase(v string) *ReservationPurchaseRecommendationDetail {
+	s.RecommendedNormalizedUnitsToPurchase = &v
+	return s
+}
+
+// SetRecommendedNumberOfInstancesToPurchase sets the RecommendedNumberOfInstancesToPurchase field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetRecommendedNumberOfInstancesToPurchase(v string) *ReservationPurchaseRecommendationDetail {
+	s.RecommendedNumberOfInstancesToPurchase = &v
+	return s
+}
+
+// SetRecurringStandardMonthlyCost sets the RecurringStandardMonthlyCost field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetRecurringStandardMonthlyCost(v string) *ReservationPurchaseRecommendationDetail {
+	s.RecurringStandardMonthlyCost = &v
+	return s
+}
+
+// SetUpfrontCost sets the UpfrontCost field's value.
+func (s *ReservationPurchaseRecommendationDetail) SetUpfrontCost(v string) *ReservationPurchaseRecommendationDetail {
+	s.UpfrontCost = &v
+	return s
+}
+
+// Information about this specific recommendation, such as the time stamp for
+// when AWS made a specific recommendation.
+type ReservationPurchaseRecommendationMetadata struct {
+	_ struct{} `type:"structure"`
+
+	// The time stamp for when AWS made this recommendation.
+	GenerationTimestamp *string `type:"string"`
+
+	// The ID for this specific recommendation.
+	RecommendationId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ReservationPurchaseRecommendationMetadata) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservationPurchaseRecommendationMetadata) GoString() string {
+	return s.String()
+}
+
+// SetGenerationTimestamp sets the GenerationTimestamp field's value.
+func (s *ReservationPurchaseRecommendationMetadata) SetGenerationTimestamp(v string) *ReservationPurchaseRecommendationMetadata {
+	s.GenerationTimestamp = &v
+	return s
+}
+
+// SetRecommendationId sets the RecommendationId field's value.
+func (s *ReservationPurchaseRecommendationMetadata) SetRecommendationId(v string) *ReservationPurchaseRecommendationMetadata {
+	s.RecommendationId = &v
+	return s
+}
+
+// A summary about this recommendation, such as the currency code, the amount
+// that AWS estimates you could save, and the total amount of reservation to
+// purchase.
+type ReservationPurchaseRecommendationSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The currency code used for this recommendation.
+	CurrencyCode *string `type:"string"`
+
+	// The total amount that AWS estimates that this recommendation could save you
+	// in a month.
+	TotalEstimatedMonthlySavingsAmount *string `type:"string"`
+
+	// The total amount that AWS estimates that this recommendation could save you
+	// in a month, as a percentage of your costs.
+	TotalEstimatedMonthlySavingsPercentage *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ReservationPurchaseRecommendationSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservationPurchaseRecommendationSummary) GoString() string {
+	return s.String()
+}
+
+// SetCurrencyCode sets the CurrencyCode field's value.
+func (s *ReservationPurchaseRecommendationSummary) SetCurrencyCode(v string) *ReservationPurchaseRecommendationSummary {
+	s.CurrencyCode = &v
+	return s
+}
+
+// SetTotalEstimatedMonthlySavingsAmount sets the TotalEstimatedMonthlySavingsAmount field's value.
+func (s *ReservationPurchaseRecommendationSummary) SetTotalEstimatedMonthlySavingsAmount(v string) *ReservationPurchaseRecommendationSummary {
+	s.TotalEstimatedMonthlySavingsAmount = &v
+	return s
+}
+
+// SetTotalEstimatedMonthlySavingsPercentage sets the TotalEstimatedMonthlySavingsPercentage field's value.
+func (s *ReservationPurchaseRecommendationSummary) SetTotalEstimatedMonthlySavingsPercentage(v string) *ReservationPurchaseRecommendationSummary {
+	s.TotalEstimatedMonthlySavingsPercentage = &v
+	return s
+}
+
 // A group of RIs that share a set of attributes.
 type ReservationUtilizationGroup struct {
 	_ struct{} `type:"structure"`
@@ -1876,7 +2844,7 @@ func (s *ReservationUtilizationGroup) SetValue(v string) *ReservationUtilization
 type ResultByTime struct {
 	_ struct{} `type:"structure"`
 
-	// Whether or not this result is estimated.
+	// Whether this result is estimated.
 	Estimated *bool `type:"boolean"`
 
 	// The groups that are included in this time period.
@@ -1920,6 +2888,31 @@ func (s *ResultByTime) SetTimePeriod(v *DateInterval) *ResultByTime {
 // SetTotal sets the Total field's value.
 func (s *ResultByTime) SetTotal(v map[string]*MetricValue) *ResultByTime {
 	s.Total = v
+	return s
+}
+
+// Hardware specifications for the service that you want recommendations for.
+type ServiceSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The EC2 hardware specifications that you want AWS to provide recommendations
+	// for.
+	EC2Specification *EC2Specification `type:"structure"`
+}
+
+// String returns the string representation
+func (s ServiceSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ServiceSpecification) GoString() string {
+	return s.String()
+}
+
+// SetEC2Specification sets the EC2Specification field's value.
+func (s *ServiceSpecification) SetEC2Specification(v *EC2Specification) *ServiceSpecification {
+	s.EC2Specification = v
 	return s
 }
 
@@ -1997,6 +2990,11 @@ func (s *UtilizationByTime) SetTotal(v *ReservationAggregates) *UtilizationByTim
 	s.Total = v
 	return s
 }
+
+const (
+	// AccountScopePayer is a AccountScope enum value
+	AccountScopePayer = "PAYER"
+)
 
 const (
 	// ContextCostAndUsage is a Context enum value
@@ -2082,4 +3080,42 @@ const (
 
 	// GroupDefinitionTypeTag is a GroupDefinitionType enum value
 	GroupDefinitionTypeTag = "TAG"
+)
+
+const (
+	// LookbackPeriodInDaysSevenDays is a LookbackPeriodInDays enum value
+	LookbackPeriodInDaysSevenDays = "SEVEN_DAYS"
+
+	// LookbackPeriodInDaysThirtyDays is a LookbackPeriodInDays enum value
+	LookbackPeriodInDaysThirtyDays = "THIRTY_DAYS"
+
+	// LookbackPeriodInDaysSixtyDays is a LookbackPeriodInDays enum value
+	LookbackPeriodInDaysSixtyDays = "SIXTY_DAYS"
+)
+
+const (
+	// OfferingClassStandard is a OfferingClass enum value
+	OfferingClassStandard = "STANDARD"
+
+	// OfferingClassConvertible is a OfferingClass enum value
+	OfferingClassConvertible = "CONVERTIBLE"
+)
+
+const (
+	// PaymentOptionNoUpfront is a PaymentOption enum value
+	PaymentOptionNoUpfront = "NO_UPFRONT"
+
+	// PaymentOptionPartialUpfront is a PaymentOption enum value
+	PaymentOptionPartialUpfront = "PARTIAL_UPFRONT"
+
+	// PaymentOptionAllUpfront is a PaymentOption enum value
+	PaymentOptionAllUpfront = "ALL_UPFRONT"
+)
+
+const (
+	// TermInYearsOneYear is a TermInYears enum value
+	TermInYearsOneYear = "ONE_YEAR"
+
+	// TermInYearsThreeYears is a TermInYears enum value
+	TermInYearsThreeYears = "THREE_YEARS"
 )

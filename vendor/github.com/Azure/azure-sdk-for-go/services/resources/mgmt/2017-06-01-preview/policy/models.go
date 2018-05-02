@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Mode enumerates the values for mode.
 type Mode string
 
@@ -36,6 +37,13 @@ const (
 	NotSpecified Mode = "NotSpecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
+// PossibleModeValues returns an array of possible values for the Mode const type.
+func PossibleModeValues() []Mode {
+	return []Mode{All, Indexed, NotSpecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Type enumerates the values for type.
 type Type string
 
@@ -48,6 +56,13 @@ const (
 	TypeNotSpecified Type = "NotSpecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
+// PossibleTypeValues returns an array of possible values for the Type const type.
+func PossibleTypeValues() []Type {
+	return []Type{TypeBuiltIn, TypeCustom, TypeNotSpecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Assignment the policy assignment.
 type Assignment struct {
 	autorest.Response `json:"-"`
@@ -63,6 +78,29 @@ type Assignment struct {
 	Sku *Sku `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
+// MarshalJSON is the custom marshaler for Assignment.
+func (a Assignment) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.AssignmentProperties != nil {
+		objectMap["properties"] = a.AssignmentProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.Sku != nil {
+		objectMap["sku"] = a.Sku
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // UnmarshalJSON is the custom unmarshaler for Assignment struct.
 func (a *Assignment) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -123,6 +161,7 @@ func (a *Assignment) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // AssignmentListResult list of policy assignments.
 type AssignmentListResult struct {
 	autorest.Response `json:"-"`
@@ -132,12 +171,14 @@ type AssignmentListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // AssignmentListResultIterator provides access to a complete listing of Assignment values.
 type AssignmentListResultIterator struct {
 	i    int
 	page AssignmentListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *AssignmentListResultIterator) Next() error {
@@ -154,16 +195,19 @@ func (iter *AssignmentListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter AssignmentListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (iter AssignmentListResultIterator) Response() AssignmentListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter AssignmentListResultIterator) Value() Assignment {
@@ -173,6 +217,7 @@ func (iter AssignmentListResultIterator) Value() Assignment {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (alr AssignmentListResult) IsEmpty() bool {
 	return alr.Value == nil || len(*alr.Value) == 0
@@ -190,12 +235,14 @@ func (alr AssignmentListResult) assignmentListResultPreparer() (*http.Request, e
 		autorest.WithBaseURL(to.String(alr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // AssignmentListResultPage contains a page of Assignment values.
 type AssignmentListResultPage struct {
 	fn  func(AssignmentListResult) (AssignmentListResult, error)
 	alr AssignmentListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *AssignmentListResultPage) Next() error {
@@ -207,16 +254,19 @@ func (page *AssignmentListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page AssignmentListResultPage) NotDone() bool {
 	return !page.alr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (page AssignmentListResultPage) Response() AssignmentListResult {
 	return page.alr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page AssignmentListResultPage) Values() []Assignment {
 	if page.alr.IsEmpty() {
@@ -225,6 +275,7 @@ func (page AssignmentListResultPage) Values() []Assignment {
 	return *page.alr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // AssignmentProperties the policy assignment properties.
 type AssignmentProperties struct {
 	// DisplayName - The display name of the policy assignment.
@@ -243,6 +294,7 @@ type AssignmentProperties struct {
 	Metadata interface{} `json:"metadata,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Definition the policy definition.
 type Definition struct {
 	autorest.Response `json:"-"`
@@ -254,6 +306,23 @@ type Definition struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
+// MarshalJSON is the custom marshaler for Definition.
+func (d Definition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if d.DefinitionProperties != nil {
+		objectMap["properties"] = d.DefinitionProperties
+	}
+	if d.ID != nil {
+		objectMap["id"] = d.ID
+	}
+	if d.Name != nil {
+		objectMap["name"] = d.Name
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // UnmarshalJSON is the custom unmarshaler for Definition struct.
 func (d *Definition) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -296,6 +365,7 @@ func (d *Definition) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DefinitionListResult list of policy definitions.
 type DefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -305,12 +375,14 @@ type DefinitionListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DefinitionListResultIterator provides access to a complete listing of Definition values.
 type DefinitionListResultIterator struct {
 	i    int
 	page DefinitionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DefinitionListResultIterator) Next() error {
@@ -327,16 +399,19 @@ func (iter *DefinitionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DefinitionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (iter DefinitionListResultIterator) Response() DefinitionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DefinitionListResultIterator) Value() Definition {
@@ -346,6 +421,7 @@ func (iter DefinitionListResultIterator) Value() Definition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlr DefinitionListResult) IsEmpty() bool {
 	return dlr.Value == nil || len(*dlr.Value) == 0
@@ -363,12 +439,14 @@ func (dlr DefinitionListResult) definitionListResultPreparer() (*http.Request, e
 		autorest.WithBaseURL(to.String(dlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DefinitionListResultPage contains a page of Definition values.
 type DefinitionListResultPage struct {
 	fn  func(DefinitionListResult) (DefinitionListResult, error)
 	dlr DefinitionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DefinitionListResultPage) Next() error {
@@ -380,16 +458,19 @@ func (page *DefinitionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DefinitionListResultPage) NotDone() bool {
 	return !page.dlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (page DefinitionListResultPage) Response() DefinitionListResult {
 	return page.dlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DefinitionListResultPage) Values() []Definition {
 	if page.dlr.IsEmpty() {
@@ -398,6 +479,7 @@ func (page DefinitionListResultPage) Values() []Definition {
 	return *page.dlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DefinitionProperties the policy definition properties.
 type DefinitionProperties struct {
 	// PolicyType - The type of policy definition. Possible values are NotSpecified, BuiltIn, and Custom. Possible values include: 'TypeNotSpecified', 'TypeBuiltIn', 'TypeCustom'
@@ -416,6 +498,7 @@ type DefinitionProperties struct {
 	Parameters interface{} `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // DefinitionReference the policy definition reference.
 type DefinitionReference struct {
 	// PolicyDefinitionID - The ID of the policy definition or policy set definition.
@@ -424,6 +507,7 @@ type DefinitionReference struct {
 	Parameters interface{} `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // ErrorResponse error reponse indicates ARM is not able to process the incoming request. The reason is provided in
 // the error message.
 type ErrorResponse struct {
@@ -435,6 +519,7 @@ type ErrorResponse struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinition the policy set definition.
 type SetDefinition struct {
 	autorest.Response `json:"-"`
@@ -448,6 +533,26 @@ type SetDefinition struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
+// MarshalJSON is the custom marshaler for SetDefinition.
+func (sd SetDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sd.SetDefinitionProperties != nil {
+		objectMap["properties"] = sd.SetDefinitionProperties
+	}
+	if sd.ID != nil {
+		objectMap["id"] = sd.ID
+	}
+	if sd.Name != nil {
+		objectMap["name"] = sd.Name
+	}
+	if sd.Type != nil {
+		objectMap["type"] = sd.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // UnmarshalJSON is the custom unmarshaler for SetDefinition struct.
 func (sd *SetDefinition) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -499,6 +604,7 @@ func (sd *SetDefinition) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinitionListResult list of policy set definitions.
 type SetDefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -508,12 +614,14 @@ type SetDefinitionListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinitionListResultIterator provides access to a complete listing of SetDefinition values.
 type SetDefinitionListResultIterator struct {
 	i    int
 	page SetDefinitionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SetDefinitionListResultIterator) Next() error {
@@ -530,16 +638,19 @@ func (iter *SetDefinitionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SetDefinitionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (iter SetDefinitionListResultIterator) Response() SetDefinitionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SetDefinitionListResultIterator) Value() SetDefinition {
@@ -549,6 +660,7 @@ func (iter SetDefinitionListResultIterator) Value() SetDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sdlr SetDefinitionListResult) IsEmpty() bool {
 	return sdlr.Value == nil || len(*sdlr.Value) == 0
@@ -566,12 +678,14 @@ func (sdlr SetDefinitionListResult) setDefinitionListResultPreparer() (*http.Req
 		autorest.WithBaseURL(to.String(sdlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinitionListResultPage contains a page of SetDefinition values.
 type SetDefinitionListResultPage struct {
 	fn   func(SetDefinitionListResult) (SetDefinitionListResult, error)
 	sdlr SetDefinitionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SetDefinitionListResultPage) Next() error {
@@ -583,16 +697,19 @@ func (page *SetDefinitionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SetDefinitionListResultPage) NotDone() bool {
 	return !page.sdlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Response returns the raw server response from the last page request.
 func (page SetDefinitionListResultPage) Response() SetDefinitionListResult {
 	return page.sdlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SetDefinitionListResultPage) Values() []SetDefinition {
 	if page.sdlr.IsEmpty() {
@@ -601,6 +718,7 @@ func (page SetDefinitionListResultPage) Values() []SetDefinition {
 	return *page.sdlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // SetDefinitionProperties the policy set definition properties.
 type SetDefinitionProperties struct {
 	// PolicyType - The type of policy definition. Possible values are NotSpecified, BuiltIn, and Custom. Possible values include: 'TypeNotSpecified', 'TypeBuiltIn', 'TypeCustom'
@@ -617,6 +735,7 @@ type SetDefinitionProperties struct {
 	PolicyDefinitions *[]DefinitionReference `json:"policyDefinitions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-06-01-preview/policy instead.
 // Sku the policy sku.
 type Sku struct {
 	// Name - The name of the policy sku. Possible values are A0 and A1.

@@ -32,6 +32,19 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+const commitTimestampPlaceholderString = "spanner.commit_timestamp()"
+
+var (
+	// CommitTimestamp is a special value used to tell Cloud Spanner
+	// to insert the commit timestamp of the transaction into a column.
+	// It can be used in a Mutation, or directly used in
+	// InsertStruct or InsertMap. See ExampleCommitTimestamp.
+	// This is just a placeholder and the actual value stored in this
+	// variable has no meaning.
+	CommitTimestamp time.Time = commitTimestamp
+	commitTimestamp           = time.Unix(0, 0).In(time.FixedZone("CommitTimestamp placeholder", 0xDB))
+)
+
 // NullInt64 represents a Cloud Spanner INT64 that may be NULL.
 type NullInt64 struct {
 	Int64 int64
@@ -1327,7 +1340,11 @@ func encodeValue(v interface{}) (*proto3.Value, *sppb.Type, error) {
 		}
 		pt = listType(floatType())
 	case time.Time:
-		pb.Kind = stringKind(v.UTC().Format(time.RFC3339Nano))
+		if v == commitTimestamp {
+			pb.Kind = stringKind(commitTimestampPlaceholderString)
+		} else {
+			pb.Kind = stringKind(v.UTC().Format(time.RFC3339Nano))
+		}
 		pt = timeType()
 	case []time.Time:
 		if v != nil {

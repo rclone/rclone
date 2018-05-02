@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // AccessPoliciesClient is the time Series Insights client
 type AccessPoliciesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewAccessPoliciesClient creates an instance of the AccessPoliciesClient client.
 func NewAccessPoliciesClient(subscriptionID string) AccessPoliciesClient {
 	return NewAccessPoliciesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // NewAccessPoliciesClientWithBaseURI creates an instance of the AccessPoliciesClient client.
 func NewAccessPoliciesClientWithBaseURI(baseURI string, subscriptionID string) AccessPoliciesClient {
 	return AccessPoliciesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdate create or update an access policy in the specified environment.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -77,6 +81,7 @@ func (client AccessPoliciesClient) CreateOrUpdate(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client AccessPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, accessPolicyName string, parameters AccessPolicyCreateOrUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -92,7 +97,7 @@ func (client AccessPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/accessPolicies/{accessPolicyName}", pathParameters),
@@ -101,6 +106,7 @@ func (client AccessPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessPoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -108,6 +114,7 @@ func (client AccessPoliciesClient) CreateOrUpdateSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client AccessPoliciesClient) CreateOrUpdateResponder(resp *http.Response) (result AccessPolicyResource, err error) {
@@ -121,6 +128,7 @@ func (client AccessPoliciesClient) CreateOrUpdateResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Delete deletes the access policy with the specified name in the specified subscription, resource group, and
 // environment
 //
@@ -149,6 +157,7 @@ func (client AccessPoliciesClient) Delete(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeletePreparer prepares the Delete request.
 func (client AccessPoliciesClient) DeletePreparer(ctx context.Context, resourceGroupName string, environmentName string, accessPolicyName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -171,6 +180,7 @@ func (client AccessPoliciesClient) DeletePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessPoliciesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -178,6 +188,7 @@ func (client AccessPoliciesClient) DeleteSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client AccessPoliciesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -190,6 +201,7 @@ func (client AccessPoliciesClient) DeleteResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Get gets the access policy with the specified name in the specified environment.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -217,6 +229,7 @@ func (client AccessPoliciesClient) Get(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetPreparer prepares the Get request.
 func (client AccessPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, environmentName string, accessPolicyName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -239,6 +252,7 @@ func (client AccessPoliciesClient) GetPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -246,6 +260,7 @@ func (client AccessPoliciesClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client AccessPoliciesClient) GetResponder(resp *http.Response) (result AccessPolicyResource, err error) {
@@ -259,6 +274,7 @@ func (client AccessPoliciesClient) GetResponder(resp *http.Response) (result Acc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironment lists all the available access policies associated with the environment.
 //
 // resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
@@ -285,6 +301,7 @@ func (client AccessPoliciesClient) ListByEnvironment(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentPreparer prepares the ListByEnvironment request.
 func (client AccessPoliciesClient) ListByEnvironmentPreparer(ctx context.Context, resourceGroupName string, environmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -306,6 +323,7 @@ func (client AccessPoliciesClient) ListByEnvironmentPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentSender sends the ListByEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessPoliciesClient) ListByEnvironmentSender(req *http.Request) (*http.Response, error) {
@@ -313,6 +331,7 @@ func (client AccessPoliciesClient) ListByEnvironmentSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // ListByEnvironmentResponder handles the response to the ListByEnvironment request. The method always
 // closes the http.Response Body.
 func (client AccessPoliciesClient) ListByEnvironmentResponder(resp *http.Response) (result AccessPolicyListResponse, err error) {
@@ -326,6 +345,7 @@ func (client AccessPoliciesClient) ListByEnvironmentResponder(resp *http.Respons
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // Update updates the access policy with the specified name in the specified subscription, resource group, and
 // environment.
 //
@@ -355,6 +375,7 @@ func (client AccessPoliciesClient) Update(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdatePreparer prepares the Update request.
 func (client AccessPoliciesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, environmentName string, accessPolicyName string, accessPolicyUpdateParameters AccessPolicyUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -370,7 +391,7 @@ func (client AccessPoliciesClient) UpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/accessPolicies/{accessPolicyName}", pathParameters),
@@ -379,6 +400,7 @@ func (client AccessPoliciesClient) UpdatePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessPoliciesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -386,6 +408,7 @@ func (client AccessPoliciesClient) UpdateSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/timeseriesinsights/mgmt/2017-02-28-preview/timeseriesinsights instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client AccessPoliciesClient) UpdateResponder(resp *http.Response) (result AccessPolicyResource, err error) {

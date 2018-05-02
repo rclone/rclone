@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ProviderClient is the webSite Management Client
 type ProviderClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewProviderClient creates an instance of the ProviderClient client.
 func NewProviderClient(subscriptionID string) ProviderClient {
 	return NewProviderClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewProviderClientWithBaseURI creates an instance of the ProviderClient client.
 func NewProviderClientWithBaseURI(baseURI string, subscriptionID string) ProviderClient {
 	return ProviderClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetPublishingUser sends the get publishing user request.
 func (client ProviderClient) GetPublishingUser(ctx context.Context) (result User, err error) {
 	req, err := client.GetPublishingUserPreparer(ctx)
@@ -62,6 +66,7 @@ func (client ProviderClient) GetPublishingUser(ctx context.Context) (result User
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetPublishingUserPreparer prepares the GetPublishingUser request.
 func (client ProviderClient) GetPublishingUserPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2015-08-01"
@@ -77,6 +82,7 @@ func (client ProviderClient) GetPublishingUserPreparer(ctx context.Context) (*ht
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetPublishingUserSender sends the GetPublishingUser request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProviderClient) GetPublishingUserSender(req *http.Request) (*http.Response, error) {
@@ -84,6 +90,7 @@ func (client ProviderClient) GetPublishingUserSender(req *http.Request) (*http.R
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetPublishingUserResponder handles the response to the GetPublishingUser request. The method always
 // closes the http.Response Body.
 func (client ProviderClient) GetPublishingUserResponder(resp *http.Response) (result User, err error) {
@@ -97,6 +104,7 @@ func (client ProviderClient) GetPublishingUserResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControl sends the get source control request.
 //
 // sourceControlType is type of source control
@@ -122,6 +130,7 @@ func (client ProviderClient) GetSourceControl(ctx context.Context, sourceControl
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlPreparer prepares the GetSourceControl request.
 func (client ProviderClient) GetSourceControlPreparer(ctx context.Context, sourceControlType string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -141,6 +150,7 @@ func (client ProviderClient) GetSourceControlPreparer(ctx context.Context, sourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlSender sends the GetSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProviderClient) GetSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -148,6 +158,7 @@ func (client ProviderClient) GetSourceControlSender(req *http.Request) (*http.Re
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlResponder handles the response to the GetSourceControl request. The method always
 // closes the http.Response Body.
 func (client ProviderClient) GetSourceControlResponder(resp *http.Response) (result SourceControl, err error) {
@@ -161,6 +172,7 @@ func (client ProviderClient) GetSourceControlResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControls sends the get source controls request.
 func (client ProviderClient) GetSourceControls(ctx context.Context) (result SourceControlCollectionPage, err error) {
 	result.fn = client.getSourceControlsNextResults
@@ -185,6 +197,7 @@ func (client ProviderClient) GetSourceControls(ctx context.Context) (result Sour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlsPreparer prepares the GetSourceControls request.
 func (client ProviderClient) GetSourceControlsPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2015-08-01"
@@ -200,6 +213,7 @@ func (client ProviderClient) GetSourceControlsPreparer(ctx context.Context) (*ht
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlsSender sends the GetSourceControls request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProviderClient) GetSourceControlsSender(req *http.Request) (*http.Response, error) {
@@ -207,6 +221,7 @@ func (client ProviderClient) GetSourceControlsSender(req *http.Request) (*http.R
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlsResponder handles the response to the GetSourceControls request. The method always
 // closes the http.Response Body.
 func (client ProviderClient) GetSourceControlsResponder(resp *http.Response) (result SourceControlCollection, err error) {
@@ -241,12 +256,14 @@ func (client ProviderClient) getSourceControlsNextResults(lastResults SourceCont
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetSourceControlsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ProviderClient) GetSourceControlsComplete(ctx context.Context) (result SourceControlCollectionIterator, err error) {
 	result.page, err = client.GetSourceControls(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdatePublishingUser sends the update publishing user request.
 //
 // requestMessage is details of publishing user
@@ -272,6 +289,7 @@ func (client ProviderClient) UpdatePublishingUser(ctx context.Context, requestMe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdatePublishingUserPreparer prepares the UpdatePublishingUser request.
 func (client ProviderClient) UpdatePublishingUserPreparer(ctx context.Context, requestMessage User) (*http.Request, error) {
 	const APIVersion = "2015-08-01"
@@ -280,7 +298,7 @@ func (client ProviderClient) UpdatePublishingUserPreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Web/publishingUsers/web"),
@@ -289,6 +307,7 @@ func (client ProviderClient) UpdatePublishingUserPreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdatePublishingUserSender sends the UpdatePublishingUser request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProviderClient) UpdatePublishingUserSender(req *http.Request) (*http.Response, error) {
@@ -296,6 +315,7 @@ func (client ProviderClient) UpdatePublishingUserSender(req *http.Request) (*htt
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdatePublishingUserResponder handles the response to the UpdatePublishingUser request. The method always
 // closes the http.Response Body.
 func (client ProviderClient) UpdatePublishingUserResponder(resp *http.Response) (result User, err error) {
@@ -309,6 +329,7 @@ func (client ProviderClient) UpdatePublishingUserResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSourceControl sends the update source control request.
 //
 // sourceControlType is type of source control requestMessage is source control token information
@@ -334,6 +355,7 @@ func (client ProviderClient) UpdateSourceControl(ctx context.Context, sourceCont
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSourceControlPreparer prepares the UpdateSourceControl request.
 func (client ProviderClient) UpdateSourceControlPreparer(ctx context.Context, sourceControlType string, requestMessage SourceControl) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -346,7 +368,7 @@ func (client ProviderClient) UpdateSourceControlPreparer(ctx context.Context, so
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/providers/Microsoft.Web/sourcecontrols/{sourceControlType}", pathParameters),
@@ -355,6 +377,7 @@ func (client ProviderClient) UpdateSourceControlPreparer(ctx context.Context, so
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSourceControlSender sends the UpdateSourceControl request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProviderClient) UpdateSourceControlSender(req *http.Request) (*http.Response, error) {
@@ -362,6 +385,7 @@ func (client ProviderClient) UpdateSourceControlSender(req *http.Request) (*http
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateSourceControlResponder handles the response to the UpdateSourceControl request. The method always
 // closes the http.Response Body.
 func (client ProviderClient) UpdateSourceControlResponder(resp *http.Response) (result SourceControl, err error) {

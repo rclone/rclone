@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // SessionClient is the REST API for Azure Server Management Service.
 type SessionClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NewSessionClient creates an instance of the SessionClient client.
 func NewSessionClient(subscriptionID string) SessionClient {
 	return NewSessionClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // NewSessionClientWithBaseURI creates an instance of the SessionClient client.
 func NewSessionClientWithBaseURI(baseURI string, subscriptionID string) SessionClient {
 	return SessionClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Create creates a session for a node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -72,6 +76,7 @@ func (client SessionClient) Create(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // CreatePreparer prepares the Create request.
 func (client SessionClient) CreatePreparer(ctx context.Context, resourceGroupName string, nodeName string, session string, sessionParameters SessionParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -87,7 +92,7 @@ func (client SessionClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServerManagement/nodes/{nodeName}/sessions/{session}", pathParameters),
@@ -96,6 +101,7 @@ func (client SessionClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client SessionClient) CreateSender(req *http.Request) (future SessionCreateFuture, err error) {
@@ -111,6 +117,7 @@ func (client SessionClient) CreateSender(req *http.Request) (future SessionCreat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client SessionClient) CreateResponder(resp *http.Response) (result SessionResource, err error) {
@@ -124,6 +131,7 @@ func (client SessionClient) CreateResponder(resp *http.Response) (result Session
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Delete deletes a session for a node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -161,6 +169,7 @@ func (client SessionClient) Delete(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // DeletePreparer prepares the Delete request.
 func (client SessionClient) DeletePreparer(ctx context.Context, resourceGroupName string, nodeName string, session string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -183,6 +192,7 @@ func (client SessionClient) DeletePreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SessionClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -190,6 +200,7 @@ func (client SessionClient) DeleteSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client SessionClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -202,6 +213,7 @@ func (client SessionClient) DeleteResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // Get gets a session for a node.
 //
 // resourceGroupName is the resource group name uniquely identifies the resource group within the user
@@ -239,6 +251,7 @@ func (client SessionClient) Get(ctx context.Context, resourceGroupName string, n
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GetPreparer prepares the Get request.
 func (client SessionClient) GetPreparer(ctx context.Context, resourceGroupName string, nodeName string, session string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -261,6 +274,7 @@ func (client SessionClient) GetPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SessionClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -268,6 +282,7 @@ func (client SessionClient) GetSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/servermanagement/mgmt/2015-07-01-preview/servermanagement instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SessionClient) GetResponder(resp *http.Response) (result SessionResource, err error) {

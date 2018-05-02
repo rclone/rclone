@@ -41,11 +41,12 @@ func NewAPIReleaseClientWithBaseURI(baseURI string, subscriptionID string) APIRe
 }
 
 // Create creates a new Release for the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. releaseID is release
-// identifier within an API. Must be unique in the current API Management service instance. parameters is create
-// parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// releaseID - release identifier within an API. Must be unique in the current API Management service instance.
+// parameters - create parameters.
 func (client APIReleaseClient) Create(ctx context.Context, resourceGroupName string, serviceName string, apiid string, releaseID string, parameters APIReleaseContract) (result APIReleaseContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -130,12 +131,13 @@ func (client APIReleaseClient) CreateResponder(resp *http.Response) (result APIR
 }
 
 // Delete deletes the specified release in the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. releaseID is release
-// identifier within an API. Must be unique in the current API Management service instance. ifMatch is eTag of the
-// Entity. ETag should match the current entity state from the header response of the GET request or it should be *
-// for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// releaseID - release identifier within an API. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client APIReleaseClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, releaseID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -218,10 +220,11 @@ func (client APIReleaseClient) DeleteResponder(resp *http.Response) (result auto
 }
 
 // Get returns the details of an API release.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. releaseID is release
-// identifier within an API. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// releaseID - release identifier within an API. Must be unique in the current API Management service instance.
 func (client APIReleaseClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, releaseID string) (result APIReleaseContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -304,10 +307,11 @@ func (client APIReleaseClient) GetResponder(resp *http.Response) (result APIRele
 }
 
 // GetEntityTag returns the etag of an API release.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. releaseID is release
-// identifier within an API. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// releaseID - release identifier within an API. Must be unique in the current API Management service instance.
 func (client APIReleaseClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string, apiid string, releaseID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -391,14 +395,16 @@ func (client APIReleaseClient) GetEntityTagResponder(resp *http.Response) (resul
 // List lists all releases of an API. An API release is created when making an API Revision current. Releases are also
 // used to rollback to previous revisions. Results will be paged and can be constrained by the $top and $skip
 // parameters.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. filter is | Field |
-// Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// filter - | Field | Supported operators    | Supported functions                         |
 // |-------|------------------------|---------------------------------------------|
 // | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// |notes|ge le eq ne gt lt|substringof contains startswith endswith| top is number of records to return. skip is
-// number of records to skip.
+// |notes|ge le eq ne gt lt|substringof contains startswith endswith|
+// top - number of records to return.
+// skip - number of records to skip.
 func (client APIReleaseClient) List(ctx context.Context, resourceGroupName string, serviceName string, apiid string, filter string, top *int32, skip *int32) (result APIReleaseCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -519,12 +525,14 @@ func (client APIReleaseClient) ListComplete(ctx context.Context, resourceGroupNa
 }
 
 // Update updates the details of the release of the API specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. releaseID is release
-// identifier within an API. Must be unique in the current API Management service instance. parameters is API
-// Release Update parameters. ifMatch is eTag of the Entity. ETag should match the current entity state from the
-// header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// releaseID - release identifier within an API. Must be unique in the current API Management service instance.
+// parameters - API Release Update parameters.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client APIReleaseClient) Update(ctx context.Context, resourceGroupName string, serviceName string, apiid string, releaseID string, parameters APIReleaseContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

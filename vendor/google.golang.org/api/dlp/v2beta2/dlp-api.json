@@ -12,7 +12,7 @@
   "baseUrl": "https://dlp.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "DLP",
-  "description": "The Google Data Loss Prevention API provides methods for detection of privacy-sensitive fragments in text, images, and Google Cloud Platform storage repositories.",
+  "description": "Provides methods for detection, risk analysis, and de-identification of privacy-sensitive fragments in text, images, and Google Cloud Platform storage repositories.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/dlp/docs/",
   "fullyEncodeReservedExpansion": true,
@@ -1202,7 +1202,7 @@
       }
     }
   },
-  "revision": "20180315",
+  "revision": "20180404",
   "rootUrl": "https://dlp.googleapis.com/",
   "schemas": {
     "GooglePrivacyDlpV2beta1AuxiliaryTable": {
@@ -5011,7 +5011,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -5052,7 +5052,7 @@
     }
   },
   "servicePath": "",
-  "title": "Cloud DLP API",
+  "title": "Cloud Data Loss Prevention (DLP) API",
   "version": "v2beta2",
   "version_module": true
 }

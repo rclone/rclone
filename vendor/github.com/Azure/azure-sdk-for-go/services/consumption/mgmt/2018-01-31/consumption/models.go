@@ -36,6 +36,11 @@ const (
 	Usage CategoryType = "Usage"
 )
 
+// PossibleCategoryTypeValues returns an array of possible values for the CategoryType const type.
+func PossibleCategoryTypeValues() []CategoryType {
+	return []CategoryType{Cost, Usage}
+}
+
 // Datagrain enumerates the values for datagrain.
 type Datagrain string
 
@@ -45,6 +50,11 @@ const (
 	// MonthlyGrain Monthly grain of data
 	MonthlyGrain Datagrain = "monthly"
 )
+
+// PossibleDatagrainValues returns an array of possible values for the Datagrain const type.
+func PossibleDatagrainValues() []Datagrain {
+	return []Datagrain{DailyGrain, MonthlyGrain}
+}
 
 // OperatorType enumerates the values for operator type.
 type OperatorType string
@@ -58,6 +68,11 @@ const (
 	GreaterThanOrEqualTo OperatorType = "GreaterThanOrEqualTo"
 )
 
+// PossibleOperatorTypeValues returns an array of possible values for the OperatorType const type.
+func PossibleOperatorTypeValues() []OperatorType {
+	return []OperatorType{EqualTo, GreaterThan, GreaterThanOrEqualTo}
+}
+
 // TimeGrainType enumerates the values for time grain type.
 type TimeGrainType string
 
@@ -69,6 +84,11 @@ const (
 	// Quarterly ...
 	Quarterly TimeGrainType = "Quarterly"
 )
+
+// PossibleTimeGrainTypeValues returns an array of possible values for the TimeGrainType const type.
+func PossibleTimeGrainTypeValues() []TimeGrainType {
+	return []TimeGrainType{Annually, Monthly, Quarterly}
+}
 
 // Budget a budget resource.
 type Budget struct {
@@ -82,6 +102,27 @@ type Budget struct {
 	Type *string `json:"type,omitempty"`
 	// ETag - eTag of the resource. To handle concurrent update scenarion, this field will be used to determine whether the user is updating the latest version or not.
 	ETag *string `json:"eTag,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Budget.
+func (b Budget) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if b.BudgetProperties != nil {
+		objectMap["properties"] = b.BudgetProperties
+	}
+	if b.ID != nil {
+		objectMap["id"] = b.ID
+	}
+	if b.Name != nil {
+		objectMap["name"] = b.Name
+	}
+	if b.Type != nil {
+		objectMap["type"] = b.Type
+	}
+	if b.ETag != nil {
+		objectMap["eTag"] = b.ETag
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Budget struct.
@@ -165,11 +206,15 @@ type BudgetProperties struct {
 // MarshalJSON is the custom marshaler for BudgetProperties.
 func (bp BudgetProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["category"] = bp.Category
+	if bp.Category != "" {
+		objectMap["category"] = bp.Category
+	}
 	if bp.Amount != nil {
 		objectMap["amount"] = bp.Amount
 	}
-	objectMap["timeGrain"] = bp.TimeGrain
+	if bp.TimeGrain != "" {
+		objectMap["timeGrain"] = bp.TimeGrain
+	}
 	if bp.TimePeriod != nil {
 		objectMap["timePeriod"] = bp.TimePeriod
 	}

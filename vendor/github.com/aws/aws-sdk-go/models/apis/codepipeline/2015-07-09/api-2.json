@@ -94,6 +94,31 @@
         {"shape":"ValidationException"}
       ]
     },
+    "DeleteWebhook":{
+      "name":"DeleteWebhook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteWebhookInput"},
+      "output":{"shape":"DeleteWebhookOutput"},
+      "errors":[
+        {"shape":"ValidationException"}
+      ]
+    },
+    "DeregisterWebhookWithThirdParty":{
+      "name":"DeregisterWebhookWithThirdParty",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeregisterWebhookWithThirdPartyInput"},
+      "output":{"shape":"DeregisterWebhookWithThirdPartyOutput"},
+      "errors":[
+        {"shape":"ValidationException"},
+        {"shape":"WebhookNotFoundException"}
+      ]
+    },
     "DisableStageTransition":{
       "name":"DisableStageTransition",
       "http":{
@@ -225,6 +250,20 @@
       "input":{"shape":"ListPipelinesInput"},
       "output":{"shape":"ListPipelinesOutput"},
       "errors":[
+        {"shape":"ValidationException"},
+        {"shape":"InvalidNextTokenException"}
+      ]
+    },
+    "ListWebhooks":{
+      "name":"ListWebhooks",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListWebhooksInput"},
+      "output":{"shape":"ListWebhooksOutput"},
+      "errors":[
+        {"shape":"ValidationException"},
         {"shape":"InvalidNextTokenException"}
       ]
     },
@@ -338,6 +377,35 @@
         {"shape":"JobNotFoundException"},
         {"shape":"InvalidJobStateException"},
         {"shape":"InvalidClientTokenException"}
+      ]
+    },
+    "PutWebhook":{
+      "name":"PutWebhook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutWebhookInput"},
+      "output":{"shape":"PutWebhookOutput"},
+      "errors":[
+        {"shape":"ValidationException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InvalidWebhookFilterPatternException"},
+        {"shape":"InvalidWebhookAuthenticationParametersException"},
+        {"shape":"PipelineNotFoundException"}
+      ]
+    },
+    "RegisterWebhookWithThirdParty":{
+      "name":"RegisterWebhookWithThirdParty",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"RegisterWebhookWithThirdPartyInput"},
+      "output":{"shape":"RegisterWebhookWithThirdPartyOutput"},
+      "errors":[
+        {"shape":"ValidationException"},
+        {"shape":"WebhookNotFoundException"}
       ]
     },
     "RetryStageExecution":{
@@ -804,7 +872,11 @@
       "min":1
     },
     "Code":{"type":"string"},
-    "ContinuationToken":{"type":"string"},
+    "ContinuationToken":{
+      "type":"string",
+      "max":2048,
+      "min":1
+    },
     "CreateCustomActionTypeInput":{
       "type":"structure",
       "required":[
@@ -877,9 +949,32 @@
         "name":{"shape":"PipelineName"}
       }
     },
+    "DeleteWebhookInput":{
+      "type":"structure",
+      "required":["name"],
+      "members":{
+        "name":{"shape":"WebhookName"}
+      }
+    },
+    "DeleteWebhookOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeregisterWebhookWithThirdPartyInput":{
+      "type":"structure",
+      "members":{
+        "webhookName":{"shape":"WebhookName"}
+      }
+    },
+    "DeregisterWebhookWithThirdPartyOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "Description":{
       "type":"string",
-      "max":2048,
+      "max":160,
       "min":1
     },
     "DisableStageTransitionInput":{
@@ -957,7 +1052,11 @@
       "max":1500,
       "min":1
     },
-    "ExecutionSummary":{"type":"string"},
+    "ExecutionSummary":{
+      "type":"string",
+      "max":2048,
+      "min":1
+    },
     "FailureDetails":{
       "type":"structure",
       "required":[
@@ -1131,6 +1230,18 @@
       },
       "exception":true
     },
+    "InvalidWebhookAuthenticationParametersException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidWebhookFilterPatternException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "Job":{
       "type":"structure",
       "members":{
@@ -1187,6 +1298,11 @@
         "Failed"
       ]
     },
+    "JsonPath":{
+      "type":"string",
+      "max":150,
+      "min":1
+    },
     "LastChangedAt":{"type":"timestamp"},
     "LastChangedBy":{"type":"string"},
     "LastUpdatedBy":{"type":"string"},
@@ -1240,6 +1356,40 @@
         "nextToken":{"shape":"NextToken"}
       }
     },
+    "ListWebhookItem":{
+      "type":"structure",
+      "required":[
+        "definition",
+        "url"
+      ],
+      "members":{
+        "definition":{"shape":"WebhookDefinition"},
+        "url":{"shape":"WebhookUrl"},
+        "errorMessage":{"shape":"WebhookErrorMessage"},
+        "errorCode":{"shape":"WebhookErrorCode"},
+        "lastTriggered":{"shape":"WebhookLastTriggered"},
+        "arn":{"shape":"WebhookArn"}
+      }
+    },
+    "ListWebhooksInput":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"}
+      }
+    },
+    "ListWebhooksOutput":{
+      "type":"structure",
+      "members":{
+        "webhooks":{"shape":"WebhookList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
+    "MatchEquals":{
+      "type":"string",
+      "max":150,
+      "min":1
+    },
     "MaxBatchSize":{
       "type":"integer",
       "min":1
@@ -1254,7 +1404,11 @@
       "max":5,
       "min":0
     },
-    "Message":{"type":"string"},
+    "Message":{
+      "type":"string",
+      "max":5000,
+      "min":1
+    },
     "MinimumArtifactCount":{
       "type":"integer",
       "max":5,
@@ -1265,7 +1419,11 @@
       "max":2048,
       "min":1
     },
-    "Nonce":{"type":"string"},
+    "Nonce":{
+      "type":"string",
+      "max":50,
+      "min":1
+    },
     "NotLatestPipelineExecutionException":{
       "type":"structure",
       "members":{
@@ -1351,7 +1509,8 @@
         "pipelineExecutionId":{"shape":"PipelineExecutionId"},
         "status":{"shape":"PipelineExecutionStatus"},
         "startTime":{"shape":"Timestamp"},
-        "lastUpdateTime":{"shape":"Timestamp"}
+        "lastUpdateTime":{"shape":"Timestamp"},
+        "sourceRevisions":{"shape":"SourceRevisionList"}
       }
     },
     "PipelineExecutionSummaryList":{
@@ -1533,12 +1692,36 @@
         "executionDetails":{"shape":"ExecutionDetails"}
       }
     },
+    "PutWebhookInput":{
+      "type":"structure",
+      "required":["webhook"],
+      "members":{
+        "webhook":{"shape":"WebhookDefinition"}
+      }
+    },
+    "PutWebhookOutput":{
+      "type":"structure",
+      "members":{
+        "webhook":{"shape":"ListWebhookItem"}
+      }
+    },
     "QueryParamMap":{
       "type":"map",
       "key":{"shape":"ActionConfigurationKey"},
       "value":{"shape":"ActionConfigurationQueryableValue"},
       "max":1,
       "min":0
+    },
+    "RegisterWebhookWithThirdPartyInput":{
+      "type":"structure",
+      "members":{
+        "webhookName":{"shape":"WebhookName"}
+      }
+    },
+    "RegisterWebhookWithThirdPartyOutput":{
+      "type":"structure",
+      "members":{
+      }
     },
     "RetryStageExecutionInput":{
       "type":"structure",
@@ -1596,6 +1779,20 @@
     "S3ObjectKey":{"type":"string"},
     "SecretAccessKey":{"type":"string"},
     "SessionToken":{"type":"string"},
+    "SourceRevision":{
+      "type":"structure",
+      "required":["actionName"],
+      "members":{
+        "actionName":{"shape":"ActionName"},
+        "revisionId":{"shape":"Revision"},
+        "revisionSummary":{"shape":"RevisionSummary"},
+        "revisionUrl":{"shape":"Url"}
+      }
+    },
+    "SourceRevisionList":{
+      "type":"list",
+      "member":{"shape":"SourceRevision"}
+    },
     "StageActionDeclarationList":{
       "type":"list",
       "member":{"shape":"ActionDeclaration"}
@@ -1778,6 +1975,88 @@
       "max":9,
       "min":1,
       "pattern":"[0-9A-Za-z_-]+"
+    },
+    "WebhookArn":{"type":"string"},
+    "WebhookAuthConfiguration":{
+      "type":"structure",
+      "members":{
+        "AllowedIPRange":{"shape":"WebhookAuthConfigurationAllowedIPRange"},
+        "SecretToken":{"shape":"WebhookAuthConfigurationSecretToken"}
+      }
+    },
+    "WebhookAuthConfigurationAllowedIPRange":{
+      "type":"string",
+      "max":100,
+      "min":1
+    },
+    "WebhookAuthConfigurationSecretToken":{
+      "type":"string",
+      "max":100,
+      "min":1
+    },
+    "WebhookAuthenticationType":{
+      "type":"string",
+      "enum":[
+        "GITHUB_HMAC",
+        "IP",
+        "UNAUTHENTICATED"
+      ]
+    },
+    "WebhookDefinition":{
+      "type":"structure",
+      "required":[
+        "name",
+        "targetPipeline",
+        "targetAction",
+        "filters",
+        "authentication",
+        "authenticationConfiguration"
+      ],
+      "members":{
+        "name":{"shape":"WebhookName"},
+        "targetPipeline":{"shape":"PipelineName"},
+        "targetAction":{"shape":"ActionName"},
+        "filters":{"shape":"WebhookFilters"},
+        "authentication":{"shape":"WebhookAuthenticationType"},
+        "authenticationConfiguration":{"shape":"WebhookAuthConfiguration"}
+      }
+    },
+    "WebhookErrorCode":{"type":"string"},
+    "WebhookErrorMessage":{"type":"string"},
+    "WebhookFilterRule":{
+      "type":"structure",
+      "required":["jsonPath"],
+      "members":{
+        "jsonPath":{"shape":"JsonPath"},
+        "matchEquals":{"shape":"MatchEquals"}
+      }
+    },
+    "WebhookFilters":{
+      "type":"list",
+      "member":{"shape":"WebhookFilterRule"},
+      "max":5
+    },
+    "WebhookLastTriggered":{"type":"timestamp"},
+    "WebhookList":{
+      "type":"list",
+      "member":{"shape":"ListWebhookItem"}
+    },
+    "WebhookName":{
+      "type":"string",
+      "max":100,
+      "min":1,
+      "pattern":"[A-Za-z0-9.@\\-_]+"
+    },
+    "WebhookNotFoundException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "WebhookUrl":{
+      "type":"string",
+      "max":1000,
+      "min":1
     }
   }
 }

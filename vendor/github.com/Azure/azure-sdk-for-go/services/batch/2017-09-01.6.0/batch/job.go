@@ -156,7 +156,7 @@ func (client JobClient) AddPreparer(ctx context.Context, job JobAddParameter, ti
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/jobs"),
@@ -376,7 +376,7 @@ func (client JobClient) DisablePreparer(ctx context.Context, jobID string, jobDi
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/disable", pathParameters),
@@ -1330,7 +1330,7 @@ func (client JobClient) PatchPreparer(ctx context.Context, jobID string, jobPatc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}", pathParameters),
@@ -1446,7 +1446,7 @@ func (client JobClient) TerminatePreparer(ctx context.Context, jobID string, job
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}/terminate", pathParameters),
@@ -1600,7 +1600,7 @@ func (client JobClient) UpdatePreparer(ctx context.Context, jobID string, jobUpd
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; odata=minimalmetadata; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/jobs/{jobId}", pathParameters),

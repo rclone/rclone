@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // OperationalizationClustersClient is the these APIs allow end users to operate on Azure Machine Learning Compute
 // resources. They support the following operations:<ul><li>Create or update a cluster</li><li>Get a
 // cluster</li><li>Patch a cluster</li><li>Delete a cluster</li><li>Get keys for a cluster</li><li>Check if updates are
@@ -34,16 +35,19 @@ type OperationalizationClustersClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NewOperationalizationClustersClient creates an instance of the OperationalizationClustersClient client.
 func NewOperationalizationClustersClient(subscriptionID string) OperationalizationClustersClient {
 	return NewOperationalizationClustersClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NewOperationalizationClustersClientWithBaseURI creates an instance of the OperationalizationClustersClient client.
 func NewOperationalizationClustersClientWithBaseURI(baseURI string, subscriptionID string) OperationalizationClustersClient {
 	return OperationalizationClustersClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CheckSystemServicesUpdatesAvailable checks if updates are available for system services in the cluster.
 //
 // resourceGroupName is name of the resource group in which the cluster is located. clusterName is the name of the
@@ -82,6 +86,7 @@ func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CheckSystemServicesUpdatesAvailablePreparer prepares the CheckSystemServicesUpdatesAvailable request.
 func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailablePreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -103,6 +108,7 @@ func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailab
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CheckSystemServicesUpdatesAvailableSender sends the CheckSystemServicesUpdatesAvailable request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailableSender(req *http.Request) (*http.Response, error) {
@@ -110,6 +116,7 @@ func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailab
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CheckSystemServicesUpdatesAvailableResponder handles the response to the CheckSystemServicesUpdatesAvailable request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailableResponder(resp *http.Response) (result CheckSystemServicesUpdatesAvailableResponse, err error) {
@@ -123,6 +130,7 @@ func (client OperationalizationClustersClient) CheckSystemServicesUpdatesAvailab
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CreateOrUpdate create or update an operationalization cluster.
 //
 // resourceGroupName is name of the resource group in which the cluster is located. clusterName is the name of the
@@ -186,6 +194,7 @@ func (client OperationalizationClustersClient) CreateOrUpdate(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client OperationalizationClustersClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters OperationalizationCluster) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -200,7 +209,7 @@ func (client OperationalizationClustersClient) CreateOrUpdatePreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearningCompute/operationalizationClusters/{clusterName}", pathParameters),
@@ -209,6 +218,7 @@ func (client OperationalizationClustersClient) CreateOrUpdatePreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) CreateOrUpdateSender(req *http.Request) (future OperationalizationClustersCreateOrUpdateFuture, err error) {
@@ -224,6 +234,7 @@ func (client OperationalizationClustersClient) CreateOrUpdateSender(req *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) CreateOrUpdateResponder(resp *http.Response) (result OperationalizationCluster, err error) {
@@ -237,6 +248,7 @@ func (client OperationalizationClustersClient) CreateOrUpdateResponder(resp *htt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Delete deletes the specified cluster.
 //
 // resourceGroupName is name of the resource group in which the cluster is located. clusterName is the name of the
@@ -269,6 +281,7 @@ func (client OperationalizationClustersClient) Delete(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // DeletePreparer prepares the Delete request.
 func (client OperationalizationClustersClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string, deleteAll *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -293,6 +306,7 @@ func (client OperationalizationClustersClient) DeletePreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) DeleteSender(req *http.Request) (future OperationalizationClustersDeleteFuture, err error) {
@@ -308,6 +322,7 @@ func (client OperationalizationClustersClient) DeleteSender(req *http.Request) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -320,6 +335,7 @@ func (client OperationalizationClustersClient) DeleteResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Get gets the operationalization cluster resource view. Note that the credentials are not returned by this call. Call
 // ListKeys to get them.
 //
@@ -359,6 +375,7 @@ func (client OperationalizationClustersClient) Get(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client OperationalizationClustersClient) GetPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -380,6 +397,7 @@ func (client OperationalizationClustersClient) GetPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -387,6 +405,7 @@ func (client OperationalizationClustersClient) GetSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) GetResponder(resp *http.Response) (result OperationalizationCluster, err error) {
@@ -400,6 +419,7 @@ func (client OperationalizationClustersClient) GetResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListByResourceGroup gets the clusters in the specified resource group.
 //
 // resourceGroupName is name of the resource group in which the cluster is located. skiptoken is continuation token
@@ -435,6 +455,7 @@ func (client OperationalizationClustersClient) ListByResourceGroup(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client OperationalizationClustersClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, skiptoken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -458,6 +479,7 @@ func (client OperationalizationClustersClient) ListByResourceGroupPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -465,6 +487,7 @@ func (client OperationalizationClustersClient) ListByResourceGroupSender(req *ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) ListByResourceGroupResponder(resp *http.Response) (result PaginatedOperationalizationClustersList, err error) {
@@ -499,12 +522,14 @@ func (client OperationalizationClustersClient) listByResourceGroupNextResults(la
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client OperationalizationClustersClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, skiptoken string) (result PaginatedOperationalizationClustersListIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, skiptoken)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListBySubscriptionID gets the operationalization clusters in the specified subscription.
 //
 // skiptoken is continuation token for pagination.
@@ -531,6 +556,7 @@ func (client OperationalizationClustersClient) ListBySubscriptionID(ctx context.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListBySubscriptionIDPreparer prepares the ListBySubscriptionID request.
 func (client OperationalizationClustersClient) ListBySubscriptionIDPreparer(ctx context.Context, skiptoken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -553,6 +579,7 @@ func (client OperationalizationClustersClient) ListBySubscriptionIDPreparer(ctx 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListBySubscriptionIDSender sends the ListBySubscriptionID request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) ListBySubscriptionIDSender(req *http.Request) (*http.Response, error) {
@@ -560,6 +587,7 @@ func (client OperationalizationClustersClient) ListBySubscriptionIDSender(req *h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListBySubscriptionIDResponder handles the response to the ListBySubscriptionID request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) ListBySubscriptionIDResponder(resp *http.Response) (result PaginatedOperationalizationClustersList, err error) {
@@ -594,12 +622,14 @@ func (client OperationalizationClustersClient) listBySubscriptionIDNextResults(l
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListBySubscriptionIDComplete enumerates all values, automatically crossing page boundaries as required.
 func (client OperationalizationClustersClient) ListBySubscriptionIDComplete(ctx context.Context, skiptoken string) (result PaginatedOperationalizationClustersListIterator, err error) {
 	result.page, err = client.ListBySubscriptionID(ctx, skiptoken)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListKeys gets the credentials for the specified cluster such as Storage, ACR and ACS credentials. This is a long
 // running operation because it fetches keys from dependencies.
 //
@@ -639,6 +669,7 @@ func (client OperationalizationClustersClient) ListKeys(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListKeysPreparer prepares the ListKeys request.
 func (client OperationalizationClustersClient) ListKeysPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -660,6 +691,7 @@ func (client OperationalizationClustersClient) ListKeysPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) ListKeysSender(req *http.Request) (*http.Response, error) {
@@ -667,6 +699,7 @@ func (client OperationalizationClustersClient) ListKeysSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) ListKeysResponder(resp *http.Response) (result OperationalizationClusterCredentials, err error) {
@@ -680,6 +713,7 @@ func (client OperationalizationClustersClient) ListKeysResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // Update the PATCH operation can be used to update only the tags for a cluster. Use PUT operation to update other
 // properties.
 //
@@ -719,6 +753,7 @@ func (client OperationalizationClustersClient) Update(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdatePreparer prepares the Update request.
 func (client OperationalizationClustersClient) UpdatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters OperationalizationClusterUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -733,7 +768,7 @@ func (client OperationalizationClustersClient) UpdatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearningCompute/operationalizationClusters/{clusterName}", pathParameters),
@@ -742,6 +777,7 @@ func (client OperationalizationClustersClient) UpdatePreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -749,6 +785,7 @@ func (client OperationalizationClustersClient) UpdateSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) UpdateResponder(resp *http.Response) (result OperationalizationCluster, err error) {
@@ -762,6 +799,7 @@ func (client OperationalizationClustersClient) UpdateResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSystemServices updates system services in a cluster.
 //
 // resourceGroupName is name of the resource group in which the cluster is located. clusterName is the name of the
@@ -794,6 +832,7 @@ func (client OperationalizationClustersClient) UpdateSystemServices(ctx context.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSystemServicesPreparer prepares the UpdateSystemServices request.
 func (client OperationalizationClustersClient) UpdateSystemServicesPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -815,6 +854,7 @@ func (client OperationalizationClustersClient) UpdateSystemServicesPreparer(ctx 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSystemServicesSender sends the UpdateSystemServices request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationalizationClustersClient) UpdateSystemServicesSender(req *http.Request) (future OperationalizationClustersUpdateSystemServicesFuture, err error) {
@@ -830,6 +870,7 @@ func (client OperationalizationClustersClient) UpdateSystemServicesSender(req *h
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // UpdateSystemServicesResponder handles the response to the UpdateSystemServices request. The method always
 // closes the http.Response Body.
 func (client OperationalizationClustersClient) UpdateSystemServicesResponder(resp *http.Response) (result UpdateSystemServicesResponse, err error) {

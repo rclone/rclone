@@ -179,7 +179,7 @@ func TestSchemaConversion(t *testing.T) {
 					Name:        "outer",
 					Required:    true,
 					Type:        "RECORD",
-					Schema: []*FieldSchema{
+					Schema: Schema{
 						{
 							Description: "inner field",
 							Name:        "inner",

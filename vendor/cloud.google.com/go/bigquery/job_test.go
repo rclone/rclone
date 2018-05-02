@@ -23,37 +23,52 @@ import (
 
 func TestCreateJobRef(t *testing.T) {
 	defer fixRandomID("RANDOM")()
+	cNoLoc := &Client{projectID: "projectID"}
+	cLoc := &Client{projectID: "projectID", Location: "defaultLoc"}
 	for _, test := range []struct {
-		jobID          string
-		addJobIDSuffix bool
-		want           string
+		in     JobIDConfig
+		client *Client
+		want   *bq.JobReference
 	}{
 		{
-			jobID:          "foo",
-			addJobIDSuffix: false,
-			want:           "foo",
+			in:   JobIDConfig{JobID: "foo"},
+			want: &bq.JobReference{JobId: "foo"},
 		},
 		{
-			jobID:          "",
-			addJobIDSuffix: false,
-			want:           "RANDOM",
+			in:   JobIDConfig{},
+			want: &bq.JobReference{JobId: "RANDOM"},
 		},
 		{
-			jobID:          "",
-			addJobIDSuffix: true, // irrelevant
-			want:           "RANDOM",
+			in:   JobIDConfig{AddJobIDSuffix: true},
+			want: &bq.JobReference{JobId: "RANDOM"},
 		},
 		{
-			jobID:          "foo",
-			addJobIDSuffix: true,
-			want:           "foo-RANDOM",
+			in:   JobIDConfig{JobID: "foo", AddJobIDSuffix: true},
+			want: &bq.JobReference{JobId: "foo-RANDOM"},
+		},
+		{
+			in:   JobIDConfig{JobID: "foo", Location: "loc"},
+			want: &bq.JobReference{JobId: "foo", Location: "loc"},
+		},
+		{
+			in:     JobIDConfig{JobID: "foo"},
+			client: cLoc,
+			want:   &bq.JobReference{JobId: "foo", Location: "defaultLoc"},
+		},
+		{
+			in:     JobIDConfig{JobID: "foo", Location: "loc"},
+			client: cLoc,
+			want:   &bq.JobReference{JobId: "foo", Location: "loc"},
 		},
 	} {
-		jc := JobIDConfig{JobID: test.jobID, AddJobIDSuffix: test.addJobIDSuffix}
-		jr := jc.createJobRef("projectID")
-		got := jr.JobId
-		if got != test.want {
-			t.Errorf("%q, %t: got %q, want %q", test.jobID, test.addJobIDSuffix, got, test.want)
+		client := test.client
+		if client == nil {
+			client = cNoLoc
+		}
+		got := test.in.createJobRef(client)
+		test.want.ProjectId = "projectID"
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%+v: got %+v, want %+v", test.in, got, test.want)
 		}
 	}
 }

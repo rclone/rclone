@@ -1947,7 +1947,7 @@
       }
     }
   },
-  "revision": "20180308",
+  "revision": "20180430",
   "rootUrl": "https://adexchangebuyer.googleapis.com/",
   "schemas": {
     "AbsoluteDateRange": {
@@ -2297,7 +2297,7 @@
       "type": "object"
     },
     "Creative": {
-      "description": "A creative and its classification data.\n\nNext ID: 31",
+      "description": "A creative and its classification data.\n\nNext ID: 35",
       "id": "Creative",
       "properties": {
         "accountId": {
@@ -2583,7 +2583,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -2702,7 +2702,9 @@
             "MAXIMUM_NUMBER_OF_HTTP_CALLS_EXCEEDED",
             "MAXIMUM_NUMBER_OF_COOKIES_EXCEEDED",
             "PERSONAL_LOANS",
-            "UNSUPPORTED_FLASH_CONTENT"
+            "UNSUPPORTED_FLASH_CONTENT",
+            "MISUSE_BY_OMID_SCRIPT",
+            "NON_WHITELISTED_OMID_VENDOR"
           ],
           "enumDescriptions": [
             "The length of the image animation is longer than allowed.",
@@ -2798,7 +2800,9 @@
             "Maximum number of HTTP calls exceeded.",
             "Maximum number of cookies exceeded.",
             "Financial service ad does not adhere to specifications.",
-            "Flash content was found in an unsupported context."
+            "Flash content was found in an unsupported context.",
+            "Misuse by an Open Measurement SDK script.",
+            "Use of an Open Measurement SDK vendor not on approved whitelist."
           ],
           "type": "string"
         }
@@ -2839,24 +2843,6 @@
             "A placeholder for an undefined environment; indicates that no environment\nfilter will be applied.",
             "The ad impression appears on the web.",
             "The ad impression appears in an app."
-          ],
-          "type": "string"
-        },
-        "format": {
-          "description": "DEPRECATED: use repeated formats field instead.\nThe format on which to filter; optional.",
-          "enum": [
-            "FORMAT_UNSPECIFIED",
-            "NATIVE_DISPLAY",
-            "NATIVE_VIDEO",
-            "NON_NATIVE_DISPLAY",
-            "NON_NATIVE_VIDEO"
-          ],
-          "enumDescriptions": [
-            "A placeholder for an undefined format; indicates that no format filter\nwill be applied.",
-            "The ad impression is a native ad, and display (i.e. image) format.",
-            "The ad impression is a native ad, and video format.",
-            "The ad impression is not a native ad, and display (i.e. image) format.",
-            "The ad impression is not a native ad, and video format."
           ],
           "type": "string"
         },
@@ -2904,6 +2890,13 @@
           },
           "type": "array"
         },
+        "publisherIdentifiers": {
+          "description": "For Exchange Bidding buyers only.\nThe list of publisher identifiers on which to filter; may be empty.\nThe filters represented by multiple publisher identifiers are ORed\ntogether.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "realtimeTimeRange": {
           "$ref": "RealtimeTimeRange",
           "description": "An open-ended realtime time range, defined by the aggregation start\ntimestamp."
@@ -2913,7 +2906,7 @@
           "description": "A relative date range, defined by an offset from today and a duration.\nInterpreted relative to Pacific time zone."
         },
         "sellerNetworkIds": {
-          "description": "The list of IDs of the seller (publisher) networks on which to filter;\nmay be empty. The filters represented by multiple seller network IDs are\nORed together (i.e. if non-empty, results must match any one of the\npublisher networks).\nSee [seller-network-ids](https://developers.google.com/ad-exchange/rtb/downloads/seller-network-ids)\nfile for the set of existing seller network IDs.",
+          "description": "For Ad Exchange buyers only.\nThe list of IDs of the seller (publisher) networks on which to filter;\nmay be empty. The filters represented by multiple seller network IDs are\nORed together (i.e. if non-empty, results must match any one of the\npublisher networks).\nSee [seller-network-ids](https://developers.google.com/ad-exchange/rtb/downloads/seller-network-ids)\nfile for the set of existing seller network IDs.",
           "items": {
             "format": "int32",
             "type": "integer"

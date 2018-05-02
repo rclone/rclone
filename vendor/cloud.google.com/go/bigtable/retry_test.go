@@ -30,6 +30,7 @@ import (
 	rpcpb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func setupFakeServer(opt ...grpc.ServerOption) (tbl *Table, cleanup func(), err error) {
@@ -42,12 +43,12 @@ func setupFakeServer(opt ...grpc.ServerOption) (tbl *Table, cleanup func(), err 
 		return nil, nil, err
 	}
 
-	client, err := NewClient(context.Background(), "client", "instance", option.WithGRPCConn(conn))
+	client, err := NewClient(context.Background(), "client", "instance", option.WithGRPCConn(conn), option.WithGRPCDialOption(grpc.WithBlock()))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	adminClient, err := NewAdminClient(context.Background(), "client", "instance", option.WithGRPCConn(conn))
+	adminClient, err := NewAdminClient(context.Background(), "client", "instance", option.WithGRPCConn(conn), option.WithGRPCDialOption(grpc.WithBlock()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -76,7 +77,7 @@ func TestRetryApply(t *testing.T) {
 	errInjector := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if strings.HasSuffix(info.FullMethod, "MutateRow") && errCount < 3 {
 			errCount++
-			return nil, grpc.Errorf(code, "")
+			return nil, status.Errorf(code, "")
 		}
 		return handler(ctx, req)
 	}
@@ -156,7 +157,7 @@ func TestRetryApplyBulk(t *testing.T) {
 	f = func(ss grpc.ServerStream) error {
 		if errCount < 3 {
 			errCount++
-			return grpc.Errorf(codes.Aborted, "")
+			return status.Errorf(codes.Aborted, "")
 		}
 		return nil
 	}
@@ -182,7 +183,7 @@ func TestRetryApplyBulk(t *testing.T) {
 		switch errCount {
 		case 0:
 			// Retryable request failure
-			err = grpc.Errorf(codes.Unavailable, "")
+			err = status.Errorf(codes.Unavailable, "")
 		case 1:
 			// Two mutations fail
 			writeMutateRowsResponse(ss, codes.Unavailable, codes.OK, codes.Aborted)
@@ -235,8 +236,8 @@ func TestRetryApplyBulk(t *testing.T) {
 		t.Errorf("unretryable errors: request failed %v", err)
 	}
 	want := []error{
-		grpc.Errorf(codes.FailedPrecondition, ""),
-		grpc.Errorf(codes.Aborted, ""),
+		status.Errorf(codes.FailedPrecondition, ""),
+		status.Errorf(codes.Aborted, ""),
 	}
 	if !testutil.Equal(want, errors) {
 		t.Errorf("unretryable errors: got: %v, want: %v", errors, want)
@@ -323,20 +324,20 @@ func TestRetryReadRows(t *testing.T) {
 		switch errCount {
 		case 0:
 			// Retryable request failure
-			err = grpc.Errorf(codes.Unavailable, "")
+			err = status.Errorf(codes.Unavailable, "")
 		case 1:
 			// Write two rows then error
 			if want, got := "a", string(req.Rows.RowRanges[0].GetStartKeyClosed()); want != got {
 				t.Errorf("first retry, no data received yet: got %q, want %q", got, want)
 			}
 			writeReadRowsResponse(ss, "a", "b")
-			err = grpc.Errorf(codes.Unavailable, "")
+			err = status.Errorf(codes.Unavailable, "")
 		case 2:
 			// Retryable request failure
 			if want, got := "b\x00", string(req.Rows.RowRanges[0].GetStartKeyClosed()); want != got {
 				t.Errorf("2 range retries: got %q, want %q", got, want)
 			}
-			err = grpc.Errorf(codes.Unavailable, "")
+			err = status.Errorf(codes.Unavailable, "")
 		case 3:
 			// Write two more rows
 			writeReadRowsResponse(ss, "c", "d")

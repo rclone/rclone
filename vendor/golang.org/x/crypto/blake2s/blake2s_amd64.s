@@ -436,28 +436,3 @@ TEXT ·hashBlocksSSSE3(SB), 0, $672-48 // frame = 656 + 16 byte alignment
 TEXT ·hashBlocksSSE4(SB), 0, $32-48 // frame = 16 + 16 byte alignment
 	HASH_BLOCKS(h+0(FP), c+8(FP), flag+16(FP), blocks_base+24(FP), blocks_len+32(FP), BLAKE2s_SSE4)
 	RET
-
-// func supportSSE4() bool
-TEXT ·supportSSE4(SB), 4, $0-1
-	MOVL $1, AX
-	CPUID
-	SHRL $19, CX       // Bit 19 indicates SSE4.1.
-	ANDL $1, CX
-	MOVB CX, ret+0(FP)
-	RET
-
-// func supportSSSE3() bool
-TEXT ·supportSSSE3(SB), 4, $0-1
-	MOVL $1, AX
-	CPUID
-	MOVL CX, BX
-	ANDL $0x1, BX      // Bit zero indicates SSE3 support.
-	JZ   FALSE
-	ANDL $0x200, CX    // Bit nine indicates SSSE3 support.
-	JZ   FALSE
-	MOVB $1, ret+0(FP)
-	RET
-
-FALSE:
-	MOVB $0, ret+0(FP)
-	RET

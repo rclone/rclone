@@ -41,9 +41,11 @@ func NewApplicationClientWithBaseURI(baseURI string, subscriptionID string) Appl
 }
 
 // Create adds an application to the specified Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// parameters - the parameters for the request.
 func (client ApplicationClient) Create(ctx context.Context, resourceGroupName string, accountName string, applicationID string, parameters *ApplicationCreateParameters) (result Application, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -89,7 +91,7 @@ func (client ApplicationClient) CreatePreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationId}", pathParameters),
@@ -122,9 +124,10 @@ func (client ApplicationClient) CreateResponder(resp *http.Response) (result App
 }
 
 // Delete deletes an application.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
 func (client ApplicationClient) Delete(ctx context.Context, resourceGroupName string, accountName string, applicationID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -197,9 +200,10 @@ func (client ApplicationClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get gets information about the specified application.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
 func (client ApplicationClient) Get(ctx context.Context, resourceGroupName string, accountName string, applicationID string) (result Application, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -273,9 +277,10 @@ func (client ApplicationClient) GetResponder(resp *http.Response) (result Applic
 }
 
 // List lists all of the applications in the specified account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. maxresults is the maximum number of items to return in the response.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// maxresults - the maximum number of items to return in the response.
 func (client ApplicationClient) List(ctx context.Context, resourceGroupName string, accountName string, maxresults *int32) (result ListApplicationsResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -379,9 +384,11 @@ func (client ApplicationClient) ListComplete(ctx context.Context, resourceGroupN
 }
 
 // Update updates settings for the specified application.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// parameters - the parameters for the request.
 func (client ApplicationClient) Update(ctx context.Context, resourceGroupName string, accountName string, applicationID string, parameters ApplicationUpdateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -427,7 +434,7 @@ func (client ApplicationClient) UpdatePreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationId}", pathParameters),

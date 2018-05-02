@@ -14,7 +14,7 @@ const opCancelJob = "CancelJob"
 
 // CancelJobRequest generates a "aws/request.Request" representing the
 // client's request for the CancelJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -102,7 +102,7 @@ const opCreateComputeEnvironment = "CreateComputeEnvironment"
 
 // CreateComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateComputeEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -207,7 +207,7 @@ const opCreateJobQueue = "CreateJobQueue"
 
 // CreateJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the CreateJobQueue operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -299,7 +299,7 @@ const opDeleteComputeEnvironment = "DeleteComputeEnvironment"
 
 // DeleteComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteComputeEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -387,7 +387,7 @@ const opDeleteJobQueue = "DeleteJobQueue"
 
 // DeleteJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteJobQueue operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -476,7 +476,7 @@ const opDeregisterJobDefinition = "DeregisterJobDefinition"
 
 // DeregisterJobDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterJobDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -560,7 +560,7 @@ const opDescribeComputeEnvironments = "DescribeComputeEnvironments"
 
 // DescribeComputeEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeComputeEnvironments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -648,7 +648,7 @@ const opDescribeJobDefinitions = "DescribeJobDefinitions"
 
 // DescribeJobDefinitionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobDefinitions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -733,7 +733,7 @@ const opDescribeJobQueues = "DescribeJobQueues"
 
 // DescribeJobQueuesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobQueues operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -817,7 +817,7 @@ const opDescribeJobs = "DescribeJobs"
 
 // DescribeJobsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -901,7 +901,7 @@ const opListJobs = "ListJobs"
 
 // ListJobsRequest generates a "aws/request.Request" representing the
 // client's request for the ListJobs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -987,7 +987,7 @@ const opRegisterJobDefinition = "RegisterJobDefinition"
 
 // RegisterJobDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterJobDefinition operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1071,7 +1071,7 @@ const opSubmitJob = "SubmitJob"
 
 // SubmitJobRequest generates a "aws/request.Request" representing the
 // client's request for the SubmitJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1156,7 +1156,7 @@ const opTerminateJob = "TerminateJob"
 
 // TerminateJobRequest generates a "aws/request.Request" representing the
 // client's request for the TerminateJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1242,7 +1242,7 @@ const opUpdateComputeEnvironment = "UpdateComputeEnvironment"
 
 // UpdateComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateComputeEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1326,7 +1326,7 @@ const opUpdateJobQueue = "UpdateJobQueue"
 
 // UpdateJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateJobQueue operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1581,16 +1581,18 @@ type AttemptDetail struct {
 	// Details about the container in this job attempt.
 	Container *AttemptContainerDetail `locationName:"container" type:"structure"`
 
-	// The Unix time stamp for when the attempt was started (when the attempt transitioned
-	// from the STARTING state to the RUNNING state).
+	// The Unix time stamp (in seconds and milliseconds) for when the attempt was
+	// started (when the attempt transitioned from the STARTING state to the RUNNING
+	// state).
 	StartedAt *int64 `locationName:"startedAt" type:"long"`
 
 	// A short, human-readable string to provide additional details about the current
 	// status of the job attempt.
 	StatusReason *string `locationName:"statusReason" type:"string"`
 
-	// The Unix time stamp for when the attempt was stopped (when the attempt transitioned
-	// from the RUNNING state to a terminal state, such as SUCCEEDED or FAILED).
+	// The Unix time stamp (in seconds and milliseconds) for when the attempt was
+	// stopped (when the attempt transitioned from the RUNNING state to a terminal
+	// state, such as SUCCEEDED or FAILED).
 	StoppedAt *int64 `locationName:"stoppedAt" type:"long"`
 }
 
@@ -2392,6 +2394,11 @@ type ContainerProperties struct {
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/)
 	// and the --memory option to docker run (https://docs.docker.com/engine/reference/run/).
 	// You must specify at least 4 MiB of memory for a job.
+	//
+	// If you are trying to maximize your resource utilization by providing your
+	// jobs as much memory as possible for a particular instance type, see Memory
+	// Management (http://docs.aws.amazon.com/batch/latest/userguide/memory-management.html)
+	// in the AWS Batch User Guide.
 	//
 	// Memory is a required field
 	Memory *int64 `locationName:"memory" type:"integer" required:"true"`
@@ -3429,6 +3436,11 @@ type JobDefinition struct {
 	// The status of the job definition.
 	Status *string `locationName:"status" type:"string"`
 
+	// The timeout configuration for jobs that are submitted with this job definition.
+	// You can specify a timeout duration after which AWS Batch terminates your
+	// jobs if they have not finished.
+	Timeout *JobTimeout `locationName:"timeout" type:"structure"`
+
 	// The type of job definition.
 	//
 	// Type is a required field
@@ -3487,6 +3499,12 @@ func (s *JobDefinition) SetStatus(v string) *JobDefinition {
 	return s
 }
 
+// SetTimeout sets the Timeout field's value.
+func (s *JobDefinition) SetTimeout(v *JobTimeout) *JobDefinition {
+	s.Timeout = v
+	return s
+}
+
 // SetType sets the Type field's value.
 func (s *JobDefinition) SetType(v string) *JobDefinition {
 	s.Type = &v
@@ -3540,10 +3558,11 @@ type JobDetail struct {
 	// the job.
 	Container *ContainerDetail `locationName:"container" type:"structure"`
 
-	// The Unix time stamp for when the job was created. For non-array jobs and
-	// parent array jobs, this is when the job entered the SUBMITTED state (at the
-	// time SubmitJob was called). For array child jobs, this is when the child
-	// job was spawned by its parent and entered the PENDING state.
+	// The Unix time stamp (in seconds and milliseconds) for when the job was created.
+	// For non-array jobs and parent array jobs, this is when the job entered the
+	// SUBMITTED state (at the time SubmitJob was called). For array child jobs,
+	// this is when the child job was spawned by its parent and entered the PENDING
+	// state.
 	CreatedAt *int64 `locationName:"createdAt" type:"long"`
 
 	// A list of job names or IDs on which this job depends.
@@ -3577,8 +3596,8 @@ type JobDetail struct {
 	// The retry strategy to use for this job if an attempt fails.
 	RetryStrategy *RetryStrategy `locationName:"retryStrategy" type:"structure"`
 
-	// The Unix time stamp for when the job was started (when the job transitioned
-	// from the STARTING state to the RUNNING state).
+	// The Unix time stamp (in seconds and milliseconds) for when the job was started
+	// (when the job transitioned from the STARTING state to the RUNNING state).
 	//
 	// StartedAt is a required field
 	StartedAt *int64 `locationName:"startedAt" type:"long" required:"true"`
@@ -3592,9 +3611,13 @@ type JobDetail struct {
 	// status of the job.
 	StatusReason *string `locationName:"statusReason" type:"string"`
 
-	// The Unix time stamp for when the job was stopped (when the job transitioned
-	// from the RUNNING state to a terminal state, such as SUCCEEDED or FAILED).
+	// The Unix time stamp (in seconds and milliseconds) for when the job was stopped
+	// (when the job transitioned from the RUNNING state to a terminal state, such
+	// as SUCCEEDED or FAILED).
 	StoppedAt *int64 `locationName:"stoppedAt" type:"long"`
+
+	// The timeout configuration for the job.
+	Timeout *JobTimeout `locationName:"timeout" type:"structure"`
 }
 
 // String returns the string representation
@@ -3694,6 +3717,12 @@ func (s *JobDetail) SetStatusReason(v string) *JobDetail {
 // SetStoppedAt sets the StoppedAt field's value.
 func (s *JobDetail) SetStoppedAt(v int64) *JobDetail {
 	s.StoppedAt = &v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *JobDetail) SetTimeout(v *JobTimeout) *JobDetail {
+	s.Timeout = v
 	return s
 }
 
@@ -3892,6 +3921,31 @@ func (s *JobSummary) SetStatusReason(v string) *JobSummary {
 // SetStoppedAt sets the StoppedAt field's value.
 func (s *JobSummary) SetStoppedAt(v int64) *JobSummary {
 	s.StoppedAt = &v
+	return s
+}
+
+// An object representing a job timeout configuration.
+type JobTimeout struct {
+	_ struct{} `type:"structure"`
+
+	// The time duration in seconds (measured from the job attempt's startedAt timestamp)
+	// after which AWS Batch terminates your jobs if they have not finished.
+	AttemptDurationSeconds *int64 `locationName:"attemptDurationSeconds" type:"integer"`
+}
+
+// String returns the string representation
+func (s JobTimeout) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s JobTimeout) GoString() string {
+	return s.String()
+}
+
+// SetAttemptDurationSeconds sets the AttemptDurationSeconds field's value.
+func (s *JobTimeout) SetAttemptDurationSeconds(v int64) *JobTimeout {
+	s.AttemptDurationSeconds = &v
 	return s
 }
 
@@ -4105,8 +4159,18 @@ type RegisterJobDefinitionInput struct {
 
 	// The retry strategy to use for failed jobs that are submitted with this job
 	// definition. Any retry strategy that is specified during a SubmitJob operation
-	// overrides the retry strategy defined here.
+	// overrides the retry strategy defined here. If a job is terminated due to
+	// a timeout, it is not retried.
 	RetryStrategy *RetryStrategy `locationName:"retryStrategy" type:"structure"`
+
+	// The timeout configuration for jobs that are submitted with this job definition,
+	// after which AWS Batch terminates your jobs if they have not finished. If
+	// a job is terminated due to a timeout, it is not retried. The minimum value
+	// for the timeout is 60 seconds. Any timeout configuration that is specified
+	// during a SubmitJob operation overrides the timeout configuration defined
+	// here. For more information, see Job Timeouts (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/job_timeouts.html)
+	// in the Amazon Elastic Container Service Developer Guide.
+	Timeout *JobTimeout `locationName:"timeout" type:"structure"`
 
 	// The type of job definition.
 	//
@@ -4166,6 +4230,12 @@ func (s *RegisterJobDefinitionInput) SetParameters(v map[string]*string) *Regist
 // SetRetryStrategy sets the RetryStrategy field's value.
 func (s *RegisterJobDefinitionInput) SetRetryStrategy(v *RetryStrategy) *RegisterJobDefinitionInput {
 	s.RetryStrategy = v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *RegisterJobDefinitionInput) SetTimeout(v *JobTimeout) *RegisterJobDefinitionInput {
+	s.Timeout = v
 	return s
 }
 
@@ -4304,6 +4374,16 @@ type SubmitJobInput struct {
 	// When a retry strategy is specified here, it overrides the retry strategy
 	// defined in the job definition.
 	RetryStrategy *RetryStrategy `locationName:"retryStrategy" type:"structure"`
+
+	// The timeout configuration for this SubmitJob operation. You can specify a
+	// timeout duration after which AWS Batch terminates your jobs if they have
+	// not finished. If a job is terminated due to a timeout, it is not retried.
+	// The minimum value for the timeout is 60 seconds. This configuration overrides
+	// any timeout configuration specified in the job definition. For array jobs,
+	// child jobs have the same timeout configuration as the parent job. For more
+	// information, see Job Timeouts (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/job_timeouts.html)
+	// in the Amazon Elastic Container Service Developer Guide.
+	Timeout *JobTimeout `locationName:"timeout" type:"structure"`
 }
 
 // String returns the string representation
@@ -4380,6 +4460,12 @@ func (s *SubmitJobInput) SetParameters(v map[string]*string) *SubmitJobInput {
 // SetRetryStrategy sets the RetryStrategy field's value.
 func (s *SubmitJobInput) SetRetryStrategy(v *RetryStrategy) *SubmitJobInput {
 	s.RetryStrategy = v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *SubmitJobInput) SetTimeout(v *JobTimeout) *SubmitJobInput {
+	s.Timeout = v
 	return s
 }
 

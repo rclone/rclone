@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"path"
 	"path/filepath"
 	"strings"
@@ -77,12 +78,21 @@ func runTest(t *testing.T, msg string, test *pb.Test) {
 
 	ctx := context.Background()
 	c, srv := newMock(t)
-
 	switch tt := test.Test.(type) {
 	case *pb.Test_Get:
-		srv.addRPC(tt.Get.Request, &fspb.Document{
-			CreateTime: &ts.Timestamp{},
-			UpdateTime: &ts.Timestamp{},
+		req := &fspb.BatchGetDocumentsRequest{
+			Database:  c.path(),
+			Documents: []string{tt.Get.DocRefPath},
+		}
+		srv.addRPC(req, []interface{}{
+			&fspb.BatchGetDocumentsResponse{
+				Result: &fspb.BatchGetDocumentsResponse_Found{&fspb.Document{
+					Name:       tt.Get.DocRefPath,
+					CreateTime: &ts.Timestamp{},
+					UpdateTime: &ts.Timestamp{},
+				}},
+				ReadTime: &ts.Timestamp{},
+			},
 		})
 		ref := docRefFromPath(tt.Get.DocRefPath, c)
 		_, err := ref.Get(ctx)
@@ -202,6 +212,8 @@ func convertTestValue(v interface{}) interface{} {
 			return ServerTimestamp
 		case "Delete":
 			return Delete
+		case "NaN":
+			return math.NaN()
 		default:
 			return v
 		}

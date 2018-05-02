@@ -39,6 +39,11 @@ const (
 	Replace AccessPolicyUpdateKind = "replace"
 )
 
+// PossibleAccessPolicyUpdateKindValues returns an array of possible values for the AccessPolicyUpdateKind const type.
+func PossibleAccessPolicyUpdateKindValues() []AccessPolicyUpdateKind {
+	return []AccessPolicyUpdateKind{Add, Remove, Replace}
+}
+
 // CertificatePermissions enumerates the values for certificate permissions.
 type CertificatePermissions string
 
@@ -73,6 +78,11 @@ const (
 	Update CertificatePermissions = "update"
 )
 
+// PossibleCertificatePermissionsValues returns an array of possible values for the CertificatePermissions const type.
+func PossibleCertificatePermissionsValues() []CertificatePermissions {
+	return []CertificatePermissions{Create, Delete, Deleteissuers, Get, Getissuers, Import, List, Listissuers, Managecontacts, Manageissuers, Purge, Recover, Setissuers, Update}
+}
+
 // CreateMode enumerates the values for create mode.
 type CreateMode string
 
@@ -82,6 +92,11 @@ const (
 	// CreateModeRecover ...
 	CreateModeRecover CreateMode = "recover"
 )
+
+// PossibleCreateModeValues returns an array of possible values for the CreateMode const type.
+func PossibleCreateModeValues() []CreateMode {
+	return []CreateMode{CreateModeDefault, CreateModeRecover}
+}
 
 // KeyPermissions enumerates the values for key permissions.
 type KeyPermissions string
@@ -121,6 +136,11 @@ const (
 	KeyPermissionsWrapKey KeyPermissions = "wrapKey"
 )
 
+// PossibleKeyPermissionsValues returns an array of possible values for the KeyPermissions const type.
+func PossibleKeyPermissionsValues() []KeyPermissions {
+	return []KeyPermissions{KeyPermissionsBackup, KeyPermissionsCreate, KeyPermissionsDecrypt, KeyPermissionsDelete, KeyPermissionsEncrypt, KeyPermissionsGet, KeyPermissionsImport, KeyPermissionsList, KeyPermissionsPurge, KeyPermissionsRecover, KeyPermissionsRestore, KeyPermissionsSign, KeyPermissionsUnwrapKey, KeyPermissionsUpdate, KeyPermissionsVerify, KeyPermissionsWrapKey}
+}
+
 // Reason enumerates the values for reason.
 type Reason string
 
@@ -130,6 +150,11 @@ const (
 	// AlreadyExists ...
 	AlreadyExists Reason = "AlreadyExists"
 )
+
+// PossibleReasonValues returns an array of possible values for the Reason const type.
+func PossibleReasonValues() []Reason {
+	return []Reason{AccountNameInvalid, AlreadyExists}
+}
 
 // SecretPermissions enumerates the values for secret permissions.
 type SecretPermissions string
@@ -153,6 +178,11 @@ const (
 	SecretPermissionsSet SecretPermissions = "set"
 )
 
+// PossibleSecretPermissionsValues returns an array of possible values for the SecretPermissions const type.
+func PossibleSecretPermissionsValues() []SecretPermissions {
+	return []SecretPermissions{SecretPermissionsBackup, SecretPermissionsDelete, SecretPermissionsGet, SecretPermissionsList, SecretPermissionsPurge, SecretPermissionsRecover, SecretPermissionsRestore, SecretPermissionsSet}
+}
+
 // SkuName enumerates the values for sku name.
 type SkuName string
 
@@ -162,6 +192,11 @@ const (
 	// Standard ...
 	Standard SkuName = "standard"
 )
+
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Premium, Standard}
+}
 
 // StoragePermissions enumerates the values for storage permissions.
 type StoragePermissions string
@@ -196,6 +231,11 @@ const (
 	// StoragePermissionsUpdate ...
 	StoragePermissionsUpdate StoragePermissions = "update"
 )
+
+// PossibleStoragePermissionsValues returns an array of possible values for the StoragePermissions const type.
+func PossibleStoragePermissionsValues() []StoragePermissions {
+	return []StoragePermissions{StoragePermissionsBackup, StoragePermissionsDelete, StoragePermissionsDeletesas, StoragePermissionsGet, StoragePermissionsGetsas, StoragePermissionsList, StoragePermissionsListsas, StoragePermissionsPurge, StoragePermissionsRecover, StoragePermissionsRegeneratekey, StoragePermissionsRestore, StoragePermissionsSet, StoragePermissionsSetsas, StoragePermissionsUpdate}
+}
 
 // AccessPolicyEntry an identity that have access to the key vault. All identities in the array must use the same
 // tenant ID as the key vault's tenant ID.
@@ -391,6 +431,24 @@ type Operation struct {
 	Origin *string `json:"origin,omitempty"`
 	// OperationProperties - Properties of operation, include metric specifications.
 	*OperationProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Operation.
+func (o Operation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.Display != nil {
+		objectMap["display"] = o.Display
+	}
+	if o.Origin != nil {
+		objectMap["origin"] = o.Origin
+	}
+	if o.OperationProperties != nil {
+		objectMap["properties"] = o.OperationProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Operation struct.
@@ -959,10 +1017,12 @@ type VaultPatchProperties struct {
 	EnabledForDiskEncryption *bool `json:"enabledForDiskEncryption,omitempty"`
 	// EnabledForTemplateDeployment - Property to specify whether Azure Resource Manager is permitted to retrieve secrets from the key vault.
 	EnabledForTemplateDeployment *bool `json:"enabledForTemplateDeployment,omitempty"`
-	// EnableSoftDelete - Property to specify whether the 'soft delete' functionality is enabled for this key vault. It does not accept false value.
+	// EnableSoftDelete - Property specifying whether recoverable deletion ('soft' delete) is enabled for this key vault. The property may not be set to false.
 	EnableSoftDelete *bool `json:"enableSoftDelete,omitempty"`
 	// CreateMode - The vault's create mode to indicate whether the vault need to be recovered or not. Possible values include: 'CreateModeRecover', 'CreateModeDefault'
 	CreateMode CreateMode `json:"createMode,omitempty"`
+	// EnablePurgeProtection - Property specifying whether protection against purge is enabled for this vault; it is only effective if soft delete is also enabled. Once activated, the property may no longer be reset to false.
+	EnablePurgeProtection *bool `json:"enablePurgeProtection,omitempty"`
 }
 
 // VaultProperties properties of the vault
@@ -981,10 +1041,12 @@ type VaultProperties struct {
 	EnabledForDiskEncryption *bool `json:"enabledForDiskEncryption,omitempty"`
 	// EnabledForTemplateDeployment - Property to specify whether Azure Resource Manager is permitted to retrieve secrets from the key vault.
 	EnabledForTemplateDeployment *bool `json:"enabledForTemplateDeployment,omitempty"`
-	// EnableSoftDelete - Property to specify whether the 'soft delete' functionality is enabled for this key vault. It does not accept false value.
+	// EnableSoftDelete - Property specifying whether recoverable deletion is enabled for this key vault. Setting this property to true activates the soft delete feature, whereby vaults or vault entities can be recovered after deletion. Enabling this functionality is irreversible - that is, the property does not accept false as its value.
 	EnableSoftDelete *bool `json:"enableSoftDelete,omitempty"`
 	// CreateMode - The vault's create mode to indicate whether the vault need to be recovered or not. Possible values include: 'CreateModeRecover', 'CreateModeDefault'
 	CreateMode CreateMode `json:"createMode,omitempty"`
+	// EnablePurgeProtection - Property specifying whether protection against purge is enabled for this vault. Setting this property to true activates protection against purge for this vault and its content - only the Key Vault service may initiate a hard, irrecoverable deletion. The setting is effective only if soft delete is also enabled. Enabling this functionality is irreversible - that is, the property does not accept false as its value.
+	EnablePurgeProtection *bool `json:"enablePurgeProtection,omitempty"`
 }
 
 // VaultsPurgeDeletedFuture an abstraction for monitoring and retrieving the results of a long-running operation.

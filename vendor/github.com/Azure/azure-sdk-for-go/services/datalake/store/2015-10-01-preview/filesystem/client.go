@@ -29,17 +29,20 @@ const (
 	DefaultAdlsFileSystemDNSSuffix = "azuredatalakestore.net"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // BaseClient is the base client for Filesystem.
 type BaseClient struct {
 	autorest.Client
 	AdlsFileSystemDNSSuffix string
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // New creates an instance of the BaseClient client.
 func New() BaseClient {
 	return NewWithoutDefaults(DefaultAdlsFileSystemDNSSuffix)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // NewWithoutDefaults creates an instance of the BaseClient client.
 func NewWithoutDefaults(adlsFileSystemDNSSuffix string) BaseClient {
 	return BaseClient{

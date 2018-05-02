@@ -43,8 +43,8 @@ func NewNameAvailabilityClientWithBaseURI(baseURI string, subscriptionID string)
 }
 
 // CheckNameAvailability sends the check name availability request.
-//
-// checkNameAvailabilityInput is input to check.
+// Parameters:
+// checkNameAvailabilityInput - input to check.
 func (client NameAvailabilityClient) CheckNameAvailability(ctx context.Context, checkNameAvailabilityInput CheckNameAvailabilityInput) (result CheckNameAvailabilityOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: checkNameAvailabilityInput,
@@ -82,7 +82,7 @@ func (client NameAvailabilityClient) CheckNameAvailabilityPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Cdn/checkNameAvailability"),

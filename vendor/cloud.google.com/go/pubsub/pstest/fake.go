@@ -38,8 +38,8 @@ import (
 	emptypb "github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // For testing. Note that even though changes to the now variable are atomic, a call
@@ -183,7 +183,7 @@ func (s *gServer) CreateTopic(_ context.Context, t *pb.Topic) (*pb.Topic, error)
 	defer s.mu.Unlock()
 
 	if s.topics[t.Name] != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "topic %q", t.Name)
+		return nil, status.Errorf(codes.AlreadyExists, "topic %q", t.Name)
 	}
 	top := newTopic(t)
 	s.topics[t.Name] = top
@@ -197,11 +197,11 @@ func (s *gServer) GetTopic(_ context.Context, req *pb.GetTopicRequest) (*pb.Topi
 	if t := s.topics[req.Topic]; t != nil {
 		return t.proto, nil
 	}
-	return nil, grpc.Errorf(codes.NotFound, "topic %q", req.Topic)
+	return nil, status.Errorf(codes.NotFound, "topic %q", req.Topic)
 }
 
 func (s *gServer) UpdateTopic(_ context.Context, req *pb.UpdateTopicRequest) (*pb.Topic, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "unimplemented")
+	return nil, status.Errorf(codes.Unimplemented, "unimplemented")
 }
 
 func (s *gServer) ListTopics(_ context.Context, req *pb.ListTopicsRequest) (*pb.ListTopicsResponse, error) {
@@ -253,7 +253,7 @@ func (s *gServer) DeleteTopic(_ context.Context, req *pb.DeleteTopicRequest) (*e
 
 	t := s.topics[req.Topic]
 	if t == nil {
-		return nil, grpc.Errorf(codes.NotFound, "topic %q", req.Topic)
+		return nil, status.Errorf(codes.NotFound, "topic %q", req.Topic)
 	}
 	t.stop()
 	delete(s.topics, req.Topic)
@@ -265,17 +265,17 @@ func (s *gServer) CreateSubscription(_ context.Context, ps *pb.Subscription) (*p
 	defer s.mu.Unlock()
 
 	if ps.Name == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "missing name")
+		return nil, status.Errorf(codes.InvalidArgument, "missing name")
 	}
 	if s.subs[ps.Name] != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "subscription %q", ps.Name)
+		return nil, status.Errorf(codes.AlreadyExists, "subscription %q", ps.Name)
 	}
 	if ps.Topic == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "missing topic")
+		return nil, status.Errorf(codes.InvalidArgument, "missing topic")
 	}
 	top := s.topics[ps.Topic]
 	if top == nil {
-		return nil, grpc.Errorf(codes.NotFound, "topic %q", ps.Topic)
+		return nil, status.Errorf(codes.NotFound, "topic %q", ps.Topic)
 	}
 	if err := checkAckDeadline(ps.AckDeadlineSeconds); err != nil {
 		return nil, err
@@ -297,10 +297,13 @@ func (s *gServer) CreateSubscription(_ context.Context, ps *pb.Subscription) (*p
 	return ps, nil
 }
 
+// Can be set for testing.
+var minAckDeadlineSecs int32 = 10
+
 func checkAckDeadline(ads int32) error {
-	if ads < 10 || ads > 600 {
+	if ads < minAckDeadlineSecs || ads > 600 {
 		// PubSub service returns Unknown.
-		return grpc.Errorf(codes.Unknown, "bad ack_deadline_seconds: %d", ads)
+		return status.Errorf(codes.Unknown, "bad ack_deadline_seconds: %d", ads)
 	}
 	return nil
 }
@@ -315,7 +318,7 @@ var defaultMessageRetentionDuration = ptypes.DurationProto(maxMessageRetentionDu
 func checkMRD(pmrd *durpb.Duration) error {
 	mrd, err := ptypes.Duration(pmrd)
 	if err != nil || mrd < minMessageRetentionDuration || mrd > maxMessageRetentionDuration {
-		return grpc.Errorf(codes.InvalidArgument, "bad message_retention_duration %+v", pmrd)
+		return status.Errorf(codes.InvalidArgument, "bad message_retention_duration %+v", pmrd)
 	}
 	return nil
 }
@@ -327,7 +330,7 @@ func (s *gServer) GetSubscription(_ context.Context, req *pb.GetSubscriptionRequ
 	if sub := s.subs[req.Subscription]; sub != nil {
 		return sub.proto, nil
 	}
-	return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription)
+	return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription)
 }
 
 func (s *gServer) UpdateSubscription(_ context.Context, req *pb.UpdateSubscriptionRequest) (*pb.Subscription, error) {
@@ -336,7 +339,7 @@ func (s *gServer) UpdateSubscription(_ context.Context, req *pb.UpdateSubscripti
 
 	sub := s.subs[req.Subscription.Name]
 	if sub == nil {
-		return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription.Name)
+		return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription.Name)
 	}
 
 	for _, path := range req.UpdateMask.Paths {
@@ -362,7 +365,7 @@ func (s *gServer) UpdateSubscription(_ context.Context, req *pb.UpdateSubscripti
 
 			// TODO(jba): labels
 		default:
-			return nil, grpc.Errorf(codes.InvalidArgument, "unknown field name %q", path)
+			return nil, status.Errorf(codes.InvalidArgument, "unknown field name %q", path)
 		}
 	}
 	return sub.proto, nil
@@ -396,7 +399,7 @@ func (s *gServer) DeleteSubscription(_ context.Context, req *pb.DeleteSubscripti
 
 	sub := s.subs[req.Subscription]
 	if sub == nil {
-		return nil, grpc.Errorf(codes.NotFound, "subscription %q", req.Subscription)
+		return nil, status.Errorf(codes.NotFound, "subscription %q", req.Subscription)
 	}
 	sub.stop()
 	delete(s.subs, req.Subscription)
@@ -409,11 +412,11 @@ func (s *gServer) Publish(_ context.Context, req *pb.PublishRequest) (*pb.Publis
 	defer s.mu.Unlock()
 
 	if req.Topic == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "missing topic")
+		return nil, status.Errorf(codes.InvalidArgument, "missing topic")
 	}
 	top := s.topics[req.Topic]
 	if top == nil {
-		return nil, grpc.Errorf(codes.NotFound, "topic %q", req.Topic)
+		return nil, status.Errorf(codes.NotFound, "topic %q", req.Topic)
 	}
 	var ids []string
 	for _, pm := range req.Messages {
@@ -423,7 +426,7 @@ func (s *gServer) Publish(_ context.Context, req *pb.PublishRequest) (*pb.Publis
 		pubTime := timeNow()
 		tsPubTime, err := ptypes.TimestampProto(pubTime)
 		if err != nil {
-			return nil, grpc.Errorf(codes.Internal, err.Error())
+			return nil, status.Errorf(codes.Internal, err.Error())
 		}
 		pm.PublishTime = tsPubTime
 		m := &Message{
@@ -489,11 +492,15 @@ type subscription struct {
 }
 
 func newSubscription(t *topic, mu *sync.Mutex, ps *pb.Subscription) *subscription {
+	at := time.Duration(ps.AckDeadlineSeconds) * time.Second
+	if at == 0 {
+		at = 10 * time.Second
+	}
 	return &subscription{
 		topic:      t,
 		mu:         mu,
 		proto:      ps,
-		ackTimeout: 10 * time.Second,
+		ackTimeout: at,
 		msgs:       map[string]*message{},
 		done:       make(chan struct{}),
 	}
@@ -525,13 +532,13 @@ func (s *gServer) StreamingPull(sps pb.Subscriber_StreamingPullServer) error {
 		return err
 	}
 	if req.Subscription == "" {
-		return grpc.Errorf(codes.InvalidArgument, "missing subscription")
+		return status.Errorf(codes.InvalidArgument, "missing subscription")
 	}
 	s.mu.Lock()
 	sub := s.subs[req.Subscription]
 	s.mu.Unlock()
 	if sub == nil {
-		return grpc.Errorf(codes.NotFound, "subscription %s", req.Subscription)
+		return status.Errorf(codes.NotFound, "subscription %s", req.Subscription)
 	}
 	// Create a new stream to handle the pull.
 	st := sub.newStream(sps, s.streamTimeout)
@@ -564,6 +571,9 @@ func (s *subscription) deliver() {
 	// Try to deliver each remaining message.
 	curIndex := 0
 	for _, m := range s.msgs {
+		if m.outstanding() {
+			continue
+		}
 		// If the message was never delivered before, start with the stream at
 		// curIndex. If it was delivered before, start with the stream after the one
 		// that owned it.
@@ -649,6 +659,7 @@ type message struct {
 	streamIndex int // index of stream that currently owns msg, for round-robin delivery
 }
 
+// A message is outstanding if it is owned by some stream.
 func (m *message) outstanding() bool {
 	return !m.ackDeadline.IsZero()
 }

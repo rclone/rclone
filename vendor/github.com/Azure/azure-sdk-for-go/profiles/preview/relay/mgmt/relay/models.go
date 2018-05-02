@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type HybridConnectionsClient = original.HybridConnectionsClient
-
-func NewHybridConnectionsClient(subscriptionID string) HybridConnectionsClient {
-	return original.NewHybridConnectionsClient(subscriptionID)
-}
-func NewHybridConnectionsClientWithBaseURI(baseURI string, subscriptionID string) HybridConnectionsClient {
-	return original.NewHybridConnectionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessRights = original.AccessRights
 
 const (
@@ -131,16 +115,45 @@ type WcfRelaysListResult = original.WcfRelaysListResult
 type WcfRelaysListResultIterator = original.WcfRelaysListResultIterator
 type WcfRelaysListResultPage = original.WcfRelaysListResultPage
 type NamespacesClient = original.NamespacesClient
+type OperationsClient = original.OperationsClient
+type WCFRelaysClient = original.WCFRelaysClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewHybridConnectionsClient(subscriptionID string) HybridConnectionsClient {
+	return original.NewHybridConnectionsClient(subscriptionID)
+}
+func NewHybridConnectionsClientWithBaseURI(baseURI string, subscriptionID string) HybridConnectionsClient {
+	return original.NewHybridConnectionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessRightsValues() []AccessRights {
+	return original.PossibleAccessRightsValues()
+}
+func PossibleKeyTypeValues() []KeyType {
+	return original.PossibleKeyTypeValues()
+}
+func PossibleProvisioningStateEnumValues() []ProvisioningStateEnum {
+	return original.PossibleProvisioningStateEnumValues()
+}
+func PossibleRelaytypeEnumValues() []RelaytypeEnum {
+	return original.PossibleRelaytypeEnumValues()
+}
+func PossibleSkuTierValues() []SkuTier {
+	return original.PossibleSkuTierValues()
+}
+func PossibleUnavailableReasonValues() []UnavailableReason {
+	return original.PossibleUnavailableReasonValues()
+}
 func NewNamespacesClient(subscriptionID string) NamespacesClient {
 	return original.NewNamespacesClient(subscriptionID)
 }
 func NewNamespacesClientWithBaseURI(baseURI string, subscriptionID string) NamespacesClient {
 	return original.NewNamespacesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OperationsClient = original.OperationsClient
-
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
@@ -153,9 +166,6 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type WCFRelaysClient = original.WCFRelaysClient
-
 func NewWCFRelaysClient(subscriptionID string) WCFRelaysClient {
 	return original.NewWCFRelaysClient(subscriptionID)
 }

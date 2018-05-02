@@ -38,6 +38,11 @@ const (
 	Parse DatabaseAccountKind = "Parse"
 )
 
+// PossibleDatabaseAccountKindValues returns an array of possible values for the DatabaseAccountKind const type.
+func PossibleDatabaseAccountKindValues() []DatabaseAccountKind {
+	return []DatabaseAccountKind{GlobalDocumentDB, MongoDB, Parse}
+}
+
 // DatabaseAccountOfferType enumerates the values for database account offer type.
 type DatabaseAccountOfferType string
 
@@ -45,6 +50,11 @@ const (
 	// Standard ...
 	Standard DatabaseAccountOfferType = "Standard"
 )
+
+// PossibleDatabaseAccountOfferTypeValues returns an array of possible values for the DatabaseAccountOfferType const type.
+func PossibleDatabaseAccountOfferTypeValues() []DatabaseAccountOfferType {
+	return []DatabaseAccountOfferType{Standard}
+}
 
 // DefaultConsistencyLevel enumerates the values for default consistency level.
 type DefaultConsistencyLevel string
@@ -62,6 +72,11 @@ const (
 	Strong DefaultConsistencyLevel = "Strong"
 )
 
+// PossibleDefaultConsistencyLevelValues returns an array of possible values for the DefaultConsistencyLevel const type.
+func PossibleDefaultConsistencyLevelValues() []DefaultConsistencyLevel {
+	return []DefaultConsistencyLevel{BoundedStaleness, ConsistentPrefix, Eventual, Session, Strong}
+}
+
 // KeyKind enumerates the values for key kind.
 type KeyKind string
 
@@ -75,6 +90,11 @@ const (
 	// SecondaryReadonly ...
 	SecondaryReadonly KeyKind = "secondaryReadonly"
 )
+
+// PossibleKeyKindValues returns an array of possible values for the KeyKind const type.
+func PossibleKeyKindValues() []KeyKind {
+	return []KeyKind{Primary, PrimaryReadonly, Secondary, SecondaryReadonly}
+}
 
 // PrimaryAggregationType enumerates the values for primary aggregation type.
 type PrimaryAggregationType string
@@ -93,6 +113,11 @@ const (
 	// Total ...
 	Total PrimaryAggregationType = "Total"
 )
+
+// PossiblePrimaryAggregationTypeValues returns an array of possible values for the PrimaryAggregationType const type.
+func PossiblePrimaryAggregationTypeValues() []PrimaryAggregationType {
+	return []PrimaryAggregationType{Average, Last, Maximum, Minimimum, None, Total}
+}
 
 // UnitType enumerates the values for unit type.
 type UnitType string
@@ -114,9 +139,14 @@ const (
 	Seconds UnitType = "Seconds"
 )
 
+// PossibleUnitTypeValues returns an array of possible values for the UnitType const type.
+func PossibleUnitTypeValues() []UnitType {
+	return []UnitType{Bytes, BytesPerSecond, Count, CountPerSecond, Milliseconds, Percent, Seconds}
+}
+
 // Capability cosmos DB capability object
 type Capability struct {
-	// Name - Name of the Cosmos DB capability
+	// Name - Name of the Cosmos DB capability. For example, "name": "EnableCassandra". Current values also include "EnableTable" and "EnableGremlin".
 	Name *string `json:"name,omitempty"`
 }
 
@@ -150,7 +180,9 @@ type DatabaseAccount struct {
 // MarshalJSON is the custom marshaler for DatabaseAccount.
 func (da DatabaseAccount) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["kind"] = da.Kind
+	if da.Kind != "" {
+		objectMap["kind"] = da.Kind
+	}
 	if da.DatabaseAccountProperties != nil {
 		objectMap["properties"] = da.DatabaseAccountProperties
 	}
@@ -277,7 +309,9 @@ type DatabaseAccountCreateUpdateParameters struct {
 // MarshalJSON is the custom marshaler for DatabaseAccountCreateUpdateParameters.
 func (dacup DatabaseAccountCreateUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["kind"] = dacup.Kind
+	if dacup.Kind != "" {
+		objectMap["kind"] = dacup.Kind
+	}
 	if dacup.DatabaseAccountCreateUpdateProperties != nil {
 		objectMap["properties"] = dacup.DatabaseAccountCreateUpdateProperties
 	}
@@ -386,10 +420,14 @@ type DatabaseAccountCreateUpdateProperties struct {
 	DatabaseAccountOfferType *string     `json:"databaseAccountOfferType,omitempty"`
 	// IPRangeFilter - Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list of client IPs for a given database account. IP addresses/ranges must be comma separated and must not contain any spaces.
 	IPRangeFilter *string `json:"ipRangeFilter,omitempty"`
+	// IsVirtualNetworkFilterEnabled - Flag to indicate whether to enable/disable Virtual Network ACL rules.
+	IsVirtualNetworkFilterEnabled *bool `json:"isVirtualNetworkFilterEnabled,omitempty"`
 	// EnableAutomaticFailover - Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will result in a new write region for the account and is chosen based on the failover priorities configured for the account.
 	EnableAutomaticFailover *bool `json:"enableAutomaticFailover,omitempty"`
 	// Capabilities - List of Cosmos DB capabilities for the account
 	Capabilities *[]Capability `json:"capabilities,omitempty"`
+	// VirtualNetworkRules - List of Virtual Network ACL rules configured for the Cosmos DB account.
+	VirtualNetworkRules *[]VirtualNetworkRule `json:"virtualNetworkRules,omitempty"`
 }
 
 // DatabaseAccountListConnectionStringsResult the connection strings for the given database account.
@@ -407,6 +445,21 @@ type DatabaseAccountListKeysResult struct {
 	// SecondaryMasterKey - Base 64 encoded value of the secondary read-write key.
 	SecondaryMasterKey                     *string `json:"secondaryMasterKey,omitempty"`
 	*DatabaseAccountListReadOnlyKeysResult `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DatabaseAccountListKeysResult.
+func (dalkr DatabaseAccountListKeysResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dalkr.PrimaryMasterKey != nil {
+		objectMap["primaryMasterKey"] = dalkr.PrimaryMasterKey
+	}
+	if dalkr.SecondaryMasterKey != nil {
+		objectMap["secondaryMasterKey"] = dalkr.SecondaryMasterKey
+	}
+	if dalkr.DatabaseAccountListReadOnlyKeysResult != nil {
+		objectMap["properties"] = dalkr.DatabaseAccountListReadOnlyKeysResult
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DatabaseAccountListKeysResult struct.
@@ -526,6 +579,8 @@ type DatabaseAccountProperties struct {
 	DatabaseAccountOfferType DatabaseAccountOfferType `json:"databaseAccountOfferType,omitempty"`
 	// IPRangeFilter - Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list of client IPs for a given database account. IP addresses/ranges must be comma separated and must not contain any spaces.
 	IPRangeFilter *string `json:"ipRangeFilter,omitempty"`
+	// IsVirtualNetworkFilterEnabled - Flag to indicate whether to enable/disable Virtual Network ACL rules.
+	IsVirtualNetworkFilterEnabled *bool `json:"isVirtualNetworkFilterEnabled,omitempty"`
 	// EnableAutomaticFailover - Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will result in a new write region for the account and is chosen based on the failover priorities configured for the account.
 	EnableAutomaticFailover *bool `json:"enableAutomaticFailover,omitempty"`
 	// ConsistencyPolicy - The consistency policy for the Cosmos DB database account.
@@ -538,6 +593,8 @@ type DatabaseAccountProperties struct {
 	ReadLocations *[]Location `json:"readLocations,omitempty"`
 	// FailoverPolicies - An array that contains the regions ordered by their failover priorities.
 	FailoverPolicies *[]FailoverPolicy `json:"failoverPolicies,omitempty"`
+	// VirtualNetworkRules - List of Virtual Network ACL rules configured for the Cosmos DB account.
+	VirtualNetworkRules *[]VirtualNetworkRule `json:"virtualNetworkRules,omitempty"`
 }
 
 // DatabaseAccountRegenerateKeyParameters parameters to regenerate the keys within the database account.
@@ -1185,4 +1242,10 @@ type UsagesResult struct {
 	autorest.Response `json:"-"`
 	// Value - The list of usages for the database. A usage is a point in time metric
 	Value *[]Usage `json:"value,omitempty"`
+}
+
+// VirtualNetworkRule virtual Network ACL Rule object
+type VirtualNetworkRule struct {
+	// ID - Resource ID of a subnet, for example: /subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}.
+	ID *string `json:"id,omitempty"`
 }

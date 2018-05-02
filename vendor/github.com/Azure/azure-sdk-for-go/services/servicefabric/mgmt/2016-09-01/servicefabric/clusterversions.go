@@ -40,9 +40,10 @@ func NewClusterVersionsClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // Get get cluster code versions by environment and version
-//
-// location is the location for the cluster code versions, this is different from cluster location environment is
-// cluster operating system, the default means all clusterVersion is the cluster code version
+// Parameters:
+// location - the location for the cluster code versions, this is different from cluster location
+// environment - cluster operating system, the default means all
+// clusterVersion - the cluster code version
 func (client ClusterVersionsClient) Get(ctx context.Context, location string, environment string, clusterVersion string) (result ClusterCodeVersionsResult, err error) {
 	req, err := client.GetPreparer(ctx, location, environment, clusterVersion)
 	if err != nil {
@@ -108,8 +109,8 @@ func (client ClusterVersionsClient) GetResponder(resp *http.Response) (result Cl
 }
 
 // List list cluster code versions by location
-//
-// location is the location for the cluster code versions, this is different from cluster location
+// Parameters:
+// location - the location for the cluster code versions, this is different from cluster location
 func (client ClusterVersionsClient) List(ctx context.Context, location string) (result ClusterCodeVersionsListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, location)
@@ -201,9 +202,9 @@ func (client ClusterVersionsClient) ListComplete(ctx context.Context, location s
 }
 
 // ListByEnvironment list cluster code versions by environment
-//
-// location is the location for the cluster code versions, this is different from cluster location environment is
-// cluster operating system, the default means all
+// Parameters:
+// location - the location for the cluster code versions, this is different from cluster location
+// environment - cluster operating system, the default means all
 func (client ClusterVersionsClient) ListByEnvironment(ctx context.Context, location string, environment string) (result ClusterCodeVersionsListResultPage, err error) {
 	result.fn = client.listByEnvironmentNextResults
 	req, err := client.ListByEnvironmentPreparer(ctx, location, environment)
@@ -296,9 +297,9 @@ func (client ClusterVersionsClient) ListByEnvironmentComplete(ctx context.Contex
 }
 
 // ListByVersion list cluster code versions by version
-//
-// location is the location for the cluster code versions, this is different from cluster location clusterVersion
-// is the cluster code version
+// Parameters:
+// location - the location for the cluster code versions, this is different from cluster location
+// clusterVersion - the cluster code version
 func (client ClusterVersionsClient) ListByVersion(ctx context.Context, location string, clusterVersion string) (result ClusterCodeVersionsListResultPage, err error) {
 	result.fn = client.listByVersionNextResults
 	req, err := client.ListByVersionPreparer(ctx, location, clusterVersion)

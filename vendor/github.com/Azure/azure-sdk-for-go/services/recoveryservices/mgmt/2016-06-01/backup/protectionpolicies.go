@@ -41,10 +41,11 @@ func NewProtectionPoliciesClientWithBaseURI(baseURI string, subscriptionID strin
 
 // CreateOrUpdate creates or modifies a backup policy. This is an asynchronous operation. Use the
 // GetPolicyOperationResult API to Get the operation status.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. policyName is the backup policy to be created.
-// resourceProtectionPolicy is the resource backup policy.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// policyName - the backup policy to be created.
+// resourceProtectionPolicy - the resource backup policy.
 func (client ProtectionPoliciesClient) CreateOrUpdate(ctx context.Context, vaultName string, resourceGroupName string, policyName string, resourceProtectionPolicy ProtectionPolicyResource) (result ProtectionPolicyResource, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, vaultName, resourceGroupName, policyName, resourceProtectionPolicy)
 	if err != nil {
@@ -82,7 +83,7 @@ func (client ProtectionPoliciesClient) CreateOrUpdatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupPolicies/{policyName}", pathParameters),
@@ -113,9 +114,10 @@ func (client ProtectionPoliciesClient) CreateOrUpdateResponder(resp *http.Respon
 
 // Delete deletes the specified backup policy from your Recovery Services vault. This is an asynchronous operation. Use
 // the GetPolicyOperationResult API to Get the operation status.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. policyName is the name of the backup policy to be deleted.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// policyName - the name of the backup policy to be deleted.
 func (client ProtectionPoliciesClient) Delete(ctx context.Context, vaultName string, resourceGroupName string, policyName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, vaultName, resourceGroupName, policyName)
 	if err != nil {
@@ -181,9 +183,10 @@ func (client ProtectionPoliciesClient) DeleteResponder(resp *http.Response) (res
 
 // Get gets the details of the backup policy associated with the Recovery Services vault. This is an asynchronous
 // operation. Use the GetPolicyOperationResult API to Get the operation status.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. policyName is the backup policy name used in this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// policyName - the backup policy name used in this GET operation.
 func (client ProtectionPoliciesClient) Get(ctx context.Context, vaultName string, resourceGroupName string, policyName string) (result ProtectionPolicyResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, policyName)
 	if err != nil {
@@ -250,10 +253,11 @@ func (client ProtectionPoliciesClient) GetResponder(resp *http.Response) (result
 
 // List lists the backup policies associated with the Recovery Services vault. The API provides parameters to Get
 // scoped results.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is the following equation can be used to filter the list of
-// backup policies. backupManagementType eq {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql}.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - the following equation can be used to filter the list of backup policies. backupManagementType eq
+// {AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql}.
 func (client ProtectionPoliciesClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string) (result ProtectionPolicyResourceList, err error) {
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter)
 	if err != nil {

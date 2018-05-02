@@ -40,8 +40,9 @@ func NewReplicaLoadInformationsClientWithBaseURI(baseURI string, timeout *int32)
 }
 
 // Get get replica load informations
-//
-// partitionID is the id of the partition replicaID is the id of the replica
+// Parameters:
+// partitionID - the id of the partition
+// replicaID - the id of the replica
 func (client ReplicaLoadInformationsClient) Get(ctx context.Context, partitionID string, replicaID string) (result ReplicaLoadInformation, err error) {
 	req, err := client.GetPreparer(ctx, partitionID, replicaID)
 	if err != nil {

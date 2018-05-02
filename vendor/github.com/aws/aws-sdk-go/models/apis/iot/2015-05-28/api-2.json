@@ -2055,7 +2055,8 @@
         "cloudwatchMetric":{"shape":"CloudwatchMetricAction"},
         "cloudwatchAlarm":{"shape":"CloudwatchAlarmAction"},
         "elasticsearch":{"shape":"ElasticsearchAction"},
-        "salesforce":{"shape":"SalesforceAction"}
+        "salesforce":{"shape":"SalesforceAction"},
+        "iotAnalytics":{"shape":"IotAnalyticsAction"}
       }
     },
     "ActionList":{
@@ -2463,6 +2464,7 @@
       "type":"list",
       "member":{"shape":"Certificate"}
     },
+    "ChannelName":{"type":"string"},
     "ClearDefaultAuthorizerRequest":{
       "type":"structure",
       "members":{
@@ -3931,6 +3933,14 @@
       },
       "error":{"httpStatusCode":400},
       "exception":true
+    },
+    "IotAnalyticsAction":{
+      "type":"structure",
+      "members":{
+        "channelArn":{"shape":"AwsArn"},
+        "channelName":{"shape":"ChannelName"},
+        "roleArn":{"shape":"AwsArn"}
+      }
     },
     "IsAuthenticated":{"type":"boolean"},
     "IsDefaultVersion":{"type":"boolean"},

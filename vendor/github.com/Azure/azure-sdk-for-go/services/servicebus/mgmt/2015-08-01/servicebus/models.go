@@ -38,6 +38,11 @@ const (
 	Send AccessRights = "Send"
 )
 
+// PossibleAccessRightsValues returns an array of possible values for the AccessRights const type.
+func PossibleAccessRightsValues() []AccessRights {
+	return []AccessRights{Listen, Manage, Send}
+}
+
 // EntityAvailabilityStatus enumerates the values for entity availability status.
 type EntityAvailabilityStatus string
 
@@ -53,6 +58,11 @@ const (
 	// Unknown ...
 	Unknown EntityAvailabilityStatus = "Unknown"
 )
+
+// PossibleEntityAvailabilityStatusValues returns an array of possible values for the EntityAvailabilityStatus const type.
+func PossibleEntityAvailabilityStatusValues() []EntityAvailabilityStatus {
+	return []EntityAvailabilityStatus{Available, Limited, Renaming, Restoring, Unknown}
+}
 
 // EntityStatus enumerates the values for entity status.
 type EntityStatus string
@@ -77,6 +87,11 @@ const (
 	// EntityStatusUnknown ...
 	EntityStatusUnknown EntityStatus = "Unknown"
 )
+
+// PossibleEntityStatusValues returns an array of possible values for the EntityStatus const type.
+func PossibleEntityStatusValues() []EntityStatus {
+	return []EntityStatus{EntityStatusActive, EntityStatusCreating, EntityStatusDeleting, EntityStatusDisabled, EntityStatusReceiveDisabled, EntityStatusRenaming, EntityStatusRestoring, EntityStatusSendDisabled, EntityStatusUnknown}
+}
 
 // NamespaceState enumerates the values for namespace state.
 type NamespaceState string
@@ -110,6 +125,11 @@ const (
 	NamespaceStateUnknown NamespaceState = "Unknown"
 )
 
+// PossibleNamespaceStateValues returns an array of possible values for the NamespaceState const type.
+func PossibleNamespaceStateValues() []NamespaceState {
+	return []NamespaceState{NamespaceStateActivating, NamespaceStateActive, NamespaceStateCreated, NamespaceStateCreating, NamespaceStateDisabled, NamespaceStateDisabling, NamespaceStateEnabling, NamespaceStateFailed, NamespaceStateRemoved, NamespaceStateRemoving, NamespaceStateSoftDeleted, NamespaceStateSoftDeleting, NamespaceStateUnknown}
+}
+
 // Policykey enumerates the values for policykey.
 type Policykey string
 
@@ -119,6 +139,11 @@ const (
 	// SecondaryKey ...
 	SecondaryKey Policykey = "SecondaryKey"
 )
+
+// PossiblePolicykeyValues returns an array of possible values for the Policykey const type.
+func PossiblePolicykeyValues() []Policykey {
+	return []Policykey{PrimaryKey, SecondaryKey}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -132,6 +157,11 @@ const (
 	Standard SkuName = "Standard"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Basic, Premium, Standard}
+}
+
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -143,6 +173,11 @@ const (
 	// SkuTierStandard ...
 	SkuTierStandard SkuTier = "Standard"
 )
+
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{SkuTierBasic, SkuTierPremium, SkuTierStandard}
+}
 
 // UnavailableReason enumerates the values for unavailable reason.
 type UnavailableReason string
@@ -161,6 +196,11 @@ const (
 	// TooManyNamespaceInCurrentSubscription ...
 	TooManyNamespaceInCurrentSubscription UnavailableReason = "TooManyNamespaceInCurrentSubscription"
 )
+
+// PossibleUnavailableReasonValues returns an array of possible values for the UnavailableReason const type.
+func PossibleUnavailableReasonValues() []UnavailableReason {
+	return []UnavailableReason{InvalidName, NameInLockdown, NameInUse, None, SubscriptionIsDisabled, TooManyNamespaceInCurrentSubscription}
+}
 
 // CheckNameAvailability description of a Check Name availability request properties.
 type CheckNameAvailability struct {
@@ -761,6 +801,21 @@ type QueueCreateOrUpdateParameters struct {
 	*QueueProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for QueueCreateOrUpdateParameters.
+func (qcoup QueueCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if qcoup.Name != nil {
+		objectMap["name"] = qcoup.Name
+	}
+	if qcoup.Location != nil {
+		objectMap["location"] = qcoup.Location
+	}
+	if qcoup.QueueProperties != nil {
+		objectMap["properties"] = qcoup.QueueProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for QueueCreateOrUpdateParameters struct.
 func (qcoup *QueueCreateOrUpdateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -966,6 +1021,27 @@ type QueueResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for QueueResource.
+func (qr QueueResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if qr.QueueProperties != nil {
+		objectMap["properties"] = qr.QueueProperties
+	}
+	if qr.ID != nil {
+		objectMap["id"] = qr.ID
+	}
+	if qr.Name != nil {
+		objectMap["name"] = qr.Name
+	}
+	if qr.Location != nil {
+		objectMap["location"] = qr.Location
+	}
+	if qr.Type != nil {
+		objectMap["type"] = qr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for QueueResource struct.
 func (qr *QueueResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1067,6 +1143,21 @@ type SharedAccessAuthorizationRuleCreateOrUpdateParameters struct {
 	// Name - Name of the authorization rule.
 	Name                                     *string `json:"name,omitempty"`
 	*SharedAccessAuthorizationRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SharedAccessAuthorizationRuleCreateOrUpdateParameters.
+func (saarcoup SharedAccessAuthorizationRuleCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if saarcoup.Location != nil {
+		objectMap["location"] = saarcoup.Location
+	}
+	if saarcoup.Name != nil {
+		objectMap["name"] = saarcoup.Name
+	}
+	if saarcoup.SharedAccessAuthorizationRuleProperties != nil {
+		objectMap["properties"] = saarcoup.SharedAccessAuthorizationRuleProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SharedAccessAuthorizationRuleCreateOrUpdateParameters struct.
@@ -1234,6 +1325,27 @@ type SharedAccessAuthorizationRuleResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SharedAccessAuthorizationRuleResource.
+func (saarr SharedAccessAuthorizationRuleResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if saarr.SharedAccessAuthorizationRuleProperties != nil {
+		objectMap["properties"] = saarr.SharedAccessAuthorizationRuleProperties
+	}
+	if saarr.ID != nil {
+		objectMap["id"] = saarr.ID
+	}
+	if saarr.Name != nil {
+		objectMap["name"] = saarr.Name
+	}
+	if saarr.Location != nil {
+		objectMap["location"] = saarr.Location
+	}
+	if saarr.Type != nil {
+		objectMap["type"] = saarr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SharedAccessAuthorizationRuleResource struct.
 func (saarr *SharedAccessAuthorizationRuleResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1311,6 +1423,21 @@ type SubscriptionCreateOrUpdateParameters struct {
 	// Type - Resource manager type of the resource.
 	Type                    *string `json:"type,omitempty"`
 	*SubscriptionProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SubscriptionCreateOrUpdateParameters.
+func (scoup SubscriptionCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scoup.Location != nil {
+		objectMap["location"] = scoup.Location
+	}
+	if scoup.Type != nil {
+		objectMap["type"] = scoup.Type
+	}
+	if scoup.SubscriptionProperties != nil {
+		objectMap["properties"] = scoup.SubscriptionProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SubscriptionCreateOrUpdateParameters struct.
@@ -1506,6 +1633,27 @@ type SubscriptionResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SubscriptionResource.
+func (sr SubscriptionResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sr.SubscriptionProperties != nil {
+		objectMap["properties"] = sr.SubscriptionProperties
+	}
+	if sr.ID != nil {
+		objectMap["id"] = sr.ID
+	}
+	if sr.Name != nil {
+		objectMap["name"] = sr.Name
+	}
+	if sr.Location != nil {
+		objectMap["location"] = sr.Location
+	}
+	if sr.Type != nil {
+		objectMap["type"] = sr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SubscriptionResource struct.
 func (sr *SubscriptionResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1573,6 +1721,21 @@ type TopicCreateOrUpdateParameters struct {
 	// Location - Location of the resource.
 	Location         *string `json:"location,omitempty"`
 	*TopicProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for TopicCreateOrUpdateParameters.
+func (tcoup TopicCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tcoup.Name != nil {
+		objectMap["name"] = tcoup.Name
+	}
+	if tcoup.Location != nil {
+		objectMap["location"] = tcoup.Location
+	}
+	if tcoup.TopicProperties != nil {
+		objectMap["properties"] = tcoup.TopicProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for TopicCreateOrUpdateParameters struct.
@@ -1740,8 +1903,6 @@ type TopicProperties struct {
 	EnableExpress *bool `json:"enableExpress,omitempty"`
 	// EnablePartitioning - Value that indicates whether the topic to be partitioned across multiple message brokers is enabled.
 	EnablePartitioning *bool `json:"enablePartitioning,omitempty"`
-	// EnableSubscriptionPartitioning - Value that indicates whether partitioning is enabled or disabled. NOTE: This property is unsupported, and may be deprecated.
-	EnableSubscriptionPartitioning *bool `json:"enableSubscriptionPartitioning,omitempty"`
 	// FilteringMessagesBeforePublishing - Whether messages should be filtered before publishing.
 	FilteringMessagesBeforePublishing *bool `json:"filteringMessagesBeforePublishing,omitempty"`
 	// IsAnonymousAccessible - Value that indicates whether the message is accessible anonymously.
@@ -1775,6 +1936,27 @@ type TopicResource struct {
 	Location *string `json:"location,omitempty"`
 	// Type - Resource type
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for TopicResource.
+func (tr TopicResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tr.TopicProperties != nil {
+		objectMap["properties"] = tr.TopicProperties
+	}
+	if tr.ID != nil {
+		objectMap["id"] = tr.ID
+	}
+	if tr.Name != nil {
+		objectMap["name"] = tr.Name
+	}
+	if tr.Location != nil {
+		objectMap["location"] = tr.Location
+	}
+	if tr.Type != nil {
+		objectMap["type"] = tr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for TopicResource struct.

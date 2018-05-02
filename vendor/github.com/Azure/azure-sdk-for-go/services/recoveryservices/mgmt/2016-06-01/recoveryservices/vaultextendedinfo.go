@@ -40,9 +40,10 @@ func NewVaultExtendedInfoClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate create vault extended info.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. resourceResourceExtendedInfoDetails is details of ResourceExtendedInfo
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// resourceResourceExtendedInfoDetails - details of ResourceExtendedInfo
 func (client VaultExtendedInfoClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, vaultName string, resourceResourceExtendedInfoDetails VaultExtendedInfoResource) (result VaultExtendedInfoResource, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, vaultName, resourceResourceExtendedInfoDetails)
 	if err != nil {
@@ -79,7 +80,7 @@ func (client VaultExtendedInfoClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/extendedInformation/vaultExtendedInfo", pathParameters),
@@ -109,9 +110,9 @@ func (client VaultExtendedInfoClient) CreateOrUpdateResponder(resp *http.Respons
 }
 
 // Get get the vault extended info.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault.
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
 func (client VaultExtendedInfoClient) Get(ctx context.Context, resourceGroupName string, vaultName string) (result VaultExtendedInfoResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -176,9 +177,10 @@ func (client VaultExtendedInfoClient) GetResponder(resp *http.Response) (result 
 }
 
 // Update update vault extended info.
-//
-// resourceGroupName is the name of the resource group where the recovery services vault is present. vaultName is
-// the name of the recovery services vault. resourceResourceExtendedInfoDetails is details of ResourceExtendedInfo
+// Parameters:
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// vaultName - the name of the recovery services vault.
+// resourceResourceExtendedInfoDetails - details of ResourceExtendedInfo
 func (client VaultExtendedInfoClient) Update(ctx context.Context, resourceGroupName string, vaultName string, resourceResourceExtendedInfoDetails VaultExtendedInfoResource) (result VaultExtendedInfoResource, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, vaultName, resourceResourceExtendedInfoDetails)
 	if err != nil {
@@ -215,7 +217,7 @@ func (client VaultExtendedInfoClient) UpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/extendedInformation/vaultExtendedInfo", pathParameters),

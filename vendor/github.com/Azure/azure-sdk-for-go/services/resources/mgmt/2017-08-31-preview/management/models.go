@@ -1,4 +1,4 @@
-package management
+package managementgroups
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ChildType enumerates the values for child type.
 type ChildType string
 
@@ -40,6 +41,13 @@ const (
 	Subscription ChildType = "Subscription"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// PossibleChildTypeValues returns an array of possible values for the ChildType const type.
+func PossibleChildTypeValues() []ChildType {
+	return []ChildType{Account, Department, Enrollment, Subscription}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ChildType1 enumerates the values for child type 1.
 type ChildType1 string
 
@@ -54,99 +62,36 @@ const (
 	ChildType1Subscription ChildType1 = "Subscription"
 )
 
-// GroupType enumerates the values for group type.
-type GroupType string
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// PossibleChildType1Values returns an array of possible values for the ChildType1 const type.
+func PossibleChildType1Values() []ChildType1 {
+	return []ChildType1{ChildType1Account, ChildType1Department, ChildType1Enrollment, ChildType1Subscription}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ManagementGroupType enumerates the values for management group type.
+type ManagementGroupType string
 
 const (
-	// GroupTypeAccount ...
-	GroupTypeAccount GroupType = "Account"
-	// GroupTypeDepartment ...
-	GroupTypeDepartment GroupType = "Department"
-	// GroupTypeEnrollment ...
-	GroupTypeEnrollment GroupType = "Enrollment"
-	// GroupTypeSubscription ...
-	GroupTypeSubscription GroupType = "Subscription"
+	// ManagementGroupTypeAccount ...
+	ManagementGroupTypeAccount ManagementGroupType = "Account"
+	// ManagementGroupTypeDepartment ...
+	ManagementGroupTypeDepartment ManagementGroupType = "Department"
+	// ManagementGroupTypeEnrollment ...
+	ManagementGroupTypeEnrollment ManagementGroupType = "Enrollment"
+	// ManagementGroupTypeSubscription ...
+	ManagementGroupTypeSubscription ManagementGroupType = "Subscription"
 )
 
-// ErrorDetails the details of the error.
-type ErrorDetails struct {
-	// Code - One of a server-defined set of error codes.
-	Code *string `json:"code,omitempty"`
-	// Message - A human-readable representation of the error.
-	Message *string `json:"message,omitempty"`
-	// Target - (Optional) The target of the error.
-	Target *string `json:"target,omitempty"`
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// PossibleManagementGroupTypeValues returns an array of possible values for the ManagementGroupType const type.
+func PossibleManagementGroupTypeValues() []ManagementGroupType {
+	return []ManagementGroupType{ManagementGroupTypeAccount, ManagementGroupTypeDepartment, ManagementGroupTypeEnrollment, ManagementGroupTypeSubscription}
 }
 
-// ErrorResponse the error object.
-type ErrorResponse struct {
-	Error *ErrorDetails `json:"error,omitempty"`
-}
-
-// Group the management group details.
-type Group struct {
-	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
-	ID *string `json:"id,omitempty"`
-	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
-	Type *string `json:"type,omitempty"`
-	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
-	Name             *uuid.UUID `json:"name,omitempty"`
-	*GroupProperties `json:"properties,omitempty"`
-}
-
-// UnmarshalJSON is the custom unmarshaler for Group struct.
-func (g *Group) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	for k, v := range m {
-		switch k {
-		case "id":
-			if v != nil {
-				var ID string
-				err = json.Unmarshal(*v, &ID)
-				if err != nil {
-					return err
-				}
-				g.ID = &ID
-			}
-		case "type":
-			if v != nil {
-				var typeVar string
-				err = json.Unmarshal(*v, &typeVar)
-				if err != nil {
-					return err
-				}
-				g.Type = &typeVar
-			}
-		case "name":
-			if v != nil {
-				var name uuid.UUID
-				err = json.Unmarshal(*v, &name)
-				if err != nil {
-					return err
-				}
-				g.Name = &name
-			}
-		case "properties":
-			if v != nil {
-				var groupProperties GroupProperties
-				err = json.Unmarshal(*v, &groupProperties)
-				if err != nil {
-					return err
-				}
-				g.GroupProperties = &groupProperties
-			}
-		}
-	}
-
-	return nil
-}
-
-// GroupChildInfo the unique identifier (ID) of a management group.
-type GroupChildInfo struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ChildInfo the unique identifier (ID) of a management group.
+type ChildInfo struct {
 	// ChildType - Possible values include: 'Enrollment', 'Department', 'Account', 'Subscription'
 	ChildType ChildType `json:"childType,omitempty"`
 	// ChildID - The ID of the child resource (management group or subscription). E.g. /providers/Microsoft.Management/managementGroups/40000000-0000-0000-0000-000000000000
@@ -157,8 +102,9 @@ type GroupChildInfo struct {
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 }
 
-// GroupDetailsProperties the details properties of a management group.
-type GroupDetailsProperties struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// DetailsProperties the details properties of a management group.
+type DetailsProperties struct {
 	// Version - The version number of the object.
 	Version *float64 `json:"version,omitempty"`
 	// UpdatedTime - The date and time when this object was last updated.
@@ -166,23 +112,61 @@ type GroupDetailsProperties struct {
 	// UpdatedBy - The identity of the principal or process that updated the object.
 	UpdatedBy *string          `json:"updatedBy,omitempty"`
 	Parent    *ParentGroupInfo `json:"parent,omitempty"`
-	// ManagementGroupType - Possible values include: 'GroupTypeEnrollment', 'GroupTypeDepartment', 'GroupTypeAccount', 'GroupTypeSubscription'
-	ManagementGroupType GroupType `json:"managementGroupType,omitempty"`
+	// ManagementGroupType - Possible values include: 'ManagementGroupTypeEnrollment', 'ManagementGroupTypeDepartment', 'ManagementGroupTypeAccount', 'ManagementGroupTypeSubscription'
+	ManagementGroupType ManagementGroupType `json:"managementGroupType,omitempty"`
 }
 
-// GroupInfo the management group.
-type GroupInfo struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ErrorDetails the details of the error.
+type ErrorDetails struct {
+	// Code - One of a server-defined set of error codes.
+	Code *string `json:"code,omitempty"`
+	// Message - A human-readable representation of the error.
+	Message *string `json:"message,omitempty"`
+	// Target - (Optional) The target of the error.
+	Target *string `json:"target,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ErrorResponse the error object.
+type ErrorResponse struct {
+	Error *ErrorDetails `json:"error,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// Info the management group.
+type Info struct {
 	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
 	ID *string `json:"id,omitempty"`
 	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
 	Type *string `json:"type,omitempty"`
 	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
-	Name                 *uuid.UUID `json:"name,omitempty"`
-	*GroupInfoProperties `json:"properties,omitempty"`
+	Name            *uuid.UUID `json:"name,omitempty"`
+	*InfoProperties `json:"properties,omitempty"`
 }
 
-// UnmarshalJSON is the custom unmarshaler for GroupInfo struct.
-func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// MarshalJSON is the custom marshaler for Info.
+func (i Info) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Type != nil {
+		objectMap["type"] = i.Type
+	}
+	if i.Name != nil {
+		objectMap["name"] = i.Name
+	}
+	if i.InfoProperties != nil {
+		objectMap["properties"] = i.InfoProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// UnmarshalJSON is the custom unmarshaler for Info struct.
+func (i *Info) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
 	err := json.Unmarshal(body, &m)
 	if err != nil {
@@ -197,7 +181,7 @@ func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gi.ID = &ID
+				i.ID = &ID
 			}
 		case "type":
 			if v != nil {
@@ -206,7 +190,7 @@ func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gi.Type = &typeVar
+				i.Type = &typeVar
 			}
 		case "name":
 			if v != nil {
@@ -215,16 +199,16 @@ func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gi.Name = &name
+				i.Name = &name
 			}
 		case "properties":
 			if v != nil {
-				var groupInfoProperties GroupInfoProperties
-				err = json.Unmarshal(*v, &groupInfoProperties)
+				var infoProperties InfoProperties
+				err = json.Unmarshal(*v, &infoProperties)
 				if err != nil {
 					return err
 				}
-				gi.GroupInfoProperties = &groupInfoProperties
+				i.InfoProperties = &infoProperties
 			}
 		}
 	}
@@ -232,32 +216,36 @@ func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// GroupInfoProperties the generic properties of a management group.
-type GroupInfoProperties struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// InfoProperties the generic properties of a management group.
+type InfoProperties struct {
 	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 	// DisplayName - The friendly name of the management group.
 	DisplayName *string `json:"displayName,omitempty"`
 }
 
-// GroupListResult the result of listing management groups.
-type GroupListResult struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ListResult the result of listing management groups.
+type ListResult struct {
 	autorest.Response `json:"-"`
 	// Value - The list of management groups.
-	Value *[]GroupInfo `json:"value,omitempty"`
+	Value *[]Info `json:"value,omitempty"`
 	// NextLink - The URL to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// GroupListResultIterator provides access to a complete listing of GroupInfo values.
-type GroupListResultIterator struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ListResultIterator provides access to a complete listing of Info values.
+type ListResultIterator struct {
 	i    int
-	page GroupListResultPage
+	page ListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
-func (iter *GroupListResultIterator) Next() error {
+func (iter *ListResultIterator) Next() error {
 	iter.i++
 	if iter.i < len(iter.page.Values()) {
 		return nil
@@ -271,135 +259,120 @@ func (iter *GroupListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
-func (iter GroupListResultIterator) NotDone() bool {
+func (iter ListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Response returns the raw server response from the last page request.
-func (iter GroupListResultIterator) Response() GroupListResult {
+func (iter ListResultIterator) Response() ListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
-func (iter GroupListResultIterator) Value() GroupInfo {
+func (iter ListResultIterator) Value() Info {
 	if !iter.page.NotDone() {
-		return GroupInfo{}
+		return Info{}
 	}
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // IsEmpty returns true if the ListResult contains no values.
-func (glr GroupListResult) IsEmpty() bool {
-	return glr.Value == nil || len(*glr.Value) == 0
+func (lr ListResult) IsEmpty() bool {
+	return lr.Value == nil || len(*lr.Value) == 0
 }
 
-// groupListResultPreparer prepares a request to retrieve the next set of results.
+// listResultPreparer prepares a request to retrieve the next set of results.
 // It returns nil if no more results exist.
-func (glr GroupListResult) groupListResultPreparer() (*http.Request, error) {
-	if glr.NextLink == nil || len(to.String(glr.NextLink)) < 1 {
+func (lr ListResult) listResultPreparer() (*http.Request, error) {
+	if lr.NextLink == nil || len(to.String(lr.NextLink)) < 1 {
 		return nil, nil
 	}
 	return autorest.Prepare(&http.Request{},
 		autorest.AsJSON(),
 		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(glr.NextLink)))
+		autorest.WithBaseURL(to.String(lr.NextLink)))
 }
 
-// GroupListResultPage contains a page of GroupInfo values.
-type GroupListResultPage struct {
-	fn  func(GroupListResult) (GroupListResult, error)
-	glr GroupListResult
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ListResultPage contains a page of Info values.
+type ListResultPage struct {
+	fn func(ListResult) (ListResult, error)
+	lr ListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
-func (page *GroupListResultPage) Next() error {
-	next, err := page.fn(page.glr)
+func (page *ListResultPage) Next() error {
+	next, err := page.fn(page.lr)
 	if err != nil {
 		return err
 	}
-	page.glr = next
+	page.lr = next
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
-func (page GroupListResultPage) NotDone() bool {
-	return !page.glr.IsEmpty()
+func (page ListResultPage) NotDone() bool {
+	return !page.lr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Response returns the raw server response from the last page request.
-func (page GroupListResultPage) Response() GroupListResult {
-	return page.glr
+func (page ListResultPage) Response() ListResult {
+	return page.lr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Values returns the slice of values for the current page or nil if there are no values.
-func (page GroupListResultPage) Values() []GroupInfo {
-	if page.glr.IsEmpty() {
+func (page ListResultPage) Values() []Info {
+	if page.lr.IsEmpty() {
 		return nil
 	}
-	return *page.glr.Value
+	return *page.lr.Value
 }
 
-// GroupProperties the generic properties of a management group.
-type GroupProperties struct {
-	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
-	TenantID *uuid.UUID `json:"tenantId,omitempty"`
-	// DisplayName - The friendly name of the management group.
-	DisplayName *string                 `json:"displayName,omitempty"`
-	Details     *GroupDetailsProperties `json:"details,omitempty"`
-}
-
-// GroupPropertiesWithChildren the generic properties of a management group.
-type GroupPropertiesWithChildren struct {
-	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
-	TenantID *uuid.UUID `json:"tenantId,omitempty"`
-	// DisplayName - The friendly name of the management group.
-	DisplayName *string                 `json:"displayName,omitempty"`
-	Details     *GroupDetailsProperties `json:"details,omitempty"`
-	// Children - The list of children.
-	Children *[]GroupChildInfo `json:"children,omitempty"`
-}
-
-// GroupPropertiesWithHierarchy the generic properties of a management group.
-type GroupPropertiesWithHierarchy struct {
-	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
-	TenantID *uuid.UUID `json:"tenantId,omitempty"`
-	// DisplayName - The friendly name of the management group.
-	DisplayName *string                 `json:"displayName,omitempty"`
-	Details     *GroupDetailsProperties `json:"details,omitempty"`
-	// Children - The list of children.
-	Children *[]GroupRecursiveChildInfo `json:"children,omitempty"`
-}
-
-// GroupRecursiveChildInfo the unique identifier (ID) of a management group.
-type GroupRecursiveChildInfo struct {
-	// ChildType - Possible values include: 'ChildType1Enrollment', 'ChildType1Department', 'ChildType1Account', 'ChildType1Subscription'
-	ChildType ChildType1 `json:"childType,omitempty"`
-	// ChildID - The ID of the child resource (management group or subscription). E.g. /providers/Microsoft.Management/managementGroups/40000000-0000-0000-0000-000000000000
-	ChildID *string `json:"childId,omitempty"`
-	// DisplayName - The friendly name of the child resource.
-	DisplayName *string `json:"displayName,omitempty"`
-	// TenantID - (Optional) The AAD Tenant ID associated with the child resource.
-	TenantID *uuid.UUID `json:"tenantId,omitempty"`
-	// Children - The list of children.
-	Children *[]GroupRecursiveChildInfo `json:"children,omitempty"`
-}
-
-// GroupWithChildren the management group details.
-type GroupWithChildren struct {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// ManagementGroup the management group details.
+type ManagementGroup struct {
 	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
 	ID *string `json:"id,omitempty"`
 	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
 	Type *string `json:"type,omitempty"`
 	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
-	Name                         *uuid.UUID `json:"name,omitempty"`
-	*GroupPropertiesWithChildren `json:"properties,omitempty"`
+	Name        *uuid.UUID `json:"name,omitempty"`
+	*Properties `json:"properties,omitempty"`
 }
 
-// UnmarshalJSON is the custom unmarshaler for GroupWithChildren struct.
-func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// MarshalJSON is the custom marshaler for ManagementGroup.
+func (mg ManagementGroup) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mg.ID != nil {
+		objectMap["id"] = mg.ID
+	}
+	if mg.Type != nil {
+		objectMap["type"] = mg.Type
+	}
+	if mg.Name != nil {
+		objectMap["name"] = mg.Name
+	}
+	if mg.Properties != nil {
+		objectMap["properties"] = mg.Properties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// UnmarshalJSON is the custom unmarshaler for ManagementGroup struct.
+func (mg *ManagementGroup) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
 	err := json.Unmarshal(body, &m)
 	if err != nil {
@@ -414,7 +387,7 @@ func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gwc.ID = &ID
+				mg.ID = &ID
 			}
 		case "type":
 			if v != nil {
@@ -423,7 +396,7 @@ func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gwc.Type = &typeVar
+				mg.Type = &typeVar
 			}
 		case "name":
 			if v != nil {
@@ -432,16 +405,16 @@ func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
 				if err != nil {
 					return err
 				}
-				gwc.Name = &name
+				mg.Name = &name
 			}
 		case "properties":
 			if v != nil {
-				var groupPropertiesWithChildren GroupPropertiesWithChildren
-				err = json.Unmarshal(*v, &groupPropertiesWithChildren)
+				var properties Properties
+				err = json.Unmarshal(*v, &properties)
 				if err != nil {
 					return err
 				}
-				gwc.GroupPropertiesWithChildren = &groupPropertiesWithChildren
+				mg.Properties = &properties
 			}
 		}
 	}
@@ -449,69 +422,7 @@ func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// GroupWithHierarchy the management group details.
-type GroupWithHierarchy struct {
-	autorest.Response `json:"-"`
-	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
-	ID *string `json:"id,omitempty"`
-	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
-	Type *string `json:"type,omitempty"`
-	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
-	Name                          *uuid.UUID `json:"name,omitempty"`
-	*GroupPropertiesWithHierarchy `json:"properties,omitempty"`
-}
-
-// UnmarshalJSON is the custom unmarshaler for GroupWithHierarchy struct.
-func (gwh *GroupWithHierarchy) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	for k, v := range m {
-		switch k {
-		case "id":
-			if v != nil {
-				var ID string
-				err = json.Unmarshal(*v, &ID)
-				if err != nil {
-					return err
-				}
-				gwh.ID = &ID
-			}
-		case "type":
-			if v != nil {
-				var typeVar string
-				err = json.Unmarshal(*v, &typeVar)
-				if err != nil {
-					return err
-				}
-				gwh.Type = &typeVar
-			}
-		case "name":
-			if v != nil {
-				var name uuid.UUID
-				err = json.Unmarshal(*v, &name)
-				if err != nil {
-					return err
-				}
-				gwh.Name = &name
-			}
-		case "properties":
-			if v != nil {
-				var groupPropertiesWithHierarchy GroupPropertiesWithHierarchy
-				err = json.Unmarshal(*v, &groupPropertiesWithHierarchy)
-				if err != nil {
-					return err
-				}
-				gwh.GroupPropertiesWithHierarchy = &groupPropertiesWithHierarchy
-			}
-		}
-	}
-
-	return nil
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Operation a Management REST API operation.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}.
@@ -520,6 +431,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // OperationDisplay the object that represents the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft.Management.
@@ -530,6 +442,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // OperationListResult result listing  operations. It contains a list of operations and a URL link to get the next
 // set of results.
 type OperationListResult struct {
@@ -540,12 +453,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -562,16 +477,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -581,6 +499,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -598,12 +517,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -615,16 +536,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -633,10 +557,227 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
 // ParentGroupInfo (Optional) The ID of the parent management group.
 type ParentGroupInfo struct {
 	// ParentID - The ID of the parent management group. E.g. /providers/Microsoft.Management/managementGroups/30000000-0000-0000-0000-000000000000
 	ParentID *string `json:"parentId,omitempty"`
 	// DisplayName - The friendly name of the management group.
 	DisplayName *string `json:"displayName,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// Properties the generic properties of a management group.
+type Properties struct {
+	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
+	TenantID *uuid.UUID `json:"tenantId,omitempty"`
+	// DisplayName - The friendly name of the management group.
+	DisplayName *string            `json:"displayName,omitempty"`
+	Details     *DetailsProperties `json:"details,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// PropertiesWithChildren the generic properties of a management group.
+type PropertiesWithChildren struct {
+	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
+	TenantID *uuid.UUID `json:"tenantId,omitempty"`
+	// DisplayName - The friendly name of the management group.
+	DisplayName *string            `json:"displayName,omitempty"`
+	Details     *DetailsProperties `json:"details,omitempty"`
+	// Children - The list of children.
+	Children *[]ChildInfo `json:"children,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// PropertiesWithHierarchy the generic properties of a management group.
+type PropertiesWithHierarchy struct {
+	// TenantID - The AAD Tenant ID associated with the management group. E.g. 10000000-0000-0000-0000-000000000000
+	TenantID *uuid.UUID `json:"tenantId,omitempty"`
+	// DisplayName - The friendly name of the management group.
+	DisplayName *string            `json:"displayName,omitempty"`
+	Details     *DetailsProperties `json:"details,omitempty"`
+	// Children - The list of children.
+	Children *[]RecursiveChildInfo `json:"children,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// RecursiveChildInfo the unique identifier (ID) of a management group.
+type RecursiveChildInfo struct {
+	// ChildType - Possible values include: 'ChildType1Enrollment', 'ChildType1Department', 'ChildType1Account', 'ChildType1Subscription'
+	ChildType ChildType1 `json:"childType,omitempty"`
+	// ChildID - The ID of the child resource (management group or subscription). E.g. /providers/Microsoft.Management/managementGroups/40000000-0000-0000-0000-000000000000
+	ChildID *string `json:"childId,omitempty"`
+	// DisplayName - The friendly name of the child resource.
+	DisplayName *string `json:"displayName,omitempty"`
+	// TenantID - (Optional) The AAD Tenant ID associated with the child resource.
+	TenantID *uuid.UUID `json:"tenantId,omitempty"`
+	// Children - The list of children.
+	Children *[]RecursiveChildInfo `json:"children,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// WithChildren the management group details.
+type WithChildren struct {
+	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
+	ID *string `json:"id,omitempty"`
+	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
+	Type *string `json:"type,omitempty"`
+	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
+	Name                    *uuid.UUID `json:"name,omitempty"`
+	*PropertiesWithChildren `json:"properties,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// MarshalJSON is the custom marshaler for WithChildren.
+func (wc WithChildren) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wc.ID != nil {
+		objectMap["id"] = wc.ID
+	}
+	if wc.Type != nil {
+		objectMap["type"] = wc.Type
+	}
+	if wc.Name != nil {
+		objectMap["name"] = wc.Name
+	}
+	if wc.PropertiesWithChildren != nil {
+		objectMap["properties"] = wc.PropertiesWithChildren
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// UnmarshalJSON is the custom unmarshaler for WithChildren struct.
+func (wc *WithChildren) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wc.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wc.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wc.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var propertiesWithChildren PropertiesWithChildren
+				err = json.Unmarshal(*v, &propertiesWithChildren)
+				if err != nil {
+					return err
+				}
+				wc.PropertiesWithChildren = &propertiesWithChildren
+			}
+		}
+	}
+
+	return nil
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// WithHierarchy the management group details.
+type WithHierarchy struct {
+	autorest.Response `json:"-"`
+	// ID - The ID of the management group. E.g. /providers/Microsoft.Management/managementGroups/20000000-0000-0000-0000-000000000000
+	ID *string `json:"id,omitempty"`
+	// Type - The type of the resource. E.g. /providers/Microsoft.Management/managementGroups
+	Type *string `json:"type,omitempty"`
+	// Name - The name of the management group. E.g. 20000000-0000-0000-0000-000000000000
+	Name                     *uuid.UUID `json:"name,omitempty"`
+	*PropertiesWithHierarchy `json:"properties,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// MarshalJSON is the custom marshaler for WithHierarchy.
+func (wh WithHierarchy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wh.ID != nil {
+		objectMap["id"] = wh.ID
+	}
+	if wh.Type != nil {
+		objectMap["type"] = wh.Type
+	}
+	if wh.Name != nil {
+		objectMap["name"] = wh.Name
+	}
+	if wh.PropertiesWithHierarchy != nil {
+		objectMap["properties"] = wh.PropertiesWithHierarchy
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2017-08-31-preview/management instead.
+// UnmarshalJSON is the custom unmarshaler for WithHierarchy struct.
+func (wh *WithHierarchy) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wh.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wh.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wh.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var propertiesWithHierarchy PropertiesWithHierarchy
+				err = json.Unmarshal(*v, &propertiesWithHierarchy)
+				if err != nil {
+					return err
+				}
+				wh.PropertiesWithHierarchy = &propertiesWithHierarchy
+			}
+		}
+	}
+
+	return nil
 }

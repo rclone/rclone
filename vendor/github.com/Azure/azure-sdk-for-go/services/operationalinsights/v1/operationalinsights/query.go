@@ -41,11 +41,11 @@ func NewQueryClientWithBaseURI(baseURI string, workspaceID string) QueryClient {
 }
 
 // Get executes an Analytics query for data
-//
-// query is the Analytics query. Learn more about the [Analytics query
-// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/) timespan is
-// optional. The timespan over which to query data. This is an ISO8601 time period value.  This timespan is applied
-// in addition to any that are specified in the query expression.
+// Parameters:
+// query - the Analytics query. Learn more about the [Analytics query
+// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/)
+// timespan - optional. The timespan over which to query data. This is an ISO8601 time period value.  This
+// timespan is applied in addition to any that are specified in the query expression.
 func (client QueryClient) Get(ctx context.Context, query string, timespan *string) (result QueryResults, err error) {
 	req, err := client.GetPreparer(ctx, query, timespan)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client QueryClient) GetResponder(resp *http.Response) (result QueryResults
 
 // Post executes an Analytics query for data. [Here](/documentation/2-Using-the-API/Query) is an example for using POST
 // with an Analytics query.
-//
-// body is the Analytics query. Learn more about the [Analytics query
+// Parameters:
+// body - the Analytics query. Learn more about the [Analytics query
 // syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/)
 func (client QueryClient) Post(ctx context.Context, body QueryBody) (result QueryResults, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -149,7 +149,7 @@ func (client QueryClient) PostPreparer(ctx context.Context, body QueryBody) (*ht
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/workspaces/{workspaceId}/query", pathParameters),

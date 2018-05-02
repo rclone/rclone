@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // WorkspacesClient is the these APIs allow end users to operate on Azure Machine Learning Team Account resources. They
 // support CRUD operations for Azure Machine Learning Team Accounts.
 type WorkspacesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NewWorkspacesClient creates an instance of the WorkspacesClient client.
 func NewWorkspacesClient(subscriptionID string) WorkspacesClient {
 	return NewWorkspacesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // NewWorkspacesClientWithBaseURI creates an instance of the WorkspacesClient client.
 func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) WorkspacesClient {
 	return WorkspacesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // CreateOrUpdate creates or updates a machine learning workspace with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the machine learning team account belongs.
@@ -83,6 +87,7 @@ func (client WorkspacesClient) CreateOrUpdate(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, parameters Workspace) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -98,7 +103,7 @@ func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearningExperimentation/accounts/{accountName}/workspaces/{workspaceName}", pathParameters),
@@ -107,6 +112,7 @@ func (client WorkspacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -114,6 +120,7 @@ func (client WorkspacesClient) CreateOrUpdateSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) CreateOrUpdateResponder(resp *http.Response) (result Workspace, err error) {
@@ -127,6 +134,7 @@ func (client WorkspacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Delete deletes a machine learning workspace.
 //
 // resourceGroupName is the name of the resource group to which the machine learning team account belongs.
@@ -166,6 +174,7 @@ func (client WorkspacesClient) Delete(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // DeletePreparer prepares the Delete request.
 func (client WorkspacesClient) DeletePreparer(ctx context.Context, resourceGroupName string, accountName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -188,6 +197,7 @@ func (client WorkspacesClient) DeletePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -195,6 +205,7 @@ func (client WorkspacesClient) DeleteSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -207,6 +218,7 @@ func (client WorkspacesClient) DeleteResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Get gets the properties of the specified machine learning workspace.
 //
 // resourceGroupName is the name of the resource group to which the machine learning team account belongs.
@@ -246,6 +258,7 @@ func (client WorkspacesClient) Get(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // GetPreparer prepares the Get request.
 func (client WorkspacesClient) GetPreparer(ctx context.Context, resourceGroupName string, accountName string, workspaceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -268,6 +281,7 @@ func (client WorkspacesClient) GetPreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -275,6 +289,7 @@ func (client WorkspacesClient) GetSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) GetResponder(resp *http.Response) (result Workspace, err error) {
@@ -288,6 +303,7 @@ func (client WorkspacesClient) GetResponder(resp *http.Response) (result Workspa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ListByAccounts lists all the available machine learning workspaces under the specified team account.
 //
 // accountName is the name of the machine learning team account. resourceGroupName is the name of the resource
@@ -323,6 +339,7 @@ func (client WorkspacesClient) ListByAccounts(ctx context.Context, accountName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ListByAccountsPreparer prepares the ListByAccounts request.
 func (client WorkspacesClient) ListByAccountsPreparer(ctx context.Context, accountName string, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -344,6 +361,7 @@ func (client WorkspacesClient) ListByAccountsPreparer(ctx context.Context, accou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ListByAccountsSender sends the ListByAccounts request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListByAccountsSender(req *http.Request) (*http.Response, error) {
@@ -351,6 +369,7 @@ func (client WorkspacesClient) ListByAccountsSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ListByAccountsResponder handles the response to the ListByAccounts request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) ListByAccountsResponder(resp *http.Response) (result WorkspaceListResult, err error) {
@@ -385,12 +404,14 @@ func (client WorkspacesClient) listByAccountsNextResults(lastResults WorkspaceLi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // ListByAccountsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client WorkspacesClient) ListByAccountsComplete(ctx context.Context, accountName string, resourceGroupName string) (result WorkspaceListResultIterator, err error) {
 	result.page, err = client.ListByAccounts(ctx, accountName, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // Update updates a machine learning workspace with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the machine learning team account belongs.
@@ -430,6 +451,7 @@ func (client WorkspacesClient) Update(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UpdatePreparer prepares the Update request.
 func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, parameters WorkspaceUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -445,7 +467,7 @@ func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearningExperimentation/accounts/{accountName}/workspaces/{workspaceName}", pathParameters),
@@ -454,6 +476,7 @@ func (client WorkspacesClient) UpdatePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -461,6 +484,7 @@ func (client WorkspacesClient) UpdateSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-05-01-preview/experimentation instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client WorkspacesClient) UpdateResponder(resp *http.Response) (result Workspace, err error) {

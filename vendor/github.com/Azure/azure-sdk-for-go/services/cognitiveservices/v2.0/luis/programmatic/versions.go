@@ -37,9 +37,10 @@ func NewVersionsClient(azureRegion AzureRegions) VersionsClient {
 }
 
 // Clone creates a new version using the current snapshot of the selected application version.
-//
-// appID is the application ID. versionID is the version ID. versionCloneObject is a model containing the new
-// version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// versionCloneObject - a model containing the new version ID.
 func (client VersionsClient) Clone(ctx context.Context, appID uuid.UUID, versionID string, versionCloneObject *TaskUpdateObject) (result String, err error) {
 	req, err := client.ClonePreparer(ctx, appID, versionID, versionCloneObject)
 	if err != nil {
@@ -74,7 +75,7 @@ func (client VersionsClient) ClonePreparer(ctx context.Context, appID uuid.UUID,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/clone", pathParameters))
@@ -106,8 +107,9 @@ func (client VersionsClient) CloneResponder(resp *http.Response) (result String,
 }
 
 // Delete deletes an application version.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client VersionsClient) Delete(ctx context.Context, appID uuid.UUID, versionID string) (result OperationStatus, err error) {
 	req, err := client.DeletePreparer(ctx, appID, versionID)
 	if err != nil {
@@ -169,8 +171,10 @@ func (client VersionsClient) DeleteResponder(resp *http.Response) (result Operat
 }
 
 // DeleteUnlabelledUtterance deleted an unlabelled utterance.
-//
-// appID is the application ID. versionID is the version ID. utterance is the utterance text to delete.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// utterance - the utterance text to delete.
 func (client VersionsClient) DeleteUnlabelledUtterance(ctx context.Context, appID uuid.UUID, versionID string, utterance string) (result OperationStatus, err error) {
 	req, err := client.DeleteUnlabelledUtterancePreparer(ctx, appID, versionID, utterance)
 	if err != nil {
@@ -205,7 +209,7 @@ func (client VersionsClient) DeleteUnlabelledUtterancePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsDelete(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/suggest", pathParameters),
@@ -234,8 +238,9 @@ func (client VersionsClient) DeleteUnlabelledUtteranceResponder(resp *http.Respo
 }
 
 // Export exports a LUIS application to JSON format.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client VersionsClient) Export(ctx context.Context, appID uuid.UUID, versionID string) (result LuisApp, err error) {
 	req, err := client.ExportPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -297,8 +302,9 @@ func (client VersionsClient) ExportResponder(resp *http.Response) (result LuisAp
 }
 
 // Get gets the version info.
-//
-// appID is the application ID. versionID is the version ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
 func (client VersionsClient) Get(ctx context.Context, appID uuid.UUID, versionID string) (result VersionInfo, err error) {
 	req, err := client.GetPreparer(ctx, appID, versionID)
 	if err != nil {
@@ -360,9 +366,11 @@ func (client VersionsClient) GetResponder(resp *http.Response) (result VersionIn
 }
 
 // Import imports a new version into a LUIS application.
-//
-// appID is the application ID. luisApp is a LUIS application structure. versionID is the new versionId to import.
-// If not specified, the versionId will be read from the imported object.
+// Parameters:
+// appID - the application ID.
+// luisApp - a LUIS application structure.
+// versionID - the new versionId to import. If not specified, the versionId will be read from the imported
+// object.
 func (client VersionsClient) Import(ctx context.Context, appID uuid.UUID, luisApp LuisApp, versionID string) (result String, err error) {
 	req, err := client.ImportPreparer(ctx, appID, luisApp, versionID)
 	if err != nil {
@@ -401,7 +409,7 @@ func (client VersionsClient) ImportPreparer(ctx context.Context, appID uuid.UUID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/import", pathParameters),
@@ -431,9 +439,10 @@ func (client VersionsClient) ImportResponder(resp *http.Response) (result String
 }
 
 // List gets the application versions info.
-//
-// appID is the application ID. skip is the number of entries to skip. Default value is 0. take is the number of
-// entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client VersionsClient) List(ctx context.Context, appID uuid.UUID, skip *int32, take *int32) (result ListVersionInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -519,9 +528,10 @@ func (client VersionsClient) ListResponder(resp *http.Response) (result ListVers
 }
 
 // Update updates the name or description of the application version.
-//
-// appID is the application ID. versionID is the version ID. versionUpdateObject is a model containing Name and
-// Description of the application.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// versionUpdateObject - a model containing Name and Description of the application.
 func (client VersionsClient) Update(ctx context.Context, appID uuid.UUID, versionID string, versionUpdateObject TaskUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdatePreparer(ctx, appID, versionID, versionUpdateObject)
 	if err != nil {
@@ -556,7 +566,7 @@ func (client VersionsClient) UpdatePreparer(ctx context.Context, appID uuid.UUID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/", pathParameters),

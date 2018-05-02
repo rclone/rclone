@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // TopicTypesClient is the azure EventGrid Management Client
 type TopicTypesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // NewTopicTypesClient creates an instance of the TopicTypesClient client.
 func NewTopicTypesClient(subscriptionID string) TopicTypesClient {
 	return NewTopicTypesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // NewTopicTypesClientWithBaseURI creates an instance of the TopicTypesClient client.
 func NewTopicTypesClientWithBaseURI(baseURI string, subscriptionID string) TopicTypesClient {
 	return TopicTypesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // Get get information about a topic type
 //
 // topicTypeName is name of the topic type
@@ -64,6 +68,7 @@ func (client TopicTypesClient) Get(ctx context.Context, topicTypeName string) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // GetPreparer prepares the Get request.
 func (client TopicTypesClient) GetPreparer(ctx context.Context, topicTypeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -83,6 +88,7 @@ func (client TopicTypesClient) GetPreparer(ctx context.Context, topicTypeName st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopicTypesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -90,6 +96,7 @@ func (client TopicTypesClient) GetSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client TopicTypesClient) GetResponder(resp *http.Response) (result TopicTypeInfo, err error) {
@@ -103,6 +110,7 @@ func (client TopicTypesClient) GetResponder(resp *http.Response) (result TopicTy
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // List list all registered topic types
 func (client TopicTypesClient) List(ctx context.Context) (result TopicTypesListResult, err error) {
 	req, err := client.ListPreparer(ctx)
@@ -126,6 +134,7 @@ func (client TopicTypesClient) List(ctx context.Context) (result TopicTypesListR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListPreparer prepares the List request.
 func (client TopicTypesClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2017-09-15-preview"
@@ -141,6 +150,7 @@ func (client TopicTypesClient) ListPreparer(ctx context.Context) (*http.Request,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopicTypesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -148,6 +158,7 @@ func (client TopicTypesClient) ListSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client TopicTypesClient) ListResponder(resp *http.Response) (result TopicTypesListResult, err error) {
@@ -161,6 +172,7 @@ func (client TopicTypesClient) ListResponder(resp *http.Response) (result TopicT
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListEventTypes list event types for a topic type
 //
 // topicTypeName is name of the topic type
@@ -186,6 +198,7 @@ func (client TopicTypesClient) ListEventTypes(ctx context.Context, topicTypeName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListEventTypesPreparer prepares the ListEventTypes request.
 func (client TopicTypesClient) ListEventTypesPreparer(ctx context.Context, topicTypeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -205,6 +218,7 @@ func (client TopicTypesClient) ListEventTypesPreparer(ctx context.Context, topic
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListEventTypesSender sends the ListEventTypes request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopicTypesClient) ListEventTypesSender(req *http.Request) (*http.Response, error) {
@@ -212,6 +226,7 @@ func (client TopicTypesClient) ListEventTypesSender(req *http.Request) (*http.Re
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2017-09-15-preview/eventgrid instead.
 // ListEventTypesResponder handles the response to the ListEventTypes request. The method always
 // closes the http.Response Body.
 func (client TopicTypesClient) ListEventTypesResponder(resp *http.Response) (result EventTypesListResult, err error) {

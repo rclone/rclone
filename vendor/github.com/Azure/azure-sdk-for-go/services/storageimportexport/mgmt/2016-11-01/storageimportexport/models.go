@@ -44,6 +44,11 @@ const (
 	Transferring DriveState = "Transferring"
 )
 
+// PossibleDriveStateValues returns an array of possible values for the DriveState const type.
+func PossibleDriveStateValues() []DriveState {
+	return []DriveState{Completed, CompletedMoreInfo, NeverReceived, Received, ShippedBack, Specified, Transferring}
+}
+
 // DriveBitLockerKey bitLocker recovery key or password to the specified drive
 type DriveBitLockerKey struct {
 	// BitLockerKey - BitLocker recovery key or password
@@ -84,6 +89,15 @@ type DriveStatus struct {
 type ErrorResponse struct {
 	// ErrorResponseError - Describes the error information.
 	*ErrorResponseError `json:"error,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ErrorResponse.
+func (er ErrorResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if er.ErrorResponseError != nil {
+		objectMap["error"] = er.ErrorResponseError
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ErrorResponse struct.
@@ -141,6 +155,18 @@ type Export struct {
 	*ExportBlobList `json:"blobList,omitempty"`
 	// BlobListblobPath - The relative URI to the block blob that contains the list of blob paths or blob path prefixes as defined above, beginning with the container name. If the blob is in root container, the URI must begin with $root.
 	BlobListblobPath *string `json:"blobListblobPath,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Export.
+func (e Export) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if e.ExportBlobList != nil {
+		objectMap["blobList"] = e.ExportBlobList
+	}
+	if e.BlobListblobPath != nil {
+		objectMap["blobListblobPath"] = e.BlobListblobPath
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Export struct.
@@ -368,6 +394,24 @@ type Location struct {
 	*LocationProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Location.
+func (l Location) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if l.ID != nil {
+		objectMap["id"] = l.ID
+	}
+	if l.Name != nil {
+		objectMap["name"] = l.Name
+	}
+	if l.Type != nil {
+		objectMap["type"] = l.Type
+	}
+	if l.LocationProperties != nil {
+		objectMap["properties"] = l.LocationProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Location struct.
 func (l *Location) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -456,6 +500,18 @@ type Operation struct {
 	Name *string `json:"name,omitempty"`
 	// OperationDisplay - operation display properties
 	*OperationDisplay `json:"display,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Operation.
+func (o Operation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.OperationDisplay != nil {
+		objectMap["display"] = o.OperationDisplay
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Operation struct.
@@ -582,6 +638,16 @@ type UpdateJobParameters struct {
 	Tags interface{} `json:"tags,omitempty"`
 	// UpdateJobParametersProperties - Specifies the properties of a UpdateJob.
 	*UpdateJobParametersProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateJobParameters.
+func (ujp UpdateJobParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["tags"] = ujp.Tags
+	if ujp.UpdateJobParametersProperties != nil {
+		objectMap["properties"] = ujp.UpdateJobParametersProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateJobParameters struct.

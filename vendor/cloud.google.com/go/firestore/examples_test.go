@@ -316,6 +316,24 @@ func ExampleDocumentRef_Get() {
 	_ = docsnap // TODO: Use DocumentSnapshot.
 }
 
+func ExampleDocumentRef_Snapshots() {
+	ctx := context.Background()
+	client, err := firestore.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer client.Close()
+	iter := client.Doc("States/Idaho").Snapshots(ctx)
+	defer iter.Stop()
+	for {
+		docsnap, err := iter.Next()
+		if err != nil {
+			// TODO: Handle error.
+		}
+		_ = docsnap // TODO: Use DocumentSnapshot.
+	}
+}
+
 func ExampleDocumentSnapshot_Data() {
 	ctx := context.Background()
 	client, err := firestore.NewClient(ctx, "project-id")
@@ -450,6 +468,7 @@ func ExampleDocumentIterator_Next() {
 		Where("pop", ">", 10).
 		OrderBy("pop", firestore.Desc)
 	iter := q.Documents(ctx)
+	defer iter.Stop()
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {

@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type CustomInstanceClient = original.CustomInstanceClient
-
-func NewCustomInstanceClient() CustomInstanceClient {
-	return original.NewCustomInstanceClient()
-}
-func NewCustomInstanceClientWithBaseURI(baseURI string) CustomInstanceClient {
-	return original.NewCustomInstanceClientWithBaseURI(baseURI)
-}
-
 type ErrorCode = original.ErrorCode
 
 const (
@@ -124,6 +108,33 @@ type WebMetaTag = original.WebMetaTag
 type WebPage = original.WebPage
 type WebWebAnswer = original.WebWebAnswer
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func NewCustomInstanceClient() CustomInstanceClient {
+	return original.NewCustomInstanceClient()
+}
+func NewCustomInstanceClientWithBaseURI(baseURI string) CustomInstanceClient {
+	return original.NewCustomInstanceClientWithBaseURI(baseURI)
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleSafeSearchValues() []SafeSearch {
+	return original.PossibleSafeSearchValues()
+}
+func PossibleTextFormatValues() []TextFormat {
+	return original.PossibleTextFormatValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"
 }

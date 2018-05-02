@@ -22,54 +22,15 @@ package servicefabric
 import original "github.com/Azure/azure-sdk-for-go/services/servicefabric/mgmt/2017-07-01-preview/servicefabric"
 
 type ApplicationClient = original.ApplicationClient
-
-func NewApplicationClient() ApplicationClient {
-	return original.NewApplicationClient()
-}
-func NewApplicationClientWithBaseURI(baseURI string) ApplicationClient {
-	return original.NewApplicationClientWithBaseURI(baseURI)
-}
-
 type ApplicationTypeClient = original.ApplicationTypeClient
-
-func NewApplicationTypeClient() ApplicationTypeClient {
-	return original.NewApplicationTypeClient()
-}
-func NewApplicationTypeClientWithBaseURI(baseURI string) ApplicationTypeClient {
-	return original.NewApplicationTypeClientWithBaseURI(baseURI)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type ClustersClient = original.ClustersClient
-
-func NewClustersClient() ClustersClient {
-	return original.NewClustersClient()
-}
-func NewClustersClientWithBaseURI(baseURI string) ClustersClient {
-	return original.NewClustersClientWithBaseURI(baseURI)
-}
-
 type ClusterVersionsClient = original.ClusterVersionsClient
-
-func NewClusterVersionsClient() ClusterVersionsClient {
-	return original.NewClusterVersionsClient()
-}
-func NewClusterVersionsClientWithBaseURI(baseURI string) ClusterVersionsClient {
-	return original.NewClusterVersionsClientWithBaseURI(baseURI)
-}
-
 type ClusterState = original.ClusterState
 
 const (
@@ -292,16 +253,93 @@ type VersionPutFuture = original.VersionPutFuture
 type VersionResource = original.VersionResource
 type VersionResourceList = original.VersionResourceList
 type OperationsClient = original.OperationsClient
+type ServiceClient = original.ServiceClient
+type VersionClient = original.VersionClient
 
+func NewApplicationClient() ApplicationClient {
+	return original.NewApplicationClient()
+}
+func NewApplicationClientWithBaseURI(baseURI string) ApplicationClient {
+	return original.NewApplicationClientWithBaseURI(baseURI)
+}
+func NewApplicationTypeClient() ApplicationTypeClient {
+	return original.NewApplicationTypeClient()
+}
+func NewApplicationTypeClientWithBaseURI(baseURI string) ApplicationTypeClient {
+	return original.NewApplicationTypeClientWithBaseURI(baseURI)
+}
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func NewClustersClient() ClustersClient {
+	return original.NewClustersClient()
+}
+func NewClustersClientWithBaseURI(baseURI string) ClustersClient {
+	return original.NewClustersClientWithBaseURI(baseURI)
+}
+func NewClusterVersionsClient() ClusterVersionsClient {
+	return original.NewClusterVersionsClient()
+}
+func NewClusterVersionsClientWithBaseURI(baseURI string) ClusterVersionsClient {
+	return original.NewClusterVersionsClientWithBaseURI(baseURI)
+}
+func PossibleClusterStateValues() []ClusterState {
+	return original.PossibleClusterStateValues()
+}
+func PossibleDefaultMoveCostValues() []DefaultMoveCost {
+	return original.PossibleDefaultMoveCostValues()
+}
+func PossibleDurabilityLevelValues() []DurabilityLevel {
+	return original.PossibleDurabilityLevelValues()
+}
+func PossibleEnvironmentValues() []Environment {
+	return original.PossibleEnvironmentValues()
+}
+func PossiblePartitionSchemeValues() []PartitionScheme {
+	return original.PossiblePartitionSchemeValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleReliabilityLevelValues() []ReliabilityLevel {
+	return original.PossibleReliabilityLevelValues()
+}
+func PossibleReliabilityLevel1Values() []ReliabilityLevel1 {
+	return original.PossibleReliabilityLevel1Values()
+}
+func PossibleSchemeValues() []Scheme {
+	return original.PossibleSchemeValues()
+}
+func PossibleServiceKindValues() []ServiceKind {
+	return original.PossibleServiceKindValues()
+}
+func PossibleServiceKindBasicServiceUpdatePropertiesValues() []ServiceKindBasicServiceUpdateProperties {
+	return original.PossibleServiceKindBasicServiceUpdatePropertiesValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleUpgradeModeValues() []UpgradeMode {
+	return original.PossibleUpgradeModeValues()
+}
+func PossibleUpgradeMode1Values() []UpgradeMode1 {
+	return original.PossibleUpgradeMode1Values()
+}
+func PossibleWeightValues() []Weight {
+	return original.PossibleWeightValues()
+}
+func PossibleX509StoreNameValues() []X509StoreName {
+	return original.PossibleX509StoreNameValues()
+}
 func NewOperationsClient() OperationsClient {
 	return original.NewOperationsClient()
 }
 func NewOperationsClientWithBaseURI(baseURI string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI)
 }
-
-type ServiceClient = original.ServiceClient
-
 func NewServiceClient() ServiceClient {
 	return original.NewServiceClient()
 }
@@ -314,9 +352,6 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type VersionClient = original.VersionClient
-
 func NewVersionClient() VersionClient {
 	return original.NewVersionClient()
 }

@@ -41,8 +41,9 @@ func NewReplicationLogicalNetworksClientWithBaseURI(baseURI string, subscription
 }
 
 // Get gets the details of a logical network.
-//
-// fabricName is server Id. logicalNetworkName is logical network name.
+// Parameters:
+// fabricName - server Id.
+// logicalNetworkName - logical network name.
 func (client ReplicationLogicalNetworksClient) Get(ctx context.Context, fabricName string, logicalNetworkName string) (result LogicalNetwork, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, logicalNetworkName)
 	if err != nil {
@@ -109,8 +110,8 @@ func (client ReplicationLogicalNetworksClient) GetResponder(resp *http.Response)
 }
 
 // ListByReplicationFabrics lists all the logical networks of the Azure Site Recovery fabric
-//
-// fabricName is server Id.
+// Parameters:
+// fabricName - server Id.
 func (client ReplicationLogicalNetworksClient) ListByReplicationFabrics(ctx context.Context, fabricName string) (result LogicalNetworkCollectionPage, err error) {
 	result.fn = client.listByReplicationFabricsNextResults
 	req, err := client.ListByReplicationFabricsPreparer(ctx, fabricName)

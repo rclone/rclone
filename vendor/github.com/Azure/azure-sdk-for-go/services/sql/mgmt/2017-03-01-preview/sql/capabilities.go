@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CapabilitiesClient is the the Azure SQL Database management API provides a RESTful set of web services that interact
 // with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update, and
 // delete databases.
@@ -31,16 +32,19 @@ type CapabilitiesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewCapabilitiesClient creates an instance of the CapabilitiesClient client.
 func NewCapabilitiesClient(subscriptionID string) CapabilitiesClient {
 	return NewCapabilitiesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewCapabilitiesClientWithBaseURI creates an instance of the CapabilitiesClient client.
 func NewCapabilitiesClientWithBaseURI(baseURI string, subscriptionID string) CapabilitiesClient {
 	return CapabilitiesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocation gets the capabilities available for the specified location.
 //
 // locationID is the location id whose capabilities are retrieved.
@@ -66,6 +70,7 @@ func (client CapabilitiesClient) ListByLocation(ctx context.Context, locationID 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationPreparer prepares the ListByLocation request.
 func (client CapabilitiesClient) ListByLocationPreparer(ctx context.Context, locationID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -86,6 +91,7 @@ func (client CapabilitiesClient) ListByLocationPreparer(ctx context.Context, loc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationSender sends the ListByLocation request. The method will close the
 // http.Response Body if it receives an error.
 func (client CapabilitiesClient) ListByLocationSender(req *http.Request) (*http.Response, error) {
@@ -93,6 +99,7 @@ func (client CapabilitiesClient) ListByLocationSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByLocationResponder handles the response to the ListByLocation request. The method always
 // closes the http.Response Body.
 func (client CapabilitiesClient) ListByLocationResponder(resp *http.Response) (result LocationCapabilities, err error) {

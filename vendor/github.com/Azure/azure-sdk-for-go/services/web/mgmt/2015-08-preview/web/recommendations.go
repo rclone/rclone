@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RecommendationsClient is the webSite Management Client
 type RecommendationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewRecommendationsClient creates an instance of the RecommendationsClient client.
 func NewRecommendationsClient(subscriptionID string) RecommendationsClient {
 	return NewRecommendationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewRecommendationsClientWithBaseURI creates an instance of the RecommendationsClient client.
 func NewRecommendationsClientWithBaseURI(baseURI string, subscriptionID string) RecommendationsClient {
 	return RecommendationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationBySubscription sends the get recommendation by subscription request.
 //
 // featured is if set, this API returns only the most critical recommendation among the others. Otherwise this API
@@ -66,6 +70,7 @@ func (client RecommendationsClient) GetRecommendationBySubscription(ctx context.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationBySubscriptionPreparer prepares the GetRecommendationBySubscription request.
 func (client RecommendationsClient) GetRecommendationBySubscriptionPreparer(ctx context.Context, featured *bool, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,6 +96,7 @@ func (client RecommendationsClient) GetRecommendationBySubscriptionPreparer(ctx 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationBySubscriptionSender sends the GetRecommendationBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) GetRecommendationBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -98,6 +104,7 @@ func (client RecommendationsClient) GetRecommendationBySubscriptionSender(req *h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationBySubscriptionResponder handles the response to the GetRecommendationBySubscription request. The method always
 // closes the http.Response Body.
 func (client RecommendationsClient) GetRecommendationBySubscriptionResponder(resp *http.Response) (result ListRecommendation, err error) {
@@ -111,6 +118,7 @@ func (client RecommendationsClient) GetRecommendationBySubscriptionResponder(res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationHistoryForSite sends the get recommendation history for site request.
 //
 // resourceGroupName is resource group name siteName is site name startTime is the start time of a time range to
@@ -139,6 +147,7 @@ func (client RecommendationsClient) GetRecommendationHistoryForSite(ctx context.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationHistoryForSitePreparer prepares the GetRecommendationHistoryForSite request.
 func (client RecommendationsClient) GetRecommendationHistoryForSitePreparer(ctx context.Context, resourceGroupName string, siteName string, startTime string, endTime string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -166,6 +175,7 @@ func (client RecommendationsClient) GetRecommendationHistoryForSitePreparer(ctx 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationHistoryForSiteSender sends the GetRecommendationHistoryForSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) GetRecommendationHistoryForSiteSender(req *http.Request) (*http.Response, error) {
@@ -173,6 +183,7 @@ func (client RecommendationsClient) GetRecommendationHistoryForSiteSender(req *h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendationHistoryForSiteResponder handles the response to the GetRecommendationHistoryForSite request. The method always
 // closes the http.Response Body.
 func (client RecommendationsClient) GetRecommendationHistoryForSiteResponder(resp *http.Response) (result ListRecommendation, err error) {
@@ -186,6 +197,7 @@ func (client RecommendationsClient) GetRecommendationHistoryForSiteResponder(res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendedRulesForSite sends the get recommended rules for site request.
 //
 // resourceGroupName is resource group name siteName is site name featured is if set, this API returns only the
@@ -213,6 +225,7 @@ func (client RecommendationsClient) GetRecommendedRulesForSite(ctx context.Conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendedRulesForSitePreparer prepares the GetRecommendedRulesForSite request.
 func (client RecommendationsClient) GetRecommendedRulesForSitePreparer(ctx context.Context, resourceGroupName string, siteName string, featured *bool, siteSku string, numSlots *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -243,6 +256,7 @@ func (client RecommendationsClient) GetRecommendedRulesForSitePreparer(ctx conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendedRulesForSiteSender sends the GetRecommendedRulesForSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) GetRecommendedRulesForSiteSender(req *http.Request) (*http.Response, error) {
@@ -250,6 +264,7 @@ func (client RecommendationsClient) GetRecommendedRulesForSiteSender(req *http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRecommendedRulesForSiteResponder handles the response to the GetRecommendedRulesForSite request. The method always
 // closes the http.Response Body.
 func (client RecommendationsClient) GetRecommendedRulesForSiteResponder(resp *http.Response) (result ListRecommendation, err error) {
@@ -263,6 +278,7 @@ func (client RecommendationsClient) GetRecommendedRulesForSiteResponder(resp *ht
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRuleDetailsBySiteName sends the get rule details by site name request.
 //
 // resourceGroupName is resource group name siteName is site name name is recommendation rule name
@@ -288,6 +304,7 @@ func (client RecommendationsClient) GetRuleDetailsBySiteName(ctx context.Context
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRuleDetailsBySiteNamePreparer prepares the GetRuleDetailsBySiteName request.
 func (client RecommendationsClient) GetRuleDetailsBySiteNamePreparer(ctx context.Context, resourceGroupName string, siteName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -310,6 +327,7 @@ func (client RecommendationsClient) GetRuleDetailsBySiteNamePreparer(ctx context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRuleDetailsBySiteNameSender sends the GetRuleDetailsBySiteName request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) GetRuleDetailsBySiteNameSender(req *http.Request) (*http.Response, error) {
@@ -317,6 +335,7 @@ func (client RecommendationsClient) GetRuleDetailsBySiteNameSender(req *http.Req
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRuleDetailsBySiteNameResponder handles the response to the GetRuleDetailsBySiteName request. The method always
 // closes the http.Response Body.
 func (client RecommendationsClient) GetRuleDetailsBySiteNameResponder(resp *http.Response) (result RecommendationRule, err error) {

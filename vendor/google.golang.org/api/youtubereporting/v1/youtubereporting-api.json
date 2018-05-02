@@ -420,7 +420,7 @@
       }
     }
   },
-  "revision": "20180203",
+  "revision": "20180326",
   "rootUrl": "https://youtubereporting.googleapis.com/",
   "schemas": {
     "Empty": {
@@ -752,7 +752,6 @@
           "type": "string"
         },
         "isPotentialRetry": {
-          "default": "true",
           "description": "gdata",
           "type": "boolean"
         },

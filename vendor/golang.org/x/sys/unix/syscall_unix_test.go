@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"syscall"
 	"testing"
 	"time"
 
@@ -57,6 +58,44 @@ func _() {
 		_ = unix.F_SETLK
 		_ = unix.F_SETLKW
 	)
+}
+
+func TestErrnoSignalName(t *testing.T) {
+	testErrors := []struct {
+		num  syscall.Errno
+		name string
+	}{
+		{syscall.EPERM, "EPERM"},
+		{syscall.EINVAL, "EINVAL"},
+		{syscall.ENOENT, "ENOENT"},
+	}
+
+	for _, te := range testErrors {
+		t.Run(fmt.Sprintf("%d/%s", te.num, te.name), func(t *testing.T) {
+			e := unix.ErrnoName(te.num)
+			if e != te.name {
+				t.Errorf("ErrnoName(%d) returned %s, want %s", te.num, e, te.name)
+			}
+		})
+	}
+
+	testSignals := []struct {
+		num  syscall.Signal
+		name string
+	}{
+		{syscall.SIGHUP, "SIGHUP"},
+		{syscall.SIGPIPE, "SIGPIPE"},
+		{syscall.SIGSEGV, "SIGSEGV"},
+	}
+
+	for _, ts := range testSignals {
+		t.Run(fmt.Sprintf("%d/%s", ts.num, ts.name), func(t *testing.T) {
+			s := unix.SignalName(ts.num)
+			if s != ts.name {
+				t.Errorf("SignalName(%d) returned %s, want %s", ts.num, s, ts.name)
+			}
+		})
+	}
 }
 
 // TestFcntlFlock tests whether the file locking structure matches
@@ -464,6 +503,60 @@ func TestFstatat(t *testing.T) {
 
 	if st1 != st2 {
 		t.Errorf("Fstatat: returned stat does not match Lstat")
+	}
+}
+
+func TestFchmodat(t *testing.T) {
+	defer chtmpdir(t)()
+
+	touch(t, "file1")
+	err := os.Symlink("file1", "symlink1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mode := os.FileMode(0444)
+	err = unix.Fchmodat(unix.AT_FDCWD, "symlink1", uint32(mode), 0)
+	if err != nil {
+		t.Fatalf("Fchmodat: unexpected error: %v", err)
+	}
+
+	fi, err := os.Stat("file1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if fi.Mode() != mode {
+		t.Errorf("Fchmodat: failed to change file mode: expected %v, got %v", mode, fi.Mode())
+	}
+
+	mode = os.FileMode(0644)
+	didChmodSymlink := true
+	err = unix.Fchmodat(unix.AT_FDCWD, "symlink1", uint32(mode), unix.AT_SYMLINK_NOFOLLOW)
+	if err != nil {
+		if (runtime.GOOS == "linux" || runtime.GOOS == "solaris") && err == unix.EOPNOTSUPP {
+			// Linux and Illumos don't support flags != 0
+			didChmodSymlink = false
+		} else {
+			t.Fatalf("Fchmodat: unexpected error: %v", err)
+		}
+	}
+
+	if !didChmodSymlink {
+		// Didn't change mode of the symlink. On Linux, the permissions
+		// of a symbolic link are always 0777 according to symlink(7)
+		mode = os.FileMode(0777)
+	}
+
+	var st unix.Stat_t
+	err = unix.Lstat("symlink1", &st)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := os.FileMode(st.Mode & 0777)
+	if got != mode {
+		t.Errorf("Fchmodat: failed to change symlink mode: expected %v, got %v", mode, got)
 	}
 }
 

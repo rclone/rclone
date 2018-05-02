@@ -41,9 +41,10 @@ func NewLocalNetworkGatewaysClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // CreateOrUpdate creates or updates a local network gateway in the specified resource group.
-//
-// resourceGroupName is the name of the resource group. localNetworkGatewayName is the name of the local network
-// gateway. parameters is parameters supplied to the create or update local network gateway operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// localNetworkGatewayName - the name of the local network gateway.
+// parameters - parameters supplied to the create or update local network gateway operation.
 func (client LocalNetworkGatewaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, localNetworkGatewayName string, parameters LocalNetworkGateway) (result LocalNetworkGatewaysCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -80,7 +81,7 @@ func (client LocalNetworkGatewaysClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}", pathParameters),
@@ -118,9 +119,9 @@ func (client LocalNetworkGatewaysClient) CreateOrUpdateResponder(resp *http.Resp
 }
 
 // Delete deletes the specified local network gateway.
-//
-// resourceGroupName is the name of the resource group. localNetworkGatewayName is the name of the local network
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// localNetworkGatewayName - the name of the local network gateway.
 func (client LocalNetworkGatewaysClient) Delete(ctx context.Context, resourceGroupName string, localNetworkGatewayName string) (result LocalNetworkGatewaysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, localNetworkGatewayName)
 	if err != nil {
@@ -186,9 +187,9 @@ func (client LocalNetworkGatewaysClient) DeleteResponder(resp *http.Response) (r
 }
 
 // Get gets the specified local network gateway in a resource group.
-//
-// resourceGroupName is the name of the resource group. localNetworkGatewayName is the name of the local network
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// localNetworkGatewayName - the name of the local network gateway.
 func (client LocalNetworkGatewaysClient) Get(ctx context.Context, resourceGroupName string, localNetworkGatewayName string) (result LocalNetworkGateway, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, localNetworkGatewayName)
 	if err != nil {
@@ -253,8 +254,8 @@ func (client LocalNetworkGatewaysClient) GetResponder(resp *http.Response) (resu
 }
 
 // List gets all the local network gateways in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client LocalNetworkGatewaysClient) List(ctx context.Context, resourceGroupName string) (result LocalNetworkGatewayListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)

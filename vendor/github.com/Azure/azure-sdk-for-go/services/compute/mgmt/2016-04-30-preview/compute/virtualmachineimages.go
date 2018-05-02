@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // VirtualMachineImagesClient is the compute Client
 type VirtualMachineImagesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewVirtualMachineImagesClient creates an instance of the VirtualMachineImagesClient client.
 func NewVirtualMachineImagesClient(subscriptionID string) VirtualMachineImagesClient {
 	return NewVirtualMachineImagesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewVirtualMachineImagesClientWithBaseURI creates an instance of the VirtualMachineImagesClient client.
 func NewVirtualMachineImagesClientWithBaseURI(baseURI string, subscriptionID string) VirtualMachineImagesClient {
 	return VirtualMachineImagesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Get gets a virtual machine image.
 //
 // location is the name of a supported Azure region. publisherName is a valid image publisher. offer is a valid
@@ -65,6 +69,7 @@ func (client VirtualMachineImagesClient) Get(ctx context.Context, location strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client VirtualMachineImagesClient) GetPreparer(ctx context.Context, location string, publisherName string, offer string, skus string, version string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -89,6 +94,7 @@ func (client VirtualMachineImagesClient) GetPreparer(ctx context.Context, locati
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineImagesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -96,6 +102,7 @@ func (client VirtualMachineImagesClient) GetSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineImagesClient) GetResponder(resp *http.Response) (result VirtualMachineImage, err error) {
@@ -109,6 +116,7 @@ func (client VirtualMachineImagesClient) GetResponder(resp *http.Response) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List gets a list of all virtual machine image versions for the specified location, publisher, offer, and SKU.
 //
 // location is the name of a supported Azure region. publisherName is a valid image publisher. offer is a valid
@@ -135,6 +143,7 @@ func (client VirtualMachineImagesClient) List(ctx context.Context, location stri
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client VirtualMachineImagesClient) ListPreparer(ctx context.Context, location string, publisherName string, offer string, skus string, filter string, top *int32, orderby string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -167,6 +176,7 @@ func (client VirtualMachineImagesClient) ListPreparer(ctx context.Context, locat
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineImagesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -174,6 +184,7 @@ func (client VirtualMachineImagesClient) ListSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineImagesClient) ListResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
@@ -187,6 +198,7 @@ func (client VirtualMachineImagesClient) ListResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListOffers gets a list of virtual machine image offers for the specified location and publisher.
 //
 // location is the name of a supported Azure region. publisherName is a valid image publisher.
@@ -212,6 +224,7 @@ func (client VirtualMachineImagesClient) ListOffers(ctx context.Context, locatio
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListOffersPreparer prepares the ListOffers request.
 func (client VirtualMachineImagesClient) ListOffersPreparer(ctx context.Context, location string, publisherName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -233,6 +246,7 @@ func (client VirtualMachineImagesClient) ListOffersPreparer(ctx context.Context,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListOffersSender sends the ListOffers request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineImagesClient) ListOffersSender(req *http.Request) (*http.Response, error) {
@@ -240,6 +254,7 @@ func (client VirtualMachineImagesClient) ListOffersSender(req *http.Request) (*h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListOffersResponder handles the response to the ListOffers request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineImagesClient) ListOffersResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
@@ -253,6 +268,7 @@ func (client VirtualMachineImagesClient) ListOffersResponder(resp *http.Response
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPublishers gets a list of virtual machine image publishers for the specified Azure location.
 //
 // location is the name of a supported Azure region.
@@ -278,6 +294,7 @@ func (client VirtualMachineImagesClient) ListPublishers(ctx context.Context, loc
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPublishersPreparer prepares the ListPublishers request.
 func (client VirtualMachineImagesClient) ListPublishersPreparer(ctx context.Context, location string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -298,6 +315,7 @@ func (client VirtualMachineImagesClient) ListPublishersPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPublishersSender sends the ListPublishers request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineImagesClient) ListPublishersSender(req *http.Request) (*http.Response, error) {
@@ -305,6 +323,7 @@ func (client VirtualMachineImagesClient) ListPublishersSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPublishersResponder handles the response to the ListPublishers request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineImagesClient) ListPublishersResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
@@ -318,6 +337,7 @@ func (client VirtualMachineImagesClient) ListPublishersResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkus gets a list of virtual machine image SKUs for the specified location, publisher, and offer.
 //
 // location is the name of a supported Azure region. publisherName is a valid image publisher. offer is a valid
@@ -344,6 +364,7 @@ func (client VirtualMachineImagesClient) ListSkus(ctx context.Context, location 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusPreparer prepares the ListSkus request.
 func (client VirtualMachineImagesClient) ListSkusPreparer(ctx context.Context, location string, publisherName string, offer string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -366,6 +387,7 @@ func (client VirtualMachineImagesClient) ListSkusPreparer(ctx context.Context, l
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusSender sends the ListSkus request. The method will close the
 // http.Response Body if it receives an error.
 func (client VirtualMachineImagesClient) ListSkusSender(req *http.Request) (*http.Response, error) {
@@ -373,6 +395,7 @@ func (client VirtualMachineImagesClient) ListSkusSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSkusResponder handles the response to the ListSkus request. The method always
 // closes the http.Response Body.
 func (client VirtualMachineImagesClient) ListSkusResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {

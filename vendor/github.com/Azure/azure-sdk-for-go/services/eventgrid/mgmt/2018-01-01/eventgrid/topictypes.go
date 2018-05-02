@@ -40,8 +40,8 @@ func NewTopicTypesClientWithBaseURI(baseURI string, subscriptionID string) Topic
 }
 
 // Get get information about a topic type
-//
-// topicTypeName is name of the topic type
+// Parameters:
+// topicTypeName - name of the topic type
 func (client TopicTypesClient) Get(ctx context.Context, topicTypeName string) (result TopicTypeInfo, err error) {
 	req, err := client.GetPreparer(ctx, topicTypeName)
 	if err != nil {
@@ -162,8 +162,8 @@ func (client TopicTypesClient) ListResponder(resp *http.Response) (result TopicT
 }
 
 // ListEventTypes list event types for a topic type
-//
-// topicTypeName is name of the topic type
+// Parameters:
+// topicTypeName - name of the topic type
 func (client TopicTypesClient) ListEventTypes(ctx context.Context, topicTypeName string) (result EventTypesListResult, err error) {
 	req, err := client.ListEventTypesPreparer(ctx, topicTypeName)
 	if err != nil {

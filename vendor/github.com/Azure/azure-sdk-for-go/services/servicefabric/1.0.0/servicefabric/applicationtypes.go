@@ -40,8 +40,8 @@ func NewApplicationTypesClientWithBaseURI(baseURI string, timeout *int32) Applic
 }
 
 // Get get application types
-//
-// applicationTypeName is the name of the application type
+// Parameters:
+// applicationTypeName - the name of the application type
 func (client ApplicationTypesClient) Get(ctx context.Context, applicationTypeName string) (result ListApplicationType, err error) {
 	req, err := client.GetPreparer(ctx, applicationTypeName)
 	if err != nil {
@@ -168,8 +168,8 @@ func (client ApplicationTypesClient) ListResponder(resp *http.Response) (result 
 }
 
 // Register register application types
-//
-// registerApplicationType is the type of the register application
+// Parameters:
+// registerApplicationType - the type of the register application
 func (client ApplicationTypesClient) Register(ctx context.Context, registerApplicationType RegisterApplicationType) (result String, err error) {
 	req, err := client.RegisterPreparer(ctx, registerApplicationType)
 	if err != nil {
@@ -203,7 +203,7 @@ func (client ApplicationTypesClient) RegisterPreparer(ctx context.Context, regis
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/ApplicationTypes/$/Provision"),
@@ -233,9 +233,9 @@ func (client ApplicationTypesClient) RegisterResponder(resp *http.Response) (res
 }
 
 // Unregister unregister application types
-//
-// applicationTypeName is the name of the application type unregisterApplicationType is the type of the unregister
-// application
+// Parameters:
+// applicationTypeName - the name of the application type
+// unregisterApplicationType - the type of the unregister application
 func (client ApplicationTypesClient) Unregister(ctx context.Context, applicationTypeName string, unregisterApplicationType UnregisterApplicationType) (result String, err error) {
 	req, err := client.UnregisterPreparer(ctx, applicationTypeName, unregisterApplicationType)
 	if err != nil {
@@ -273,7 +273,7 @@ func (client ApplicationTypesClient) UnregisterPreparer(ctx context.Context, app
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/ApplicationTypes/{applicationTypeName}/$/Unprovision", pathParameters),

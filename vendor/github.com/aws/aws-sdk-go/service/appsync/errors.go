@@ -13,7 +13,8 @@ const (
 	// ErrCodeApiKeyValidityOutOfBoundsException for service response error code
 	// "ApiKeyValidityOutOfBoundsException".
 	//
-	// The API key expiration must be set to a value between 1 and 365 days.
+	// The API key expiration must be set to a value between 1 and 365 days from
+	// creation (for CreateApiKey) or from update (for UpdateApiKey).
 	ErrCodeApiKeyValidityOutOfBoundsException = "ApiKeyValidityOutOfBoundsException"
 
 	// ErrCodeApiLimitExceededException for service response error code

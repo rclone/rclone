@@ -55,7 +55,7 @@ func TestDataTransferServiceSmoke(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", projectId, "us-central1")
+	var formattedParent string = fmt.Sprintf("projects/%s", projectId)
 	var request = &datatransferpb.ListDataSourcesRequest{
 		Parent: formattedParent,
 	}

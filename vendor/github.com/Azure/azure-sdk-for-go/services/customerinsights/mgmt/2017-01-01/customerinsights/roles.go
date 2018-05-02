@@ -42,8 +42,9 @@ func NewRolesClientWithBaseURI(baseURI string, subscriptionID string) RolesClien
 }
 
 // ListByHub gets all the roles for the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client RolesClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result RoleListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)

@@ -547,7 +547,7 @@
         "locations": {
           "methods": {
             "get": {
-              "description": "Get information about a location.",
+              "description": "Gets information about a location.",
               "flatPath": "v1alpha/apps/{appsId}/locations/{locationsId}",
               "httpMethod": "GET",
               "id": "appengine.apps.locations.get",
@@ -705,7 +705,7 @@
       }
     }
   },
-  "revision": "20180307",
+  "revision": "20180320",
   "rootUrl": "https://appengine.googleapis.com/",
   "schemas": {
     "AuthorizedCertificate": {
@@ -784,6 +784,17 @@
         },
         "publicCertificate": {
           "description": "PEM encoded x.509 public key certificate. This field is set once on certificate creation. Must include the header and footer. Example: \u003cpre\u003e -----BEGIN CERTIFICATE----- \u003ccertificate_value\u003e -----END CERTIFICATE----- \u003c/pre\u003e",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateVersionMetadataV1": {
+      "description": "Metadata for the given google.longrunning.Operation during a google.appengine.v1.CreateVersionRequest.",
+      "id": "CreateVersionMetadataV1",
+      "properties": {
+        "cloudBuildId": {
+          "description": "The Cloud Build ID if one was created as part of the version create. @OutputOnly",
           "type": "string"
         }
       },
@@ -1090,6 +1101,9 @@
       "description": "Metadata for the given google.longrunning.Operation.",
       "id": "OperationMetadataV1",
       "properties": {
+        "createVersionMetadata": {
+          "$ref": "CreateVersionMetadataV1"
+        },
         "endTime": {
           "description": "Time that this operation completed.@OutputOnly",
           "format": "google-datetime",

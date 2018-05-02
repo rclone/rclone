@@ -52,6 +52,11 @@ const (
 	Westus2 AzureRegions = "westus2"
 )
 
+// PossibleAzureRegionsValues returns an array of possible values for the AzureRegions const type.
+func PossibleAzureRegionsValues() []AzureRegions {
+	return []AzureRegions{Australiaeast, Brazilsouth, Eastasia, Eastus, Eastus2, Northeurope, Southcentralus, Southeastasia, Westcentralus, Westeurope, Westus, Westus2}
+}
+
 // APIError error information returned by the API
 type APIError struct {
 	// StatusCode - HTTP Status code
@@ -213,4 +218,13 @@ type LuisResult struct {
 	Entities *[]EntityModel `json:"entities,omitempty"`
 	// CompositeEntities - The composite entities extracted from the utterance.
 	CompositeEntities *[]CompositeEntityModel `json:"compositeEntities,omitempty"`
+	Sentiment         *Sentiment              `json:"sentiment,omitempty"`
+}
+
+// Sentiment sentiment of the input utterance.
+type Sentiment struct {
+	// Label - The polarity of the sentiment, can be positive, neutral or negative.
+	Label *string `json:"label,omitempty"`
+	// Score - Score of the sentiment, ranges from 0 (most negative) to 1 (most negative).
+	Score *float64 `json:"score,omitempty"`
 }

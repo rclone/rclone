@@ -165,7 +165,7 @@
       }
     }
   },
-  "revision": "20180221",
+  "revision": "20180416",
   "rootUrl": "https://vision.googleapis.com/",
   "schemas": {
     "Color": {
@@ -191,6 +191,24 @@
           "description": "The amount of red in the color as a value in the interval [0, 1].",
           "format": "float",
           "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p2beta1AnnotateFileResponse": {
+      "description": "Response to a single file annotation request. A file may contain one or more\nimages, which individually have their own responses.",
+      "id": "GoogleCloudVisionV1p2beta1AnnotateFileResponse",
+      "properties": {
+        "inputConfig": {
+          "$ref": "GoogleCloudVisionV1p2beta1InputConfig",
+          "description": "Information about the file for which this response is generated."
+        },
+        "responses": {
+          "description": "Individual responses to images found within the file.",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p2beta1AnnotateImageResponse"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -431,6 +449,13 @@
       "description": "A bounding polygon for the detected image annotation.",
       "id": "GoogleCloudVisionV1p2beta1BoundingPoly",
       "properties": {
+        "normalizedVertices": {
+          "description": "The bounding polygon normalized vertices.",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p2beta1NormalizedVertex"
+          },
+          "type": "array"
+        },
         "vertices": {
           "description": "The bounding polygon vertices.",
           "items": {
@@ -916,7 +941,7 @@
       "id": "GoogleCloudVisionV1p2beta1GcsSource",
       "properties": {
         "uri": {
-          "description": "Google Cloud Storage URI for the input file. This must only be a GCS\nobject. Wildcards are not currently supported.",
+          "description": "Google Cloud Storage URI for the input file. This must only be a\nGoogle Cloud Storage object. Wildcards are not currently supported.",
           "type": "string"
         }
       },
@@ -971,7 +996,7 @@
         },
         "latLongRect": {
           "$ref": "GoogleCloudVisionV1p2beta1LatLongRect",
-          "description": "lat/long rectangle that specifies the location of the image."
+          "description": "Not used."
         },
         "webDetectionParams": {
           "$ref": "GoogleCloudVisionV1p2beta1WebDetectionParams",
@@ -1047,6 +1072,23 @@
       },
       "type": "object"
     },
+    "GoogleCloudVisionV1p2beta1NormalizedVertex": {
+      "description": "A vertex represents a 2D point in the image.\nNOTE: the normalized vertex coordinates are relative to the original image\nand range from 0 to 1.",
+      "id": "GoogleCloudVisionV1p2beta1NormalizedVertex",
+      "properties": {
+        "x": {
+          "description": "X coordinate.",
+          "format": "float",
+          "type": "number"
+        },
+        "y": {
+          "description": "Y coordinate.",
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "GoogleCloudVisionV1p2beta1OperationMetadata": {
       "description": "Contains metadata for the BatchAnnotateImages operation.",
       "id": "GoogleCloudVisionV1p2beta1OperationMetadata",
@@ -1087,7 +1129,7 @@
       "id": "GoogleCloudVisionV1p2beta1OutputConfig",
       "properties": {
         "batchSize": {
-          "description": "The max number of response protos to put into each output JSON file on GCS.\nThe valid range is [1, 100]. If not specified, the default value is 20.\n\nFor example, for one pdf file with 100 pages, 100 response protos will\nbe generated. If `batch_size` = 20, then 5 json files each\ncontaining 20 response protos will be written under the prefix\n`gcs_destination`.`uri`.\n\nCurrently, batch_size only applies to GcsDestination, with potential future\nsupport for other output configurations.",
+          "description": "The max number of response protos to put into each output JSON file on\nGoogle Cloud Storage.\nThe valid range is [1, 100]. If not specified, the default value is 20.\n\nFor example, for one pdf file with 100 pages, 100 response protos will\nbe generated. If `batch_size` = 20, then 5 json files each\ncontaining 20 response protos will be written under the prefix\n`gcs_destination`.`uri`.\n\nCurrently, batch_size only applies to GcsDestination, with potential future\nsupport for other output configurations.",
           "format": "int32",
           "type": "integer"
         },
@@ -1684,7 +1726,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Vision API",
+  "title": "Cloud Vision API",
   "version": "v1p2beta1",
   "version_module": true
 }

@@ -41,14 +41,16 @@ func NewAPIRevisionsClientWithBaseURI(baseURI string, subscriptionID string) API
 }
 
 // List lists all revisions of an API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. filter is | Field
-// | Supported operators    | Supported functions               |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// filter - | Field       | Supported operators    | Supported functions               |
 // |-------------|------------------------|-----------------------------------|
 //
-// |apiRevision | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith| top is number of records to
-// return. skip is number of records to skip.
+// |apiRevision | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith|
+// top - number of records to return.
+// skip - number of records to skip.
 func (client APIRevisionsClient) List(ctx context.Context, resourceGroupName string, serviceName string, apiid string, filter string, top *int32, skip *int32) (result APIRevisionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

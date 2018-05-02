@@ -237,7 +237,6 @@ func (s *AggregationInfo) MarshalJSON() ([]byte, error) {
 type AuditConfig struct {
 	// AuditLogConfigs: The configuration for logging of each type of
 	// permission.
-	// Next ID: 4
 	AuditLogConfigs []*AuditLogConfig `json:"auditLogConfigs,omitempty"`
 
 	// Service: Specifies a service that will be enabled for audit
@@ -1322,7 +1321,8 @@ type BillingAccountsCreateCall struct {
 // Create: Creates a billing account.
 // This method can only be used to create
 // [billing
-// subaccounts](https://cloud.google.com/billing/docs/concepts).
+// subaccounts](https://cloud.google.com/billing/docs/concepts)
+// for GCP resellers.
 // When creating a subaccount, the current authenticated user must have
 // the
 // `billing.accounts.update` IAM permission on the master account, which
@@ -1423,7 +1423,7 @@ func (c *BillingAccountsCreateCall) Do(opts ...googleapi.CallOption) (*BillingAc
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a billing account.\nThis method can only be used to create\n[billing subaccounts](https://cloud.google.com/billing/docs/concepts).\nWhen creating a subaccount, the current authenticated user must have the\n`billing.accounts.update` IAM permission on the master account, which is\ntypically given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "description": "Creates a billing account.\nThis method can only be used to create\n[billing subaccounts](https://cloud.google.com/billing/docs/concepts)\nfor GCP resellers.\nWhen creating a subaccount, the current authenticated user must have the\n`billing.accounts.update` IAM permission on the master account, which is\ntypically given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
 	//   "flatPath": "v1/billingAccounts",
 	//   "httpMethod": "POST",
 	//   "id": "cloudbilling.billingAccounts.create",

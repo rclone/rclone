@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // AsyncOperationState enumerates the values for async operation state.
 type AsyncOperationState string
 
@@ -37,6 +38,13 @@ const (
 	Succeeded AsyncOperationState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleAsyncOperationStateValues returns an array of possible values for the AsyncOperationState const type.
+func PossibleAsyncOperationStateValues() []AsyncOperationState {
+	return []AsyncOperationState{Failed, InProgress, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterProvisioningState enumerates the values for cluster provisioning state.
 type ClusterProvisioningState string
 
@@ -53,6 +61,13 @@ const (
 	ClusterProvisioningStateSucceeded ClusterProvisioningState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleClusterProvisioningStateValues returns an array of possible values for the ClusterProvisioningState const type.
+func PossibleClusterProvisioningStateValues() []ClusterProvisioningState {
+	return []ClusterProvisioningState{ClusterProvisioningStateCanceled, ClusterProvisioningStateDeleting, ClusterProvisioningStateFailed, ClusterProvisioningStateInProgress, ClusterProvisioningStateSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // DirectoryType enumerates the values for directory type.
 type DirectoryType string
 
@@ -61,6 +76,13 @@ const (
 	ActiveDirectory DirectoryType = "ActiveDirectory"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleDirectoryTypeValues returns an array of possible values for the DirectoryType const type.
+func PossibleDirectoryTypeValues() []DirectoryType {
+	return []DirectoryType{ActiveDirectory}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // EnabledCredential enumerates the values for enabled credential.
 type EnabledCredential string
 
@@ -71,6 +93,13 @@ const (
 	True EnabledCredential = "true"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleEnabledCredentialValues returns an array of possible values for the EnabledCredential const type.
+func PossibleEnabledCredentialValues() []EnabledCredential {
+	return []EnabledCredential{False, True}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OSType enumerates the values for os type.
 type OSType string
 
@@ -81,6 +110,13 @@ const (
 	Windows OSType = "Windows"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleOSTypeValues returns an array of possible values for the OSType const type.
+func PossibleOSTypeValues() []OSType {
+	return []OSType{Linux, Windows}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Tier enumerates the values for tier.
 type Tier string
 
@@ -91,6 +127,13 @@ const (
 	Standard Tier = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
+// PossibleTierValues returns an array of possible values for the Tier const type.
+func PossibleTierValues() []Tier {
+	return []Tier{Premium, Standard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Application the HDInsight cluster application
 type Application struct {
 	autorest.Response `json:"-"`
@@ -108,6 +151,7 @@ type Application struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for Application.
 func (a Application) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -132,6 +176,7 @@ func (a Application) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationGetEndpoint gets the application SSH endpoint
 type ApplicationGetEndpoint struct {
 	// Location - The location of the endpoint.
@@ -142,6 +187,7 @@ type ApplicationGetEndpoint struct {
 	PublicPort *int32 `json:"publicPort,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationGetHTTPSEndpoint gets the application HTTP endpoints.
 type ApplicationGetHTTPSEndpoint struct {
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
@@ -156,6 +202,7 @@ type ApplicationGetHTTPSEndpoint struct {
 	PublicPort *int32 `json:"publicPort,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for ApplicationGetHTTPSEndpoint.
 func (aghe ApplicationGetHTTPSEndpoint) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -177,6 +224,7 @@ func (aghe ApplicationGetHTTPSEndpoint) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationGetProperties the HDInsight cluster application GET response.
 type ApplicationGetProperties struct {
 	// ComputeProfile - The list of roles in the cluster.
@@ -205,6 +253,7 @@ type ApplicationGetProperties struct {
 	AdditionalProperties *string `json:"additionalProperties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationListResult result of the request to list cluster Applications. It contains a list of operations and a
 // URL link to get the next set of results.
 type ApplicationListResult struct {
@@ -215,12 +264,14 @@ type ApplicationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationListResultIterator provides access to a complete listing of Application values.
 type ApplicationListResultIterator struct {
 	i    int
 	page ApplicationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ApplicationListResultIterator) Next() error {
@@ -237,16 +288,19 @@ func (iter *ApplicationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ApplicationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (iter ApplicationListResultIterator) Response() ApplicationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ApplicationListResultIterator) Value() Application {
@@ -256,6 +310,7 @@ func (iter ApplicationListResultIterator) Value() Application {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (alr ApplicationListResult) IsEmpty() bool {
 	return alr.Value == nil || len(*alr.Value) == 0
@@ -273,12 +328,14 @@ func (alr ApplicationListResult) applicationListResultPreparer() (*http.Request,
 		autorest.WithBaseURL(to.String(alr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationListResultPage contains a page of Application values.
 type ApplicationListResultPage struct {
 	fn  func(ApplicationListResult) (ApplicationListResult, error)
 	alr ApplicationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ApplicationListResultPage) Next() error {
@@ -290,16 +347,19 @@ func (page *ApplicationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ApplicationListResultPage) NotDone() bool {
 	return !page.alr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (page ApplicationListResultPage) Response() ApplicationListResult {
 	return page.alr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ApplicationListResultPage) Values() []Application {
 	if page.alr.IsEmpty() {
@@ -308,12 +368,14 @@ func (page ApplicationListResultPage) Values() []Application {
 	return *page.alr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ApplicationsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ApplicationsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ApplicationsDeleteFuture) Result(client ApplicationsClient) (ar autorest.Response, err error) {
@@ -356,6 +418,7 @@ func (future ApplicationsDeleteFuture) Result(client ApplicationsClient) (ar aut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // CapabilitiesResult the Get Capabilities operation response.
 type CapabilitiesResult struct {
 	autorest.Response `json:"-"`
@@ -373,6 +436,7 @@ type CapabilitiesResult struct {
 	Quota *QuotaCapability `json:"quota,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for CapabilitiesResult.
 func (cr CapabilitiesResult) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -397,6 +461,7 @@ func (cr CapabilitiesResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Cluster the HDInsight cluster.
 type Cluster struct {
 	autorest.Response `json:"-"`
@@ -416,6 +481,7 @@ type Cluster struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for Cluster.
 func (c Cluster) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -443,6 +509,7 @@ func (c Cluster) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterCreateParametersExtended the CreateCluster request parameters.
 type ClusterCreateParametersExtended struct {
 	// Location - The location of the cluster.
@@ -453,6 +520,7 @@ type ClusterCreateParametersExtended struct {
 	Properties *ClusterCreateProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for ClusterCreateParametersExtended.
 func (ccpe ClusterCreateParametersExtended) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -468,6 +536,7 @@ func (ccpe ClusterCreateParametersExtended) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterCreateProperties the cluster create parameters.
 type ClusterCreateProperties struct {
 	// ClusterVersion - The version of the cluster.
@@ -486,6 +555,7 @@ type ClusterCreateProperties struct {
 	StorageProfile *StorageProfile `json:"storageProfile,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterDefinition the cluster definition.
 type ClusterDefinition struct {
 	// Blueprint - The link to the blueprint.
@@ -498,6 +568,7 @@ type ClusterDefinition struct {
 	Configurations interface{} `json:"configurations,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for ClusterDefinition.
 func (cd ClusterDefinition) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -514,6 +585,7 @@ func (cd ClusterDefinition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterGetProperties the properties of cluster.
 type ClusterGetProperties struct {
 	// ClusterVersion - The version of the cluster.
@@ -542,6 +614,7 @@ type ClusterGetProperties struct {
 	ConnectivityEndpoints *[]ConnectivityEndpoint `json:"connectivityEndpoints,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterListPersistedScriptActionsResult the ListPersistedScriptActions operation response.
 type ClusterListPersistedScriptActionsResult struct {
 	// Value - The list of Persisted Script Actions.
@@ -550,6 +623,7 @@ type ClusterListPersistedScriptActionsResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterListResult the List Cluster operation response.
 type ClusterListResult struct {
 	autorest.Response `json:"-"`
@@ -559,12 +633,14 @@ type ClusterListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterListResultIterator provides access to a complete listing of Cluster values.
 type ClusterListResultIterator struct {
 	i    int
 	page ClusterListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ClusterListResultIterator) Next() error {
@@ -581,16 +657,19 @@ func (iter *ClusterListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ClusterListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (iter ClusterListResultIterator) Response() ClusterListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ClusterListResultIterator) Value() Cluster {
@@ -600,6 +679,7 @@ func (iter ClusterListResultIterator) Value() Cluster {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (clr ClusterListResult) IsEmpty() bool {
 	return clr.Value == nil || len(*clr.Value) == 0
@@ -617,12 +697,14 @@ func (clr ClusterListResult) clusterListResultPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(clr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterListResultPage contains a page of Cluster values.
 type ClusterListResultPage struct {
 	fn  func(ClusterListResult) (ClusterListResult, error)
 	clr ClusterListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ClusterListResultPage) Next() error {
@@ -634,16 +716,19 @@ func (page *ClusterListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ClusterListResultPage) NotDone() bool {
 	return !page.clr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (page ClusterListResultPage) Response() ClusterListResult {
 	return page.clr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ClusterListResultPage) Values() []Cluster {
 	if page.clr.IsEmpty() {
@@ -652,6 +737,7 @@ func (page ClusterListResultPage) Values() []Cluster {
 	return *page.clr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterListRuntimeScriptActionDetailResult the list runtime script action detail response.
 type ClusterListRuntimeScriptActionDetailResult struct {
 	// Value - The list of persisted script action details for the cluster.
@@ -660,6 +746,7 @@ type ClusterListRuntimeScriptActionDetailResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterMonitoringRequest the Operations Management Suite (OMS) parameters.
 type ClusterMonitoringRequest struct {
 	// WorkspaceID - The Operations Management Suite (OMS) workspace ID.
@@ -668,6 +755,7 @@ type ClusterMonitoringRequest struct {
 	PrimaryKey *string `json:"primaryKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterMonitoringResponse the Operations Management Suite (OMS) status response
 type ClusterMonitoringResponse struct {
 	autorest.Response `json:"-"`
@@ -677,12 +765,14 @@ type ClusterMonitoringResponse struct {
 	WorkspaceID *string `json:"WorkspaceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterPatchParameters the PatchCluster request parameters
 type ClusterPatchParameters struct {
 	// Tags - The resource tags.
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for ClusterPatchParameters.
 func (cpp ClusterPatchParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -692,18 +782,21 @@ func (cpp ClusterPatchParameters) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClusterResizeParameters the Resize Cluster request parameters.
 type ClusterResizeParameters struct {
 	// TargetInstanceCount - The target instance count for the operation.
 	TargetInstanceCount *int32 `json:"targetInstanceCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClustersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err error) {
@@ -746,12 +839,14 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
@@ -794,6 +889,7 @@ func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClustersExecuteScriptActionsFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ClustersExecuteScriptActionsFuture struct {
@@ -801,6 +897,7 @@ type ClustersExecuteScriptActionsFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersExecuteScriptActionsFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
@@ -843,12 +940,14 @@ func (future ClustersExecuteScriptActionsFuture) Result(client ClustersClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ClustersResizeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersResizeFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ClustersResizeFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
@@ -891,12 +990,14 @@ func (future ClustersResizeFuture) Result(client ClustersClient) (ar autorest.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ComputeProfile describes the compute profile.
 type ComputeProfile struct {
 	// Roles - The list of roles in the cluster.
 	Roles *[]Role `json:"roles,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ConfigurationsUpdateHTTPSettingsFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ConfigurationsUpdateHTTPSettingsFuture struct {
@@ -904,6 +1005,7 @@ type ConfigurationsUpdateHTTPSettingsFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ConfigurationsUpdateHTTPSettingsFuture) Result(client ConfigurationsClient) (ar autorest.Response, err error) {
@@ -946,6 +1048,7 @@ func (future ConfigurationsUpdateHTTPSettingsFuture) Result(client Configuration
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ConnectivityEndpoint the connectivity properties
 type ConnectivityEndpoint struct {
 	// Name - The name of the endpoint.
@@ -958,6 +1061,7 @@ type ConnectivityEndpoint struct {
 	Port *int32 `json:"port,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // DataDisksGroups the data disks groups for the role.
 type DataDisksGroups struct {
 	// DisksPerNode - The number of disks per node.
@@ -968,6 +1072,7 @@ type DataDisksGroups struct {
 	DiskSizeGB *int32 `json:"diskSizeGB,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Errors the error message associated with the cluster creation.
 type Errors struct {
 	// Code - The error code.
@@ -976,6 +1081,7 @@ type Errors struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExecuteScriptActionParameters the parameters for the script actions to execute on a running cluster.
 type ExecuteScriptActionParameters struct {
 	// ScriptActions - The list of run time script actions.
@@ -984,6 +1090,7 @@ type ExecuteScriptActionParameters struct {
 	PersistOnSuccess *bool `json:"persistOnSuccess,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Extension cluster monitoring extensions
 type Extension struct {
 	autorest.Response `json:"-"`
@@ -993,6 +1100,7 @@ type Extension struct {
 	PrimaryKey *string `json:"primaryKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExtensionDisableMonitoringFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ExtensionDisableMonitoringFuture struct {
@@ -1000,6 +1108,7 @@ type ExtensionDisableMonitoringFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
@@ -1042,6 +1151,7 @@ func (future ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (a
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ExtensionEnableMonitoringFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ExtensionEnableMonitoringFuture struct {
@@ -1049,6 +1159,7 @@ type ExtensionEnableMonitoringFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ExtensionEnableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
@@ -1091,12 +1202,14 @@ func (future ExtensionEnableMonitoringFuture) Result(client ExtensionClient) (ar
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // HardwareProfile the hardware profile.
 type HardwareProfile struct {
 	// VMSize - The size of the VM
 	VMSize *string `json:"vmSize,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // HTTPConnectivitySettings the payload for a Configure HTTP settings request.
 type HTTPConnectivitySettings struct {
 	// EnabledCredential - Whether or not the HTTP based authorization is enabled. Possible values include: 'True', 'False'
@@ -1107,6 +1220,7 @@ type HTTPConnectivitySettings struct {
 	Password *string `json:"restAuthCredential.password,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // LinuxOperatingSystemProfile the ssh username, password, and ssh public key.
 type LinuxOperatingSystemProfile struct {
 	// Username - The username.
@@ -1117,6 +1231,7 @@ type LinuxOperatingSystemProfile struct {
 	SSHProfile *SSHProfile `json:"sshProfile,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Operation the HDInsight REST API operation.
 type Operation struct {
 	// Name - The operation name: {provider}/{resource}/{operation}
@@ -1125,6 +1240,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OperationDisplay the object that represents the operation.
 type OperationDisplay struct {
 	// Provider - The service provider: Microsoft.HDInsight
@@ -1135,6 +1251,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OperationListResult result of the request to list HDInsight operations. It contains a list of operations and a
 // URL link to get the next set of results.
 type OperationListResult struct {
@@ -1145,12 +1262,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -1167,16 +1286,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -1186,6 +1308,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -1203,12 +1326,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -1220,16 +1345,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -1238,6 +1366,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OperationResource the azure async operation response.
 type OperationResource struct {
 	// Status - The async operation state. Possible values include: 'InProgress', 'Succeeded', 'Failed'
@@ -1246,12 +1375,14 @@ type OperationResource struct {
 	Error *Errors `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // OsProfile the Linux operation systems profile.
 type OsProfile struct {
 	// LinuxOperatingSystemProfile - The Linux OS profile.
 	LinuxOperatingSystemProfile *LinuxOperatingSystemProfile `json:"linuxOperatingSystemProfile,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ProxyResource the resource model definition for a ARM proxy resource. It will have everything other than
 // required location and tags
 type ProxyResource struct {
@@ -1263,18 +1394,21 @@ type ProxyResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // QuotaCapability the regional quota capability.
 type QuotaCapability struct {
 	// RegionalQuotas - The list of region quota capabilities.
 	RegionalQuotas *[]RegionalQuotaCapability `json:"regionalQuotas,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // QuotaInfo the quota properties for the cluster.
 type QuotaInfo struct {
 	// CoresUsed - The cores used by the cluster.
 	CoresUsed *int32 `json:"coresUsed,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // RegionalQuotaCapability the regional quota capacity.
 type RegionalQuotaCapability struct {
 	// RegionName - The region name.
@@ -1285,12 +1419,14 @@ type RegionalQuotaCapability struct {
 	CoresAvailable *int64 `json:"cores_available,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // RegionsCapability the regions capability.
 type RegionsCapability struct {
 	// Available - The list of region capabilities.
 	Available *[]string `json:"available,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Resource the core properties of ARM resources
 type Resource struct {
 	// ID - Fully qualified resource Id for the resource.
@@ -1301,6 +1437,7 @@ type Resource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Role describes a role on the cluster.
 type Role struct {
 	// Name - The name of the role.
@@ -1321,6 +1458,7 @@ type Role struct {
 	ScriptActions *[]ScriptAction `json:"scriptActions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // RuntimeScriptAction describes a script action on a running cluster.
 type RuntimeScriptAction struct {
 	// Name - The name of the script action.
@@ -1335,6 +1473,7 @@ type RuntimeScriptAction struct {
 	ApplicationName *string `json:"applicationName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // RuntimeScriptActionDetail the execution details of a script action.
 type RuntimeScriptActionDetail struct {
 	autorest.Response `json:"-"`
@@ -1364,6 +1503,7 @@ type RuntimeScriptActionDetail struct {
 	ApplicationName *string `json:"applicationName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptAction describes a script action on role on the cluster.
 type ScriptAction struct {
 	// Name - The name of the script action.
@@ -1374,6 +1514,7 @@ type ScriptAction struct {
 	Parameters *string `json:"parameters,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionExecutionHistoryList the list script execution history response.
 type ScriptActionExecutionHistoryList struct {
 	autorest.Response `json:"-"`
@@ -1383,6 +1524,7 @@ type ScriptActionExecutionHistoryList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionExecutionHistoryListIterator provides access to a complete listing of RuntimeScriptActionDetail
 // values.
 type ScriptActionExecutionHistoryListIterator struct {
@@ -1390,6 +1532,7 @@ type ScriptActionExecutionHistoryListIterator struct {
 	page ScriptActionExecutionHistoryListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ScriptActionExecutionHistoryListIterator) Next() error {
@@ -1406,16 +1549,19 @@ func (iter *ScriptActionExecutionHistoryListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ScriptActionExecutionHistoryListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (iter ScriptActionExecutionHistoryListIterator) Response() ScriptActionExecutionHistoryList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ScriptActionExecutionHistoryListIterator) Value() RuntimeScriptActionDetail {
@@ -1425,6 +1571,7 @@ func (iter ScriptActionExecutionHistoryListIterator) Value() RuntimeScriptAction
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (saehl ScriptActionExecutionHistoryList) IsEmpty() bool {
 	return saehl.Value == nil || len(*saehl.Value) == 0
@@ -1442,12 +1589,14 @@ func (saehl ScriptActionExecutionHistoryList) scriptActionExecutionHistoryListPr
 		autorest.WithBaseURL(to.String(saehl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionExecutionHistoryListPage contains a page of RuntimeScriptActionDetail values.
 type ScriptActionExecutionHistoryListPage struct {
 	fn    func(ScriptActionExecutionHistoryList) (ScriptActionExecutionHistoryList, error)
 	saehl ScriptActionExecutionHistoryList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ScriptActionExecutionHistoryListPage) Next() error {
@@ -1459,16 +1608,19 @@ func (page *ScriptActionExecutionHistoryListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ScriptActionExecutionHistoryListPage) NotDone() bool {
 	return !page.saehl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (page ScriptActionExecutionHistoryListPage) Response() ScriptActionExecutionHistoryList {
 	return page.saehl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ScriptActionExecutionHistoryListPage) Values() []RuntimeScriptActionDetail {
 	if page.saehl.IsEmpty() {
@@ -1477,6 +1629,7 @@ func (page ScriptActionExecutionHistoryListPage) Values() []RuntimeScriptActionD
 	return *page.saehl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionExecutionSummary the execution summary of a script action.
 type ScriptActionExecutionSummary struct {
 	// Status - The status of script action execution.
@@ -1485,6 +1638,7 @@ type ScriptActionExecutionSummary struct {
 	InstanceCount *int32 `json:"instanceCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionPersistedGetResponseSpec the persisted script action for cluster.
 type ScriptActionPersistedGetResponseSpec struct {
 	// Name - The name of script action.
@@ -1499,6 +1653,7 @@ type ScriptActionPersistedGetResponseSpec struct {
 	ApplicationName *string `json:"applicationName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionsList the persisted script action for the cluster.
 type ScriptActionsList struct {
 	autorest.Response `json:"-"`
@@ -1508,12 +1663,14 @@ type ScriptActionsList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionsListIterator provides access to a complete listing of RuntimeScriptActionDetail values.
 type ScriptActionsListIterator struct {
 	i    int
 	page ScriptActionsListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ScriptActionsListIterator) Next() error {
@@ -1530,16 +1687,19 @@ func (iter *ScriptActionsListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ScriptActionsListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (iter ScriptActionsListIterator) Response() ScriptActionsList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ScriptActionsListIterator) Value() RuntimeScriptActionDetail {
@@ -1549,6 +1709,7 @@ func (iter ScriptActionsListIterator) Value() RuntimeScriptActionDetail {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sal ScriptActionsList) IsEmpty() bool {
 	return sal.Value == nil || len(*sal.Value) == 0
@@ -1566,12 +1727,14 @@ func (sal ScriptActionsList) scriptActionsListPreparer() (*http.Request, error) 
 		autorest.WithBaseURL(to.String(sal.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptActionsListPage contains a page of RuntimeScriptActionDetail values.
 type ScriptActionsListPage struct {
 	fn  func(ScriptActionsList) (ScriptActionsList, error)
 	sal ScriptActionsList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ScriptActionsListPage) Next() error {
@@ -1583,16 +1746,19 @@ func (page *ScriptActionsListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ScriptActionsListPage) NotDone() bool {
 	return !page.sal.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Response returns the raw server response from the last page request.
 func (page ScriptActionsListPage) Response() ScriptActionsList {
 	return page.sal
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ScriptActionsListPage) Values() []RuntimeScriptActionDetail {
 	if page.sal.IsEmpty() {
@@ -1601,6 +1767,7 @@ func (page ScriptActionsListPage) Values() []RuntimeScriptActionDetail {
 	return *page.sal.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // SecurityProfile the security profile which contains Ssh public key for the HDInsight cluster.
 type SecurityProfile struct {
 	// DirectoryType - The directory type. Possible values include: 'ActiveDirectory'
@@ -1619,12 +1786,14 @@ type SecurityProfile struct {
 	ClusterUsersGroupDNS *[]string `json:"clusterUsersGroupDNs,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // SetString ...
 type SetString struct {
 	autorest.Response `json:"-"`
 	Value             map[string]*string `json:"value"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for SetString.
 func (ss SetString) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1634,18 +1803,21 @@ func (ss SetString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // SSHProfile the list of SSH public keys.
 type SSHProfile struct {
 	// PublicKeys - The list of SSH public keys.
 	PublicKeys *[]SSHPublicKey `json:"publicKeys,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // SSHPublicKey the SSH public key for the cluster nodes.
 type SSHPublicKey struct {
 	// CertificateData - The certificate for SSH.
 	CertificateData *string `json:"certificateData,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // StorageAccount the storage Account.
 type StorageAccount struct {
 	// Name - The name of the storage account.
@@ -1658,12 +1830,14 @@ type StorageAccount struct {
 	Key *string `json:"key,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // StorageProfile the storage profile.
 type StorageProfile struct {
 	// Storageaccounts - The list of storage accounts in the cluster.
 	Storageaccounts *[]StorageAccount `json:"storageaccounts,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // TrackedResource the resource model definition for a ARM tracked top level resource
 type TrackedResource struct {
 	// Location - The Azure Region where the resource lives
@@ -1678,6 +1852,7 @@ type TrackedResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for TrackedResource.
 func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1699,12 +1874,14 @@ func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // VersionsCapability the version capability.
 type VersionsCapability struct {
 	// Available - The list of version capabilities.
 	Available *[]VersionSpec `json:"available,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // VersionSpec the version properties.
 type VersionSpec struct {
 	// FriendlyName - The friendly name
@@ -1717,6 +1894,7 @@ type VersionSpec struct {
 	ComponentVersions map[string]*string `json:"componentVersions"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // MarshalJSON is the custom marshaler for VersionSpec.
 func (vs VersionSpec) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1735,6 +1913,7 @@ func (vs VersionSpec) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // VirtualNetworkProfile the virtual network properties.
 type VirtualNetworkProfile struct {
 	// ID - The ID of the virtual network.
@@ -1743,6 +1922,7 @@ type VirtualNetworkProfile struct {
 	Subnet *string `json:"subnet,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // VMSizeCompatibilityFilter the virtual machine type compatibility filter.
 type VMSizeCompatibilityFilter struct {
 	// FilterMode - The mode for the filter.
@@ -1759,6 +1939,7 @@ type VMSizeCompatibilityFilter struct {
 	Vmsizes *[]string `json:"vmsizes,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // VMSizesCapability the virtual machine sizes capability.
 type VMSizesCapability struct {
 	// Available - The list of virtual machine size capabilities.

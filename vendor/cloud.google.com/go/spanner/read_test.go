@@ -25,8 +25,9 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/status"
 
-	proto "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	proto3 "github.com/golang/protobuf/ptypes/struct"
 
 	"cloud.google.com/go/spanner/internal/testutil"
@@ -717,7 +718,7 @@ func TestRsdNonblockingStates(t *testing.T) {
 				queueingRetryable, // got foo-02
 				aborted,           // got error
 			},
-			wantErr: grpc.Errorf(codes.Unknown, "I quit"),
+			wantErr: status.Errorf(codes.Unknown, "I quit"),
 		},
 		{
 			// unConnected->queueingRetryable->queueingUnretryable->queueingUnretryable
@@ -785,7 +786,7 @@ func TestRsdNonblockingStates(t *testing.T) {
 				s = append(s, aborted)             // Error happens
 				return s
 			}(),
-			wantErr: grpc.Errorf(codes.Unknown, "Just Abort It"),
+			wantErr: status.Errorf(codes.Unknown, "Just Abort It"),
 		},
 	}
 nextTest:
@@ -901,11 +902,11 @@ func TestRsdBlockingStates(t *testing.T) {
 			// unConnected -> unConnected
 			name: "unConnected -> unConnected",
 			rpc: func(ct context.Context, resumeToken []byte) (streamingReceiver, error) {
-				return nil, grpc.Errorf(codes.Unavailable, "trust me: server is unavailable")
+				return nil, status.Errorf(codes.Unavailable, "trust me: server is unavailable")
 			},
 			sql:          "SELECT * from t_whatever",
 			stateHistory: []resumableStreamDecoderState{unConnected, unConnected, unConnected},
-			wantErr:      grpc.Errorf(codes.Unavailable, "trust me: server is unavailable"),
+			wantErr:      status.Errorf(codes.Unavailable, "trust me: server is unavailable"),
 		},
 		{
 			// unConnected -> queueingRetryable
@@ -1344,7 +1345,7 @@ func TestResumeToken(t *testing.T) {
 	}
 	// Inject resumable failure.
 	ms.AddMsg(
-		grpc.Errorf(codes.Unavailable, "mock server unavailable"),
+		status.Errorf(codes.Unavailable, "mock server unavailable"),
 		false,
 	)
 	// Test if client detects the resumable failure and retries.
@@ -1401,7 +1402,7 @@ func TestResumeToken(t *testing.T) {
 	// Inject resumable error, but since resumableStreamDecoder is already at queueingUnretryable
 	// state, query will just fail.
 	ms.AddMsg(
-		grpc.Errorf(codes.Unavailable, "mock server wants some sleep"),
+		status.Errorf(codes.Unavailable, "mock server wants some sleep"),
 		false,
 	)
 	var gotErr error
@@ -1410,7 +1411,7 @@ func TestResumeToken(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatalf("timeout in waiting for failed query to return.")
 	}
-	if wantErr := toSpannerError(grpc.Errorf(codes.Unavailable, "mock server wants some sleep")); !testEqual(gotErr, wantErr) {
+	if wantErr := toSpannerError(status.Errorf(codes.Unavailable, "mock server wants some sleep")); !testEqual(gotErr, wantErr) {
 		t.Fatalf("stream() returns error: %v, but want error: %v", gotErr, wantErr)
 	}
 

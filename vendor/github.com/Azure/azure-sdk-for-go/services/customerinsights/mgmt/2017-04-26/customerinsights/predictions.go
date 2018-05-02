@@ -43,9 +43,11 @@ func NewPredictionsClientWithBaseURI(baseURI string, subscriptionID string) Pred
 }
 
 // CreateOrUpdate creates a Prediction or updates an existing Prediction in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction. parameters is parameters supplied to the create/update Prediction operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
+// parameters - parameters supplied to the create/update Prediction operation.
 func (client PredictionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, predictionName string, parameters PredictionResourceFormat) (result PredictionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: predictionName,
@@ -98,7 +100,7 @@ func (client PredictionsClient) CreateOrUpdatePreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/predictions/{predictionName}", pathParameters),
@@ -136,9 +138,10 @@ func (client PredictionsClient) CreateOrUpdateResponder(resp *http.Response) (re
 }
 
 // Delete deletes a Prediction in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
 func (client PredictionsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -205,9 +208,10 @@ func (client PredictionsClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get gets a Prediction in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
 func (client PredictionsClient) Get(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -273,9 +277,10 @@ func (client PredictionsClient) GetResponder(resp *http.Response) (result Predic
 }
 
 // GetModelStatus gets model status of the prediction.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
 func (client PredictionsClient) GetModelStatus(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionModelStatus, err error) {
 	req, err := client.GetModelStatusPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -341,9 +346,10 @@ func (client PredictionsClient) GetModelStatusResponder(resp *http.Response) (re
 }
 
 // GetTrainingResults gets training results.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
 func (client PredictionsClient) GetTrainingResults(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionTrainingResults, err error) {
 	req, err := client.GetTrainingResultsPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -409,8 +415,9 @@ func (client PredictionsClient) GetTrainingResultsResponder(resp *http.Response)
 }
 
 // ListByHub gets all the predictions in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client PredictionsClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result PredictionListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)
@@ -503,9 +510,11 @@ func (client PredictionsClient) ListByHubComplete(ctx context.Context, resourceG
 }
 
 // ModelStatus creates or updates the model status of prediction.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
-// of the Prediction. parameters is parameters supplied to the create/update prediction model status operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// predictionName - the name of the Prediction.
+// parameters - parameters supplied to the create/update prediction model status operation.
 func (client PredictionsClient) ModelStatus(ctx context.Context, resourceGroupName string, hubName string, predictionName string, parameters PredictionModelStatus) (result autorest.Response, err error) {
 	req, err := client.ModelStatusPreparer(ctx, resourceGroupName, hubName, predictionName, parameters)
 	if err != nil {
@@ -543,7 +552,7 @@ func (client PredictionsClient) ModelStatusPreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/predictions/{predictionName}/modelStatus", pathParameters),

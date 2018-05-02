@@ -39,6 +39,11 @@ const (
 	ObjectTypeUser ObjectType = "User"
 )
 
+// PossibleObjectTypeValues returns an array of possible values for the ObjectType const type.
+func PossibleObjectTypeValues() []ObjectType {
+	return []ObjectType{ObjectTypeApplication, ObjectTypeDirectoryObject, ObjectTypeGroup, ObjectTypeServicePrincipal, ObjectTypeUser}
+}
+
 // UserType enumerates the values for user type.
 type UserType string
 
@@ -48,6 +53,11 @@ const (
 	// Member ...
 	Member UserType = "Member"
 )
+
+// PossibleUserTypeValues returns an array of possible values for the UserType const type.
+func PossibleUserTypeValues() []UserType {
+	return []UserType{Guest, Member}
+}
 
 // AADObject the properties of an Active Directory object.
 type AADObject struct {
@@ -193,7 +203,9 @@ func (ag ADGroup) MarshalJSON() ([]byte, error) {
 	if ag.DeletionTimestamp != nil {
 		objectMap["deletionTimestamp"] = ag.DeletionTimestamp
 	}
-	objectMap["objectType"] = ag.ObjectType
+	if ag.ObjectType != "" {
+		objectMap["objectType"] = ag.ObjectType
+	}
 	for k, v := range ag.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -293,7 +305,9 @@ func (a Application) MarshalJSON() ([]byte, error) {
 	if a.DeletionTimestamp != nil {
 		objectMap["deletionTimestamp"] = a.DeletionTimestamp
 	}
-	objectMap["objectType"] = a.ObjectType
+	if a.ObjectType != "" {
+		objectMap["objectType"] = a.ObjectType
+	}
 	for k, v := range a.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -686,7 +700,9 @@ func (do DirectoryObject) MarshalJSON() ([]byte, error) {
 	if do.DeletionTimestamp != nil {
 		objectMap["deletionTimestamp"] = do.DeletionTimestamp
 	}
-	objectMap["objectType"] = do.ObjectType
+	if do.ObjectType != "" {
+		objectMap["objectType"] = do.ObjectType
+	}
 	for k, v := range do.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -928,6 +944,15 @@ type GraphError struct {
 	*OdataError `json:"odata.error,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for GraphError.
+func (ge GraphError) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ge.OdataError != nil {
+		objectMap["odata.error"] = ge.OdataError
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for GraphError struct.
 func (ge *GraphError) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1140,6 +1165,8 @@ type KeyCredential struct {
 	Usage *string `json:"usage,omitempty"`
 	// Type - Type. Acceptable values are 'AsymmetricX509Cert' and 'Symmetric'.
 	Type *string `json:"type,omitempty"`
+	// CustomKeyIdentifier - Custom Key Identifier
+	CustomKeyIdentifier *[]byte `json:"customKeyIdentifier,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for KeyCredential.
@@ -1162,6 +1189,9 @@ func (kc KeyCredential) MarshalJSON() ([]byte, error) {
 	}
 	if kc.Type != nil {
 		objectMap["type"] = kc.Type
+	}
+	if kc.CustomKeyIdentifier != nil {
+		objectMap["customKeyIdentifier"] = kc.CustomKeyIdentifier
 	}
 	for k, v := range kc.AdditionalProperties {
 		objectMap[k] = v
@@ -1188,6 +1218,18 @@ type OdataError struct {
 	Code *string `json:"code,omitempty"`
 	// ErrorMessage - Error Message.
 	*ErrorMessage `json:"message,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for OdataError.
+func (oe OdataError) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if oe.Code != nil {
+		objectMap["code"] = oe.Code
+	}
+	if oe.ErrorMessage != nil {
+		objectMap["message"] = oe.ErrorMessage
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for OdataError struct.
@@ -1388,7 +1430,9 @@ func (sp ServicePrincipal) MarshalJSON() ([]byte, error) {
 	if sp.DeletionTimestamp != nil {
 		objectMap["deletionTimestamp"] = sp.DeletionTimestamp
 	}
-	objectMap["objectType"] = sp.ObjectType
+	if sp.ObjectType != "" {
+		objectMap["objectType"] = sp.ObjectType
+	}
 	for k, v := range sp.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -1627,7 +1671,9 @@ func (u User) MarshalJSON() ([]byte, error) {
 	if u.Surname != nil {
 		objectMap["surname"] = u.Surname
 	}
-	objectMap["userType"] = u.UserType
+	if u.UserType != "" {
+		objectMap["userType"] = u.UserType
+	}
 	if u.AccountEnabled != nil {
 		objectMap["accountEnabled"] = u.AccountEnabled
 	}
@@ -1652,7 +1698,9 @@ func (u User) MarshalJSON() ([]byte, error) {
 	if u.DeletionTimestamp != nil {
 		objectMap["deletionTimestamp"] = u.DeletionTimestamp
 	}
-	objectMap["objectType"] = u.ObjectType
+	if u.ObjectType != "" {
+		objectMap["objectType"] = u.ObjectType
+	}
 	for k, v := range u.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -1720,7 +1768,9 @@ func (ub UserBase) MarshalJSON() ([]byte, error) {
 	if ub.Surname != nil {
 		objectMap["surname"] = ub.Surname
 	}
-	objectMap["userType"] = ub.UserType
+	if ub.UserType != "" {
+		objectMap["userType"] = ub.UserType
+	}
 	for k, v := range ub.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -1788,7 +1838,9 @@ func (ucp UserCreateParameters) MarshalJSON() ([]byte, error) {
 	if ucp.Surname != nil {
 		objectMap["surname"] = ucp.Surname
 	}
-	objectMap["userType"] = ucp.UserType
+	if ucp.UserType != "" {
+		objectMap["userType"] = ucp.UserType
+	}
 	for k, v := range ucp.AdditionalProperties {
 		objectMap[k] = v
 	}
@@ -1968,7 +2020,9 @@ func (uup UserUpdateParameters) MarshalJSON() ([]byte, error) {
 	if uup.Surname != nil {
 		objectMap["surname"] = uup.Surname
 	}
-	objectMap["userType"] = uup.UserType
+	if uup.UserType != "" {
+		objectMap["userType"] = uup.UserType
+	}
 	for k, v := range uup.AdditionalProperties {
 		objectMap[k] = v
 	}

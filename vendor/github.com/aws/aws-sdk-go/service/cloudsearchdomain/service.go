@@ -50,14 +50,14 @@ func New(p client.ConfigProvider, cfgs ...*aws.Config) *CloudSearchDomain {
 	} else {
 		c = p.ClientConfig(EndpointsID, cfgs...)
 	}
+	if c.SigningNameDerived || len(c.SigningName) == 0 {
+		c.SigningName = "cloudsearch"
+	}
 	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
 func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *CloudSearchDomain {
-	if len(signingName) == 0 {
-		signingName = "cloudsearch"
-	}
 	svc := &CloudSearchDomain{
 		Client: client.New(
 			cfg,

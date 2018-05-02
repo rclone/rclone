@@ -274,11 +274,13 @@ func errToStructArgType(p interface{}) error {
 // ToStruct fetches the columns in a row into the fields of a struct.
 // The rules for mapping a row's columns into a struct's exported fields
 // are as the following:
-// 1. If a field has a `spanner: "column_name"` tag, then decode column
-//    'column_name' into the field. A special case is the `spanner: "-"`
-//    tag, which instructs ToStruct to ignore the field during decoding.
-// 2. Otherwise, if the name of a field matches the name of a column (ignoring case),
-//    decode the column into the field.
+//
+//   1. If a field has a `spanner: "column_name"` tag, then decode column
+//      'column_name' into the field. A special case is the `spanner: "-"`
+//      tag, which instructs ToStruct to ignore the field during decoding.
+//
+//   2. Otherwise, if the name of a field matches the name of a column (ignoring case),
+//      decode the column into the field.
 //
 // The fields of the destination struct can be of any type that is acceptable
 // to spanner.Row.Column.

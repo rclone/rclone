@@ -58,7 +58,7 @@ const (
 	leap7        month   = 0 // leap7
 )
 
-var locales = []uint32{ // 775 elements
+var locales = []uint32{ // 768 elements
 	// Entry 0 - 1F
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -275,9 +275,6 @@ var locales = []uint32{ // 775 elements
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-	// Entry 300 - 31F
-	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-	0x00000000, 0x00000000, 0x00000000,
 } // Size: xxxx bytes
 
 var indices = []uint16{ // 86 elements
@@ -350,4 +347,4 @@ var enumMap = map[string]uint16{
 	"leap7":        0,
 }
 
-// Total table size: xxxx bytes (4KiB); checksum: 7EA7DE6
+// Total table size: xxxx bytes (4KiB); checksum: EB82B0F5

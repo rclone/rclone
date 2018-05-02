@@ -155,7 +155,7 @@ func (dbx *apiImpl) PropertiesAdd(arg *AddPropertiesArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -222,7 +222,7 @@ func (dbx *apiImpl) PropertiesOverwrite(arg *OverwritePropertyGroupArg) (err err
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -289,7 +289,7 @@ func (dbx *apiImpl) PropertiesRemove(arg *RemovePropertiesArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -361,7 +361,7 @@ func (dbx *apiImpl) PropertiesSearch(arg *PropertiesSearchArg) (res *PropertiesS
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -433,7 +433,7 @@ func (dbx *apiImpl) PropertiesSearchContinue(arg *PropertiesSearchContinueArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -500,7 +500,7 @@ func (dbx *apiImpl) PropertiesUpdate(arg *UpdatePropertiesArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -569,7 +569,7 @@ func (dbx *apiImpl) TemplatesAddForTeam(arg *AddTemplateArg) (res *AddTemplateRe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -641,7 +641,7 @@ func (dbx *apiImpl) TemplatesAddForUser(arg *AddTemplateArg) (res *AddTemplateRe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -710,7 +710,7 @@ func (dbx *apiImpl) TemplatesGetForTeam(arg *GetTemplateArg) (res *GetTemplateRe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -782,7 +782,7 @@ func (dbx *apiImpl) TemplatesGetForUser(arg *GetTemplateArg) (res *GetTemplateRe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -843,7 +843,7 @@ func (dbx *apiImpl) TemplatesListForTeam() (res *ListTemplateResult, err error) 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -907,7 +907,7 @@ func (dbx *apiImpl) TemplatesListForUser() (res *ListTemplateResult, err error) 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -971,7 +971,7 @@ func (dbx *apiImpl) TemplatesRemoveForTeam(arg *RemoveTemplateArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1038,7 +1038,7 @@ func (dbx *apiImpl) TemplatesRemoveForUser(arg *RemoveTemplateArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1107,7 +1107,7 @@ func (dbx *apiImpl) TemplatesUpdateForTeam(arg *UpdateTemplateArg) (res *UpdateT
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1179,7 +1179,7 @@ func (dbx *apiImpl) TemplatesUpdateForUser(arg *UpdateTemplateArg) (res *UpdateT
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusBadRequest {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

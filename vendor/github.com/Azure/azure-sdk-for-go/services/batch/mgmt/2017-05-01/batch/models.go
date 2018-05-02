@@ -36,6 +36,11 @@ const (
 	Secondary AccountKeyType = "Secondary"
 )
 
+// PossibleAccountKeyTypeValues returns an array of possible values for the AccountKeyType const type.
+func PossibleAccountKeyTypeValues() []AccountKeyType {
+	return []AccountKeyType{Primary, Secondary}
+}
+
 // NameAvailabilityReason enumerates the values for name availability reason.
 type NameAvailabilityReason string
 
@@ -45,6 +50,11 @@ const (
 	// Invalid ...
 	Invalid NameAvailabilityReason = "Invalid"
 )
+
+// PossibleNameAvailabilityReasonValues returns an array of possible values for the NameAvailabilityReason const type.
+func PossibleNameAvailabilityReasonValues() []NameAvailabilityReason {
+	return []NameAvailabilityReason{AlreadyExists, Invalid}
+}
 
 // PackageState enumerates the values for package state.
 type PackageState string
@@ -58,6 +68,11 @@ const (
 	Unmapped PackageState = "unmapped"
 )
 
+// PossiblePackageStateValues returns an array of possible values for the PackageState const type.
+func PossiblePackageStateValues() []PackageState {
+	return []PackageState{Active, Pending, Unmapped}
+}
+
 // PoolAllocationMode enumerates the values for pool allocation mode.
 type PoolAllocationMode string
 
@@ -67,6 +82,11 @@ const (
 	// UserSubscription ...
 	UserSubscription PoolAllocationMode = "UserSubscription"
 )
+
+// PossiblePoolAllocationModeValues returns an array of possible values for the PoolAllocationMode const type.
+func PossiblePoolAllocationModeValues() []PoolAllocationMode {
+	return []PoolAllocationMode{BatchService, UserSubscription}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -85,6 +105,11 @@ const (
 	// ProvisioningStateSucceeded ...
 	ProvisioningStateSucceeded ProvisioningState = "Succeeded"
 )
+
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{ProvisioningStateCancelled, ProvisioningStateCreating, ProvisioningStateDeleting, ProvisioningStateFailed, ProvisioningStateInvalid, ProvisioningStateSucceeded}
+}
 
 // Account contains information about an Azure Batch account.
 type Account struct {

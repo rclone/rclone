@@ -1,11 +1,22 @@
 # go-autorest
 
-[![GoDoc](https://godoc.org/github.com/Azure/go-autorest/autorest?status.png)](https://godoc.org/github.com/Azure/go-autorest/autorest) [![Build Status](https://travis-ci.org/Azure/go-autorest.svg?branch=master)](https://travis-ci.org/Azure/go-autorest) [![Go Report Card](https://goreportcard.com/badge/Azure/go-autorest)](https://goreportcard.com/report/Azure/go-autorest)
+[![GoDoc](https://godoc.org/github.com/Azure/go-autorest/autorest?status.png)](https://godoc.org/github.com/Azure/go-autorest/autorest)
+[![Build Status](https://travis-ci.org/Azure/go-autorest.svg?branch=master)](https://travis-ci.org/Azure/go-autorest)
+[![Go Report Card](https://goreportcard.com/badge/Azure/go-autorest)](https://goreportcard.com/report/Azure/go-autorest)
 
-## Usage
-Package autorest implements an HTTP request pipeline suitable for use across multiple go-routines
-and provides the shared routines relied on by AutoRest (see https://github.com/Azure/autorest/)
-generated Go code.
+Package go-autorest provides an HTTP request client for use with [Autorest](https://github.com/Azure/autorest.go)-generated API client packages.
+
+An authentication client tested with Azure Active Directory (AAD) is also
+provided in this repo in the package
+`github.com/Azure/go-autorest/autorest/adal`.  Despite its name, this package
+is maintained only as part of the Azure Go SDK and is not related to other
+"ADAL" libraries in [github.com/AzureAD](https://github.com/AzureAD).
+
+## Overview
+
+Package go-autorest implements an HTTP request pipeline suitable for use across
+multiple goroutines and provides the shared routines used by packages generated
+by [Autorest](https://github.com/Azure/autorest.go).
 
 The package breaks sending and responding to HTTP requests into three phases: Preparing, Sending,
 and Responding. A typical pattern is:
@@ -129,4 +140,10 @@ go get github.com/Azure/go-autorest/autorest/to
 See LICENSE file.
 
 -----
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project has adopted the [Microsoft Open Source Code of
+Conduct](https://opensource.microsoft.com/codeofconduct/). For more information
+see the [Code of Conduct
+FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact
+[opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional
+questions or comments.

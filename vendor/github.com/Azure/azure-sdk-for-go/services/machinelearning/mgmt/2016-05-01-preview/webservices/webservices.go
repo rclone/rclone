@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // Client is the these APIs allow end users to operate on Azure Machine Learning Web Services resources. They support
 // the following operations:<ul><li>Create or update a web service</li><li>Get a web service</li><li>Patch a web
 // service</li><li>Delete a web service</li><li>Get All Web Services in a Resource Group </li><li>Get All Web Services
@@ -33,16 +34,19 @@ type Client struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // NewClient creates an instance of the Client client.
 func NewClient(subscriptionID string) Client {
 	return NewClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // NewClientWithBaseURI creates an instance of the Client client.
 func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return Client{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // CreateOrUpdate create or update a web service. This call will overwrite an existing web service. Note that there is
 // no warning or confirmation. This is a nonrecoverable operation. If your intent is to create a new web service, call
 // the Get operation first to verify that it does not exist.
@@ -90,6 +94,7 @@ func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, webServiceName string, createOrUpdatePayload WebService) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -104,7 +109,7 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearning/webServices/{webServiceName}", pathParameters),
@@ -113,6 +118,7 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateOrUpdateSender(req *http.Request) (future CreateOrUpdateFuture, err error) {
@@ -128,6 +134,7 @@ func (client Client) CreateOrUpdateSender(req *http.Request) (future CreateOrUpd
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client Client) CreateOrUpdateResponder(resp *http.Response) (result WebService, err error) {
@@ -141,6 +148,7 @@ func (client Client) CreateOrUpdateResponder(resp *http.Response) (result WebSer
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // Get gets the Web Service Definiton as specified by a subscription, resource group, and name. Note that the storage
 // credentials and web service keys are not returned by this call. To get the web service access keys, call List Keys.
 //
@@ -168,6 +176,7 @@ func (client Client) Get(ctx context.Context, resourceGroupName string, webServi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // GetPreparer prepares the Get request.
 func (client Client) GetPreparer(ctx context.Context, resourceGroupName string, webServiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -189,6 +198,7 @@ func (client Client) GetPreparer(ctx context.Context, resourceGroupName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetSender(req *http.Request) (*http.Response, error) {
@@ -196,6 +206,7 @@ func (client Client) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client Client) GetResponder(resp *http.Response) (result WebService, err error) {
@@ -209,6 +220,7 @@ func (client Client) GetResponder(resp *http.Response) (result WebService, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // List gets the web services in the specified subscription.
 //
 // skiptoken is continuation token for pagination.
@@ -235,6 +247,7 @@ func (client Client) List(ctx context.Context, skiptoken string) (result Paginat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListPreparer prepares the List request.
 func (client Client) ListPreparer(ctx context.Context, skiptoken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -257,6 +270,7 @@ func (client Client) ListPreparer(ctx context.Context, skiptoken string) (*http.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListSender(req *http.Request) (*http.Response, error) {
@@ -264,6 +278,7 @@ func (client Client) ListSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client Client) ListResponder(resp *http.Response) (result PaginatedWebServicesList, err error) {
@@ -298,12 +313,14 @@ func (client Client) listNextResults(lastResults PaginatedWebServicesList) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListComplete(ctx context.Context, skiptoken string) (result PaginatedWebServicesListIterator, err error) {
 	result.page, err = client.List(ctx, skiptoken)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListByResourceGroup gets the web services in the specified resource group.
 //
 // resourceGroupName is name of the resource group in which the web service is located. skiptoken is continuation
@@ -331,6 +348,7 @@ func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client Client) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, skiptoken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -354,6 +372,7 @@ func (client Client) ListByResourceGroupPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -361,6 +380,7 @@ func (client Client) ListByResourceGroupSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client Client) ListByResourceGroupResponder(resp *http.Response) (result PaginatedWebServicesList, err error) {
@@ -395,12 +415,14 @@ func (client Client) listByResourceGroupNextResults(lastResults PaginatedWebServ
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, skiptoken string) (result PaginatedWebServicesListIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, skiptoken)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListKeys gets the access keys for the specified web service.
 //
 // resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
@@ -427,6 +449,7 @@ func (client Client) ListKeys(ctx context.Context, resourceGroupName string, web
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListKeysPreparer prepares the ListKeys request.
 func (client Client) ListKeysPreparer(ctx context.Context, resourceGroupName string, webServiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -448,6 +471,7 @@ func (client Client) ListKeysPreparer(ctx context.Context, resourceGroupName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListKeysSender(req *http.Request) (*http.Response, error) {
@@ -455,6 +479,7 @@ func (client Client) ListKeysSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
 func (client Client) ListKeysResponder(resp *http.Response) (result Keys, err error) {
@@ -468,6 +493,7 @@ func (client Client) ListKeysResponder(resp *http.Response) (result Keys, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // Patch modifies an existing web service resource. The PATCH API call is an asynchronous operation. To determine
 // whether it has completed successfully, you must perform a Get operation.
 //
@@ -489,6 +515,7 @@ func (client Client) Patch(ctx context.Context, resourceGroupName string, webSer
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // PatchPreparer prepares the Patch request.
 func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string, webServiceName string, patchPayload WebService) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -503,7 +530,7 @@ func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearning/webServices/{webServiceName}", pathParameters),
@@ -512,6 +539,7 @@ func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // PatchSender sends the Patch request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) PatchSender(req *http.Request) (future PatchFuture, err error) {
@@ -527,6 +555,7 @@ func (client Client) PatchSender(req *http.Request) (future PatchFuture, err err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // PatchResponder handles the response to the Patch request. The method always
 // closes the http.Response Body.
 func (client Client) PatchResponder(resp *http.Response) (result WebService, err error) {
@@ -540,6 +569,7 @@ func (client Client) PatchResponder(resp *http.Response) (result WebService, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // Remove deletes the specified web service.
 //
 // resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
@@ -560,6 +590,7 @@ func (client Client) Remove(ctx context.Context, resourceGroupName string, webSe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // RemovePreparer prepares the Remove request.
 func (client Client) RemovePreparer(ctx context.Context, resourceGroupName string, webServiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -581,6 +612,7 @@ func (client Client) RemovePreparer(ctx context.Context, resourceGroupName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // RemoveSender sends the Remove request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RemoveSender(req *http.Request) (future RemoveFuture, err error) {
@@ -596,6 +628,7 @@ func (client Client) RemoveSender(req *http.Request) (future RemoveFuture, err e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/webservices instead.
 // RemoveResponder handles the response to the Remove request. The method always
 // closes the http.Response Body.
 func (client Client) RemoveResponder(resp *http.Response) (result autorest.Response, err error) {

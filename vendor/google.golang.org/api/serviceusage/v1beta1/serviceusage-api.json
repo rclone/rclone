@@ -201,7 +201,7 @@
           ],
           "parameters": {
             "parent": {
-              "description": "Parent to enable services on.\n\nAn example name would be:\nprojects/123\n\nThe `BatchEnableServices` method currently only supports projects.",
+              "description": "Parent to enable services on.\n\nAn example name would be:\n`projects/123`\nwhere `123` is the project number (not project ID).\n\nThe `BatchEnableServices` method currently only supports projects.",
               "location": "path",
               "pattern": "^[^/]+/[^/]+$",
               "required": true,
@@ -230,7 +230,7 @@
           ],
           "parameters": {
             "name": {
-              "description": "Name of the consumer and service to disable the service on.\n\nThe enable and disable methods currently only support projects.\n\nAn example name would be:\nprojects/123/services/serviceusage.googleapis.com",
+              "description": "Name of the consumer and service to disable the service on.\n\nThe enable and disable methods currently only support projects.\n\nAn example name would be:\n`projects/123/services/serviceusage.googleapis.com`\nwhere `123` is the project number (not project ID).",
               "location": "path",
               "pattern": "^[^/]+/[^/]+/services/[^/]+$",
               "required": true,
@@ -259,7 +259,7 @@
           ],
           "parameters": {
             "name": {
-              "description": "Name of the consumer and service to enable the service on.\n\nThe `EnableService` and `DisableService` methods currently only support\nprojects.\n\nEnabling a service requires that the service is public or is shared with\nthe user enabling the service.\n\nAn example name would be:\nprojects/123/services/serviceusage.googleapis.com",
+              "description": "Name of the consumer and service to enable the service on.\n\nThe `EnableService` and `DisableService` methods currently only support\nprojects.\n\nEnabling a service requires that the service is public or is shared with\nthe user enabling the service.\n\nAn example name would be:\n`projects/123/services/serviceusage.googleapis.com`\nwhere `123` is the project number (not project ID).",
               "location": "path",
               "pattern": "^[^/]+/[^/]+/services/[^/]+$",
               "required": true,
@@ -288,7 +288,7 @@
           ],
           "parameters": {
             "name": {
-              "description": "Name of the consumer and service to get the `ConsumerState` for.\n\nAn example name would be:\nprojects/123/services/serviceusage.googleapis.com",
+              "description": "Name of the consumer and service to get the `ConsumerState` for.\n\nAn example name would be:\n`projects/123/services/serviceusage.googleapis.com`\nwhere `123` is the project number (not project ID).",
               "location": "path",
               "pattern": "^[^/]+/[^/]+/services/[^/]+$",
               "required": true,
@@ -330,7 +330,7 @@
               "type": "string"
             },
             "parent": {
-              "description": "Parent to search for services on.\n\nAn example name would be:\nprojects/123",
+              "description": "Parent to search for services on.\n\nAn example name would be:\n`projects/123`\nwhere `123` is the project number (not project ID).",
               "location": "path",
               "pattern": "^[^/]+/[^/]+$",
               "required": true,
@@ -349,7 +349,7 @@
       }
     }
   },
-  "revision": "20180308",
+  "revision": "20180503",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "Api": {
@@ -472,7 +472,7 @@
       "id": "AuthenticationRule",
       "properties": {
         "allowWithoutCredential": {
-          "description": "Whether to allow requests without a credential. The credential can be\nan OAuth token, Google cookies (first-party auth) or EndUserCreds.\n\nFor requests without credentials, if the service control environment is\nspecified, each incoming request **must** be associated with a service\nconsumer. This can be done by passing an API key that belongs to a consumer\nproject.",
+          "description": "If true, the service accepts API keys without any other credential.",
           "type": "boolean"
         },
         "customAuth": {
@@ -570,6 +570,27 @@
           "description": "The identifiers of the services to enable on the project.\n\nA valid identifier would be:\nserviceusage.googleapis.com\n\nEnabling services requires that each service is public or is shared with\nthe user enabling the service.\n\nTwo or more services must be specified. To enable a single service,\nuse the `EnableService` method instead.\n\nA single request can enable a maximum of 20 services at a time. If more\nthan 20 services are specified, the request will fail, and no state changes\nwill occur.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchEnableServicesResponse": {
+      "description": "Response message for the `BatchEnableServices` method.\nThis response message is assigned to the `response` field of the returned\nOperation when that operation is done.",
+      "id": "BatchEnableServicesResponse",
+      "properties": {
+        "failures": {
+          "description": "If allow_partial_success is true, and one or more services could not be\nenabled, this field contains the details about each failure.",
+          "items": {
+            "$ref": "EnableFailure"
+          },
+          "type": "array"
+        },
+        "services": {
+          "description": "The new state of the services after enabling.",
+          "items": {
+            "$ref": "GoogleApiServiceusageV1Service"
           },
           "type": "array"
         }
@@ -740,8 +761,19 @@
       "properties": {},
       "type": "object"
     },
+    "DisableServiceResponse": {
+      "description": "Response message for the `DisableService` method.\nThis response message is assigned to the `response` field of the returned\nOperation when that operation is done.",
+      "id": "DisableServiceResponse",
+      "properties": {
+        "service": {
+          "$ref": "GoogleApiServiceusageV1Service",
+          "description": "The new state of the service after disabling."
+        }
+      },
+      "type": "object"
+    },
     "Documentation": {
-      "description": "`Documentation` provides the information for describing a service.\n\nExample:\n\u003cpre\u003e\u003ccode\u003edocumentation:\n  summary: \u003e\n    The Google Calendar API gives access\n    to most calendar features.\n  pages:\n  - name: Overview\n    content: \u0026#40;== include google/foo/overview.md ==\u0026#41;\n  - name: Tutorial\n    content: \u0026#40;== include google/foo/tutorial.md ==\u0026#41;\n    subpages;\n    - name: Java\n      content: \u0026#40;== include google/foo/tutorial_java.md ==\u0026#41;\n  rules:\n  - selector: google.calendar.Calendar.Get\n    description: \u003e\n      ...\n  - selector: google.calendar.Calendar.Put\n    description: \u003e\n      ...\n\u003c/code\u003e\u003c/pre\u003e\nDocumentation is provided in markdown syntax. In addition to\nstandard markdown features, definition lists, tables and fenced\ncode blocks are supported. Section headers can be provided and are\ninterpreted relative to the section nesting of the context where\na documentation fragment is embedded.\n\nDocumentation from the IDL is merged with documentation defined\nvia the config at normalization time, where documentation provided\nby config rules overrides IDL provided.\n\nA number of constructs specific to the API platform are supported\nin documentation text.\n\nIn order to reference a proto element, the following\nnotation can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;fully.qualified.proto.name]\u0026#91;]\u003c/code\u003e\u003c/pre\u003e\nTo override the display text used for the link, this can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;display text]\u0026#91;fully.qualified.proto.name]\u003c/code\u003e\u003c/pre\u003e\nText can be excluded from doc using the following notation:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;-- internal comment --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nComments can be made conditional using a visibility label. The below\ntext will be only rendered if the `BETA` label is available:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;--BETA: comment for BETA users --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nA few directives are available in documentation. Note that\ndirectives must appear on a single line to be properly\nidentified. The `include` directive includes a markdown file from\nan external source:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== include path/to/file ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe `resource_for` directive marks a message to be the resource of\na collection in REST view. If it is not specified, tools attempt\nto infer the resource from the operations in a collection:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== resource_for v1.shelves.books ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe directive `suppress_warning` does not directly affect documentation\nand is documented together with service config validation.",
+      "description": "`Documentation` provides the information for describing a service.\n\nExample:\n\u003cpre\u003e\u003ccode\u003edocumentation:\n  summary: \u003e\n    The Google Calendar API gives access\n    to most calendar features.\n  pages:\n  - name: Overview\n    content: \u0026#40;== include google/foo/overview.md ==\u0026#41;\n  - name: Tutorial\n    content: \u0026#40;== include google/foo/tutorial.md ==\u0026#41;\n    subpages;\n    - name: Java\n      content: \u0026#40;== include google/foo/tutorial_java.md ==\u0026#41;\n  rules:\n  - selector: google.calendar.Calendar.Get\n    description: \u003e\n      ...\n  - selector: google.calendar.Calendar.Put\n    description: \u003e\n      ...\n\u003c/code\u003e\u003c/pre\u003e\nDocumentation is provided in markdown syntax. In addition to\nstandard markdown features, definition lists, tables and fenced\ncode blocks are supported. Section headers can be provided and are\ninterpreted relative to the section nesting of the context where\na documentation fragment is embedded.\n\nDocumentation from the IDL is merged with documentation defined\nvia the config at normalization time, where documentation provided\nby config rules overrides IDL provided.\n\nA number of constructs specific to the API platform are supported\nin documentation text.\n\nIn order to reference a proto element, the following\nnotation can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;fully.qualified.proto.name]\u0026#91;]\u003c/code\u003e\u003c/pre\u003e\nTo override the display text used for the link, this can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;display text]\u0026#91;fully.qualified.proto.name]\u003c/code\u003e\u003c/pre\u003e\nText can be excluded from doc using the following notation:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;-- internal comment --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\n\nA few directives are available in documentation. Note that\ndirectives must appear on a single line to be properly\nidentified. The `include` directive includes a markdown file from\nan external source:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== include path/to/file ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe `resource_for` directive marks a message to be the resource of\na collection in REST view. If it is not specified, tools attempt\nto infer the resource from the operations in a collection:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== resource_for v1.shelves.books ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe directive `suppress_warning` does not directly affect documentation\nand is documented together with service config validation.",
       "id": "Documentation",
       "properties": {
         "documentationRootUrl": {
@@ -792,10 +824,35 @@
       },
       "type": "object"
     },
+    "EnableFailure": {
+      "id": "EnableFailure",
+      "properties": {
+        "errorMessage": {
+          "description": "An error message describing why the service could not be enabled.",
+          "type": "string"
+        },
+        "serviceId": {
+          "description": "The service id of a service that could not be enabled.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "EnableServiceRequest": {
       "description": "Request message for the `EnableService` method.",
       "id": "EnableServiceRequest",
       "properties": {},
+      "type": "object"
+    },
+    "EnableServiceResponse": {
+      "description": "Response message for the `EnableService` method.\nThis response message is assigned to the `response` field of the returned\nOperation when that operation is done.",
+      "id": "EnableServiceResponse",
+      "properties": {
+        "service": {
+          "$ref": "GoogleApiServiceusageV1Service",
+          "description": "The new state of the service after enabling."
+        }
+      },
       "type": "object"
     },
     "Endpoint": {
@@ -1152,10 +1209,84 @@
         "usage": {
           "$ref": "Usage",
           "description": "Configuration controlling usage of this service."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV1Service": {
+      "description": "A service that is available for use by the consumer.",
+      "id": "GoogleApiServiceusageV1Service",
+      "properties": {
+        "config": {
+          "$ref": "GoogleApiServiceusageV1ServiceConfig",
+          "description": "The service configuration of the available service.\nSome fields may be filtered out of the configuration in responses to\nthe `ListServices` method. These fields are present only in responses to\nthe `GetService` method."
         },
-        "visibility": {
-          "$ref": "Visibility",
-          "description": "API visibility configuration."
+        "name": {
+          "description": "The resource name of the consumer and service.\n\nA valid name would be:\n- projects/123/services/serviceusage.googleapis.com",
+          "type": "string"
+        },
+        "parent": {
+          "description": "The resource name of the consumer.\n\nA valid name would be:\n- projects/123",
+          "type": "string"
+        },
+        "state": {
+          "description": "Whether or not the service has been enabled for use by the consumer.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "DISABLED",
+            "ENABLED"
+          ],
+          "enumDescriptions": [
+            "The default value, which indicates that the enabled state of the service\nis unspecified or not meaningful. Currently, all consumers other than\nprojects (such as folders and organizations) are always in this state.",
+            "The service cannot be used by this consumer. It has either been explicitly\ndisabled, or has never been enabled.",
+            "The service has been explicitly enabled for use by this consumer."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV1ServiceConfig": {
+      "description": "The configuration of the service.",
+      "id": "GoogleApiServiceusageV1ServiceConfig",
+      "properties": {
+        "apis": {
+          "description": "A list of API interfaces exported by this service. Contains only the names,\nversions, and method names of the interfaces.",
+          "items": {
+            "$ref": "Api"
+          },
+          "type": "array"
+        },
+        "authentication": {
+          "$ref": "Authentication",
+          "description": "Auth configuration. Contains only the OAuth rules."
+        },
+        "documentation": {
+          "$ref": "Documentation",
+          "description": "Additional API documentation. Contains only the summary and the\ndocumentation URL."
+        },
+        "endpoints": {
+          "description": "Configuration for network endpoints. Contains only the names and aliases\nof the endpoints.",
+          "items": {
+            "$ref": "Endpoint"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "The DNS address at which this service is available.\n\nAn example DNS address would be:\n`calendar.googleapis.com`.",
+          "type": "string"
+        },
+        "quota": {
+          "$ref": "Quota",
+          "description": "Quota configuration."
+        },
+        "title": {
+          "description": "The product title for this service.",
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "Usage",
+          "description": "Configuration controlling usage of this service."
         }
       },
       "type": "object"
@@ -2170,35 +2301,6 @@
         "skipServiceControl": {
           "description": "If true, the selected method should skip service control and the control\nplane features, such as quota and billing, will not be available.\nThis flag is used by Google Cloud Endpoints to bypass checks for internal\nmethods, such as service health check methods.",
           "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "Visibility": {
-      "description": "`Visibility` defines restrictions for the visibility of service\nelements.  Restrictions are specified using visibility labels\n(e.g., TRUSTED_TESTER) that are elsewhere linked to users and projects.\n\nUsers and projects can have access to more than one visibility label. The\neffective visibility for multiple labels is the union of each label's\nelements, plus any unrestricted elements.\n\nIf an element and its parents have no restrictions, visibility is\nunconditionally granted.\n\nExample:\n\n    visibility:\n      rules:\n      - selector: google.calendar.Calendar.EnhancedSearch\n        restriction: TRUSTED_TESTER\n      - selector: google.calendar.Calendar.Delegate\n        restriction: GOOGLE_INTERNAL\n\nHere, all methods are publicly visible except for the restricted methods\nEnhancedSearch and Delegate.",
-      "id": "Visibility",
-      "properties": {
-        "rules": {
-          "description": "A list of visibility rules that apply to individual API elements.\n\n**NOTE:** All service configuration rules follow \"last one wins\" order.",
-          "items": {
-            "$ref": "VisibilityRule"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "VisibilityRule": {
-      "description": "A visibility rule provides visibility configuration for an individual API\nelement.",
-      "id": "VisibilityRule",
-      "properties": {
-        "restriction": {
-          "description": "A comma-separated list of visibility labels that apply to the `selector`.\nAny of the listed labels can be used to grant the visibility.\n\nIf a rule has multiple labels, removing one of the labels but not all of\nthem can break clients.\n\nExample:\n\n    visibility:\n      rules:\n      - selector: google.calendar.Calendar.EnhancedSearch\n        restriction: GOOGLE_INTERNAL, TRUSTED_TESTER\n\nRemoving GOOGLE_INTERNAL from this restriction will break clients that\nrely on this method and only had access to it through GOOGLE_INTERNAL.",
-          "type": "string"
-        },
-        "selector": {
-          "description": "Selects methods, messages, fields, enums, etc. to which this rule applies.\n\nRefer to selector for syntax details.",
-          "type": "string"
         }
       },
       "type": "object"

@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseAutomaticTuningClient is the the Azure SQL Database management API provides a RESTful set of web services
 // that interact with Azure SQL Database services to manage your databases. The API enables you to create, retrieve,
 // update, and delete databases.
@@ -31,16 +32,19 @@ type DatabaseAutomaticTuningClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewDatabaseAutomaticTuningClient creates an instance of the DatabaseAutomaticTuningClient client.
 func NewDatabaseAutomaticTuningClient(subscriptionID string) DatabaseAutomaticTuningClient {
 	return NewDatabaseAutomaticTuningClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewDatabaseAutomaticTuningClientWithBaseURI creates an instance of the DatabaseAutomaticTuningClient client.
 func NewDatabaseAutomaticTuningClientWithBaseURI(baseURI string, subscriptionID string) DatabaseAutomaticTuningClient {
 	return DatabaseAutomaticTuningClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a database's automatic tuning.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -68,6 +72,7 @@ func (client DatabaseAutomaticTuningClient) Get(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client DatabaseAutomaticTuningClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,6 +95,7 @@ func (client DatabaseAutomaticTuningClient) GetPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseAutomaticTuningClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client DatabaseAutomaticTuningClient) GetSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client DatabaseAutomaticTuningClient) GetResponder(resp *http.Response) (result DatabaseAutomaticTuning, err error) {
@@ -110,6 +117,7 @@ func (client DatabaseAutomaticTuningClient) GetResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Update update automatic tuning properties for target database.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -137,6 +145,7 @@ func (client DatabaseAutomaticTuningClient) Update(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UpdatePreparer prepares the Update request.
 func (client DatabaseAutomaticTuningClient) UpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseAutomaticTuning) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -152,7 +161,7 @@ func (client DatabaseAutomaticTuningClient) UpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/automaticTuning/current", pathParameters),
@@ -161,6 +170,7 @@ func (client DatabaseAutomaticTuningClient) UpdatePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseAutomaticTuningClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -168,6 +178,7 @@ func (client DatabaseAutomaticTuningClient) UpdateSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client DatabaseAutomaticTuningClient) UpdateResponder(resp *http.Response) (result DatabaseAutomaticTuning, err error) {

@@ -481,7 +481,8 @@
         "ModelName":{"shape":"ModelName"},
         "PrimaryContainer":{"shape":"ContainerDefinition"},
         "ExecutionRoleArn":{"shape":"RoleArn"},
-        "Tags":{"shape":"TagList"}
+        "Tags":{"shape":"TagList"},
+        "VpcConfig":{"shape":"VpcConfig"}
       }
     },
     "CreateModelOutput":{
@@ -564,6 +565,7 @@
         "InputDataConfig":{"shape":"InputDataConfig"},
         "OutputDataConfig":{"shape":"OutputDataConfig"},
         "ResourceConfig":{"shape":"ResourceConfig"},
+        "VpcConfig":{"shape":"VpcConfig"},
         "StoppingCondition":{"shape":"StoppingCondition"},
         "Tags":{"shape":"TagList"}
       }
@@ -705,6 +707,7 @@
         "ModelName":{"shape":"ModelName"},
         "PrimaryContainer":{"shape":"ContainerDefinition"},
         "ExecutionRoleArn":{"shape":"RoleArn"},
+        "VpcConfig":{"shape":"VpcConfig"},
         "CreationTime":{"shape":"Timestamp"},
         "ModelArn":{"shape":"ModelArn"}
       }
@@ -788,6 +791,7 @@
         "InputDataConfig":{"shape":"InputDataConfig"},
         "OutputDataConfig":{"shape":"OutputDataConfig"},
         "ResourceConfig":{"shape":"ResourceConfig"},
+        "VpcConfig":{"shape":"VpcConfig"},
         "StoppingCondition":{"shape":"StoppingCondition"},
         "CreationTime":{"shape":"Timestamp"},
         "TrainingStartTime":{"shape":"Timestamp"},
@@ -950,9 +954,20 @@
       "type":"string",
       "enum":[
         "ml.t2.medium",
+        "ml.t2.large",
+        "ml.t2.xlarge",
+        "ml.t2.2xlarge",
         "ml.m4.xlarge",
+        "ml.m4.2xlarge",
+        "ml.m4.4xlarge",
+        "ml.m4.10xlarge",
+        "ml.m4.16xlarge",
         "ml.p2.xlarge",
-        "ml.p3.2xlarge"
+        "ml.p2.8xlarge",
+        "ml.p2.16xlarge",
+        "ml.p3.2xlarge",
+        "ml.p3.8xlarge",
+        "ml.p3.16xlarge"
       ]
     },
     "KmsKeyId":{
@@ -1345,16 +1360,38 @@
     "ProductionVariantInstanceType":{
       "type":"string",
       "enum":[
-        "ml.c4.2xlarge",
-        "ml.c4.8xlarge",
-        "ml.c4.xlarge",
-        "ml.c5.2xlarge",
-        "ml.c5.9xlarge",
-        "ml.c5.xlarge",
+        "ml.t2.medium",
+        "ml.t2.large",
+        "ml.t2.xlarge",
+        "ml.t2.2xlarge",
         "ml.m4.xlarge",
+        "ml.m4.2xlarge",
+        "ml.m4.4xlarge",
+        "ml.m4.10xlarge",
+        "ml.m4.16xlarge",
+        "ml.m5.large",
+        "ml.m5.xlarge",
+        "ml.m5.2xlarge",
+        "ml.m5.4xlarge",
+        "ml.m5.12xlarge",
+        "ml.m5.24xlarge",
+        "ml.c4.large",
+        "ml.c4.xlarge",
+        "ml.c4.2xlarge",
+        "ml.c4.4xlarge",
+        "ml.c4.8xlarge",
         "ml.p2.xlarge",
+        "ml.p2.8xlarge",
+        "ml.p2.16xlarge",
         "ml.p3.2xlarge",
-        "ml.t2.medium"
+        "ml.p3.8xlarge",
+        "ml.p3.16xlarge",
+        "ml.c5.large",
+        "ml.c5.xlarge",
+        "ml.c5.2xlarge",
+        "ml.c5.4xlarge",
+        "ml.c5.9xlarge",
+        "ml.c5.18xlarge"
       ]
     },
     "ProductionVariantList":{
@@ -1535,6 +1572,12 @@
       "type":"string",
       "max":32
     },
+    "Subnets":{
+      "type":"list",
+      "member":{"shape":"SubnetId"},
+      "max":16,
+      "min":1
+    },
     "Tag":{
       "type":"structure",
       "required":[
@@ -1590,10 +1633,19 @@
       "type":"string",
       "enum":[
         "ml.m4.xlarge",
+        "ml.m4.2xlarge",
         "ml.m4.4xlarge",
         "ml.m4.10xlarge",
+        "ml.m4.16xlarge",
+        "ml.m5.large",
+        "ml.m5.xlarge",
+        "ml.m5.2xlarge",
+        "ml.m5.4xlarge",
+        "ml.m5.12xlarge",
+        "ml.m5.24xlarge",
         "ml.c4.xlarge",
         "ml.c4.2xlarge",
+        "ml.c4.4xlarge",
         "ml.c4.8xlarge",
         "ml.p2.xlarge",
         "ml.p2.8xlarge",
@@ -1611,7 +1663,7 @@
     "TrainingJobArn":{
       "type":"string",
       "max":256,
-      "pattern":"arn:aws:sagemaker:[\\p{Alnum}\\-]*:[0-9]{12}:training-job/.*"
+      "pattern":"arn:aws[a-z\\-]*:sagemaker:[\\p{Alnum}\\-]*:[0-9]{12}:training-job/.*"
     },
     "TrainingJobName":{
       "type":"string",
@@ -1730,6 +1782,23 @@
     },
     "VolumeSizeInGB":{
       "type":"integer",
+      "min":1
+    },
+    "VpcConfig":{
+      "type":"structure",
+      "required":[
+        "SecurityGroupIds",
+        "Subnets"
+      ],
+      "members":{
+        "SecurityGroupIds":{"shape":"VpcSecurityGroupIds"},
+        "Subnets":{"shape":"Subnets"}
+      }
+    },
+    "VpcSecurityGroupIds":{
+      "type":"list",
+      "member":{"shape":"SecurityGroupId"},
+      "max":5,
       "min":1
     }
   }

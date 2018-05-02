@@ -33,6 +33,54 @@ make backwards-incompatible changes.
 
 ## News
 
+_April 9, 2018_
+
+*v0.21.0*
+
+- bigquery:
+  - Add OpenCensus tracing.
+
+- firestore:
+  - **BREAKING CHANGE:** If a document does not exist, return a DocumentSnapshot
+    whose Exists method returns false. DocumentRef.Get and Transaction.Get
+    return the non-nil DocumentSnapshot in addition to a NotFound error.
+    **DocumentRef.GetAll and Transaction.GetAll return a non-nil
+    DocumentSnapshot instead of nil.**
+  - Add DocumentIterator.Stop. **Call Stop whenever you are done with a
+    DocumentIterator.**
+  - Added Query.Snapshots and DocumentRef.Snapshots, which provide realtime
+    notification of updates. See https://cloud.google.com/firestore/docs/query-data/listen.
+  - Canceling an RPC now always returns a grpc.Status with codes.Canceled.
+
+- spanner:
+  - Add `CommitTimestamp`, which supports inserting the commit timestamp of a
+    transaction into a column.
+
+_March 22, 2018_
+
+*v0.20.0*
+
+- bigquery: Support SchemaUpdateOptions for load jobs.
+
+- bigtable:
+  - Add SampleRowKeys.
+  - cbt: Support union, intersection GCPolicy.
+  - Retry admin RPCS.
+  - Add trace spans to retries.
+
+- datastore: Add OpenCensus tracing.
+
+- firestore:
+  - Fix queries involving Null and NaN.
+  - Allow Timestamp protobuffers for time values.
+
+- logging: Add a WriteTimeout option.
+
+- spanner: Support Batch API.
+
+- storage: Add OpenCensus tracing.
+
+
 _February 26, 2018_
 
 *v0.19.0*

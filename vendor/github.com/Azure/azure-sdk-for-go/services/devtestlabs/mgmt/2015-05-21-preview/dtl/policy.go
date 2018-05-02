@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicyClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type PolicyClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewPolicyClient creates an instance of the PolicyClient client.
 func NewPolicyClient(subscriptionID string) PolicyClient {
 	return NewPolicyClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewPolicyClientWithBaseURI creates an instance of the PolicyClient client.
 func NewPolicyClientWithBaseURI(baseURI string, subscriptionID string) PolicyClient {
 	return PolicyClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResource create or replace an existing policy.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
@@ -65,6 +69,7 @@ func (client PolicyClient) CreateOrUpdateResource(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourcePreparer prepares the CreateOrUpdateResource request.
 func (client PolicyClient) CreateOrUpdateResourcePreparer(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy Policy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,7 +86,7 @@ func (client PolicyClient) CreateOrUpdateResourcePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/policysets/{policySetName}/policies/{name}", pathParameters),
@@ -90,6 +95,7 @@ func (client PolicyClient) CreateOrUpdateResourcePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceSender sends the CreateOrUpdateResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicyClient) CreateOrUpdateResourceSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client PolicyClient) CreateOrUpdateResourceSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceResponder handles the response to the CreateOrUpdateResource request. The method always
 // closes the http.Response Body.
 func (client PolicyClient) CreateOrUpdateResourceResponder(resp *http.Response) (result Policy, err error) {
@@ -110,6 +117,7 @@ func (client PolicyClient) CreateOrUpdateResourceResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResource delete policy.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
@@ -136,6 +144,7 @@ func (client PolicyClient) DeleteResource(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourcePreparer prepares the DeleteResource request.
 func (client PolicyClient) DeleteResourcePreparer(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -159,6 +168,7 @@ func (client PolicyClient) DeleteResourcePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceSender sends the DeleteResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicyClient) DeleteResourceSender(req *http.Request) (*http.Response, error) {
@@ -166,6 +176,7 @@ func (client PolicyClient) DeleteResourceSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceResponder handles the response to the DeleteResource request. The method always
 // closes the http.Response Body.
 func (client PolicyClient) DeleteResourceResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -178,6 +189,7 @@ func (client PolicyClient) DeleteResourceResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResource get policy.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
@@ -204,6 +216,7 @@ func (client PolicyClient) GetResource(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourcePreparer prepares the GetResource request.
 func (client PolicyClient) GetResourcePreparer(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -227,6 +240,7 @@ func (client PolicyClient) GetResourcePreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceSender sends the GetResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicyClient) GetResourceSender(req *http.Request) (*http.Response, error) {
@@ -234,6 +248,7 @@ func (client PolicyClient) GetResourceSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceResponder handles the response to the GetResource request. The method always
 // closes the http.Response Body.
 func (client PolicyClient) GetResourceResponder(resp *http.Response) (result Policy, err error) {
@@ -247,6 +262,7 @@ func (client PolicyClient) GetResourceResponder(resp *http.Response) (result Pol
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list policies.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
@@ -274,6 +290,7 @@ func (client PolicyClient) List(ctx context.Context, resourceGroupName string, l
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client PolicyClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, policySetName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -305,6 +322,7 @@ func (client PolicyClient) ListPreparer(ctx context.Context, resourceGroupName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicyClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -312,6 +330,7 @@ func (client PolicyClient) ListSender(req *http.Request) (*http.Response, error)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client PolicyClient) ListResponder(resp *http.Response) (result ResponseWithContinuationPolicy, err error) {
@@ -346,12 +365,14 @@ func (client PolicyClient) listNextResults(lastResults ResponseWithContinuationP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PolicyClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, policySetName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationPolicyIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, policySetName, filter, top, orderBy)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResource modify properties of policies.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
@@ -378,6 +399,7 @@ func (client PolicyClient) PatchResource(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourcePreparer prepares the PatchResource request.
 func (client PolicyClient) PatchResourcePreparer(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy Policy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -394,7 +416,7 @@ func (client PolicyClient) PatchResourcePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/policysets/{policySetName}/policies/{name}", pathParameters),
@@ -403,6 +425,7 @@ func (client PolicyClient) PatchResourcePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceSender sends the PatchResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicyClient) PatchResourceSender(req *http.Request) (*http.Response, error) {
@@ -410,6 +433,7 @@ func (client PolicyClient) PatchResourceSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceResponder handles the response to the PatchResource request. The method always
 // closes the http.Response Body.
 func (client PolicyClient) PatchResourceResponder(resp *http.Response) (result Policy, err error) {

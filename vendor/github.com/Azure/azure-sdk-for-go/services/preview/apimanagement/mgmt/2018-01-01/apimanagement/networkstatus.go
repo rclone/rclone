@@ -42,10 +42,11 @@ func NewNetworkStatusClientWithBaseURI(baseURI string, subscriptionID string) Ne
 
 // ListByLocation gets the Connectivity Status to the external resources on which the Api Management service depends
 // from inside the Cloud Service. This also returns the DNS Servers as visible to the CloudService.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// locationName is location in which the API Management service is deployed. This is one of the Azure Regions like
-// West US, East US, South Central US.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// locationName - location in which the API Management service is deployed. This is one of the Azure Regions
+// like West US, East US, South Central US.
 func (client NetworkStatusClient) ListByLocation(ctx context.Context, resourceGroupName string, serviceName string, locationName string) (result NetworkStatusContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -122,8 +123,9 @@ func (client NetworkStatusClient) ListByLocationResponder(resp *http.Response) (
 
 // ListByService gets the Connectivity Status to the external resources on which the Api Management service depends
 // from inside the Cloud Service. This also returns the DNS Servers as visible to the CloudService.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client NetworkStatusClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string) (result ListNetworkStatusContractByLocation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

@@ -45,14 +45,14 @@ const (
 //     svc := serverlessapplicationrepository.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *ServerlessApplicationRepository {
 	c := p.ClientConfig(EndpointsID, cfgs...)
+	if c.SigningNameDerived || len(c.SigningName) == 0 {
+		c.SigningName = "serverlessrepo"
+	}
 	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
 func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *ServerlessApplicationRepository {
-	if len(signingName) == 0 {
-		signingName = "serverlessrepo"
-	}
 	svc := &ServerlessApplicationRepository{
 		Client: client.New(
 			cfg,

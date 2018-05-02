@@ -41,9 +41,10 @@ func NewApplicationGatewaysClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // BackendHealth gets the backend health of the specified application gateway in a resource group.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway. expand is expands BackendAddressPool and BackendHttpSettings referenced in backend health.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
+// expand - expands BackendAddressPool and BackendHttpSettings referenced in backend health.
 func (client ApplicationGatewaysClient) BackendHealth(ctx context.Context, resourceGroupName string, applicationGatewayName string, expand string) (result ApplicationGatewaysBackendHealthFuture, err error) {
 	req, err := client.BackendHealthPreparer(ctx, resourceGroupName, applicationGatewayName, expand)
 	if err != nil {
@@ -113,9 +114,10 @@ func (client ApplicationGatewaysClient) BackendHealthResponder(resp *http.Respon
 }
 
 // CreateOrUpdate creates or updates the specified application gateway.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway. parameters is parameters supplied to the create or update application gateway operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
+// parameters - parameters supplied to the create or update application gateway operation.
 func (client ApplicationGatewaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, applicationGatewayName string, parameters ApplicationGateway) (result ApplicationGatewaysCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -162,7 +164,7 @@ func (client ApplicationGatewaysClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}", pathParameters),
@@ -200,9 +202,9 @@ func (client ApplicationGatewaysClient) CreateOrUpdateResponder(resp *http.Respo
 }
 
 // Delete deletes the specified application gateway.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
 func (client ApplicationGatewaysClient) Delete(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -268,9 +270,9 @@ func (client ApplicationGatewaysClient) DeleteResponder(resp *http.Response) (re
 }
 
 // Get gets the specified application gateway.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
 func (client ApplicationGatewaysClient) Get(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGateway, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -335,8 +337,8 @@ func (client ApplicationGatewaysClient) GetResponder(resp *http.Response) (resul
 }
 
 // GetSslPredefinedPolicy gets Ssl predefined policy with the specified policy name.
-//
-// predefinedPolicyName is name of Ssl predefined policy.
+// Parameters:
+// predefinedPolicyName - name of Ssl predefined policy.
 func (client ApplicationGatewaysClient) GetSslPredefinedPolicy(ctx context.Context, predefinedPolicyName string) (result ApplicationGatewaySslPredefinedPolicy, err error) {
 	req, err := client.GetSslPredefinedPolicyPreparer(ctx, predefinedPolicyName)
 	if err != nil {
@@ -400,8 +402,8 @@ func (client ApplicationGatewaysClient) GetSslPredefinedPolicyResponder(resp *ht
 }
 
 // List lists all application gateways in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client ApplicationGatewaysClient) List(ctx context.Context, resourceGroupName string) (result ApplicationGatewayListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)
@@ -797,9 +799,9 @@ func (client ApplicationGatewaysClient) ListAvailableWafRuleSetsResponder(resp *
 }
 
 // Start starts the specified application gateway.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
 func (client ApplicationGatewaysClient) Start(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -865,9 +867,9 @@ func (client ApplicationGatewaysClient) StartResponder(resp *http.Response) (res
 }
 
 // Stop stops the specified application gateway in a resource group.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
 func (client ApplicationGatewaysClient) Stop(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -933,9 +935,10 @@ func (client ApplicationGatewaysClient) StopResponder(resp *http.Response) (resu
 }
 
 // UpdateTags updates the specified application gateway tags.
-//
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
-// gateway. parameters is parameters supplied to update application gateway tags.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// applicationGatewayName - the name of the application gateway.
+// parameters - parameters supplied to update application gateway tags.
 func (client ApplicationGatewaysClient) UpdateTags(ctx context.Context, resourceGroupName string, applicationGatewayName string, parameters TagsObject) (result ApplicationGatewaysUpdateTagsFuture, err error) {
 	req, err := client.UpdateTagsPreparer(ctx, resourceGroupName, applicationGatewayName, parameters)
 	if err != nil {
@@ -966,7 +969,7 @@ func (client ApplicationGatewaysClient) UpdateTagsPreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}", pathParameters),

@@ -41,10 +41,11 @@ func NewJobOperationResultsClientWithBaseURI(baseURI string, subscriptionID stri
 
 // Get fetches the result of any operation.
 // the operation.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. jobName is job name whose operation result has to be fetched.
-// operationID is operationID which represents the operation whose result has to be fetched.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// jobName - job name whose operation result has to be fetched.
+// operationID - operationID which represents the operation whose result has to be fetched.
 func (client JobOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, jobName string, operationID string) (result autorest.Response, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, jobName, operationID)
 	if err != nil {

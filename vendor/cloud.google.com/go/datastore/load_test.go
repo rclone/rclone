@@ -811,3 +811,76 @@ func TestLoadPointers(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadNonArrayIntoSlice(t *testing.T) {
+	// Loading a non-array value into a slice field results in a slice of size 1.
+	var got struct{ S []string }
+	if err := LoadStruct(&got, []Property{{Name: "S", Value: "x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"x"}; !testutil.Equal(got.S, want) {
+		t.Errorf("got %#v, want %#v", got.S, want)
+	}
+}
+
+func TestLoadEmptyArrayIntoSlice(t *testing.T) {
+	// Loading an empty array into a slice field is a no-op.
+	var got = struct{ S []string }{[]string{"x"}}
+	if err := LoadStruct(&got, []Property{{Name: "S", Value: []interface{}{}}}); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"x"}; !testutil.Equal(got.S, want) {
+		t.Errorf("got %#v, want %#v", got.S, want)
+	}
+}
+
+func TestLoadNull(t *testing.T) {
+	// Loading a Datastore Null into a basic type (int, float, etc.) results in a zero value.
+	// Loading a Null into a slice of basic type results in a slice of size 1 containing the zero value.
+	// (As expected from the behavior of slices and nulls with basic types.)
+	type S struct {
+		I int64
+		F float64
+		S string
+		B bool
+		A []string
+	}
+	got := S{
+		I: 1,
+		F: 1.0,
+		S: "1",
+		B: true,
+		A: []string{"X"},
+	}
+	want := S{A: []string{""}}
+	props := []Property{{Name: "I"}, {Name: "F"}, {Name: "S"}, {Name: "B"}, {Name: "A"}}
+	if err := LoadStruct(&got, props); err != nil {
+		t.Fatal(err)
+	}
+	if !testutil.Equal(got, want) {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+
+	// Loading a Null into a pointer to struct field results in a nil field.
+	got2 := struct{ X *S }{X: &S{}}
+	if err := LoadStruct(&got2, []Property{{Name: "X"}}); err != nil {
+		t.Fatal(err)
+	}
+	if got2.X != nil {
+		t.Errorf("got %v, want nil", got2.X)
+	}
+
+	// Loading a Null into a struct field is an error.
+	got3 := struct{ X S }{}
+	err := LoadStruct(&got3, []Property{{Name: "X"}})
+	if err == nil {
+		t.Error("got nil, want error")
+	}
+}
+
+// 	var got2 struct{ S []Pet }
+// 	if err := LoadStruct(&got2, []Property{{Name: "S", Value: nil}}); err != nil {
+// 		t.Fatal(err)
+// 	}
+
+// }

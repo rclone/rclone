@@ -43,7 +43,7 @@ const (
 	// ErrCodeInvalidNextTokenException for service response error code
 	// "InvalidNextTokenException".
 	//
-	// The specified next token is invalid. Specify the NextToken string that was
+	// The specified next token is invalid. Specify the nextToken string that was
 	// returned in the previous response to get the next page of results.
 	ErrCodeInvalidNextTokenException = "InvalidNextTokenException"
 
@@ -58,7 +58,7 @@ const (
 	// "InvalidRecordingGroupException".
 	//
 	// AWS Config throws an exception if the recording group does not contain a
-	// valid list of resource types. Invalid values could also be incorrectly formatted.
+	// valid list of resource types. Invalid values might also be incorrectly formatted.
 	ErrCodeInvalidRecordingGroupException = "InvalidRecordingGroupException"
 
 	// ErrCodeInvalidResultTokenException for service response error code
@@ -111,19 +111,19 @@ const (
 	//
 	// Failed to add the AWS Config rule because the account already contains the
 	// maximum number of 50 rules. Consider deleting any deactivated rules before
-	// adding new rules.
+	// you add new rules.
 	ErrCodeMaxNumberOfConfigRulesExceededException = "MaxNumberOfConfigRulesExceededException"
 
 	// ErrCodeMaxNumberOfConfigurationRecordersExceededException for service response error code
 	// "MaxNumberOfConfigurationRecordersExceededException".
 	//
-	// You have reached the limit on the number of recorders you can create.
+	// You have reached the limit of the number of recorders you can create.
 	ErrCodeMaxNumberOfConfigurationRecordersExceededException = "MaxNumberOfConfigurationRecordersExceededException"
 
 	// ErrCodeMaxNumberOfDeliveryChannelsExceededException for service response error code
 	// "MaxNumberOfDeliveryChannelsExceededException".
 	//
-	// You have reached the limit on the number of delivery channels you can create.
+	// You have reached the limit of the number of delivery channels you can create.
 	ErrCodeMaxNumberOfDeliveryChannelsExceededException = "MaxNumberOfDeliveryChannelsExceededException"
 
 	// ErrCodeNoAvailableConfigurationRecorderException for service response error code
@@ -138,6 +138,12 @@ const (
 	//
 	// There is no delivery channel available to record configurations.
 	ErrCodeNoAvailableDeliveryChannelException = "NoAvailableDeliveryChannelException"
+
+	// ErrCodeNoAvailableOrganizationException for service response error code
+	// "NoAvailableOrganizationException".
+	//
+	// Organization does is no longer available.
+	ErrCodeNoAvailableOrganizationException = "NoAvailableOrganizationException"
 
 	// ErrCodeNoRunningConfigurationRecorderException for service response error code
 	// "NoRunningConfigurationRecorderException".
@@ -158,6 +164,12 @@ const (
 	// rule names are correct and try again.
 	ErrCodeNoSuchConfigRuleException = "NoSuchConfigRuleException"
 
+	// ErrCodeNoSuchConfigurationAggregatorException for service response error code
+	// "NoSuchConfigurationAggregatorException".
+	//
+	// You have specified a configuration aggregator that does not exist.
+	ErrCodeNoSuchConfigurationAggregatorException = "NoSuchConfigurationAggregatorException"
+
 	// ErrCodeNoSuchConfigurationRecorderException for service response error code
 	// "NoSuchConfigurationRecorderException".
 	//
@@ -169,6 +181,19 @@ const (
 	//
 	// You have specified a delivery channel that does not exist.
 	ErrCodeNoSuchDeliveryChannelException = "NoSuchDeliveryChannelException"
+
+	// ErrCodeOrganizationAccessDeniedException for service response error code
+	// "OrganizationAccessDeniedException".
+	//
+	// No permission to call the EnableAWSServiceAccess API.
+	ErrCodeOrganizationAccessDeniedException = "OrganizationAccessDeniedException"
+
+	// ErrCodeOrganizationAllFeaturesNotEnabledException for service response error code
+	// "OrganizationAllFeaturesNotEnabledException".
+	//
+	// The configuration aggregator cannot be created because organization does
+	// not have all features enabled.
+	ErrCodeOrganizationAllFeaturesNotEnabledException = "OrganizationAllFeaturesNotEnabledException"
 
 	// ErrCodeResourceInUseException for service response error code
 	// "ResourceInUseException".

@@ -41,9 +41,11 @@ func NewFormulasClientWithBaseURI(baseURI string, subscriptionID string) Formula
 }
 
 // CreateOrUpdate create or replace an existing Formula. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// formula. formula is a formula for creating a VM, specifying an image base and other parameters
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the formula.
+// formula - a formula for creating a VM, specifying an image base and other parameters
 func (client FormulasClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, formula Formula) (result FormulasCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: formula,
@@ -94,7 +96,7 @@ func (client FormulasClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/formulas/{name}", pathParameters),
@@ -132,9 +134,10 @@ func (client FormulasClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete delete formula.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// formula.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the formula.
 func (client FormulasClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -199,9 +202,11 @@ func (client FormulasClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get get formula.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// formula. expand is specify the $expand query. Example: 'properties($select=description)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the formula.
+// expand - specify the $expand query. Example: 'properties($select=description)'
 func (client FormulasClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result Formula, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {
@@ -270,11 +275,13 @@ func (client FormulasClient) GetResponder(resp *http.Response) (result Formula, 
 }
 
 // List list formulas in a given lab.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
-// $expand query. Example: 'properties($select=description)' filter is the filter to apply to the operation. top is
-// the maximum number of resources to return from the operation. orderby is the ordering expression for the
-// results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// expand - specify the $expand query. Example: 'properties($select=description)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client FormulasClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationFormulaPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

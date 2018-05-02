@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -274,6 +275,8 @@ func getChunkSizes(size int64) (chunks []chunkSize) {
 	return chunks
 }
 
+var attrMatch = regexp.MustCompile(`{".*"}`)
+
 func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
 	err = EBADATTR
 	block, err := aes.NewCipher(key)
@@ -287,6 +290,10 @@ func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
 
 	if string(buf[:4]) == "MEGA" {
 		str := strings.TrimRight(string(buf[4:]), "\x00")
+		trimmed := attrMatch.FindString(str)
+		if trimmed != "" {
+			str = trimmed
+		}
 		err = json.Unmarshal([]byte(str), &attr)
 	}
 	return attr, err

@@ -57,8 +57,8 @@ func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 
 // CheckNameAvailability check the availability of a resource name. This is needed for resources where name is globally
 // unique, such as a CDN endpoint.
-//
-// checkNameAvailabilityInput is input to check.
+// Parameters:
+// checkNameAvailabilityInput - input to check.
 func (client BaseClient) CheckNameAvailability(ctx context.Context, checkNameAvailabilityInput CheckNameAvailabilityInput) (result CheckNameAvailabilityOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: checkNameAvailabilityInput,
@@ -96,7 +96,7 @@ func (client BaseClient) CheckNameAvailabilityPreparer(ctx context.Context, chec
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPath("/providers/Microsoft.Cdn/checkNameAvailability"),
@@ -125,11 +125,85 @@ func (client BaseClient) CheckNameAvailabilityResponder(resp *http.Response) (re
 	return
 }
 
+// CheckNameAvailabilityWithSubscription check the availability of a resource name. This is needed for resources where
+// name is globally unique, such as a CDN endpoint.
+// Parameters:
+// checkNameAvailabilityInput - input to check.
+func (client BaseClient) CheckNameAvailabilityWithSubscription(ctx context.Context, checkNameAvailabilityInput CheckNameAvailabilityInput) (result CheckNameAvailabilityOutput, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: checkNameAvailabilityInput,
+			Constraints: []validation.Constraint{{Target: "checkNameAvailabilityInput.Name", Name: validation.Null, Rule: true, Chain: nil},
+				{Target: "checkNameAvailabilityInput.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("cdn.BaseClient", "CheckNameAvailabilityWithSubscription", err.Error())
+	}
+
+	req, err := client.CheckNameAvailabilityWithSubscriptionPreparer(ctx, checkNameAvailabilityInput)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "cdn.BaseClient", "CheckNameAvailabilityWithSubscription", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.CheckNameAvailabilityWithSubscriptionSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "cdn.BaseClient", "CheckNameAvailabilityWithSubscription", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.CheckNameAvailabilityWithSubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "cdn.BaseClient", "CheckNameAvailabilityWithSubscription", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// CheckNameAvailabilityWithSubscriptionPreparer prepares the CheckNameAvailabilityWithSubscription request.
+func (client BaseClient) CheckNameAvailabilityWithSubscriptionPreparer(ctx context.Context, checkNameAvailabilityInput CheckNameAvailabilityInput) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-10-12"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Cdn/checkNameAvailability", pathParameters),
+		autorest.WithJSON(checkNameAvailabilityInput),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// CheckNameAvailabilityWithSubscriptionSender sends the CheckNameAvailabilityWithSubscription request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) CheckNameAvailabilityWithSubscriptionSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// CheckNameAvailabilityWithSubscriptionResponder handles the response to the CheckNameAvailabilityWithSubscription request. The method always
+// closes the http.Response Body.
+func (client BaseClient) CheckNameAvailabilityWithSubscriptionResponder(resp *http.Response) (result CheckNameAvailabilityOutput, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // ValidateProbe check if the probe path is a valid path and the file can be accessed. Probe path is the path to a file
 // hosted on the origin server to help accelerate the delivery of dynamic content via the CDN endpoint. This path is
 // relative to the origin path specified in the endpoint configuration.
-//
-// validateProbeInput is input to check.
+// Parameters:
+// validateProbeInput - input to check.
 func (client BaseClient) ValidateProbe(ctx context.Context, validateProbeInput ValidateProbeInput) (result ValidateProbeOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: validateProbeInput,
@@ -170,7 +244,7 @@ func (client BaseClient) ValidateProbePreparer(ctx context.Context, validateProb
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Cdn/validateProbe", pathParameters),

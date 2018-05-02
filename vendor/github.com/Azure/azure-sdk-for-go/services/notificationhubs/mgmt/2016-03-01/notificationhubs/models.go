@@ -38,6 +38,11 @@ const (
 	Send AccessRights = "Send"
 )
 
+// PossibleAccessRightsValues returns an array of possible values for the AccessRights const type.
+func PossibleAccessRightsValues() []AccessRights {
+	return []AccessRights{Listen, Manage, Send}
+}
+
 // NamespaceType enumerates the values for namespace type.
 type NamespaceType string
 
@@ -47,6 +52,11 @@ const (
 	// NotificationHub ...
 	NotificationHub NamespaceType = "NotificationHub"
 )
+
+// PossibleNamespaceTypeValues returns an array of possible values for the NamespaceType const type.
+func PossibleNamespaceTypeValues() []NamespaceType {
+	return []NamespaceType{Messaging, NotificationHub}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -60,10 +70,24 @@ const (
 	Standard SkuName = "Standard"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{Basic, Free, Standard}
+}
+
 // AdmCredential description of a NotificationHub AdmCredential.
 type AdmCredential struct {
 	// AdmCredentialProperties - Properties of NotificationHub AdmCredential.
 	*AdmCredentialProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AdmCredential.
+func (ac AdmCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ac.AdmCredentialProperties != nil {
+		objectMap["properties"] = ac.AdmCredentialProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AdmCredential struct.
@@ -106,6 +130,15 @@ type ApnsCredential struct {
 	*ApnsCredentialProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApnsCredential.
+func (ac ApnsCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ac.ApnsCredentialProperties != nil {
+		objectMap["properties"] = ac.ApnsCredentialProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApnsCredential struct.
 func (ac *ApnsCredential) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -146,6 +179,15 @@ type ApnsCredentialProperties struct {
 type BaiduCredential struct {
 	// BaiduCredentialProperties - Properties of NotificationHub BaiduCredential.
 	*BaiduCredentialProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for BaiduCredential.
+func (bc BaiduCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bc.BaiduCredentialProperties != nil {
+		objectMap["properties"] = bc.BaiduCredentialProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for BaiduCredential struct.
@@ -403,6 +445,15 @@ type GcmCredential struct {
 	*GcmCredentialProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for GcmCredential.
+func (gc GcmCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gc.GcmCredentialProperties != nil {
+		objectMap["properties"] = gc.GcmCredentialProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for GcmCredential struct.
 func (gc *GcmCredential) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -541,6 +592,15 @@ func (page ListResultPage) Values() []ResourceType {
 type MpnsCredential struct {
 	// MpnsCredentialProperties - Properties of NotificationHub MpnsCredential.
 	*MpnsCredentialProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MpnsCredential.
+func (mc MpnsCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mc.MpnsCredentialProperties != nil {
+		objectMap["properties"] = mc.MpnsCredentialProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for MpnsCredential struct.
@@ -1670,6 +1730,15 @@ type SubResource struct {
 type WnsCredential struct {
 	// WnsCredentialProperties - Properties of NotificationHub WnsCredential.
 	*WnsCredentialProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WnsCredential.
+func (wc WnsCredential) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wc.WnsCredentialProperties != nil {
+		objectMap["properties"] = wc.WnsCredentialProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WnsCredential struct.

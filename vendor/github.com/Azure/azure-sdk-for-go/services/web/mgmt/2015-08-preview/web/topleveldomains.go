@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // TopLevelDomainsClient is the webSite Management Client
 type TopLevelDomainsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewTopLevelDomainsClient creates an instance of the TopLevelDomainsClient client.
 func NewTopLevelDomainsClient(subscriptionID string) TopLevelDomainsClient {
 	return NewTopLevelDomainsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewTopLevelDomainsClientWithBaseURI creates an instance of the TopLevelDomainsClient client.
 func NewTopLevelDomainsClientWithBaseURI(baseURI string, subscriptionID string) TopLevelDomainsClient {
 	return TopLevelDomainsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetGetTopLevelDomains sends the get get top level domains request.
 func (client TopLevelDomainsClient) GetGetTopLevelDomains(ctx context.Context) (result TopLevelDomainCollectionPage, err error) {
 	result.fn = client.getGetTopLevelDomainsNextResults
@@ -63,6 +67,7 @@ func (client TopLevelDomainsClient) GetGetTopLevelDomains(ctx context.Context) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetGetTopLevelDomainsPreparer prepares the GetGetTopLevelDomains request.
 func (client TopLevelDomainsClient) GetGetTopLevelDomainsPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -82,6 +87,7 @@ func (client TopLevelDomainsClient) GetGetTopLevelDomainsPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetGetTopLevelDomainsSender sends the GetGetTopLevelDomains request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopLevelDomainsClient) GetGetTopLevelDomainsSender(req *http.Request) (*http.Response, error) {
@@ -89,6 +95,7 @@ func (client TopLevelDomainsClient) GetGetTopLevelDomainsSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetGetTopLevelDomainsResponder handles the response to the GetGetTopLevelDomains request. The method always
 // closes the http.Response Body.
 func (client TopLevelDomainsClient) GetGetTopLevelDomainsResponder(resp *http.Response) (result TopLevelDomainCollection, err error) {
@@ -123,12 +130,14 @@ func (client TopLevelDomainsClient) getGetTopLevelDomainsNextResults(lastResults
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetGetTopLevelDomainsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client TopLevelDomainsClient) GetGetTopLevelDomainsComplete(ctx context.Context) (result TopLevelDomainCollectionIterator, err error) {
 	result.page, err = client.GetGetTopLevelDomains(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetTopLevelDomain sends the get top level domain request.
 //
 // name is name of the top level domain
@@ -154,6 +163,7 @@ func (client TopLevelDomainsClient) GetTopLevelDomain(ctx context.Context, name 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetTopLevelDomainPreparer prepares the GetTopLevelDomain request.
 func (client TopLevelDomainsClient) GetTopLevelDomainPreparer(ctx context.Context, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -174,6 +184,7 @@ func (client TopLevelDomainsClient) GetTopLevelDomainPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetTopLevelDomainSender sends the GetTopLevelDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopLevelDomainsClient) GetTopLevelDomainSender(req *http.Request) (*http.Response, error) {
@@ -181,6 +192,7 @@ func (client TopLevelDomainsClient) GetTopLevelDomainSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetTopLevelDomainResponder handles the response to the GetTopLevelDomain request. The method always
 // closes the http.Response Body.
 func (client TopLevelDomainsClient) GetTopLevelDomainResponder(resp *http.Response) (result TopLevelDomain, err error) {
@@ -194,6 +206,7 @@ func (client TopLevelDomainsClient) GetTopLevelDomainResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListTopLevelDomainAgreements sends the list top level domain agreements request.
 //
 // name is name of the top level domain agreementOption is domain agreement options
@@ -220,6 +233,7 @@ func (client TopLevelDomainsClient) ListTopLevelDomainAgreements(ctx context.Con
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListTopLevelDomainAgreementsPreparer prepares the ListTopLevelDomainAgreements request.
 func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsPreparer(ctx context.Context, name string, agreementOption TopLevelDomainAgreementOption) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -233,7 +247,7 @@ func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsPreparer(ctx con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}/listAgreements", pathParameters),
@@ -242,6 +256,7 @@ func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsPreparer(ctx con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListTopLevelDomainAgreementsSender sends the ListTopLevelDomainAgreements request. The method will close the
 // http.Response Body if it receives an error.
 func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsSender(req *http.Request) (*http.Response, error) {
@@ -249,6 +264,7 @@ func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsSender(req *http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListTopLevelDomainAgreementsResponder handles the response to the ListTopLevelDomainAgreements request. The method always
 // closes the http.Response Body.
 func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsResponder(resp *http.Response) (result TldLegalAgreementCollection, err error) {
@@ -283,6 +299,7 @@ func (client TopLevelDomainsClient) listTopLevelDomainAgreementsNextResults(last
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ListTopLevelDomainAgreementsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client TopLevelDomainsClient) ListTopLevelDomainAgreementsComplete(ctx context.Context, name string, agreementOption TopLevelDomainAgreementOption) (result TldLegalAgreementCollectionIterator, err error) {
 	result.page, err = client.ListTopLevelDomainAgreements(ctx, name, agreementOption)

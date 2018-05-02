@@ -741,7 +741,7 @@
       }
     }
   },
-  "revision": "20180124",
+  "revision": "20180418",
   "rootUrl": "https://firestore.googleapis.com/",
   "schemas": {
     "ArrayValue": {
@@ -956,7 +956,7 @@
           "type": "string"
         },
         "updateTime": {
-          "description": "Output only. The time at which the document was last changed.\n\nThis value is initally set to the `create_time` then increases\nmonotonically with each change to the document. It can also be\ncompared to values from other documents and the `read_time` of a query.",
+          "description": "Output only. The time at which the document was last changed.\n\nThis value is initially set to the `create_time` then increases\nmonotonically with each change to the document. It can also be\ncompared to values from other documents and the `read_time` of a query.",
           "format": "google-datetime",
           "type": "string"
         }
@@ -1801,7 +1801,7 @@
       "properties": {
         "arrayValue": {
           "$ref": "ArrayValue",
-          "description": "An array value.\n\nCannot contain another array value."
+          "description": "An array value.\n\nCannot directly contain another array value, though can contain an\nmap which contains another array."
         },
         "booleanValue": {
           "description": "A boolean value.",
@@ -1962,7 +1962,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Firestore API",
+  "title": "Cloud Firestore API",
   "version": "v1beta1",
   "version_module": true
 }

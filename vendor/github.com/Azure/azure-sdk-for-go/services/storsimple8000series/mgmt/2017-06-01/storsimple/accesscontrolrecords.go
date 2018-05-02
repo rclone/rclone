@@ -41,9 +41,11 @@ func NewAccessControlRecordsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // CreateOrUpdate creates or Updates an access control record.
-//
-// accessControlRecordName is the name of the access control record. parameters is the access control record to be
-// added or updated. resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// accessControlRecordName - the name of the access control record.
+// parameters - the access control record to be added or updated.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AccessControlRecordsClient) CreateOrUpdate(ctx context.Context, accessControlRecordName string, parameters AccessControlRecord, resourceGroupName string, managerName string) (result AccessControlRecordsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -85,7 +87,7 @@ func (client AccessControlRecordsClient) CreateOrUpdatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/accessControlRecords/{accessControlRecordName}", pathParameters),
@@ -123,9 +125,10 @@ func (client AccessControlRecordsClient) CreateOrUpdateResponder(resp *http.Resp
 }
 
 // Delete deletes the access control record.
-//
-// accessControlRecordName is the name of the access control record to delete. resourceGroupName is the resource
-// group name managerName is the manager name
+// Parameters:
+// accessControlRecordName - the name of the access control record to delete.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AccessControlRecordsClient) Delete(ctx context.Context, accessControlRecordName string, resourceGroupName string, managerName string) (result AccessControlRecordsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -199,9 +202,10 @@ func (client AccessControlRecordsClient) DeleteResponder(resp *http.Response) (r
 }
 
 // Get returns the properties of the specified access control record name.
-//
-// accessControlRecordName is name of access control record to be fetched. resourceGroupName is the resource group
-// name managerName is the manager name
+// Parameters:
+// accessControlRecordName - name of access control record to be fetched.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AccessControlRecordsClient) Get(ctx context.Context, accessControlRecordName string, resourceGroupName string, managerName string) (result AccessControlRecord, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -274,8 +278,9 @@ func (client AccessControlRecordsClient) GetResponder(resp *http.Response) (resu
 }
 
 // ListByManager retrieves all the access control records in a manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AccessControlRecordsClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string) (result AccessControlRecordList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,

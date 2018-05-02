@@ -10,6 +10,7 @@
     "DisableAlarmActions": "<p>Disables the actions for the specified alarms. When an alarm's actions are disabled, the alarm actions do not execute when the alarm state changes.</p>",
     "EnableAlarmActions": "<p>Enables the actions for the specified alarms.</p>",
     "GetDashboard": "<p>Displays the details of the dashboard that you specify.</p> <p>To copy an existing dashboard, use <code>GetDashboard</code>, and then use the data returned within <code>DashboardBody</code> as the template for the new dashboard when you call <code>PutDashboard</code> to create the copy.</p>",
+    "GetMetricData": "<p>You can use the <code>GetMetricData</code> API to retrieve as many as 100 different metrics in a single request, with a total of as many as 100,800 datapoints. You can also optionally perform math expressions on the values of the returned statistics, to create new time series that represent new insights into your data. For example, using Lambda metrics, you could divide the Errors metric by the Invocations metric to get an error rate time series. For more information about metric math expressions, see <a href=\"http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html#metric-math-syntax\">Metric Math Syntax and Functions</a> in the <i>Amazon CloudWatch User Guide</i>.</p> <p>Calls to the <code>GetMetricData</code> API have a different pricing structure than calls to <code>GetMetricStatistics</code>. For more information about pricing, see <a href=\"https://aws.amazon.com/cloudwatch/pricing/\">Amazon CloudWatch Pricing</a>.</p>",
     "GetMetricStatistics": "<p>Gets statistics for the specified metric.</p> <p>The maximum number of data points returned from a single call is 1,440. If you request more than 1,440 data points, CloudWatch returns an error. To reduce the number of data points, you can narrow the specified time range and make multiple requests across adjacent time ranges, or you can increase the specified period. Data points are not returned in chronological order.</p> <p>CloudWatch aggregates data points based on the length of the period that you specify. For example, if you request statistics with a one-hour period, CloudWatch aggregates all data points with time stamps that fall within each one-hour period. Therefore, the number of values aggregated by CloudWatch is larger than the number of data points returned.</p> <p>CloudWatch needs raw data points to calculate percentile statistics. If you publish data using a statistic set instead, you can only retrieve percentile statistics for this data if one of the following conditions is true:</p> <ul> <li> <p>The SampleCount value of the statistic set is 1.</p> </li> <li> <p>The Min and the Max values of the statistic set are equal.</p> </li> </ul> <p>Amazon CloudWatch retains metric data as follows:</p> <ul> <li> <p>Data points with a period of less than 60 seconds are available for 3 hours. These data points are high-resolution metrics and are available only for custom metrics that have been defined with a <code>StorageResolution</code> of 1.</p> </li> <li> <p>Data points with a period of 60 seconds (1-minute) are available for 15 days.</p> </li> <li> <p>Data points with a period of 300 seconds (5-minute) are available for 63 days.</p> </li> <li> <p>Data points with a period of 3600 seconds (1 hour) are available for 455 days (15 months).</p> </li> </ul> <p>Data points that are initially published with a shorter period are aggregated together for long-term storage. For example, if you collect data using a period of 1 minute, the data remains available for 15 days with 1-minute resolution. After 15 days, this data is still available, but is aggregated and retrievable only with a resolution of 5 minutes. After 63 days, the data is further aggregated and is available with a resolution of 1 hour.</p> <p>CloudWatch started retaining 5-minute and 1-hour metric data as of July 9, 2016.</p> <p>For information about metrics and dimensions supported by AWS services, see the <a href=\"http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html\">Amazon CloudWatch Metrics and Dimensions Reference</a> in the <i>Amazon CloudWatch User Guide</i>.</p>",
     "ListDashboards": "<p>Returns a list of the dashboards for your account. If you include <code>DashboardNamePrefix</code>, only those dashboards with names starting with the prefix are listed. Otherwise, all dashboards in your account are listed. </p>",
     "ListMetrics": "<p>List the specified metrics. You can use the returned metrics with <a>GetMetricStatistics</a> to obtain statistical data.</p> <p>Up to 500 results are returned for any one call. To retrieve additional results, use the returned token with subsequent calls.</p> <p>After you create a metric, allow up to fifteen minutes before the metric appears. Statistics about the metric, however, are available sooner using <a>GetMetricStatistics</a>.</p>",
@@ -197,6 +198,7 @@
         "Datapoint$Minimum": "<p>The minimum metric value for the data point.</p>",
         "Datapoint$Maximum": "<p>The maximum metric value for the data point.</p>",
         "DatapointValueMap$value": null,
+        "DatapointValues$member": null,
         "MetricDatum$Value": "<p>The value for the metric.</p> <p>Although the parameter accepts numbers of type Double, CloudWatch rejects values that are either too small or too large. Values must be in the range of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360 (Base 2). In addition, special values (for example, NaN, +Infinity, -Infinity) are not supported.</p>",
         "StatisticSet$SampleCount": "<p>The number of samples used for the statistic set.</p>",
         "StatisticSet$Sum": "<p>The sum of values for the sample set.</p>",
@@ -210,6 +212,12 @@
         "Datapoint$ExtendedStatistics": "<p>The percentile statistic for the data point.</p>"
       }
     },
+    "DatapointValues": {
+      "base": null,
+      "refs": {
+        "MetricDataResult$Values": "<p>The data points for the metric corresponding to <code>Timestamps</code>. The number of values always matches the number of time stamps and the time stamp for Values[x] is Timestamps[x].</p>"
+      }
+    },
     "Datapoints": {
       "base": null,
       "refs": {
@@ -220,7 +228,7 @@
       "base": null,
       "refs": {
         "MetricAlarm$DatapointsToAlarm": "<p>The number of datapoints that must be breaching to trigger the alarm.</p>",
-        "PutMetricAlarmInput$DatapointsToAlarm": "<p>The number of datapoints that must be breaching to trigger the alarm.</p>"
+        "PutMetricAlarmInput$DatapointsToAlarm": "<p>The number of datapoints that must be breaching to trigger the alarm. This is used only if you are setting an \"M out of N\" alarm. In that case, this value is the M. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarm-evaluation\">Evaluating an Alarm</a> in the <i>Amazon CloudWatch User Guide</i>.</p>"
       }
     },
     "DeleteAlarmsInput": {
@@ -341,7 +349,7 @@
       "base": null,
       "refs": {
         "MetricAlarm$EvaluationPeriods": "<p>The number of periods over which data is compared to the specified threshold.</p>",
-        "PutMetricAlarmInput$EvaluationPeriods": "<p>The number of periods over which data is compared to the specified threshold. An alarm's total current evaluation period can be no longer than one day, so this number multiplied by <code>Period</code> cannot be more than 86,400 seconds.</p>"
+        "PutMetricAlarmInput$EvaluationPeriods": "<p>The number of periods over which data is compared to the specified threshold. If you are setting an alarm which requires that a number of consecutive data points be breaching to trigger the alarm, this value specifies that number. If you are setting an \"M out of N\" alarm, this value is the N.</p> <p>An alarm's total current evaluation period can be no longer than one day, so this number multiplied by <code>Period</code> cannot be more than 86,400 seconds.</p>"
       }
     },
     "ExtendedStatistic": {
@@ -372,6 +380,22 @@
       }
     },
     "GetDashboardOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetMetricDataInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetMetricDataMaxDatapoints": {
+      "base": null,
+      "refs": {
+        "GetMetricDataInput$MaxDatapoints": "<p>The maximum number of data points the request should return before paginating. If you omit this, the default of 100,800 is used.</p>"
+      }
+    },
+    "GetMetricDataOutput": {
       "base": null,
       "refs": {
       }
@@ -474,9 +498,28 @@
         "DashboardValidationMessage$Message": "<p>A message describing the error or warning.</p>"
       }
     },
+    "MessageData": {
+      "base": "<p>A message returned by the <code>GetMetricData</code>API, including a code and a description.</p>",
+      "refs": {
+        "MetricDataResultMessages$member": null
+      }
+    },
+    "MessageDataCode": {
+      "base": null,
+      "refs": {
+        "MessageData$Code": "<p>The error code or status code associated with the message.</p>"
+      }
+    },
+    "MessageDataValue": {
+      "base": null,
+      "refs": {
+        "MessageData$Value": "<p>The message text.</p>"
+      }
+    },
     "Metric": {
       "base": "<p>Represents a specific metric.</p>",
       "refs": {
+        "MetricStat$Metric": "<p>The metric to return, including the metric name, namespace, and dimensions.</p>",
         "Metrics$member": null
       }
     },
@@ -499,16 +542,61 @@
         "PutMetricDataInput$MetricData": "<p>The data for the metric.</p>"
       }
     },
+    "MetricDataQueries": {
+      "base": null,
+      "refs": {
+        "GetMetricDataInput$MetricDataQueries": "<p>The metric queries to be returned. A single <code>GetMetricData</code> call can include as many as 100 <code>MetricDataQuery</code> structures. Each of these structures can specify either a metric to retrieve, or a math expression to perform on retrieved data. </p>"
+      }
+    },
+    "MetricDataQuery": {
+      "base": "<p>This structure indicates the metric data to return, and whether this call is just retrieving a batch set of data for one metric, or is performing a math expression on metric data. A single <code>GetMetricData</code> call can include up to 100 <code>MetricDataQuery</code> structures.</p>",
+      "refs": {
+        "MetricDataQueries$member": null
+      }
+    },
+    "MetricDataResult": {
+      "base": "<p>A <code>GetMetricData</code> call returns an array of <code>MetricDataResult</code> structures. Each of these structures includes the data points for that metric, along with the time stamps of those data points and other identifying information.</p>",
+      "refs": {
+        "MetricDataResults$member": null
+      }
+    },
+    "MetricDataResultMessages": {
+      "base": null,
+      "refs": {
+        "MetricDataResult$Messages": "<p>A list of messages with additional information about the data returned.</p>"
+      }
+    },
+    "MetricDataResults": {
+      "base": null,
+      "refs": {
+        "GetMetricDataOutput$MetricDataResults": "<p>The metrics that are returned, including the metric name, namespace, and dimensions.</p>"
+      }
+    },
     "MetricDatum": {
       "base": "<p>Encapsulates the information sent to either create a metric or add new values to be aggregated into an existing metric.</p>",
       "refs": {
         "MetricData$member": null
       }
     },
+    "MetricExpression": {
+      "base": null,
+      "refs": {
+        "MetricDataQuery$Expression": "<p>The math expression to be performed on the returned data, if this structure is performing a math expression. For more information about metric math expressions, see <a href=\"http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html#metric-math-syntax\">Metric Math Syntax and Functions</a> in the <i>Amazon CloudWatch User Guide</i>.</p> <p>Within one MetricDataQuery structure, you must specify either <code>Expression</code> or <code>MetricStat</code> but not both.</p>"
+      }
+    },
+    "MetricId": {
+      "base": null,
+      "refs": {
+        "MetricDataQuery$Id": "<p>A short name used to tie this structure to the results in the response. This name must be unique within a single call to <code>GetMetricData</code>. If you are performing math expressions on this set of data, this name represents that data and can serve as a variable in the mathematical expression. The valid characters are letters, numbers, and underscore. The first character must be a lowercase letter.</p>",
+        "MetricDataResult$Id": "<p>The short name you specified to represent this metric.</p>"
+      }
+    },
     "MetricLabel": {
       "base": null,
       "refs": {
-        "GetMetricStatisticsOutput$Label": "<p>A label for the specified metric.</p>"
+        "GetMetricStatisticsOutput$Label": "<p>A label for the specified metric.</p>",
+        "MetricDataQuery$Label": "<p>A human-readable label for this metric or expression. This is especially useful if this is an expression, so that you know what the value represents. If the metric or expression is shown in a CloudWatch dashboard widget, the label is shown. If Label is omitted, CloudWatch generates a default.</p>",
+        "MetricDataResult$Label": "<p>The human-readable label associated with the data.</p>"
       }
     },
     "MetricName": {
@@ -521,6 +609,12 @@
         "MetricAlarm$MetricName": "<p>The name of the metric associated with the alarm.</p>",
         "MetricDatum$MetricName": "<p>The name of the metric.</p>",
         "PutMetricAlarmInput$MetricName": "<p>The name for the metric associated with the alarm.</p>"
+      }
+    },
+    "MetricStat": {
+      "base": "<p>This structure defines the metric to be returned, along with the statistics, period, and units.</p>",
+      "refs": {
+        "MetricDataQuery$MetricStat": "<p>The metric to be returned, along with statistics, period, and units. Use this parameter only if this structure is performing a data retrieval and not performing a math expression on the returned data.</p> <p>Within one MetricDataQuery structure, you must specify either <code>Expression</code> or <code>MetricStat</code> but not both.</p>"
       }
     },
     "Metrics": {
@@ -553,6 +647,8 @@
         "DescribeAlarmHistoryOutput$NextToken": "<p>The token that marks the start of the next batch of returned results.</p>",
         "DescribeAlarmsInput$NextToken": "<p>The token returned by a previous call to indicate that there is more data available.</p>",
         "DescribeAlarmsOutput$NextToken": "<p>The token that marks the start of the next batch of returned results.</p>",
+        "GetMetricDataInput$NextToken": "<p>Include this value, if it was returned by the previous call, to get the next set of data points.</p>",
+        "GetMetricDataOutput$NextToken": "<p>A token that marks the next batch of returned results.</p>",
         "ListDashboardsInput$NextToken": "<p>The token returned by a previous call to indicate that there is more data available.</p>",
         "ListDashboardsOutput$NextToken": "<p>The token that marks the start of the next batch of returned results.</p>",
         "ListMetricsInput$NextToken": "<p>The token returned by a previous call to indicate that there is more data available.</p>",
@@ -565,7 +661,8 @@
         "DescribeAlarmsForMetricInput$Period": "<p>The period, in seconds, over which the statistic is applied.</p>",
         "GetMetricStatisticsInput$Period": "<p>The granularity, in seconds, of the returned data points. For metrics with regular resolution, a period can be as short as one minute (60 seconds) and must be a multiple of 60. For high-resolution metrics that are collected at intervals of less than one minute, the period can be 1, 5, 10, 30, 60, or any multiple of 60. High-resolution metrics are those metrics stored by a <code>PutMetricData</code> call that includes a <code>StorageResolution</code> of 1 second.</p> <p>If the <code>StartTime</code> parameter specifies a time stamp that is greater than 3 hours ago, you must specify the period as follows or no data points in that time range is returned:</p> <ul> <li> <p>Start time between 3 hours and 15 days ago - Use a multiple of 60 seconds (1 minute).</p> </li> <li> <p>Start time between 15 and 63 days ago - Use a multiple of 300 seconds (5 minutes).</p> </li> <li> <p>Start time greater than 63 days ago - Use a multiple of 3600 seconds (1 hour).</p> </li> </ul>",
         "MetricAlarm$Period": "<p>The period, in seconds, over which the statistic is applied.</p>",
-        "PutMetricAlarmInput$Period": "<p>The period, in seconds, over which the specified statistic is applied. Valid values are 10, 30, and any multiple of 60.</p> <p>Be sure to specify 10 or 30 only for metrics that are stored by a <code>PutMetricData</code> call with a <code>StorageResolution</code> of 1. If you specify a Period of 10 or 30 for a metric that does not have sub-minute resolution, the alarm still attempts to gather data at the period rate that you specify. In this case, it does not receive data for the attempts that do not correspond to a one-minute data resolution, and the alarm may often lapse into INSUFFICENT_DATA status. Specifying 10 or 30 also sets this alarm as a high-resolution alarm, which has a higher charge than other alarms. For more information about pricing, see <a href=\"https://aws.amazon.com/cloudwatch/pricing/\">Amazon CloudWatch Pricing</a>.</p> <p>An alarm's total current evaluation period can be no longer than one day, so <code>Period</code> multiplied by <code>EvaluationPeriods</code> cannot be more than 86,400 seconds.</p>"
+        "MetricStat$Period": "<p>The period to use when retrieving the metric.</p>",
+        "PutMetricAlarmInput$Period": "<p>The period, in seconds, over which the specified statistic is applied. Valid values are 10, 30, and any multiple of 60.</p> <p>Be sure to specify 10 or 30 only for metrics that are stored by a <code>PutMetricData</code> call with a <code>StorageResolution</code> of 1. If you specify a period of 10 or 30 for a metric that does not have sub-minute resolution, the alarm still attempts to gather data at the period rate that you specify. In this case, it does not receive data for the attempts that do not correspond to a one-minute data resolution, and the alarm may often lapse into INSUFFICENT_DATA status. Specifying 10 or 30 also sets this alarm as a high-resolution alarm, which has a higher charge than other alarms. For more information about pricing, see <a href=\"https://aws.amazon.com/cloudwatch/pricing/\">Amazon CloudWatch Pricing</a>.</p> <p>An alarm's total current evaluation period can be no longer than one day, so <code>Period</code> multiplied by <code>EvaluationPeriods</code> cannot be more than 86,400 seconds.</p>"
       }
     },
     "PutDashboardInput": {
@@ -610,6 +707,18 @@
       "refs": {
       }
     },
+    "ReturnData": {
+      "base": null,
+      "refs": {
+        "MetricDataQuery$ReturnData": "<p>Indicates whether to return the time stamps and raw data values of this metric. If you are performing this call just to do math expressions and do not also need the raw data returned, you can specify <code>False</code>. If you omit this, the default of <code>True</code> is used.</p>"
+      }
+    },
+    "ScanBy": {
+      "base": null,
+      "refs": {
+        "GetMetricDataInput$ScanBy": "<p>The order in which data points should be returned. <code>TimestampDescending</code> returns the newest data first and paginates when the <code>MaxDatapoints</code> limit is reached. <code>TimestampAscending</code> returns the oldest data first and paginates when the <code>MaxDatapoints</code> limit is reached.</p>"
+      }
+    },
     "SetAlarmStateInput": {
       "base": null,
       "refs": {
@@ -626,10 +735,17 @@
       "refs": {
         "Datapoint$Unit": "<p>The standard unit for the data point.</p>",
         "DescribeAlarmsForMetricInput$Unit": "<p>The unit for the metric.</p>",
-        "GetMetricStatisticsInput$Unit": "<p>The unit for a given metric. Metrics may be reported in multiple units. Not supplying a unit results in all units being returned. If the metric only ever reports one unit, specifying a unit has no effect.</p>",
+        "GetMetricStatisticsInput$Unit": "<p>The unit for a given metric. Metrics may be reported in multiple units. Not supplying a unit results in all units being returned. If you specify only a unit that the metric does not report, the results of the call are null.</p>",
         "MetricAlarm$Unit": "<p>The unit of the metric associated with the alarm.</p>",
         "MetricDatum$Unit": "<p>The unit of the metric.</p>",
+        "MetricStat$Unit": "<p>The unit to use for the returned data points.</p>",
         "PutMetricAlarmInput$Unit": "<p>The unit of measure for the statistic. For example, the units for the Amazon EC2 NetworkIn metric are Bytes because NetworkIn tracks the number of bytes that an instance receives on all network interfaces. You can also specify a unit when you create a custom metric. Units help provide conceptual meaning to your data. Metric data points that specify a unit of measure, such as Percent, are aggregated separately.</p> <p>If you specify a unit, you must use a unit that is appropriate for the metric. Otherwise, the CloudWatch alarm can get stuck in the <code>INSUFFICIENT DATA</code> state. </p>"
+      }
+    },
+    "Stat": {
+      "base": null,
+      "refs": {
+        "MetricStat$Stat": "<p>The statistic to return. It can include any CloudWatch statistic or extended statistic.</p>"
       }
     },
     "StateReason": {
@@ -675,6 +791,12 @@
         "GetMetricStatisticsInput$Statistics": "<p>The metric statistics, other than percentile. For percentile statistics, use <code>ExtendedStatistics</code>. When calling <code>GetMetricStatistics</code>, you must specify either <code>Statistics</code> or <code>ExtendedStatistics</code>, but not both.</p>"
       }
     },
+    "StatusCode": {
+      "base": null,
+      "refs": {
+        "MetricDataResult$StatusCode": "<p>The status of the returned data. <code>Complete</code> indicates that all data points in the requested time range were returned. <code>PartialData</code> means that an incomplete set of data points were returned. You can use the <code>NextToken</code> value that was returned and repeat your request to get more data points. <code>NextToken</code> is not returned if you are performing a math expression. <code>InternalError</code> indicates that an error occurred. Retry your request using <code>NextToken</code>, if present.</p>"
+      }
+    },
     "StorageResolution": {
       "base": null,
       "refs": {
@@ -695,11 +817,20 @@
         "Datapoint$Timestamp": "<p>The time stamp used for the data point.</p>",
         "DescribeAlarmHistoryInput$StartDate": "<p>The starting date to retrieve alarm history.</p>",
         "DescribeAlarmHistoryInput$EndDate": "<p>The ending date to retrieve alarm history.</p>",
+        "GetMetricDataInput$StartTime": "<p>The time stamp indicating the earliest data to be returned.</p>",
+        "GetMetricDataInput$EndTime": "<p>The time stamp indicating the latest data to be returned.</p>",
         "GetMetricStatisticsInput$StartTime": "<p>The time stamp that determines the first data point to return. Start times are evaluated relative to the time that CloudWatch receives the request.</p> <p>The value specified is inclusive; results include data points with the specified time stamp. The time stamp must be in ISO 8601 UTC format (for example, 2016-10-03T23:00:00Z).</p> <p>CloudWatch rounds the specified time stamp as follows:</p> <ul> <li> <p>Start time less than 15 days ago - Round down to the nearest whole minute. For example, 12:32:34 is rounded down to 12:32:00.</p> </li> <li> <p>Start time between 15 and 63 days ago - Round down to the nearest 5-minute clock interval. For example, 12:32:34 is rounded down to 12:30:00.</p> </li> <li> <p>Start time greater than 63 days ago - Round down to the nearest 1-hour clock interval. For example, 12:32:34 is rounded down to 12:00:00.</p> </li> </ul> <p>If you set <code>Period</code> to 5, 10, or 30, the start time of your request is rounded down to the nearest time that corresponds to even 5-, 10-, or 30-second divisions of a minute. For example, if you make a query at (HH:mm:ss) 01:05:23 for the previous 10-second period, the start time of your request is rounded down and you receive data from 01:05:10 to 01:05:20. If you make a query at 15:07:17 for the previous 5 minutes of data, using a period of 5 seconds, you receive data timestamped between 15:02:15 and 15:07:15. </p>",
         "GetMetricStatisticsInput$EndTime": "<p>The time stamp that determines the last data point to return.</p> <p>The value specified is exclusive; results include data points up to the specified time stamp. The time stamp must be in ISO 8601 UTC format (for example, 2016-10-10T23:00:00Z).</p>",
         "MetricAlarm$AlarmConfigurationUpdatedTimestamp": "<p>The time stamp of the last update to the alarm configuration.</p>",
         "MetricAlarm$StateUpdatedTimestamp": "<p>The time stamp of the last update to the alarm state.</p>",
-        "MetricDatum$Timestamp": "<p>The time the metric data was received, expressed as the number of milliseconds since Jan 1, 1970 00:00:00 UTC.</p>"
+        "MetricDatum$Timestamp": "<p>The time the metric data was received, expressed as the number of milliseconds since Jan 1, 1970 00:00:00 UTC.</p>",
+        "Timestamps$member": null
+      }
+    },
+    "Timestamps": {
+      "base": null,
+      "refs": {
+        "MetricDataResult$Timestamps": "<p>The time stamps for the data points, formatted in Unix timestamp format. The number of time stamps always matches the number of values and the value for Timestamps[x] is Values[x].</p>"
       }
     },
     "TreatMissingData": {

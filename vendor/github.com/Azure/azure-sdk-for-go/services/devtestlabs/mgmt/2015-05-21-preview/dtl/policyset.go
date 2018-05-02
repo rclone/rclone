@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PolicySetClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type PolicySetClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewPolicySetClient creates an instance of the PolicySetClient client.
 func NewPolicySetClient(subscriptionID string) PolicySetClient {
 	return NewPolicySetClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewPolicySetClientWithBaseURI creates an instance of the PolicySetClient client.
 func NewPolicySetClientWithBaseURI(baseURI string, subscriptionID string) PolicySetClient {
 	return PolicySetClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePolicies evaluates Lab Policy.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -65,6 +69,7 @@ func (client PolicySetClient) EvaluatePolicies(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesPreparer prepares the EvaluatePolicies request.
 func (client PolicySetClient) EvaluatePoliciesPreparer(ctx context.Context, resourceGroupName string, labName string, name string, evaluatePoliciesRequest EvaluatePoliciesRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -80,7 +85,7 @@ func (client PolicySetClient) EvaluatePoliciesPreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/policysets/{name}/evaluatePolicies", pathParameters),
@@ -89,6 +94,7 @@ func (client PolicySetClient) EvaluatePoliciesPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesSender sends the EvaluatePolicies request. The method will close the
 // http.Response Body if it receives an error.
 func (client PolicySetClient) EvaluatePoliciesSender(req *http.Request) (*http.Response, error) {
@@ -96,6 +102,7 @@ func (client PolicySetClient) EvaluatePoliciesSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // EvaluatePoliciesResponder handles the response to the EvaluatePolicies request. The method always
 // closes the http.Response Body.
 func (client PolicySetClient) EvaluatePoliciesResponder(resp *http.Response) (result EvaluatePoliciesResponse, err error) {

@@ -22,14 +22,13 @@ package eventgrid
 import original "github.com/Azure/azure-sdk-for-go/services/eventgrid/2018-01-01/eventgrid"
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithoutDefaults() BaseClient {
-	return original.NewWithoutDefaults()
-}
-
+type ContainerRegistryEventActor = original.ContainerRegistryEventActor
+type ContainerRegistryEventData = original.ContainerRegistryEventData
+type ContainerRegistryEventRequest = original.ContainerRegistryEventRequest
+type ContainerRegistryEventSource = original.ContainerRegistryEventSource
+type ContainerRegistryEventTarget = original.ContainerRegistryEventTarget
+type ContainerRegistryImageDeletedEventData = original.ContainerRegistryImageDeletedEventData
+type ContainerRegistryImagePushedEventData = original.ContainerRegistryImagePushedEventData
 type DeviceLifeCycleEventProperties = original.DeviceLifeCycleEventProperties
 type DeviceTwinInfo = original.DeviceTwinInfo
 type DeviceTwinInfoProperties = original.DeviceTwinInfoProperties
@@ -49,6 +48,12 @@ type ResourceWriteSuccessData = original.ResourceWriteSuccessData
 type StorageBlobCreatedEventData = original.StorageBlobCreatedEventData
 type StorageBlobDeletedEventData = original.StorageBlobDeletedEventData
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithoutDefaults() BaseClient {
+	return original.NewWithoutDefaults()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"
 }

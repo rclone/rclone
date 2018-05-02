@@ -17,7 +17,7 @@ const opAbortEnvironmentUpdate = "AbortEnvironmentUpdate"
 
 // AbortEnvironmentUpdateRequest generates a "aws/request.Request" representing the
 // client's request for the AbortEnvironmentUpdate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -71,7 +71,7 @@ func (c *ElasticBeanstalk) AbortEnvironmentUpdateRequest(input *AbortEnvironment
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/AbortEnvironmentUpdate
@@ -100,7 +100,7 @@ const opApplyEnvironmentManagedAction = "ApplyEnvironmentManagedAction"
 
 // ApplyEnvironmentManagedActionRequest generates a "aws/request.Request" representing the
 // client's request for the ApplyEnvironmentManagedAction operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -184,7 +184,7 @@ const opCheckDNSAvailability = "CheckDNSAvailability"
 
 // CheckDNSAvailabilityRequest generates a "aws/request.Request" representing the
 // client's request for the CheckDNSAvailability operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -258,7 +258,7 @@ const opComposeEnvironments = "ComposeEnvironments"
 
 // ComposeEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the ComposeEnvironments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -318,7 +318,7 @@ func (c *ElasticBeanstalk) ComposeEnvironmentsRequest(input *ComposeEnvironments
 //   The specified account has reached its limit of environments.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ComposeEnvironments
@@ -347,7 +347,7 @@ const opCreateApplication = "CreateApplication"
 
 // CreateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -427,7 +427,7 @@ const opCreateApplicationVersion = "CreateApplicationVersion"
 
 // CreateApplicationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApplicationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -500,7 +500,7 @@ func (c *ElasticBeanstalk) CreateApplicationVersionRequest(input *CreateApplicat
 //   The specified account has reached its limit of application versions.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeS3LocationNotInServiceRegionException "S3LocationNotInServiceRegionException"
@@ -542,7 +542,7 @@ const opCreateConfigurationTemplate = "CreateConfigurationTemplate"
 
 // CreateConfigurationTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the CreateConfigurationTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -603,7 +603,7 @@ func (c *ElasticBeanstalk) CreateConfigurationTemplateRequest(input *CreateConfi
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeTooManyBucketsException "TooManyBucketsException"
@@ -638,7 +638,7 @@ const opCreateEnvironment = "CreateEnvironment"
 
 // CreateEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -693,7 +693,7 @@ func (c *ElasticBeanstalk) CreateEnvironmentRequest(input *CreateEnvironmentInpu
 //   The specified account has reached its limit of environments.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateEnvironment
@@ -722,7 +722,7 @@ const opCreatePlatformVersion = "CreatePlatformVersion"
 
 // CreatePlatformVersionRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePlatformVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -773,7 +773,7 @@ func (c *ElasticBeanstalk) CreatePlatformVersionRequest(input *CreatePlatformVer
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeServiceException "ServiceException"
@@ -809,7 +809,7 @@ const opCreateStorageLocation = "CreateStorageLocation"
 
 // CreateStorageLocationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateStorageLocation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -870,7 +870,7 @@ func (c *ElasticBeanstalk) CreateStorageLocationRequest(input *CreateStorageLoca
 //   The specified account does not have a subscription to Amazon S3.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateStorageLocation
@@ -899,7 +899,7 @@ const opDeleteApplication = "DeleteApplication"
 
 // DeleteApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -985,7 +985,7 @@ const opDeleteApplicationVersion = "DeleteApplicationVersion"
 
 // DeleteApplicationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplicationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1045,7 +1045,7 @@ func (c *ElasticBeanstalk) DeleteApplicationVersionRequest(input *DeleteApplicat
 //   version. The application version was deleted successfully.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeOperationInProgressException "OperationInProgressFailure"
@@ -1088,7 +1088,7 @@ const opDeleteConfigurationTemplate = "DeleteConfigurationTemplate"
 
 // DeleteConfigurationTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteConfigurationTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1174,7 +1174,7 @@ const opDeleteEnvironmentConfiguration = "DeleteEnvironmentConfiguration"
 
 // DeleteEnvironmentConfigurationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEnvironmentConfiguration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1257,7 +1257,7 @@ const opDeletePlatformVersion = "DeletePlatformVersion"
 
 // DeletePlatformVersionRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePlatformVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1312,7 +1312,7 @@ func (c *ElasticBeanstalk) DeletePlatformVersionRequest(input *DeletePlatformVer
 //   effects an element in this activity is already in progress.
 //
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeServiceException "ServiceException"
@@ -1348,7 +1348,7 @@ const opDescribeAccountAttributes = "DescribeAccountAttributes"
 
 // DescribeAccountAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAccountAttributes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1388,6 +1388,11 @@ func (c *ElasticBeanstalk) DescribeAccountAttributesRequest(input *DescribeAccou
 
 // DescribeAccountAttributes API operation for AWS Elastic Beanstalk.
 //
+// Returns attributes related to AWS Elastic Beanstalk that are associated with
+// the calling AWS account.
+//
+// The result currently has one set of attributes—resource quotas.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1397,7 +1402,7 @@ func (c *ElasticBeanstalk) DescribeAccountAttributesRequest(input *DescribeAccou
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeAccountAttributes
@@ -1426,7 +1431,7 @@ const opDescribeApplicationVersions = "DescribeApplicationVersions"
 
 // DescribeApplicationVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeApplicationVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1500,7 +1505,7 @@ const opDescribeApplications = "DescribeApplications"
 
 // DescribeApplicationsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeApplications operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1574,7 +1579,7 @@ const opDescribeConfigurationOptions = "DescribeConfigurationOptions"
 
 // DescribeConfigurationOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigurationOptions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1657,7 +1662,7 @@ const opDescribeConfigurationSettings = "DescribeConfigurationSettings"
 
 // DescribeConfigurationSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigurationSettings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1748,7 +1753,7 @@ const opDescribeEnvironmentHealth = "DescribeEnvironmentHealth"
 
 // DescribeEnvironmentHealthRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentHealth operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1833,7 +1838,7 @@ const opDescribeEnvironmentManagedActionHistory = "DescribeEnvironmentManagedAct
 
 // DescribeEnvironmentManagedActionHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentManagedActionHistory operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1912,7 +1917,7 @@ const opDescribeEnvironmentManagedActions = "DescribeEnvironmentManagedActions"
 
 // DescribeEnvironmentManagedActionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentManagedActions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1991,7 +1996,7 @@ const opDescribeEnvironmentResources = "DescribeEnvironmentResources"
 
 // DescribeEnvironmentResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironmentResources operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2042,7 +2047,7 @@ func (c *ElasticBeanstalk) DescribeEnvironmentResourcesRequest(input *DescribeEn
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentResources
@@ -2071,7 +2076,7 @@ const opDescribeEnvironments = "DescribeEnvironments"
 
 // DescribeEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEnvironments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2145,7 +2150,7 @@ const opDescribeEvents = "DescribeEvents"
 
 // DescribeEventsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeEvents operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2277,7 +2282,7 @@ const opDescribeInstancesHealth = "DescribeInstancesHealth"
 
 // DescribeInstancesHealthRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeInstancesHealth operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2361,7 +2366,7 @@ const opDescribePlatformVersion = "DescribePlatformVersion"
 
 // DescribePlatformVersionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePlatformVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2412,7 +2417,7 @@ func (c *ElasticBeanstalk) DescribePlatformVersionRequest(input *DescribePlatfor
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeServiceException "ServiceException"
@@ -2444,7 +2449,7 @@ const opListAvailableSolutionStacks = "ListAvailableSolutionStacks"
 
 // ListAvailableSolutionStacksRequest generates a "aws/request.Request" representing the
 // client's request for the ListAvailableSolutionStacks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2519,7 +2524,7 @@ const opListPlatformVersions = "ListPlatformVersions"
 
 // ListPlatformVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListPlatformVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2570,7 +2575,7 @@ func (c *ElasticBeanstalk) ListPlatformVersionsRequest(input *ListPlatformVersio
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeServiceException "ServiceException"
@@ -2602,7 +2607,7 @@ const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2658,7 +2663,7 @@ func (c *ElasticBeanstalk) ListTagsForResourceRequest(input *ListTagsForResource
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
@@ -2694,7 +2699,7 @@ const opRebuildEnvironment = "RebuildEnvironment"
 
 // RebuildEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the RebuildEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2748,7 +2753,7 @@ func (c *ElasticBeanstalk) RebuildEnvironmentRequest(input *RebuildEnvironmentIn
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RebuildEnvironment
@@ -2777,7 +2782,7 @@ const opRequestEnvironmentInfo = "RequestEnvironmentInfo"
 
 // RequestEnvironmentInfoRequest generates a "aws/request.Request" representing the
 // client's request for the RequestEnvironmentInfo operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2867,7 +2872,7 @@ const opRestartAppServer = "RestartAppServer"
 
 // RestartAppServerRequest generates a "aws/request.Request" representing the
 // client's request for the RestartAppServer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2944,7 +2949,7 @@ const opRetrieveEnvironmentInfo = "RetrieveEnvironmentInfo"
 
 // RetrieveEnvironmentInfoRequest generates a "aws/request.Request" representing the
 // client's request for the RetrieveEnvironmentInfo operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3022,7 +3027,7 @@ const opSwapEnvironmentCNAMEs = "SwapEnvironmentCNAMEs"
 
 // SwapEnvironmentCNAMEsRequest generates a "aws/request.Request" representing the
 // client's request for the SwapEnvironmentCNAMEs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3098,7 +3103,7 @@ const opTerminateEnvironment = "TerminateEnvironment"
 
 // TerminateEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the TerminateEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3149,7 +3154,7 @@ func (c *ElasticBeanstalk) TerminateEnvironmentRequest(input *TerminateEnvironme
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/TerminateEnvironment
@@ -3178,7 +3183,7 @@ const opUpdateApplication = "UpdateApplication"
 
 // UpdateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplication operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3255,7 +3260,7 @@ const opUpdateApplicationResourceLifecycle = "UpdateApplicationResourceLifecycle
 
 // UpdateApplicationResourceLifecycleRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplicationResourceLifecycle operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3306,7 +3311,7 @@ func (c *ElasticBeanstalk) UpdateApplicationResourceLifecycleRequest(input *Upda
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateApplicationResourceLifecycle
@@ -3335,7 +3340,7 @@ const opUpdateApplicationVersion = "UpdateApplicationVersion"
 
 // UpdateApplicationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplicationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3412,7 +3417,7 @@ const opUpdateConfigurationTemplate = "UpdateConfigurationTemplate"
 
 // UpdateConfigurationTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateConfigurationTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3471,7 +3476,7 @@ func (c *ElasticBeanstalk) UpdateConfigurationTemplateRequest(input *UpdateConfi
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeTooManyBucketsException "TooManyBucketsException"
@@ -3503,7 +3508,7 @@ const opUpdateEnvironment = "UpdateEnvironment"
 
 // UpdateEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEnvironment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3564,7 +3569,7 @@ func (c *ElasticBeanstalk) UpdateEnvironmentRequest(input *UpdateEnvironmentInpu
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeTooManyBucketsException "TooManyBucketsException"
@@ -3596,7 +3601,7 @@ const opUpdateTagsForResource = "UpdateTagsForResource"
 
 // UpdateTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTagsForResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3667,7 +3672,7 @@ func (c *ElasticBeanstalk) UpdateTagsForResourceRequest(input *UpdateTagsForReso
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeOperationInProgressException "OperationInProgressFailure"
@@ -3714,7 +3719,7 @@ const opValidateConfigurationSettings = "ValidateConfigurationSettings"
 
 // ValidateConfigurationSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the ValidateConfigurationSettings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3769,7 +3774,7 @@ func (c *ElasticBeanstalk) ValidateConfigurationSettingsRequest(input *ValidateC
 //
 // Returned Error Codes:
 //   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
-//   The specified account does not have sufficient privileges for one of more
+//   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
 //   * ErrCodeTooManyBucketsException "TooManyBucketsException"
@@ -3862,6 +3867,9 @@ func (s AbortEnvironmentUpdateOutput) GoString() string {
 type ApplicationDescription struct {
 	_ struct{} `type:"structure"`
 
+	// The Amazon Resource Name (ARN) of the application.
+	ApplicationArn *string `type:"string"`
+
 	// The name of the application.
 	ApplicationName *string `min:"1" type:"string"`
 
@@ -3892,6 +3900,12 @@ func (s ApplicationDescription) String() string {
 // GoString returns the string representation
 func (s ApplicationDescription) GoString() string {
 	return s.String()
+}
+
+// SetApplicationArn sets the ApplicationArn field's value.
+func (s *ApplicationDescription) SetApplicationArn(v string) *ApplicationDescription {
+	s.ApplicationArn = &v
+	return s
 }
 
 // SetApplicationName sets the ApplicationName field's value.
@@ -4075,6 +4089,9 @@ type ApplicationVersionDescription struct {
 	// The name of the application to which the application version belongs.
 	ApplicationName *string `min:"1" type:"string"`
 
+	// The Amazon Resource Name (ARN) of the application version.
+	ApplicationVersionArn *string `type:"string"`
+
 	// Reference to the artifact from the AWS CodeBuild build.
 	BuildArn *string `type:"string"`
 
@@ -4115,6 +4132,12 @@ func (s ApplicationVersionDescription) GoString() string {
 // SetApplicationName sets the ApplicationName field's value.
 func (s *ApplicationVersionDescription) SetApplicationName(v string) *ApplicationVersionDescription {
 	s.ApplicationName = &v
+	return s
+}
+
+// SetApplicationVersionArn sets the ApplicationVersionArn field's value.
+func (s *ApplicationVersionDescription) SetApplicationVersionArn(v string) *ApplicationVersionDescription {
+	s.ApplicationVersionArn = &v
 	return s
 }
 
@@ -6287,6 +6310,7 @@ func (s DescribeAccountAttributesInput) GoString() string {
 type DescribeAccountAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
+	// The Elastic Beanstalk resource quotas associated with the calling AWS account.
 	ResourceQuotas *ResourceQuotas `type:"structure"`
 }
 
@@ -7606,7 +7630,7 @@ type EnvironmentDescription struct {
 	EndpointURL *string `type:"string"`
 
 	// The environment's Amazon Resource Name (ARN), which can be used in other
-	// API reuqests that require an ARN.
+	// API requests that require an ARN.
 	EnvironmentArn *string `type:"string"`
 
 	// The ID of this environment.
@@ -9641,9 +9665,13 @@ func (s RequestEnvironmentInfoOutput) GoString() string {
 	return s.String()
 }
 
+// The AWS Elastic Beanstalk quota information for a single resource type in
+// an AWS account. It reflects the resource's limits for this account.
 type ResourceQuota struct {
 	_ struct{} `type:"structure"`
 
+	// The maximum number of instances of this Elastic Beanstalk resource type that
+	// an AWS account can use.
 	Maximum *int64 `type:"integer"`
 }
 
@@ -9663,17 +9691,24 @@ func (s *ResourceQuota) SetMaximum(v int64) *ResourceQuota {
 	return s
 }
 
+// A set of per-resource AWS Elastic Beanstalk quotas associated with an AWS
+// account. They reflect Elastic Beanstalk resource limits for this account.
 type ResourceQuotas struct {
 	_ struct{} `type:"structure"`
 
+	// The quota for applications in the AWS account.
 	ApplicationQuota *ResourceQuota `type:"structure"`
 
+	// The quota for application versions in the AWS account.
 	ApplicationVersionQuota *ResourceQuota `type:"structure"`
 
+	// The quota for configuration templates in the AWS account.
 	ConfigurationTemplateQuota *ResourceQuota `type:"structure"`
 
+	// The quota for custom platforms in the AWS account.
 	CustomPlatformQuota *ResourceQuota `type:"structure"`
 
+	// The quota for environments in the AWS account.
 	EnvironmentQuota *ResourceQuota `type:"structure"`
 }
 

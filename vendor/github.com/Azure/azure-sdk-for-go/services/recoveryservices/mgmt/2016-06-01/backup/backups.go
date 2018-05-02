@@ -41,11 +41,13 @@ func NewBackupsClientWithBaseURI(baseURI string, subscriptionID string) BackupsC
 
 // Trigger triggers the backup job for the specified backup item. This is an asynchronous operation. To know the status
 // of the operation, call GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. fabricName is the fabric name associated with the backup item.
-// containerName is the container name associated with the backup item. protectedItemName is the name of backup
-// item used in this POST operation. resourceBackupRequest is the resource backup request.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// fabricName - the fabric name associated with the backup item.
+// containerName - the container name associated with the backup item.
+// protectedItemName - the name of backup item used in this POST operation.
+// resourceBackupRequest - the resource backup request.
 func (client BackupsClient) Trigger(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, resourceBackupRequest RequestResource) (result autorest.Response, err error) {
 	req, err := client.TriggerPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, resourceBackupRequest)
 	if err != nil {
@@ -85,7 +87,7 @@ func (client BackupsClient) TriggerPreparer(ctx context.Context, vaultName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/backup", pathParameters),

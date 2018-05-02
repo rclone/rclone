@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ManagementAssociationsClient is the operations Management Client
 type ManagementAssociationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // NewManagementAssociationsClient creates an instance of the ManagementAssociationsClient client.
 func NewManagementAssociationsClient(subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
 	return NewManagementAssociationsClientWithBaseURI(DefaultBaseURI, subscriptionID, providerName, resourceType, resourceName)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // NewManagementAssociationsClientWithBaseURI creates an instance of the ManagementAssociationsClient client.
 func NewManagementAssociationsClientWithBaseURI(baseURI string, subscriptionID string, providerName string, resourceType string, resourceName string) ManagementAssociationsClient {
 	return ManagementAssociationsClient{NewWithBaseURI(baseURI, subscriptionID, providerName, resourceType, resourceName)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CreateOrUpdate creates or updates the ManagementAssociation.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive.
@@ -78,6 +82,7 @@ func (client ManagementAssociationsClient) CreateOrUpdate(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ManagementAssociationsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, managementAssociationName string, parameters ManagementAssociation) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -95,7 +100,7 @@ func (client ManagementAssociationsClient) CreateOrUpdatePreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{providerName}/{resourceType}/{resourceName}/providers/Microsoft.OperationsManagement/ManagementAssociations/{managementAssociationName}", pathParameters),
@@ -104,6 +109,7 @@ func (client ManagementAssociationsClient) CreateOrUpdatePreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementAssociationsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -111,6 +117,7 @@ func (client ManagementAssociationsClient) CreateOrUpdateSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ManagementAssociationsClient) CreateOrUpdateResponder(resp *http.Response) (result ManagementAssociation, err error) {
@@ -124,6 +131,7 @@ func (client ManagementAssociationsClient) CreateOrUpdateResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // Delete deletes the ManagementAssociation in the subscription.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive.
@@ -158,6 +166,7 @@ func (client ManagementAssociationsClient) Delete(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // DeletePreparer prepares the Delete request.
 func (client ManagementAssociationsClient) DeletePreparer(ctx context.Context, resourceGroupName string, managementAssociationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -182,6 +191,7 @@ func (client ManagementAssociationsClient) DeletePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementAssociationsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -189,6 +199,7 @@ func (client ManagementAssociationsClient) DeleteSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ManagementAssociationsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -201,6 +212,7 @@ func (client ManagementAssociationsClient) DeleteResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // Get retrieves the user ManagementAssociation.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive.
@@ -235,6 +247,7 @@ func (client ManagementAssociationsClient) Get(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // GetPreparer prepares the Get request.
 func (client ManagementAssociationsClient) GetPreparer(ctx context.Context, resourceGroupName string, managementAssociationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -259,6 +272,7 @@ func (client ManagementAssociationsClient) GetPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementAssociationsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -266,6 +280,7 @@ func (client ManagementAssociationsClient) GetSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ManagementAssociationsClient) GetResponder(resp *http.Response) (result ManagementAssociation, err error) {
@@ -279,6 +294,7 @@ func (client ManagementAssociationsClient) GetResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ListBySubscription retrieves the ManagementAssociatons list.
 func (client ManagementAssociationsClient) ListBySubscription(ctx context.Context) (result ManagementAssociationPropertiesList, err error) {
 	req, err := client.ListBySubscriptionPreparer(ctx)
@@ -302,6 +318,7 @@ func (client ManagementAssociationsClient) ListBySubscription(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client ManagementAssociationsClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -321,6 +338,7 @@ func (client ManagementAssociationsClient) ListBySubscriptionPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementAssociationsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -328,6 +346,7 @@ func (client ManagementAssociationsClient) ListBySubscriptionSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client ManagementAssociationsClient) ListBySubscriptionResponder(resp *http.Response) (result ManagementAssociationPropertiesList, err error) {

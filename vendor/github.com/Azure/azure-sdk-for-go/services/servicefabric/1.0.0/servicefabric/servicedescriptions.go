@@ -40,8 +40,8 @@ func NewServiceDescriptionsClientWithBaseURI(baseURI string, timeout *int32) Ser
 }
 
 // Get get service descriptions
-//
-// serviceName is the name of the service
+// Parameters:
+// serviceName - the name of the service
 func (client ServiceDescriptionsClient) Get(ctx context.Context, serviceName string) (result ServiceDescriptionModel, err error) {
 	req, err := client.GetPreparer(ctx, serviceName)
 	if err != nil {

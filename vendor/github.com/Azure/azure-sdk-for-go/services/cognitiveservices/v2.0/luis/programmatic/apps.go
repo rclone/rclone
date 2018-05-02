@@ -37,10 +37,10 @@ func NewAppsClient(azureRegion AzureRegions) AppsClient {
 }
 
 // Add creates a new LUIS app.
-//
-// applicationCreateObject is a model containing Name, Description (optional), Culture, Usage Scenario (optional),
-// Domain (optional) and initial version ID (optional) of the application. Default value for the version ID is 0.1.
-// Note: the culture cannot be changed after the app is created.
+// Parameters:
+// applicationCreateObject - a model containing Name, Description (optional), Culture, Usage Scenario
+// (optional), Domain (optional) and initial version ID (optional) of the application. Default value for the
+// version ID is 0.1. Note: the culture cannot be changed after the app is created.
 func (client AppsClient) Add(ctx context.Context, applicationCreateObject ApplicationCreateObject) (result UUID, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: applicationCreateObject,
@@ -77,7 +77,7 @@ func (client AppsClient) AddPreparer(ctx context.Context, applicationCreateObjec
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPath("/apps/"),
@@ -106,8 +106,8 @@ func (client AppsClient) AddResponder(resp *http.Response) (result UUID, err err
 }
 
 // AddCustomPrebuiltDomain adds a prebuilt domain along with its models as a new application.
-//
-// prebuiltDomainCreateObject is a prebuilt domain create object containing the name and culture of the domain.
+// Parameters:
+// prebuiltDomainCreateObject - a prebuilt domain create object containing the name and culture of the domain.
 func (client AppsClient) AddCustomPrebuiltDomain(ctx context.Context, prebuiltDomainCreateObject PrebuiltDomainCreateObject) (result UUID, err error) {
 	req, err := client.AddCustomPrebuiltDomainPreparer(ctx, prebuiltDomainCreateObject)
 	if err != nil {
@@ -137,7 +137,7 @@ func (client AppsClient) AddCustomPrebuiltDomainPreparer(ctx context.Context, pr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPath("/apps/customprebuiltdomains"),
@@ -166,8 +166,8 @@ func (client AppsClient) AddCustomPrebuiltDomainResponder(resp *http.Response) (
 }
 
 // Delete deletes an application.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client AppsClient) Delete(ctx context.Context, appID uuid.UUID) (result OperationStatus, err error) {
 	req, err := client.DeletePreparer(ctx, appID)
 	if err != nil {
@@ -228,8 +228,8 @@ func (client AppsClient) DeleteResponder(resp *http.Response) (result OperationS
 }
 
 // DownloadQueryLogs gets the query logs of the past month for the application.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client AppsClient) DownloadQueryLogs(ctx context.Context, appID uuid.UUID) (result ReadCloser, err error) {
 	req, err := client.DownloadQueryLogsPreparer(ctx, appID)
 	if err != nil {
@@ -289,8 +289,8 @@ func (client AppsClient) DownloadQueryLogsResponder(resp *http.Response) (result
 }
 
 // Get gets the application info.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client AppsClient) Get(ctx context.Context, appID uuid.UUID) (result ApplicationInfoResponse, err error) {
 	req, err := client.GetPreparer(ctx, appID)
 	if err != nil {
@@ -351,8 +351,8 @@ func (client AppsClient) GetResponder(resp *http.Response) (result ApplicationIn
 }
 
 // GetSettings get the application settings.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client AppsClient) GetSettings(ctx context.Context, appID uuid.UUID) (result ApplicationSettings, err error) {
 	req, err := client.GetSettingsPreparer(ctx, appID)
 	if err != nil {
@@ -413,9 +413,10 @@ func (client AppsClient) GetSettingsResponder(resp *http.Response) (result Appli
 }
 
 // Import imports an application to LUIS, the application's structure should be included in in the request body.
-//
-// luisApp is a LUIS application structure. appName is the application name to create. If not specified, the
-// application name will be read from the imported object.
+// Parameters:
+// luisApp - a LUIS application structure.
+// appName - the application name to create. If not specified, the application name will be read from the
+// imported object.
 func (client AppsClient) Import(ctx context.Context, luisApp LuisApp, appName string) (result UUID, err error) {
 	req, err := client.ImportPreparer(ctx, luisApp, appName)
 	if err != nil {
@@ -450,7 +451,7 @@ func (client AppsClient) ImportPreparer(ctx context.Context, luisApp LuisApp, ap
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPath("/apps/import"),
@@ -480,9 +481,9 @@ func (client AppsClient) ImportResponder(resp *http.Response) (result UUID, err 
 }
 
 // List lists all of the user applications.
-//
-// skip is the number of entries to skip. Default value is 0. take is the number of entries to return. Maximum page
-// size is 500. Default is 100.
+// Parameters:
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client AppsClient) List(ctx context.Context, skip *int32, take *int32) (result ListApplicationInfoResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,
@@ -620,8 +621,8 @@ func (client AppsClient) ListAvailableCustomPrebuiltDomainsResponder(resp *http.
 }
 
 // ListAvailableCustomPrebuiltDomainsForCulture gets all the available custom prebuilt domains for a specific culture.
-//
-// culture is culture.
+// Parameters:
+// culture - culture.
 func (client AppsClient) ListAvailableCustomPrebuiltDomainsForCulture(ctx context.Context, culture string) (result ListPrebuiltDomain, err error) {
 	req, err := client.ListAvailableCustomPrebuiltDomainsForCulturePreparer(ctx, culture)
 	if err != nil {
@@ -794,8 +795,8 @@ func (client AppsClient) ListDomainsResponder(resp *http.Response) (result ListS
 }
 
 // ListEndpoints returns the available endpoint deployment regions and URLs.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client AppsClient) ListEndpoints(ctx context.Context, appID uuid.UUID) (result SetString, err error) {
 	req, err := client.ListEndpointsPreparer(ctx, appID)
 	if err != nil {
@@ -968,9 +969,10 @@ func (client AppsClient) ListUsageScenariosResponder(resp *http.Response) (resul
 }
 
 // Publish publishes a specific version of the application.
-//
-// appID is the application ID. applicationPublishObject is the application publish object. The region is the
-// target region that the application is published to.
+// Parameters:
+// appID - the application ID.
+// applicationPublishObject - the application publish object. The region is the target region that the
+// application is published to.
 func (client AppsClient) Publish(ctx context.Context, appID uuid.UUID, applicationPublishObject ApplicationPublishObject) (result ProductionOrStagingEndpointInfo, err error) {
 	req, err := client.PublishPreparer(ctx, appID, applicationPublishObject)
 	if err != nil {
@@ -1004,7 +1006,7 @@ func (client AppsClient) PublishPreparer(ctx context.Context, appID uuid.UUID, a
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/publish", pathParameters),
@@ -1033,9 +1035,9 @@ func (client AppsClient) PublishResponder(resp *http.Response) (result Productio
 }
 
 // Update updates the name or description of the application.
-//
-// appID is the application ID. applicationUpdateObject is a model containing Name and Description of the
-// application.
+// Parameters:
+// appID - the application ID.
+// applicationUpdateObject - a model containing Name and Description of the application.
 func (client AppsClient) Update(ctx context.Context, appID uuid.UUID, applicationUpdateObject ApplicationUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdatePreparer(ctx, appID, applicationUpdateObject)
 	if err != nil {
@@ -1069,7 +1071,7 @@ func (client AppsClient) UpdatePreparer(ctx context.Context, appID uuid.UUID, ap
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}", pathParameters),
@@ -1098,9 +1100,9 @@ func (client AppsClient) UpdateResponder(resp *http.Response) (result OperationS
 }
 
 // UpdateSettings updates the application settings.
-//
-// appID is the application ID. applicationSettingUpdateObject is an object containing the new application
-// settings.
+// Parameters:
+// appID - the application ID.
+// applicationSettingUpdateObject - an object containing the new application settings.
 func (client AppsClient) UpdateSettings(ctx context.Context, appID uuid.UUID, applicationSettingUpdateObject ApplicationSettingUpdateObject) (result OperationStatus, err error) {
 	req, err := client.UpdateSettingsPreparer(ctx, appID, applicationSettingUpdateObject)
 	if err != nil {
@@ -1134,7 +1136,7 @@ func (client AppsClient) UpdateSettingsPreparer(ctx context.Context, appID uuid.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/settings", pathParameters),

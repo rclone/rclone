@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeysClient is the the Azure SQL Database management API provides a RESTful set of web services that interact
 // with Azure SQL Database services to manage your databases. The API enables you to create, retrieve, update, and
 // delete databases.
@@ -31,16 +32,19 @@ type ServerKeysClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewServerKeysClient creates an instance of the ServerKeysClient client.
 func NewServerKeysClient(subscriptionID string) ServerKeysClient {
 	return NewServerKeysClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewServerKeysClientWithBaseURI creates an instance of the ServerKeysClient client.
 func NewServerKeysClientWithBaseURI(baseURI string, subscriptionID string) ServerKeysClient {
 	return ServerKeysClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdate creates or updates a server key.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -66,6 +70,7 @@ func (client ServerKeysClient) CreateOrUpdate(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client ServerKeysClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, keyName string, parameters ServerKey) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,7 +86,7 @@ func (client ServerKeysClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/keys/{keyName}", pathParameters),
@@ -90,6 +95,7 @@ func (client ServerKeysClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) CreateOrUpdateSender(req *http.Request) (future ServerKeysCreateOrUpdateFuture, err error) {
@@ -105,6 +111,7 @@ func (client ServerKeysClient) CreateOrUpdateSender(req *http.Request) (future S
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client ServerKeysClient) CreateOrUpdateResponder(resp *http.Response) (result ServerKey, err error) {
@@ -118,6 +125,7 @@ func (client ServerKeysClient) CreateOrUpdateResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Delete deletes the server key with the given name.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -139,6 +147,7 @@ func (client ServerKeysClient) Delete(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeletePreparer prepares the Delete request.
 func (client ServerKeysClient) DeletePreparer(ctx context.Context, resourceGroupName string, serverName string, keyName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -161,6 +170,7 @@ func (client ServerKeysClient) DeletePreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) DeleteSender(req *http.Request) (future ServerKeysDeleteFuture, err error) {
@@ -176,6 +186,7 @@ func (client ServerKeysClient) DeleteSender(req *http.Request) (future ServerKey
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client ServerKeysClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -188,6 +199,7 @@ func (client ServerKeysClient) DeleteResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Get gets a server key.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -215,6 +227,7 @@ func (client ServerKeysClient) Get(ctx context.Context, resourceGroupName string
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetPreparer prepares the Get request.
 func (client ServerKeysClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, keyName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -237,6 +250,7 @@ func (client ServerKeysClient) GetPreparer(ctx context.Context, resourceGroupNam
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -244,6 +258,7 @@ func (client ServerKeysClient) GetSender(req *http.Request) (*http.Response, err
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client ServerKeysClient) GetResponder(resp *http.Response) (result ServerKey, err error) {
@@ -257,6 +272,7 @@ func (client ServerKeysClient) GetResponder(resp *http.Response) (result ServerK
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServer gets a list of server keys.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -284,6 +300,7 @@ func (client ServerKeysClient) ListByServer(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerPreparer prepares the ListByServer request.
 func (client ServerKeysClient) ListByServerPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -305,6 +322,7 @@ func (client ServerKeysClient) ListByServerPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) ListByServerSender(req *http.Request) (*http.Response, error) {
@@ -312,6 +330,7 @@ func (client ServerKeysClient) ListByServerSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerResponder handles the response to the ListByServer request. The method always
 // closes the http.Response Body.
 func (client ServerKeysClient) ListByServerResponder(resp *http.Response) (result ServerKeyListResult, err error) {
@@ -346,6 +365,7 @@ func (client ServerKeysClient) listByServerNextResults(lastResults ServerKeyList
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByServerComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ServerKeysClient) ListByServerComplete(ctx context.Context, resourceGroupName string, serverName string) (result ServerKeyListResultIterator, err error) {
 	result.page, err = client.ListByServer(ctx, resourceGroupName, serverName)

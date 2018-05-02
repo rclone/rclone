@@ -41,10 +41,12 @@ func NewSuppressionsClientWithBaseURI(baseURI string, subscriptionID string) Sup
 
 // Create enables the snoozed or dismissed attribute of a recommendation. The snoozed or dismissed attribute is
 // referred to as a suppression. Use this API to create or update the snoozed or dismissed status of a recommendation.
-//
-// resourceURI is the fully qualified Azure Resource Manager identifier of the resource to which the recommendation
-// applies. recommendationID is the recommendation ID. name is the name of the suppression. suppressionContract is
-// the snoozed or dismissed attribute; for example, the snooze duration.
+// Parameters:
+// resourceURI - the fully qualified Azure Resource Manager identifier of the resource to which the
+// recommendation applies.
+// recommendationID - the recommendation ID.
+// name - the name of the suppression.
+// suppressionContract - the snoozed or dismissed attribute; for example, the snooze duration.
 func (client SuppressionsClient) Create(ctx context.Context, resourceURI string, recommendationID string, name string, suppressionContract SuppressionContract) (result SuppressionContract, err error) {
 	req, err := client.CreatePreparer(ctx, resourceURI, recommendationID, name, suppressionContract)
 	if err != nil {
@@ -81,7 +83,7 @@ func (client SuppressionsClient) CreatePreparer(ctx context.Context, resourceURI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{resourceUri}/providers/Microsoft.Advisor/recommendations/{recommendationId}/suppressions/{name}", pathParameters),
@@ -112,9 +114,11 @@ func (client SuppressionsClient) CreateResponder(resp *http.Response) (result Su
 
 // Delete enables the activation of a snoozed or dismissed recommendation. The snoozed or dismissed attribute of a
 // recommendation is referred to as a suppression.
-//
-// resourceURI is the fully qualified Azure Resource Manager identifier of the resource to which the recommendation
-// applies. recommendationID is the recommendation ID. name is the name of the suppression.
+// Parameters:
+// resourceURI - the fully qualified Azure Resource Manager identifier of the resource to which the
+// recommendation applies.
+// recommendationID - the recommendation ID.
+// name - the name of the suppression.
 func (client SuppressionsClient) Delete(ctx context.Context, resourceURI string, recommendationID string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceURI, recommendationID, name)
 	if err != nil {
@@ -178,9 +182,11 @@ func (client SuppressionsClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get obtains the details of a suppression.
-//
-// resourceURI is the fully qualified Azure Resource Manager identifier of the resource to which the recommendation
-// applies. recommendationID is the recommendation ID. name is the name of the suppression.
+// Parameters:
+// resourceURI - the fully qualified Azure Resource Manager identifier of the resource to which the
+// recommendation applies.
+// recommendationID - the recommendation ID.
+// name - the name of the suppression.
 func (client SuppressionsClient) Get(ctx context.Context, resourceURI string, recommendationID string, name string) (result SuppressionContract, err error) {
 	req, err := client.GetPreparer(ctx, resourceURI, recommendationID, name)
 	if err != nil {

@@ -36,6 +36,11 @@ const (
 	Deny Access = "Deny"
 )
 
+// PossibleAccessValues returns an array of possible values for the Access const type.
+func PossibleAccessValues() []Access {
+	return []Access{Allow, Deny}
+}
+
 // ApplicationGatewayBackendHealthServerHealth enumerates the values for application gateway backend health
 // server health.
 type ApplicationGatewayBackendHealthServerHealth string
@@ -53,6 +58,11 @@ const (
 	Up ApplicationGatewayBackendHealthServerHealth = "Up"
 )
 
+// PossibleApplicationGatewayBackendHealthServerHealthValues returns an array of possible values for the ApplicationGatewayBackendHealthServerHealth const type.
+func PossibleApplicationGatewayBackendHealthServerHealthValues() []ApplicationGatewayBackendHealthServerHealth {
+	return []ApplicationGatewayBackendHealthServerHealth{Down, Draining, Partial, Unknown, Up}
+}
+
 // ApplicationGatewayCookieBasedAffinity enumerates the values for application gateway cookie based affinity.
 type ApplicationGatewayCookieBasedAffinity string
 
@@ -63,6 +73,11 @@ const (
 	Enabled ApplicationGatewayCookieBasedAffinity = "Enabled"
 )
 
+// PossibleApplicationGatewayCookieBasedAffinityValues returns an array of possible values for the ApplicationGatewayCookieBasedAffinity const type.
+func PossibleApplicationGatewayCookieBasedAffinityValues() []ApplicationGatewayCookieBasedAffinity {
+	return []ApplicationGatewayCookieBasedAffinity{Disabled, Enabled}
+}
+
 // ApplicationGatewayFirewallMode enumerates the values for application gateway firewall mode.
 type ApplicationGatewayFirewallMode string
 
@@ -72,6 +87,11 @@ const (
 	// Prevention ...
 	Prevention ApplicationGatewayFirewallMode = "Prevention"
 )
+
+// PossibleApplicationGatewayFirewallModeValues returns an array of possible values for the ApplicationGatewayFirewallMode const type.
+func PossibleApplicationGatewayFirewallModeValues() []ApplicationGatewayFirewallMode {
+	return []ApplicationGatewayFirewallMode{Detection, Prevention}
+}
 
 // ApplicationGatewayOperationalState enumerates the values for application gateway operational state.
 type ApplicationGatewayOperationalState string
@@ -87,6 +107,11 @@ const (
 	Stopping ApplicationGatewayOperationalState = "Stopping"
 )
 
+// PossibleApplicationGatewayOperationalStateValues returns an array of possible values for the ApplicationGatewayOperationalState const type.
+func PossibleApplicationGatewayOperationalStateValues() []ApplicationGatewayOperationalState {
+	return []ApplicationGatewayOperationalState{Running, Starting, Stopped, Stopping}
+}
+
 // ApplicationGatewayProtocol enumerates the values for application gateway protocol.
 type ApplicationGatewayProtocol string
 
@@ -96,6 +121,11 @@ const (
 	// HTTPS ...
 	HTTPS ApplicationGatewayProtocol = "Https"
 )
+
+// PossibleApplicationGatewayProtocolValues returns an array of possible values for the ApplicationGatewayProtocol const type.
+func PossibleApplicationGatewayProtocolValues() []ApplicationGatewayProtocol {
+	return []ApplicationGatewayProtocol{HTTP, HTTPS}
+}
 
 // ApplicationGatewayRedirectType enumerates the values for application gateway redirect type.
 type ApplicationGatewayRedirectType string
@@ -111,6 +141,11 @@ const (
 	Temporary ApplicationGatewayRedirectType = "Temporary"
 )
 
+// PossibleApplicationGatewayRedirectTypeValues returns an array of possible values for the ApplicationGatewayRedirectType const type.
+func PossibleApplicationGatewayRedirectTypeValues() []ApplicationGatewayRedirectType {
+	return []ApplicationGatewayRedirectType{Found, Permanent, SeeOther, Temporary}
+}
+
 // ApplicationGatewayRequestRoutingRuleType enumerates the values for application gateway request routing rule
 // type.
 type ApplicationGatewayRequestRoutingRuleType string
@@ -121,6 +156,11 @@ const (
 	// PathBasedRouting ...
 	PathBasedRouting ApplicationGatewayRequestRoutingRuleType = "PathBasedRouting"
 )
+
+// PossibleApplicationGatewayRequestRoutingRuleTypeValues returns an array of possible values for the ApplicationGatewayRequestRoutingRuleType const type.
+func PossibleApplicationGatewayRequestRoutingRuleTypeValues() []ApplicationGatewayRequestRoutingRuleType {
+	return []ApplicationGatewayRequestRoutingRuleType{Basic, PathBasedRouting}
+}
 
 // ApplicationGatewaySkuName enumerates the values for application gateway sku name.
 type ApplicationGatewaySkuName string
@@ -137,6 +177,11 @@ const (
 	// WAFMedium ...
 	WAFMedium ApplicationGatewaySkuName = "WAF_Medium"
 )
+
+// PossibleApplicationGatewaySkuNameValues returns an array of possible values for the ApplicationGatewaySkuName const type.
+func PossibleApplicationGatewaySkuNameValues() []ApplicationGatewaySkuName {
+	return []ApplicationGatewaySkuName{StandardLarge, StandardMedium, StandardSmall, WAFLarge, WAFMedium}
+}
 
 // ApplicationGatewaySslCipherSuite enumerates the values for application gateway ssl cipher suite.
 type ApplicationGatewaySslCipherSuite string
@@ -194,6 +239,11 @@ const (
 	TLSRSAWITHAES256GCMSHA384 ApplicationGatewaySslCipherSuite = "TLS_RSA_WITH_AES_256_GCM_SHA384"
 )
 
+// PossibleApplicationGatewaySslCipherSuiteValues returns an array of possible values for the ApplicationGatewaySslCipherSuite const type.
+func PossibleApplicationGatewaySslCipherSuiteValues() []ApplicationGatewaySslCipherSuite {
+	return []ApplicationGatewaySslCipherSuite{TLSDHEDSSWITHAES128CBCSHA, TLSDHEDSSWITHAES128CBCSHA256, TLSDHEDSSWITHAES256CBCSHA, TLSDHEDSSWITHAES256CBCSHA256, TLSDHERSAWITHAES128CBCSHA, TLSDHERSAWITHAES128GCMSHA256, TLSDHERSAWITHAES256CBCSHA, TLSDHERSAWITHAES256GCMSHA384, TLSECDHEECDSAWITHAES128CBCSHA, TLSECDHEECDSAWITHAES128CBCSHA256, TLSECDHEECDSAWITHAES128GCMSHA256, TLSECDHEECDSAWITHAES256CBCSHA, TLSECDHEECDSAWITHAES256CBCSHA384, TLSECDHEECDSAWITHAES256GCMSHA384, TLSECDHERSAWITHAES128CBCSHA, TLSECDHERSAWITHAES128CBCSHA256, TLSECDHERSAWITHAES256CBCSHA, TLSECDHERSAWITHAES256CBCSHA384, TLSRSAWITH3DESEDECBCSHA, TLSRSAWITHAES128CBCSHA, TLSRSAWITHAES128CBCSHA256, TLSRSAWITHAES128GCMSHA256, TLSRSAWITHAES256CBCSHA, TLSRSAWITHAES256CBCSHA256, TLSRSAWITHAES256GCMSHA384}
+}
+
 // ApplicationGatewaySslPolicyName enumerates the values for application gateway ssl policy name.
 type ApplicationGatewaySslPolicyName string
 
@@ -206,6 +256,11 @@ const (
 	AppGwSslPolicy20170401S ApplicationGatewaySslPolicyName = "AppGwSslPolicy20170401S"
 )
 
+// PossibleApplicationGatewaySslPolicyNameValues returns an array of possible values for the ApplicationGatewaySslPolicyName const type.
+func PossibleApplicationGatewaySslPolicyNameValues() []ApplicationGatewaySslPolicyName {
+	return []ApplicationGatewaySslPolicyName{AppGwSslPolicy20150501, AppGwSslPolicy20170401, AppGwSslPolicy20170401S}
+}
+
 // ApplicationGatewaySslPolicyType enumerates the values for application gateway ssl policy type.
 type ApplicationGatewaySslPolicyType string
 
@@ -215,6 +270,11 @@ const (
 	// Predefined ...
 	Predefined ApplicationGatewaySslPolicyType = "Predefined"
 )
+
+// PossibleApplicationGatewaySslPolicyTypeValues returns an array of possible values for the ApplicationGatewaySslPolicyType const type.
+func PossibleApplicationGatewaySslPolicyTypeValues() []ApplicationGatewaySslPolicyType {
+	return []ApplicationGatewaySslPolicyType{Custom, Predefined}
+}
 
 // ApplicationGatewaySslProtocol enumerates the values for application gateway ssl protocol.
 type ApplicationGatewaySslProtocol string
@@ -228,6 +288,11 @@ const (
 	TLSv12 ApplicationGatewaySslProtocol = "TLSv1_2"
 )
 
+// PossibleApplicationGatewaySslProtocolValues returns an array of possible values for the ApplicationGatewaySslProtocol const type.
+func PossibleApplicationGatewaySslProtocolValues() []ApplicationGatewaySslProtocol {
+	return []ApplicationGatewaySslProtocol{TLSv10, TLSv11, TLSv12}
+}
+
 // ApplicationGatewayTier enumerates the values for application gateway tier.
 type ApplicationGatewayTier string
 
@@ -237,6 +302,11 @@ const (
 	// WAF ...
 	WAF ApplicationGatewayTier = "WAF"
 )
+
+// PossibleApplicationGatewayTierValues returns an array of possible values for the ApplicationGatewayTier const type.
+func PossibleApplicationGatewayTierValues() []ApplicationGatewayTier {
+	return []ApplicationGatewayTier{Standard, WAF}
+}
 
 // AssociationType enumerates the values for association type.
 type AssociationType string
@@ -248,6 +318,11 @@ const (
 	Contains AssociationType = "Contains"
 )
 
+// PossibleAssociationTypeValues returns an array of possible values for the AssociationType const type.
+func PossibleAssociationTypeValues() []AssociationType {
+	return []AssociationType{Associated, Contains}
+}
+
 // AuthenticationMethod enumerates the values for authentication method.
 type AuthenticationMethod string
 
@@ -258,6 +333,11 @@ const (
 	EAPTLS AuthenticationMethod = "EAPTLS"
 )
 
+// PossibleAuthenticationMethodValues returns an array of possible values for the AuthenticationMethod const type.
+func PossibleAuthenticationMethodValues() []AuthenticationMethod {
+	return []AuthenticationMethod{EAPMSCHAPv2, EAPTLS}
+}
+
 // AuthorizationUseStatus enumerates the values for authorization use status.
 type AuthorizationUseStatus string
 
@@ -267,6 +347,11 @@ const (
 	// InUse ...
 	InUse AuthorizationUseStatus = "InUse"
 )
+
+// PossibleAuthorizationUseStatusValues returns an array of possible values for the AuthorizationUseStatus const type.
+func PossibleAuthorizationUseStatusValues() []AuthorizationUseStatus {
+	return []AuthorizationUseStatus{Available, InUse}
+}
 
 // BgpPeerState enumerates the values for bgp peer state.
 type BgpPeerState string
@@ -284,6 +369,11 @@ const (
 	BgpPeerStateUnknown BgpPeerState = "Unknown"
 )
 
+// PossibleBgpPeerStateValues returns an array of possible values for the BgpPeerState const type.
+func PossibleBgpPeerStateValues() []BgpPeerState {
+	return []BgpPeerState{BgpPeerStateConnected, BgpPeerStateConnecting, BgpPeerStateIdle, BgpPeerStateStopped, BgpPeerStateUnknown}
+}
+
 // ConnectionStatus enumerates the values for connection status.
 type ConnectionStatus string
 
@@ -297,6 +387,11 @@ const (
 	// ConnectionStatusUnknown ...
 	ConnectionStatusUnknown ConnectionStatus = "Unknown"
 )
+
+// PossibleConnectionStatusValues returns an array of possible values for the ConnectionStatus const type.
+func PossibleConnectionStatusValues() []ConnectionStatus {
+	return []ConnectionStatus{ConnectionStatusConnected, ConnectionStatusDegraded, ConnectionStatusDisconnected, ConnectionStatusUnknown}
+}
 
 // DhGroup enumerates the values for dh group.
 type DhGroup string
@@ -320,6 +415,11 @@ const (
 	None DhGroup = "None"
 )
 
+// PossibleDhGroupValues returns an array of possible values for the DhGroup const type.
+func PossibleDhGroupValues() []DhGroup {
+	return []DhGroup{DHGroup1, DHGroup14, DHGroup2, DHGroup2048, DHGroup24, ECP256, ECP384, None}
+}
+
 // Direction enumerates the values for direction.
 type Direction string
 
@@ -329,6 +429,11 @@ const (
 	// Outbound ...
 	Outbound Direction = "Outbound"
 )
+
+// PossibleDirectionValues returns an array of possible values for the Direction const type.
+func PossibleDirectionValues() []Direction {
+	return []Direction{Inbound, Outbound}
+}
 
 // EffectiveRouteSource enumerates the values for effective route source.
 type EffectiveRouteSource string
@@ -344,6 +449,11 @@ const (
 	EffectiveRouteSourceVirtualNetworkGateway EffectiveRouteSource = "VirtualNetworkGateway"
 )
 
+// PossibleEffectiveRouteSourceValues returns an array of possible values for the EffectiveRouteSource const type.
+func PossibleEffectiveRouteSourceValues() []EffectiveRouteSource {
+	return []EffectiveRouteSource{EffectiveRouteSourceDefault, EffectiveRouteSourceUnknown, EffectiveRouteSourceUser, EffectiveRouteSourceVirtualNetworkGateway}
+}
+
 // EffectiveRouteState enumerates the values for effective route state.
 type EffectiveRouteState string
 
@@ -353,6 +463,11 @@ const (
 	// Invalid ...
 	Invalid EffectiveRouteState = "Invalid"
 )
+
+// PossibleEffectiveRouteStateValues returns an array of possible values for the EffectiveRouteState const type.
+func PossibleEffectiveRouteStateValues() []EffectiveRouteState {
+	return []EffectiveRouteState{Active, Invalid}
+}
 
 // EffectiveSecurityRuleProtocol enumerates the values for effective security rule protocol.
 type EffectiveSecurityRuleProtocol string
@@ -365,6 +480,11 @@ const (
 	// UDP ...
 	UDP EffectiveSecurityRuleProtocol = "Udp"
 )
+
+// PossibleEffectiveSecurityRuleProtocolValues returns an array of possible values for the EffectiveSecurityRuleProtocol const type.
+func PossibleEffectiveSecurityRuleProtocolValues() []EffectiveSecurityRuleProtocol {
+	return []EffectiveSecurityRuleProtocol{All, TCP, UDP}
+}
 
 // ExpressRouteCircuitPeeringAdvertisedPublicPrefixState enumerates the values for express route circuit
 // peering advertised public prefix state.
@@ -381,6 +501,11 @@ const (
 	ValidationNeeded ExpressRouteCircuitPeeringAdvertisedPublicPrefixState = "ValidationNeeded"
 )
 
+// PossibleExpressRouteCircuitPeeringAdvertisedPublicPrefixStateValues returns an array of possible values for the ExpressRouteCircuitPeeringAdvertisedPublicPrefixState const type.
+func PossibleExpressRouteCircuitPeeringAdvertisedPublicPrefixStateValues() []ExpressRouteCircuitPeeringAdvertisedPublicPrefixState {
+	return []ExpressRouteCircuitPeeringAdvertisedPublicPrefixState{Configured, Configuring, NotConfigured, ValidationNeeded}
+}
+
 // ExpressRouteCircuitPeeringState enumerates the values for express route circuit peering state.
 type ExpressRouteCircuitPeeringState string
 
@@ -390,6 +515,11 @@ const (
 	// ExpressRouteCircuitPeeringStateEnabled ...
 	ExpressRouteCircuitPeeringStateEnabled ExpressRouteCircuitPeeringState = "Enabled"
 )
+
+// PossibleExpressRouteCircuitPeeringStateValues returns an array of possible values for the ExpressRouteCircuitPeeringState const type.
+func PossibleExpressRouteCircuitPeeringStateValues() []ExpressRouteCircuitPeeringState {
+	return []ExpressRouteCircuitPeeringState{ExpressRouteCircuitPeeringStateDisabled, ExpressRouteCircuitPeeringStateEnabled}
+}
 
 // ExpressRouteCircuitPeeringType enumerates the values for express route circuit peering type.
 type ExpressRouteCircuitPeeringType string
@@ -403,6 +533,11 @@ const (
 	MicrosoftPeering ExpressRouteCircuitPeeringType = "MicrosoftPeering"
 )
 
+// PossibleExpressRouteCircuitPeeringTypeValues returns an array of possible values for the ExpressRouteCircuitPeeringType const type.
+func PossibleExpressRouteCircuitPeeringTypeValues() []ExpressRouteCircuitPeeringType {
+	return []ExpressRouteCircuitPeeringType{AzurePrivatePeering, AzurePublicPeering, MicrosoftPeering}
+}
+
 // ExpressRouteCircuitSkuFamily enumerates the values for express route circuit sku family.
 type ExpressRouteCircuitSkuFamily string
 
@@ -413,6 +548,11 @@ const (
 	UnlimitedData ExpressRouteCircuitSkuFamily = "UnlimitedData"
 )
 
+// PossibleExpressRouteCircuitSkuFamilyValues returns an array of possible values for the ExpressRouteCircuitSkuFamily const type.
+func PossibleExpressRouteCircuitSkuFamilyValues() []ExpressRouteCircuitSkuFamily {
+	return []ExpressRouteCircuitSkuFamily{MeteredData, UnlimitedData}
+}
+
 // ExpressRouteCircuitSkuTier enumerates the values for express route circuit sku tier.
 type ExpressRouteCircuitSkuTier string
 
@@ -422,6 +562,11 @@ const (
 	// ExpressRouteCircuitSkuTierStandard ...
 	ExpressRouteCircuitSkuTierStandard ExpressRouteCircuitSkuTier = "Standard"
 )
+
+// PossibleExpressRouteCircuitSkuTierValues returns an array of possible values for the ExpressRouteCircuitSkuTier const type.
+func PossibleExpressRouteCircuitSkuTierValues() []ExpressRouteCircuitSkuTier {
+	return []ExpressRouteCircuitSkuTier{ExpressRouteCircuitSkuTierPremium, ExpressRouteCircuitSkuTierStandard}
+}
 
 // IkeEncryption enumerates the values for ike encryption.
 type IkeEncryption string
@@ -439,6 +584,11 @@ const (
 	DES3 IkeEncryption = "DES3"
 )
 
+// PossibleIkeEncryptionValues returns an array of possible values for the IkeEncryption const type.
+func PossibleIkeEncryptionValues() []IkeEncryption {
+	return []IkeEncryption{AES128, AES192, AES256, DES, DES3}
+}
+
 // IkeIntegrity enumerates the values for ike integrity.
 type IkeIntegrity string
 
@@ -453,6 +603,11 @@ const (
 	SHA384 IkeIntegrity = "SHA384"
 )
 
+// PossibleIkeIntegrityValues returns an array of possible values for the IkeIntegrity const type.
+func PossibleIkeIntegrityValues() []IkeIntegrity {
+	return []IkeIntegrity{MD5, SHA1, SHA256, SHA384}
+}
+
 // IPAllocationMethod enumerates the values for ip allocation method.
 type IPAllocationMethod string
 
@@ -462,6 +617,11 @@ const (
 	// Static ...
 	Static IPAllocationMethod = "Static"
 )
+
+// PossibleIPAllocationMethodValues returns an array of possible values for the IPAllocationMethod const type.
+func PossibleIPAllocationMethodValues() []IPAllocationMethod {
+	return []IPAllocationMethod{Dynamic, Static}
+}
 
 // IpsecEncryption enumerates the values for ipsec encryption.
 type IpsecEncryption string
@@ -487,6 +647,11 @@ const (
 	IpsecEncryptionNone IpsecEncryption = "None"
 )
 
+// PossibleIpsecEncryptionValues returns an array of possible values for the IpsecEncryption const type.
+func PossibleIpsecEncryptionValues() []IpsecEncryption {
+	return []IpsecEncryption{IpsecEncryptionAES128, IpsecEncryptionAES192, IpsecEncryptionAES256, IpsecEncryptionDES, IpsecEncryptionDES3, IpsecEncryptionGCMAES128, IpsecEncryptionGCMAES192, IpsecEncryptionGCMAES256, IpsecEncryptionNone}
+}
+
 // IpsecIntegrity enumerates the values for ipsec integrity.
 type IpsecIntegrity string
 
@@ -505,6 +670,11 @@ const (
 	IpsecIntegritySHA256 IpsecIntegrity = "SHA256"
 )
 
+// PossibleIpsecIntegrityValues returns an array of possible values for the IpsecIntegrity const type.
+func PossibleIpsecIntegrityValues() []IpsecIntegrity {
+	return []IpsecIntegrity{IpsecIntegrityGCMAES128, IpsecIntegrityGCMAES192, IpsecIntegrityGCMAES256, IpsecIntegrityMD5, IpsecIntegritySHA1, IpsecIntegritySHA256}
+}
+
 // IPVersion enumerates the values for ip version.
 type IPVersion string
 
@@ -514,6 +684,11 @@ const (
 	// IPv6 ...
 	IPv6 IPVersion = "IPv6"
 )
+
+// PossibleIPVersionValues returns an array of possible values for the IPVersion const type.
+func PossibleIPVersionValues() []IPVersion {
+	return []IPVersion{IPv4, IPv6}
+}
 
 // IssueType enumerates the values for issue type.
 type IssueType string
@@ -539,6 +714,11 @@ const (
 	IssueTypeUserDefinedRoute IssueType = "UserDefinedRoute"
 )
 
+// PossibleIssueTypeValues returns an array of possible values for the IssueType const type.
+func PossibleIssueTypeValues() []IssueType {
+	return []IssueType{IssueTypeAgentStopped, IssueTypeDNSResolution, IssueTypeGuestFirewall, IssueTypeNetworkSecurityRule, IssueTypePlatform, IssueTypePortThrottled, IssueTypeSocketBind, IssueTypeUnknown, IssueTypeUserDefinedRoute}
+}
+
 // LoadBalancerSkuName enumerates the values for load balancer sku name.
 type LoadBalancerSkuName string
 
@@ -548,6 +728,11 @@ const (
 	// LoadBalancerSkuNameStandard ...
 	LoadBalancerSkuNameStandard LoadBalancerSkuName = "Standard"
 )
+
+// PossibleLoadBalancerSkuNameValues returns an array of possible values for the LoadBalancerSkuName const type.
+func PossibleLoadBalancerSkuNameValues() []LoadBalancerSkuName {
+	return []LoadBalancerSkuName{LoadBalancerSkuNameBasic, LoadBalancerSkuNameStandard}
+}
 
 // LoadDistribution enumerates the values for load distribution.
 type LoadDistribution string
@@ -560,6 +745,11 @@ const (
 	// SourceIPProtocol ...
 	SourceIPProtocol LoadDistribution = "SourceIPProtocol"
 )
+
+// PossibleLoadDistributionValues returns an array of possible values for the LoadDistribution const type.
+func PossibleLoadDistributionValues() []LoadDistribution {
+	return []LoadDistribution{Default, SourceIP, SourceIPProtocol}
+}
 
 // NextHopType enumerates the values for next hop type.
 type NextHopType string
@@ -579,6 +769,11 @@ const (
 	NextHopTypeVnetLocal NextHopType = "VnetLocal"
 )
 
+// PossibleNextHopTypeValues returns an array of possible values for the NextHopType const type.
+func PossibleNextHopTypeValues() []NextHopType {
+	return []NextHopType{NextHopTypeHyperNetGateway, NextHopTypeInternet, NextHopTypeNone, NextHopTypeVirtualAppliance, NextHopTypeVirtualNetworkGateway, NextHopTypeVnetLocal}
+}
+
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
 
@@ -591,6 +786,11 @@ const (
 	Succeeded OperationStatus = "Succeeded"
 )
 
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{Failed, InProgress, Succeeded}
+}
+
 // Origin enumerates the values for origin.
 type Origin string
 
@@ -602,6 +802,11 @@ const (
 	// OriginOutbound ...
 	OriginOutbound Origin = "Outbound"
 )
+
+// PossibleOriginValues returns an array of possible values for the Origin const type.
+func PossibleOriginValues() []Origin {
+	return []Origin{OriginInbound, OriginLocal, OriginOutbound}
+}
 
 // PcError enumerates the values for pc error.
 type PcError string
@@ -619,6 +824,11 @@ const (
 	StorageFailed PcError = "StorageFailed"
 )
 
+// PossiblePcErrorValues returns an array of possible values for the PcError const type.
+func PossiblePcErrorValues() []PcError {
+	return []PcError{AgentStopped, CaptureFailed, InternalError, LocalFileFailed, StorageFailed}
+}
+
 // PcProtocol enumerates the values for pc protocol.
 type PcProtocol string
 
@@ -630,6 +840,11 @@ const (
 	// PcProtocolUDP ...
 	PcProtocolUDP PcProtocol = "UDP"
 )
+
+// PossiblePcProtocolValues returns an array of possible values for the PcProtocol const type.
+func PossiblePcProtocolValues() []PcProtocol {
+	return []PcProtocol{PcProtocolAny, PcProtocolTCP, PcProtocolUDP}
+}
 
 // PcStatus enumerates the values for pc status.
 type PcStatus string
@@ -646,6 +861,11 @@ const (
 	// PcStatusUnknown ...
 	PcStatusUnknown PcStatus = "Unknown"
 )
+
+// PossiblePcStatusValues returns an array of possible values for the PcStatus const type.
+func PossiblePcStatusValues() []PcStatus {
+	return []PcStatus{PcStatusError, PcStatusNotStarted, PcStatusRunning, PcStatusStopped, PcStatusUnknown}
+}
 
 // PfsGroup enumerates the values for pfs group.
 type PfsGroup string
@@ -667,6 +887,11 @@ const (
 	PfsGroupPFS24 PfsGroup = "PFS24"
 )
 
+// PossiblePfsGroupValues returns an array of possible values for the PfsGroup const type.
+func PossiblePfsGroupValues() []PfsGroup {
+	return []PfsGroup{PfsGroupECP256, PfsGroupECP384, PfsGroupNone, PfsGroupPFS1, PfsGroupPFS2, PfsGroupPFS2048, PfsGroupPFS24}
+}
+
 // ProbeProtocol enumerates the values for probe protocol.
 type ProbeProtocol string
 
@@ -676,6 +901,11 @@ const (
 	// ProbeProtocolTCP ...
 	ProbeProtocolTCP ProbeProtocol = "Tcp"
 )
+
+// PossibleProbeProtocolValues returns an array of possible values for the ProbeProtocol const type.
+func PossibleProbeProtocolValues() []ProbeProtocol {
+	return []ProbeProtocol{ProbeProtocolHTTP, ProbeProtocolTCP}
+}
 
 // ProcessorArchitecture enumerates the values for processor architecture.
 type ProcessorArchitecture string
@@ -687,6 +917,11 @@ const (
 	X86 ProcessorArchitecture = "X86"
 )
 
+// PossibleProcessorArchitectureValues returns an array of possible values for the ProcessorArchitecture const type.
+func PossibleProcessorArchitectureValues() []ProcessorArchitecture {
+	return []ProcessorArchitecture{Amd64, X86}
+}
+
 // Protocol enumerates the values for protocol.
 type Protocol string
 
@@ -696,6 +931,11 @@ const (
 	// ProtocolUDP ...
 	ProtocolUDP Protocol = "UDP"
 )
+
+// PossibleProtocolValues returns an array of possible values for the Protocol const type.
+func PossibleProtocolValues() []Protocol {
+	return []Protocol{ProtocolTCP, ProtocolUDP}
+}
 
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
@@ -711,6 +951,11 @@ const (
 	ProvisioningStateUpdating ProvisioningState = "Updating"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{ProvisioningStateDeleting, ProvisioningStateFailed, ProvisioningStateSucceeded, ProvisioningStateUpdating}
+}
+
 // PublicIPAddressSkuName enumerates the values for public ip address sku name.
 type PublicIPAddressSkuName string
 
@@ -720,6 +965,11 @@ const (
 	// PublicIPAddressSkuNameStandard ...
 	PublicIPAddressSkuNameStandard PublicIPAddressSkuName = "Standard"
 )
+
+// PossiblePublicIPAddressSkuNameValues returns an array of possible values for the PublicIPAddressSkuName const type.
+func PossiblePublicIPAddressSkuNameValues() []PublicIPAddressSkuName {
+	return []PublicIPAddressSkuName{PublicIPAddressSkuNameBasic, PublicIPAddressSkuNameStandard}
+}
 
 // RouteNextHopType enumerates the values for route next hop type.
 type RouteNextHopType string
@@ -737,6 +987,11 @@ const (
 	RouteNextHopTypeVnetLocal RouteNextHopType = "VnetLocal"
 )
 
+// PossibleRouteNextHopTypeValues returns an array of possible values for the RouteNextHopType const type.
+func PossibleRouteNextHopTypeValues() []RouteNextHopType {
+	return []RouteNextHopType{RouteNextHopTypeInternet, RouteNextHopTypeNone, RouteNextHopTypeVirtualAppliance, RouteNextHopTypeVirtualNetworkGateway, RouteNextHopTypeVnetLocal}
+}
+
 // SecurityRuleAccess enumerates the values for security rule access.
 type SecurityRuleAccess string
 
@@ -747,6 +1002,11 @@ const (
 	SecurityRuleAccessDeny SecurityRuleAccess = "Deny"
 )
 
+// PossibleSecurityRuleAccessValues returns an array of possible values for the SecurityRuleAccess const type.
+func PossibleSecurityRuleAccessValues() []SecurityRuleAccess {
+	return []SecurityRuleAccess{SecurityRuleAccessAllow, SecurityRuleAccessDeny}
+}
+
 // SecurityRuleDirection enumerates the values for security rule direction.
 type SecurityRuleDirection string
 
@@ -756,6 +1016,11 @@ const (
 	// SecurityRuleDirectionOutbound ...
 	SecurityRuleDirectionOutbound SecurityRuleDirection = "Outbound"
 )
+
+// PossibleSecurityRuleDirectionValues returns an array of possible values for the SecurityRuleDirection const type.
+func PossibleSecurityRuleDirectionValues() []SecurityRuleDirection {
+	return []SecurityRuleDirection{SecurityRuleDirectionInbound, SecurityRuleDirectionOutbound}
+}
 
 // SecurityRuleProtocol enumerates the values for security rule protocol.
 type SecurityRuleProtocol string
@@ -768,6 +1033,11 @@ const (
 	// SecurityRuleProtocolUDP ...
 	SecurityRuleProtocolUDP SecurityRuleProtocol = "Udp"
 )
+
+// PossibleSecurityRuleProtocolValues returns an array of possible values for the SecurityRuleProtocol const type.
+func PossibleSecurityRuleProtocolValues() []SecurityRuleProtocol {
+	return []SecurityRuleProtocol{SecurityRuleProtocolAsterisk, SecurityRuleProtocolTCP, SecurityRuleProtocolUDP}
+}
 
 // ServiceProviderProvisioningState enumerates the values for service provider provisioning state.
 type ServiceProviderProvisioningState string
@@ -783,6 +1053,11 @@ const (
 	Provisioning ServiceProviderProvisioningState = "Provisioning"
 )
 
+// PossibleServiceProviderProvisioningStateValues returns an array of possible values for the ServiceProviderProvisioningState const type.
+func PossibleServiceProviderProvisioningStateValues() []ServiceProviderProvisioningState {
+	return []ServiceProviderProvisioningState{Deprovisioning, NotProvisioned, Provisioned, Provisioning}
+}
+
 // Severity enumerates the values for severity.
 type Severity string
 
@@ -792,6 +1067,11 @@ const (
 	// SeverityWarning ...
 	SeverityWarning Severity = "Warning"
 )
+
+// PossibleSeverityValues returns an array of possible values for the Severity const type.
+func PossibleSeverityValues() []Severity {
+	return []Severity{SeverityError, SeverityWarning}
+}
 
 // TransportProtocol enumerates the values for transport protocol.
 type TransportProtocol string
@@ -804,6 +1084,11 @@ const (
 	// TransportProtocolUDP ...
 	TransportProtocolUDP TransportProtocol = "Udp"
 )
+
+// PossibleTransportProtocolValues returns an array of possible values for the TransportProtocol const type.
+func PossibleTransportProtocolValues() []TransportProtocol {
+	return []TransportProtocol{TransportProtocolAll, TransportProtocolTCP, TransportProtocolUDP}
+}
 
 // VirtualNetworkGatewayConnectionStatus enumerates the values for virtual network gateway connection status.
 type VirtualNetworkGatewayConnectionStatus string
@@ -819,6 +1104,11 @@ const (
 	VirtualNetworkGatewayConnectionStatusUnknown VirtualNetworkGatewayConnectionStatus = "Unknown"
 )
 
+// PossibleVirtualNetworkGatewayConnectionStatusValues returns an array of possible values for the VirtualNetworkGatewayConnectionStatus const type.
+func PossibleVirtualNetworkGatewayConnectionStatusValues() []VirtualNetworkGatewayConnectionStatus {
+	return []VirtualNetworkGatewayConnectionStatus{VirtualNetworkGatewayConnectionStatusConnected, VirtualNetworkGatewayConnectionStatusConnecting, VirtualNetworkGatewayConnectionStatusNotConnected, VirtualNetworkGatewayConnectionStatusUnknown}
+}
+
 // VirtualNetworkGatewayConnectionType enumerates the values for virtual network gateway connection type.
 type VirtualNetworkGatewayConnectionType string
 
@@ -832,6 +1122,11 @@ const (
 	// VPNClient ...
 	VPNClient VirtualNetworkGatewayConnectionType = "VPNClient"
 )
+
+// PossibleVirtualNetworkGatewayConnectionTypeValues returns an array of possible values for the VirtualNetworkGatewayConnectionType const type.
+func PossibleVirtualNetworkGatewayConnectionTypeValues() []VirtualNetworkGatewayConnectionType {
+	return []VirtualNetworkGatewayConnectionType{ExpressRoute, IPsec, Vnet2Vnet, VPNClient}
+}
 
 // VirtualNetworkGatewaySkuName enumerates the values for virtual network gateway sku name.
 type VirtualNetworkGatewaySkuName string
@@ -853,6 +1148,11 @@ const (
 	VirtualNetworkGatewaySkuNameVpnGw3 VirtualNetworkGatewaySkuName = "VpnGw3"
 )
 
+// PossibleVirtualNetworkGatewaySkuNameValues returns an array of possible values for the VirtualNetworkGatewaySkuName const type.
+func PossibleVirtualNetworkGatewaySkuNameValues() []VirtualNetworkGatewaySkuName {
+	return []VirtualNetworkGatewaySkuName{VirtualNetworkGatewaySkuNameBasic, VirtualNetworkGatewaySkuNameHighPerformance, VirtualNetworkGatewaySkuNameStandard, VirtualNetworkGatewaySkuNameUltraPerformance, VirtualNetworkGatewaySkuNameVpnGw1, VirtualNetworkGatewaySkuNameVpnGw2, VirtualNetworkGatewaySkuNameVpnGw3}
+}
+
 // VirtualNetworkGatewaySkuTier enumerates the values for virtual network gateway sku tier.
 type VirtualNetworkGatewaySkuTier string
 
@@ -873,6 +1173,11 @@ const (
 	VirtualNetworkGatewaySkuTierVpnGw3 VirtualNetworkGatewaySkuTier = "VpnGw3"
 )
 
+// PossibleVirtualNetworkGatewaySkuTierValues returns an array of possible values for the VirtualNetworkGatewaySkuTier const type.
+func PossibleVirtualNetworkGatewaySkuTierValues() []VirtualNetworkGatewaySkuTier {
+	return []VirtualNetworkGatewaySkuTier{VirtualNetworkGatewaySkuTierBasic, VirtualNetworkGatewaySkuTierHighPerformance, VirtualNetworkGatewaySkuTierStandard, VirtualNetworkGatewaySkuTierUltraPerformance, VirtualNetworkGatewaySkuTierVpnGw1, VirtualNetworkGatewaySkuTierVpnGw2, VirtualNetworkGatewaySkuTierVpnGw3}
+}
+
 // VirtualNetworkGatewayType enumerates the values for virtual network gateway type.
 type VirtualNetworkGatewayType string
 
@@ -882,6 +1187,11 @@ const (
 	// VirtualNetworkGatewayTypeVpn ...
 	VirtualNetworkGatewayTypeVpn VirtualNetworkGatewayType = "Vpn"
 )
+
+// PossibleVirtualNetworkGatewayTypeValues returns an array of possible values for the VirtualNetworkGatewayType const type.
+func PossibleVirtualNetworkGatewayTypeValues() []VirtualNetworkGatewayType {
+	return []VirtualNetworkGatewayType{VirtualNetworkGatewayTypeExpressRoute, VirtualNetworkGatewayTypeVpn}
+}
 
 // VirtualNetworkPeeringState enumerates the values for virtual network peering state.
 type VirtualNetworkPeeringState string
@@ -895,6 +1205,11 @@ const (
 	Initiated VirtualNetworkPeeringState = "Initiated"
 )
 
+// PossibleVirtualNetworkPeeringStateValues returns an array of possible values for the VirtualNetworkPeeringState const type.
+func PossibleVirtualNetworkPeeringStateValues() []VirtualNetworkPeeringState {
+	return []VirtualNetworkPeeringState{Connected, Disconnected, Initiated}
+}
+
 // VpnClientProtocol enumerates the values for vpn client protocol.
 type VpnClientProtocol string
 
@@ -905,6 +1220,11 @@ const (
 	SSTP VpnClientProtocol = "SSTP"
 )
 
+// PossibleVpnClientProtocolValues returns an array of possible values for the VpnClientProtocol const type.
+func PossibleVpnClientProtocolValues() []VpnClientProtocol {
+	return []VpnClientProtocol{IkeV2, SSTP}
+}
+
 // VpnType enumerates the values for vpn type.
 type VpnType string
 
@@ -914,6 +1234,11 @@ const (
 	// RouteBased ...
 	RouteBased VpnType = "RouteBased"
 )
+
+// PossibleVpnTypeValues returns an array of possible values for the VpnType const type.
+func PossibleVpnTypeValues() []VpnType {
+	return []VpnType{PolicyBased, RouteBased}
+}
 
 // AddressSpace addressSpace contains an array of IP address ranges that can be used by subnets of the virtual
 // network.
@@ -1056,6 +1381,27 @@ type ApplicationGatewayAuthenticationCertificate struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayAuthenticationCertificate.
+func (agac ApplicationGatewayAuthenticationCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agac.ApplicationGatewayAuthenticationCertificatePropertiesFormat != nil {
+		objectMap["properties"] = agac.ApplicationGatewayAuthenticationCertificatePropertiesFormat
+	}
+	if agac.Name != nil {
+		objectMap["name"] = agac.Name
+	}
+	if agac.Etag != nil {
+		objectMap["etag"] = agac.Etag
+	}
+	if agac.Type != nil {
+		objectMap["type"] = agac.Type
+	}
+	if agac.ID != nil {
+		objectMap["id"] = agac.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayAuthenticationCertificate struct.
@@ -1382,6 +1728,27 @@ type ApplicationGatewayBackendAddressPool struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewayBackendAddressPool.
+func (agbap ApplicationGatewayBackendAddressPool) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agbap.ApplicationGatewayBackendAddressPoolPropertiesFormat != nil {
+		objectMap["properties"] = agbap.ApplicationGatewayBackendAddressPoolPropertiesFormat
+	}
+	if agbap.Name != nil {
+		objectMap["name"] = agbap.Name
+	}
+	if agbap.Etag != nil {
+		objectMap["etag"] = agbap.Etag
+	}
+	if agbap.Type != nil {
+		objectMap["type"] = agbap.Type
+	}
+	if agbap.ID != nil {
+		objectMap["id"] = agbap.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayBackendAddressPool struct.
 func (agbap *ApplicationGatewayBackendAddressPool) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1496,6 +1863,27 @@ type ApplicationGatewayBackendHTTPSettings struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayBackendHTTPSettings.
+func (agbhs ApplicationGatewayBackendHTTPSettings) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agbhs.ApplicationGatewayBackendHTTPSettingsPropertiesFormat != nil {
+		objectMap["properties"] = agbhs.ApplicationGatewayBackendHTTPSettingsPropertiesFormat
+	}
+	if agbhs.Name != nil {
+		objectMap["name"] = agbhs.Name
+	}
+	if agbhs.Etag != nil {
+		objectMap["etag"] = agbhs.Etag
+	}
+	if agbhs.Type != nil {
+		objectMap["type"] = agbhs.Type
+	}
+	if agbhs.ID != nil {
+		objectMap["id"] = agbhs.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayBackendHTTPSettings struct.
@@ -1757,6 +2145,27 @@ type ApplicationGatewayFrontendIPConfiguration struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewayFrontendIPConfiguration.
+func (agfic ApplicationGatewayFrontendIPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agfic.ApplicationGatewayFrontendIPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = agfic.ApplicationGatewayFrontendIPConfigurationPropertiesFormat
+	}
+	if agfic.Name != nil {
+		objectMap["name"] = agfic.Name
+	}
+	if agfic.Etag != nil {
+		objectMap["etag"] = agfic.Etag
+	}
+	if agfic.Type != nil {
+		objectMap["type"] = agfic.Type
+	}
+	if agfic.ID != nil {
+		objectMap["id"] = agfic.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayFrontendIPConfiguration struct.
 func (agfic *ApplicationGatewayFrontendIPConfiguration) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1845,6 +2254,27 @@ type ApplicationGatewayFrontendPort struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewayFrontendPort.
+func (agfp ApplicationGatewayFrontendPort) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agfp.ApplicationGatewayFrontendPortPropertiesFormat != nil {
+		objectMap["properties"] = agfp.ApplicationGatewayFrontendPortPropertiesFormat
+	}
+	if agfp.Name != nil {
+		objectMap["name"] = agfp.Name
+	}
+	if agfp.Etag != nil {
+		objectMap["etag"] = agfp.Etag
+	}
+	if agfp.Type != nil {
+		objectMap["type"] = agfp.Type
+	}
+	if agfp.ID != nil {
+		objectMap["id"] = agfp.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayFrontendPort struct.
 func (agfp *ApplicationGatewayFrontendPort) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1924,6 +2354,27 @@ type ApplicationGatewayHTTPListener struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayHTTPListener.
+func (aghl ApplicationGatewayHTTPListener) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aghl.ApplicationGatewayHTTPListenerPropertiesFormat != nil {
+		objectMap["properties"] = aghl.ApplicationGatewayHTTPListenerPropertiesFormat
+	}
+	if aghl.Name != nil {
+		objectMap["name"] = aghl.Name
+	}
+	if aghl.Etag != nil {
+		objectMap["etag"] = aghl.Etag
+	}
+	if aghl.Type != nil {
+		objectMap["type"] = aghl.Type
+	}
+	if aghl.ID != nil {
+		objectMap["id"] = aghl.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayHTTPListener struct.
@@ -2016,6 +2467,27 @@ type ApplicationGatewayIPConfiguration struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayIPConfiguration.
+func (agic ApplicationGatewayIPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agic.ApplicationGatewayIPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = agic.ApplicationGatewayIPConfigurationPropertiesFormat
+	}
+	if agic.Name != nil {
+		objectMap["name"] = agic.Name
+	}
+	if agic.Etag != nil {
+		objectMap["etag"] = agic.Etag
+	}
+	if agic.Type != nil {
+		objectMap["type"] = agic.Type
+	}
+	if agic.ID != nil {
+		objectMap["id"] = agic.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayIPConfiguration struct.
@@ -2201,6 +2673,27 @@ type ApplicationGatewayPathRule struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewayPathRule.
+func (agpr ApplicationGatewayPathRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agpr.ApplicationGatewayPathRulePropertiesFormat != nil {
+		objectMap["properties"] = agpr.ApplicationGatewayPathRulePropertiesFormat
+	}
+	if agpr.Name != nil {
+		objectMap["name"] = agpr.Name
+	}
+	if agpr.Etag != nil {
+		objectMap["etag"] = agpr.Etag
+	}
+	if agpr.Type != nil {
+		objectMap["type"] = agpr.Type
+	}
+	if agpr.ID != nil {
+		objectMap["id"] = agpr.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayPathRule struct.
 func (agpr *ApplicationGatewayPathRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2286,6 +2779,27 @@ type ApplicationGatewayProbe struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayProbe.
+func (agp ApplicationGatewayProbe) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agp.ApplicationGatewayProbePropertiesFormat != nil {
+		objectMap["properties"] = agp.ApplicationGatewayProbePropertiesFormat
+	}
+	if agp.Name != nil {
+		objectMap["name"] = agp.Name
+	}
+	if agp.Etag != nil {
+		objectMap["etag"] = agp.Etag
+	}
+	if agp.Type != nil {
+		objectMap["type"] = agp.Type
+	}
+	if agp.ID != nil {
+		objectMap["id"] = agp.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayProbe struct.
@@ -2433,6 +2947,27 @@ type ApplicationGatewayRedirectConfiguration struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewayRedirectConfiguration.
+func (agrc ApplicationGatewayRedirectConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agrc.ApplicationGatewayRedirectConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = agrc.ApplicationGatewayRedirectConfigurationPropertiesFormat
+	}
+	if agrc.Name != nil {
+		objectMap["name"] = agrc.Name
+	}
+	if agrc.Etag != nil {
+		objectMap["etag"] = agrc.Etag
+	}
+	if agrc.Type != nil {
+		objectMap["type"] = agrc.Type
+	}
+	if agrc.ID != nil {
+		objectMap["id"] = agrc.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayRedirectConfiguration struct.
 func (agrc *ApplicationGatewayRedirectConfiguration) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2525,6 +3060,27 @@ type ApplicationGatewayRequestRoutingRule struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayRequestRoutingRule.
+func (agrrr ApplicationGatewayRequestRoutingRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agrrr.ApplicationGatewayRequestRoutingRulePropertiesFormat != nil {
+		objectMap["properties"] = agrrr.ApplicationGatewayRequestRoutingRulePropertiesFormat
+	}
+	if agrrr.Name != nil {
+		objectMap["name"] = agrrr.Name
+	}
+	if agrrr.Etag != nil {
+		objectMap["etag"] = agrrr.Etag
+	}
+	if agrrr.Type != nil {
+		objectMap["type"] = agrrr.Type
+	}
+	if agrrr.ID != nil {
+		objectMap["id"] = agrrr.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayRequestRoutingRule struct.
@@ -2776,6 +3332,27 @@ type ApplicationGatewaySslCertificate struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ApplicationGatewaySslCertificate.
+func (agsc ApplicationGatewaySslCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agsc.ApplicationGatewaySslCertificatePropertiesFormat != nil {
+		objectMap["properties"] = agsc.ApplicationGatewaySslCertificatePropertiesFormat
+	}
+	if agsc.Name != nil {
+		objectMap["name"] = agsc.Name
+	}
+	if agsc.Etag != nil {
+		objectMap["etag"] = agsc.Etag
+	}
+	if agsc.Type != nil {
+		objectMap["type"] = agsc.Type
+	}
+	if agsc.ID != nil {
+		objectMap["id"] = agsc.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewaySslCertificate struct.
 func (agsc *ApplicationGatewaySslCertificate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2870,6 +3447,21 @@ type ApplicationGatewaySslPredefinedPolicy struct {
 	*ApplicationGatewaySslPredefinedPolicyPropertiesFormat `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewaySslPredefinedPolicy.
+func (agspp ApplicationGatewaySslPredefinedPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agspp.Name != nil {
+		objectMap["name"] = agspp.Name
+	}
+	if agspp.ApplicationGatewaySslPredefinedPolicyPropertiesFormat != nil {
+		objectMap["properties"] = agspp.ApplicationGatewaySslPredefinedPolicyPropertiesFormat
+	}
+	if agspp.ID != nil {
+		objectMap["id"] = agspp.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewaySslPredefinedPolicy struct.
@@ -3081,6 +3673,27 @@ type ApplicationGatewayURLPathMap struct {
 	Type *string `json:"type,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ApplicationGatewayURLPathMap.
+func (agupm ApplicationGatewayURLPathMap) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if agupm.ApplicationGatewayURLPathMapPropertiesFormat != nil {
+		objectMap["properties"] = agupm.ApplicationGatewayURLPathMapPropertiesFormat
+	}
+	if agupm.Name != nil {
+		objectMap["name"] = agupm.Name
+	}
+	if agupm.Etag != nil {
+		objectMap["etag"] = agupm.Etag
+	}
+	if agupm.Type != nil {
+		objectMap["type"] = agupm.Type
+	}
+	if agupm.ID != nil {
+		objectMap["id"] = agupm.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationGatewayURLPathMap struct.
@@ -3750,6 +4363,24 @@ type BackendAddressPool struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for BackendAddressPool.
+func (bap BackendAddressPool) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bap.BackendAddressPoolPropertiesFormat != nil {
+		objectMap["properties"] = bap.BackendAddressPoolPropertiesFormat
+	}
+	if bap.Name != nil {
+		objectMap["name"] = bap.Name
+	}
+	if bap.Etag != nil {
+		objectMap["etag"] = bap.Etag
+	}
+	if bap.ID != nil {
+		objectMap["id"] = bap.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for BackendAddressPool struct.
@@ -4590,6 +5221,24 @@ type ExpressRouteCircuitAuthorization struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ExpressRouteCircuitAuthorization.
+func (erca ExpressRouteCircuitAuthorization) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if erca.AuthorizationPropertiesFormat != nil {
+		objectMap["properties"] = erca.AuthorizationPropertiesFormat
+	}
+	if erca.Name != nil {
+		objectMap["name"] = erca.Name
+	}
+	if erca.Etag != nil {
+		objectMap["etag"] = erca.Etag
+	}
+	if erca.ID != nil {
+		objectMap["id"] = erca.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ExpressRouteCircuitAuthorization struct.
 func (erca *ExpressRouteCircuitAuthorization) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4851,6 +5500,24 @@ type ExpressRouteCircuitPeering struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ExpressRouteCircuitPeering.
+func (ercp ExpressRouteCircuitPeering) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ercp.ExpressRouteCircuitPeeringPropertiesFormat != nil {
+		objectMap["properties"] = ercp.ExpressRouteCircuitPeeringPropertiesFormat
+	}
+	if ercp.Name != nil {
+		objectMap["name"] = ercp.Name
+	}
+	if ercp.Etag != nil {
+		objectMap["etag"] = ercp.Etag
+	}
+	if ercp.ID != nil {
+		objectMap["id"] = ercp.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ExpressRouteCircuitPeering struct.
@@ -5806,6 +6473,18 @@ type FlowLogInformation struct {
 	*FlowLogProperties `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FlowLogInformation.
+func (fli FlowLogInformation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fli.TargetResourceID != nil {
+		objectMap["targetResourceId"] = fli.TargetResourceID
+	}
+	if fli.FlowLogProperties != nil {
+		objectMap["properties"] = fli.FlowLogProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FlowLogInformation struct.
 func (fli *FlowLogInformation) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5867,6 +6546,27 @@ type FrontendIPConfiguration struct {
 	Zones *[]string `json:"zones,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for FrontendIPConfiguration.
+func (fic FrontendIPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fic.FrontendIPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = fic.FrontendIPConfigurationPropertiesFormat
+	}
+	if fic.Name != nil {
+		objectMap["name"] = fic.Name
+	}
+	if fic.Etag != nil {
+		objectMap["etag"] = fic.Etag
+	}
+	if fic.Zones != nil {
+		objectMap["zones"] = fic.Zones
+	}
+	if fic.ID != nil {
+		objectMap["id"] = fic.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for FrontendIPConfiguration struct.
@@ -5988,6 +6688,24 @@ type InboundNatPool struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for InboundNatPool.
+func (inp InboundNatPool) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if inp.InboundNatPoolPropertiesFormat != nil {
+		objectMap["properties"] = inp.InboundNatPoolPropertiesFormat
+	}
+	if inp.Name != nil {
+		objectMap["name"] = inp.Name
+	}
+	if inp.Etag != nil {
+		objectMap["etag"] = inp.Etag
+	}
+	if inp.ID != nil {
+		objectMap["id"] = inp.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for InboundNatPool struct.
 func (inp *InboundNatPool) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6066,6 +6784,24 @@ type InboundNatRule struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for InboundNatRule.
+func (inr InboundNatRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if inr.InboundNatRulePropertiesFormat != nil {
+		objectMap["properties"] = inr.InboundNatRulePropertiesFormat
+	}
+	if inr.Name != nil {
+		objectMap["name"] = inr.Name
+	}
+	if inr.Etag != nil {
+		objectMap["etag"] = inr.Etag
+	}
+	if inr.ID != nil {
+		objectMap["id"] = inr.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for InboundNatRule struct.
@@ -6496,6 +7232,24 @@ type InterfaceIPConfiguration struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for InterfaceIPConfiguration.
+func (iic InterfaceIPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iic.InterfaceIPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = iic.InterfaceIPConfigurationPropertiesFormat
+	}
+	if iic.Name != nil {
+		objectMap["name"] = iic.Name
+	}
+	if iic.Etag != nil {
+		objectMap["etag"] = iic.Etag
+	}
+	if iic.ID != nil {
+		objectMap["id"] = iic.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for InterfaceIPConfiguration struct.
@@ -7168,6 +7922,24 @@ type IPConfiguration struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for IPConfiguration.
+func (ic IPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ic.IPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = ic.IPConfigurationPropertiesFormat
+	}
+	if ic.Name != nil {
+		objectMap["name"] = ic.Name
+	}
+	if ic.Etag != nil {
+		objectMap["etag"] = ic.Etag
+	}
+	if ic.ID != nil {
+		objectMap["id"] = ic.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IPConfiguration struct.
@@ -8107,6 +8879,24 @@ type LoadBalancingRule struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for LoadBalancingRule.
+func (lbr LoadBalancingRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lbr.LoadBalancingRulePropertiesFormat != nil {
+		objectMap["properties"] = lbr.LoadBalancingRulePropertiesFormat
+	}
+	if lbr.Name != nil {
+		objectMap["name"] = lbr.Name
+	}
+	if lbr.Etag != nil {
+		objectMap["etag"] = lbr.Etag
+	}
+	if lbr.ID != nil {
+		objectMap["id"] = lbr.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for LoadBalancingRule struct.
 func (lbr *LoadBalancingRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8648,6 +9438,24 @@ type Operation struct {
 	*OperationPropertiesFormat `json:"properties,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Operation.
+func (o Operation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if o.Name != nil {
+		objectMap["name"] = o.Name
+	}
+	if o.Display != nil {
+		objectMap["display"] = o.Display
+	}
+	if o.Origin != nil {
+		objectMap["origin"] = o.Origin
+	}
+	if o.OperationPropertiesFormat != nil {
+		objectMap["properties"] = o.OperationPropertiesFormat
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Operation struct.
 func (o *Operation) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8840,6 +9648,24 @@ type OutboundNatRule struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for OutboundNatRule.
+func (onr OutboundNatRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if onr.OutboundNatRulePropertiesFormat != nil {
+		objectMap["properties"] = onr.OutboundNatRulePropertiesFormat
+	}
+	if onr.Name != nil {
+		objectMap["name"] = onr.Name
+	}
+	if onr.Etag != nil {
+		objectMap["etag"] = onr.Etag
+	}
+	if onr.ID != nil {
+		objectMap["id"] = onr.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for OutboundNatRule struct.
 func (onr *OutboundNatRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8906,6 +9732,15 @@ type OutboundNatRulePropertiesFormat struct {
 // PacketCapture parameters that define the create packet capture operation.
 type PacketCapture struct {
 	*PacketCaptureParameters `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PacketCapture.
+func (pc PacketCapture) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pc.PacketCaptureParameters != nil {
+		objectMap["properties"] = pc.PacketCaptureParameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for PacketCapture struct.
@@ -8993,6 +9828,24 @@ type PacketCaptureResult struct {
 	ID                             *string `json:"id,omitempty"`
 	Etag                           *string `json:"etag,omitempty"`
 	*PacketCaptureResultProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PacketCaptureResult.
+func (pcr PacketCaptureResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pcr.Name != nil {
+		objectMap["name"] = pcr.Name
+	}
+	if pcr.ID != nil {
+		objectMap["id"] = pcr.ID
+	}
+	if pcr.Etag != nil {
+		objectMap["etag"] = pcr.Etag
+	}
+	if pcr.PacketCaptureResultProperties != nil {
+		objectMap["properties"] = pcr.PacketCaptureResultProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for PacketCaptureResult struct.
@@ -9478,6 +10331,24 @@ type Probe struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Probe.
+func (p Probe) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if p.ProbePropertiesFormat != nil {
+		objectMap["properties"] = p.ProbePropertiesFormat
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	if p.Etag != nil {
+		objectMap["etag"] = p.Etag
+	}
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Probe struct.
@@ -10039,6 +10910,24 @@ type ResourceNavigationLink struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ResourceNavigationLink.
+func (rnl ResourceNavigationLink) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rnl.ResourceNavigationLinkFormat != nil {
+		objectMap["properties"] = rnl.ResourceNavigationLinkFormat
+	}
+	if rnl.Name != nil {
+		objectMap["name"] = rnl.Name
+	}
+	if rnl.Etag != nil {
+		objectMap["etag"] = rnl.Etag
+	}
+	if rnl.ID != nil {
+		objectMap["id"] = rnl.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ResourceNavigationLink struct.
 func (rnl *ResourceNavigationLink) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -10119,6 +11008,24 @@ type Route struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Route.
+func (r Route) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.RoutePropertiesFormat != nil {
+		objectMap["properties"] = r.RoutePropertiesFormat
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Etag != nil {
+		objectMap["etag"] = r.Etag
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Route struct.
@@ -11935,6 +12842,24 @@ type SecurityRule struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SecurityRule.
+func (sr SecurityRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sr.SecurityRulePropertiesFormat != nil {
+		objectMap["properties"] = sr.SecurityRulePropertiesFormat
+	}
+	if sr.Name != nil {
+		objectMap["name"] = sr.Name
+	}
+	if sr.Etag != nil {
+		objectMap["etag"] = sr.Etag
+	}
+	if sr.ID != nil {
+		objectMap["id"] = sr.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SecurityRule struct.
 func (sr *SecurityRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -12259,6 +13184,24 @@ type Subnet struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Subnet.
+func (s Subnet) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.SubnetPropertiesFormat != nil {
+		objectMap["properties"] = s.SubnetPropertiesFormat
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Etag != nil {
+		objectMap["etag"] = s.Etag
+	}
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Subnet struct.
@@ -12617,6 +13560,18 @@ type TroubleshootingParameters struct {
 	// TargetResourceID - The target resource to troubleshoot.
 	TargetResourceID           *string `json:"targetResourceId,omitempty"`
 	*TroubleshootingProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for TroubleshootingParameters.
+func (tp TroubleshootingParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tp.TargetResourceID != nil {
+		objectMap["targetResourceId"] = tp.TargetResourceID
+	}
+	if tp.TroubleshootingProperties != nil {
+		objectMap["properties"] = tp.TroubleshootingProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for TroubleshootingParameters struct.
@@ -13790,6 +14745,24 @@ type VirtualNetworkGatewayIPConfiguration struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VirtualNetworkGatewayIPConfiguration.
+func (vngic VirtualNetworkGatewayIPConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vngic.VirtualNetworkGatewayIPConfigurationPropertiesFormat != nil {
+		objectMap["properties"] = vngic.VirtualNetworkGatewayIPConfigurationPropertiesFormat
+	}
+	if vngic.Name != nil {
+		objectMap["name"] = vngic.Name
+	}
+	if vngic.Etag != nil {
+		objectMap["etag"] = vngic.Etag
+	}
+	if vngic.ID != nil {
+		objectMap["id"] = vngic.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VirtualNetworkGatewayIPConfiguration struct.
 func (vngic *VirtualNetworkGatewayIPConfiguration) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -14803,6 +15776,24 @@ type VirtualNetworkPeering struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VirtualNetworkPeering.
+func (vnp VirtualNetworkPeering) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vnp.VirtualNetworkPeeringPropertiesFormat != nil {
+		objectMap["properties"] = vnp.VirtualNetworkPeeringPropertiesFormat
+	}
+	if vnp.Name != nil {
+		objectMap["name"] = vnp.Name
+	}
+	if vnp.Etag != nil {
+		objectMap["etag"] = vnp.Etag
+	}
+	if vnp.ID != nil {
+		objectMap["id"] = vnp.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VirtualNetworkPeering struct.
 func (vnp *VirtualNetworkPeering) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -15304,6 +16295,24 @@ type VpnClientRevokedCertificate struct {
 	ID *string `json:"id,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VpnClientRevokedCertificate.
+func (vcrc VpnClientRevokedCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vcrc.VpnClientRevokedCertificatePropertiesFormat != nil {
+		objectMap["properties"] = vcrc.VpnClientRevokedCertificatePropertiesFormat
+	}
+	if vcrc.Name != nil {
+		objectMap["name"] = vcrc.Name
+	}
+	if vcrc.Etag != nil {
+		objectMap["etag"] = vcrc.Etag
+	}
+	if vcrc.ID != nil {
+		objectMap["id"] = vcrc.ID
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VpnClientRevokedCertificate struct.
 func (vcrc *VpnClientRevokedCertificate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -15374,6 +16383,24 @@ type VpnClientRootCertificate struct {
 	Etag *string `json:"etag,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VpnClientRootCertificate.
+func (vcrc VpnClientRootCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vcrc.VpnClientRootCertificatePropertiesFormat != nil {
+		objectMap["properties"] = vcrc.VpnClientRootCertificatePropertiesFormat
+	}
+	if vcrc.Name != nil {
+		objectMap["name"] = vcrc.Name
+	}
+	if vcrc.Etag != nil {
+		objectMap["etag"] = vcrc.Etag
+	}
+	if vcrc.ID != nil {
+		objectMap["id"] = vcrc.ID
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VpnClientRootCertificate struct.

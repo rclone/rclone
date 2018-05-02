@@ -69,6 +69,12 @@ func load_terminfo() ([]byte, error) {
 		}
 	}
 
+	// next, /lib/terminfo
+	data, err = ti_try_path("/lib/terminfo")
+	if err == nil {
+		return data, nil
+	}
+
 	// fall back to /usr/share/terminfo
 	return ti_try_path("/usr/share/terminfo")
 }

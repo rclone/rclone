@@ -25,10 +25,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/status"
 
 	"cloud.google.com/go/spanner/internal/testutil"
 	sppb "google.golang.org/genproto/googleapis/spanner/v1"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
@@ -222,7 +222,7 @@ func TestTakeFromIdleListChecked(t *testing.T) {
 	}
 	// Inject session error to mockclient, and take the session from the session pool, the old session should be destroyed and
 	// the session pool will create a new session.
-	sc.InjectError("GetSession", grpc.Errorf(codes.NotFound, "Session not found:"))
+	sc.InjectError("GetSession", status.Errorf(codes.NotFound, "Session not found:"))
 	// Delay to trigger sessionPool.Take to ping the session.
 	<-time.After(time.Second)
 	sh, err = sp.take(context.Background())
@@ -279,7 +279,7 @@ func TestTakeFromIdleWriteListChecked(t *testing.T) {
 	}
 	// Inject session error to mockclient, and take the session from the session pool, the old session should be destroyed and
 	// the session pool will create a new session.
-	sc.InjectError("GetSession", grpc.Errorf(codes.NotFound, "Session not found:"))
+	sc.InjectError("GetSession", status.Errorf(codes.NotFound, "Session not found:"))
 	// Delay to trigger sessionPool.Take to ping the session.
 	<-time.After(time.Second)
 	sh, err = sp.takeWriteSession(context.Background())
@@ -369,7 +369,7 @@ func TestMaxBurst(t *testing.T) {
 	sp, sc, cancel := setup(t, SessionPoolConfig{MaxBurst: 1})
 	defer cancel()
 	// Will cause session creation RPC to be retried forever.
-	sc.InjectError("CreateSession", grpc.Errorf(codes.Unavailable, "try later"))
+	sc.InjectError("CreateSession", status.Errorf(codes.Unavailable, "try later"))
 	// This session request will never finish until the injected error is cleared.
 	go sp.take(context.Background())
 	// Poll for the execution of the first session request.
@@ -619,7 +619,7 @@ func TestSessionHealthCheck(t *testing.T) {
 	if err != nil {
 		t.Errorf("cannot get session from session pool: %v", err)
 	}
-	sc.InjectError("GetSession", grpc.Errorf(codes.NotFound, "Session not found:"))
+	sc.InjectError("GetSession", status.Errorf(codes.NotFound, "Session not found:"))
 	// Wait for healthcheck workers to find the broken session and tear it down.
 	<-time.After(1 * time.Second)
 	s := sh.session

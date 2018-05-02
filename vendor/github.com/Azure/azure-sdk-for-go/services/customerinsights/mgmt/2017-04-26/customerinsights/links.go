@@ -43,9 +43,11 @@ func NewLinksClientWithBaseURI(baseURI string, subscriptionID string) LinksClien
 }
 
 // CreateOrUpdate creates a link or updates an existing link in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. linkName is the name of the
-// link. parameters is parameters supplied to the CreateOrUpdate Link operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// linkName - the name of the link.
+// parameters - parameters supplied to the CreateOrUpdate Link operation.
 func (client LinksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, linkName string, parameters LinkResourceFormat) (result LinksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: linkName,
@@ -91,7 +93,7 @@ func (client LinksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/links/{linkName}", pathParameters),
@@ -129,9 +131,10 @@ func (client LinksClient) CreateOrUpdateResponder(resp *http.Response) (result L
 }
 
 // Delete deletes a link in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. linkName is the name of the
-// link.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// linkName - the name of the link.
 func (client LinksClient) Delete(ctx context.Context, resourceGroupName string, hubName string, linkName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, linkName)
 	if err != nil {
@@ -196,9 +199,10 @@ func (client LinksClient) DeleteResponder(resp *http.Response) (result autorest.
 }
 
 // Get gets a link in the hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. linkName is the name of the
-// link.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// linkName - the name of the link.
 func (client LinksClient) Get(ctx context.Context, resourceGroupName string, hubName string, linkName string) (result LinkResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, linkName)
 	if err != nil {
@@ -264,8 +268,9 @@ func (client LinksClient) GetResponder(resp *http.Response) (result LinkResource
 }
 
 // ListByHub gets all the links in the specified hub.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
 func (client LinksClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string) (result LinkListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName)

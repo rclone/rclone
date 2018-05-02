@@ -41,9 +41,10 @@ func NewAlertsClientWithBaseURI(baseURI string, subscriptionID string) AlertsCli
 }
 
 // Clear clear the alerts.
-//
-// parameters is the clear alert request. resourceGroupName is the resource group name managerName is the manager
-// name
+// Parameters:
+// parameters - the clear alert request.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AlertsClient) Clear(ctx context.Context, parameters ClearAlertRequest, resourceGroupName string, managerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -89,7 +90,7 @@ func (client AlertsClient) ClearPreparer(ctx context.Context, parameters ClearAl
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/clearAlerts", pathParameters),
@@ -118,8 +119,10 @@ func (client AlertsClient) ClearResponder(resp *http.Response) (result autorest.
 }
 
 // ListByManager retrieves all the alerts in a manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name filter is oData Filter options
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// filter - oData Filter options
 func (client AlertsClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string, filter string) (result AlertListPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -222,9 +225,11 @@ func (client AlertsClient) ListByManagerComplete(ctx context.Context, resourceGr
 }
 
 // SendTestEmail sends a test alert email.
-//
-// deviceName is the device name parameters is the send test alert email request. resourceGroupName is the resource
-// group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// parameters - the send test alert email request.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client AlertsClient) SendTestEmail(ctx context.Context, deviceName string, parameters SendTestAlertEmailRequest, resourceGroupName string, managerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -271,7 +276,7 @@ func (client AlertsClient) SendTestEmailPreparer(ctx context.Context, deviceName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{deviceName}/sendTestAlertEmail", pathParameters),

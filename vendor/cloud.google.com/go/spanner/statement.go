@@ -66,12 +66,12 @@ var (
 	errNoType   = errors.New("no type information")
 )
 
-// bindParams binds parameters in a Statement to a sppb.ExecuteSqlRequest.
-func (s *Statement) bindParams(r *sppb.ExecuteSqlRequest) error {
-	r.Params = &proto3.Struct{
+// bindParams binds parameters in a Statement to a sppb.ExecuteSqlRequest or sppb.PartitionQueryRequest.
+func (s *Statement) bindParams(i interface{}) error {
+	params := &proto3.Struct{
 		Fields: map[string]*proto3.Value{},
 	}
-	r.ParamTypes = map[string]*sppb.Type{}
+	paramTypes := map[string]*sppb.Type{}
 	for k, v := range s.Params {
 		if v == nil {
 			return errBindParam(k, v, errNilParam)
@@ -83,8 +83,19 @@ func (s *Statement) bindParams(r *sppb.ExecuteSqlRequest) error {
 		if t == nil { // should not happen, because of nil check above
 			return errBindParam(k, v, errNoType)
 		}
-		r.Params.Fields[k] = val
-		r.ParamTypes[k] = t
+		params.Fields[k] = val
+		paramTypes[k] = t
+	}
+
+	switch r := i.(type) {
+	default:
+		return fmt.Errorf("failed to bind query parameter, unexpected request type: %v", r)
+	case *sppb.ExecuteSqlRequest:
+		r.Params = params
+		r.ParamTypes = paramTypes
+	case *sppb.PartitionQueryRequest:
+		r.Params = params
+		r.ParamTypes = paramTypes
 	}
 	return nil
 }

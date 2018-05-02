@@ -37,8 +37,9 @@ func NewPermissionsClient(azureRegion AzureRegions) PermissionsClient {
 
 // Add adds a user to the allowed list of users to access this LUIS application. Users are added using their email
 // address.
-//
-// appID is the application ID. userToAdd is a model containing the user's email address.
+// Parameters:
+// appID - the application ID.
+// userToAdd - a model containing the user's email address.
 func (client PermissionsClient) Add(ctx context.Context, appID uuid.UUID, userToAdd UserCollaborator) (result OperationStatus, err error) {
 	req, err := client.AddPreparer(ctx, appID, userToAdd)
 	if err != nil {
@@ -72,7 +73,7 @@ func (client PermissionsClient) AddPreparer(ctx context.Context, appID uuid.UUID
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/permissions", pathParameters),
@@ -102,8 +103,9 @@ func (client PermissionsClient) AddResponder(resp *http.Response) (result Operat
 
 // Delete removes a user from the allowed list of users to access this LUIS application. Users are removed using their
 // email address.
-//
-// appID is the application ID. userToDelete is a model containing the user's email address.
+// Parameters:
+// appID - the application ID.
+// userToDelete - a model containing the user's email address.
 func (client PermissionsClient) Delete(ctx context.Context, appID uuid.UUID, userToDelete UserCollaborator) (result OperationStatus, err error) {
 	req, err := client.DeletePreparer(ctx, appID, userToDelete)
 	if err != nil {
@@ -137,7 +139,7 @@ func (client PermissionsClient) DeletePreparer(ctx context.Context, appID uuid.U
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsDelete(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/permissions", pathParameters),
@@ -166,8 +168,8 @@ func (client PermissionsClient) DeleteResponder(resp *http.Response) (result Ope
 }
 
 // List gets the list of user emails that have permissions to access your application.
-//
-// appID is the application ID.
+// Parameters:
+// appID - the application ID.
 func (client PermissionsClient) List(ctx context.Context, appID uuid.UUID) (result UserAccessList, err error) {
 	req, err := client.ListPreparer(ctx, appID)
 	if err != nil {
@@ -229,8 +231,9 @@ func (client PermissionsClient) ListResponder(resp *http.Response) (result UserA
 
 // Update replaces the current users access list with the one sent in the body. If an empty list is sent, all access to
 // other users will be removed.
-//
-// appID is the application ID. collaborators is a model containing a list of user's email addresses.
+// Parameters:
+// appID - the application ID.
+// collaborators - a model containing a list of user's email addresses.
 func (client PermissionsClient) Update(ctx context.Context, appID uuid.UUID, collaborators CollaboratorsArray) (result OperationStatus, err error) {
 	req, err := client.UpdatePreparer(ctx, appID, collaborators)
 	if err != nil {
@@ -264,7 +267,7 @@ func (client PermissionsClient) UpdatePreparer(ctx context.Context, appID uuid.U
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/permissions", pathParameters),

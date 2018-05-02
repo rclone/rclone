@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // MachineLearningComputeClient is the these APIs allow end users to operate on Azure Machine Learning Compute
 // resources. They support the following operations:<ul><li>Create or update a cluster</li><li>Get a
 // cluster</li><li>Patch a cluster</li><li>Delete a cluster</li><li>Get keys for a cluster</li><li>Check if updates are
@@ -33,16 +34,19 @@ type MachineLearningComputeClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NewMachineLearningComputeClient creates an instance of the MachineLearningComputeClient client.
 func NewMachineLearningComputeClient(subscriptionID string) MachineLearningComputeClient {
 	return NewMachineLearningComputeClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // NewMachineLearningComputeClientWithBaseURI creates an instance of the MachineLearningComputeClient client.
 func NewMachineLearningComputeClientWithBaseURI(baseURI string, subscriptionID string) MachineLearningComputeClient {
 	return MachineLearningComputeClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListAvailableOperations gets all available operations.
 func (client MachineLearningComputeClient) ListAvailableOperations(ctx context.Context) (result AvailableOperations, err error) {
 	req, err := client.ListAvailableOperationsPreparer(ctx)
@@ -66,6 +70,7 @@ func (client MachineLearningComputeClient) ListAvailableOperations(ctx context.C
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListAvailableOperationsPreparer prepares the ListAvailableOperations request.
 func (client MachineLearningComputeClient) ListAvailableOperationsPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2017-08-01-preview"
@@ -81,6 +86,7 @@ func (client MachineLearningComputeClient) ListAvailableOperationsPreparer(ctx c
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListAvailableOperationsSender sends the ListAvailableOperations request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachineLearningComputeClient) ListAvailableOperationsSender(req *http.Request) (*http.Response, error) {
@@ -88,6 +94,7 @@ func (client MachineLearningComputeClient) ListAvailableOperationsSender(req *ht
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2017-08-01-preview/compute instead.
 // ListAvailableOperationsResponder handles the response to the ListAvailableOperations request. The method always
 // closes the http.Response Body.
 func (client MachineLearningComputeClient) ListAvailableOperationsResponder(resp *http.Response) (result AvailableOperations, err error) {

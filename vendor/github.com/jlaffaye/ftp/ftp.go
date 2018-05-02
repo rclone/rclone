@@ -30,6 +30,9 @@ type ServerConn struct {
 	// Do not use EPSV mode
 	DisableEPSV bool
 
+	// Timezone that the server is in
+	Location *time.Location
+
 	conn          *textproto.Conn
 	host          string
 	timeout       time.Duration
@@ -83,6 +86,7 @@ func DialTimeout(addr string, timeout time.Duration) (*ServerConn, error) {
 		host:     remoteAddr.IP.String(),
 		timeout:  timeout,
 		features: make(map[string]string),
+		Location: time.UTC,
 	}
 
 	_, _, err = c.conn.ReadResponse(StatusReady)
@@ -374,7 +378,7 @@ func (c *ServerConn) List(path string) (entries []*Entry, err error) {
 	scanner := bufio.NewScanner(r)
 	now := time.Now()
 	for scanner.Scan() {
-		entry, err := parser(scanner.Text(), now)
+		entry, err := parser(scanner.Text(), now, c.Location)
 		if err == nil {
 			entries = append(entries, entry)
 		}

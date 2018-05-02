@@ -41,8 +41,10 @@ func NewDevicesClientWithBaseURI(baseURI string, subscriptionID string) DevicesC
 }
 
 // AuthorizeForServiceEncryptionKeyRollover authorizes the specified device for service data encryption key rollover.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) AuthorizeForServiceEncryptionKeyRollover(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -114,9 +116,10 @@ func (client DevicesClient) AuthorizeForServiceEncryptionKeyRolloverResponder(re
 }
 
 // Configure complete minimal setup before using the device.
-//
-// parameters is the minimal properties to configure a device. resourceGroupName is the resource group name
-// managerName is the manager name
+// Parameters:
+// parameters - the minimal properties to configure a device.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) Configure(ctx context.Context, parameters ConfigureDeviceRequest, resourceGroupName string, managerName string) (result DevicesConfigureFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -160,7 +163,7 @@ func (client DevicesClient) ConfigurePreparer(ctx context.Context, parameters Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/configureDevice", pathParameters),
@@ -197,8 +200,10 @@ func (client DevicesClient) ConfigureResponder(resp *http.Response) (result auto
 }
 
 // Deactivate deactivates the device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) Deactivate(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result DevicesDeactivateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -272,8 +277,10 @@ func (client DevicesClient) DeactivateResponder(resp *http.Response) (result aut
 }
 
 // Delete deletes the device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) Delete(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result DevicesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -347,10 +354,12 @@ func (client DevicesClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Failover failovers a set of volume containers from a specified source device to a target device.
-//
-// sourceDeviceName is the source device name on which failover is performed. parameters is failoverRequest
-// containing the source device and the list of volume containers to be failed over. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// sourceDeviceName - the source device name on which failover is performed.
+// parameters - failoverRequest containing the source device and the list of volume containers to be failed
+// over.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) Failover(ctx context.Context, sourceDeviceName string, parameters FailoverRequest, resourceGroupName string, managerName string) (result DevicesFailoverFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -389,7 +398,7 @@ func (client DevicesClient) FailoverPreparer(ctx context.Context, sourceDeviceNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{sourceDeviceName}/failover", pathParameters),
@@ -426,10 +435,13 @@ func (client DevicesClient) FailoverResponder(resp *http.Response) (result autor
 }
 
 // Get returns the properties of the specified device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
-// expand is specify $expand=details to populate additional fields related to the device or $expand=rolloverdetails
-// to populate additional fields related to the service data encryption key rollover on device
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// expand - specify $expand=details to populate additional fields related to the device or
+// $expand=rolloverdetails to populate additional fields related to the service data encryption key rollover on
+// device
 func (client DevicesClient) Get(ctx context.Context, deviceName string, resourceGroupName string, managerName string, expand string) (result Device, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -505,8 +517,10 @@ func (client DevicesClient) GetResponder(resp *http.Response) (result Device, er
 }
 
 // GetUpdateSummary returns the update summary of the specified device name.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) GetUpdateSummary(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result Updates, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -579,8 +593,10 @@ func (client DevicesClient) GetUpdateSummaryResponder(resp *http.Response) (resu
 }
 
 // InstallUpdates downloads and installs the updates on the device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) InstallUpdates(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result DevicesInstallUpdatesFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -654,10 +670,12 @@ func (client DevicesClient) InstallUpdatesResponder(resp *http.Response) (result
 }
 
 // ListByManager returns the list of devices for the specified manager.
-//
-// resourceGroupName is the resource group name managerName is the manager name expand is specify $expand=details
-// to populate additional fields related to the device or $expand=rolloverdetails to populate additional fields
-// related to the service data encryption key rollover on device
+// Parameters:
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// expand - specify $expand=details to populate additional fields related to the device or
+// $expand=rolloverdetails to populate additional fields related to the service data encryption key rollover on
+// device
 func (client DevicesClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string, expand string) (result DeviceList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -734,8 +752,10 @@ func (client DevicesClient) ListByManagerResponder(resp *http.Response) (result 
 // ListFailoverSets returns all failover sets for a given device and their eligibility for participating in a failover.
 // A failover set refers to a set of volume containers that need to be failed-over as a single unit to maintain data
 // integrity.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) ListFailoverSets(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result FailoverSetsList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -809,10 +829,11 @@ func (client DevicesClient) ListFailoverSetsResponder(resp *http.Response) (resu
 
 // ListFailoverTargets given a list of volume containers to be failed over from a source device, this method returns
 // the eligibility result, as a failover target, for all devices under that resource.
-//
-// sourceDeviceName is the source device name on which failover is performed. parameters is
-// listFailoverTargetsRequest containing the list of volume containers to be failed over. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// sourceDeviceName - the source device name on which failover is performed.
+// parameters - listFailoverTargetsRequest containing the list of volume containers to be failed over.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) ListFailoverTargets(ctx context.Context, sourceDeviceName string, parameters ListFailoverTargetsRequest, resourceGroupName string, managerName string) (result FailoverTargetsList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -857,7 +878,7 @@ func (client DevicesClient) ListFailoverTargetsPreparer(ctx context.Context, sou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{sourceDeviceName}/listFailoverTargets", pathParameters),
@@ -887,8 +908,10 @@ func (client DevicesClient) ListFailoverTargetsResponder(resp *http.Response) (r
 }
 
 // ListMetricDefinition gets the metric definitions for the specified device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) ListMetricDefinition(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result MetricDefinitionList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -961,9 +984,11 @@ func (client DevicesClient) ListMetricDefinitionResponder(resp *http.Response) (
 }
 
 // ListMetrics gets the metrics for the specified device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
-// filter is oData Filter options
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
+// filter - oData Filter options
 func (client DevicesClient) ListMetrics(ctx context.Context, deviceName string, resourceGroupName string, managerName string, filter string) (result MetricList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1037,8 +1062,10 @@ func (client DevicesClient) ListMetricsResponder(resp *http.Response) (result Me
 }
 
 // ScanForUpdates scans for updates on the device.
-//
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) ScanForUpdates(ctx context.Context, deviceName string, resourceGroupName string, managerName string) (result DevicesScanForUpdatesFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1112,9 +1139,11 @@ func (client DevicesClient) ScanForUpdatesResponder(resp *http.Response) (result
 }
 
 // Update patches the device.
-//
-// deviceName is the device name parameters is patch representation of the device. resourceGroupName is the
-// resource group name managerName is the manager name
+// Parameters:
+// deviceName - the device name
+// parameters - patch representation of the device.
+// resourceGroupName - the resource group name
+// managerName - the manager name
 func (client DevicesClient) Update(ctx context.Context, deviceName string, parameters DevicePatch, resourceGroupName string, managerName string) (result Device, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
@@ -1159,7 +1188,7 @@ func (client DevicesClient) UpdatePreparer(ctx context.Context, deviceName strin
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StorSimple/managers/{managerName}/devices/{deviceName}", pathParameters),

@@ -26,23 +26,7 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type ImagesClient = original.ImagesClient
-
-func NewImagesClient() ImagesClient {
-	return original.NewImagesClient()
-}
-func NewImagesClientWithBaseURI(baseURI string) ImagesClient {
-	return original.NewImagesClientWithBaseURI(baseURI)
-}
-
 type Currency = original.Currency
 
 const (
@@ -455,6 +439,66 @@ type TrendingImagesTile = original.TrendingImagesTile
 type BasicWebPage = original.BasicWebPage
 type WebPage = original.WebPage
 
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func NewImagesClient() ImagesClient {
+	return original.NewImagesClient()
+}
+func NewImagesClientWithBaseURI(baseURI string) ImagesClient {
+	return original.NewImagesClientWithBaseURI(baseURI)
+}
+func PossibleCurrencyValues() []Currency {
+	return original.PossibleCurrencyValues()
+}
+func PossibleErrorCodeValues() []ErrorCode {
+	return original.PossibleErrorCodeValues()
+}
+func PossibleErrorSubCodeValues() []ErrorSubCode {
+	return original.PossibleErrorSubCodeValues()
+}
+func PossibleFreshnessValues() []Freshness {
+	return original.PossibleFreshnessValues()
+}
+func PossibleImageAspectValues() []ImageAspect {
+	return original.PossibleImageAspectValues()
+}
+func PossibleImageColorValues() []ImageColor {
+	return original.PossibleImageColorValues()
+}
+func PossibleImageContentValues() []ImageContent {
+	return original.PossibleImageContentValues()
+}
+func PossibleImageCropTypeValues() []ImageCropType {
+	return original.PossibleImageCropTypeValues()
+}
+func PossibleImageInsightModuleValues() []ImageInsightModule {
+	return original.PossibleImageInsightModuleValues()
+}
+func PossibleImageLicenseValues() []ImageLicense {
+	return original.PossibleImageLicenseValues()
+}
+func PossibleImageSizeValues() []ImageSize {
+	return original.PossibleImageSizeValues()
+}
+func PossibleImageTypeValues() []ImageType {
+	return original.PossibleImageTypeValues()
+}
+func PossibleItemAvailabilityValues() []ItemAvailability {
+	return original.PossibleItemAvailabilityValues()
+}
+func PossibleSafeSearchValues() []SafeSearch {
+	return original.PossibleSafeSearchValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleTypeBasicResponseBaseValues() []TypeBasicResponseBase {
+	return original.PossibleTypeBasicResponseBaseValues()
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }

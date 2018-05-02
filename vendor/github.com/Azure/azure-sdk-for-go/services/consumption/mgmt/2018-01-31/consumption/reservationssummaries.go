@@ -41,9 +41,11 @@ func NewReservationsSummariesClientWithBaseURI(baseURI string, subscriptionID st
 }
 
 // ListByReservationOrder lists the reservations summaries for daily or monthly grain.
-//
-// reservationOrderID is order Id of the reservation grain is can be daily or monthly filter is required only for
-// daily grain. The properties/UsageDate for start date and end date. The filter supports 'le' and  'ge'
+// Parameters:
+// reservationOrderID - order Id of the reservation
+// grain - can be daily or monthly
+// filter - required only for daily grain. The properties/UsageDate for start date and end date. The filter
+// supports 'le' and  'ge'
 func (client ReservationsSummariesClient) ListByReservationOrder(ctx context.Context, reservationOrderID string, grain Datagrain, filter string) (result ReservationSummariesListResultPage, err error) {
 	result.fn = client.listByReservationOrderNextResults
 	req, err := client.ListByReservationOrderPreparer(ctx, reservationOrderID, grain, filter)
@@ -138,10 +140,12 @@ func (client ReservationsSummariesClient) ListByReservationOrderComplete(ctx con
 }
 
 // ListByReservationOrderAndReservation lists the reservations summaries for daily or monthly grain.
-//
-// reservationOrderID is order Id of the reservation reservationID is id of the reservation grain is can be daily
-// or monthly filter is required only for daily grain. The properties/UsageDate for start date and end date. The
-// filter supports 'le' and  'ge'
+// Parameters:
+// reservationOrderID - order Id of the reservation
+// reservationID - id of the reservation
+// grain - can be daily or monthly
+// filter - required only for daily grain. The properties/UsageDate for start date and end date. The filter
+// supports 'le' and  'ge'
 func (client ReservationsSummariesClient) ListByReservationOrderAndReservation(ctx context.Context, reservationOrderID string, reservationID string, grain Datagrain, filter string) (result ReservationSummariesListResultPage, err error) {
 	result.fn = client.listByReservationOrderAndReservationNextResults
 	req, err := client.ListByReservationOrderAndReservationPreparer(ctx, reservationOrderID, reservationID, grain, filter)

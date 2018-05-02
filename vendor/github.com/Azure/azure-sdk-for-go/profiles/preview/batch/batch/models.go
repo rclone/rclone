@@ -19,84 +19,21 @@
 
 package batch
 
-import original "github.com/Azure/azure-sdk-for-go/services/batch/2017-09-01.6.0/batch"
+import original "github.com/Azure/azure-sdk-for-go/services/batch/2018-03-01.6.1/batch"
 
 type AccountClient = original.AccountClient
-
-func NewAccountClient() AccountClient {
-	return original.NewAccountClient()
-}
-func NewAccountClientWithBaseURI(baseURI string) AccountClient {
-	return original.NewAccountClientWithBaseURI(baseURI)
-}
-
 type ApplicationClient = original.ApplicationClient
-
-func NewApplicationClient() ApplicationClient {
-	return original.NewApplicationClient()
-}
-func NewApplicationClientWithBaseURI(baseURI string) ApplicationClient {
-	return original.NewApplicationClientWithBaseURI(baseURI)
-}
-
 type CertificateClient = original.CertificateClient
-
-func NewCertificateClient() CertificateClient {
-	return original.NewCertificateClient()
-}
-func NewCertificateClientWithBaseURI(baseURI string) CertificateClient {
-	return original.NewCertificateClientWithBaseURI(baseURI)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New() BaseClient {
-	return original.New()
-}
-func NewWithBaseURI(baseURI string) BaseClient {
-	return original.NewWithBaseURI(baseURI)
-}
-
 type ComputeNodeClient = original.ComputeNodeClient
-
-func NewComputeNodeClient() ComputeNodeClient {
-	return original.NewComputeNodeClient()
-}
-func NewComputeNodeClientWithBaseURI(baseURI string) ComputeNodeClient {
-	return original.NewComputeNodeClientWithBaseURI(baseURI)
-}
-
 type FileClient = original.FileClient
-
-func NewFileClient() FileClient {
-	return original.NewFileClient()
-}
-func NewFileClientWithBaseURI(baseURI string) FileClient {
-	return original.NewFileClientWithBaseURI(baseURI)
-}
-
 type JobClient = original.JobClient
-
-func NewJobClient() JobClient {
-	return original.NewJobClient()
-}
-func NewJobClientWithBaseURI(baseURI string) JobClient {
-	return original.NewJobClientWithBaseURI(baseURI)
-}
-
 type JobScheduleClient = original.JobScheduleClient
-
-func NewJobScheduleClient() JobScheduleClient {
-	return original.NewJobScheduleClient()
-}
-func NewJobScheduleClientWithBaseURI(baseURI string) JobScheduleClient {
-	return original.NewJobScheduleClientWithBaseURI(baseURI)
-}
-
 type AccessScope = original.AccessScope
 
 const (
@@ -501,6 +438,7 @@ type NameValuePair = original.NameValuePair
 type NetworkConfiguration = original.NetworkConfiguration
 type NetworkSecurityGroupRule = original.NetworkSecurityGroupRule
 type NodeAgentSku = original.NodeAgentSku
+type NodeCounts = original.NodeCounts
 type NodeDisableSchedulingParameter = original.NodeDisableSchedulingParameter
 type NodeFile = original.NodeFile
 type NodeFileListResult = original.NodeFileListResult
@@ -523,6 +461,10 @@ type PoolInformation = original.PoolInformation
 type PoolListUsageMetricsResult = original.PoolListUsageMetricsResult
 type PoolListUsageMetricsResultIterator = original.PoolListUsageMetricsResultIterator
 type PoolListUsageMetricsResultPage = original.PoolListUsageMetricsResultPage
+type PoolNodeCounts = original.PoolNodeCounts
+type PoolNodeCountsListResult = original.PoolNodeCountsListResult
+type PoolNodeCountsListResultIterator = original.PoolNodeCountsListResultIterator
+type PoolNodeCountsListResultPage = original.PoolNodeCountsListResultPage
 type PoolPatchParameter = original.PoolPatchParameter
 type PoolResizeParameter = original.PoolResizeParameter
 type PoolSpecification = original.PoolSpecification
@@ -555,22 +497,187 @@ type TaskInformation = original.TaskInformation
 type TaskSchedulingPolicy = original.TaskSchedulingPolicy
 type TaskStatistics = original.TaskStatistics
 type TaskUpdateParameter = original.TaskUpdateParameter
+type UploadBatchServiceLogsConfiguration = original.UploadBatchServiceLogsConfiguration
+type UploadBatchServiceLogsResult = original.UploadBatchServiceLogsResult
 type UsageStatistics = original.UsageStatistics
 type UserAccount = original.UserAccount
 type UserIdentity = original.UserIdentity
 type VirtualMachineConfiguration = original.VirtualMachineConfiguration
 type WindowsConfiguration = original.WindowsConfiguration
 type PoolClient = original.PoolClient
+type TaskClient = original.TaskClient
 
+func NewAccountClient() AccountClient {
+	return original.NewAccountClient()
+}
+func NewAccountClientWithBaseURI(baseURI string) AccountClient {
+	return original.NewAccountClientWithBaseURI(baseURI)
+}
+func NewApplicationClient() ApplicationClient {
+	return original.NewApplicationClient()
+}
+func NewApplicationClientWithBaseURI(baseURI string) ApplicationClient {
+	return original.NewApplicationClientWithBaseURI(baseURI)
+}
+func NewCertificateClient() CertificateClient {
+	return original.NewCertificateClient()
+}
+func NewCertificateClientWithBaseURI(baseURI string) CertificateClient {
+	return original.NewCertificateClientWithBaseURI(baseURI)
+}
+func New() BaseClient {
+	return original.New()
+}
+func NewWithBaseURI(baseURI string) BaseClient {
+	return original.NewWithBaseURI(baseURI)
+}
+func NewComputeNodeClient() ComputeNodeClient {
+	return original.NewComputeNodeClient()
+}
+func NewComputeNodeClientWithBaseURI(baseURI string) ComputeNodeClient {
+	return original.NewComputeNodeClientWithBaseURI(baseURI)
+}
+func NewFileClient() FileClient {
+	return original.NewFileClient()
+}
+func NewFileClientWithBaseURI(baseURI string) FileClient {
+	return original.NewFileClientWithBaseURI(baseURI)
+}
+func NewJobClient() JobClient {
+	return original.NewJobClient()
+}
+func NewJobClientWithBaseURI(baseURI string) JobClient {
+	return original.NewJobClientWithBaseURI(baseURI)
+}
+func NewJobScheduleClient() JobScheduleClient {
+	return original.NewJobScheduleClient()
+}
+func NewJobScheduleClientWithBaseURI(baseURI string) JobScheduleClient {
+	return original.NewJobScheduleClientWithBaseURI(baseURI)
+}
+func PossibleAccessScopeValues() []AccessScope {
+	return original.PossibleAccessScopeValues()
+}
+func PossibleAllocationStateValues() []AllocationState {
+	return original.PossibleAllocationStateValues()
+}
+func PossibleAutoUserScopeValues() []AutoUserScope {
+	return original.PossibleAutoUserScopeValues()
+}
+func PossibleCachingTypeValues() []CachingType {
+	return original.PossibleCachingTypeValues()
+}
+func PossibleCertificateFormatValues() []CertificateFormat {
+	return original.PossibleCertificateFormatValues()
+}
+func PossibleCertificateStateValues() []CertificateState {
+	return original.PossibleCertificateStateValues()
+}
+func PossibleCertificateStoreLocationValues() []CertificateStoreLocation {
+	return original.PossibleCertificateStoreLocationValues()
+}
+func PossibleCertificateVisibilityValues() []CertificateVisibility {
+	return original.PossibleCertificateVisibilityValues()
+}
+func PossibleComputeNodeDeallocationOptionValues() []ComputeNodeDeallocationOption {
+	return original.PossibleComputeNodeDeallocationOptionValues()
+}
+func PossibleComputeNodeFillTypeValues() []ComputeNodeFillType {
+	return original.PossibleComputeNodeFillTypeValues()
+}
+func PossibleComputeNodeRebootOptionValues() []ComputeNodeRebootOption {
+	return original.PossibleComputeNodeRebootOptionValues()
+}
+func PossibleComputeNodeReimageOptionValues() []ComputeNodeReimageOption {
+	return original.PossibleComputeNodeReimageOptionValues()
+}
+func PossibleComputeNodeStateValues() []ComputeNodeState {
+	return original.PossibleComputeNodeStateValues()
+}
+func PossibleDependencyActionValues() []DependencyAction {
+	return original.PossibleDependencyActionValues()
+}
+func PossibleDisableComputeNodeSchedulingOptionValues() []DisableComputeNodeSchedulingOption {
+	return original.PossibleDisableComputeNodeSchedulingOptionValues()
+}
+func PossibleDisableJobOptionValues() []DisableJobOption {
+	return original.PossibleDisableJobOptionValues()
+}
+func PossibleElevationLevelValues() []ElevationLevel {
+	return original.PossibleElevationLevelValues()
+}
+func PossibleErrorCategoryValues() []ErrorCategory {
+	return original.PossibleErrorCategoryValues()
+}
+func PossibleInboundEndpointProtocolValues() []InboundEndpointProtocol {
+	return original.PossibleInboundEndpointProtocolValues()
+}
+func PossibleJobActionValues() []JobAction {
+	return original.PossibleJobActionValues()
+}
+func PossibleJobPreparationTaskStateValues() []JobPreparationTaskState {
+	return original.PossibleJobPreparationTaskStateValues()
+}
+func PossibleJobReleaseTaskStateValues() []JobReleaseTaskState {
+	return original.PossibleJobReleaseTaskStateValues()
+}
+func PossibleJobScheduleStateValues() []JobScheduleState {
+	return original.PossibleJobScheduleStateValues()
+}
+func PossibleJobStateValues() []JobState {
+	return original.PossibleJobStateValues()
+}
+func PossibleNetworkSecurityGroupRuleAccessValues() []NetworkSecurityGroupRuleAccess {
+	return original.PossibleNetworkSecurityGroupRuleAccessValues()
+}
+func PossibleOnAllTasksCompleteValues() []OnAllTasksComplete {
+	return original.PossibleOnAllTasksCompleteValues()
+}
+func PossibleOnTaskFailureValues() []OnTaskFailure {
+	return original.PossibleOnTaskFailureValues()
+}
+func PossibleOSTypeValues() []OSType {
+	return original.PossibleOSTypeValues()
+}
+func PossibleOutputFileUploadConditionValues() []OutputFileUploadCondition {
+	return original.PossibleOutputFileUploadConditionValues()
+}
+func PossiblePoolLifetimeOptionValues() []PoolLifetimeOption {
+	return original.PossiblePoolLifetimeOptionValues()
+}
+func PossiblePoolStateValues() []PoolState {
+	return original.PossiblePoolStateValues()
+}
+func PossibleSchedulingStateValues() []SchedulingState {
+	return original.PossibleSchedulingStateValues()
+}
+func PossibleStartTaskStateValues() []StartTaskState {
+	return original.PossibleStartTaskStateValues()
+}
+func PossibleStorageAccountTypeValues() []StorageAccountType {
+	return original.PossibleStorageAccountTypeValues()
+}
+func PossibleSubtaskStateValues() []SubtaskState {
+	return original.PossibleSubtaskStateValues()
+}
+func PossibleTaskAddStatusValues() []TaskAddStatus {
+	return original.PossibleTaskAddStatusValues()
+}
+func PossibleTaskCountValidationStatusValues() []TaskCountValidationStatus {
+	return original.PossibleTaskCountValidationStatusValues()
+}
+func PossibleTaskExecutionResultValues() []TaskExecutionResult {
+	return original.PossibleTaskExecutionResultValues()
+}
+func PossibleTaskStateValues() []TaskState {
+	return original.PossibleTaskStateValues()
+}
 func NewPoolClient() PoolClient {
 	return original.NewPoolClient()
 }
 func NewPoolClientWithBaseURI(baseURI string) PoolClient {
 	return original.NewPoolClientWithBaseURI(baseURI)
 }
-
-type TaskClient = original.TaskClient
-
 func NewTaskClient() TaskClient {
 	return original.NewTaskClient()
 }

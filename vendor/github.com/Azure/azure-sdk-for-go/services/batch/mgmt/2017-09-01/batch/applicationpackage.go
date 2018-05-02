@@ -41,10 +41,12 @@ func NewApplicationPackageClientWithBaseURI(baseURI string, subscriptionID strin
 }
 
 // Activate activates the specified application package.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. version is the version of the application to
-// activate. parameters is the parameters for the request.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// version - the version of the application to activate.
+// parameters - the parameters for the request.
 func (client ApplicationPackageClient) Activate(ctx context.Context, resourceGroupName string, accountName string, applicationID string, version string, parameters ActivateApplicationPackageParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -93,7 +95,7 @@ func (client ApplicationPackageClient) ActivatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationId}/versions/{version}/activate", pathParameters),
@@ -122,9 +124,11 @@ func (client ApplicationPackageClient) ActivateResponder(resp *http.Response) (r
 }
 
 // Create creates an application package record.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. version is the version of the application.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// version - the version of the application.
 func (client ApplicationPackageClient) Create(ctx context.Context, resourceGroupName string, accountName string, applicationID string, version string) (result ApplicationPackage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -199,10 +203,11 @@ func (client ApplicationPackageClient) CreateResponder(resp *http.Response) (res
 }
 
 // Delete deletes an application package record and its associated binary file.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. version is the version of the application to
-// delete.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// version - the version of the application to delete.
 func (client ApplicationPackageClient) Delete(ctx context.Context, resourceGroupName string, accountName string, applicationID string, version string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -276,9 +281,11 @@ func (client ApplicationPackageClient) DeleteResponder(resp *http.Response) (res
 }
 
 // Get gets information about the specified application package.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account. applicationID is the ID of the application. version is the version of the application.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
+// applicationID - the ID of the application.
+// version - the version of the application.
 func (client ApplicationPackageClient) Get(ctx context.Context, resourceGroupName string, accountName string, applicationID string, version string) (result ApplicationPackage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,

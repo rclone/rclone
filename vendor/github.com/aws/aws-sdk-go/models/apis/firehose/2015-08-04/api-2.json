@@ -61,6 +61,20 @@
       "input":{"shape":"ListDeliveryStreamsInput"},
       "output":{"shape":"ListDeliveryStreamsOutput"}
     },
+    "ListTagsForDeliveryStream":{
+      "name":"ListTagsForDeliveryStream",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListTagsForDeliveryStreamInput"},
+      "output":{"shape":"ListTagsForDeliveryStreamOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"LimitExceededException"}
+      ]
+    },
     "PutRecord":{
       "name":"PutRecord",
       "http":{
@@ -87,6 +101,36 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidArgumentException"},
         {"shape":"ServiceUnavailableException"}
+      ]
+    },
+    "TagDeliveryStream":{
+      "name":"TagDeliveryStream",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"TagDeliveryStreamInput"},
+      "output":{"shape":"TagDeliveryStreamOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"LimitExceededException"}
+      ]
+    },
+    "UntagDeliveryStream":{
+      "name":"UntagDeliveryStream",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UntagDeliveryStreamInput"},
+      "output":{"shape":"UntagDeliveryStreamOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"LimitExceededException"}
       ]
     },
     "UpdateDestination":{
@@ -583,6 +627,37 @@
         "HasMoreDeliveryStreams":{"shape":"BooleanObject"}
       }
     },
+    "ListTagsForDeliveryStreamInput":{
+      "type":"structure",
+      "required":["DeliveryStreamName"],
+      "members":{
+        "DeliveryStreamName":{"shape":"DeliveryStreamName"},
+        "ExclusiveStartTagKey":{"shape":"TagKey"},
+        "Limit":{"shape":"ListTagsForDeliveryStreamInputLimit"}
+      }
+    },
+    "ListTagsForDeliveryStreamInputLimit":{
+      "type":"integer",
+      "max":50,
+      "min":1
+    },
+    "ListTagsForDeliveryStreamOutput":{
+      "type":"structure",
+      "required":[
+        "Tags",
+        "HasMoreTags"
+      ],
+      "members":{
+        "Tags":{"shape":"ListTagsForDeliveryStreamOutputTagList"},
+        "HasMoreTags":{"shape":"BooleanObject"}
+      }
+    },
+    "ListTagsForDeliveryStreamOutputTagList":{
+      "type":"list",
+      "member":{"shape":"Tag"},
+      "max":50,
+      "min":0
+    },
     "LogGroupName":{"type":"string"},
     "LogStreamName":{"type":"string"},
     "NoEncryptionConfig":{
@@ -962,7 +1037,69 @@
         "AllEvents"
       ]
     },
+    "Tag":{
+      "type":"structure",
+      "required":["Key"],
+      "members":{
+        "Key":{"shape":"TagKey"},
+        "Value":{"shape":"TagValue"}
+      }
+    },
+    "TagDeliveryStreamInput":{
+      "type":"structure",
+      "required":[
+        "DeliveryStreamName",
+        "Tags"
+      ],
+      "members":{
+        "DeliveryStreamName":{"shape":"DeliveryStreamName"},
+        "Tags":{"shape":"TagDeliveryStreamInputTagList"}
+      }
+    },
+    "TagDeliveryStreamInputTagList":{
+      "type":"list",
+      "member":{"shape":"Tag"},
+      "max":50,
+      "min":1
+    },
+    "TagDeliveryStreamOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "TagKey":{
+      "type":"string",
+      "max":128,
+      "min":1
+    },
+    "TagKeyList":{
+      "type":"list",
+      "member":{"shape":"TagKey"},
+      "max":50,
+      "min":1
+    },
+    "TagValue":{
+      "type":"string",
+      "max":256,
+      "min":0
+    },
     "Timestamp":{"type":"timestamp"},
+    "UntagDeliveryStreamInput":{
+      "type":"structure",
+      "required":[
+        "DeliveryStreamName",
+        "TagKeys"
+      ],
+      "members":{
+        "DeliveryStreamName":{"shape":"DeliveryStreamName"},
+        "TagKeys":{"shape":"TagKeyList"}
+      }
+    },
+    "UntagDeliveryStreamOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "UpdateDestinationInput":{
       "type":"structure",
       "required":[

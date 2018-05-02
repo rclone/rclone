@@ -77,6 +77,18 @@ func TestMarshalAndParseMessage(t *testing.T) {
 					},
 				},
 				{
+					Type: ipv4.ICMPTypeExtendedEchoRequest, Code: 0,
+					Body: &icmp.ExtendedEchoRequest{
+						ID: 1, Seq: 2,
+					},
+				},
+				{
+					Type: ipv4.ICMPTypeExtendedEchoReply, Code: 0,
+					Body: &icmp.ExtendedEchoReply{
+						State: 4 /* Delay */, Active: true, IPv4: true,
+					},
+				},
+				{
 					Type: ipv4.ICMPTypePhoturis,
 					Body: &icmp.DefaultMessageBody{
 						Data: []byte{0x80, 0x40, 0x20, 0x10},
@@ -118,6 +130,18 @@ func TestMarshalAndParseMessage(t *testing.T) {
 					Body: &icmp.Echo{
 						ID: 1, Seq: 2,
 						Data: []byte("HELLO-R-U-THERE"),
+					},
+				},
+				{
+					Type: ipv6.ICMPTypeExtendedEchoRequest, Code: 0,
+					Body: &icmp.ExtendedEchoRequest{
+						ID: 1, Seq: 2,
+					},
+				},
+				{
+					Type: ipv6.ICMPTypeExtendedEchoReply, Code: 0,
+					Body: &icmp.ExtendedEchoReply{
+						State: 5 /* Probe */, Active: true, IPv6: true,
 					},
 				},
 				{

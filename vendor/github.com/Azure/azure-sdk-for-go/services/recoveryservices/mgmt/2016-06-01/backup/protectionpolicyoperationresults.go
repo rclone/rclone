@@ -41,10 +41,11 @@ func NewProtectionPolicyOperationResultsClientWithBaseURI(baseURI string, subscr
 }
 
 // Get provides the result of an operation.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. policyName is the backup policy name used in this GET operation.
-// operationID is the ID associated with this GET operation.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// policyName - the backup policy name used in this GET operation.
+// operationID - the ID associated with this GET operation.
 func (client ProtectionPolicyOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, policyName string, operationID string) (result ProtectionPolicyResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, policyName, operationID)
 	if err != nil {

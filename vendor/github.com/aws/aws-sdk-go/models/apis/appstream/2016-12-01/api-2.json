@@ -23,6 +23,7 @@
       "output":{"shape":"AssociateFleetResult"},
       "errors":[
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"ConcurrentModificationException"},
         {"shape":"IncompatibleImageException"},
@@ -42,6 +43,7 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceNotAvailableException"},
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"IncompatibleImageException"}
       ]
     },
@@ -55,7 +57,8 @@
       "output":{"shape":"CreateDirectoryConfigResult"},
       "errors":[
         {"shape":"ResourceAlreadyExistsException"},
-        {"shape":"LimitExceededException"}
+        {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"}
       ]
     },
     "CreateFleet":{
@@ -71,6 +74,7 @@
         {"shape":"ResourceNotAvailableException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"InvalidRoleException"},
         {"shape":"ConcurrentModificationException"},
         {"shape":"InvalidParameterCombinationException"},
@@ -87,6 +91,7 @@
       "output":{"shape":"CreateImageBuilderResult"},
       "errors":[
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"ResourceAlreadyExistsException"},
         {"shape":"ResourceNotAvailableException"},
         {"shape":"ResourceNotFoundException"},
@@ -119,6 +124,7 @@
       "output":{"shape":"CreateStackResult"},
       "errors":[
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"ResourceAlreadyExistsException"},
         {"shape":"ConcurrentModificationException"},
         {"shape":"InvalidRoleException"},
@@ -348,6 +354,7 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"OperationNotPermittedException"},
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"ConcurrentModificationException"}
       ]
     },
@@ -363,6 +370,7 @@
         {"shape":"ResourceNotAvailableException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"ConcurrentModificationException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"IncompatibleImageException"}
       ]
     },
@@ -403,6 +411,7 @@
       "output":{"shape":"TagResourceResponse"},
       "errors":[
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"ResourceNotFoundException"}
       ]
     },
@@ -443,6 +452,7 @@
       "errors":[
         {"shape":"ResourceInUseException"},
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"InvalidRoleException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceNotAvailableException"},
@@ -466,6 +476,7 @@
         {"shape":"InvalidRoleException"},
         {"shape":"InvalidParameterCombinationException"},
         {"shape":"LimitExceededException"},
+        {"shape":"InvalidAccountStatusException"},
         {"shape":"IncompatibleImageException"}
       ]
     }
@@ -673,7 +684,8 @@
         "Description":{"shape":"Description"},
         "DisplayName":{"shape":"DisplayName"},
         "StorageConnectors":{"shape":"StorageConnectorList"},
-        "RedirectURL":{"shape":"RedirectURL"}
+        "RedirectURL":{"shape":"RedirectURL"},
+        "FeedbackURL":{"shape":"FeedbackURL"}
       }
     },
     "CreateStackResult":{
@@ -922,6 +934,10 @@
       "members":{
       }
     },
+    "FeedbackURL":{
+      "type":"string",
+      "max":1000
+    },
     "Fleet":{
       "type":"structure",
       "required":[
@@ -1135,6 +1151,13 @@
       "exception":true
     },
     "Integer":{"type":"integer"},
+    "InvalidAccountStatusException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
     "InvalidParameterCombinationException":{
       "type":"structure",
       "members":{
@@ -1338,6 +1361,7 @@
         "CreatedTime":{"shape":"Timestamp"},
         "StorageConnectors":{"shape":"StorageConnectorList"},
         "RedirectURL":{"shape":"RedirectURL"},
+        "FeedbackURL":{"shape":"FeedbackURL"},
         "StackErrors":{"shape":"StackErrors"}
       }
     },
@@ -1345,7 +1369,9 @@
       "type":"string",
       "enum":[
         "STORAGE_CONNECTORS",
-        "REDIRECT_URL"
+        "REDIRECT_URL",
+        "FEEDBACK_URL",
+        "THEME_NAME"
       ]
     },
     "StackAttributes":{
@@ -1573,6 +1599,7 @@
           "deprecated":true
         },
         "RedirectURL":{"shape":"RedirectURL"},
+        "FeedbackURL":{"shape":"FeedbackURL"},
         "AttributesToDelete":{"shape":"StackAttributes"}
       }
     },

@@ -281,7 +281,7 @@ func TestDataTransferServiceGetDataSource(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/dataSources/%s", "[PROJECT]", "[LOCATION]", "[DATA_SOURCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/dataSources/%s", "[PROJECT]", "[DATA_SOURCE]")
 	var request = &datatransferpb.GetDataSourceRequest{
 		Name: formattedName,
 	}
@@ -310,7 +310,7 @@ func TestDataTransferServiceGetDataSourceError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/dataSources/%s", "[PROJECT]", "[LOCATION]", "[DATA_SOURCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/dataSources/%s", "[PROJECT]", "[DATA_SOURCE]")
 	var request = &datatransferpb.GetDataSourceRequest{
 		Name: formattedName,
 	}
@@ -343,7 +343,7 @@ func TestDataTransferServiceListDataSources(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &datatransferpb.ListDataSourcesRequest{
 		Parent: formattedParent,
 	}
@@ -382,7 +382,7 @@ func TestDataTransferServiceListDataSourcesError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &datatransferpb.ListDataSourcesRequest{
 		Parent: formattedParent,
 	}
@@ -428,7 +428,7 @@ func TestDataTransferServiceCreateTransferConfig(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var transferConfig *datatransferpb.TransferConfig = &datatransferpb.TransferConfig{}
 	var request = &datatransferpb.CreateTransferConfigRequest{
 		Parent:         formattedParent,
@@ -459,7 +459,7 @@ func TestDataTransferServiceCreateTransferConfigError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var transferConfig *datatransferpb.TransferConfig = &datatransferpb.TransferConfig{}
 	var request = &datatransferpb.CreateTransferConfigRequest{
 		Parent:         formattedParent,
@@ -567,7 +567,7 @@ func TestDataTransferServiceDeleteTransferConfig(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.DeleteTransferConfigRequest{
 		Name: formattedName,
 	}
@@ -593,7 +593,7 @@ func TestDataTransferServiceDeleteTransferConfigError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.DeleteTransferConfigRequest{
 		Name: formattedName,
 	}
@@ -638,7 +638,7 @@ func TestDataTransferServiceGetTransferConfig(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.GetTransferConfigRequest{
 		Name: formattedName,
 	}
@@ -667,7 +667,7 @@ func TestDataTransferServiceGetTransferConfigError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.GetTransferConfigRequest{
 		Name: formattedName,
 	}
@@ -700,7 +700,7 @@ func TestDataTransferServiceListTransferConfigs(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &datatransferpb.ListTransferConfigsRequest{
 		Parent: formattedParent,
 	}
@@ -739,7 +739,7 @@ func TestDataTransferServiceListTransferConfigsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s", "[PROJECT]", "[LOCATION]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &datatransferpb.ListTransferConfigsRequest{
 		Parent: formattedParent,
 	}
@@ -766,7 +766,7 @@ func TestDataTransferServiceScheduleTransferRuns(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var startTime *timestamppb.Timestamp = &timestamppb.Timestamp{}
 	var endTime *timestamppb.Timestamp = &timestamppb.Timestamp{}
 	var request = &datatransferpb.ScheduleTransferRunsRequest{
@@ -799,7 +799,7 @@ func TestDataTransferServiceScheduleTransferRunsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var startTime *timestamppb.Timestamp = &timestamppb.Timestamp{}
 	var endTime *timestamppb.Timestamp = &timestamppb.Timestamp{}
 	var request = &datatransferpb.ScheduleTransferRunsRequest{
@@ -841,7 +841,7 @@ func TestDataTransferServiceGetTransferRun(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.GetTransferRunRequest{
 		Name: formattedName,
 	}
@@ -870,7 +870,7 @@ func TestDataTransferServiceGetTransferRunError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.GetTransferRunRequest{
 		Name: formattedName,
 	}
@@ -897,7 +897,7 @@ func TestDataTransferServiceDeleteTransferRun(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.DeleteTransferRunRequest{
 		Name: formattedName,
 	}
@@ -923,7 +923,7 @@ func TestDataTransferServiceDeleteTransferRunError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedName string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.DeleteTransferRunRequest{
 		Name: formattedName,
 	}
@@ -955,7 +955,7 @@ func TestDataTransferServiceListTransferRuns(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.ListTransferRunsRequest{
 		Parent: formattedParent,
 	}
@@ -994,7 +994,7 @@ func TestDataTransferServiceListTransferRunsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s", "[PROJECT]", "[TRANSFER_CONFIG]")
 	var request = &datatransferpb.ListTransferRunsRequest{
 		Parent: formattedParent,
 	}
@@ -1027,7 +1027,7 @@ func TestDataTransferServiceListTransferLogs(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.ListTransferLogsRequest{
 		Parent: formattedParent,
 	}
@@ -1066,7 +1066,7 @@ func TestDataTransferServiceListTransferLogsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = fmt.Sprintf("projects/%s/locations/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[LOCATION]", "[TRANSFER_CONFIG]", "[RUN]")
+	var formattedParent string = fmt.Sprintf("projects/%s/transferConfigs/%s/runs/%s", "[PROJECT]", "[TRANSFER_CONFIG]", "[RUN]")
 	var request = &datatransferpb.ListTransferLogsRequest{
 		Parent: formattedParent,
 	}
@@ -1096,7 +1096,7 @@ func TestDataTransferServiceCheckValidCreds(t *testing.T) {
 
 	mockDataTransfer.resps = append(mockDataTransfer.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/dataSources/%s", "[PROJECT]", "[LOCATION]", "[DATA_SOURCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/dataSources/%s", "[PROJECT]", "[DATA_SOURCE]")
 	var request = &datatransferpb.CheckValidCredsRequest{
 		Name: formattedName,
 	}
@@ -1125,7 +1125,7 @@ func TestDataTransferServiceCheckValidCredsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDataTransfer.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("projects/%s/locations/%s/dataSources/%s", "[PROJECT]", "[LOCATION]", "[DATA_SOURCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/dataSources/%s", "[PROJECT]", "[DATA_SOURCE]")
 	var request = &datatransferpb.CheckValidCredsRequest{
 		Name: formattedName,
 	}

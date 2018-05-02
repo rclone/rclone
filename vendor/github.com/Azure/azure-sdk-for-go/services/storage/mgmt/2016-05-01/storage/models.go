@@ -35,6 +35,11 @@ const (
 	Hot AccessTier = "Hot"
 )
 
+// PossibleAccessTierValues returns an array of possible values for the AccessTier const type.
+func PossibleAccessTierValues() []AccessTier {
+	return []AccessTier{Cool, Hot}
+}
+
 // AccountStatus enumerates the values for account status.
 type AccountStatus string
 
@@ -44,6 +49,11 @@ const (
 	// Unavailable ...
 	Unavailable AccountStatus = "unavailable"
 )
+
+// PossibleAccountStatusValues returns an array of possible values for the AccountStatus const type.
+func PossibleAccountStatusValues() []AccountStatus {
+	return []AccountStatus{Available, Unavailable}
+}
 
 // HTTPProtocol enumerates the values for http protocol.
 type HTTPProtocol string
@@ -55,6 +65,11 @@ const (
 	Httpshttp HTTPProtocol = "https,http"
 )
 
+// PossibleHTTPProtocolValues returns an array of possible values for the HTTPProtocol const type.
+func PossibleHTTPProtocolValues() []HTTPProtocol {
+	return []HTTPProtocol{HTTPS, Httpshttp}
+}
+
 // KeyPermission enumerates the values for key permission.
 type KeyPermission string
 
@@ -65,6 +80,11 @@ const (
 	Read KeyPermission = "Read"
 )
 
+// PossibleKeyPermissionValues returns an array of possible values for the KeyPermission const type.
+func PossibleKeyPermissionValues() []KeyPermission {
+	return []KeyPermission{Full, Read}
+}
+
 // Kind enumerates the values for kind.
 type Kind string
 
@@ -74,6 +94,11 @@ const (
 	// Storage ...
 	Storage Kind = "Storage"
 )
+
+// PossibleKindValues returns an array of possible values for the Kind const type.
+func PossibleKindValues() []Kind {
+	return []Kind{BlobStorage, Storage}
+}
 
 // Permissions enumerates the values for permissions.
 type Permissions string
@@ -97,6 +122,11 @@ const (
 	W Permissions = "w"
 )
 
+// PossiblePermissionsValues returns an array of possible values for the Permissions const type.
+func PossiblePermissionsValues() []Permissions {
+	return []Permissions{A, C, D, L, P, R, U, W}
+}
+
 // Permissions1 enumerates the values for permissions 1.
 type Permissions1 string
 
@@ -119,6 +149,11 @@ const (
 	Permissions1W Permissions1 = "w"
 )
 
+// PossiblePermissions1Values returns an array of possible values for the Permissions1 const type.
+func PossiblePermissions1Values() []Permissions1 {
+	return []Permissions1{Permissions1A, Permissions1C, Permissions1D, Permissions1L, Permissions1P, Permissions1R, Permissions1U, Permissions1W}
+}
+
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -131,6 +166,11 @@ const (
 	Succeeded ProvisioningState = "Succeeded"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Creating, ResolvingDNS, Succeeded}
+}
+
 // Reason enumerates the values for reason.
 type Reason string
 
@@ -140,6 +180,11 @@ const (
 	// AlreadyExists ...
 	AlreadyExists Reason = "AlreadyExists"
 )
+
+// PossibleReasonValues returns an array of possible values for the Reason const type.
+func PossibleReasonValues() []Reason {
+	return []Reason{AccountNameInvalid, AlreadyExists}
+}
 
 // ResourceEnum enumerates the values for resource enum.
 type ResourceEnum string
@@ -155,6 +200,11 @@ const (
 	ResourceEnumS ResourceEnum = "s"
 )
 
+// PossibleResourceEnumValues returns an array of possible values for the ResourceEnum const type.
+func PossibleResourceEnumValues() []ResourceEnum {
+	return []ResourceEnum{ResourceEnumB, ResourceEnumC, ResourceEnumF, ResourceEnumS}
+}
+
 // ResourceTypes enumerates the values for resource types.
 type ResourceTypes string
 
@@ -166,6 +216,11 @@ const (
 	// ResourceTypesS ...
 	ResourceTypesS ResourceTypes = "s"
 )
+
+// PossibleResourceTypesValues returns an array of possible values for the ResourceTypes const type.
+func PossibleResourceTypesValues() []ResourceTypes {
+	return []ResourceTypes{ResourceTypesC, ResourceTypesO, ResourceTypesS}
+}
 
 // Services enumerates the values for services.
 type Services string
@@ -180,6 +235,11 @@ const (
 	// T ...
 	T Services = "t"
 )
+
+// PossibleServicesValues returns an array of possible values for the Services const type.
+func PossibleServicesValues() []Services {
+	return []Services{B, F, Q, T}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -197,6 +257,11 @@ const (
 	StandardZRS SkuName = "Standard_ZRS"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{PremiumLRS, StandardGRS, StandardLRS, StandardRAGRS, StandardZRS}
+}
+
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
@@ -206,6 +271,11 @@ const (
 	// Standard ...
 	Standard SkuTier = "Standard"
 )
+
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Premium, Standard}
+}
 
 // UsageUnit enumerates the values for usage unit.
 type UsageUnit string
@@ -224,6 +294,11 @@ const (
 	// Seconds ...
 	Seconds UsageUnit = "Seconds"
 )
+
+// PossibleUsageUnitValues returns an array of possible values for the UsageUnit const type.
+func PossibleUsageUnitValues() []UsageUnit {
+	return []UsageUnit{Bytes, BytesPerSecond, Count, CountsPerSecond, Percent, Seconds}
+}
 
 // Account the storage account.
 type Account struct {
@@ -251,7 +326,9 @@ func (a Account) MarshalJSON() ([]byte, error) {
 	if a.Sku != nil {
 		objectMap["sku"] = a.Sku
 	}
-	objectMap["kind"] = a.Kind
+	if a.Kind != "" {
+		objectMap["kind"] = a.Kind
+	}
 	if a.AccountProperties != nil {
 		objectMap["properties"] = a.AccountProperties
 	}
@@ -385,7 +462,9 @@ func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
 	if acp.Sku != nil {
 		objectMap["sku"] = acp.Sku
 	}
-	objectMap["kind"] = acp.Kind
+	if acp.Kind != "" {
+		objectMap["kind"] = acp.Kind
+	}
 	if acp.Location != nil {
 		objectMap["location"] = acp.Location
 	}

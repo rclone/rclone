@@ -40,8 +40,9 @@ func NewDeployedReplicasClientWithBaseURI(baseURI string, timeout *int32) Deploy
 }
 
 // Get get deployed replicas
-//
-// nodeName is the name of the node applicationName is the name of the application
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
 func (client DeployedReplicasClient) Get(ctx context.Context, nodeName string, applicationName string) (result ListDeployedReplica, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName)
 	if err != nil {

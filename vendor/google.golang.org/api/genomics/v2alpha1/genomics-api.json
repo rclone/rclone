@@ -278,9 +278,25 @@
       }
     }
   },
-  "revision": "20180307",
+  "revision": "20180501",
   "rootUrl": "https://genomics.googleapis.com/",
   "schemas": {
+    "Accelerator": {
+      "description": "Carries information about an accelerator that can be attached to a VM.",
+      "id": "Accelerator",
+      "properties": {
+        "count": {
+          "description": "How many accelerators of this type to attach.",
+          "format": "int64",
+          "type": "string"
+        },
+        "type": {
+          "description": "The accelerator type string (eg nvidia-tesla-k80).\n\nOnly NVIDIA GPU accelerators are currently supported.  If an NVIDIA GPU is\nattached, the required runtime libraries will be made available to all\ncontainers under `/usr/local/nvidia`.  The driver version to install must\nbe specified using the NVIDIA driver version parameter on the virtual\nmachine specification.  Note that attaching a GPU increases the worker VM\nstartup time by a few minutes.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Action": {
       "description": "Action specifies a single action that runs a docker container.",
       "id": "Action",
@@ -312,7 +328,8 @@
             "Normally, once an action fails no further actions are run.  This flag\nindicates that this action must be run even if the pipeline has already\nfailed.  This is useful for actions that copy output files off of the VM\nor for debugging.",
             "Enable access to the FUSE device for this action.  Filesystems can then\nbe mounted into disks shared with other actions.  The other actions do\nnot need the ENABLE_FUSE flag to access the mounted filesystem.\n\nThis has the effect of causing the container to be executed with\nCAP_SYS_ADMIN and exposes /dev/fuse to the container, so it should only\nbe used for containers you trust.",
             "Expose all ports specified by EXPOSE statements in the container.  To\ndiscover the host side port numbers, consult the ACTION_STARTED event in\nthe operation metadata.",
-            "Normally, all container images are downloaded before any actions are\nexecuted.  This helps prevent typos in URIs or issues like lack of disk\nspace from wasting large amounts of compute resources.\n\nIf set, this flag prevents the worker from downloading the image until\njust before the action is executed.\n\nThis is useful for two reasons: first, if the image is large and a step\nearlier in the pipeline can fail, it can save time to avoid fetching the\nimage until it is needed.\n\nSecond, if the image is private (that is, it requires running `docker\nlogin` to access) this flag **must** be set so that a preceding action\ncan establish the credentials required to fetch it."
+            "Normally, all container images are downloaded before any actions are\nexecuted.  This helps prevent typos in URIs or issues like lack of disk\nspace from wasting large amounts of compute resources.\n\nIf set, this flag prevents the worker from downloading the image until\njust before the action is executed.\n\nThis is useful for two reasons: first, if the image is large and a step\nearlier in the pipeline can fail, it can save time to avoid fetching the\nimage until it is needed.\n\nSecond, if the image is private (that is, it requires running `docker\nlogin` to access) this flag **must** be set so that a preceding action\ncan establish the credentials required to fetch it.",
+            "Normally, a small portion of the container's standard error stream is\ncaptured and returned inside the ContainerStoppedEvent.  Setting this\nflag disables this functionality."
           ],
           "items": {
             "enum": [
@@ -322,7 +339,8 @@
               "ALWAYS_RUN",
               "ENABLE_FUSE",
               "PUBLISH_EXPOSED_PORTS",
-              "DISABLE_IMAGE_PREFETCH"
+              "DISABLE_IMAGE_PREFETCH",
+              "DISABLE_STANDARD_ERROR_CAPTURE"
             ],
             "type": "string"
           },
@@ -477,6 +495,10 @@
           "description": "The exit status of the container.",
           "format": "int32",
           "type": "integer"
+        },
+        "stderr": {
+          "description": "The tail end of any content written to standard error by the container.\nTo prevent this from being recorded if the action is known to emit\nlarge amounts of debugging noise or sensitive information, set the\nDISABLE_STANDARD_ERROR_CAPTURE flag.\n\nNote that only a small amount of the end of the stream is captured here.\nThe entire stream is stored in the /google/logs directory mounted into\neach action, and may be copied off the machine as described elsewhere.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -661,6 +683,11 @@
           "format": "google-datetime",
           "type": "string"
         },
+        "endTime": {
+          "description": "The time at which execution was completed and resources were cleaned up.",
+          "format": "google-datetime",
+          "type": "string"
+        },
         "events": {
           "description": "The list of events that have happened so far during the execution of this\noperation.",
           "items": {
@@ -678,6 +705,11 @@
         "pipeline": {
           "$ref": "Pipeline",
           "description": "The pipeline this operation represents."
+        },
+        "startTime": {
+          "description": "The first time at which resources were allocated to execute the pipeline.",
+          "format": "google-datetime",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1003,6 +1035,13 @@
       "description": "Carries information about a Compute Engine VM resource.",
       "id": "VirtualMachine",
       "properties": {
+        "accelerators": {
+          "description": "The list of accelerators to attach to the VM.",
+          "items": {
+            "$ref": "Accelerator"
+          },
+          "type": "array"
+        },
         "bootDiskSizeGb": {
           "description": "The size of the boot disk, in gigabytes. The boot disk must be large\nenough to accommodate all of the docker images from each action in the\npipeline at the same time. If not specified, a small but reasonable\ndefault value is used.",
           "format": "int32",
@@ -1037,6 +1076,10 @@
         "network": {
           "$ref": "Network",
           "description": "The VM network configuration."
+        },
+        "nvidiaDriverVersion": {
+          "description": "The NVIDIA driver version to use when attaching an NVIDIA GPU accelerator.\nThe version specified here must be compatible with the GPU libraries\ncontained in the container being executed, and must be one of the drivers\nhosted in the 'nvidia-drivers-us-public' bucket on Google Cloud Storage.",
+          "type": "string"
         },
         "preemptible": {
           "description": "If true, allocate a preemptible VM.",

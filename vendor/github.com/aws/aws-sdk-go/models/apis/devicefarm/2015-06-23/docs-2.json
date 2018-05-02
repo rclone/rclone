@@ -3,20 +3,26 @@
   "service": "<p>AWS Device Farm is a service that enables mobile app developers to test Android, iOS, and Fire OS apps on physical phones, tablets, and other devices in the cloud.</p>",
   "operations": {
     "CreateDevicePool": "<p>Creates a device pool.</p>",
+    "CreateInstanceProfile": "<p>Creates a profile that can be applied to one or more private fleet device instances.</p>",
     "CreateNetworkProfile": "<p>Creates a network profile.</p>",
     "CreateProject": "<p>Creates a new project.</p>",
     "CreateRemoteAccessSession": "<p>Specifies and starts a remote access session.</p>",
     "CreateUpload": "<p>Uploads an app or test scripts.</p>",
+    "CreateVPCEConfiguration": "<p>Creates a configuration record in Device Farm for your Amazon Virtual Private Cloud (VPC) endpoint.</p>",
     "DeleteDevicePool": "<p>Deletes a device pool given the pool ARN. Does not allow deletion of curated pools owned by the system.</p>",
+    "DeleteInstanceProfile": "<p>Deletes a profile that can be applied to one or more private device instances.</p>",
     "DeleteNetworkProfile": "<p>Deletes a network profile.</p>",
     "DeleteProject": "<p>Deletes an AWS Device Farm project, given the project ARN.</p> <p> <b>Note</b> Deleting this resource does not stop an in-progress run.</p>",
     "DeleteRemoteAccessSession": "<p>Deletes a completed remote access session and its results.</p>",
     "DeleteRun": "<p>Deletes the run, given the run ARN.</p> <p> <b>Note</b> Deleting this resource does not stop an in-progress run.</p>",
     "DeleteUpload": "<p>Deletes an upload given the upload ARN.</p>",
+    "DeleteVPCEConfiguration": "<p>Deletes a configuration for your Amazon Virtual Private Cloud (VPC) endpoint.</p>",
     "GetAccountSettings": "<p>Returns the number of unmetered iOS and/or unmetered Android devices that have been purchased by the account.</p>",
     "GetDevice": "<p>Gets information about a unique device type.</p>",
+    "GetDeviceInstance": "<p>Returns information about a device instance belonging to a private device fleet.</p>",
     "GetDevicePool": "<p>Gets information about a device pool.</p>",
     "GetDevicePoolCompatibility": "<p>Gets information about compatibility with a device pool.</p>",
+    "GetInstanceProfile": "<p>Returns information about the specified instance profile.</p>",
     "GetJob": "<p>Gets information about a job.</p>",
     "GetNetworkProfile": "<p>Returns information about a network profile.</p>",
     "GetOfferingStatus": "<p>Gets the current status and future status of all offerings purchased by an AWS account. The response indicates how many offerings are currently available and the offerings that will be available in the next period. The API returns a <code>NotEligible</code> error if the user is not permitted to invoke the operation. Please contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
@@ -26,10 +32,13 @@
     "GetSuite": "<p>Gets information about a suite.</p>",
     "GetTest": "<p>Gets information about a test.</p>",
     "GetUpload": "<p>Gets information about an upload.</p>",
+    "GetVPCEConfiguration": "<p>Returns information about the configuration settings for your Amazon Virtual Private Cloud (VPC) endpoint.</p>",
     "InstallToRemoteAccessSession": "<p>Installs an application to the device in a remote access session. For Android applications, the file must be in .apk format. For iOS applications, the file must be in .ipa format.</p>",
     "ListArtifacts": "<p>Gets information about artifacts.</p>",
+    "ListDeviceInstances": "<p>Returns information about the private device instances associated with one or more AWS accounts.</p>",
     "ListDevicePools": "<p>Gets information about device pools.</p>",
     "ListDevices": "<p>Gets information about unique device types.</p>",
+    "ListInstanceProfiles": "<p>Returns information about all the instance profiles in an AWS account.</p>",
     "ListJobs": "<p>Gets information about jobs for a given test run.</p>",
     "ListNetworkProfiles": "<p>Returns the list of available network profiles.</p>",
     "ListOfferingPromotions": "<p>Returns a list of offering promotions. Each offering promotion record contains the ID and description of the promotion. The API returns a <code>NotEligible</code> error if the caller is not permitted to invoke the operation. Contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
@@ -43,14 +52,18 @@
     "ListTests": "<p>Gets information about tests in a given test suite.</p>",
     "ListUniqueProblems": "<p>Gets information about unique problems.</p>",
     "ListUploads": "<p>Gets information about uploads, given an AWS Device Farm project ARN.</p>",
+    "ListVPCEConfigurations": "<p>Returns information about all Amazon Virtual Private Cloud (VPC) endpoint configurations in the AWS account.</p>",
     "PurchaseOffering": "<p>Immediately purchases offerings for an AWS account. Offerings renew with the latest total purchased quantity for an offering, unless the renewal was overridden. The API returns a <code>NotEligible</code> error if the user is not permitted to invoke the operation. Please contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
     "RenewOffering": "<p>Explicitly sets the quantity of devices to renew for an offering, starting from the <code>effectiveDate</code> of the next period. The API returns a <code>NotEligible</code> error if the user is not permitted to invoke the operation. Please contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
     "ScheduleRun": "<p>Schedules a run.</p>",
     "StopRemoteAccessSession": "<p>Ends a specified remote access session.</p>",
     "StopRun": "<p>Initiates a stop request for the current test run. AWS Device Farm will immediately stop the run on devices where tests have not started executing, and you will not be billed for these devices. On devices where tests have started executing, Setup Suite and Teardown Suite tests will run to completion before stopping execution on those devices. You will be billed for Setup, Teardown, and any tests that were in progress or already completed.</p>",
+    "UpdateDeviceInstance": "<p>Updates information about an existing private device instance.</p>",
     "UpdateDevicePool": "<p>Modifies the name, description, and rules in a device pool given the attributes and the pool ARN. Rule updates are all-or-nothing, meaning they can only be updated as a whole (or not at all).</p>",
+    "UpdateInstanceProfile": "<p>Updates information about an existing private device instance profile.</p>",
     "UpdateNetworkProfile": "<p>Updates the network profile with specific settings.</p>",
-    "UpdateProject": "<p>Modifies the specified project name, given the project ARN and a new name.</p>"
+    "UpdateProject": "<p>Modifies the specified project name, given the project ARN and a new name.</p>",
+    "UpdateVPCEConfiguration": "<p>Updates information about an existing Amazon Virtual Private Cloud (VPC) endpoint configuration.</p>"
   },
   "shapes": {
     "AWSAccountNumber": {
@@ -80,20 +93,27 @@
         "CreateNetworkProfileRequest$projectArn": "<p>The Amazon Resource Name (ARN) of the project for which you want to create a network profile.</p>",
         "CreateRemoteAccessSessionRequest$projectArn": "<p>The Amazon Resource Name (ARN) of the project for which you want to create a remote access session.</p>",
         "CreateRemoteAccessSessionRequest$deviceArn": "<p>The Amazon Resource Name (ARN) of the device for which you want to create a remote access session.</p>",
+        "CreateRemoteAccessSessionRequest$instanceArn": "<p>The Amazon Resource Name (ARN) of the device instance for which you want to create a remote access session.</p>",
         "CreateRemoteAccessSessionRequest$remoteRecordAppArn": "<p>The Amazon Resource Name (ARN) for the app to be recorded in the remote access session.</p>",
         "CreateUploadRequest$projectArn": "<p>The ARN of the project for the upload.</p>",
         "DeleteDevicePoolRequest$arn": "<p>Represents the Amazon Resource Name (ARN) of the Device Farm device pool you wish to delete.</p>",
+        "DeleteInstanceProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the instance profile you are requesting to delete.</p>",
         "DeleteNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the network profile you want to delete.</p>",
         "DeleteProjectRequest$arn": "<p>Represents the Amazon Resource Name (ARN) of the Device Farm project you wish to delete.</p>",
         "DeleteRemoteAccessSessionRequest$arn": "<p>The Amazon Resource Name (ARN) of the sesssion for which you want to delete remote access.</p>",
         "DeleteRunRequest$arn": "<p>The Amazon Resource Name (ARN) for the run you wish to delete.</p>",
         "DeleteUploadRequest$arn": "<p>Represents the Amazon Resource Name (ARN) of the Device Farm upload you wish to delete.</p>",
+        "DeleteVPCEConfigurationRequest$arn": "<p>The Amazon Resource Name (ARN) of the VPC endpoint configuration you want to delete.</p>",
         "Device$arn": "<p>The device's ARN.</p>",
+        "DeviceInstance$arn": "<p>The Amazon Resource Name (ARN) of the device instance.</p>",
+        "DeviceInstance$deviceArn": "<p>The Amazon Resource Name (ARN) of the device.</p>",
         "DevicePool$arn": "<p>The device pool's ARN.</p>",
+        "GetDeviceInstanceRequest$arn": "<p>The Amazon Resource Name (ARN) of the instance you're requesting information about.</p>",
         "GetDevicePoolCompatibilityRequest$devicePoolArn": "<p>The device pool's ARN.</p>",
         "GetDevicePoolCompatibilityRequest$appArn": "<p>The ARN of the app that is associated with the specified device pool.</p>",
         "GetDevicePoolRequest$arn": "<p>The device pool's ARN.</p>",
         "GetDeviceRequest$arn": "<p>The device type's ARN.</p>",
+        "GetInstanceProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of your instance profile.</p>",
         "GetJobRequest$arn": "<p>The job's ARN.</p>",
         "GetNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the network profile you want to return information about.</p>",
         "GetProjectRequest$arn": "<p>The project's ARN.</p>",
@@ -102,9 +122,12 @@
         "GetSuiteRequest$arn": "<p>The suite's ARN.</p>",
         "GetTestRequest$arn": "<p>The test's ARN.</p>",
         "GetUploadRequest$arn": "<p>The upload's ARN.</p>",
+        "GetVPCEConfigurationRequest$arn": "<p>The Amazon Resource Name (ARN) of the VPC endpoint configuration you want to describe.</p>",
         "InstallToRemoteAccessSessionRequest$remoteAccessSessionArn": "<p>The Amazon Resource Name (ARN) of the remote access session about which you are requesting information.</p>",
         "InstallToRemoteAccessSessionRequest$appArn": "<p>The Amazon Resource Name (ARN) of the app about which you are requesting information.</p>",
+        "InstanceProfile$arn": "<p>The Amazon Resource Name (ARN) of the instance profile.</p>",
         "Job$arn": "<p>The job's ARN.</p>",
+        "Job$instanceArn": "<p>The Amazon Resource Name (ARN) of the instance.</p>",
         "ListArtifactsRequest$arn": "<p>The Run, Job, Suite, or Test ARN.</p>",
         "ListDevicePoolsRequest$arn": "<p>The project ARN.</p>",
         "ListDevicesRequest$arn": "<p>The Amazon Resource Name (ARN) of the project.</p>",
@@ -122,6 +145,7 @@
         "ProblemDetail$arn": "<p>The problem detail's ARN.</p>",
         "Project$arn": "<p>The project's ARN.</p>",
         "RemoteAccessSession$arn": "<p>The Amazon Resource Name (ARN) of the remote access session.</p>",
+        "RemoteAccessSession$instanceArn": "<p>The Amazon Resource Name (ARN) of the instance.</p>",
         "RemoteAccessSession$remoteRecordAppArn": "<p>The Amazon Resource Name (ARN) for the app to be recorded in the remote access session.</p>",
         "Run$arn": "<p>The run's ARN.</p>",
         "Run$appUpload": "<p>An app to upload or that has been uploaded.</p>",
@@ -137,15 +161,21 @@
         "StopRunRequest$arn": "<p>Represents the Amazon Resource Name (ARN) of the Device Farm run you wish to stop.</p>",
         "Suite$arn": "<p>The suite's ARN.</p>",
         "Test$arn": "<p>The test's ARN.</p>",
+        "UpdateDeviceInstanceRequest$arn": "<p>The Amazon Resource Name (ARN) of the device instance.</p>",
+        "UpdateDeviceInstanceRequest$profileArn": "<p>The Amazon Resource Name (ARN) of the profile that you want to associate with the device instance.</p>",
         "UpdateDevicePoolRequest$arn": "<p>The Amazon Resourc Name (ARN) of the Device Farm device pool you wish to update.</p>",
+        "UpdateInstanceProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the instance profile.</p>",
         "UpdateNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to update network profile settings.</p>",
         "UpdateProjectRequest$arn": "<p>The Amazon Resource Name (ARN) of the project whose name you wish to update.</p>",
-        "Upload$arn": "<p>The upload's ARN.</p>"
+        "UpdateVPCEConfigurationRequest$arn": "<p>The Amazon Resource Name (ARN) of the VPC endpoint configuration you want to update.</p>",
+        "Upload$arn": "<p>The upload's ARN.</p>",
+        "VPCEConfiguration$arn": "<p>The Amazon Resource Name (ARN) of the VPC endpoint configuration.</p>"
       }
     },
     "AmazonResourceNames": {
       "base": null,
       "refs": {
+        "ScheduleRunConfiguration$vpceConfigurationArns": "<p>An array of Amazon Resource Names (ARNs) for your VPC endpoint configurations.</p>",
         "ScheduleRunConfiguration$auxiliaryApps": "<p>A list of auxiliary apps for the run.</p>"
       }
     },
@@ -193,7 +223,7 @@
     "BillingMethod": {
       "base": null,
       "refs": {
-        "CreateRemoteAccessSessionConfiguration$billingMethod": "<p>Returns the billing method for purposes of configuring a remote access session.</p>",
+        "CreateRemoteAccessSessionConfiguration$billingMethod": "<p>The billing method for the remote access session.</p>",
         "RemoteAccessSession$billingMethod": "<p>The billing method of the remote access session. Possible values include <code>METERED</code> or <code>UNMETERED</code>. For more information about metered devices, see <a href=\"http://docs.aws.amazon.com/devicefarm/latest/developerguide/welcome.html#welcome-terminology\">AWS Device Farm terminology</a>.\"</p>",
         "Run$billingMethod": "<p>Specifies the billing method for a test run: <code>metered</code> or <code>unmetered</code>. If the parameter is not specified, the default value is <code>metered</code>.</p>",
         "ScheduleRunConfiguration$billingMethod": "<p>Specifies the billing method for a test run: <code>metered</code> or <code>unmetered</code>. If the parameter is not specified, the default value is <code>metered</code>.</p>"
@@ -202,17 +232,24 @@
     "Boolean": {
       "base": null,
       "refs": {
+        "CreateInstanceProfileRequest$packageCleanup": "<p>When set to <code>true</code>, Device Farm will remove app packages after a test run. The default value is <code>false</code> for private devices.</p>",
+        "CreateInstanceProfileRequest$rebootAfterUse": "<p>When set to <code>true</code>, Device Farm will reboot the instance after a test run. The default value is <code>true</code>.</p>",
         "CreateRemoteAccessSessionRequest$remoteDebugEnabled": "<p>Set to <code>true</code> if you want to access devices remotely for debugging in your remote access session.</p>",
         "CreateRemoteAccessSessionRequest$remoteRecordEnabled": "<p>Set to <code>true</code> to enable remote recording for the remote access session.</p>",
+        "CreateRemoteAccessSessionRequest$skipAppResign": "<p>When set to <code>true</code>, for private devices, Device Farm will not sign your app again. For public devices, Device Farm always signs your apps again and this parameter has no effect.</p> <p>For more information about how Device Farm re-signs your app(s), see <a href=\"https://aws.amazon.com/device-farm/faq/\">Do you modify my app?</a> in the <i>AWS Device Farm FAQs</i>.</p>",
         "Device$remoteAccessEnabled": "<p>Specifies whether remote access has been enabled for the specified device.</p>",
         "Device$remoteDebugEnabled": "<p>This flag is set to <code>true</code> if remote debugging is enabled for the device.</p>",
         "DevicePoolCompatibilityResult$compatible": "<p>Whether the result was compatible with the device pool.</p>",
+        "InstanceProfile$packageCleanup": "<p>When set to <code>true</code>, Device Farm will remove app packages after a test run. The default value is <code>false</code> for private devices.</p>",
+        "InstanceProfile$rebootAfterUse": "<p>When set to <code>true</code>, Device Farm will reboot the instance after a test run. The default value is <code>true</code>.</p>",
         "Radios$wifi": "<p>True if Wi-Fi is enabled at the beginning of the test; otherwise, false.</p>",
         "Radios$bluetooth": "<p>True if Bluetooth is enabled at the beginning of the test; otherwise, false.</p>",
         "Radios$nfc": "<p>True if NFC is enabled at the beginning of the test; otherwise, false.</p>",
         "Radios$gps": "<p>True if GPS is enabled at the beginning of the test; otherwise, false.</p>",
         "RemoteAccessSession$remoteDebugEnabled": "<p>This flag is set to <code>true</code> if remote debugging is enabled for the remote access session.</p>",
-        "RemoteAccessSession$remoteRecordEnabled": "<p>This flag is set to <code>true</code> if remote recording is enabled for the remote access session.</p>"
+        "RemoteAccessSession$remoteRecordEnabled": "<p>This flag is set to <code>true</code> if remote recording is enabled for the remote access session.</p>",
+        "UpdateInstanceProfileRequest$packageCleanup": "<p>The updated choice for whether you want to specify package cleanup. The default value is <code>false</code> for private devices.</p>",
+        "UpdateInstanceProfileRequest$rebootAfterUse": "<p>The updated choice for whether you want to reboot the device after use. The default value is <code>true</code>.</p>"
       }
     },
     "CPU": {
@@ -254,6 +291,16 @@
       "refs": {
       }
     },
+    "CreateInstanceProfileRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateInstanceProfileResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "CreateNetworkProfileRequest": {
       "base": null,
       "refs": {
@@ -275,7 +322,7 @@
       }
     },
     "CreateRemoteAccessSessionConfiguration": {
-      "base": "<p>Creates the configuration settings for a remote access session, including the device model and type.</p>",
+      "base": "<p>Configuration settings for a remote access session, including billing method.</p>",
       "refs": {
         "CreateRemoteAccessSessionRequest$configuration": "<p>The configuration information for the remote access session request.</p>"
       }
@@ -297,6 +344,16 @@
     },
     "CreateUploadResult": {
       "base": "<p>Represents the result of a create upload request.</p>",
+      "refs": {
+      }
+    },
+    "CreateVPCEConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateVPCEConfigurationResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -344,6 +401,16 @@
     },
     "DeleteDevicePoolResult": {
       "base": "<p>Represents the result of a delete device pool request.</p>",
+      "refs": {
+      }
+    },
+    "DeleteInstanceProfileRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteInstanceProfileResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -397,6 +464,16 @@
       "refs": {
       }
     },
+    "DeleteVPCEConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteVPCEConfigurationResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "Device": {
       "base": "<p>Represents a device type that an app is tested against.</p>",
       "refs": {
@@ -412,7 +489,7 @@
       "base": null,
       "refs": {
         "IncompatibilityMessage$type": "<p>The type of incompatibility.</p> <p>Allowed values include:</p> <ul> <li> <p>ARN: The ARN.</p> </li> <li> <p>FORM_FACTOR: The form factor (for example, phone or tablet).</p> </li> <li> <p>MANUFACTURER: The manufacturer.</p> </li> <li> <p>PLATFORM: The platform (for example, Android or iOS).</p> </li> <li> <p>REMOTE_ACCESS_ENABLED: Whether the device is enabled for remote access.</p> </li> <li> <p>APPIUM_VERSION: The Appium version for the test.</p> </li> </ul>",
-        "Rule$attribute": "<p>The rule's stringified attribute. For example, specify the value as <code>\"\\\"abc\\\"\"</code>.</p> <p>Allowed values include:</p> <ul> <li> <p>ARN: The ARN.</p> </li> <li> <p>FORM_FACTOR: The form factor (for example, phone or tablet).</p> </li> <li> <p>MANUFACTURER: The manufacturer.</p> </li> <li> <p>PLATFORM: The platform (for example, Android or iOS).</p> </li> <li> <p>REMOTE_ACCESS_ENABLED: Whether the device is enabled for remote access.</p> </li> <li> <p>APPIUM_VERSION: The Appium version for the test.</p> </li> </ul>"
+        "Rule$attribute": "<p>The rule's stringified attribute. For example, specify the value as <code>\"\\\"abc\\\"\"</code>.</p> <p>Allowed values include:</p> <ul> <li> <p>ARN: The ARN.</p> </li> <li> <p>FORM_FACTOR: The form factor (for example, phone or tablet).</p> </li> <li> <p>MANUFACTURER: The manufacturer.</p> </li> <li> <p>PLATFORM: The platform (for example, Android or iOS).</p> </li> <li> <p>REMOTE_ACCESS_ENABLED: Whether the device is enabled for remote access.</p> </li> <li> <p>APPIUM_VERSION: The Appium version for the test.</p> </li> <li> <p>INSTANCE_ARN: The Amazon Resource Name (ARN) of the device instance.</p> </li> <li> <p>INSTANCE_LABELS: The label of the device instance.</p> </li> </ul>"
       }
     },
     "DeviceFormFactor": {
@@ -425,6 +502,21 @@
       "base": null,
       "refs": {
         "CustomerArtifactPaths$deviceHostPaths": "<p>Comma-separated list of paths in the test execution environment where the artifacts generated by the customer's tests will be pulled from.</p>"
+      }
+    },
+    "DeviceInstance": {
+      "base": "<p>Represents the device instance.</p>",
+      "refs": {
+        "DeviceInstances$member": null,
+        "GetDeviceInstanceResult$deviceInstance": "<p>An object containing information about your device instance.</p>",
+        "UpdateDeviceInstanceResult$deviceInstance": "<p>An object containing information about your device instance.</p>"
+      }
+    },
+    "DeviceInstances": {
+      "base": null,
+      "refs": {
+        "Device$instances": "<p>The instances belonging to this device.</p>",
+        "ListDeviceInstancesResult$deviceInstances": "<p>An object containing information about your device instances.</p>"
       }
     },
     "DeviceMinutes": {
@@ -551,6 +643,16 @@
       "refs": {
       }
     },
+    "GetDeviceInstanceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetDeviceInstanceResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetDevicePoolCompatibilityRequest": {
       "base": "<p>Represents a request to the get device pool compatibility operation.</p>",
       "refs": {
@@ -578,6 +680,16 @@
     },
     "GetDeviceResult": {
       "base": "<p>Represents the result of a get device request.</p>",
+      "refs": {
+      }
+    },
+    "GetInstanceProfileRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetInstanceProfileResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -671,6 +783,16 @@
       "refs": {
       }
     },
+    "GetVPCEConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetVPCEConfigurationResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "HostAddress": {
       "base": null,
       "refs": {
@@ -704,6 +826,35 @@
       "refs": {
       }
     },
+    "InstanceLabels": {
+      "base": null,
+      "refs": {
+        "DeviceInstance$labels": "<p>An array of strings describing the device instance.</p>",
+        "UpdateDeviceInstanceRequest$labels": "<p>An array of strings that you want to associate with the device instance.</p>"
+      }
+    },
+    "InstanceProfile": {
+      "base": "<p>Represents the instance profile.</p>",
+      "refs": {
+        "CreateInstanceProfileResult$instanceProfile": "<p>An object containing information about your instance profile.</p>",
+        "DeviceInstance$instanceProfile": "<p>A object containing information about the instance profile.</p>",
+        "GetInstanceProfileResult$instanceProfile": "<p>An object containing information about your instance profile.</p>",
+        "InstanceProfiles$member": null,
+        "UpdateInstanceProfileResult$instanceProfile": "<p>An object containing information about your instance profile.</p>"
+      }
+    },
+    "InstanceProfiles": {
+      "base": null,
+      "refs": {
+        "ListInstanceProfilesResult$instanceProfiles": "<p>An object containing information about your instance profiles.</p>"
+      }
+    },
+    "InstanceStatus": {
+      "base": null,
+      "refs": {
+        "DeviceInstance$status": "<p>The status of the device instance. Valid values are listed below.</p>"
+      }
+    },
     "Integer": {
       "base": null,
       "refs": {
@@ -714,6 +865,9 @@
         "Counters$errored": "<p>The number of errored entities.</p>",
         "Counters$stopped": "<p>The number of stopped entities.</p>",
         "Counters$skipped": "<p>The number of skipped entities.</p>",
+        "ListDeviceInstancesRequest$maxResults": "<p>An integer specifying the maximum number of items you want to return in the API response.</p>",
+        "ListInstanceProfilesRequest$maxResults": "<p>An integer specifying the maximum number of items you want to return in the API response.</p>",
+        "ListVPCEConfigurationsRequest$maxResults": "<p>An integer specifying the maximum number of items you want to return in the API response.</p>",
         "MaxSlotMap$value": null,
         "OfferingStatus$quantity": "<p>The number of available devices in the offering.</p>",
         "PurchaseOfferingRequest$quantity": "<p>The number of device slots you wish to purchase in an offering request.</p>",
@@ -732,6 +886,11 @@
       "refs": {
         "CreateRemoteAccessSessionRequest$interactionMode": "<p>The interaction mode of the remote access session. Valid values are:</p> <ul> <li> <p>INTERACTIVE: You can interact with the iOS device by viewing, touching, and rotating the screen. You <b>cannot</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>NO_VIDEO: You are connected to the device but cannot interact with it or view the screen. This mode has the fastest test execution speed. You <b>can</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You <b>can</b> run XCUITest framework-based tests and watch the screen in this mode.</p> </li> </ul>",
         "RemoteAccessSession$interactionMode": "<p>The interaction mode of the remote access session. Valid values are:</p> <ul> <li> <p>INTERACTIVE: You can interact with the iOS device by viewing, touching, and rotating the screen. You <b>cannot</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>NO_VIDEO: You are connected to the device but cannot interact with it or view the screen. This mode has the fastest test execution speed. You <b>can</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You <b>can</b> run XCUITest framework-based tests and watch the screen in this mode.</p> </li> </ul>"
+      }
+    },
+    "InvalidOperationException": {
+      "base": "<p>There was an error with the update request, or you do not have sufficient permissions to update this VPC endpoint configuration.</p>",
+      "refs": {
       }
     },
     "IosPaths": {
@@ -780,6 +939,16 @@
       "refs": {
       }
     },
+    "ListDeviceInstancesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListDeviceInstancesResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "ListDevicePoolsRequest": {
       "base": "<p>Represents the result of a list device pools request.</p>",
       "refs": {
@@ -797,6 +966,16 @@
     },
     "ListDevicesResult": {
       "base": "<p>Represents the result of a list devices operation.</p>",
+      "refs": {
+      }
+    },
+    "ListInstanceProfilesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListInstanceProfilesResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -930,6 +1109,16 @@
       "refs": {
       }
     },
+    "ListVPCEConfigurationsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListVPCEConfigurationsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "Location": {
       "base": "<p>Represents a latitude and longitude pair, expressed in geographic coordinate system degrees (for example 47.6204, -122.3491).</p> <p>Elevation is currently not supported.</p>",
       "refs": {
@@ -973,10 +1162,13 @@
       "refs": {
         "ArgumentException$message": "<p>Any additional information about the exception.</p>",
         "CreateDevicePoolRequest$description": "<p>The device pool's description.</p>",
+        "CreateInstanceProfileRequest$description": "<p>The description of your instance profile.</p>",
         "CreateNetworkProfileRequest$description": "<p>The description of the network profile.</p>",
         "DevicePool$description": "<p>The device pool's description.</p>",
         "IdempotencyException$message": "<p>Any additional information about the exception.</p>",
         "IncompatibilityMessage$message": "<p>A message about the incompatibility.</p>",
+        "InstanceProfile$description": "<p>The description of the instance profile.</p>",
+        "InvalidOperationException$message": null,
         "Job$message": "<p>A message about the job's result.</p>",
         "LimitExceededException$message": "<p>Any additional information about the exception.</p>",
         "NetworkProfile$description": "<p>The description of the network profile.</p>",
@@ -992,6 +1184,7 @@
         "Test$message": "<p>A message about the test's result.</p>",
         "UniqueProblem$message": "<p>A message about the unique problems' result.</p>",
         "UpdateDevicePoolRequest$description": "<p>A description of the device pool you wish to update.</p>",
+        "UpdateInstanceProfileRequest$description": "<p>The updated description for your instance profile.</p>",
         "UpdateNetworkProfileRequest$description": "<p>The descriptoin of the network profile about which you are returning information.</p>",
         "Upload$message": "<p>A message about the upload's result.</p>"
       }
@@ -1014,12 +1207,14 @@
       "refs": {
         "Artifact$name": "<p>The artifact's name.</p>",
         "CreateDevicePoolRequest$name": "<p>The device pool's name.</p>",
+        "CreateInstanceProfileRequest$name": "<p>The name of your instance profile.</p>",
         "CreateNetworkProfileRequest$name": "<p>The name you wish to specify for the new network profile.</p>",
         "CreateProjectRequest$name": "<p>The project's name.</p>",
         "CreateRemoteAccessSessionRequest$name": "<p>The name of the remote access session that you wish to create.</p>",
         "CreateUploadRequest$name": "<p>The upload's file name. The name should not contain the '/' character. If uploading an iOS app, the file name needs to end with the <code>.ipa</code> extension. If uploading an Android app, the file name needs to end with the <code>.apk</code> extension. For all others, the file name must end with the <code>.zip</code> file extension.</p>",
         "Device$name": "<p>The device's display name.</p>",
         "DevicePool$name": "<p>The device pool's name.</p>",
+        "InstanceProfile$name": "<p>The name of the instance profile.</p>",
         "Job$name": "<p>The job's name.</p>",
         "NetworkProfile$name": "<p>The name of the network profile.</p>",
         "ProblemDetail$name": "<p>The problem detail's name.</p>",
@@ -1030,6 +1225,7 @@
         "Suite$name": "<p>The suite's name.</p>",
         "Test$name": "<p>The test's name.</p>",
         "UpdateDevicePoolRequest$name": "<p>A string representing the name of the device pool you wish to update.</p>",
+        "UpdateInstanceProfileRequest$name": "<p>The updated name for your instance profile.</p>",
         "UpdateNetworkProfileRequest$name": "<p>The name of the network profile about which you are returning information.</p>",
         "UpdateProjectRequest$name": "<p>A string representing the new name of the project that you are updating.</p>",
         "Upload$name": "<p>The upload's file name.</p>"
@@ -1152,6 +1348,14 @@
         "ListOfferingsResult$offerings": "<p>A value representing the list offering results.</p>"
       }
     },
+    "PackageIds": {
+      "base": null,
+      "refs": {
+        "CreateInstanceProfileRequest$excludeAppPackagesFromCleanup": "<p>An array of strings specifying the list of app packages that should not be cleaned up from the device after a test run is over.</p> <p>The list of packages is only considered if you set <code>packageCleanup</code> to <code>true</code>.</p>",
+        "InstanceProfile$excludeAppPackagesFromCleanup": "<p>An array of strings specifying the list of app packages that should not be cleaned up from the device after a test run is over.</p> <p>The list of packages is only considered if you set <code>packageCleanup</code> to <code>true</code>.</p>",
+        "UpdateInstanceProfileRequest$excludeAppPackagesFromCleanup": "<p>An array of strings specifying the list of app packages that should not be cleaned up from the device after a test run is over.</p> <p>The list of packages is only considered if you set <code>packageCleanup</code> to <code>true</code>.</p>"
+      }
+    },
     "PaginationToken": {
       "base": null,
       "refs": {
@@ -1159,10 +1363,14 @@
         "GetOfferingStatusResult$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListArtifactsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListArtifactsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
+        "ListDeviceInstancesRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
+        "ListDeviceInstancesResult$nextToken": "<p>An identifier that can be used in the next call to this operation to return the next set of items in the list.</p>",
         "ListDevicePoolsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListDevicePoolsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
         "ListDevicesRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListDevicesResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
+        "ListInstanceProfilesRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
+        "ListInstanceProfilesResult$nextToken": "<p>An identifier that can be used in the next call to this operation to return the next set of items in the list.</p>",
         "ListJobsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListJobsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
         "ListNetworkProfilesRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
@@ -1188,7 +1396,9 @@
         "ListUniqueProblemsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListUniqueProblemsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
         "ListUploadsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
-        "ListUploadsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>"
+        "ListUploadsResult$nextToken": "<p>If the number of items that are returned is significantly large, this is an identifier that is also returned, which can be used in a subsequent call to this operation to return the next set of items in the list.</p>",
+        "ListVPCEConfigurationsRequest$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
+        "ListVPCEConfigurationsResult$nextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>"
       }
     },
     "PercentInteger": {
@@ -1367,6 +1577,7 @@
     "ScheduleRunConfiguration": {
       "base": "<p>Represents the settings for a run. Includes things like location, radio states, auxiliary apps, and network profiles.</p>",
       "refs": {
+        "GetDevicePoolCompatibilityRequest$configuration": "<p>An object containing information about the settings for a run.</p>",
         "ScheduleRunRequest$configuration": "<p>Information about the settings for the run to be scheduled.</p>"
       }
     },
@@ -1390,6 +1601,23 @@
     "ServiceAccountException": {
       "base": "<p>There was a problem with the service account.</p>",
       "refs": {
+      }
+    },
+    "ServiceDnsName": {
+      "base": null,
+      "refs": {
+        "CreateVPCEConfigurationRequest$serviceDnsName": "<p>The DNS name of the service running in your VPC that you want Device Farm to test.</p>",
+        "UpdateVPCEConfigurationRequest$serviceDnsName": "<p>The DNS (domain) name used to connect to your private service in your Amazon VPC. The DNS name must not already be in use on the Internet.</p>",
+        "VPCEConfiguration$serviceDnsName": "<p>The DNS name that maps to the private IP address of the service you want to access.</p>"
+      }
+    },
+    "SkipAppResign": {
+      "base": null,
+      "refs": {
+        "AccountSettings$skipAppResign": "<p>When set to <code>true</code>, for private devices, Device Farm will not sign your app again. For public devices, Device Farm always signs your apps again and this parameter has no effect.</p> <p>For more information about how Device Farm re-signs your app(s), see <a href=\"https://aws.amazon.com/device-farm/faq/\">Do you modify my app?</a> in the <i>AWS Device Farm FAQs</i>.</p>",
+        "ExecutionConfiguration$skipAppResign": "<p>When set to <code>true</code>, for private devices, Device Farm will not sign your app again. For public devices, Device Farm always signs your apps again and this parameter has no effect.</p> <p>For more information about how Device Farm re-signs your app(s), see <a href=\"https://aws.amazon.com/device-farm/faq/\">Do you modify my app?</a> in the <i>AWS Device Farm FAQs</i>.</p>",
+        "RemoteAccessSession$skipAppResign": "<p>When set to <code>true</code>, for private devices, Device Farm will not sign your app again. For public devices, Device Farm always signs your apps again and this parameter has no effect.</p> <p>For more information about how Device Farm re-signs your app(s), see <a href=\"https://aws.amazon.com/device-farm/faq/\">Do you modify my app?</a> in the <i>AWS Device Farm FAQs</i>.</p>",
+        "Run$skipAppResign": "<p>When set to <code>true</code>, for private devices, Device Farm will not sign your app again. For public devices, Device Farm always signs your apps again and this parameter has no effect.</p> <p>For more information about how Device Farm re-signs your app(s), see <a href=\"https://aws.amazon.com/device-farm/faq/\">Do you modify my app?</a> in the <i>AWS Device Farm FAQs</i>.</p>"
       }
     },
     "SshPublicKey": {
@@ -1435,14 +1663,17 @@
         "Device$fleetType": "<p>The type of fleet to which this device belongs. Possible values for fleet type are PRIVATE and PUBLIC.</p>",
         "Device$fleetName": "<p>The name of the fleet to which this device belongs.</p>",
         "DeviceHostPaths$member": null,
+        "DeviceInstance$udid": "<p>Unique device identifier for the device instance.</p>",
+        "InstanceLabels$member": null,
         "IosPaths$member": null,
         "MaxSlotMap$key": null,
+        "PackageIds$member": null,
         "RemoteAccessSession$endpoint": "<p>The endpoint for the remote access sesssion.</p>",
         "RemoteAccessSession$deviceUdid": "<p>Unique device identifier for the remote device. Only returned if remote debugging is enabled for the remote access session.</p>",
         "Rule$value": "<p>The rule's value.</p>",
         "Run$parsingResultUrl": "<p>Read-only URL for an object in S3 bucket where you can get the parsing results of the test package. If the test package doesn't parse, the reason why it doesn't parse appears in the file that this URL points to.</p>",
         "Run$locale": "<p>Information about the locale that is used for the run.</p>",
-        "Run$webUrl": "<p>A pre-signed Amazon S3 URL that can be used with a corresponding GET request to download the symbol file for the run.</p>",
+        "Run$webUrl": "<p>The Device Farm console URL for the recording of the run.</p>",
         "ScheduleRunConfiguration$locale": "<p>Information about the locale that is used for the run.</p>",
         "TestParameters$key": null,
         "TestParameters$value": null
@@ -1529,6 +1760,16 @@
         "ListUniqueProblemsResult$uniqueProblems": "<p>Information about the unique problems.</p> <p>Allowed values include:</p> <ul> <li> <p>PENDING: A pending condition.</p> </li> <li> <p>PASSED: A passing condition.</p> </li> <li> <p>WARNED: A warning condition.</p> </li> <li> <p>FAILED: A failed condition.</p> </li> <li> <p>SKIPPED: A skipped condition.</p> </li> <li> <p>ERRORED: An error condition.</p> </li> <li> <p>STOPPED: A stopped condition.</p> </li> </ul>"
       }
     },
+    "UpdateDeviceInstanceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateDeviceInstanceResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "UpdateDevicePoolRequest": {
       "base": "<p>Represents a request to the update device pool operation.</p>",
       "refs": {
@@ -1536,6 +1777,16 @@
     },
     "UpdateDevicePoolResult": {
       "base": "<p>Represents the result of an update device pool request.</p>",
+      "refs": {
+      }
+    },
+    "UpdateInstanceProfileRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateInstanceProfileResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -1556,6 +1807,16 @@
     },
     "UpdateProjectResult": {
       "base": "<p>Represents the result of an update project request.</p>",
+      "refs": {
+      }
+    },
+    "UpdateVPCEConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateVPCEConfigurationResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -1585,6 +1846,45 @@
       "base": null,
       "refs": {
         "ListUploadsResult$uploads": "<p>Information about the uploads.</p>"
+      }
+    },
+    "VPCEConfiguration": {
+      "base": "<p>Represents an Amazon Virtual Private Cloud (VPC) endpoint configuration.</p>",
+      "refs": {
+        "CreateVPCEConfigurationResult$vpceConfiguration": "<p>An object containing information about your VPC endpoint configuration.</p>",
+        "GetVPCEConfigurationResult$vpceConfiguration": "<p>An object containing information about your VPC endpoint configuration.</p>",
+        "UpdateVPCEConfigurationResult$vpceConfiguration": "<p>An object containing information about your VPC endpoint configuration.</p>",
+        "VPCEConfigurations$member": null
+      }
+    },
+    "VPCEConfigurationDescription": {
+      "base": null,
+      "refs": {
+        "CreateVPCEConfigurationRequest$vpceConfigurationDescription": "<p>An optional description, providing more details about your VPC endpoint configuration.</p>",
+        "UpdateVPCEConfigurationRequest$vpceConfigurationDescription": "<p>An optional description, providing more details about your VPC endpoint configuration.</p>",
+        "VPCEConfiguration$vpceConfigurationDescription": "<p>An optional description, providing more details about your VPC endpoint configuration.</p>"
+      }
+    },
+    "VPCEConfigurationName": {
+      "base": null,
+      "refs": {
+        "CreateVPCEConfigurationRequest$vpceConfigurationName": "<p>The friendly name you give to your VPC endpoint configuration, to manage your configurations more easily.</p>",
+        "UpdateVPCEConfigurationRequest$vpceConfigurationName": "<p>The friendly name you give to your VPC endpoint configuration, to manage your configurations more easily.</p>",
+        "VPCEConfiguration$vpceConfigurationName": "<p>The friendly name you give to your VPC endpoint configuration, to manage your configurations more easily.</p>"
+      }
+    },
+    "VPCEConfigurations": {
+      "base": null,
+      "refs": {
+        "ListVPCEConfigurationsResult$vpceConfigurations": "<p>An array of <code>VPCEConfiguration</code> objects containing information about your VPC endpoint configuration.</p>"
+      }
+    },
+    "VPCEServiceName": {
+      "base": null,
+      "refs": {
+        "CreateVPCEConfigurationRequest$vpceServiceName": "<p>The name of the VPC endpoint service running inside your AWS account that you want Device Farm to test.</p>",
+        "UpdateVPCEConfigurationRequest$vpceServiceName": "<p>The name of the VPC endpoint service running inside your AWS account that you want Device Farm to test.</p>",
+        "VPCEConfiguration$vpceServiceName": "<p>The name of the VPC endpoint service running inside your AWS account that you want Device Farm to test.</p>"
       }
     }
   }

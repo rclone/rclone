@@ -40,9 +40,9 @@ func NewApplicationManifestsClientWithBaseURI(baseURI string, timeout *int32) Ap
 }
 
 // Get get application manifests
-//
-// applicationTypeName is the name of the application type applicationTypeVersion is the version of the application
-// type
+// Parameters:
+// applicationTypeName - the name of the application type
+// applicationTypeVersion - the version of the application type
 func (client ApplicationManifestsClient) Get(ctx context.Context, applicationTypeName string, applicationTypeVersion string) (result ApplicationManifest, err error) {
 	req, err := client.GetPreparer(ctx, applicationTypeName, applicationTypeVersion)
 	if err != nil {

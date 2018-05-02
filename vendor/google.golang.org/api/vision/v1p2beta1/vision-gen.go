@@ -1,4 +1,4 @@
-// Package vision provides access to the Google Cloud Vision API.
+// Package vision provides access to the Cloud Vision API.
 //
 // See https://cloud.google.com/vision/
 //
@@ -296,6 +296,40 @@ func (s *Color) UnmarshalJSON(data []byte) error {
 	s.Green = float64(s1.Green)
 	s.Red = float64(s1.Red)
 	return nil
+}
+
+// GoogleCloudVisionV1p2beta1AnnotateFileResponse: Response to a single
+// file annotation request. A file may contain one or more
+// images, which individually have their own responses.
+type GoogleCloudVisionV1p2beta1AnnotateFileResponse struct {
+	// InputConfig: Information about the file for which this response is
+	// generated.
+	InputConfig *GoogleCloudVisionV1p2beta1InputConfig `json:"inputConfig,omitempty"`
+
+	// Responses: Individual responses to images found within the file.
+	Responses []*GoogleCloudVisionV1p2beta1AnnotateImageResponse `json:"responses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1AnnotateFileResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1AnnotateFileResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudVisionV1p2beta1AnnotateImageRequest: Request for
@@ -697,23 +731,27 @@ func (s *GoogleCloudVisionV1p2beta1Block) UnmarshalJSON(data []byte) error {
 // GoogleCloudVisionV1p2beta1BoundingPoly: A bounding polygon for the
 // detected image annotation.
 type GoogleCloudVisionV1p2beta1BoundingPoly struct {
+	// NormalizedVertices: The bounding polygon normalized vertices.
+	NormalizedVertices []*GoogleCloudVisionV1p2beta1NormalizedVertex `json:"normalizedVertices,omitempty"`
+
 	// Vertices: The bounding polygon vertices.
 	Vertices []*GoogleCloudVisionV1p2beta1Vertex `json:"vertices,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Vertices") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "NormalizedVertices")
+	// to unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Vertices") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "NormalizedVertices") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -1434,9 +1472,9 @@ func (s *GoogleCloudVisionV1p2beta1GcsDestination) MarshalJSON() ([]byte, error)
 // GoogleCloudVisionV1p2beta1GcsSource: The Google Cloud Storage
 // location where the input will be read from.
 type GoogleCloudVisionV1p2beta1GcsSource struct {
-	// Uri: Google Cloud Storage URI for the input file. This must only be a
-	// GCS
-	// object. Wildcards are not currently supported.
+	// Uri: Google Cloud Storage URI for the input file. This must only be
+	// a
+	// Google Cloud Storage object. Wildcards are not currently supported.
 	Uri string `json:"uri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Uri") to
@@ -1559,8 +1597,7 @@ type GoogleCloudVisionV1p2beta1ImageContext struct {
 	// [supported languages](/vision/docs/languages).
 	LanguageHints []string `json:"languageHints,omitempty"`
 
-	// LatLongRect: lat/long rectangle that specifies the location of the
-	// image.
+	// LatLongRect: Not used.
 	LatLongRect *GoogleCloudVisionV1p2beta1LatLongRect `json:"latLongRect,omitempty"`
 
 	// WebDetectionParams: Parameters for web detection.
@@ -1779,6 +1816,57 @@ func (s *GoogleCloudVisionV1p2beta1LocationInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudVisionV1p2beta1NormalizedVertex: A vertex represents a 2D
+// point in the image.
+// NOTE: the normalized vertex coordinates are relative to the original
+// image
+// and range from 0 to 1.
+type GoogleCloudVisionV1p2beta1NormalizedVertex struct {
+	// X: X coordinate.
+	X float64 `json:"x,omitempty"`
+
+	// Y: Y coordinate.
+	Y float64 `json:"y,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "X") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "X") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1NormalizedVertex) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1NormalizedVertex
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GoogleCloudVisionV1p2beta1NormalizedVertex) UnmarshalJSON(data []byte) error {
+	type NoMethod GoogleCloudVisionV1p2beta1NormalizedVertex
+	var s1 struct {
+		X gensupport.JSONFloat64 `json:"x"`
+		Y gensupport.JSONFloat64 `json:"y"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.X = float64(s1.X)
+	s.Y = float64(s1.Y)
+	return nil
+}
+
 // GoogleCloudVisionV1p2beta1OperationMetadata: Contains metadata for
 // the BatchAnnotateImages operation.
 type GoogleCloudVisionV1p2beta1OperationMetadata struct {
@@ -1825,7 +1913,8 @@ func (s *GoogleCloudVisionV1p2beta1OperationMetadata) MarshalJSON() ([]byte, err
 // and metadata.
 type GoogleCloudVisionV1p2beta1OutputConfig struct {
 	// BatchSize: The max number of response protos to put into each output
-	// JSON file on GCS.
+	// JSON file on
+	// Google Cloud Storage.
 	// The valid range is [1, 100]. If not specified, the default value is
 	// 20.
 	//

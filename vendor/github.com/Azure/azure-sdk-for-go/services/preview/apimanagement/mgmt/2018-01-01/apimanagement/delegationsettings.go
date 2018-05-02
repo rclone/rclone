@@ -41,9 +41,10 @@ func NewDelegationSettingsClientWithBaseURI(baseURI string, subscriptionID strin
 }
 
 // CreateOrUpdate create or Update Delegation settings.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is create or update parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - create or update parameters.
 func (client DelegationSettingsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, parameters PortalDelegationSettings) (result PortalDelegationSettings, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -118,8 +119,9 @@ func (client DelegationSettingsClient) CreateOrUpdateResponder(resp *http.Respon
 }
 
 // Get get Delegation settings.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client DelegationSettingsClient) Get(ctx context.Context, resourceGroupName string, serviceName string) (result PortalDelegationSettings, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -192,8 +194,9 @@ func (client DelegationSettingsClient) GetResponder(resp *http.Response) (result
 }
 
 // GetEntityTag gets the entity state (Etag) version of the DelegationSettings.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client DelegationSettingsClient) GetEntityTag(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -265,10 +268,12 @@ func (client DelegationSettingsClient) GetEntityTagResponder(resp *http.Response
 }
 
 // Update update Delegation settings.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is update Delegation settings. ifMatch is eTag of the Entity. ETag should match the current entity
-// state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - update Delegation settings.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client DelegationSettingsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, parameters PortalDelegationSettings, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

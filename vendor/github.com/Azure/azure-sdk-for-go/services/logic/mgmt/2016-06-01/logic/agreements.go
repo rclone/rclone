@@ -41,9 +41,11 @@ func NewAgreementsClientWithBaseURI(baseURI string, subscriptionID string) Agree
 }
 
 // CreateOrUpdate creates or updates an integration account agreement.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// agreementName is the integration account agreement name. agreement is the integration account agreement.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// agreementName - the integration account agreement name.
+// agreement - the integration account agreement.
 func (client AgreementsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string, agreement IntegrationAccountAgreement) (result IntegrationAccountAgreement, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: agreement,
@@ -516,7 +518,7 @@ func (client AgreementsClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/agreements/{agreementName}", pathParameters),
@@ -546,9 +548,10 @@ func (client AgreementsClient) CreateOrUpdateResponder(resp *http.Response) (res
 }
 
 // Delete deletes an integration account agreement.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// agreementName is the integration account agreement name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// agreementName - the integration account agreement name.
 func (client AgreementsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {
@@ -613,9 +616,10 @@ func (client AgreementsClient) DeleteResponder(resp *http.Response) (result auto
 }
 
 // Get gets an integration account agreement.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// agreementName is the integration account agreement name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// agreementName - the integration account agreement name.
 func (client AgreementsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result IntegrationAccountAgreement, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {
@@ -681,9 +685,11 @@ func (client AgreementsClient) GetResponder(resp *http.Response) (result Integra
 }
 
 // ListByIntegrationAccounts gets a list of integration account agreements.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. top is the
-// number of items to be included in the result. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client AgreementsClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountAgreementListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

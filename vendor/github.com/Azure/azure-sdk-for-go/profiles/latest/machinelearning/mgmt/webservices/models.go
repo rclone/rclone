@@ -26,14 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AssetType = original.AssetType
 
 const (
@@ -165,7 +157,41 @@ type StorageAccount = original.StorageAccount
 type TableSpecification = original.TableSpecification
 type WebService = original.WebService
 type OperationsClient = original.OperationsClient
+type Client = original.Client
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAssetTypeValues() []AssetType {
+	return original.PossibleAssetTypeValues()
+}
+func PossibleColumnFormatValues() []ColumnFormat {
+	return original.PossibleColumnFormatValues()
+}
+func PossibleColumnTypeValues() []ColumnType {
+	return original.PossibleColumnTypeValues()
+}
+func PossibleDiagnosticsLevelValues() []DiagnosticsLevel {
+	return original.PossibleDiagnosticsLevelValues()
+}
+func PossibleInputPortTypeValues() []InputPortType {
+	return original.PossibleInputPortTypeValues()
+}
+func PossibleOutputPortTypeValues() []OutputPortType {
+	return original.PossibleOutputPortTypeValues()
+}
+func PossiblePackageTypeValues() []PackageType {
+	return original.PossiblePackageTypeValues()
+}
+func PossibleParameterTypeValues() []ParameterType {
+	return original.PossibleParameterTypeValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
@@ -178,9 +204,6 @@ func UserAgent() string {
 func Version() string {
 	return original.Version()
 }
-
-type Client = original.Client
-
 func NewClient(subscriptionID string) Client {
 	return original.NewClient(subscriptionID)
 }

@@ -22,6 +22,19 @@
         {"shape":"ThrottledException"}
       ]
     },
+    "GetEncryptionConfig":{
+      "name":"GetEncryptionConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/EncryptionConfig"
+      },
+      "input":{"shape":"GetEncryptionConfigRequest"},
+      "output":{"shape":"GetEncryptionConfigResult"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottledException"}
+      ]
+    },
     "GetServiceGraph":{
       "name":"GetServiceGraph",
       "http":{
@@ -56,6 +69,19 @@
       },
       "input":{"shape":"GetTraceSummariesRequest"},
       "output":{"shape":"GetTraceSummariesResult"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottledException"}
+      ]
+    },
+    "PutEncryptionConfig":{
+      "name":"PutEncryptionConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/PutEncryptionConfig"
+      },
+      "input":{"shape":"PutEncryptionConfigRequest"},
+      "output":{"shape":"PutEncryptionConfigResult"},
       "errors":[
         {"shape":"InvalidRequestException"},
         {"shape":"ThrottledException"}
@@ -176,6 +202,33 @@
         "TotalResponseTime":{"shape":"NullableDouble"}
       }
     },
+    "EncryptionConfig":{
+      "type":"structure",
+      "members":{
+        "KeyId":{"shape":"String"},
+        "Status":{"shape":"EncryptionStatus"},
+        "Type":{"shape":"EncryptionType"}
+      }
+    },
+    "EncryptionKeyId":{
+      "type":"string",
+      "max":3000,
+      "min":1
+    },
+    "EncryptionStatus":{
+      "type":"string",
+      "enum":[
+        "UPDATING",
+        "ACTIVE"
+      ]
+    },
+    "EncryptionType":{
+      "type":"string",
+      "enum":[
+        "NONE",
+        "KMS"
+      ]
+    },
     "ErrorMessage":{"type":"string"},
     "ErrorStatistics":{
       "type":"structure",
@@ -196,6 +249,17 @@
       "type":"string",
       "max":2000,
       "min":1
+    },
+    "GetEncryptionConfigRequest":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "GetEncryptionConfigResult":{
+      "type":"structure",
+      "members":{
+        "EncryptionConfig":{"shape":"EncryptionConfig"}
+      }
     },
     "GetServiceGraphRequest":{
       "type":"structure",
@@ -293,6 +357,20 @@
     "NullableDouble":{"type":"double"},
     "NullableInteger":{"type":"integer"},
     "NullableLong":{"type":"long"},
+    "PutEncryptionConfigRequest":{
+      "type":"structure",
+      "required":["Type"],
+      "members":{
+        "KeyId":{"shape":"EncryptionKeyId"},
+        "Type":{"shape":"EncryptionType"}
+      }
+    },
+    "PutEncryptionConfigResult":{
+      "type":"structure",
+      "members":{
+        "EncryptionConfig":{"shape":"EncryptionConfig"}
+      }
+    },
     "PutTelemetryRecordsRequest":{
       "type":"structure",
       "required":["TelemetryRecords"],

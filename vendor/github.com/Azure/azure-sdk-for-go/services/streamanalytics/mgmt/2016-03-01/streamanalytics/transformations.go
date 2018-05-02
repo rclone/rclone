@@ -41,15 +41,17 @@ func NewTransformationsClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // CreateOrReplace creates a transformation or replaces an already existing transformation under an existing streaming
 // job.
-//
-// transformation is the definition of the transformation that will be used to create a new transformation or
-// replace the existing one under the streaming job. resourceGroupName is the name of the resource group that
-// contains the resource. You can obtain this value from the Azure Resource Manager API or the portal. jobName is
-// the name of the streaming job. transformationName is the name of the transformation. ifMatch is the ETag of the
-// transformation. Omit this value to always overwrite the current transformation. Specify the last-seen ETag value
-// to prevent accidentally overwritting concurrent changes. ifNoneMatch is set to '*' to allow a new transformation
-// to be created, but to prevent updating an existing transformation. Other values will result in a 412
-// Pre-condition Failed response.
+// Parameters:
+// transformation - the definition of the transformation that will be used to create a new transformation or
+// replace the existing one under the streaming job.
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// transformationName - the name of the transformation.
+// ifMatch - the ETag of the transformation. Omit this value to always overwrite the current transformation.
+// Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// ifNoneMatch - set to '*' to allow a new transformation to be created, but to prevent updating an existing
+// transformation. Other values will result in a 412 Pre-condition Failed response.
 func (client TransformationsClient) CreateOrReplace(ctx context.Context, transformation Transformation, resourceGroupName string, jobName string, transformationName string, ifMatch string, ifNoneMatch string) (result Transformation, err error) {
 	req, err := client.CreateOrReplacePreparer(ctx, transformation, resourceGroupName, jobName, transformationName, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -87,7 +89,7 @@ func (client TransformationsClient) CreateOrReplacePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/transformations/{transformationName}", pathParameters),
@@ -125,10 +127,11 @@ func (client TransformationsClient) CreateOrReplaceResponder(resp *http.Response
 }
 
 // Get gets details about the specified transformation.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. transformationName is
-// the name of the transformation.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// transformationName - the name of the transformation.
 func (client TransformationsClient) Get(ctx context.Context, resourceGroupName string, jobName string, transformationName string) (result Transformation, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobName, transformationName)
 	if err != nil {
@@ -195,15 +198,17 @@ func (client TransformationsClient) GetResponder(resp *http.Response) (result Tr
 
 // Update updates an existing transformation under an existing streaming job. This can be used to partially update (ie.
 // update one or two properties) a transformation without affecting the rest the job or transformation definition.
-//
-// transformation is a Transformation object. The properties specified here will overwrite the corresponding
-// properties in the existing transformation (ie. Those properties will be updated). Any properties that are set to
-// null here will mean that the corresponding property in the existing transformation will remain the same and not
-// change as a result of this PATCH operation. resourceGroupName is the name of the resource group that contains
-// the resource. You can obtain this value from the Azure Resource Manager API or the portal. jobName is the name
-// of the streaming job. transformationName is the name of the transformation. ifMatch is the ETag of the
-// transformation. Omit this value to always overwrite the current transformation. Specify the last-seen ETag value
-// to prevent accidentally overwritting concurrent changes.
+// Parameters:
+// transformation - a Transformation object. The properties specified here will overwrite the corresponding
+// properties in the existing transformation (ie. Those properties will be updated). Any properties that are
+// set to null here will mean that the corresponding property in the existing transformation will remain the
+// same and not change as a result of this PATCH operation.
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// jobName - the name of the streaming job.
+// transformationName - the name of the transformation.
+// ifMatch - the ETag of the transformation. Omit this value to always overwrite the current transformation.
+// Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
 func (client TransformationsClient) Update(ctx context.Context, transformation Transformation, resourceGroupName string, jobName string, transformationName string, ifMatch string) (result Transformation, err error) {
 	req, err := client.UpdatePreparer(ctx, transformation, resourceGroupName, jobName, transformationName, ifMatch)
 	if err != nil {
@@ -241,7 +246,7 @@ func (client TransformationsClient) UpdatePreparer(ctx context.Context, transfor
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/transformations/{transformationName}", pathParameters),

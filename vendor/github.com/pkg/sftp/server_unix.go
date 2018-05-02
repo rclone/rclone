@@ -6,7 +6,9 @@ package sftp
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"path"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -20,10 +22,21 @@ func runLsStatt(dirent os.FileInfo, statt *syscall.Stat_t) string {
 	typeword := runLsTypeWord(dirent)
 	numLinks := statt.Nlink
 	uid := statt.Uid
+	usr, err := user.LookupId(strconv.Itoa(int(uid)))
+	var username string
+	if err == nil {
+		username = usr.Username
+	} else {
+		username = fmt.Sprintf("%d", uid)
+	}
 	gid := statt.Gid
-	username := fmt.Sprintf("%d", uid)
-	groupname := fmt.Sprintf("%d", gid)
-	// TODO FIXME: uid -> username, gid -> groupname lookup for ls -l format output
+	grp, err := user.LookupGroupId(strconv.Itoa(int(gid)))
+	var groupname string
+	if err == nil {
+		groupname = grp.Name
+	} else {
+		groupname = fmt.Sprintf("%d", gid)
+	}
 
 	mtime := dirent.ModTime()
 	monthStr := mtime.Month().String()[0:3]

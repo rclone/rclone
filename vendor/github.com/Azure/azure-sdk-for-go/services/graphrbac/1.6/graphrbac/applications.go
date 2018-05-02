@@ -42,9 +42,9 @@ func NewApplicationsClientWithBaseURI(baseURI string, tenantID string) Applicati
 }
 
 // AddOwner add an owner to an application.
-//
-// applicationObjectID is the object ID of the application to which to add the owner. parameters is the URL of the
-// owner object, such as
+// Parameters:
+// applicationObjectID - the object ID of the application to which to add the owner.
+// parameters - the URL of the owner object, such as
 // https://graph.windows.net/0b1f9851-1bf0-433f-aec3-cb9272f093dc/directoryObjects/f260bbc4-c254-447b-94cf-293b5ec434dd.
 func (client ApplicationsClient) AddOwner(ctx context.Context, applicationObjectID string, parameters ApplicationAddOwnerParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -87,7 +87,7 @@ func (client ApplicationsClient) AddOwnerPreparer(ctx context.Context, applicati
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/applications/{applicationObjectId}/$links/owners", pathParameters),
@@ -116,8 +116,8 @@ func (client ApplicationsClient) AddOwnerResponder(resp *http.Response) (result 
 }
 
 // Create create a new application.
-//
-// parameters is the parameters for creating an application.
+// Parameters:
+// parameters - the parameters for creating an application.
 func (client ApplicationsClient) Create(ctx context.Context, parameters ApplicationCreateParameters) (result Application, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -160,7 +160,7 @@ func (client ApplicationsClient) CreatePreparer(ctx context.Context, parameters 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/applications", pathParameters),
@@ -190,8 +190,8 @@ func (client ApplicationsClient) CreateResponder(resp *http.Response) (result Ap
 }
 
 // Delete delete an application.
-//
-// applicationObjectID is application object ID.
+// Parameters:
+// applicationObjectID - application object ID.
 func (client ApplicationsClient) Delete(ctx context.Context, applicationObjectID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, applicationObjectID)
 	if err != nil {
@@ -254,8 +254,8 @@ func (client ApplicationsClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get get an application by object ID.
-//
-// applicationObjectID is application object ID.
+// Parameters:
+// applicationObjectID - application object ID.
 func (client ApplicationsClient) Get(ctx context.Context, applicationObjectID string) (result Application, err error) {
 	req, err := client.GetPreparer(ctx, applicationObjectID)
 	if err != nil {
@@ -319,8 +319,8 @@ func (client ApplicationsClient) GetResponder(resp *http.Response) (result Appli
 }
 
 // List lists applications by filter parameters.
-//
-// filter is the filters to apply to the operation.
+// Parameters:
+// filter - the filters to apply to the operation.
 func (client ApplicationsClient) List(ctx context.Context, filter string) (result ApplicationListResultPage, err error) {
 	result.fn = func(lastResult ApplicationListResult) (ApplicationListResult, error) {
 		if lastResult.OdataNextLink == nil || len(to.String(lastResult.OdataNextLink)) < 1 {
@@ -398,8 +398,8 @@ func (client ApplicationsClient) ListComplete(ctx context.Context, filter string
 }
 
 // ListKeyCredentials get the keyCredentials associated with an application.
-//
-// applicationObjectID is application object ID.
+// Parameters:
+// applicationObjectID - application object ID.
 func (client ApplicationsClient) ListKeyCredentials(ctx context.Context, applicationObjectID string) (result KeyCredentialListResult, err error) {
 	req, err := client.ListKeyCredentialsPreparer(ctx, applicationObjectID)
 	if err != nil {
@@ -463,8 +463,8 @@ func (client ApplicationsClient) ListKeyCredentialsResponder(resp *http.Response
 }
 
 // ListNext gets a list of applications from the current tenant.
-//
-// nextLink is next link for the list operation.
+// Parameters:
+// nextLink - next link for the list operation.
 func (client ApplicationsClient) ListNext(ctx context.Context, nextLink string) (result ApplicationListResult, err error) {
 	req, err := client.ListNextPreparer(ctx, nextLink)
 	if err != nil {
@@ -528,8 +528,8 @@ func (client ApplicationsClient) ListNextResponder(resp *http.Response) (result 
 }
 
 // ListOwners the owners are a set of non-admin users who are allowed to modify this object.
-//
-// applicationObjectID is the object ID of the application for which to get owners.
+// Parameters:
+// applicationObjectID - the object ID of the application for which to get owners.
 func (client ApplicationsClient) ListOwners(ctx context.Context, applicationObjectID string) (result DirectoryObjectListResult, err error) {
 	req, err := client.ListOwnersPreparer(ctx, applicationObjectID)
 	if err != nil {
@@ -593,8 +593,8 @@ func (client ApplicationsClient) ListOwnersResponder(resp *http.Response) (resul
 }
 
 // ListPasswordCredentials get the passwordCredentials associated with an application.
-//
-// applicationObjectID is application object ID.
+// Parameters:
+// applicationObjectID - application object ID.
 func (client ApplicationsClient) ListPasswordCredentials(ctx context.Context, applicationObjectID string) (result PasswordCredentialListResult, err error) {
 	req, err := client.ListPasswordCredentialsPreparer(ctx, applicationObjectID)
 	if err != nil {
@@ -658,8 +658,9 @@ func (client ApplicationsClient) ListPasswordCredentialsResponder(resp *http.Res
 }
 
 // Patch update an existing application.
-//
-// applicationObjectID is application object ID. parameters is parameters to update an existing application.
+// Parameters:
+// applicationObjectID - application object ID.
+// parameters - parameters to update an existing application.
 func (client ApplicationsClient) Patch(ctx context.Context, applicationObjectID string, parameters ApplicationUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.PatchPreparer(ctx, applicationObjectID, parameters)
 	if err != nil {
@@ -695,7 +696,7 @@ func (client ApplicationsClient) PatchPreparer(ctx context.Context, applicationO
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/applications/{applicationObjectId}", pathParameters),
@@ -724,9 +725,9 @@ func (client ApplicationsClient) PatchResponder(resp *http.Response) (result aut
 }
 
 // UpdateKeyCredentials update the keyCredentials associated with an application.
-//
-// applicationObjectID is application object ID. parameters is parameters to update the keyCredentials of an
-// existing application.
+// Parameters:
+// applicationObjectID - application object ID.
+// parameters - parameters to update the keyCredentials of an existing application.
 func (client ApplicationsClient) UpdateKeyCredentials(ctx context.Context, applicationObjectID string, parameters KeyCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdateKeyCredentialsPreparer(ctx, applicationObjectID, parameters)
 	if err != nil {
@@ -762,7 +763,7 @@ func (client ApplicationsClient) UpdateKeyCredentialsPreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/applications/{applicationObjectId}/keyCredentials", pathParameters),
@@ -791,9 +792,9 @@ func (client ApplicationsClient) UpdateKeyCredentialsResponder(resp *http.Respon
 }
 
 // UpdatePasswordCredentials update passwordCredentials associated with an application.
-//
-// applicationObjectID is application object ID. parameters is parameters to update passwordCredentials of an
-// existing application.
+// Parameters:
+// applicationObjectID - application object ID.
+// parameters - parameters to update passwordCredentials of an existing application.
 func (client ApplicationsClient) UpdatePasswordCredentials(ctx context.Context, applicationObjectID string, parameters PasswordCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdatePasswordCredentialsPreparer(ctx, applicationObjectID, parameters)
 	if err != nil {
@@ -829,7 +830,7 @@ func (client ApplicationsClient) UpdatePasswordCredentialsPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{tenantID}/applications/{applicationObjectId}/passwordCredentials", pathParameters),

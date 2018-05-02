@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ScriptExecutionHistoryClient is the hDInsight Management Client
 type ScriptExecutionHistoryClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewScriptExecutionHistoryClient creates an instance of the ScriptExecutionHistoryClient client.
 func NewScriptExecutionHistoryClient(subscriptionID string) ScriptExecutionHistoryClient {
 	return NewScriptExecutionHistoryClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // NewScriptExecutionHistoryClientWithBaseURI creates an instance of the ScriptExecutionHistoryClient client.
 func NewScriptExecutionHistoryClientWithBaseURI(baseURI string, subscriptionID string) ScriptExecutionHistoryClient {
 	return ScriptExecutionHistoryClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // List lists all scripts' execution history for the specified cluster.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster.
@@ -65,6 +69,7 @@ func (client ScriptExecutionHistoryClient) List(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListPreparer prepares the List request.
 func (client ScriptExecutionHistoryClient) ListPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -86,6 +91,7 @@ func (client ScriptExecutionHistoryClient) ListPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ScriptExecutionHistoryClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -93,6 +99,7 @@ func (client ScriptExecutionHistoryClient) ListSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ScriptExecutionHistoryClient) ListResponder(resp *http.Response) (result ScriptActionExecutionHistoryList, err error) {
@@ -127,12 +134,14 @@ func (client ScriptExecutionHistoryClient) listNextResults(lastResults ScriptAct
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ScriptExecutionHistoryClient) ListComplete(ctx context.Context, resourceGroupName string, clusterName string) (result ScriptActionExecutionHistoryListIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, clusterName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // Promote promotes the specified ad-hoc script execution to a persisted script.
 //
 // resourceGroupName is the name of the resource group. clusterName is the name of the cluster. scriptExecutionID
@@ -159,6 +168,7 @@ func (client ScriptExecutionHistoryClient) Promote(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // PromotePreparer prepares the Promote request.
 func (client ScriptExecutionHistoryClient) PromotePreparer(ctx context.Context, resourceGroupName string, clusterName string, scriptExecutionID int64) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -181,6 +191,7 @@ func (client ScriptExecutionHistoryClient) PromotePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // PromoteSender sends the Promote request. The method will close the
 // http.Response Body if it receives an error.
 func (client ScriptExecutionHistoryClient) PromoteSender(req *http.Request) (*http.Response, error) {
@@ -188,6 +199,7 @@ func (client ScriptExecutionHistoryClient) PromoteSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight instead.
 // PromoteResponder handles the response to the Promote request. The method always
 // closes the http.Response Body.
 func (client ScriptExecutionHistoryClient) PromoteResponder(resp *http.Response) (result autorest.Response, err error) {

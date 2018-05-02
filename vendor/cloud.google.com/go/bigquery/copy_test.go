@@ -49,11 +49,12 @@ func defaultCopyJob() *bq.Job {
 func TestCopy(t *testing.T) {
 	defer fixRandomID("RANDOM")()
 	testCases := []struct {
-		dst    *Table
-		srcs   []*Table
-		jobID  string
-		config CopyConfig
-		want   *bq.Job
+		dst      *Table
+		srcs     []*Table
+		jobID    string
+		location string
+		config   CopyConfig
+		want     *bq.Job
 	}{
 		{
 			dst: &Table{
@@ -118,12 +119,33 @@ func TestCopy(t *testing.T) {
 				return j
 			}(),
 		},
+		{
+			dst: &Table{
+				ProjectID: "d-project-id",
+				DatasetID: "d-dataset-id",
+				TableID:   "d-table-id",
+			},
+			srcs: []*Table{
+				{
+					ProjectID: "s-project-id",
+					DatasetID: "s-dataset-id",
+					TableID:   "s-table-id",
+				},
+			},
+			location: "asia-northeast1",
+			want: func() *bq.Job {
+				j := defaultCopyJob()
+				j.JobReference.Location = "asia-northeast1"
+				return j
+			}(),
+		},
 	}
 	c := &Client{projectID: "client-project-id"}
 	for i, tc := range testCases {
 		tc.dst.c = c
 		copier := tc.dst.CopierFrom(tc.srcs...)
 		copier.JobID = tc.jobID
+		copier.Location = tc.location
 		tc.config.Srcs = tc.srcs
 		tc.config.Dst = tc.dst
 		copier.CopyConfig = tc.config

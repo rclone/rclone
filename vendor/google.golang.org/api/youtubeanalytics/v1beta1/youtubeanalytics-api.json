@@ -27,7 +27,7 @@
   "description": "Retrieves your YouTube Analytics data.",
   "discoveryVersion": "v1",
   "documentationLink": "http://developers.google.com/youtube/analytics/",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/KfUmPVzHT0UX1PxOBh_EzC81PPw\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/1EQIGwwL3SKNyvnAKOnN_kA5s_Y\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/youtube-16.png",
     "x32": "https://www.google.com/images/icons/product/youtube-32.png"
@@ -77,12 +77,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -384,7 +384,7 @@
       }
     }
   },
-  "revision": "20180205",
+  "revision": "20180430",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Group": {

@@ -41,8 +41,8 @@ func NewVirtualMachineExtensionImagesClientWithBaseURI(baseURI string, subscript
 }
 
 // Get gets a virtual machine extension image.
-//
-// location is the name of a supported Azure region.
+// Parameters:
+// location - the name of a supported Azure region.
 func (client VirtualMachineExtensionImagesClient) Get(ctx context.Context, location string, publisherName string, typeParameter string, version string) (result VirtualMachineExtensionImage, err error) {
 	req, err := client.GetPreparer(ctx, location, publisherName, typeParameter, version)
 	if err != nil {
@@ -109,8 +109,8 @@ func (client VirtualMachineExtensionImagesClient) GetResponder(resp *http.Respon
 }
 
 // ListTypes gets a list of virtual machine extension image types.
-//
-// location is the name of a supported Azure region.
+// Parameters:
+// location - the name of a supported Azure region.
 func (client VirtualMachineExtensionImagesClient) ListTypes(ctx context.Context, location string, publisherName string) (result ListVirtualMachineExtensionImage, err error) {
 	req, err := client.ListTypesPreparer(ctx, location, publisherName)
 	if err != nil {
@@ -175,8 +175,9 @@ func (client VirtualMachineExtensionImagesClient) ListTypesResponder(resp *http.
 }
 
 // ListVersions gets a list of virtual machine extension image versions.
-//
-// location is the name of a supported Azure region. filter is the filter to apply on the operation.
+// Parameters:
+// location - the name of a supported Azure region.
+// filter - the filter to apply on the operation.
 func (client VirtualMachineExtensionImagesClient) ListVersions(ctx context.Context, location string, publisherName string, typeParameter string, filter string, top *int32, orderby string) (result ListVirtualMachineExtensionImage, err error) {
 	req, err := client.ListVersionsPreparer(ctx, location, publisherName, typeParameter, filter, top, orderby)
 	if err != nil {

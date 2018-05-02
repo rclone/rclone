@@ -41,9 +41,12 @@ func NewDisksClientWithBaseURI(baseURI string, subscriptionID string) DisksClien
 }
 
 // Attach attach and create the lease of the disk to the virtual machine. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the disk. attachDiskProperties is properties of the disk to attach.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the disk.
+// attachDiskProperties - properties of the disk to attach.
 func (client DisksClient) Attach(ctx context.Context, resourceGroupName string, labName string, userName string, name string, attachDiskProperties AttachDiskProperties) (result DisksAttachFuture, err error) {
 	req, err := client.AttachPreparer(ctx, resourceGroupName, labName, userName, name, attachDiskProperties)
 	if err != nil {
@@ -76,7 +79,7 @@ func (client DisksClient) AttachPreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/users/{userName}/disks/{name}/attach", pathParameters),
@@ -113,9 +116,12 @@ func (client DisksClient) AttachResponder(resp *http.Response) (result autorest.
 }
 
 // CreateOrUpdate create or replace an existing disk. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the disk. disk is a Disk.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the disk.
+// disk - a Disk.
 func (client DisksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, userName string, name string, disk Disk) (result DisksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: disk,
@@ -154,7 +160,7 @@ func (client DisksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/users/{userName}/disks/{name}", pathParameters),
@@ -192,9 +198,11 @@ func (client DisksClient) CreateOrUpdateResponder(resp *http.Response) (result D
 }
 
 // Delete delete disk. This operation can take a while to complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the disk.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the disk.
 func (client DisksClient) Delete(ctx context.Context, resourceGroupName string, labName string, userName string, name string) (result DisksDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, userName, name)
 	if err != nil {
@@ -263,9 +271,12 @@ func (client DisksClient) DeleteResponder(resp *http.Response) (result autorest.
 
 // Detach detach and break the lease of the disk attached to the virtual machine. This operation can take a while to
 // complete.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the disk. detachDiskProperties is properties of the disk to detach.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the disk.
+// detachDiskProperties - properties of the disk to detach.
 func (client DisksClient) Detach(ctx context.Context, resourceGroupName string, labName string, userName string, name string, detachDiskProperties DetachDiskProperties) (result DisksDetachFuture, err error) {
 	req, err := client.DetachPreparer(ctx, resourceGroupName, labName, userName, name, detachDiskProperties)
 	if err != nil {
@@ -298,7 +309,7 @@ func (client DisksClient) DetachPreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/users/{userName}/disks/{name}/detach", pathParameters),
@@ -335,10 +346,12 @@ func (client DisksClient) DetachResponder(resp *http.Response) (result autorest.
 }
 
 // Get get disk.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. name is the name of the disk. expand is specify the $expand query. Example:
-// 'properties($select=diskType)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// name - the name of the disk.
+// expand - specify the $expand query. Example: 'properties($select=diskType)'
 func (client DisksClient) Get(ctx context.Context, resourceGroupName string, labName string, userName string, name string, expand string) (result Disk, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, userName, name, expand)
 	if err != nil {
@@ -408,11 +421,14 @@ func (client DisksClient) GetResponder(resp *http.Response) (result Disk, err er
 }
 
 // List list disks in a given user profile.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. expand is specify the $expand query. Example: 'properties($select=diskType)' filter is the filter
-// to apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
-// ordering expression for the results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// userName - the name of the user profile.
+// expand - specify the $expand query. Example: 'properties($select=diskType)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client DisksClient) List(ctx context.Context, resourceGroupName string, labName string, userName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationDiskPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, userName, expand, filter, top, orderby)

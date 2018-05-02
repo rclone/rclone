@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // SuppressionsClient is the REST APIs for Azure Advisor
 type SuppressionsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // NewSuppressionsClient creates an instance of the SuppressionsClient client.
 func NewSuppressionsClient(subscriptionID string) SuppressionsClient {
 	return NewSuppressionsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // NewSuppressionsClientWithBaseURI creates an instance of the SuppressionsClient client.
 func NewSuppressionsClientWithBaseURI(baseURI string, subscriptionID string) SuppressionsClient {
 	return SuppressionsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // Create enables the snoozed or dismissed attribute of a recommendation. The snoozed or dismissed attribute is
 // referred to as a suppression. Use this API to create or update the snoozed or dismissed status of a recommendation.
 //
@@ -67,6 +71,7 @@ func (client SuppressionsClient) Create(ctx context.Context, resourceURI string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // CreatePreparer prepares the Create request.
 func (client SuppressionsClient) CreatePreparer(ctx context.Context, resourceURI string, recommendationID string, name string, suppressionContract SuppressionContract) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,7 +86,7 @@ func (client SuppressionsClient) CreatePreparer(ctx context.Context, resourceURI
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{resourceUri}/providers/Microsoft.Advisor/recommendations/{recommendationId}/suppressions/{name}", pathParameters),
@@ -90,6 +95,7 @@ func (client SuppressionsClient) CreatePreparer(ctx context.Context, resourceURI
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) CreateSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client SuppressionsClient) CreateSender(req *http.Request) (*http.Response
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client SuppressionsClient) CreateResponder(resp *http.Response) (result SuppressionContract, err error) {
@@ -110,6 +117,7 @@ func (client SuppressionsClient) CreateResponder(resp *http.Response) (result Su
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // Delete enables the activation of a snoozed or dismissed recommendation. The snoozed or dismissed attribute of a
 // recommendation is referred to as a suppression.
 //
@@ -137,6 +145,7 @@ func (client SuppressionsClient) Delete(ctx context.Context, resourceURI string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // DeletePreparer prepares the Delete request.
 func (client SuppressionsClient) DeletePreparer(ctx context.Context, resourceURI string, recommendationID string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -158,6 +167,7 @@ func (client SuppressionsClient) DeletePreparer(ctx context.Context, resourceURI
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -165,6 +175,7 @@ func (client SuppressionsClient) DeleteSender(req *http.Request) (*http.Response
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client SuppressionsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -177,6 +188,7 @@ func (client SuppressionsClient) DeleteResponder(resp *http.Response) (result au
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // Get obtains the details of a suppression.
 //
 // resourceURI is the fully qualified Azure Resource Manager identifier of the resource to which the recommendation
@@ -203,6 +215,7 @@ func (client SuppressionsClient) Get(ctx context.Context, resourceURI string, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // GetPreparer prepares the Get request.
 func (client SuppressionsClient) GetPreparer(ctx context.Context, resourceURI string, recommendationID string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -224,6 +237,7 @@ func (client SuppressionsClient) GetPreparer(ctx context.Context, resourceURI st
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -231,6 +245,7 @@ func (client SuppressionsClient) GetSender(req *http.Request) (*http.Response, e
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client SuppressionsClient) GetResponder(resp *http.Response) (result SuppressionContract, err error) {
@@ -244,6 +259,7 @@ func (client SuppressionsClient) GetResponder(resp *http.Response) (result Suppr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // List retrieves the list of snoozed or dismissed suppressions for a subscription. The snoozed or dismissed attribute
 // of a recommendation is referred to as a suppression.
 func (client SuppressionsClient) List(ctx context.Context) (result ListSuppressionContract, err error) {
@@ -268,6 +284,7 @@ func (client SuppressionsClient) List(ctx context.Context) (result ListSuppressi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // ListPreparer prepares the List request.
 func (client SuppressionsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -287,6 +304,7 @@ func (client SuppressionsClient) ListPreparer(ctx context.Context) (*http.Reques
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -294,6 +312,7 @@ func (client SuppressionsClient) ListSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/advisor/mgmt/2016-07-12-preview/advisor instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client SuppressionsClient) ListResponder(resp *http.Response) (result ListSuppressionContract, err error) {

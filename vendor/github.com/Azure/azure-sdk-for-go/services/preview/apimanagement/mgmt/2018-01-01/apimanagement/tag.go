@@ -41,12 +41,13 @@ func NewTagClientWithBaseURI(baseURI string, subscriptionID string) TagClient {
 }
 
 // AssignToAPI assign tag to the Api.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. tagID is tag identifier. Must be unique in the
-// current API Management service instance. ifMatch is eTag of the Entity. Not required when creating an entity,
-// but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client TagClient) AssignToAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string, tagID string, ifMatch string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -133,13 +134,15 @@ func (client TagClient) AssignToAPIResponder(resp *http.Response) (result TagCon
 }
 
 // AssignToOperation assign tag to the Operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. operationID is operation identifier within an
-// API. Must be unique in the current API Management service instance. tagID is tag identifier. Must be unique in
-// the current API Management service instance. ifMatch is eTag of the Entity. Not required when creating an
-// entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client TagClient) AssignToOperation(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, tagID string, ifMatch string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -231,11 +234,12 @@ func (client TagClient) AssignToOperationResponder(resp *http.Response) (result 
 }
 
 // AssignToProduct assign tag to the Product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. tagID is tag
-// identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the Entity. Not
-// required when creating an entity, but required when updating an entity.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. Not required when creating an entity, but required when updating an entity.
 func (client TagClient) AssignToProduct(ctx context.Context, resourceGroupName string, serviceName string, productID string, tagID string, ifMatch string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -322,10 +326,11 @@ func (client TagClient) AssignToProductResponder(resp *http.Response) (result Ta
 }
 
 // CreateOrUpdate creates a tag.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// tagID is tag identifier. Must be unique in the current API Management service instance. parameters is create
-// parameters.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// parameters - create parameters.
 func (client TagClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, tagID string, parameters TagCreateUpdateParameters) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -412,11 +417,12 @@ func (client TagClient) CreateOrUpdateResponder(resp *http.Response) (result Tag
 }
 
 // Delete deletes specific tag of the API Management service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// tagID is tag identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the
-// Entity. ETag should match the current entity state from the header response of the GET request or it should be *
-// for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TagClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, tagID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -494,12 +500,14 @@ func (client TagClient) DeleteResponder(resp *http.Response) (result autorest.Re
 }
 
 // DetachFromAPI detach the tag from the Api.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. tagID is tag identifier. Must be unique in the
-// current API Management service instance. ifMatch is eTag of the Entity. ETag should match the current entity
-// state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TagClient) DetachFromAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string, tagID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -582,13 +590,16 @@ func (client TagClient) DetachFromAPIResponder(resp *http.Response) (result auto
 }
 
 // DetachFromOperation detach the tag from the Operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. operationID is operation identifier within an
-// API. Must be unique in the current API Management service instance. tagID is tag identifier. Must be unique in
-// the current API Management service instance. ifMatch is eTag of the Entity. ETag should match the current entity
-// state from the header response of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TagClient) DetachFromOperation(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, tagID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -676,12 +687,13 @@ func (client TagClient) DetachFromOperationResponder(resp *http.Response) (resul
 }
 
 // DetachFromProduct detach the tag from the Product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. tagID is tag
-// identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the Entity. ETag
-// should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TagClient) DetachFromProduct(ctx context.Context, resourceGroupName string, serviceName string, productID string, tagID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -764,9 +776,10 @@ func (client TagClient) DetachFromProductResponder(resp *http.Response) (result 
 }
 
 // Get gets the details of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// tagID is tag identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) Get(ctx context.Context, resourceGroupName string, serviceName string, tagID string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -844,11 +857,12 @@ func (client TagClient) GetResponder(resp *http.Response) (result TagContract, e
 }
 
 // GetByAPI get tag associated with the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. tagID is tag identifier. Must be unique in the
-// current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetByAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string, tagID string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -931,12 +945,14 @@ func (client TagClient) GetByAPIResponder(resp *http.Response) (result TagContra
 }
 
 // GetByOperation get tag associated with the Operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. operationID is operation identifier within an
-// API. Must be unique in the current API Management service instance. tagID is tag identifier. Must be unique in
-// the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetByOperation(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, tagID string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1024,10 +1040,11 @@ func (client TagClient) GetByOperationResponder(resp *http.Response) (result Tag
 }
 
 // GetByProduct get tag associated with the Product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. tagID is tag
-// identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetByProduct(ctx context.Context, resourceGroupName string, serviceName string, productID string, tagID string) (result TagContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1110,9 +1127,10 @@ func (client TagClient) GetByProductResponder(resp *http.Response) (result TagCo
 }
 
 // GetEntityState gets the entity state version of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// tagID is tag identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetEntityState(ctx context.Context, resourceGroupName string, serviceName string, tagID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1189,11 +1207,12 @@ func (client TagClient) GetEntityStateResponder(resp *http.Response) (result aut
 }
 
 // GetEntityStateByAPI gets the entity state version of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. tagID is tag identifier. Must be unique in the
-// current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetEntityStateByAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string, tagID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1275,12 +1294,14 @@ func (client TagClient) GetEntityStateByAPIResponder(resp *http.Response) (resul
 }
 
 // GetEntityStateByOperation gets the entity state version of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. operationID is operation identifier within an
-// API. Must be unique in the current API Management service instance. tagID is tag identifier. Must be unique in
-// the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetEntityStateByOperation(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, tagID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1367,10 +1388,11 @@ func (client TagClient) GetEntityStateByOperationResponder(resp *http.Response) 
 }
 
 // GetEntityStateByProduct gets the entity state version of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. tagID is tag
-// identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
 func (client TagClient) GetEntityStateByProduct(ctx context.Context, resourceGroupName string, serviceName string, productID string, tagID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1452,15 +1474,17 @@ func (client TagClient) GetEntityStateByProductResponder(resp *http.Response) (r
 }
 
 // ListByAPI lists all Tags associated with the API.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. filter is | Field       | Supported operators
-// | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// filter - | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client TagClient) ListByAPI(ctx context.Context, resourceGroupName string, serviceName string, apiid string, filter string, top *int32, skip *int32) (result TagCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1581,19 +1605,22 @@ func (client TagClient) ListByAPIComplete(ctx context.Context, resourceGroupName
 }
 
 // ListByOperation lists all Tags associated with the Operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API revision identifier. Must be unique in the current API Management service instance. Non-current
-// revision has ;rev=n as a suffix where n is the revision number. operationID is operation identifier within an
-// API. Must be unique in the current API Management service instance. filter is | Field       | Supported
-// operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API revision identifier. Must be unique in the current API Management service instance. Non-current
+// revision has ;rev=n as a suffix where n is the revision number.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// filter - | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | method     | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | description | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | urlTemplate | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | urlTemplate | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client TagClient) ListByOperation(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, filter string, top *int32, skip *int32) (result TagCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1719,14 +1746,16 @@ func (client TagClient) ListByOperationComplete(ctx context.Context, resourceGro
 }
 
 // ListByProduct lists all Tags associated with the Product.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. filter is |
-// Field       | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// productID - product identifier. Must be unique in the current API Management service instance.
+// filter - | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client TagClient) ListByProduct(ctx context.Context, resourceGroupName string, serviceName string, productID string, filter string, top *int32, skip *int32) (result TagCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1847,13 +1876,15 @@ func (client TagClient) ListByProductComplete(ctx context.Context, resourceGroup
 }
 
 // ListByService lists a collection of tags defined within a service instance.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// filter is | Field       | Supported operators    | Supported functions                         |
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// filter - | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
+// top - number of records to return.
+// skip - number of records to skip.
 func (client TagClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result TagCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -1969,11 +2000,13 @@ func (client TagClient) ListByServiceComplete(ctx context.Context, resourceGroup
 }
 
 // Update updates the details of the tag specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// tagID is tag identifier. Must be unique in the current API Management service instance. parameters is update
-// parameters. ifMatch is eTag of the Entity. ETag should match the current entity state from the header response
-// of the GET request or it should be * for unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// tagID - tag identifier. Must be unique in the current API Management service instance.
+// parameters - update parameters.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TagClient) Update(ctx context.Context, resourceGroupName string, serviceName string, tagID string, parameters TagCreateUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

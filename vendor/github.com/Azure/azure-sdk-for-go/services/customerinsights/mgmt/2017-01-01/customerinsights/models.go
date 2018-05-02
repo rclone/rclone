@@ -43,6 +43,11 @@ const (
 	Week CalculationWindowTypes = "Week"
 )
 
+// PossibleCalculationWindowTypesValues returns an array of possible values for the CalculationWindowTypes const type.
+func PossibleCalculationWindowTypesValues() []CalculationWindowTypes {
+	return []CalculationWindowTypes{Day, Hour, Lifetime, Month, Week}
+}
+
 // CardinalityTypes enumerates the values for cardinality types.
 type CardinalityTypes string
 
@@ -55,6 +60,11 @@ const (
 	OneToOne CardinalityTypes = "OneToOne"
 )
 
+// PossibleCardinalityTypesValues returns an array of possible values for the CardinalityTypes const type.
+func PossibleCardinalityTypesValues() []CardinalityTypes {
+	return []CardinalityTypes{ManyToMany, OneToMany, OneToOne}
+}
+
 // CompletionOperationTypes enumerates the values for completion operation types.
 type CompletionOperationTypes string
 
@@ -66,6 +76,11 @@ const (
 	// MoveFile ...
 	MoveFile CompletionOperationTypes = "MoveFile"
 )
+
+// PossibleCompletionOperationTypesValues returns an array of possible values for the CompletionOperationTypes const type.
+func PossibleCompletionOperationTypesValues() []CompletionOperationTypes {
+	return []CompletionOperationTypes{DeleteFile, DoNothing, MoveFile}
+}
 
 // ConnectorMappingStates enumerates the values for connector mapping states.
 type ConnectorMappingStates string
@@ -87,6 +102,11 @@ const (
 	Stopped ConnectorMappingStates = "Stopped"
 )
 
+// PossibleConnectorMappingStatesValues returns an array of possible values for the ConnectorMappingStates const type.
+func PossibleConnectorMappingStatesValues() []ConnectorMappingStates {
+	return []ConnectorMappingStates{Created, Creating, Expiring, Failed, Ready, Running, Stopped}
+}
+
 // ConnectorStates enumerates the values for connector states.
 type ConnectorStates string
 
@@ -104,6 +124,11 @@ const (
 	// ConnectorStatesReady ...
 	ConnectorStatesReady ConnectorStates = "Ready"
 )
+
+// PossibleConnectorStatesValues returns an array of possible values for the ConnectorStates const type.
+func PossibleConnectorStatesValues() []ConnectorStates {
+	return []ConnectorStates{ConnectorStatesCreated, ConnectorStatesCreating, ConnectorStatesDeleting, ConnectorStatesExpiring, ConnectorStatesFailed, ConnectorStatesReady}
+}
 
 // ConnectorTypes enumerates the values for connector types.
 type ConnectorTypes string
@@ -123,6 +148,11 @@ const (
 	Salesforce ConnectorTypes = "Salesforce"
 )
 
+// PossibleConnectorTypesValues returns an array of possible values for the ConnectorTypes const type.
+func PossibleConnectorTypesValues() []ConnectorTypes {
+	return []ConnectorTypes{AzureBlob, CRM, ExchangeOnline, None, Outbound, Salesforce}
+}
+
 // DataSourceType enumerates the values for data source type.
 type DataSourceType string
 
@@ -134,6 +164,11 @@ const (
 	// DataSourceTypeSystemDefault ...
 	DataSourceTypeSystemDefault DataSourceType = "SystemDefault"
 )
+
+// PossibleDataSourceTypeValues returns an array of possible values for the DataSourceType const type.
+func PossibleDataSourceTypeValues() []DataSourceType {
+	return []DataSourceType{DataSourceTypeConnector, DataSourceTypeLinkInteraction, DataSourceTypeSystemDefault}
+}
 
 // EntityTypes enumerates the values for entity types.
 type EntityTypes string
@@ -149,6 +184,11 @@ const (
 	EntityTypesRelationship EntityTypes = "Relationship"
 )
 
+// PossibleEntityTypesValues returns an array of possible values for the EntityTypes const type.
+func PossibleEntityTypesValues() []EntityTypes {
+	return []EntityTypes{EntityTypesInteraction, EntityTypesNone, EntityTypesProfile, EntityTypesRelationship}
+}
+
 // ErrorManagementTypes enumerates the values for error management types.
 type ErrorManagementTypes string
 
@@ -160,6 +200,11 @@ const (
 	// StopImport ...
 	StopImport ErrorManagementTypes = "StopImport"
 )
+
+// PossibleErrorManagementTypesValues returns an array of possible values for the ErrorManagementTypes const type.
+func PossibleErrorManagementTypesValues() []ErrorManagementTypes {
+	return []ErrorManagementTypes{RejectAndContinue, RejectUntilLimit, StopImport}
+}
 
 // FrequencyTypes enumerates the values for frequency types.
 type FrequencyTypes string
@@ -177,6 +222,11 @@ const (
 	FrequencyTypesWeek FrequencyTypes = "Week"
 )
 
+// PossibleFrequencyTypesValues returns an array of possible values for the FrequencyTypes const type.
+func PossibleFrequencyTypesValues() []FrequencyTypes {
+	return []FrequencyTypes{FrequencyTypesDay, FrequencyTypesHour, FrequencyTypesMinute, FrequencyTypesMonth, FrequencyTypesWeek}
+}
+
 // InstanceOperationType enumerates the values for instance operation type.
 type InstanceOperationType string
 
@@ -186,6 +236,11 @@ const (
 	// Upsert ...
 	Upsert InstanceOperationType = "Upsert"
 )
+
+// PossibleInstanceOperationTypeValues returns an array of possible values for the InstanceOperationType const type.
+func PossibleInstanceOperationTypeValues() []InstanceOperationType {
+	return []InstanceOperationType{Delete, Upsert}
+}
 
 // KpiFunctions enumerates the values for kpi functions.
 type KpiFunctions string
@@ -209,6 +264,11 @@ const (
 	KpiFunctionsSum KpiFunctions = "Sum"
 )
 
+// PossibleKpiFunctionsValues returns an array of possible values for the KpiFunctions const type.
+func PossibleKpiFunctionsValues() []KpiFunctions {
+	return []KpiFunctions{KpiFunctionsAvg, KpiFunctionsCount, KpiFunctionsCountDistinct, KpiFunctionsLast, KpiFunctionsMax, KpiFunctionsMin, KpiFunctionsNone, KpiFunctionsSum}
+}
+
 // LinkTypes enumerates the values for link types.
 type LinkTypes string
 
@@ -218,6 +278,11 @@ const (
 	// UpdateAlways ...
 	UpdateAlways LinkTypes = "UpdateAlways"
 )
+
+// PossibleLinkTypesValues returns an array of possible values for the LinkTypes const type.
+func PossibleLinkTypesValues() []LinkTypes {
+	return []LinkTypes{CopyIfNull, UpdateAlways}
+}
 
 // PermissionTypes enumerates the values for permission types.
 type PermissionTypes string
@@ -230,6 +295,11 @@ const (
 	// Write ...
 	Write PermissionTypes = "Write"
 )
+
+// PossiblePermissionTypesValues returns an array of possible values for the PermissionTypes const type.
+func PossiblePermissionTypesValues() []PermissionTypes {
+	return []PermissionTypes{Manage, Read, Write}
+}
 
 // ProvisioningStates enumerates the values for provisioning states.
 type ProvisioningStates string
@@ -249,6 +319,11 @@ const (
 	ProvisioningStatesSucceeded ProvisioningStates = "Succeeded"
 )
 
+// PossibleProvisioningStatesValues returns an array of possible values for the ProvisioningStates const type.
+func PossibleProvisioningStatesValues() []ProvisioningStates {
+	return []ProvisioningStates{ProvisioningStatesDeleting, ProvisioningStatesExpiring, ProvisioningStatesFailed, ProvisioningStatesHumanIntervention, ProvisioningStatesProvisioning, ProvisioningStatesSucceeded}
+}
+
 // RoleTypes enumerates the values for role types.
 type RoleTypes string
 
@@ -267,6 +342,11 @@ const (
 	Reader RoleTypes = "Reader"
 )
 
+// PossibleRoleTypesValues returns an array of possible values for the RoleTypes const type.
+func PossibleRoleTypesValues() []RoleTypes {
+	return []RoleTypes{Admin, DataAdmin, DataReader, ManageAdmin, ManageReader, Reader}
+}
+
 // Status enumerates the values for status.
 type Status string
 
@@ -278,6 +358,11 @@ const (
 	// StatusNone ...
 	StatusNone Status = "None"
 )
+
+// PossibleStatusValues returns an array of possible values for the Status const type.
+func PossibleStatusValues() []Status {
+	return []Status{StatusActive, StatusDeleted, StatusNone}
+}
 
 // AssignmentPrincipal the AssignmentPrincipal
 type AssignmentPrincipal struct {
@@ -432,6 +517,24 @@ type AuthorizationPolicyResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for AuthorizationPolicyResourceFormat.
+func (aprf AuthorizationPolicyResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aprf.AuthorizationPolicy != nil {
+		objectMap["properties"] = aprf.AuthorizationPolicy
+	}
+	if aprf.ID != nil {
+		objectMap["id"] = aprf.ID
+	}
+	if aprf.Name != nil {
+		objectMap["name"] = aprf.Name
+	}
+	if aprf.Type != nil {
+		objectMap["type"] = aprf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for AuthorizationPolicyResourceFormat struct.
 func (aprf *AuthorizationPolicyResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -524,7 +627,9 @@ func (c Connector) MarshalJSON() ([]byte, error) {
 	if c.ConnectorName != nil {
 		objectMap["connectorName"] = c.ConnectorName
 	}
-	objectMap["connectorType"] = c.ConnectorType
+	if c.ConnectorType != "" {
+		objectMap["connectorType"] = c.ConnectorType
+	}
 	if c.DisplayName != nil {
 		objectMap["displayName"] = c.DisplayName
 	}
@@ -540,7 +645,9 @@ func (c Connector) MarshalJSON() ([]byte, error) {
 	if c.LastModified != nil {
 		objectMap["lastModified"] = c.LastModified
 	}
-	objectMap["state"] = c.State
+	if c.State != "" {
+		objectMap["state"] = c.State
+	}
 	if c.TenantID != nil {
 		objectMap["tenantId"] = c.TenantID
 	}
@@ -861,6 +968,24 @@ type ConnectorMappingResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ConnectorMappingResourceFormat.
+func (cmrf ConnectorMappingResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cmrf.ConnectorMapping != nil {
+		objectMap["properties"] = cmrf.ConnectorMapping
+	}
+	if cmrf.ID != nil {
+		objectMap["id"] = cmrf.ID
+	}
+	if cmrf.Name != nil {
+		objectMap["name"] = cmrf.Name
+	}
+	if cmrf.Type != nil {
+		objectMap["type"] = cmrf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ConnectorMappingResourceFormat struct.
 func (cmrf *ConnectorMappingResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -934,6 +1059,24 @@ type ConnectorResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ConnectorResourceFormat.
+func (crf ConnectorResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if crf.Connector != nil {
+		objectMap["properties"] = crf.Connector
+	}
+	if crf.ID != nil {
+		objectMap["id"] = crf.ID
+	}
+	if crf.Name != nil {
+		objectMap["name"] = crf.Name
+	}
+	if crf.Type != nil {
+		objectMap["type"] = crf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectorResourceFormat struct.
@@ -1130,6 +1273,18 @@ type DataSourcePrecedence struct {
 	Precedence *int32 `json:"precedence,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DataSourcePrecedence.
+func (dsp DataSourcePrecedence) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dsp.DataSource != nil {
+		objectMap["dataSource"] = dsp.DataSource
+	}
+	if dsp.Precedence != nil {
+		objectMap["precedence"] = dsp.Precedence
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DataSourcePrecedence struct.
 func (dsp *DataSourcePrecedence) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1208,7 +1363,9 @@ type EnrichingKpi struct {
 // MarshalJSON is the custom marshaler for EnrichingKpi.
 func (ek EnrichingKpi) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["entityType"] = ek.EntityType
+	if ek.EntityType != "" {
+		objectMap["entityType"] = ek.EntityType
+	}
 	if ek.EntityTypeName != nil {
 		objectMap["entityTypeName"] = ek.EntityTypeName
 	}
@@ -1224,11 +1381,15 @@ func (ek EnrichingKpi) MarshalJSON() ([]byte, error) {
 	if ek.Description != nil {
 		objectMap["description"] = ek.Description
 	}
-	objectMap["calculationWindow"] = ek.CalculationWindow
+	if ek.CalculationWindow != "" {
+		objectMap["calculationWindow"] = ek.CalculationWindow
+	}
 	if ek.CalculationWindowFieldName != nil {
 		objectMap["calculationWindowFieldName"] = ek.CalculationWindowFieldName
 	}
-	objectMap["function"] = ek.Function
+	if ek.Function != "" {
+		objectMap["function"] = ek.Function
+	}
 	if ek.Expression != nil {
 		objectMap["expression"] = ek.Expression
 	}
@@ -1247,7 +1408,9 @@ func (ek EnrichingKpi) MarshalJSON() ([]byte, error) {
 	if ek.ParticipantProfilesMetadata != nil {
 		objectMap["participantProfilesMetadata"] = ek.ParticipantProfilesMetadata
 	}
-	objectMap["provisioningState"] = ek.ProvisioningState
+	if ek.ProvisioningState != "" {
+		objectMap["provisioningState"] = ek.ProvisioningState
+	}
 	if ek.ThresHolds != nil {
 		objectMap["thresHolds"] = ek.ThresHolds
 	}
@@ -1304,7 +1467,9 @@ func (etd EntityTypeDefinition) MarshalJSON() ([]byte, error) {
 	if etd.APIEntitySetName != nil {
 		objectMap["apiEntitySetName"] = etd.APIEntitySetName
 	}
-	objectMap["entityType"] = etd.EntityType
+	if etd.EntityType != "" {
+		objectMap["entityType"] = etd.EntityType
+	}
 	if etd.Fields != nil {
 		objectMap["fields"] = etd.Fields
 	}
@@ -1314,7 +1479,9 @@ func (etd EntityTypeDefinition) MarshalJSON() ([]byte, error) {
 	if etd.LastChangedUtc != nil {
 		objectMap["lastChangedUtc"] = etd.LastChangedUtc
 	}
-	objectMap["provisioningState"] = etd.ProvisioningState
+	if etd.ProvisioningState != "" {
+		objectMap["provisioningState"] = etd.ProvisioningState
+	}
 	if etd.SchemaItemTypeLink != nil {
 		objectMap["schemaItemTypeLink"] = etd.SchemaItemTypeLink
 	}
@@ -1769,6 +1936,24 @@ type InteractionResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for InteractionResourceFormat.
+func (irf InteractionResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if irf.InteractionTypeDefinition != nil {
+		objectMap["properties"] = irf.InteractionTypeDefinition
+	}
+	if irf.ID != nil {
+		objectMap["id"] = irf.ID
+	}
+	if irf.Name != nil {
+		objectMap["name"] = irf.Name
+	}
+	if irf.Type != nil {
+		objectMap["type"] = irf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for InteractionResourceFormat struct.
 func (irf *InteractionResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1943,7 +2128,9 @@ func (itd InteractionTypeDefinition) MarshalJSON() ([]byte, error) {
 	if itd.APIEntitySetName != nil {
 		objectMap["apiEntitySetName"] = itd.APIEntitySetName
 	}
-	objectMap["entityType"] = itd.EntityType
+	if itd.EntityType != "" {
+		objectMap["entityType"] = itd.EntityType
+	}
 	if itd.Fields != nil {
 		objectMap["fields"] = itd.Fields
 	}
@@ -1953,7 +2140,9 @@ func (itd InteractionTypeDefinition) MarshalJSON() ([]byte, error) {
 	if itd.LastChangedUtc != nil {
 		objectMap["lastChangedUtc"] = itd.LastChangedUtc
 	}
-	objectMap["provisioningState"] = itd.ProvisioningState
+	if itd.ProvisioningState != "" {
+		objectMap["provisioningState"] = itd.ProvisioningState
+	}
 	if itd.SchemaItemTypeLink != nil {
 		objectMap["schemaItemTypeLink"] = itd.SchemaItemTypeLink
 	}
@@ -2313,7 +2502,9 @@ type KpiDefinition struct {
 // MarshalJSON is the custom marshaler for KpiDefinition.
 func (kd KpiDefinition) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["entityType"] = kd.EntityType
+	if kd.EntityType != "" {
+		objectMap["entityType"] = kd.EntityType
+	}
 	if kd.EntityTypeName != nil {
 		objectMap["entityTypeName"] = kd.EntityTypeName
 	}
@@ -2329,11 +2520,15 @@ func (kd KpiDefinition) MarshalJSON() ([]byte, error) {
 	if kd.Description != nil {
 		objectMap["description"] = kd.Description
 	}
-	objectMap["calculationWindow"] = kd.CalculationWindow
+	if kd.CalculationWindow != "" {
+		objectMap["calculationWindow"] = kd.CalculationWindow
+	}
 	if kd.CalculationWindowFieldName != nil {
 		objectMap["calculationWindowFieldName"] = kd.CalculationWindowFieldName
 	}
-	objectMap["function"] = kd.Function
+	if kd.Function != "" {
+		objectMap["function"] = kd.Function
+	}
 	if kd.Expression != nil {
 		objectMap["expression"] = kd.Expression
 	}
@@ -2352,7 +2547,9 @@ func (kd KpiDefinition) MarshalJSON() ([]byte, error) {
 	if kd.ParticipantProfilesMetadata != nil {
 		objectMap["participantProfilesMetadata"] = kd.ParticipantProfilesMetadata
 	}
-	objectMap["provisioningState"] = kd.ProvisioningState
+	if kd.ProvisioningState != "" {
+		objectMap["provisioningState"] = kd.ProvisioningState
+	}
 	if kd.ThresHolds != nil {
 		objectMap["thresHolds"] = kd.ThresHolds
 	}
@@ -2566,6 +2763,24 @@ type KpiResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for KpiResourceFormat.
+func (krf KpiResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if krf.KpiDefinition != nil {
+		objectMap["properties"] = krf.KpiDefinition
+	}
+	if krf.ID != nil {
+		objectMap["id"] = krf.ID
+	}
+	if krf.Name != nil {
+		objectMap["name"] = krf.Name
+	}
+	if krf.Type != nil {
+		objectMap["type"] = krf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for KpiResourceFormat struct.
 func (krf *KpiResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2680,11 +2895,15 @@ func (ld LinkDefinition) MarshalJSON() ([]byte, error) {
 	if ld.ParticipantPropertyReferences != nil {
 		objectMap["participantPropertyReferences"] = ld.ParticipantPropertyReferences
 	}
-	objectMap["provisioningState"] = ld.ProvisioningState
+	if ld.ProvisioningState != "" {
+		objectMap["provisioningState"] = ld.ProvisioningState
+	}
 	if ld.ReferenceOnly != nil {
 		objectMap["referenceOnly"] = ld.ReferenceOnly
 	}
-	objectMap["operationType"] = ld.OperationType
+	if ld.OperationType != "" {
+		objectMap["operationType"] = ld.OperationType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2800,6 +3019,24 @@ type LinkResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for LinkResourceFormat.
+func (lrf LinkResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lrf.LinkDefinition != nil {
+		objectMap["properties"] = lrf.LinkDefinition
+	}
+	if lrf.ID != nil {
+		objectMap["id"] = lrf.ID
+	}
+	if lrf.Name != nil {
+		objectMap["name"] = lrf.Name
+	}
+	if lrf.Type != nil {
+		objectMap["type"] = lrf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for LinkResourceFormat struct.
@@ -3255,6 +3492,24 @@ type ProfileResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ProfileResourceFormat.
+func (prf ProfileResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if prf.ProfileTypeDefinition != nil {
+		objectMap["properties"] = prf.ProfileTypeDefinition
+	}
+	if prf.ID != nil {
+		objectMap["id"] = prf.ID
+	}
+	if prf.Name != nil {
+		objectMap["name"] = prf.Name
+	}
+	if prf.Type != nil {
+		objectMap["type"] = prf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ProfileResourceFormat struct.
 func (prf *ProfileResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3452,7 +3707,9 @@ func (ptd ProfileTypeDefinition) MarshalJSON() ([]byte, error) {
 	if ptd.APIEntitySetName != nil {
 		objectMap["apiEntitySetName"] = ptd.APIEntitySetName
 	}
-	objectMap["entityType"] = ptd.EntityType
+	if ptd.EntityType != "" {
+		objectMap["entityType"] = ptd.EntityType
+	}
 	if ptd.Fields != nil {
 		objectMap["fields"] = ptd.Fields
 	}
@@ -3462,7 +3719,9 @@ func (ptd ProfileTypeDefinition) MarshalJSON() ([]byte, error) {
 	if ptd.LastChangedUtc != nil {
 		objectMap["lastChangedUtc"] = ptd.LastChangedUtc
 	}
-	objectMap["provisioningState"] = ptd.ProvisioningState
+	if ptd.ProvisioningState != "" {
+		objectMap["provisioningState"] = ptd.ProvisioningState
+	}
 	if ptd.SchemaItemTypeLink != nil {
 		objectMap["schemaItemTypeLink"] = ptd.SchemaItemTypeLink
 	}
@@ -3576,7 +3835,9 @@ type RelationshipDefinition struct {
 // MarshalJSON is the custom marshaler for RelationshipDefinition.
 func (rd RelationshipDefinition) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["cardinality"] = rd.Cardinality
+	if rd.Cardinality != "" {
+		objectMap["cardinality"] = rd.Cardinality
+	}
 	if rd.DisplayName != nil {
 		objectMap["displayName"] = rd.DisplayName
 	}
@@ -3595,7 +3856,9 @@ func (rd RelationshipDefinition) MarshalJSON() ([]byte, error) {
 	if rd.ProfileType != nil {
 		objectMap["profileType"] = rd.ProfileType
 	}
-	objectMap["provisioningState"] = rd.ProvisioningState
+	if rd.ProvisioningState != "" {
+		objectMap["provisioningState"] = rd.ProvisioningState
+	}
 	if rd.RelationshipName != nil {
 		objectMap["relationshipName"] = rd.RelationshipName
 	}
@@ -3658,7 +3921,9 @@ func (rld RelationshipLinkDefinition) MarshalJSON() ([]byte, error) {
 	if rld.ProfilePropertyReferences != nil {
 		objectMap["profilePropertyReferences"] = rld.ProfilePropertyReferences
 	}
-	objectMap["provisioningState"] = rld.ProvisioningState
+	if rld.ProvisioningState != "" {
+		objectMap["provisioningState"] = rld.ProvisioningState
+	}
 	if rld.RelatedProfilePropertyReferences != nil {
 		objectMap["relatedProfilePropertyReferences"] = rld.RelatedProfilePropertyReferences
 	}
@@ -3797,6 +4062,24 @@ type RelationshipLinkResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RelationshipLinkResourceFormat.
+func (rlrf RelationshipLinkResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rlrf.RelationshipLinkDefinition != nil {
+		objectMap["properties"] = rlrf.RelationshipLinkDefinition
+	}
+	if rlrf.ID != nil {
+		objectMap["id"] = rlrf.ID
+	}
+	if rlrf.Name != nil {
+		objectMap["name"] = rlrf.Name
+	}
+	if rlrf.Type != nil {
+		objectMap["type"] = rlrf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RelationshipLinkResourceFormat struct.
@@ -4060,6 +4343,24 @@ type RelationshipResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RelationshipResourceFormat.
+func (rrf RelationshipResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rrf.RelationshipDefinition != nil {
+		objectMap["properties"] = rrf.RelationshipDefinition
+	}
+	if rrf.ID != nil {
+		objectMap["id"] = rrf.ID
+	}
+	if rrf.Name != nil {
+		objectMap["name"] = rrf.Name
+	}
+	if rrf.Type != nil {
+		objectMap["type"] = rrf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RelationshipResourceFormat struct.
@@ -4348,8 +4649,12 @@ func (ra RoleAssignment) MarshalJSON() ([]byte, error) {
 	if ra.Description != nil {
 		objectMap["description"] = ra.Description
 	}
-	objectMap["provisioningState"] = ra.ProvisioningState
-	objectMap["role"] = ra.Role
+	if ra.ProvisioningState != "" {
+		objectMap["provisioningState"] = ra.ProvisioningState
+	}
+	if ra.Role != "" {
+		objectMap["role"] = ra.Role
+	}
 	if ra.Principals != nil {
 		objectMap["principals"] = ra.Principals
 	}
@@ -4507,6 +4812,24 @@ type RoleAssignmentResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RoleAssignmentResourceFormat.
+func (rarf RoleAssignmentResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rarf.RoleAssignment != nil {
+		objectMap["properties"] = rarf.RoleAssignment
+	}
+	if rarf.ID != nil {
+		objectMap["id"] = rarf.ID
+	}
+	if rarf.Name != nil {
+		objectMap["name"] = rarf.Name
+	}
+	if rarf.Type != nil {
+		objectMap["type"] = rarf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RoleAssignmentResourceFormat struct.
@@ -4720,6 +5043,24 @@ type RoleResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RoleResourceFormat.
+func (rrf RoleResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rrf.Role != nil {
+		objectMap["properties"] = rrf.Role
+	}
+	if rrf.ID != nil {
+		objectMap["id"] = rrf.ID
+	}
+	if rrf.Name != nil {
+		objectMap["name"] = rrf.Name
+	}
+	if rrf.Type != nil {
+		objectMap["type"] = rrf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RoleResourceFormat struct.
@@ -5011,6 +5352,24 @@ type ViewResourceFormat struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ViewResourceFormat.
+func (vrf ViewResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vrf.View != nil {
+		objectMap["properties"] = vrf.View
+	}
+	if vrf.ID != nil {
+		objectMap["id"] = vrf.ID
+	}
+	if vrf.Name != nil {
+		objectMap["name"] = vrf.Name
+	}
+	if vrf.Type != nil {
+		objectMap["type"] = vrf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ViewResourceFormat struct.
 func (vrf *ViewResourceFormat) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5229,6 +5588,24 @@ type WidgetTypeResourceFormat struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WidgetTypeResourceFormat.
+func (wtrf WidgetTypeResourceFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wtrf.WidgetType != nil {
+		objectMap["properties"] = wtrf.WidgetType
+	}
+	if wtrf.ID != nil {
+		objectMap["id"] = wtrf.ID
+	}
+	if wtrf.Name != nil {
+		objectMap["name"] = wtrf.Name
+	}
+	if wtrf.Type != nil {
+		objectMap["type"] = wtrf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WidgetTypeResourceFormat struct.

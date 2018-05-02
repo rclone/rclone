@@ -40,8 +40,9 @@ func NewDeployedServicePackagesClientWithBaseURI(baseURI string, timeout *int32)
 }
 
 // Get get deployed service packages
-//
-// nodeName is the name of the node applicationName is the name of the application
+// Parameters:
+// nodeName - the name of the node
+// applicationName - the name of the application
 func (client DeployedServicePackagesClient) Get(ctx context.Context, nodeName string, applicationName string) (result ListDeployedServicePackage, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName)
 	if err != nil {

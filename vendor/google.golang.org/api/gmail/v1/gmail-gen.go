@@ -1596,7 +1596,9 @@ type SendAs struct {
 	// DisplayName: A name that appears in the "From:" header for mail sent
 	// using this alias. For custom "from" addresses, when this is empty,
 	// Gmail will populate the "From:" header with the name that is used for
-	// the primary address associated with the account.
+	// the primary address associated with the account. If the admin has
+	// disabled the ability for users to update their name format, requests
+	// to update this field for the primary login will silently fail.
 	DisplayName string `json:"displayName,omitempty"`
 
 	// IsDefault: Whether this address is selected as the default "From:"

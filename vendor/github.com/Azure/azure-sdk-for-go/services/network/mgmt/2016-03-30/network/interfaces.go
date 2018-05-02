@@ -40,9 +40,10 @@ func NewInterfacesClientWithBaseURI(baseURI string, subscriptionID string) Inter
 }
 
 // CreateOrUpdate the Put NetworkInterface operation creates/updates a networkInterface
-//
-// resourceGroupName is the name of the resource group. networkInterfaceName is the name of the network interface.
-// parameters is parameters supplied to the create/update NetworkInterface operation
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkInterfaceName - the name of the network interface.
+// parameters - parameters supplied to the create/update NetworkInterface operation
 func (client InterfacesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, networkInterfaceName string, parameters Interface) (result InterfacesCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, networkInterfaceName, parameters)
 	if err != nil {
@@ -73,7 +74,7 @@ func (client InterfacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}", pathParameters),
@@ -111,8 +112,9 @@ func (client InterfacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 }
 
 // Delete the delete netwokInterface operation deletes the specified netwokInterface.
-//
-// resourceGroupName is the name of the resource group. networkInterfaceName is the name of the network interface.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkInterfaceName - the name of the network interface.
 func (client InterfacesClient) Delete(ctx context.Context, resourceGroupName string, networkInterfaceName string) (result InterfacesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, networkInterfaceName)
 	if err != nil {
@@ -178,9 +180,10 @@ func (client InterfacesClient) DeleteResponder(resp *http.Response) (result auto
 }
 
 // Get the Get ntework interface operation retreives information about the specified network interface.
-//
-// resourceGroupName is the name of the resource group. networkInterfaceName is the name of the network interface.
-// expand is expand references resources.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// networkInterfaceName - the name of the network interface.
+// expand - expand references resources.
 func (client InterfacesClient) Get(ctx context.Context, resourceGroupName string, networkInterfaceName string, expand string) (result Interface, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, networkInterfaceName, expand)
 	if err != nil {
@@ -249,10 +252,12 @@ func (client InterfacesClient) GetResponder(resp *http.Response) (result Interfa
 
 // GetVirtualMachineScaleSetNetworkInterface the Get ntework interface operation retreives information about the
 // specified network interface in a virtual machine scale set.
-//
-// resourceGroupName is the name of the resource group. virtualMachineScaleSetName is the name of the virtual
-// machine scale set. virtualmachineIndex is the virtual machine index. networkInterfaceName is the name of the
-// network interface. expand is expand references resources.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualMachineScaleSetName - the name of the virtual machine scale set.
+// virtualmachineIndex - the virtual machine index.
+// networkInterfaceName - the name of the network interface.
+// expand - expand references resources.
 func (client InterfacesClient) GetVirtualMachineScaleSetNetworkInterface(ctx context.Context, resourceGroupName string, virtualMachineScaleSetName string, virtualmachineIndex string, networkInterfaceName string, expand string) (result Interface, err error) {
 	req, err := client.GetVirtualMachineScaleSetNetworkInterfacePreparer(ctx, resourceGroupName, virtualMachineScaleSetName, virtualmachineIndex, networkInterfaceName, expand)
 	if err != nil {
@@ -322,8 +327,8 @@ func (client InterfacesClient) GetVirtualMachineScaleSetNetworkInterfaceResponde
 }
 
 // List the List networkInterfaces opertion retrieves all the networkInterfaces in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client InterfacesClient) List(ctx context.Context, resourceGroupName string) (result InterfaceListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)
@@ -506,9 +511,9 @@ func (client InterfacesClient) ListAllComplete(ctx context.Context) (result Inte
 
 // ListVirtualMachineScaleSetNetworkInterfaces the list network interface operation retrieves information about all
 // network interfaces in a virtual machine scale set.
-//
-// resourceGroupName is the name of the resource group. virtualMachineScaleSetName is the name of the virtual
-// machine scale set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualMachineScaleSetName - the name of the virtual machine scale set.
 func (client InterfacesClient) ListVirtualMachineScaleSetNetworkInterfaces(ctx context.Context, resourceGroupName string, virtualMachineScaleSetName string) (result InterfaceListResultPage, err error) {
 	result.fn = client.listVirtualMachineScaleSetNetworkInterfacesNextResults
 	req, err := client.ListVirtualMachineScaleSetNetworkInterfacesPreparer(ctx, resourceGroupName, virtualMachineScaleSetName)
@@ -602,9 +607,10 @@ func (client InterfacesClient) ListVirtualMachineScaleSetNetworkInterfacesComple
 
 // ListVirtualMachineScaleSetVMNetworkInterfaces the list network interface operation retrieves information about all
 // network interfaces in a virtual machine from a virtual machine scale set.
-//
-// resourceGroupName is the name of the resource group. virtualMachineScaleSetName is the name of the virtual
-// machine scale set. virtualmachineIndex is the virtual machine index.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualMachineScaleSetName - the name of the virtual machine scale set.
+// virtualmachineIndex - the virtual machine index.
 func (client InterfacesClient) ListVirtualMachineScaleSetVMNetworkInterfaces(ctx context.Context, resourceGroupName string, virtualMachineScaleSetName string, virtualmachineIndex string) (result InterfaceListResultPage, err error) {
 	result.fn = client.listVirtualMachineScaleSetVMNetworkInterfacesNextResults
 	req, err := client.ListVirtualMachineScaleSetVMNetworkInterfacesPreparer(ctx, resourceGroupName, virtualMachineScaleSetName, virtualmachineIndex)

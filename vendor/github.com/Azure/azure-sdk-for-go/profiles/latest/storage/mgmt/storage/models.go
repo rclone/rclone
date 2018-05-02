@@ -23,26 +23,11 @@ import original "github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10
 
 type AccountsClient = original.AccountsClient
 
-func NewAccountsClient(subscriptionID string) AccountsClient {
-	return original.NewAccountsClient(subscriptionID)
-}
-func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
-	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AccessTier = original.AccessTier
 
 const (
@@ -250,25 +235,93 @@ type UsageListResult = original.UsageListResult
 type UsageName = original.UsageName
 type VirtualNetworkRule = original.VirtualNetworkRule
 type OperationsClient = original.OperationsClient
+type SkusClient = original.SkusClient
+type UsageClient = original.UsageClient
 
+func NewAccountsClient(subscriptionID string) AccountsClient {
+	return original.NewAccountsClient(subscriptionID)
+}
+func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
+	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAccessTierValues() []AccessTier {
+	return original.PossibleAccessTierValues()
+}
+func PossibleAccountStatusValues() []AccountStatus {
+	return original.PossibleAccountStatusValues()
+}
+func PossibleActionValues() []Action {
+	return original.PossibleActionValues()
+}
+func PossibleBypassValues() []Bypass {
+	return original.PossibleBypassValues()
+}
+func PossibleDefaultActionValues() []DefaultAction {
+	return original.PossibleDefaultActionValues()
+}
+func PossibleHTTPProtocolValues() []HTTPProtocol {
+	return original.PossibleHTTPProtocolValues()
+}
+func PossibleKeyPermissionValues() []KeyPermission {
+	return original.PossibleKeyPermissionValues()
+}
+func PossibleKeySourceValues() []KeySource {
+	return original.PossibleKeySourceValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossiblePermissionsValues() []Permissions {
+	return original.PossiblePermissionsValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleReasonValues() []Reason {
+	return original.PossibleReasonValues()
+}
+func PossibleReasonCodeValues() []ReasonCode {
+	return original.PossibleReasonCodeValues()
+}
+func PossibleServicesValues() []Services {
+	return original.PossibleServicesValues()
+}
+func PossibleSignedResourceValues() []SignedResource {
+	return original.PossibleSignedResourceValues()
+}
+func PossibleSignedResourceTypesValues() []SignedResourceTypes {
+	return original.PossibleSignedResourceTypesValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleSkuTierValues() []SkuTier {
+	return original.PossibleSkuTierValues()
+}
+func PossibleStateValues() []State {
+	return original.PossibleStateValues()
+}
+func PossibleUsageUnitValues() []UsageUnit {
+	return original.PossibleUsageUnitValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SkusClient = original.SkusClient
-
 func NewSkusClient(subscriptionID string) SkusClient {
 	return original.NewSkusClient(subscriptionID)
 }
 func NewSkusClientWithBaseURI(baseURI string, subscriptionID string) SkusClient {
 	return original.NewSkusClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type UsageClient = original.UsageClient
-
 func NewUsageClient(subscriptionID string) UsageClient {
 	return original.NewUsageClient(subscriptionID)
 }

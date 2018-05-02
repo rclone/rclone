@@ -1,4 +1,4 @@
-// Package firestore provides access to the Google Cloud Firestore API.
+// Package firestore provides access to the Cloud Firestore API.
 //
 // See https://cloud.google.com/firestore
 //
@@ -569,7 +569,7 @@ type Document struct {
 	// UpdateTime: Output only. The time at which the document was last
 	// changed.
 	//
-	// This value is initally set to the `create_time` then
+	// This value is initially set to the `create_time` then
 	// increases
 	// monotonically with each change to the document. It can also
 	// be
@@ -2307,7 +2307,9 @@ func (s *UnaryFilter) MarshalJSON() ([]byte, error) {
 type Value struct {
 	// ArrayValue: An array value.
 	//
-	// Cannot contain another array value.
+	// Cannot directly contain another array value, though can contain
+	// an
+	// map which contains another array.
 	ArrayValue *ArrayValue `json:"arrayValue,omitempty"`
 
 	// BooleanValue: A boolean value.

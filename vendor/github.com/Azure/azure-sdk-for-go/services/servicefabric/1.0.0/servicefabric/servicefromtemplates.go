@@ -40,9 +40,9 @@ func NewServiceFromTemplatesClientWithBaseURI(baseURI string, timeout *int32) Se
 }
 
 // Create create service from templates
-//
-// applicationName is the name of the application serviceDescriptionTemplate is the template of the service
-// description
+// Parameters:
+// applicationName - the name of the application
+// serviceDescriptionTemplate - the template of the service description
 func (client ServiceFromTemplatesClient) Create(ctx context.Context, applicationName string, serviceDescriptionTemplate ServiceDescriptionTemplate) (result String, err error) {
 	req, err := client.CreatePreparer(ctx, applicationName, serviceDescriptionTemplate)
 	if err != nil {
@@ -80,7 +80,7 @@ func (client ServiceFromTemplatesClient) CreatePreparer(ctx context.Context, app
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Applications/{applicationName}/$/GetServices/$/CreateFromTemplate", pathParameters),

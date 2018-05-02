@@ -1,0 +1,12 @@
+/documentation/ @mcardosos @marstr @joshgav
+/profiles/ @marstr @jhendrixMSFT
+/services/ @jhendrixMSFT @marstr @mcardosos @vladbarosan
+/storage/ @mcardosos @jhendrixMSFT
+/tools/apidiff/ @jhendrixMSFT
+/tools/generator/ @marstr
+/tools/indexer/ @jhendrixMSFT
+/tools/profileBuilder/ @marstr @jhendrixMSFT
+/version/ @jhendrixMSFT @marstr @mcardosos @vladbarosan
+.travis.yml @marstr @jhendrixMSFT @mcardosos @vladbarosan
+doc.go @joshgav
+findTestedPackages.sh @marstr

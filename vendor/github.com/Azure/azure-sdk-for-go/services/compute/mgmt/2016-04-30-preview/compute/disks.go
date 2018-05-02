@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DisksClient is the compute Client
 type DisksClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewDisksClient creates an instance of the DisksClient client.
 func NewDisksClient(subscriptionID string) DisksClient {
 	return NewDisksClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // NewDisksClientWithBaseURI creates an instance of the DisksClient client.
 func NewDisksClientWithBaseURI(baseURI string, subscriptionID string) DisksClient {
 	return DisksClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdate creates or updates a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -83,6 +87,7 @@ func (client DisksClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client DisksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, diskName string, disk Disk) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -97,7 +102,7 @@ func (client DisksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}", pathParameters),
@@ -106,6 +111,7 @@ func (client DisksClient) CreateOrUpdatePreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) CreateOrUpdateSender(req *http.Request) (future DisksCreateOrUpdateFuture, err error) {
@@ -121,6 +127,7 @@ func (client DisksClient) CreateOrUpdateSender(req *http.Request) (future DisksC
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client DisksClient) CreateOrUpdateResponder(resp *http.Response) (result Disk, err error) {
@@ -134,6 +141,7 @@ func (client DisksClient) CreateOrUpdateResponder(resp *http.Response) (result D
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Delete deletes a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -155,6 +163,7 @@ func (client DisksClient) Delete(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeletePreparer prepares the Delete request.
 func (client DisksClient) DeletePreparer(ctx context.Context, resourceGroupName string, diskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -176,6 +185,7 @@ func (client DisksClient) DeletePreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) DeleteSender(req *http.Request) (future DisksDeleteFuture, err error) {
@@ -191,6 +201,7 @@ func (client DisksClient) DeleteSender(req *http.Request) (future DisksDeleteFut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client DisksClient) DeleteResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -204,6 +215,7 @@ func (client DisksClient) DeleteResponder(resp *http.Response) (result Operation
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Get gets information about a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -231,6 +243,7 @@ func (client DisksClient) Get(ctx context.Context, resourceGroupName string, dis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetPreparer prepares the Get request.
 func (client DisksClient) GetPreparer(ctx context.Context, resourceGroupName string, diskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -252,6 +265,7 @@ func (client DisksClient) GetPreparer(ctx context.Context, resourceGroupName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -259,6 +273,7 @@ func (client DisksClient) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client DisksClient) GetResponder(resp *http.Response) (result Disk, err error) {
@@ -272,6 +287,7 @@ func (client DisksClient) GetResponder(resp *http.Response) (result Disk, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccess grants access to a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -300,6 +316,7 @@ func (client DisksClient) GrantAccess(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessPreparer prepares the GrantAccess request.
 func (client DisksClient) GrantAccessPreparer(ctx context.Context, resourceGroupName string, diskName string, grantAccessData GrantAccessData) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -314,7 +331,7 @@ func (client DisksClient) GrantAccessPreparer(ctx context.Context, resourceGroup
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}/beginGetAccess", pathParameters),
@@ -323,6 +340,7 @@ func (client DisksClient) GrantAccessPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessSender sends the GrantAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) GrantAccessSender(req *http.Request) (future DisksGrantAccessFuture, err error) {
@@ -338,6 +356,7 @@ func (client DisksClient) GrantAccessSender(req *http.Request) (future DisksGran
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // GrantAccessResponder handles the response to the GrantAccess request. The method always
 // closes the http.Response Body.
 func (client DisksClient) GrantAccessResponder(resp *http.Response) (result AccessURI, err error) {
@@ -351,6 +370,7 @@ func (client DisksClient) GrantAccessResponder(resp *http.Response) (result Acce
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // List lists all the disks under a subscription.
 func (client DisksClient) List(ctx context.Context) (result DiskListPage, err error) {
 	result.fn = client.listNextResults
@@ -375,6 +395,7 @@ func (client DisksClient) List(ctx context.Context) (result DiskListPage, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListPreparer prepares the List request.
 func (client DisksClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -394,6 +415,7 @@ func (client DisksClient) ListPreparer(ctx context.Context) (*http.Request, erro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -401,6 +423,7 @@ func (client DisksClient) ListSender(req *http.Request) (*http.Response, error) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client DisksClient) ListResponder(resp *http.Response) (result DiskList, err error) {
@@ -435,12 +458,14 @@ func (client DisksClient) listNextResults(lastResults DiskList) (result DiskList
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client DisksClient) ListComplete(ctx context.Context) (result DiskListIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroup lists all the disks under a resource group.
 //
 // resourceGroupName is the name of the resource group.
@@ -467,6 +492,7 @@ func (client DisksClient) ListByResourceGroup(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client DisksClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -487,6 +513,7 @@ func (client DisksClient) ListByResourceGroupPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -494,6 +521,7 @@ func (client DisksClient) ListByResourceGroupSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client DisksClient) ListByResourceGroupResponder(resp *http.Response) (result DiskList, err error) {
@@ -528,12 +556,14 @@ func (client DisksClient) listByResourceGroupNextResults(lastResults DiskList) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client DisksClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result DiskListIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccess revokes access to a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -555,6 +585,7 @@ func (client DisksClient) RevokeAccess(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessPreparer prepares the RevokeAccess request.
 func (client DisksClient) RevokeAccessPreparer(ctx context.Context, resourceGroupName string, diskName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -576,6 +607,7 @@ func (client DisksClient) RevokeAccessPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessSender sends the RevokeAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) RevokeAccessSender(req *http.Request) (future DisksRevokeAccessFuture, err error) {
@@ -591,6 +623,7 @@ func (client DisksClient) RevokeAccessSender(req *http.Request) (future DisksRev
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // RevokeAccessResponder handles the response to the RevokeAccess request. The method always
 // closes the http.Response Body.
 func (client DisksClient) RevokeAccessResponder(resp *http.Response) (result OperationStatusResponse, err error) {
@@ -604,6 +637,7 @@ func (client DisksClient) RevokeAccessResponder(resp *http.Response) (result Ope
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // Update updates (patches) a disk.
 //
 // resourceGroupName is the name of the resource group. diskName is the name of the managed disk that is being
@@ -626,6 +660,7 @@ func (client DisksClient) Update(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdatePreparer prepares the Update request.
 func (client DisksClient) UpdatePreparer(ctx context.Context, resourceGroupName string, diskName string, disk DiskUpdate) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -640,7 +675,7 @@ func (client DisksClient) UpdatePreparer(ctx context.Context, resourceGroupName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}", pathParameters),
@@ -649,6 +684,7 @@ func (client DisksClient) UpdatePreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client DisksClient) UpdateSender(req *http.Request) (future DisksUpdateFuture, err error) {
@@ -664,6 +700,7 @@ func (client DisksClient) UpdateSender(req *http.Request) (future DisksUpdateFut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/compute/mgmt/2016-04-30-preview/compute instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client DisksClient) UpdateResponder(resp *http.Response) (result Disk, err error) {

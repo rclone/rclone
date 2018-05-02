@@ -37,6 +37,11 @@ const (
 	CreateModeServerPropertiesForCreate CreateMode = "ServerPropertiesForCreate"
 )
 
+// PossibleCreateModeValues returns an array of possible values for the CreateMode const type.
+func PossibleCreateModeValues() []CreateMode {
+	return []CreateMode{CreateModeDefault, CreateModePointInTimeRestore, CreateModeServerPropertiesForCreate}
+}
+
 // OperationOrigin enumerates the values for operation origin.
 type OperationOrigin string
 
@@ -48,6 +53,11 @@ const (
 	// User ...
 	User OperationOrigin = "user"
 )
+
+// PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{NotSpecified, System, User}
+}
 
 // ServerState enumerates the values for server state.
 type ServerState string
@@ -61,6 +71,11 @@ const (
 	Ready ServerState = "Ready"
 )
 
+// PossibleServerStateValues returns an array of possible values for the ServerState const type.
+func PossibleServerStateValues() []ServerState {
+	return []ServerState{Disabled, Dropping, Ready}
+}
+
 // ServerVersion enumerates the values for server version.
 type ServerVersion string
 
@@ -70,6 +85,11 @@ const (
 	// FiveFullStopSix ...
 	FiveFullStopSix ServerVersion = "5.6"
 )
+
+// PossibleServerVersionValues returns an array of possible values for the ServerVersion const type.
+func PossibleServerVersionValues() []ServerVersion {
+	return []ServerVersion{FiveFullStopSeven, FiveFullStopSix}
+}
 
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
@@ -81,6 +101,11 @@ const (
 	Standard SkuTier = "Standard"
 )
 
+// PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
+func PossibleSkuTierValues() []SkuTier {
+	return []SkuTier{Basic, Standard}
+}
+
 // SslEnforcementEnum enumerates the values for ssl enforcement enum.
 type SslEnforcementEnum string
 
@@ -90,6 +115,11 @@ const (
 	// SslEnforcementEnumEnabled ...
 	SslEnforcementEnumEnabled SslEnforcementEnum = "Enabled"
 )
+
+// PossibleSslEnforcementEnumValues returns an array of possible values for the SslEnforcementEnum const type.
+func PossibleSslEnforcementEnumValues() []SslEnforcementEnum {
+	return []SslEnforcementEnum{SslEnforcementEnumDisabled, SslEnforcementEnumEnabled}
+}
 
 // Configuration represents a Configuration.
 type Configuration struct {
@@ -102,6 +132,24 @@ type Configuration struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Configuration.
+func (c Configuration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ConfigurationProperties != nil {
+		objectMap["properties"] = c.ConfigurationProperties
+	}
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Configuration struct.
@@ -238,6 +286,24 @@ type Database struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Database.
+func (d Database) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if d.DatabaseProperties != nil {
+		objectMap["properties"] = d.DatabaseProperties
+	}
+	if d.ID != nil {
+		objectMap["id"] = d.ID
+	}
+	if d.Name != nil {
+		objectMap["name"] = d.Name
+	}
+	if d.Type != nil {
+		objectMap["type"] = d.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Database struct.
@@ -416,6 +482,24 @@ type FirewallRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
 func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -591,6 +675,24 @@ type LogFile struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for LogFile.
+func (lf LogFile) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lf.LogFileProperties != nil {
+		objectMap["properties"] = lf.LogFileProperties
+	}
+	if lf.ID != nil {
+		objectMap["id"] = lf.ID
+	}
+	if lf.Name != nil {
+		objectMap["name"] = lf.Name
+	}
+	if lf.Type != nil {
+		objectMap["type"] = lf.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for LogFile struct.
 func (lf *LogFile) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -705,7 +807,9 @@ func (o Operation) MarshalJSON() ([]byte, error) {
 	if o.Display != nil {
 		objectMap["display"] = o.Display
 	}
-	objectMap["origin"] = o.Origin
+	if o.Origin != "" {
+		objectMap["origin"] = o.Origin
+	}
 	if o.Properties != nil {
 		objectMap["properties"] = o.Properties
 	}
@@ -1062,9 +1166,15 @@ func (spfc ServerPropertiesForCreate) MarshalJSON() ([]byte, error) {
 	if spfc.StorageMB != nil {
 		objectMap["storageMB"] = spfc.StorageMB
 	}
-	objectMap["version"] = spfc.Version
-	objectMap["sslEnforcement"] = spfc.SslEnforcement
-	objectMap["createMode"] = spfc.CreateMode
+	if spfc.Version != "" {
+		objectMap["version"] = spfc.Version
+	}
+	if spfc.SslEnforcement != "" {
+		objectMap["sslEnforcement"] = spfc.SslEnforcement
+	}
+	if spfc.CreateMode != "" {
+		objectMap["createMode"] = spfc.CreateMode
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1117,9 +1227,15 @@ func (spfdc ServerPropertiesForDefaultCreate) MarshalJSON() ([]byte, error) {
 	if spfdc.StorageMB != nil {
 		objectMap["storageMB"] = spfdc.StorageMB
 	}
-	objectMap["version"] = spfdc.Version
-	objectMap["sslEnforcement"] = spfdc.SslEnforcement
-	objectMap["createMode"] = spfdc.CreateMode
+	if spfdc.Version != "" {
+		objectMap["version"] = spfdc.Version
+	}
+	if spfdc.SslEnforcement != "" {
+		objectMap["sslEnforcement"] = spfdc.SslEnforcement
+	}
+	if spfdc.CreateMode != "" {
+		objectMap["createMode"] = spfdc.CreateMode
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1172,9 +1288,15 @@ func (spfr ServerPropertiesForRestore) MarshalJSON() ([]byte, error) {
 	if spfr.StorageMB != nil {
 		objectMap["storageMB"] = spfr.StorageMB
 	}
-	objectMap["version"] = spfr.Version
-	objectMap["sslEnforcement"] = spfr.SslEnforcement
-	objectMap["createMode"] = spfr.CreateMode
+	if spfr.Version != "" {
+		objectMap["version"] = spfr.Version
+	}
+	if spfr.SslEnforcement != "" {
+		objectMap["sslEnforcement"] = spfr.SslEnforcement
+	}
+	if spfr.CreateMode != "" {
+		objectMap["createMode"] = spfr.CreateMode
+	}
 	return json.Marshal(objectMap)
 }
 

@@ -38,7 +38,7 @@ using Printf to allow translators to reorder arguments.
 `,
 }
 
-func runRewrite(cmd *Command, _ *pipeline.Config, args []string) error {
+func runRewrite(cmd *Command, args []string) error {
 	w := os.Stdout
 	if *overwrite {
 		w = nil

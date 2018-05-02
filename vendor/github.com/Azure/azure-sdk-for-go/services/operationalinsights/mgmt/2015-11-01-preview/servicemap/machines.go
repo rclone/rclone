@@ -26,21 +26,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // MachinesClient is the service Map API Reference
 type MachinesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMachinesClient creates an instance of the MachinesClient client.
 func NewMachinesClient(subscriptionID string) MachinesClient {
 	return NewMachinesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewMachinesClientWithBaseURI creates an instance of the MachinesClient client.
 func NewMachinesClientWithBaseURI(baseURI string, subscriptionID string) MachinesClient {
 	return MachinesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Get returns the specified machine.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -84,6 +88,7 @@ func (client MachinesClient) Get(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetPreparer prepares the Get request.
 func (client MachinesClient) GetPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, timestamp *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -109,6 +114,7 @@ func (client MachinesClient) GetPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -116,6 +122,7 @@ func (client MachinesClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) GetResponder(resp *http.Response) (result Machine, err error) {
@@ -129,6 +136,7 @@ func (client MachinesClient) GetResponder(resp *http.Response) (result Machine, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLiveness obtains the liveness status of the machine during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -172,6 +180,7 @@ func (client MachinesClient) GetLiveness(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessPreparer prepares the GetLiveness request.
 func (client MachinesClient) GetLivenessPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -200,6 +209,7 @@ func (client MachinesClient) GetLivenessPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessSender sends the GetLiveness request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) GetLivenessSender(req *http.Request) (*http.Response, error) {
@@ -207,6 +217,7 @@ func (client MachinesClient) GetLivenessSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessResponder handles the response to the GetLiveness request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) GetLivenessResponder(resp *http.Response) (result Liveness, err error) {
@@ -220,6 +231,7 @@ func (client MachinesClient) GetLivenessResponder(resp *http.Response) (result L
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspace returns a collection of machines matching the specified conditions.  The returned collection
 // represents either machines that are active/live during the specified interval  of time (`live=true` and
 // `startTime`/`endTime` are specified) or that are known to have existed at or  some time prior to the specified point
@@ -275,6 +287,7 @@ func (client MachinesClient) ListByWorkspace(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspacePreparer prepares the ListByWorkspace request.
 func (client MachinesClient) ListByWorkspacePreparer(ctx context.Context, resourceGroupName string, workspaceName string, live *bool, startTime *date.Time, endTime *date.Time, timestamp *date.Time, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -313,6 +326,7 @@ func (client MachinesClient) ListByWorkspacePreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceSender sends the ListByWorkspace request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) ListByWorkspaceSender(req *http.Request) (*http.Response, error) {
@@ -320,6 +334,7 @@ func (client MachinesClient) ListByWorkspaceSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceResponder handles the response to the ListByWorkspace request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) ListByWorkspaceResponder(resp *http.Response) (result MachineCollection, err error) {
@@ -354,12 +369,14 @@ func (client MachinesClient) listByWorkspaceNextResults(lastResults MachineColle
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListByWorkspaceComplete enumerates all values, automatically crossing page boundaries as required.
 func (client MachinesClient) ListByWorkspaceComplete(ctx context.Context, resourceGroupName string, workspaceName string, live *bool, startTime *date.Time, endTime *date.Time, timestamp *date.Time, top *int32) (result MachineCollectionIterator, err error) {
 	result.page, err = client.ListByWorkspace(ctx, resourceGroupName, workspaceName, live, startTime, endTime, timestamp, top)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnections returns a collection of connections terminating or originating at the specified machine
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -404,6 +421,7 @@ func (client MachinesClient) ListConnections(ctx context.Context, resourceGroupN
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsPreparer prepares the ListConnections request.
 func (client MachinesClient) ListConnectionsPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -432,6 +450,7 @@ func (client MachinesClient) ListConnectionsPreparer(ctx context.Context, resour
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsSender sends the ListConnections request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) ListConnectionsSender(req *http.Request) (*http.Response, error) {
@@ -439,6 +458,7 @@ func (client MachinesClient) ListConnectionsSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsResponder handles the response to the ListConnections request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) ListConnectionsResponder(resp *http.Response) (result ConnectionCollection, err error) {
@@ -473,17 +493,22 @@ func (client MachinesClient) listConnectionsNextResults(lastResults ConnectionCo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client MachinesClient) ListConnectionsComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (result ConnectionCollectionIterator, err error) {
 	result.page, err = client.ListConnections(ctx, resourceGroupName, workspaceName, machineName, startTime, endTime)
 	return
 }
 
-// ListMachineGroupMembership returns a collection of machine groups this machine belongs to.
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
+// ListMachineGroupMembership returns a collection of machine groups this machine belongs to during the specified time
+// interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineName is machine resource name.
-func (client MachinesClient) ListMachineGroupMembership(ctx context.Context, resourceGroupName string, workspaceName string, machineName string) (result MachineGroupCollectionPage, err error) {
+// containing the resources of interest. machineName is machine resource name. startTime is UTC date and time
+// specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime is
+// UTC date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
+func (client MachinesClient) ListMachineGroupMembership(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (result MachineGroupCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
@@ -500,7 +525,7 @@ func (client MachinesClient) ListMachineGroupMembership(ctx context.Context, res
 	}
 
 	result.fn = client.listMachineGroupMembershipNextResults
-	req, err := client.ListMachineGroupMembershipPreparer(ctx, resourceGroupName, workspaceName, machineName)
+	req, err := client.ListMachineGroupMembershipPreparer(ctx, resourceGroupName, workspaceName, machineName, startTime, endTime)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "servicemap.MachinesClient", "ListMachineGroupMembership", nil, "Failure preparing request")
 		return
@@ -521,8 +546,9 @@ func (client MachinesClient) ListMachineGroupMembership(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListMachineGroupMembershipPreparer prepares the ListMachineGroupMembership request.
-func (client MachinesClient) ListMachineGroupMembershipPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string) (*http.Request, error) {
+func (client MachinesClient) ListMachineGroupMembershipPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"machineName":       autorest.Encode("path", machineName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -534,6 +560,12 @@ func (client MachinesClient) ListMachineGroupMembershipPreparer(ctx context.Cont
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
+	if startTime != nil {
+		queryParameters["startTime"] = autorest.Encode("query", *startTime)
+	}
+	if endTime != nil {
+		queryParameters["endTime"] = autorest.Encode("query", *endTime)
+	}
 
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
@@ -543,6 +575,7 @@ func (client MachinesClient) ListMachineGroupMembershipPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListMachineGroupMembershipSender sends the ListMachineGroupMembership request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) ListMachineGroupMembershipSender(req *http.Request) (*http.Response, error) {
@@ -550,6 +583,7 @@ func (client MachinesClient) ListMachineGroupMembershipSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListMachineGroupMembershipResponder handles the response to the ListMachineGroupMembership request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) ListMachineGroupMembershipResponder(resp *http.Response) (result MachineGroupCollection, err error) {
@@ -584,12 +618,14 @@ func (client MachinesClient) listMachineGroupMembershipNextResults(lastResults M
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListMachineGroupMembershipComplete enumerates all values, automatically crossing page boundaries as required.
-func (client MachinesClient) ListMachineGroupMembershipComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string) (result MachineGroupCollectionIterator, err error) {
-	result.page, err = client.ListMachineGroupMembership(ctx, resourceGroupName, workspaceName, machineName)
+func (client MachinesClient) ListMachineGroupMembershipComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (result MachineGroupCollectionIterator, err error) {
+	result.page, err = client.ListMachineGroupMembership(ctx, resourceGroupName, workspaceName, machineName, startTime, endTime)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListPorts returns a collection of live ports on the specified machine during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -634,6 +670,7 @@ func (client MachinesClient) ListPorts(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListPortsPreparer prepares the ListPorts request.
 func (client MachinesClient) ListPortsPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -662,6 +699,7 @@ func (client MachinesClient) ListPortsPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListPortsSender sends the ListPorts request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) ListPortsSender(req *http.Request) (*http.Response, error) {
@@ -669,6 +707,7 @@ func (client MachinesClient) ListPortsSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListPortsResponder handles the response to the ListPorts request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) ListPortsResponder(resp *http.Response) (result PortCollection, err error) {
@@ -703,12 +742,14 @@ func (client MachinesClient) listPortsNextResults(lastResults PortCollection) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListPortsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client MachinesClient) ListPortsComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, startTime *date.Time, endTime *date.Time) (result PortCollectionIterator, err error) {
 	result.page, err = client.ListPorts(ctx, resourceGroupName, workspaceName, machineName, startTime, endTime)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListProcesses returns a collection of processes on the specified machine matching the specified conditions. The
 // returned collection represents either processes that are active/live during the specified interval  of time
 // (`live=true` and `startTime`/`endTime` are specified) or that are known to have existed at or  some time prior to
@@ -762,6 +803,7 @@ func (client MachinesClient) ListProcesses(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListProcessesPreparer prepares the ListProcesses request.
 func (client MachinesClient) ListProcessesPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, live *bool, startTime *date.Time, endTime *date.Time, timestamp *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -798,6 +840,7 @@ func (client MachinesClient) ListProcessesPreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListProcessesSender sends the ListProcesses request. The method will close the
 // http.Response Body if it receives an error.
 func (client MachinesClient) ListProcessesSender(req *http.Request) (*http.Response, error) {
@@ -805,6 +848,7 @@ func (client MachinesClient) ListProcessesSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListProcessesResponder handles the response to the ListProcesses request. The method always
 // closes the http.Response Body.
 func (client MachinesClient) ListProcessesResponder(resp *http.Response) (result ProcessCollection, err error) {
@@ -839,6 +883,7 @@ func (client MachinesClient) listProcessesNextResults(lastResults ProcessCollect
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListProcessesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client MachinesClient) ListProcessesComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, live *bool, startTime *date.Time, endTime *date.Time, timestamp *date.Time) (result ProcessCollectionIterator, err error) {
 	result.page, err = client.ListProcesses(ctx, resourceGroupName, workspaceName, machineName, live, startTime, endTime, timestamp)

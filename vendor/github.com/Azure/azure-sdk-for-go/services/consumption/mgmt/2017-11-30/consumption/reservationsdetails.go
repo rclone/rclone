@@ -41,12 +41,12 @@ func NewReservationsDetailsClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // List lists the reservations details for provided date range.
-//
-// scope is the scope of the reservation details. The scope can be
+// Parameters:
+// scope - the scope of the reservation details. The scope can be
 // 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}' or
-// 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}/reservations/{ReservationId}' filter is
-// filter reservation details by date range. The properties/UsageDate for start date and end date. The filter
-// supports 'le' and  'ge'
+// 'providers/Microsoft.Capacity/reservationorders/{ReservationOrderId}/reservations/{ReservationId}'
+// filter - filter reservation details by date range. The properties/UsageDate for start date and end date. The
+// filter supports 'le' and  'ge'
 func (client ReservationsDetailsClient) List(ctx context.Context, scope string, filter string) (result ReservationDetailsListResult, err error) {
 	req, err := client.ListPreparer(ctx, scope, filter)
 	if err != nil {

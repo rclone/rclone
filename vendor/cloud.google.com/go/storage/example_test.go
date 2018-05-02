@@ -196,6 +196,25 @@ func ExampleBucketHandle_AddNotification() {
 	fmt.Println(n.ID)
 }
 
+func ExampleBucketHandle_LockRetentionPolicy() {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	b := client.Bucket("my-bucket")
+	attrs, err := b.Attrs(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	// Note that locking the bucket without first attaching a RetentionPolicy
+	// that's at least 1 day is a no-op
+	err = b.If(storage.BucketConditions{MetagenerationMatch: attrs.MetaGeneration}).LockRetentionPolicy(ctx)
+	if err != nil {
+		// TODO: handle err
+	}
+}
+
 func ExampleBucketHandle_Notifications() {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)

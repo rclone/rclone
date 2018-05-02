@@ -40,8 +40,8 @@ func NewReplicationJobsClientWithBaseURI(baseURI string, subscriptionID string, 
 }
 
 // Cancel the operation to cancel an Azure Site Recovery job.
-//
-// jobName is job indentifier.
+// Parameters:
+// jobName - job indentifier.
 func (client ReplicationJobsClient) Cancel(ctx context.Context, jobName string) (result ReplicationJobsCancelFuture, err error) {
 	req, err := client.CancelPreparer(ctx, jobName)
 	if err != nil {
@@ -109,8 +109,8 @@ func (client ReplicationJobsClient) CancelResponder(resp *http.Response) (result
 }
 
 // Export the operation to export the details of the Azure Site Recovery jobs of the vault.
-//
-// jobQueryParameter is job query filter.
+// Parameters:
+// jobQueryParameter - job query filter.
 func (client ReplicationJobsClient) Export(ctx context.Context, jobQueryParameter JobQueryParameter) (result ReplicationJobsExportFuture, err error) {
 	req, err := client.ExportPreparer(ctx, jobQueryParameter)
 	if err != nil {
@@ -141,7 +141,7 @@ func (client ReplicationJobsClient) ExportPreparer(ctx context.Context, jobQuery
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationJobs/export", pathParameters),
@@ -179,8 +179,8 @@ func (client ReplicationJobsClient) ExportResponder(resp *http.Response) (result
 }
 
 // Get get the details of an Azure Site Recovery job.
-//
-// jobName is job identifier
+// Parameters:
+// jobName - job identifier
 func (client ReplicationJobsClient) Get(ctx context.Context, jobName string) (result Job, err error) {
 	req, err := client.GetPreparer(ctx, jobName)
 	if err != nil {
@@ -246,8 +246,8 @@ func (client ReplicationJobsClient) GetResponder(resp *http.Response) (result Jo
 }
 
 // List gets the list of Azure Site Recovery Jobs for the vault.
-//
-// filter is oData filter options.
+// Parameters:
+// filter - oData filter options.
 func (client ReplicationJobsClient) List(ctx context.Context, filter string) (result JobCollectionPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter)
@@ -343,8 +343,8 @@ func (client ReplicationJobsClient) ListComplete(ctx context.Context, filter str
 }
 
 // Restart the operation to restart an Azure Site Recovery job.
-//
-// jobName is job identifier.
+// Parameters:
+// jobName - job identifier.
 func (client ReplicationJobsClient) Restart(ctx context.Context, jobName string) (result ReplicationJobsRestartFuture, err error) {
 	req, err := client.RestartPreparer(ctx, jobName)
 	if err != nil {
@@ -412,8 +412,9 @@ func (client ReplicationJobsClient) RestartResponder(resp *http.Response) (resul
 }
 
 // Resume the operation to resume an Azure Site Recovery job
-//
-// jobName is job identifier. resumeJobParams is resume rob comments.
+// Parameters:
+// jobName - job identifier.
+// resumeJobParams - resume rob comments.
 func (client ReplicationJobsClient) Resume(ctx context.Context, jobName string, resumeJobParams ResumeJobParams) (result ReplicationJobsResumeFuture, err error) {
 	req, err := client.ResumePreparer(ctx, jobName, resumeJobParams)
 	if err != nil {
@@ -445,7 +446,7 @@ func (client ReplicationJobsClient) ResumePreparer(ctx context.Context, jobName 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationJobs/{jobName}/resume", pathParameters),

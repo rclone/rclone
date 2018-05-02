@@ -28,14 +28,14 @@ import (
 var (
 	service        = flag.String("service", "", "service name")
 	mutexProfiling = flag.Bool("mutex_profiling", false, "enable mutex profiling")
+	duration       = flag.Int("duration", 600, "duration of the benchmark in seconds")
+	apiAddr        = flag.String("api_address", "", "API address of the profiler (e.g. 'cloudprofiler.googleapis.com:443')")
 )
-
-const duration = time.Minute * 10
 
 // busywork continuously generates 1MiB of random data and compresses it
 // throwing away the result.
 func busywork(mu *sync.Mutex) {
-	ticker := time.NewTicker(duration)
+	ticker := time.NewTicker(time.Duration(*duration) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -79,6 +79,7 @@ func main() {
 			Service:        *service,
 			MutexProfiling: *mutexProfiling,
 			DebugLogging:   true,
+			APIAddr:        *apiAddr,
 		}); err != nil {
 		log.Printf("Failed to start the profiler: %v", err)
 	} else {

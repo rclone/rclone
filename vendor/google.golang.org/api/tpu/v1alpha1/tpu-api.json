@@ -9,7 +9,7 @@
     }
   },
   "basePath": "",
-  "baseUrl": "https://content-tpu.googleapis.com/",
+  "baseUrl": "https://tpu.googleapis.com/",
   "batchPath": "batch",
   "canonicalName": "TPU",
   "description": "TPU API provides customers with access to Google TPU technology.",
@@ -120,7 +120,7 @@
         "locations": {
           "methods": {
             "get": {
-              "description": "Get information about a location.",
+              "description": "Gets information about a location.",
               "flatPath": "v1alpha1/projects/{projectsId}/locations/{locationsId}",
               "httpMethod": "GET",
               "id": "tpu.projects.locations.get",
@@ -697,8 +697,8 @@
       }
     }
   },
-  "revision": "20180303",
-  "rootUrl": "https://content-tpu.googleapis.com/",
+  "revision": "20180411",
+  "rootUrl": "https://tpu.googleapis.com/",
   "schemas": {
     "AcceleratorType": {
       "description": "A accelerator type that a Node can be configured with.",
@@ -946,7 +946,9 @@
             "REIMAGING",
             "DELETING",
             "REPAIRING",
-            "STOPPED"
+            "STOPPED",
+            "STOPPING",
+            "STARTING"
           ],
           "enumDescriptions": [
             "TPU node state is not known/set.",
@@ -956,7 +958,9 @@
             "TPU node is undergoing reimaging.",
             "TPU node is being deleted.",
             "TPU node is being repaired and may be unusable. Details can be\nfound in the `help_description` field.",
-            "7 - Reserved. Was SUSPENDED.\nTPU node is stopped."
+            "7 - Reserved. Was SUSPENDED.\nTPU node is stopped.",
+            "TPU node is currently stopping.",
+            "TPU node is currently starting."
           ],
           "type": "string"
         },

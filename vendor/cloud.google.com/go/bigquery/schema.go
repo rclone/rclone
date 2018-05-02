@@ -20,7 +20,6 @@ import (
 	"reflect"
 
 	"cloud.google.com/go/internal/atomiccache"
-
 	bq "google.golang.org/api/bigquery/v2"
 )
 

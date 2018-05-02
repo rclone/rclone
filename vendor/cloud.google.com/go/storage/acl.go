@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"cloud.google.com/go/internal/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
@@ -63,7 +64,10 @@ type ACLHandle struct {
 }
 
 // Delete permanently deletes the ACL entry for the given entity.
-func (a *ACLHandle) Delete(ctx context.Context, entity ACLEntity) error {
+func (a *ACLHandle) Delete(ctx context.Context, entity ACLEntity) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.ACL.Delete")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if a.object != "" {
 		return a.objectDelete(ctx, entity)
 	}
@@ -74,7 +78,10 @@ func (a *ACLHandle) Delete(ctx context.Context, entity ACLEntity) error {
 }
 
 // Set sets the permission level for the given entity.
-func (a *ACLHandle) Set(ctx context.Context, entity ACLEntity, role ACLRole) error {
+func (a *ACLHandle) Set(ctx context.Context, entity ACLEntity, role ACLRole) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.ACL.Set")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if a.object != "" {
 		return a.objectSet(ctx, entity, role, false)
 	}
@@ -85,7 +92,10 @@ func (a *ACLHandle) Set(ctx context.Context, entity ACLEntity, role ACLRole) err
 }
 
 // List retrieves ACL entries.
-func (a *ACLHandle) List(ctx context.Context) ([]ACLRule, error) {
+func (a *ACLHandle) List(ctx context.Context) (rules []ACLRule, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.ACL.List")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	if a.object != "" {
 		return a.objectList(ctx)
 	}

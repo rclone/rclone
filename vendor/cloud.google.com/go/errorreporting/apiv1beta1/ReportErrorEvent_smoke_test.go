@@ -69,13 +69,13 @@ func TestReportErrorsServiceSmoke(t *testing.T) {
 		LineNumber:   lineNumber,
 		FunctionName: functionName,
 	}
-	var context = &clouderrorreportingpb.ErrorContext{
+	var context_ = &clouderrorreportingpb.ErrorContext{
 		ReportLocation: reportLocation,
 	}
 	var event = &clouderrorreportingpb.ReportedErrorEvent{
 		Message:        message,
 		ServiceContext: serviceContext,
-		Context:        context,
+		Context:        context_,
 	}
 	var request = &clouderrorreportingpb.ReportErrorEventRequest{
 		ProjectName: formattedProjectName,

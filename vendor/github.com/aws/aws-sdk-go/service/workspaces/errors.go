@@ -19,7 +19,7 @@ const (
 	// ErrCodeInvalidResourceStateException for service response error code
 	// "InvalidResourceStateException".
 	//
-	// The state of the WorkSpace is not valid for this operation.
+	// The state of the resource is not valid for this operation.
 	ErrCodeInvalidResourceStateException = "InvalidResourceStateException"
 
 	// ErrCodeOperationInProgressException for service response error code
@@ -28,6 +28,30 @@ const (
 	// The properties of this WorkSpace are currently being modified. Try again
 	// in a moment.
 	ErrCodeOperationInProgressException = "OperationInProgressException"
+
+	// ErrCodeOperationNotSupportedException for service response error code
+	// "OperationNotSupportedException".
+	//
+	// This operation is not supported.
+	ErrCodeOperationNotSupportedException = "OperationNotSupportedException"
+
+	// ErrCodeResourceAlreadyExistsException for service response error code
+	// "ResourceAlreadyExistsException".
+	//
+	// The specified resource already exists.
+	ErrCodeResourceAlreadyExistsException = "ResourceAlreadyExistsException"
+
+	// ErrCodeResourceAssociatedException for service response error code
+	// "ResourceAssociatedException".
+	//
+	// The resource is associated with a directory.
+	ErrCodeResourceAssociatedException = "ResourceAssociatedException"
+
+	// ErrCodeResourceCreationFailedException for service response error code
+	// "ResourceCreationFailedException".
+	//
+	// The resource could not be created.
+	ErrCodeResourceCreationFailedException = "ResourceCreationFailedException"
 
 	// ErrCodeResourceLimitExceededException for service response error code
 	// "ResourceLimitExceededException".

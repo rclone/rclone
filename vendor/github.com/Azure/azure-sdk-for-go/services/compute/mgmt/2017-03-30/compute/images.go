@@ -41,9 +41,10 @@ func NewImagesClientWithBaseURI(baseURI string, subscriptionID string) ImagesCli
 }
 
 // CreateOrUpdate create or update an image.
-//
-// resourceGroupName is the name of the resource group. imageName is the name of the image. parameters is
-// parameters supplied to the Create Image operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// imageName - the name of the image.
+// parameters - parameters supplied to the Create Image operation.
 func (client ImagesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, imageName string, parameters Image) (result ImagesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -83,7 +84,7 @@ func (client ImagesClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/images/{imageName}", pathParameters),
@@ -121,8 +122,9 @@ func (client ImagesClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete deletes an Image.
-//
-// resourceGroupName is the name of the resource group. imageName is the name of the image.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// imageName - the name of the image.
 func (client ImagesClient) Delete(ctx context.Context, resourceGroupName string, imageName string) (result ImagesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, imageName)
 	if err != nil {
@@ -189,9 +191,10 @@ func (client ImagesClient) DeleteResponder(resp *http.Response) (result Operatio
 }
 
 // Get gets an image.
-//
-// resourceGroupName is the name of the resource group. imageName is the name of the image. expand is the expand
-// expression to apply on the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// imageName - the name of the image.
+// expand - the expand expression to apply on the operation.
 func (client ImagesClient) Get(ctx context.Context, resourceGroupName string, imageName string, expand string) (result Image, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, imageName, expand)
 	if err != nil {
@@ -350,8 +353,8 @@ func (client ImagesClient) ListComplete(ctx context.Context) (result ImageListRe
 }
 
 // ListByResourceGroup gets the list of images under a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client ImagesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ImageListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)

@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // FileType enumerates the values for file type.
 type FileType string
 
@@ -35,6 +36,13 @@ const (
 	Resource FileType = "Resource"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
+// PossibleFileTypeValues returns an array of possible values for the FileType const type.
+func PossibleFileTypeValues() []FileType {
+	return []FileType{Assembly, Resource}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DataLakeAnalyticsCatalogSecretCreateOrUpdateParameters dataLakeAnalytics DataLakeAnalyticsAccount information.
 type DataLakeAnalyticsCatalogSecretCreateOrUpdateParameters struct {
 	// Password - the password for the secret to pass in
@@ -43,6 +51,7 @@ type DataLakeAnalyticsCatalogSecretCreateOrUpdateParameters struct {
 	URI *string `json:"uri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // DdlName a Data Lake Analytics DDL name item.
 type DdlName struct {
 	// FirstPart - the name of the table associated with this database and schema.
@@ -55,6 +64,7 @@ type DdlName struct {
 	Server *string `json:"server,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // EntityID a Data Lake Analytics catalog entity identifier object.
 type EntityID struct {
 	// Name - the name of the external table associated with this database, schema and table.
@@ -63,6 +73,7 @@ type EntityID struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ExternalTable a Data Lake Analytics catalog external table item.
 type ExternalTable struct {
 	// TableName - the name of the table associated with this database and schema.
@@ -71,6 +82,7 @@ type ExternalTable struct {
 	DataSource *EntityID `json:"dataSource,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Item a Data Lake Analytics catalog item.
 type Item struct {
 	// ComputeAccountName - the name of the Data Lake Analytics account.
@@ -79,6 +91,7 @@ type Item struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // ItemList a Data Lake Analytics catalog item list.
 type ItemList struct {
 	// Count - the count of items in the list.
@@ -87,6 +100,7 @@ type ItemList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // TypeFieldInfo a Data Lake Analytics catalog type field information item.
 type TypeFieldInfo struct {
 	// Name - the name of the field associated with this type.
@@ -95,6 +109,7 @@ type TypeFieldInfo struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssembly a Data Lake Analytics catalog U-SQL Assembly.
 type USQLAssembly struct {
 	autorest.Response `json:"-"`
@@ -118,6 +133,7 @@ type USQLAssembly struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyClr a Data Lake Analytics catalog U-SQL assembly CLR item.
 type USQLAssemblyClr struct {
 	// DatabaseName - the name of the database.
@@ -132,12 +148,14 @@ type USQLAssemblyClr struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyDependencyInfo a Data Lake Analytics catalog U-SQL dependency information item.
 type USQLAssemblyDependencyInfo struct {
 	// EntityID - the EntityId of the dependency.
 	EntityID *EntityID `json:"entityId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyFileInfo a Data Lake Analytics catalog U-SQL assembly file information item.
 type USQLAssemblyFileInfo struct {
 	// Type - the assembly file type. Possible values include: 'Assembly', 'Resource'
@@ -148,6 +166,7 @@ type USQLAssemblyFileInfo struct {
 	ContentPath *string `json:"contentPath,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyList a Data Lake Analytics catalog U-SQL assembly CLR item list.
 type USQLAssemblyList struct {
 	autorest.Response `json:"-"`
@@ -159,12 +178,14 @@ type USQLAssemblyList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyListIterator provides access to a complete listing of USQLAssemblyClr values.
 type USQLAssemblyListIterator struct {
 	i    int
 	page USQLAssemblyListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLAssemblyListIterator) Next() error {
@@ -181,16 +202,19 @@ func (iter *USQLAssemblyListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLAssemblyListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLAssemblyListIterator) Response() USQLAssemblyList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLAssemblyListIterator) Value() USQLAssemblyClr {
@@ -200,6 +224,7 @@ func (iter USQLAssemblyListIterator) Value() USQLAssemblyClr {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (usal USQLAssemblyList) IsEmpty() bool {
 	return usal.Value == nil || len(*usal.Value) == 0
@@ -217,12 +242,14 @@ func (usal USQLAssemblyList) uSQLAssemblyListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(usal.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLAssemblyListPage contains a page of USQLAssemblyClr values.
 type USQLAssemblyListPage struct {
 	fn  func(USQLAssemblyList) (USQLAssemblyList, error)
 	ual USQLAssemblyList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLAssemblyListPage) Next() error {
@@ -234,16 +261,19 @@ func (page *USQLAssemblyListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLAssemblyListPage) NotDone() bool {
 	return !page.ual.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLAssemblyListPage) Response() USQLAssemblyList {
 	return page.ual
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLAssemblyListPage) Values() []USQLAssemblyClr {
 	if page.ual.IsEmpty() {
@@ -252,6 +282,7 @@ func (page USQLAssemblyListPage) Values() []USQLAssemblyClr {
 	return *page.ual.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLCredential a Data Lake Analytics catalog U-SQL credential item.
 type USQLCredential struct {
 	autorest.Response `json:"-"`
@@ -269,6 +300,7 @@ type USQLCredential struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLCredentialList a Data Lake Analytics catalog U-SQL credential item list.
 type USQLCredentialList struct {
 	autorest.Response `json:"-"`
@@ -280,12 +312,14 @@ type USQLCredentialList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLCredentialListIterator provides access to a complete listing of USQLCredential values.
 type USQLCredentialListIterator struct {
 	i    int
 	page USQLCredentialListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLCredentialListIterator) Next() error {
@@ -302,16 +336,19 @@ func (iter *USQLCredentialListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLCredentialListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLCredentialListIterator) Response() USQLCredentialList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLCredentialListIterator) Value() USQLCredential {
@@ -321,6 +358,7 @@ func (iter USQLCredentialListIterator) Value() USQLCredential {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (uscl USQLCredentialList) IsEmpty() bool {
 	return uscl.Value == nil || len(*uscl.Value) == 0
@@ -338,12 +376,14 @@ func (uscl USQLCredentialList) uSQLCredentialListPreparer() (*http.Request, erro
 		autorest.WithBaseURL(to.String(uscl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLCredentialListPage contains a page of USQLCredential values.
 type USQLCredentialListPage struct {
 	fn  func(USQLCredentialList) (USQLCredentialList, error)
 	ucl USQLCredentialList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLCredentialListPage) Next() error {
@@ -355,16 +395,19 @@ func (page *USQLCredentialListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLCredentialListPage) NotDone() bool {
 	return !page.ucl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLCredentialListPage) Response() USQLCredentialList {
 	return page.ucl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLCredentialListPage) Values() []USQLCredential {
 	if page.ucl.IsEmpty() {
@@ -373,6 +416,7 @@ func (page USQLCredentialListPage) Values() []USQLCredential {
 	return *page.ucl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDatabase a Data Lake Analytics catalog U-SQL database item.
 type USQLDatabase struct {
 	autorest.Response `json:"-"`
@@ -384,6 +428,7 @@ type USQLDatabase struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDatabaseList a Data Lake Analytics catalog U-SQL database item list.
 type USQLDatabaseList struct {
 	autorest.Response `json:"-"`
@@ -395,12 +440,14 @@ type USQLDatabaseList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDatabaseListIterator provides access to a complete listing of USQLDatabase values.
 type USQLDatabaseListIterator struct {
 	i    int
 	page USQLDatabaseListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLDatabaseListIterator) Next() error {
@@ -417,16 +464,19 @@ func (iter *USQLDatabaseListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLDatabaseListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLDatabaseListIterator) Response() USQLDatabaseList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLDatabaseListIterator) Value() USQLDatabase {
@@ -436,6 +486,7 @@ func (iter USQLDatabaseListIterator) Value() USQLDatabase {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (usdl USQLDatabaseList) IsEmpty() bool {
 	return usdl.Value == nil || len(*usdl.Value) == 0
@@ -453,12 +504,14 @@ func (usdl USQLDatabaseList) uSQLDatabaseListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(usdl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDatabaseListPage contains a page of USQLDatabase values.
 type USQLDatabaseListPage struct {
 	fn  func(USQLDatabaseList) (USQLDatabaseList, error)
 	udl USQLDatabaseList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLDatabaseListPage) Next() error {
@@ -470,16 +523,19 @@ func (page *USQLDatabaseListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLDatabaseListPage) NotDone() bool {
 	return !page.udl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLDatabaseListPage) Response() USQLDatabaseList {
 	return page.udl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLDatabaseListPage) Values() []USQLDatabase {
 	if page.udl.IsEmpty() {
@@ -488,6 +544,7 @@ func (page USQLDatabaseListPage) Values() []USQLDatabase {
 	return *page.udl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDirectedColumn a Data Lake Analytics catalog U-SQL directed column item.
 type USQLDirectedColumn struct {
 	// Name - the name of the index in the table.
@@ -496,6 +553,7 @@ type USQLDirectedColumn struct {
 	Descending *bool `json:"descending,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLDistributionInfo a Data Lake Analytics catalog U-SQL distribution information object.
 type USQLDistributionInfo struct {
 	// Type - the type of this distribution.
@@ -508,6 +566,7 @@ type USQLDistributionInfo struct {
 	DynamicCount *int32 `json:"dynamicCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLExternalDataSource a Data Lake Analytics catalog U-SQL external datasource item.
 type USQLExternalDataSource struct {
 	autorest.Response `json:"-"`
@@ -527,6 +586,7 @@ type USQLExternalDataSource struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLExternalDataSourceList a Data Lake Analytics catalog U-SQL external datasource item list.
 type USQLExternalDataSourceList struct {
 	autorest.Response `json:"-"`
@@ -538,12 +598,14 @@ type USQLExternalDataSourceList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLExternalDataSourceListIterator provides access to a complete listing of USQLExternalDataSource values.
 type USQLExternalDataSourceListIterator struct {
 	i    int
 	page USQLExternalDataSourceListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLExternalDataSourceListIterator) Next() error {
@@ -560,16 +622,19 @@ func (iter *USQLExternalDataSourceListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLExternalDataSourceListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLExternalDataSourceListIterator) Response() USQLExternalDataSourceList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLExternalDataSourceListIterator) Value() USQLExternalDataSource {
@@ -579,6 +644,7 @@ func (iter USQLExternalDataSourceListIterator) Value() USQLExternalDataSource {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (usedsl USQLExternalDataSourceList) IsEmpty() bool {
 	return usedsl.Value == nil || len(*usedsl.Value) == 0
@@ -596,12 +662,14 @@ func (usedsl USQLExternalDataSourceList) uSQLExternalDataSourceListPreparer() (*
 		autorest.WithBaseURL(to.String(usedsl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLExternalDataSourceListPage contains a page of USQLExternalDataSource values.
 type USQLExternalDataSourceListPage struct {
 	fn    func(USQLExternalDataSourceList) (USQLExternalDataSourceList, error)
 	uedsl USQLExternalDataSourceList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLExternalDataSourceListPage) Next() error {
@@ -613,16 +681,19 @@ func (page *USQLExternalDataSourceListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLExternalDataSourceListPage) NotDone() bool {
 	return !page.uedsl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLExternalDataSourceListPage) Response() USQLExternalDataSourceList {
 	return page.uedsl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLExternalDataSourceListPage) Values() []USQLExternalDataSource {
 	if page.uedsl.IsEmpty() {
@@ -631,6 +702,7 @@ func (page USQLExternalDataSourceListPage) Values() []USQLExternalDataSource {
 	return *page.uedsl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLIndex a Data Lake Analytics catalog U-SQL table index item.
 type USQLIndex struct {
 	// Name - the name of the index in the table.
@@ -655,6 +727,7 @@ type USQLIndex struct {
 	IsUnique *bool `json:"isUnique,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLProcedure a Data Lake Analytics catalog U-SQL procedure item.
 type USQLProcedure struct {
 	autorest.Response `json:"-"`
@@ -672,6 +745,7 @@ type USQLProcedure struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLProcedureList a Data Lake Analytics catalog U-SQL procedure item list.
 type USQLProcedureList struct {
 	autorest.Response `json:"-"`
@@ -683,12 +757,14 @@ type USQLProcedureList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLProcedureListIterator provides access to a complete listing of USQLProcedure values.
 type USQLProcedureListIterator struct {
 	i    int
 	page USQLProcedureListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLProcedureListIterator) Next() error {
@@ -705,16 +781,19 @@ func (iter *USQLProcedureListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLProcedureListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLProcedureListIterator) Response() USQLProcedureList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLProcedureListIterator) Value() USQLProcedure {
@@ -724,6 +803,7 @@ func (iter USQLProcedureListIterator) Value() USQLProcedure {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (uspl USQLProcedureList) IsEmpty() bool {
 	return uspl.Value == nil || len(*uspl.Value) == 0
@@ -741,12 +821,14 @@ func (uspl USQLProcedureList) uSQLProcedureListPreparer() (*http.Request, error)
 		autorest.WithBaseURL(to.String(uspl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLProcedureListPage contains a page of USQLProcedure values.
 type USQLProcedureListPage struct {
 	fn  func(USQLProcedureList) (USQLProcedureList, error)
 	upl USQLProcedureList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLProcedureListPage) Next() error {
@@ -758,16 +840,19 @@ func (page *USQLProcedureListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLProcedureListPage) NotDone() bool {
 	return !page.upl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLProcedureListPage) Response() USQLProcedureList {
 	return page.upl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLProcedureListPage) Values() []USQLProcedure {
 	if page.upl.IsEmpty() {
@@ -776,6 +861,7 @@ func (page USQLProcedureListPage) Values() []USQLProcedure {
 	return *page.upl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLSchema a Data Lake Analytics catalog U-SQL schema item.
 type USQLSchema struct {
 	autorest.Response `json:"-"`
@@ -789,6 +875,7 @@ type USQLSchema struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLSchemaList a Data Lake Analytics catalog U-SQL schema item list.
 type USQLSchemaList struct {
 	autorest.Response `json:"-"`
@@ -800,12 +887,14 @@ type USQLSchemaList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLSchemaListIterator provides access to a complete listing of USQLSchema values.
 type USQLSchemaListIterator struct {
 	i    int
 	page USQLSchemaListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLSchemaListIterator) Next() error {
@@ -822,16 +911,19 @@ func (iter *USQLSchemaListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLSchemaListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLSchemaListIterator) Response() USQLSchemaList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLSchemaListIterator) Value() USQLSchema {
@@ -841,6 +933,7 @@ func (iter USQLSchemaListIterator) Value() USQLSchema {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ussl USQLSchemaList) IsEmpty() bool {
 	return ussl.Value == nil || len(*ussl.Value) == 0
@@ -858,12 +951,14 @@ func (ussl USQLSchemaList) uSQLSchemaListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ussl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLSchemaListPage contains a page of USQLSchema values.
 type USQLSchemaListPage struct {
 	fn  func(USQLSchemaList) (USQLSchemaList, error)
 	usl USQLSchemaList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLSchemaListPage) Next() error {
@@ -875,16 +970,19 @@ func (page *USQLSchemaListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLSchemaListPage) NotDone() bool {
 	return !page.usl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLSchemaListPage) Response() USQLSchemaList {
 	return page.usl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLSchemaListPage) Values() []USQLSchema {
 	if page.usl.IsEmpty() {
@@ -893,6 +991,7 @@ func (page USQLSchemaListPage) Values() []USQLSchema {
 	return *page.usl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLSecret a Data Lake Analytics catalog U-SQL secret item.
 type USQLSecret struct {
 	autorest.Response `json:"-"`
@@ -912,6 +1011,7 @@ type USQLSecret struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTable a Data Lake Analytics catalog U-SQL table item.
 type USQLTable struct {
 	autorest.Response `json:"-"`
@@ -937,6 +1037,7 @@ type USQLTable struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableColumn a Data Lake Analytics catalog U-SQL table column item.
 type USQLTableColumn struct {
 	// Name - the name of the column in the table.
@@ -945,6 +1046,7 @@ type USQLTableColumn struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableList a Data Lake Analytics catalog U-SQL table item list.
 type USQLTableList struct {
 	autorest.Response `json:"-"`
@@ -956,12 +1058,14 @@ type USQLTableList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableListIterator provides access to a complete listing of USQLTable values.
 type USQLTableListIterator struct {
 	i    int
 	page USQLTableListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTableListIterator) Next() error {
@@ -978,16 +1082,19 @@ func (iter *USQLTableListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTableListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTableListIterator) Response() USQLTableList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTableListIterator) Value() USQLTable {
@@ -997,6 +1104,7 @@ func (iter USQLTableListIterator) Value() USQLTable {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ustl USQLTableList) IsEmpty() bool {
 	return ustl.Value == nil || len(*ustl.Value) == 0
@@ -1014,12 +1122,14 @@ func (ustl USQLTableList) uSQLTableListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ustl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableListPage contains a page of USQLTable values.
 type USQLTableListPage struct {
 	fn  func(USQLTableList) (USQLTableList, error)
 	utl USQLTableList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTableListPage) Next() error {
@@ -1031,16 +1141,19 @@ func (page *USQLTableListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTableListPage) NotDone() bool {
 	return !page.utl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTableListPage) Response() USQLTableList {
 	return page.utl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTableListPage) Values() []USQLTable {
 	if page.utl.IsEmpty() {
@@ -1049,6 +1162,7 @@ func (page USQLTableListPage) Values() []USQLTable {
 	return *page.utl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTablePartition a Data Lake Analytics catalog U-SQL table partition item.
 type USQLTablePartition struct {
 	autorest.Response `json:"-"`
@@ -1072,6 +1186,7 @@ type USQLTablePartition struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTablePartitionList a Data Lake Analytics catalog U-SQL table partition item list.
 type USQLTablePartitionList struct {
 	autorest.Response `json:"-"`
@@ -1083,12 +1198,14 @@ type USQLTablePartitionList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTablePartitionListIterator provides access to a complete listing of USQLTablePartition values.
 type USQLTablePartitionListIterator struct {
 	i    int
 	page USQLTablePartitionListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTablePartitionListIterator) Next() error {
@@ -1105,16 +1222,19 @@ func (iter *USQLTablePartitionListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTablePartitionListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTablePartitionListIterator) Response() USQLTablePartitionList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTablePartitionListIterator) Value() USQLTablePartition {
@@ -1124,6 +1244,7 @@ func (iter USQLTablePartitionListIterator) Value() USQLTablePartition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ustpl USQLTablePartitionList) IsEmpty() bool {
 	return ustpl.Value == nil || len(*ustpl.Value) == 0
@@ -1141,12 +1262,14 @@ func (ustpl USQLTablePartitionList) uSQLTablePartitionListPreparer() (*http.Requ
 		autorest.WithBaseURL(to.String(ustpl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTablePartitionListPage contains a page of USQLTablePartition values.
 type USQLTablePartitionListPage struct {
 	fn   func(USQLTablePartitionList) (USQLTablePartitionList, error)
 	utpl USQLTablePartitionList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTablePartitionListPage) Next() error {
@@ -1158,16 +1281,19 @@ func (page *USQLTablePartitionListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTablePartitionListPage) NotDone() bool {
 	return !page.utpl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTablePartitionListPage) Response() USQLTablePartitionList {
 	return page.utpl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTablePartitionListPage) Values() []USQLTablePartition {
 	if page.utpl.IsEmpty() {
@@ -1176,6 +1302,7 @@ func (page USQLTablePartitionListPage) Values() []USQLTablePartition {
 	return *page.utpl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableStatistics a Data Lake Analytics catalog U-SQL table statistics item.
 type USQLTableStatistics struct {
 	autorest.Response `json:"-"`
@@ -1211,6 +1338,7 @@ type USQLTableStatistics struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableStatisticsList a Data Lake Analytics catalog U-SQL table statistics item list.
 type USQLTableStatisticsList struct {
 	autorest.Response `json:"-"`
@@ -1222,12 +1350,14 @@ type USQLTableStatisticsList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableStatisticsListIterator provides access to a complete listing of USQLTableStatistics values.
 type USQLTableStatisticsListIterator struct {
 	i    int
 	page USQLTableStatisticsListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTableStatisticsListIterator) Next() error {
@@ -1244,16 +1374,19 @@ func (iter *USQLTableStatisticsListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTableStatisticsListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTableStatisticsListIterator) Response() USQLTableStatisticsList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTableStatisticsListIterator) Value() USQLTableStatistics {
@@ -1263,6 +1396,7 @@ func (iter USQLTableStatisticsListIterator) Value() USQLTableStatistics {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ustsl USQLTableStatisticsList) IsEmpty() bool {
 	return ustsl.Value == nil || len(*ustsl.Value) == 0
@@ -1280,12 +1414,14 @@ func (ustsl USQLTableStatisticsList) uSQLTableStatisticsListPreparer() (*http.Re
 		autorest.WithBaseURL(to.String(ustsl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableStatisticsListPage contains a page of USQLTableStatistics values.
 type USQLTableStatisticsListPage struct {
 	fn   func(USQLTableStatisticsList) (USQLTableStatisticsList, error)
 	utsl USQLTableStatisticsList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTableStatisticsListPage) Next() error {
@@ -1297,16 +1433,19 @@ func (page *USQLTableStatisticsListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTableStatisticsListPage) NotDone() bool {
 	return !page.utsl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTableStatisticsListPage) Response() USQLTableStatisticsList {
 	return page.utsl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTableStatisticsListPage) Values() []USQLTableStatistics {
 	if page.utsl.IsEmpty() {
@@ -1315,6 +1454,7 @@ func (page USQLTableStatisticsListPage) Values() []USQLTableStatistics {
 	return *page.utsl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableType a Data Lake Analytics catalog U-SQL table type item.
 type USQLTableType struct {
 	autorest.Response `json:"-"`
@@ -1356,6 +1496,7 @@ type USQLTableType struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableTypeList a Data Lake Analytics catalog U-SQL table type item list.
 type USQLTableTypeList struct {
 	autorest.Response `json:"-"`
@@ -1367,12 +1508,14 @@ type USQLTableTypeList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableTypeListIterator provides access to a complete listing of USQLTableType values.
 type USQLTableTypeListIterator struct {
 	i    int
 	page USQLTableTypeListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTableTypeListIterator) Next() error {
@@ -1389,16 +1532,19 @@ func (iter *USQLTableTypeListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTableTypeListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTableTypeListIterator) Response() USQLTableTypeList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTableTypeListIterator) Value() USQLTableType {
@@ -1408,6 +1554,7 @@ func (iter USQLTableTypeListIterator) Value() USQLTableType {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (usttl USQLTableTypeList) IsEmpty() bool {
 	return usttl.Value == nil || len(*usttl.Value) == 0
@@ -1425,12 +1572,14 @@ func (usttl USQLTableTypeList) uSQLTableTypeListPreparer() (*http.Request, error
 		autorest.WithBaseURL(to.String(usttl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableTypeListPage contains a page of USQLTableType values.
 type USQLTableTypeListPage struct {
 	fn   func(USQLTableTypeList) (USQLTableTypeList, error)
 	uttl USQLTableTypeList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTableTypeListPage) Next() error {
@@ -1442,16 +1591,19 @@ func (page *USQLTableTypeListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTableTypeListPage) NotDone() bool {
 	return !page.uttl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTableTypeListPage) Response() USQLTableTypeList {
 	return page.uttl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTableTypeListPage) Values() []USQLTableType {
 	if page.uttl.IsEmpty() {
@@ -1460,6 +1612,7 @@ func (page USQLTableTypeListPage) Values() []USQLTableType {
 	return *page.uttl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableValuedFunction a Data Lake Analytics catalog U-SQL table valued function item.
 type USQLTableValuedFunction struct {
 	autorest.Response `json:"-"`
@@ -1477,6 +1630,7 @@ type USQLTableValuedFunction struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableValuedFunctionList a Data Lake Analytics catalog U-SQL table valued function item list.
 type USQLTableValuedFunctionList struct {
 	autorest.Response `json:"-"`
@@ -1488,12 +1642,14 @@ type USQLTableValuedFunctionList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableValuedFunctionListIterator provides access to a complete listing of USQLTableValuedFunction values.
 type USQLTableValuedFunctionListIterator struct {
 	i    int
 	page USQLTableValuedFunctionListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTableValuedFunctionListIterator) Next() error {
@@ -1510,16 +1666,19 @@ func (iter *USQLTableValuedFunctionListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTableValuedFunctionListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTableValuedFunctionListIterator) Response() USQLTableValuedFunctionList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTableValuedFunctionListIterator) Value() USQLTableValuedFunction {
@@ -1529,6 +1688,7 @@ func (iter USQLTableValuedFunctionListIterator) Value() USQLTableValuedFunction 
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ustvfl USQLTableValuedFunctionList) IsEmpty() bool {
 	return ustvfl.Value == nil || len(*ustvfl.Value) == 0
@@ -1546,12 +1706,14 @@ func (ustvfl USQLTableValuedFunctionList) uSQLTableValuedFunctionListPreparer() 
 		autorest.WithBaseURL(to.String(ustvfl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTableValuedFunctionListPage contains a page of USQLTableValuedFunction values.
 type USQLTableValuedFunctionListPage struct {
 	fn    func(USQLTableValuedFunctionList) (USQLTableValuedFunctionList, error)
 	utvfl USQLTableValuedFunctionList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTableValuedFunctionListPage) Next() error {
@@ -1563,16 +1725,19 @@ func (page *USQLTableValuedFunctionListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTableValuedFunctionListPage) NotDone() bool {
 	return !page.utvfl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTableValuedFunctionListPage) Response() USQLTableValuedFunctionList {
 	return page.utvfl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTableValuedFunctionListPage) Values() []USQLTableValuedFunction {
 	if page.utvfl.IsEmpty() {
@@ -1581,6 +1746,7 @@ func (page USQLTableValuedFunctionListPage) Values() []USQLTableValuedFunction {
 	return *page.utvfl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLType a Data Lake Analytics catalog U-SQL type item.
 type USQLType struct {
 	// DatabaseName - the name of the database.
@@ -1619,6 +1785,7 @@ type USQLType struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTypeList a Data Lake Analytics catalog U-SQL type item list.
 type USQLTypeList struct {
 	autorest.Response `json:"-"`
@@ -1630,12 +1797,14 @@ type USQLTypeList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTypeListIterator provides access to a complete listing of USQLType values.
 type USQLTypeListIterator struct {
 	i    int
 	page USQLTypeListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLTypeListIterator) Next() error {
@@ -1652,16 +1821,19 @@ func (iter *USQLTypeListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLTypeListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLTypeListIterator) Response() USQLTypeList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLTypeListIterator) Value() USQLType {
@@ -1671,6 +1843,7 @@ func (iter USQLTypeListIterator) Value() USQLType {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ustl USQLTypeList) IsEmpty() bool {
 	return ustl.Value == nil || len(*ustl.Value) == 0
@@ -1688,12 +1861,14 @@ func (ustl USQLTypeList) uSQLTypeListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(ustl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLTypeListPage contains a page of USQLType values.
 type USQLTypeListPage struct {
 	fn  func(USQLTypeList) (USQLTypeList, error)
 	utl USQLTypeList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLTypeListPage) Next() error {
@@ -1705,16 +1880,19 @@ func (page *USQLTypeListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLTypeListPage) NotDone() bool {
 	return !page.utl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLTypeListPage) Response() USQLTypeList {
 	return page.utl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLTypeListPage) Values() []USQLType {
 	if page.utl.IsEmpty() {
@@ -1723,6 +1901,7 @@ func (page USQLTypeListPage) Values() []USQLType {
 	return *page.utl.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLView a Data Lake Analytics catalog U-SQL view item.
 type USQLView struct {
 	autorest.Response `json:"-"`
@@ -1740,6 +1919,7 @@ type USQLView struct {
 	Version *uuid.UUID `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLViewList a Data Lake Analytics catalog U-SQL view item list.
 type USQLViewList struct {
 	autorest.Response `json:"-"`
@@ -1751,12 +1931,14 @@ type USQLViewList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLViewListIterator provides access to a complete listing of USQLView values.
 type USQLViewListIterator struct {
 	i    int
 	page USQLViewListPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *USQLViewListIterator) Next() error {
@@ -1773,16 +1955,19 @@ func (iter *USQLViewListIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter USQLViewListIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (iter USQLViewListIterator) Response() USQLViewList {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter USQLViewListIterator) Value() USQLView {
@@ -1792,6 +1977,7 @@ func (iter USQLViewListIterator) Value() USQLView {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (usvl USQLViewList) IsEmpty() bool {
 	return usvl.Value == nil || len(*usvl.Value) == 0
@@ -1809,12 +1995,14 @@ func (usvl USQLViewList) uSQLViewListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(usvl.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // USQLViewListPage contains a page of USQLView values.
 type USQLViewListPage struct {
 	fn  func(USQLViewList) (USQLViewList, error)
 	uvl USQLViewList
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *USQLViewListPage) Next() error {
@@ -1826,16 +2014,19 @@ func (page *USQLViewListPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page USQLViewListPage) NotDone() bool {
 	return !page.uvl.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Response returns the raw server response from the last page request.
 func (page USQLViewListPage) Response() USQLViewList {
 	return page.uvl
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/2015-10-01-preview/catalog instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page USQLViewListPage) Values() []USQLView {
 	if page.uvl.IsEmpty() {

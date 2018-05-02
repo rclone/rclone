@@ -35,6 +35,11 @@ const (
 	EmailContacts ActionType = "EmailContacts"
 )
 
+// PossibleActionTypeValues returns an array of possible values for the ActionType const type.
+func PossibleActionTypeValues() []ActionType {
+	return []ActionType{AutoRenew, EmailContacts}
+}
+
 // DeletionRecoveryLevel enumerates the values for deletion recovery level.
 type DeletionRecoveryLevel string
 
@@ -48,6 +53,11 @@ const (
 	// RecoverablePurgeable ...
 	RecoverablePurgeable DeletionRecoveryLevel = "Recoverable+Purgeable"
 )
+
+// PossibleDeletionRecoveryLevelValues returns an array of possible values for the DeletionRecoveryLevel const type.
+func PossibleDeletionRecoveryLevelValues() []DeletionRecoveryLevel {
+	return []DeletionRecoveryLevel{Purgeable, Recoverable, RecoverableProtectedSubscription, RecoverablePurgeable}
+}
 
 // JSONWebKeyCurveName enumerates the values for json web key curve name.
 type JSONWebKeyCurveName string
@@ -63,6 +73,11 @@ const (
 	SECP256K1 JSONWebKeyCurveName = "SECP256K1"
 )
 
+// PossibleJSONWebKeyCurveNameValues returns an array of possible values for the JSONWebKeyCurveName const type.
+func PossibleJSONWebKeyCurveNameValues() []JSONWebKeyCurveName {
+	return []JSONWebKeyCurveName{P256, P384, P521, SECP256K1}
+}
+
 // JSONWebKeyEncryptionAlgorithm enumerates the values for json web key encryption algorithm.
 type JSONWebKeyEncryptionAlgorithm string
 
@@ -74,6 +89,11 @@ const (
 	// RSAOAEP256 ...
 	RSAOAEP256 JSONWebKeyEncryptionAlgorithm = "RSA-OAEP-256"
 )
+
+// PossibleJSONWebKeyEncryptionAlgorithmValues returns an array of possible values for the JSONWebKeyEncryptionAlgorithm const type.
+func PossibleJSONWebKeyEncryptionAlgorithmValues() []JSONWebKeyEncryptionAlgorithm {
+	return []JSONWebKeyEncryptionAlgorithm{RSA15, RSAOAEP, RSAOAEP256}
+}
 
 // JSONWebKeyOperation enumerates the values for json web key operation.
 type JSONWebKeyOperation string
@@ -92,6 +112,11 @@ const (
 	// WrapKey ...
 	WrapKey JSONWebKeyOperation = "wrapKey"
 )
+
+// PossibleJSONWebKeyOperationValues returns an array of possible values for the JSONWebKeyOperation const type.
+func PossibleJSONWebKeyOperationValues() []JSONWebKeyOperation {
+	return []JSONWebKeyOperation{Decrypt, Encrypt, Sign, UnwrapKey, Verify, WrapKey}
+}
 
 // JSONWebKeySignatureAlgorithm enumerates the values for json web key signature algorithm.
 type JSONWebKeySignatureAlgorithm string
@@ -121,6 +146,11 @@ const (
 	RSNULL JSONWebKeySignatureAlgorithm = "RSNULL"
 )
 
+// PossibleJSONWebKeySignatureAlgorithmValues returns an array of possible values for the JSONWebKeySignatureAlgorithm const type.
+func PossibleJSONWebKeySignatureAlgorithmValues() []JSONWebKeySignatureAlgorithm {
+	return []JSONWebKeySignatureAlgorithm{ECDSA256, ES256, ES384, ES512, PS256, PS384, PS512, RS256, RS384, RS512, RSNULL}
+}
+
 // JSONWebKeyType enumerates the values for json web key type.
 type JSONWebKeyType string
 
@@ -136,6 +166,11 @@ const (
 	// RSAHSM ...
 	RSAHSM JSONWebKeyType = "RSA-HSM"
 )
+
+// PossibleJSONWebKeyTypeValues returns an array of possible values for the JSONWebKeyType const type.
+func PossibleJSONWebKeyTypeValues() []JSONWebKeyType {
+	return []JSONWebKeyType{EC, ECHSM, Oct, RSA, RSAHSM}
+}
 
 // KeyUsageType enumerates the values for key usage type.
 type KeyUsageType string
@@ -160,6 +195,11 @@ const (
 	// NonRepudiation ...
 	NonRepudiation KeyUsageType = "nonRepudiation"
 )
+
+// PossibleKeyUsageTypeValues returns an array of possible values for the KeyUsageType const type.
+func PossibleKeyUsageTypeValues() []KeyUsageType {
+	return []KeyUsageType{CRLSign, DataEncipherment, DecipherOnly, DigitalSignature, EncipherOnly, KeyAgreement, KeyCertSign, KeyEncipherment, NonRepudiation}
+}
 
 // Action the action that will be executed.
 type Action struct {
@@ -1502,7 +1542,9 @@ type KeyCreateParameters struct {
 // MarshalJSON is the custom marshaler for KeyCreateParameters.
 func (kcp KeyCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["kty"] = kcp.Kty
+	if kcp.Kty != "" {
+		objectMap["kty"] = kcp.Kty
+	}
 	if kcp.KeySize != nil {
 		objectMap["key_size"] = kcp.KeySize
 	}
@@ -1515,7 +1557,9 @@ func (kcp KeyCreateParameters) MarshalJSON() ([]byte, error) {
 	if kcp.Tags != nil {
 		objectMap["tags"] = kcp.Tags
 	}
-	objectMap["crv"] = kcp.Curve
+	if kcp.Curve != "" {
+		objectMap["crv"] = kcp.Curve
+	}
 	return json.Marshal(objectMap)
 }
 

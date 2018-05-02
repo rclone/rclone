@@ -19,39 +19,15 @@
 
 package redis
 
-import original "github.com/Azure/azure-sdk-for-go/services/redis/mgmt/2017-10-01/redis"
+import original "github.com/Azure/azure-sdk-for-go/services/redis/mgmt/2018-03-01/redis"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type FirewallRulesClient = original.FirewallRulesClient
-
-func NewFirewallRulesClient(subscriptionID string) FirewallRulesClient {
-	return original.NewFirewallRulesClient(subscriptionID)
-}
-func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) FirewallRulesClient {
-	return original.NewFirewallRulesClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type LinkedServerClient = original.LinkedServerClient
-
-func NewLinkedServerClient(subscriptionID string) LinkedServerClient {
-	return original.NewLinkedServerClient(subscriptionID)
-}
-func NewLinkedServerClientWithBaseURI(baseURI string, subscriptionID string) LinkedServerClient {
-	return original.NewLinkedServerClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type DayOfWeek = original.DayOfWeek
 
 const (
@@ -71,6 +47,23 @@ type KeyType = original.KeyType
 const (
 	Primary   KeyType = original.Primary
 	Secondary KeyType = original.Secondary
+)
+
+type ProvisioningState = original.ProvisioningState
+
+const (
+	Creating               ProvisioningState = original.Creating
+	Deleting               ProvisioningState = original.Deleting
+	Disabled               ProvisioningState = original.Disabled
+	Failed                 ProvisioningState = original.Failed
+	Linking                ProvisioningState = original.Linking
+	Provisioning           ProvisioningState = original.Provisioning
+	RecoveringScaleFailure ProvisioningState = original.RecoveringScaleFailure
+	Scaling                ProvisioningState = original.Scaling
+	Succeeded              ProvisioningState = original.Succeeded
+	Unlinking              ProvisioningState = original.Unlinking
+	Unprovisioning         ProvisioningState = original.Unprovisioning
+	Updating               ProvisioningState = original.Updating
 )
 
 type RebootType = original.RebootType
@@ -103,7 +96,16 @@ const (
 	Standard SkuName = original.Standard
 )
 
+type TLSVersion = original.TLSVersion
+
+const (
+	OneFullStopOne  TLSVersion = original.OneFullStopOne
+	OneFullStopTwo  TLSVersion = original.OneFullStopTwo
+	OneFullStopZero TLSVersion = original.OneFullStopZero
+)
+
 type AccessKeys = original.AccessKeys
+type CheckNameAvailabilityParameters = original.CheckNameAvailabilityParameters
 type CommonProperties = original.CommonProperties
 type CreateFuture = original.CreateFuture
 type CreateParameters = original.CreateParameters
@@ -132,12 +134,16 @@ type LinkedServerWithPropertiesListPage = original.LinkedServerWithPropertiesLis
 type ListResult = original.ListResult
 type ListResultIterator = original.ListResultIterator
 type ListResultPage = original.ListResultPage
+type NotificationListResponse = original.NotificationListResponse
 type Operation = original.Operation
 type OperationDisplay = original.OperationDisplay
 type OperationListResult = original.OperationListResult
 type OperationListResultIterator = original.OperationListResultIterator
 type OperationListResultPage = original.OperationListResultPage
 type PatchSchedule = original.PatchSchedule
+type PatchScheduleListResult = original.PatchScheduleListResult
+type PatchScheduleListResultIterator = original.PatchScheduleListResultIterator
+type PatchScheduleListResultPage = original.PatchScheduleListResultPage
 type Properties = original.Properties
 type ProxyResource = original.ProxyResource
 type RebootParameters = original.RebootParameters
@@ -150,26 +156,65 @@ type Sku = original.Sku
 type TrackedResource = original.TrackedResource
 type UpdateParameters = original.UpdateParameters
 type UpdateProperties = original.UpdateProperties
+type UpgradeNotification = original.UpgradeNotification
 type OperationsClient = original.OperationsClient
+type PatchSchedulesClient = original.PatchSchedulesClient
+type Client = original.Client
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewFirewallRulesClient(subscriptionID string) FirewallRulesClient {
+	return original.NewFirewallRulesClient(subscriptionID)
+}
+func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) FirewallRulesClient {
+	return original.NewFirewallRulesClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewLinkedServerClient(subscriptionID string) LinkedServerClient {
+	return original.NewLinkedServerClient(subscriptionID)
+}
+func NewLinkedServerClientWithBaseURI(baseURI string, subscriptionID string) LinkedServerClient {
+	return original.NewLinkedServerClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return original.PossibleDayOfWeekValues()
+}
+func PossibleKeyTypeValues() []KeyType {
+	return original.PossibleKeyTypeValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleRebootTypeValues() []RebootType {
+	return original.PossibleRebootTypeValues()
+}
+func PossibleReplicationRoleValues() []ReplicationRole {
+	return original.PossibleReplicationRoleValues()
+}
+func PossibleSkuFamilyValues() []SkuFamily {
+	return original.PossibleSkuFamilyValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleTLSVersionValues() []TLSVersion {
+	return original.PossibleTLSVersionValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type PatchSchedulesClient = original.PatchSchedulesClient
-
 func NewPatchSchedulesClient(subscriptionID string) PatchSchedulesClient {
 	return original.NewPatchSchedulesClient(subscriptionID)
 }
 func NewPatchSchedulesClientWithBaseURI(baseURI string, subscriptionID string) PatchSchedulesClient {
 	return original.NewPatchSchedulesClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type Client = original.Client
-
 func NewClient(subscriptionID string) Client {
 	return original.NewClient(subscriptionID)
 }

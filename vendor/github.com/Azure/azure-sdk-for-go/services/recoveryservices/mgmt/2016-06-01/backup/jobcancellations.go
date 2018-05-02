@@ -41,9 +41,10 @@ func NewJobCancellationsClientWithBaseURI(baseURI string, subscriptionID string)
 
 // Trigger cancels the job. This is an asynchronous operation. To know the status of the cancellation, call the
 // GetCancelOperationResult API.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. jobName is name of the job to cancel.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// jobName - name of the job to cancel.
 func (client JobCancellationsClient) Trigger(ctx context.Context, vaultName string, resourceGroupName string, jobName string) (result autorest.Response, err error) {
 	req, err := client.TriggerPreparer(ctx, vaultName, resourceGroupName, jobName)
 	if err != nil {

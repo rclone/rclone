@@ -73,6 +73,14 @@ func setReflectFromProtoValue(v reflect.Value, vproto *pb.Value, c *Client) erro
 		v.Set(reflect.ValueOf(t))
 		return nil
 
+	case typeOfProtoTimestamp:
+		x, ok := val.(*pb.Value_TimestampValue)
+		if !ok {
+			return typeErr()
+		}
+		v.Set(reflect.ValueOf(x.TimestampValue))
+		return nil
+
 	case typeOfLatLng:
 		x, ok := val.(*pb.Value_GeoPointValue)
 		if !ok {

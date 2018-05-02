@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSourceKind enumerates the values for data source kind.
 type DataSourceKind string
 
@@ -62,6 +63,13 @@ const (
 	WindowsPerformanceCounter DataSourceKind = "WindowsPerformanceCounter"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
+// PossibleDataSourceKindValues returns an array of possible values for the DataSourceKind const type.
+func PossibleDataSourceKindValues() []DataSourceKind {
+	return []DataSourceKind{AzureActivityLog, ChangeTrackingCustomRegistry, ChangeTrackingDefaultPath, ChangeTrackingDefaultRegistry, ChangeTrackingPath, CustomLog, CustomLogCollection, GenericDataSource, IISLogs, LinuxPerformanceCollection, LinuxPerformanceObject, LinuxSyslog, LinuxSyslogCollection, WindowsEvent, WindowsPerformanceCounter}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // EntityStatus enumerates the values for entity status.
 type EntityStatus string
 
@@ -80,12 +88,21 @@ const (
 	Succeeded EntityStatus = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
+// PossibleEntityStatusValues returns an array of possible values for the EntityStatus const type.
+func PossibleEntityStatusValues() []EntityStatus {
+	return []EntityStatus{Canceled, Creating, Deleting, Failed, ProvisioningAccount, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // SkuNameEnum enumerates the values for sku name enum.
 type SkuNameEnum string
 
 const (
 	// Free ...
 	Free SkuNameEnum = "Free"
+	// PerGB2018 ...
+	PerGB2018 SkuNameEnum = "PerGB2018"
 	// PerNode ...
 	PerNode SkuNameEnum = "PerNode"
 	// Premium ...
@@ -98,6 +115,13 @@ const (
 	Unlimited SkuNameEnum = "Unlimited"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
+// PossibleSkuNameEnumValues returns an array of possible values for the SkuNameEnum const type.
+func PossibleSkuNameEnumValues() []SkuNameEnum {
+	return []SkuNameEnum{Free, PerGB2018, PerNode, Premium, Standalone, Standard, Unlimited}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSource datasources under OMS Workspace.
 type DataSource struct {
 	autorest.Response `json:"-"`
@@ -117,6 +141,7 @@ type DataSource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MarshalJSON is the custom marshaler for DataSource.
 func (ds DataSource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -124,7 +149,9 @@ func (ds DataSource) MarshalJSON() ([]byte, error) {
 	if ds.ETag != nil {
 		objectMap["eTag"] = ds.ETag
 	}
-	objectMap["kind"] = ds.Kind
+	if ds.Kind != "" {
+		objectMap["kind"] = ds.Kind
+	}
 	if ds.ID != nil {
 		objectMap["id"] = ds.ID
 	}
@@ -140,12 +167,14 @@ func (ds DataSource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSourceFilter dataSource filter. Right now, only filter by kind is supported.
 type DataSourceFilter struct {
 	// Kind - Possible values include: 'AzureActivityLog', 'ChangeTrackingPath', 'ChangeTrackingDefaultPath', 'ChangeTrackingDefaultRegistry', 'ChangeTrackingCustomRegistry', 'CustomLog', 'CustomLogCollection', 'GenericDataSource', 'IISLogs', 'LinuxPerformanceObject', 'LinuxPerformanceCollection', 'LinuxSyslog', 'LinuxSyslogCollection', 'WindowsEvent', 'WindowsPerformanceCounter'
 	Kind DataSourceKind `json:"kind,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSourceListResult the list data source by workspace operation response.
 type DataSourceListResult struct {
 	autorest.Response `json:"-"`
@@ -155,12 +184,14 @@ type DataSourceListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSourceListResultIterator provides access to a complete listing of DataSource values.
 type DataSourceListResultIterator struct {
 	i    int
 	page DataSourceListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataSourceListResultIterator) Next() error {
@@ -177,16 +208,19 @@ func (iter *DataSourceListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataSourceListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Response returns the raw server response from the last page request.
 func (iter DataSourceListResultIterator) Response() DataSourceListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataSourceListResultIterator) Value() DataSource {
@@ -196,6 +230,7 @@ func (iter DataSourceListResultIterator) Value() DataSource {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dslr DataSourceListResult) IsEmpty() bool {
 	return dslr.Value == nil || len(*dslr.Value) == 0
@@ -213,12 +248,14 @@ func (dslr DataSourceListResult) dataSourceListResultPreparer() (*http.Request, 
 		autorest.WithBaseURL(to.String(dslr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // DataSourceListResultPage contains a page of DataSource values.
 type DataSourceListResultPage struct {
 	fn   func(DataSourceListResult) (DataSourceListResult, error)
 	dslr DataSourceListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataSourceListResultPage) Next() error {
@@ -230,16 +267,19 @@ func (page *DataSourceListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataSourceListResultPage) NotDone() bool {
 	return !page.dslr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Response returns the raw server response from the last page request.
 func (page DataSourceListResultPage) Response() DataSourceListResult {
 	return page.dslr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataSourceListResultPage) Values() []DataSource {
 	if page.dslr.IsEmpty() {
@@ -248,6 +288,7 @@ func (page DataSourceListResultPage) Values() []DataSource {
 	return *page.dslr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // IntelligencePack intelligence Pack containing a string name and boolean indicating if it's enabled.
 type IntelligencePack struct {
 	// Name - The name of the intelligence pack.
@@ -258,6 +299,7 @@ type IntelligencePack struct {
 	DisplayName *string `json:"displayName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // LinkedService the top level Linked service resource container.
 type LinkedService struct {
 	autorest.Response `json:"-"`
@@ -273,6 +315,7 @@ type LinkedService struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MarshalJSON is the custom marshaler for LinkedService.
 func (ls LinkedService) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -294,6 +337,7 @@ func (ls LinkedService) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UnmarshalJSON is the custom unmarshaler for LinkedService struct.
 func (ls *LinkedService) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -354,6 +398,7 @@ func (ls *LinkedService) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // LinkedServiceListResult the list linked service operation response.
 type LinkedServiceListResult struct {
 	autorest.Response `json:"-"`
@@ -361,24 +406,38 @@ type LinkedServiceListResult struct {
 	Value *[]LinkedService `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // LinkedServiceProperties linked service properties.
 type LinkedServiceProperties struct {
 	// ResourceID - The resource id of the resource that will be linked to the workspace.
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ListIntelligencePack ...
 type ListIntelligencePack struct {
 	autorest.Response `json:"-"`
 	Value             *[]IntelligencePack `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ManagementGroup a management group that is connected to a workspace
 type ManagementGroup struct {
 	// ManagementGroupProperties - The properties of the management group.
 	*ManagementGroupProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
+// MarshalJSON is the custom marshaler for ManagementGroup.
+func (mg ManagementGroup) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mg.ManagementGroupProperties != nil {
+		objectMap["properties"] = mg.ManagementGroupProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UnmarshalJSON is the custom unmarshaler for ManagementGroup struct.
 func (mg *ManagementGroup) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -403,6 +462,7 @@ func (mg *ManagementGroup) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ManagementGroupProperties management group properties.
 type ManagementGroupProperties struct {
 	// ServerCount - The number of servers connected to the management group.
@@ -423,6 +483,7 @@ type ManagementGroupProperties struct {
 	Sku *string `json:"sku,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MetricName the name of a metric.
 type MetricName struct {
 	// Value - The system name of the metric.
@@ -431,6 +492,7 @@ type MetricName struct {
 	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Operation supported operation of OperationalInsights resource provider.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}
@@ -439,6 +501,7 @@ type Operation struct {
 	Display *OperationDisplay `json:"display,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // OperationDisplay display metadata associated with the operation.
 type OperationDisplay struct {
 	// Provider - Service provider: Microsoft OperationsManagement.
@@ -449,6 +512,7 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // OperationListResult result of the request to list solution operations.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
@@ -458,12 +522,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -480,16 +546,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -499,6 +568,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -516,12 +586,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -533,16 +605,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -551,6 +626,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // ProxyResource common properties of proxy resource.
 type ProxyResource struct {
 	// ID - Resource ID.
@@ -563,6 +639,7 @@ type ProxyResource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MarshalJSON is the custom marshaler for ProxyResource.
 func (pr ProxyResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -581,6 +658,7 @@ func (pr ProxyResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Resource the resource definition.
 type Resource struct {
 	// ID - Resource Id
@@ -595,6 +673,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -616,6 +695,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // SharedKeys the shared keys for a workspace.
 type SharedKeys struct {
 	autorest.Response `json:"-"`
@@ -625,12 +705,14 @@ type SharedKeys struct {
 	SecondarySharedKey *string `json:"secondarySharedKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Sku the SKU (tier) of a workspace.
 type Sku struct {
-	// Name - The name of the SKU. Possible values include: 'Free', 'Standard', 'Premium', 'Unlimited', 'PerNode', 'Standalone'
+	// Name - The name of the SKU. Possible values include: 'Free', 'Standard', 'Premium', 'Unlimited', 'PerNode', 'PerGB2018', 'Standalone'
 	Name SkuNameEnum `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UsageMetric a metric describing the usage of a resource.
 type UsageMetric struct {
 	// Name - The name of the metric.
@@ -647,6 +729,7 @@ type UsageMetric struct {
 	QuotaPeriod *string `json:"quotaPeriod,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Workspace the top level Workspace resource container.
 type Workspace struct {
 	autorest.Response `json:"-"`
@@ -666,6 +749,7 @@ type Workspace struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // MarshalJSON is the custom marshaler for Workspace.
 func (w Workspace) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -693,6 +777,7 @@ func (w Workspace) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // UnmarshalJSON is the custom unmarshaler for Workspace struct.
 func (w *Workspace) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -771,6 +856,7 @@ func (w *Workspace) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspaceListManagementGroupsResult the list workspace managmement groups operation response.
 type WorkspaceListManagementGroupsResult struct {
 	autorest.Response `json:"-"`
@@ -778,6 +864,7 @@ type WorkspaceListManagementGroupsResult struct {
 	Value *[]ManagementGroup `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspaceListResult the list workspaces operation response.
 type WorkspaceListResult struct {
 	autorest.Response `json:"-"`
@@ -785,6 +872,7 @@ type WorkspaceListResult struct {
 	Value *[]Workspace `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspaceListUsagesResult the list workspace usages operation response.
 type WorkspaceListUsagesResult struct {
 	autorest.Response `json:"-"`
@@ -792,6 +880,7 @@ type WorkspaceListUsagesResult struct {
 	Value *[]UsageMetric `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspaceProperties workspace properties.
 type WorkspaceProperties struct {
 	// ProvisioningState - The provisioning state of the workspace. Possible values include: 'Creating', 'Succeeded', 'Failed', 'Canceled', 'Deleting', 'ProvisioningAccount'
@@ -808,6 +897,7 @@ type WorkspaceProperties struct {
 	RetentionInDays *int32 `json:"retentionInDays,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // WorkspacesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type WorkspacesCreateOrUpdateFuture struct {
@@ -815,6 +905,7 @@ type WorkspacesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {

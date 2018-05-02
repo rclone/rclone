@@ -37,7 +37,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	proto3pb "github.com/golang/protobuf/proto/proto3_proto"
-	pb "github.com/golang/protobuf/proto/testdata"
+	pb "github.com/golang/protobuf/proto/test_proto"
 )
 
 var cloneTestMessage = &pb.MyMessage{
@@ -72,7 +72,7 @@ func init() {
 func TestClone(t *testing.T) {
 	m := proto.Clone(cloneTestMessage).(*pb.MyMessage)
 	if !proto.Equal(m, cloneTestMessage) {
-		t.Errorf("Clone(%v) = %v", cloneTestMessage, m)
+		t.Fatalf("Clone(%v) = %v", cloneTestMessage, m)
 	}
 
 	// Verify it was a deep copy.
@@ -244,27 +244,45 @@ var mergeTests = []struct {
 			Data:       []byte("texas!"),
 		},
 	},
-	// Oneof fields should merge by assignment.
-	{
-		src: &pb.Communique{
-			Union: &pb.Communique_Number{41},
-		},
-		dst: &pb.Communique{
-			Union: &pb.Communique_Name{"Bobby Tables"},
-		},
-		want: &pb.Communique{
-			Union: &pb.Communique_Number{41},
-		},
+	{ // Oneof fields should merge by assignment.
+		src:  &pb.Communique{Union: &pb.Communique_Number{41}},
+		dst:  &pb.Communique{Union: &pb.Communique_Name{"Bobby Tables"}},
+		want: &pb.Communique{Union: &pb.Communique_Number{41}},
 	},
-	// Oneof nil is the same as not set.
+	{ // Oneof nil is the same as not set.
+		src:  &pb.Communique{},
+		dst:  &pb.Communique{Union: &pb.Communique_Name{"Bobby Tables"}},
+		want: &pb.Communique{Union: &pb.Communique_Name{"Bobby Tables"}},
+	},
 	{
-		src: &pb.Communique{},
-		dst: &pb.Communique{
-			Union: &pb.Communique_Name{"Bobby Tables"},
-		},
-		want: &pb.Communique{
-			Union: &pb.Communique_Name{"Bobby Tables"},
-		},
+		src:  &pb.Communique{Union: &pb.Communique_Number{1337}},
+		dst:  &pb.Communique{},
+		want: &pb.Communique{Union: &pb.Communique_Number{1337}},
+	},
+	{
+		src:  &pb.Communique{Union: &pb.Communique_Col{pb.MyMessage_RED}},
+		dst:  &pb.Communique{},
+		want: &pb.Communique{Union: &pb.Communique_Col{pb.MyMessage_RED}},
+	},
+	{
+		src:  &pb.Communique{Union: &pb.Communique_Data{[]byte("hello")}},
+		dst:  &pb.Communique{},
+		want: &pb.Communique{Union: &pb.Communique_Data{[]byte("hello")}},
+	},
+	{
+		src:  &pb.Communique{Union: &pb.Communique_Msg{&pb.Strings{BytesField: []byte{1, 2, 3}}}},
+		dst:  &pb.Communique{},
+		want: &pb.Communique{Union: &pb.Communique_Msg{&pb.Strings{BytesField: []byte{1, 2, 3}}}},
+	},
+	{
+		src:  &pb.Communique{Union: &pb.Communique_Msg{}},
+		dst:  &pb.Communique{},
+		want: &pb.Communique{Union: &pb.Communique_Msg{}},
+	},
+	{
+		src:  &pb.Communique{Union: &pb.Communique_Msg{&pb.Strings{StringField: proto.String("123")}}},
+		dst:  &pb.Communique{Union: &pb.Communique_Msg{&pb.Strings{BytesField: []byte{1, 2, 3}}}},
+		want: &pb.Communique{Union: &pb.Communique_Msg{&pb.Strings{StringField: proto.String("123"), BytesField: []byte{1, 2, 3}}}},
 	},
 	{
 		src: &proto3pb.Message{
@@ -287,14 +305,86 @@ var mergeTests = []struct {
 			},
 		},
 	},
+	{
+		src: &pb.GoTest{
+			F_BoolRepeated:   []bool{},
+			F_Int32Repeated:  []int32{},
+			F_Int64Repeated:  []int64{},
+			F_Uint32Repeated: []uint32{},
+			F_Uint64Repeated: []uint64{},
+			F_FloatRepeated:  []float32{},
+			F_DoubleRepeated: []float64{},
+			F_StringRepeated: []string{},
+			F_BytesRepeated:  [][]byte{},
+		},
+		dst: &pb.GoTest{},
+		want: &pb.GoTest{
+			F_BoolRepeated:   []bool{},
+			F_Int32Repeated:  []int32{},
+			F_Int64Repeated:  []int64{},
+			F_Uint32Repeated: []uint32{},
+			F_Uint64Repeated: []uint64{},
+			F_FloatRepeated:  []float32{},
+			F_DoubleRepeated: []float64{},
+			F_StringRepeated: []string{},
+			F_BytesRepeated:  [][]byte{},
+		},
+	},
+	{
+		src: &pb.GoTest{},
+		dst: &pb.GoTest{
+			F_BoolRepeated:   []bool{},
+			F_Int32Repeated:  []int32{},
+			F_Int64Repeated:  []int64{},
+			F_Uint32Repeated: []uint32{},
+			F_Uint64Repeated: []uint64{},
+			F_FloatRepeated:  []float32{},
+			F_DoubleRepeated: []float64{},
+			F_StringRepeated: []string{},
+			F_BytesRepeated:  [][]byte{},
+		},
+		want: &pb.GoTest{
+			F_BoolRepeated:   []bool{},
+			F_Int32Repeated:  []int32{},
+			F_Int64Repeated:  []int64{},
+			F_Uint32Repeated: []uint32{},
+			F_Uint64Repeated: []uint64{},
+			F_FloatRepeated:  []float32{},
+			F_DoubleRepeated: []float64{},
+			F_StringRepeated: []string{},
+			F_BytesRepeated:  [][]byte{},
+		},
+	},
+	{
+		src: &pb.GoTest{
+			F_BytesRepeated: [][]byte{nil, []byte{}, []byte{0}},
+		},
+		dst: &pb.GoTest{},
+		want: &pb.GoTest{
+			F_BytesRepeated: [][]byte{nil, []byte{}, []byte{0}},
+		},
+	},
+	{
+		src: &pb.MyMessage{
+			Others: []*pb.OtherMessage{},
+		},
+		dst: &pb.MyMessage{},
+		want: &pb.MyMessage{
+			Others: []*pb.OtherMessage{},
+		},
+	},
 }
 
 func TestMerge(t *testing.T) {
 	for _, m := range mergeTests {
 		got := proto.Clone(m.dst)
+		if !proto.Equal(got, m.dst) {
+			t.Errorf("Clone()\ngot  %v\nwant %v", got, m.dst)
+			continue
+		}
 		proto.Merge(got, m.src)
 		if !proto.Equal(got, m.want) {
-			t.Errorf("Merge(%v, %v)\n got %v\nwant %v\n", m.dst, m.src, got, m.want)
+			t.Errorf("Merge(%v, %v)\ngot  %v\nwant %v", m.dst, m.src, got, m.want)
 		}
 	}
 }

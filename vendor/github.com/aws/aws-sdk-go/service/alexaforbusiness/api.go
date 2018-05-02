@@ -4,17 +4,98 @@ package alexaforbusiness
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
+const opAssociateContactWithAddressBook = "AssociateContactWithAddressBook"
+
+// AssociateContactWithAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the AssociateContactWithAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See AssociateContactWithAddressBook for more information on using the AssociateContactWithAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the AssociateContactWithAddressBookRequest method.
+//    req, resp := client.AssociateContactWithAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/AssociateContactWithAddressBook
+func (c *AlexaForBusiness) AssociateContactWithAddressBookRequest(input *AssociateContactWithAddressBookInput) (req *request.Request, output *AssociateContactWithAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opAssociateContactWithAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &AssociateContactWithAddressBookInput{}
+	}
+
+	output = &AssociateContactWithAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// AssociateContactWithAddressBook API operation for Alexa For Business.
+//
+// Associates a contact with a given address book.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation AssociateContactWithAddressBook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   You are performing an action that would put you beyond your account's limits.
+//   HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/AssociateContactWithAddressBook
+func (c *AlexaForBusiness) AssociateContactWithAddressBook(input *AssociateContactWithAddressBookInput) (*AssociateContactWithAddressBookOutput, error) {
+	req, out := c.AssociateContactWithAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// AssociateContactWithAddressBookWithContext is the same as AssociateContactWithAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See AssociateContactWithAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) AssociateContactWithAddressBookWithContext(ctx aws.Context, input *AssociateContactWithAddressBookInput, opts ...request.Option) (*AssociateContactWithAddressBookOutput, error) {
+	req, out := c.AssociateContactWithAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opAssociateDeviceWithRoom = "AssociateDeviceWithRoom"
 
 // AssociateDeviceWithRoomRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateDeviceWithRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -54,10 +135,10 @@ func (c *AlexaForBusiness) AssociateDeviceWithRoomRequest(input *AssociateDevice
 
 // AssociateDeviceWithRoom API operation for Alexa For Business.
 //
-// Associates a device to a given room. This applies all the settings from the
-// room profile to the device, and all the skills in any skill groups added
-// to that room. This operation requires the device to be online, or a manual
-// sync is required.
+// Associates a device with a given room. This applies all the settings from
+// the room profile to the device, and all the skills in any skill groups added
+// to that room. This operation requires the device to be online, or else a
+// manual sync is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -97,7 +178,7 @@ const opAssociateSkillGroupWithRoom = "AssociateSkillGroupWithRoom"
 
 // AssociateSkillGroupWithRoomRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateSkillGroupWithRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -137,7 +218,7 @@ func (c *AlexaForBusiness) AssociateSkillGroupWithRoomRequest(input *AssociateSk
 
 // AssociateSkillGroupWithRoom API operation for Alexa For Business.
 //
-// Associates a skill group to a given room. This enables all skills in the
+// Associates a skill group with a given room. This enables all skills in the
 // associated skill group on all devices in the room.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -168,11 +249,177 @@ func (c *AlexaForBusiness) AssociateSkillGroupWithRoomWithContext(ctx aws.Contex
 	return out, req.Send()
 }
 
+const opCreateAddressBook = "CreateAddressBook"
+
+// CreateAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the CreateAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateAddressBook for more information on using the CreateAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateAddressBookRequest method.
+//    req, resp := client.CreateAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/CreateAddressBook
+func (c *AlexaForBusiness) CreateAddressBookRequest(input *CreateAddressBookInput) (req *request.Request, output *CreateAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opCreateAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateAddressBookInput{}
+	}
+
+	output = &CreateAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateAddressBook API operation for Alexa For Business.
+//
+// Creates an address book with the specified details.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation CreateAddressBook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeAlreadyExistsException "AlreadyExistsException"
+//   The resource being created already exists. HTTP Status Code: 400
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   You are performing an action that would put you beyond your account's limits.
+//   HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/CreateAddressBook
+func (c *AlexaForBusiness) CreateAddressBook(input *CreateAddressBookInput) (*CreateAddressBookOutput, error) {
+	req, out := c.CreateAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// CreateAddressBookWithContext is the same as CreateAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) CreateAddressBookWithContext(ctx aws.Context, input *CreateAddressBookInput, opts ...request.Option) (*CreateAddressBookOutput, error) {
+	req, out := c.CreateAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateContact = "CreateContact"
+
+// CreateContactRequest generates a "aws/request.Request" representing the
+// client's request for the CreateContact operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateContact for more information on using the CreateContact
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateContactRequest method.
+//    req, resp := client.CreateContactRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/CreateContact
+func (c *AlexaForBusiness) CreateContactRequest(input *CreateContactInput) (req *request.Request, output *CreateContactOutput) {
+	op := &request.Operation{
+		Name:       opCreateContact,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateContactInput{}
+	}
+
+	output = &CreateContactOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateContact API operation for Alexa For Business.
+//
+// Creates a contact with the specified details.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation CreateContact for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeAlreadyExistsException "AlreadyExistsException"
+//   The resource being created already exists. HTTP Status Code: 400
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   You are performing an action that would put you beyond your account's limits.
+//   HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/CreateContact
+func (c *AlexaForBusiness) CreateContact(input *CreateContactInput) (*CreateContactOutput, error) {
+	req, out := c.CreateContactRequest(input)
+	return out, req.Send()
+}
+
+// CreateContactWithContext is the same as CreateContact with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateContact for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) CreateContactWithContext(ctx aws.Context, input *CreateContactInput, opts ...request.Option) (*CreateContactOutput, error) {
+	req, out := c.CreateContactRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateProfile = "CreateProfile"
 
 // CreateProfileRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -255,7 +502,7 @@ const opCreateRoom = "CreateRoom"
 
 // CreateRoomRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -338,7 +585,7 @@ const opCreateSkillGroup = "CreateSkillGroup"
 
 // CreateSkillGroupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSkillGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -421,7 +668,7 @@ const opCreateUser = "CreateUser"
 
 // CreateUserRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUser operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -500,11 +747,169 @@ func (c *AlexaForBusiness) CreateUserWithContext(ctx aws.Context, input *CreateU
 	return out, req.Send()
 }
 
+const opDeleteAddressBook = "DeleteAddressBook"
+
+// DeleteAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteAddressBook for more information on using the DeleteAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteAddressBookRequest method.
+//    req, resp := client.DeleteAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DeleteAddressBook
+func (c *AlexaForBusiness) DeleteAddressBookRequest(input *DeleteAddressBookInput) (req *request.Request, output *DeleteAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opDeleteAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteAddressBookInput{}
+	}
+
+	output = &DeleteAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteAddressBook API operation for Alexa For Business.
+//
+// Deletes an address book by the address book ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation DeleteAddressBook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DeleteAddressBook
+func (c *AlexaForBusiness) DeleteAddressBook(input *DeleteAddressBookInput) (*DeleteAddressBookOutput, error) {
+	req, out := c.DeleteAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// DeleteAddressBookWithContext is the same as DeleteAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) DeleteAddressBookWithContext(ctx aws.Context, input *DeleteAddressBookInput, opts ...request.Option) (*DeleteAddressBookOutput, error) {
+	req, out := c.DeleteAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteContact = "DeleteContact"
+
+// DeleteContactRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteContact operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteContact for more information on using the DeleteContact
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteContactRequest method.
+//    req, resp := client.DeleteContactRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DeleteContact
+func (c *AlexaForBusiness) DeleteContactRequest(input *DeleteContactInput) (req *request.Request, output *DeleteContactOutput) {
+	op := &request.Operation{
+		Name:       opDeleteContact,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteContactInput{}
+	}
+
+	output = &DeleteContactOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteContact API operation for Alexa For Business.
+//
+// Deletes a contact by the contact ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation DeleteContact for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DeleteContact
+func (c *AlexaForBusiness) DeleteContact(input *DeleteContactInput) (*DeleteContactOutput, error) {
+	req, out := c.DeleteContactRequest(input)
+	return out, req.Send()
+}
+
+// DeleteContactWithContext is the same as DeleteContact with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteContact for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) DeleteContactWithContext(ctx aws.Context, input *DeleteContactInput, opts ...request.Option) (*DeleteContactOutput, error) {
+	req, out := c.DeleteContactRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteProfile = "DeleteProfile"
 
 // DeleteProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -583,7 +988,7 @@ const opDeleteRoom = "DeleteRoom"
 
 // DeleteRoomRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -662,7 +1067,7 @@ const opDeleteRoomSkillParameter = "DeleteRoomSkillParameter"
 
 // DeleteRoomSkillParameterRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRoomSkillParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -736,7 +1141,7 @@ const opDeleteSkillGroup = "DeleteSkillGroup"
 
 // DeleteSkillGroupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSkillGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -815,7 +1220,7 @@ const opDeleteUser = "DeleteUser"
 
 // DeleteUserRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUser operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -890,11 +1295,85 @@ func (c *AlexaForBusiness) DeleteUserWithContext(ctx aws.Context, input *DeleteU
 	return out, req.Send()
 }
 
+const opDisassociateContactFromAddressBook = "DisassociateContactFromAddressBook"
+
+// DisassociateContactFromAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the DisassociateContactFromAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DisassociateContactFromAddressBook for more information on using the DisassociateContactFromAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DisassociateContactFromAddressBookRequest method.
+//    req, resp := client.DisassociateContactFromAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DisassociateContactFromAddressBook
+func (c *AlexaForBusiness) DisassociateContactFromAddressBookRequest(input *DisassociateContactFromAddressBookInput) (req *request.Request, output *DisassociateContactFromAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opDisassociateContactFromAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DisassociateContactFromAddressBookInput{}
+	}
+
+	output = &DisassociateContactFromAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DisassociateContactFromAddressBook API operation for Alexa For Business.
+//
+// Disassociates a contact from a given address book.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation DisassociateContactFromAddressBook for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/DisassociateContactFromAddressBook
+func (c *AlexaForBusiness) DisassociateContactFromAddressBook(input *DisassociateContactFromAddressBookInput) (*DisassociateContactFromAddressBookOutput, error) {
+	req, out := c.DisassociateContactFromAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// DisassociateContactFromAddressBookWithContext is the same as DisassociateContactFromAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DisassociateContactFromAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) DisassociateContactFromAddressBookWithContext(ctx aws.Context, input *DisassociateContactFromAddressBookInput, opts ...request.Option) (*DisassociateContactFromAddressBookOutput, error) {
+	req, out := c.DisassociateContactFromAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDisassociateDeviceFromRoom = "DisassociateDeviceFromRoom"
 
 // DisassociateDeviceFromRoomRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateDeviceFromRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -970,7 +1449,7 @@ const opDisassociateSkillGroupFromRoom = "DisassociateSkillGroupFromRoom"
 
 // DisassociateSkillGroupFromRoomRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateSkillGroupFromRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1041,11 +1520,169 @@ func (c *AlexaForBusiness) DisassociateSkillGroupFromRoomWithContext(ctx aws.Con
 	return out, req.Send()
 }
 
+const opGetAddressBook = "GetAddressBook"
+
+// GetAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the GetAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetAddressBook for more information on using the GetAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetAddressBookRequest method.
+//    req, resp := client.GetAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/GetAddressBook
+func (c *AlexaForBusiness) GetAddressBookRequest(input *GetAddressBookInput) (req *request.Request, output *GetAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opGetAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetAddressBookInput{}
+	}
+
+	output = &GetAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetAddressBook API operation for Alexa For Business.
+//
+// Gets address the book details by the address book ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation GetAddressBook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/GetAddressBook
+func (c *AlexaForBusiness) GetAddressBook(input *GetAddressBookInput) (*GetAddressBookOutput, error) {
+	req, out := c.GetAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// GetAddressBookWithContext is the same as GetAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) GetAddressBookWithContext(ctx aws.Context, input *GetAddressBookInput, opts ...request.Option) (*GetAddressBookOutput, error) {
+	req, out := c.GetAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetContact = "GetContact"
+
+// GetContactRequest generates a "aws/request.Request" representing the
+// client's request for the GetContact operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetContact for more information on using the GetContact
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetContactRequest method.
+//    req, resp := client.GetContactRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/GetContact
+func (c *AlexaForBusiness) GetContactRequest(input *GetContactInput) (req *request.Request, output *GetContactOutput) {
+	op := &request.Operation{
+		Name:       opGetContact,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetContactInput{}
+	}
+
+	output = &GetContactOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetContact API operation for Alexa For Business.
+//
+// Gets the contact details by the contact ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation GetContact for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/GetContact
+func (c *AlexaForBusiness) GetContact(input *GetContactInput) (*GetContactOutput, error) {
+	req, out := c.GetContactRequest(input)
+	return out, req.Send()
+}
+
+// GetContactWithContext is the same as GetContact with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetContact for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) GetContactWithContext(ctx aws.Context, input *GetContactInput, opts ...request.Option) (*GetContactOutput, error) {
+	req, out := c.GetContactRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetDevice = "GetDevice"
 
 // GetDeviceRequest generates a "aws/request.Request" representing the
 // client's request for the GetDevice operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1124,7 +1761,7 @@ const opGetProfile = "GetProfile"
 
 // GetProfileRequest generates a "aws/request.Request" representing the
 // client's request for the GetProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1203,7 +1840,7 @@ const opGetRoom = "GetRoom"
 
 // GetRoomRequest generates a "aws/request.Request" representing the
 // client's request for the GetRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1282,7 +1919,7 @@ const opGetRoomSkillParameter = "GetRoomSkillParameter"
 
 // GetRoomSkillParameterRequest generates a "aws/request.Request" representing the
 // client's request for the GetRoomSkillParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1361,7 +1998,7 @@ const opGetSkillGroup = "GetSkillGroup"
 
 // GetSkillGroupRequest generates a "aws/request.Request" representing the
 // client's request for the GetSkillGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1436,11 +2073,149 @@ func (c *AlexaForBusiness) GetSkillGroupWithContext(ctx aws.Context, input *GetS
 	return out, req.Send()
 }
 
+const opListDeviceEvents = "ListDeviceEvents"
+
+// ListDeviceEventsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDeviceEvents operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDeviceEvents for more information on using the ListDeviceEvents
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListDeviceEventsRequest method.
+//    req, resp := client.ListDeviceEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/ListDeviceEvents
+func (c *AlexaForBusiness) ListDeviceEventsRequest(input *ListDeviceEventsInput) (req *request.Request, output *ListDeviceEventsOutput) {
+	op := &request.Operation{
+		Name:       opListDeviceEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListDeviceEventsInput{}
+	}
+
+	output = &ListDeviceEventsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDeviceEvents API operation for Alexa For Business.
+//
+// Lists the Device Event history for up to 30 days. If EventType isn't specified
+// in the request, this returns a list of all device events in reverse chronological
+// order. If EventType is specified, this returns a list of device events for
+// that EventType in reverse chronological order.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation ListDeviceEvents for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/ListDeviceEvents
+func (c *AlexaForBusiness) ListDeviceEvents(input *ListDeviceEventsInput) (*ListDeviceEventsOutput, error) {
+	req, out := c.ListDeviceEventsRequest(input)
+	return out, req.Send()
+}
+
+// ListDeviceEventsWithContext is the same as ListDeviceEvents with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDeviceEvents for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) ListDeviceEventsWithContext(ctx aws.Context, input *ListDeviceEventsInput, opts ...request.Option) (*ListDeviceEventsOutput, error) {
+	req, out := c.ListDeviceEventsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListDeviceEventsPages iterates over the pages of a ListDeviceEvents operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListDeviceEvents method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListDeviceEvents operation.
+//    pageNum := 0
+//    err := client.ListDeviceEventsPages(params,
+//        func(page *ListDeviceEventsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *AlexaForBusiness) ListDeviceEventsPages(input *ListDeviceEventsInput, fn func(*ListDeviceEventsOutput, bool) bool) error {
+	return c.ListDeviceEventsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListDeviceEventsPagesWithContext same as ListDeviceEventsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) ListDeviceEventsPagesWithContext(ctx aws.Context, input *ListDeviceEventsInput, fn func(*ListDeviceEventsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListDeviceEventsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListDeviceEventsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListDeviceEventsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListSkills = "ListSkills"
 
 // ListSkillsRequest generates a "aws/request.Request" representing the
 // client's request for the ListSkills operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1570,7 +2345,7 @@ const opListTags = "ListTags"
 
 // ListTagsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1705,7 +2480,7 @@ const opPutRoomSkillParameter = "PutRoomSkillParameter"
 
 // PutRoomSkillParameterRequest generates a "aws/request.Request" representing the
 // client's request for the PutRoomSkillParameter operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1780,7 +2555,7 @@ const opResolveRoom = "ResolveRoom"
 
 // ResolveRoomRequest generates a "aws/request.Request" representing the
 // client's request for the ResolveRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1860,7 +2635,7 @@ const opRevokeInvitation = "RevokeInvitation"
 
 // RevokeInvitationRequest generates a "aws/request.Request" representing the
 // client's request for the RevokeInvitation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1935,11 +2710,272 @@ func (c *AlexaForBusiness) RevokeInvitationWithContext(ctx aws.Context, input *R
 	return out, req.Send()
 }
 
+const opSearchAddressBooks = "SearchAddressBooks"
+
+// SearchAddressBooksRequest generates a "aws/request.Request" representing the
+// client's request for the SearchAddressBooks operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See SearchAddressBooks for more information on using the SearchAddressBooks
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the SearchAddressBooksRequest method.
+//    req, resp := client.SearchAddressBooksRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/SearchAddressBooks
+func (c *AlexaForBusiness) SearchAddressBooksRequest(input *SearchAddressBooksInput) (req *request.Request, output *SearchAddressBooksOutput) {
+	op := &request.Operation{
+		Name:       opSearchAddressBooks,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &SearchAddressBooksInput{}
+	}
+
+	output = &SearchAddressBooksOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// SearchAddressBooks API operation for Alexa For Business.
+//
+// Searches address books and lists the ones that meet a set of filter and sort
+// criteria.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation SearchAddressBooks for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/SearchAddressBooks
+func (c *AlexaForBusiness) SearchAddressBooks(input *SearchAddressBooksInput) (*SearchAddressBooksOutput, error) {
+	req, out := c.SearchAddressBooksRequest(input)
+	return out, req.Send()
+}
+
+// SearchAddressBooksWithContext is the same as SearchAddressBooks with the addition of
+// the ability to pass a context and additional request options.
+//
+// See SearchAddressBooks for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) SearchAddressBooksWithContext(ctx aws.Context, input *SearchAddressBooksInput, opts ...request.Option) (*SearchAddressBooksOutput, error) {
+	req, out := c.SearchAddressBooksRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// SearchAddressBooksPages iterates over the pages of a SearchAddressBooks operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See SearchAddressBooks method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a SearchAddressBooks operation.
+//    pageNum := 0
+//    err := client.SearchAddressBooksPages(params,
+//        func(page *SearchAddressBooksOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *AlexaForBusiness) SearchAddressBooksPages(input *SearchAddressBooksInput, fn func(*SearchAddressBooksOutput, bool) bool) error {
+	return c.SearchAddressBooksPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// SearchAddressBooksPagesWithContext same as SearchAddressBooksPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) SearchAddressBooksPagesWithContext(ctx aws.Context, input *SearchAddressBooksInput, fn func(*SearchAddressBooksOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *SearchAddressBooksInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.SearchAddressBooksRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*SearchAddressBooksOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
+const opSearchContacts = "SearchContacts"
+
+// SearchContactsRequest generates a "aws/request.Request" representing the
+// client's request for the SearchContacts operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See SearchContacts for more information on using the SearchContacts
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the SearchContactsRequest method.
+//    req, resp := client.SearchContactsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/SearchContacts
+func (c *AlexaForBusiness) SearchContactsRequest(input *SearchContactsInput) (req *request.Request, output *SearchContactsOutput) {
+	op := &request.Operation{
+		Name:       opSearchContacts,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &SearchContactsInput{}
+	}
+
+	output = &SearchContactsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// SearchContacts API operation for Alexa For Business.
+//
+// Searches contacts and lists the ones that meet a set of filter and sort criteria.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation SearchContacts for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/SearchContacts
+func (c *AlexaForBusiness) SearchContacts(input *SearchContactsInput) (*SearchContactsOutput, error) {
+	req, out := c.SearchContactsRequest(input)
+	return out, req.Send()
+}
+
+// SearchContactsWithContext is the same as SearchContacts with the addition of
+// the ability to pass a context and additional request options.
+//
+// See SearchContacts for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) SearchContactsWithContext(ctx aws.Context, input *SearchContactsInput, opts ...request.Option) (*SearchContactsOutput, error) {
+	req, out := c.SearchContactsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// SearchContactsPages iterates over the pages of a SearchContacts operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See SearchContacts method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a SearchContacts operation.
+//    pageNum := 0
+//    err := client.SearchContactsPages(params,
+//        func(page *SearchContactsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *AlexaForBusiness) SearchContactsPages(input *SearchContactsInput, fn func(*SearchContactsOutput, bool) bool) error {
+	return c.SearchContactsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// SearchContactsPagesWithContext same as SearchContactsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) SearchContactsPagesWithContext(ctx aws.Context, input *SearchContactsInput, fn func(*SearchContactsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *SearchContactsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.SearchContactsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*SearchContactsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opSearchDevices = "SearchDevices"
 
 // SearchDevicesRequest generates a "aws/request.Request" representing the
 // client's request for the SearchDevices operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2069,7 +3105,7 @@ const opSearchProfiles = "SearchProfiles"
 
 // SearchProfilesRequest generates a "aws/request.Request" representing the
 // client's request for the SearchProfiles operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2199,7 +3235,7 @@ const opSearchRooms = "SearchRooms"
 
 // SearchRoomsRequest generates a "aws/request.Request" representing the
 // client's request for the SearchRooms operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2329,7 +3365,7 @@ const opSearchSkillGroups = "SearchSkillGroups"
 
 // SearchSkillGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the SearchSkillGroups operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2460,7 +3496,7 @@ const opSearchUsers = "SearchUsers"
 
 // SearchUsersRequest generates a "aws/request.Request" representing the
 // client's request for the SearchUsers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2590,7 +3626,7 @@ const opSendInvitation = "SendInvitation"
 
 // SendInvitationRequest generates a "aws/request.Request" representing the
 // client's request for the SendInvitation operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2674,7 +3710,7 @@ const opStartDeviceSync = "StartDeviceSync"
 
 // StartDeviceSyncRequest generates a "aws/request.Request" representing the
 // client's request for the StartDeviceSync operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2714,7 +3750,7 @@ func (c *AlexaForBusiness) StartDeviceSyncRequest(input *StartDeviceSyncInput) (
 
 // StartDeviceSync API operation for Alexa For Business.
 //
-// Resets a device and its account to the known default settings by clearing
+// Resets a device and its account to the known default settings, by clearing
 // all information and settings set by previous users.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2749,7 +3785,7 @@ const opTagResource = "TagResource"
 
 // TagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the TagResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2828,7 +3864,7 @@ const opUntagResource = "UntagResource"
 
 // UntagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UntagResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2903,11 +3939,172 @@ func (c *AlexaForBusiness) UntagResourceWithContext(ctx aws.Context, input *Unta
 	return out, req.Send()
 }
 
+const opUpdateAddressBook = "UpdateAddressBook"
+
+// UpdateAddressBookRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateAddressBook operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateAddressBook for more information on using the UpdateAddressBook
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateAddressBookRequest method.
+//    req, resp := client.UpdateAddressBookRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/UpdateAddressBook
+func (c *AlexaForBusiness) UpdateAddressBookRequest(input *UpdateAddressBookInput) (req *request.Request, output *UpdateAddressBookOutput) {
+	op := &request.Operation{
+		Name:       opUpdateAddressBook,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateAddressBookInput{}
+	}
+
+	output = &UpdateAddressBookOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateAddressBook API operation for Alexa For Business.
+//
+// Updates address book details by the address book ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation UpdateAddressBook for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+//   * ErrCodeNameInUseException "NameInUseException"
+//   The name sent in the request is already in use. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/UpdateAddressBook
+func (c *AlexaForBusiness) UpdateAddressBook(input *UpdateAddressBookInput) (*UpdateAddressBookOutput, error) {
+	req, out := c.UpdateAddressBookRequest(input)
+	return out, req.Send()
+}
+
+// UpdateAddressBookWithContext is the same as UpdateAddressBook with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateAddressBook for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) UpdateAddressBookWithContext(ctx aws.Context, input *UpdateAddressBookInput, opts ...request.Option) (*UpdateAddressBookOutput, error) {
+	req, out := c.UpdateAddressBookRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateContact = "UpdateContact"
+
+// UpdateContactRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateContact operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateContact for more information on using the UpdateContact
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateContactRequest method.
+//    req, resp := client.UpdateContactRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/UpdateContact
+func (c *AlexaForBusiness) UpdateContactRequest(input *UpdateContactInput) (req *request.Request, output *UpdateContactOutput) {
+	op := &request.Operation{
+		Name:       opUpdateContact,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateContactInput{}
+	}
+
+	output = &UpdateContactOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateContact API operation for Alexa For Business.
+//
+// Updates the contact details by the contact ARN.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Alexa For Business's
+// API operation UpdateContact for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource is not found. HTTP Status Code: 400
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/alexaforbusiness-2017-11-09/UpdateContact
+func (c *AlexaForBusiness) UpdateContact(input *UpdateContactInput) (*UpdateContactOutput, error) {
+	req, out := c.UpdateContactRequest(input)
+	return out, req.Send()
+}
+
+// UpdateContactWithContext is the same as UpdateContact with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateContact for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AlexaForBusiness) UpdateContactWithContext(ctx aws.Context, input *UpdateContactInput, opts ...request.Option) (*UpdateContactOutput, error) {
+	req, out := c.UpdateContactRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateDevice = "UpdateDevice"
 
 // UpdateDeviceRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDevice operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2986,7 +4183,7 @@ const opUpdateProfile = "UpdateProfile"
 
 // UpdateProfileRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProfile operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3068,7 +4265,7 @@ const opUpdateRoom = "UpdateRoom"
 
 // UpdateRoomRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateRoom operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3150,7 +4347,7 @@ const opUpdateSkillGroup = "UpdateSkillGroup"
 
 // UpdateSkillGroupRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSkillGroup operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3226,6 +4423,156 @@ func (c *AlexaForBusiness) UpdateSkillGroupWithContext(ctx aws.Context, input *U
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// An address book with attributes.
+type AddressBook struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address book.
+	AddressBookArn *string `type:"string"`
+
+	// The description of the address book.
+	Description *string `min:"1" type:"string"`
+
+	// The name of the address book.
+	Name *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s AddressBook) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddressBook) GoString() string {
+	return s.String()
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *AddressBook) SetAddressBookArn(v string) *AddressBook {
+	s.AddressBookArn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *AddressBook) SetDescription(v string) *AddressBook {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AddressBook) SetName(v string) *AddressBook {
+	s.Name = &v
+	return s
+}
+
+// Information related to an address book.
+type AddressBookData struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address book.
+	AddressBookArn *string `type:"string"`
+
+	// The description of the address book.
+	Description *string `min:"1" type:"string"`
+
+	// The name of the address book.
+	Name *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s AddressBookData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddressBookData) GoString() string {
+	return s.String()
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *AddressBookData) SetAddressBookArn(v string) *AddressBookData {
+	s.AddressBookArn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *AddressBookData) SetDescription(v string) *AddressBookData {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AddressBookData) SetName(v string) *AddressBookData {
+	s.Name = &v
+	return s
+}
+
+type AssociateContactWithAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address book with which to associate the contact.
+	//
+	// AddressBookArn is a required field
+	AddressBookArn *string `type:"string" required:"true"`
+
+	// The ARN of the contact to associate with an address book.
+	//
+	// ContactArn is a required field
+	ContactArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s AssociateContactWithAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssociateContactWithAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AssociateContactWithAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AssociateContactWithAddressBookInput"}
+	if s.AddressBookArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddressBookArn"))
+	}
+	if s.ContactArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ContactArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *AssociateContactWithAddressBookInput) SetAddressBookArn(v string) *AssociateContactWithAddressBookInput {
+	s.AddressBookArn = &v
+	return s
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *AssociateContactWithAddressBookInput) SetContactArn(v string) *AssociateContactWithAddressBookInput {
+	s.ContactArn = &v
+	return s
+}
+
+type AssociateContactWithAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s AssociateContactWithAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssociateContactWithAddressBookOutput) GoString() string {
+	return s.String()
 }
 
 type AssociateDeviceWithRoomInput struct {
@@ -3318,6 +4665,328 @@ func (s AssociateSkillGroupWithRoomOutput) String() string {
 // GoString returns the string representation
 func (s AssociateSkillGroupWithRoomOutput) GoString() string {
 	return s.String()
+}
+
+// A contact with attributes.
+type Contact struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the contact.
+	ContactArn *string `type:"string"`
+
+	// The name of the contact to display on the console.
+	DisplayName *string `min:"1" type:"string"`
+
+	// The first name of the contact, used to call the contact on the device.
+	FirstName *string `min:"1" type:"string"`
+
+	// The last name of the contact, used to call the contact on the device.
+	LastName *string `min:"1" type:"string"`
+
+	// The phone number of the contact.
+	PhoneNumber *string `type:"string"`
+}
+
+// String returns the string representation
+func (s Contact) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Contact) GoString() string {
+	return s.String()
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *Contact) SetContactArn(v string) *Contact {
+	s.ContactArn = &v
+	return s
+}
+
+// SetDisplayName sets the DisplayName field's value.
+func (s *Contact) SetDisplayName(v string) *Contact {
+	s.DisplayName = &v
+	return s
+}
+
+// SetFirstName sets the FirstName field's value.
+func (s *Contact) SetFirstName(v string) *Contact {
+	s.FirstName = &v
+	return s
+}
+
+// SetLastName sets the LastName field's value.
+func (s *Contact) SetLastName(v string) *Contact {
+	s.LastName = &v
+	return s
+}
+
+// SetPhoneNumber sets the PhoneNumber field's value.
+func (s *Contact) SetPhoneNumber(v string) *Contact {
+	s.PhoneNumber = &v
+	return s
+}
+
+// Information related to a contact.
+type ContactData struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the contact.
+	ContactArn *string `type:"string"`
+
+	// The name of the contact to display on the console.
+	DisplayName *string `min:"1" type:"string"`
+
+	// The first name of the contact, used to call the contact on the device.
+	FirstName *string `min:"1" type:"string"`
+
+	// The last name of the contact, used to call the contact on the device.
+	LastName *string `min:"1" type:"string"`
+
+	// The phone number of the contact.
+	PhoneNumber *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ContactData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ContactData) GoString() string {
+	return s.String()
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *ContactData) SetContactArn(v string) *ContactData {
+	s.ContactArn = &v
+	return s
+}
+
+// SetDisplayName sets the DisplayName field's value.
+func (s *ContactData) SetDisplayName(v string) *ContactData {
+	s.DisplayName = &v
+	return s
+}
+
+// SetFirstName sets the FirstName field's value.
+func (s *ContactData) SetFirstName(v string) *ContactData {
+	s.FirstName = &v
+	return s
+}
+
+// SetLastName sets the LastName field's value.
+func (s *ContactData) SetLastName(v string) *ContactData {
+	s.LastName = &v
+	return s
+}
+
+// SetPhoneNumber sets the PhoneNumber field's value.
+func (s *ContactData) SetPhoneNumber(v string) *ContactData {
+	s.PhoneNumber = &v
+	return s
+}
+
+type CreateAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique, user-specified identifier for the request that ensures idempotency.
+	ClientRequestToken *string `min:"10" type:"string" idempotencyToken:"true"`
+
+	// The description of the address book.
+	Description *string `min:"1" type:"string"`
+
+	// The name of the address book.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateAddressBookInput"}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 10 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 10))
+	}
+	if s.Description != nil && len(*s.Description) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *CreateAddressBookInput) SetClientRequestToken(v string) *CreateAddressBookInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateAddressBookInput) SetDescription(v string) *CreateAddressBookInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateAddressBookInput) SetName(v string) *CreateAddressBookInput {
+	s.Name = &v
+	return s
+}
+
+type CreateAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the newly created address book.
+	AddressBookArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CreateAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateAddressBookOutput) GoString() string {
+	return s.String()
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *CreateAddressBookOutput) SetAddressBookArn(v string) *CreateAddressBookOutput {
+	s.AddressBookArn = &v
+	return s
+}
+
+type CreateContactInput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique, user-specified identifier for this request that ensures idempotency.
+	ClientRequestToken *string `min:"10" type:"string" idempotencyToken:"true"`
+
+	// The name of the contact to display on the console.
+	DisplayName *string `min:"1" type:"string"`
+
+	// The first name of the contact that is used to call the contact on the device.
+	//
+	// FirstName is a required field
+	FirstName *string `min:"1" type:"string" required:"true"`
+
+	// The last name of the contact that is used to call the contact on the device.
+	LastName *string `min:"1" type:"string"`
+
+	// The phone number of the contact in E.164 format.
+	//
+	// PhoneNumber is a required field
+	PhoneNumber *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateContactInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateContactInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateContactInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateContactInput"}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 10 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 10))
+	}
+	if s.DisplayName != nil && len(*s.DisplayName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DisplayName", 1))
+	}
+	if s.FirstName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FirstName"))
+	}
+	if s.FirstName != nil && len(*s.FirstName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FirstName", 1))
+	}
+	if s.LastName != nil && len(*s.LastName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LastName", 1))
+	}
+	if s.PhoneNumber == nil {
+		invalidParams.Add(request.NewErrParamRequired("PhoneNumber"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *CreateContactInput) SetClientRequestToken(v string) *CreateContactInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetDisplayName sets the DisplayName field's value.
+func (s *CreateContactInput) SetDisplayName(v string) *CreateContactInput {
+	s.DisplayName = &v
+	return s
+}
+
+// SetFirstName sets the FirstName field's value.
+func (s *CreateContactInput) SetFirstName(v string) *CreateContactInput {
+	s.FirstName = &v
+	return s
+}
+
+// SetLastName sets the LastName field's value.
+func (s *CreateContactInput) SetLastName(v string) *CreateContactInput {
+	s.LastName = &v
+	return s
+}
+
+// SetPhoneNumber sets the PhoneNumber field's value.
+func (s *CreateContactInput) SetPhoneNumber(v string) *CreateContactInput {
+	s.PhoneNumber = &v
+	return s
+}
+
+type CreateContactOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the newly created address book.
+	ContactArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CreateContactOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateContactOutput) GoString() string {
+	return s.String()
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *CreateContactOutput) SetContactArn(v string) *CreateContactOutput {
+	s.ContactArn = &v
+	return s
 }
 
 type CreateProfileInput struct {
@@ -3837,6 +5506,110 @@ func (s *CreateUserOutput) SetUserArn(v string) *CreateUserOutput {
 	return s
 }
 
+type DeleteAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address book to delete.
+	//
+	// AddressBookArn is a required field
+	AddressBookArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteAddressBookInput"}
+	if s.AddressBookArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddressBookArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *DeleteAddressBookInput) SetAddressBookArn(v string) *DeleteAddressBookInput {
+	s.AddressBookArn = &v
+	return s
+}
+
+type DeleteAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAddressBookOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteContactInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the contact to delete.
+	//
+	// ContactArn is a required field
+	ContactArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteContactInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteContactInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteContactInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteContactInput"}
+	if s.ContactArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ContactArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *DeleteContactInput) SetContactArn(v string) *DeleteContactInput {
+	s.ContactArn = &v
+	return s
+}
+
+type DeleteContactOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteContactOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteContactOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4101,7 +5874,7 @@ type Device struct {
 	DeviceSerialNumber *string `type:"string"`
 
 	// The status of a device. If the status is not READY, check the DeviceStatusInfo
-	// for details.
+	// value for details.
 	DeviceStatus *string `type:"string" enum:"DeviceStatus"`
 
 	// Detailed information about a device's status.
@@ -4289,6 +6062,48 @@ func (s *DeviceData) SetSoftwareVersion(v string) *DeviceData {
 	return s
 }
 
+// The list of device events.
+type DeviceEvent struct {
+	_ struct{} `type:"structure"`
+
+	// The time (in epoch) when the event occurred.
+	Timestamp *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The type of device event.
+	Type *string `type:"string" enum:"DeviceEventType"`
+
+	// The value of the event.
+	Value *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DeviceEvent) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeviceEvent) GoString() string {
+	return s.String()
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *DeviceEvent) SetTimestamp(v time.Time) *DeviceEvent {
+	s.Timestamp = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *DeviceEvent) SetType(v string) *DeviceEvent {
+	s.Type = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *DeviceEvent) SetValue(v string) *DeviceEvent {
+	s.Value = &v
+	return s
+}
+
 // Details of a device’s status.
 type DeviceStatusDetail struct {
 	_ struct{} `type:"structure"`
@@ -4317,6 +6132,9 @@ func (s *DeviceStatusDetail) SetCode(v string) *DeviceStatusDetail {
 type DeviceStatusInfo struct {
 	_ struct{} `type:"structure"`
 
+	// The latest available information about the connection status of a device.
+	ConnectionStatus *string `type:"string" enum:"ConnectionStatus"`
+
 	// One or more device status detail descriptions.
 	DeviceStatusDetails []*DeviceStatusDetail `type:"list"`
 }
@@ -4331,10 +6149,82 @@ func (s DeviceStatusInfo) GoString() string {
 	return s.String()
 }
 
+// SetConnectionStatus sets the ConnectionStatus field's value.
+func (s *DeviceStatusInfo) SetConnectionStatus(v string) *DeviceStatusInfo {
+	s.ConnectionStatus = &v
+	return s
+}
+
 // SetDeviceStatusDetails sets the DeviceStatusDetails field's value.
 func (s *DeviceStatusInfo) SetDeviceStatusDetails(v []*DeviceStatusDetail) *DeviceStatusInfo {
 	s.DeviceStatusDetails = v
 	return s
+}
+
+type DisassociateContactFromAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address from which to disassociate the contact.
+	//
+	// AddressBookArn is a required field
+	AddressBookArn *string `type:"string" required:"true"`
+
+	// The ARN of the contact to disassociate from an address book.
+	//
+	// ContactArn is a required field
+	ContactArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DisassociateContactFromAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisassociateContactFromAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisassociateContactFromAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisassociateContactFromAddressBookInput"}
+	if s.AddressBookArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddressBookArn"))
+	}
+	if s.ContactArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ContactArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *DisassociateContactFromAddressBookInput) SetAddressBookArn(v string) *DisassociateContactFromAddressBookInput {
+	s.AddressBookArn = &v
+	return s
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *DisassociateContactFromAddressBookInput) SetContactArn(v string) *DisassociateContactFromAddressBookInput {
+	s.ContactArn = &v
+	return s
+}
+
+type DisassociateContactFromAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DisassociateContactFromAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisassociateContactFromAddressBookOutput) GoString() string {
+	return s.String()
 }
 
 type DisassociateDeviceFromRoomInput struct {
@@ -4474,6 +6364,128 @@ func (s *Filter) SetKey(v string) *Filter {
 // SetValues sets the Values field's value.
 func (s *Filter) SetValues(v []*string) *Filter {
 	s.Values = v
+	return s
+}
+
+type GetAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the address book for which to request details.
+	//
+	// AddressBookArn is a required field
+	AddressBookArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetAddressBookInput"}
+	if s.AddressBookArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddressBookArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *GetAddressBookInput) SetAddressBookArn(v string) *GetAddressBookInput {
+	s.AddressBookArn = &v
+	return s
+}
+
+type GetAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The details of the requested address book.
+	AddressBook *AddressBook `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAddressBookOutput) GoString() string {
+	return s.String()
+}
+
+// SetAddressBook sets the AddressBook field's value.
+func (s *GetAddressBookOutput) SetAddressBook(v *AddressBook) *GetAddressBookOutput {
+	s.AddressBook = v
+	return s
+}
+
+type GetContactInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the contact for which to request details.
+	//
+	// ContactArn is a required field
+	ContactArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetContactInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetContactInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetContactInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetContactInput"}
+	if s.ContactArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ContactArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *GetContactInput) SetContactArn(v string) *GetContactInput {
+	s.ContactArn = &v
+	return s
+}
+
+type GetContactOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The details of the requested contact.
+	Contact *Contact `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetContactOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetContactOutput) GoString() string {
+	return s.String()
+}
+
+// SetContact sets the Contact field's value.
+func (s *GetContactOutput) SetContact(v *Contact) *GetContactOutput {
+	s.Contact = v
 	return s
 }
 
@@ -4746,6 +6758,111 @@ func (s GetSkillGroupOutput) GoString() string {
 // SetSkillGroup sets the SkillGroup field's value.
 func (s *GetSkillGroupOutput) SetSkillGroup(v *SkillGroup) *GetSkillGroupOutput {
 	s.SkillGroup = v
+	return s
+}
+
+type ListDeviceEventsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of a device.
+	//
+	// DeviceArn is a required field
+	DeviceArn *string `type:"string" required:"true"`
+
+	// The event type to filter device events.
+	EventType *string `type:"string" enum:"DeviceEventType"`
+
+	// The maximum number of results to include in the response. If more results
+	// exist than the specified MaxResults value, a token is included in the response
+	// so that the remaining results can be retrieved. Required.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An optional token returned from a prior request. Use this token for pagination
+	// of results from this action. If this parameter is specified, the response
+	// only includes results beyond the token, up to the value specified by MaxResults.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s ListDeviceEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDeviceEventsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDeviceEventsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDeviceEventsInput"}
+	if s.DeviceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceArn"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeviceArn sets the DeviceArn field's value.
+func (s *ListDeviceEventsInput) SetDeviceArn(v string) *ListDeviceEventsInput {
+	s.DeviceArn = &v
+	return s
+}
+
+// SetEventType sets the EventType field's value.
+func (s *ListDeviceEventsInput) SetEventType(v string) *ListDeviceEventsInput {
+	s.EventType = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDeviceEventsInput) SetMaxResults(v int64) *ListDeviceEventsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDeviceEventsInput) SetNextToken(v string) *ListDeviceEventsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDeviceEventsOutput struct {
+	_ struct{} `type:"structure"`
+
+	DeviceEvents []*DeviceEvent `type:"list"`
+
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s ListDeviceEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDeviceEventsOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeviceEvents sets the DeviceEvents field's value.
+func (s *ListDeviceEventsOutput) SetDeviceEvents(v []*DeviceEvent) *ListDeviceEventsOutput {
+	s.DeviceEvents = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDeviceEventsOutput) SetNextToken(v string) *ListDeviceEventsOutput {
+	s.NextToken = &v
 	return s
 }
 
@@ -5532,12 +7649,279 @@ func (s *RoomSkillParameter) SetParameterValue(v string) *RoomSkillParameter {
 	return s
 }
 
+type SearchAddressBooksInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filters to use to list a specified set of address books. The supported
+	// filter key is AddressBookName.
+	Filters []*Filter `type:"list"`
+
+	// The maximum number of results to include in the response. If more results
+	// exist than the specified MaxResults value, a token is included in the response
+	// so that the remaining results can be retrieved.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An optional token returned from a prior request. Use this token for pagination
+	// of results from this action. If this parameter is specified, the response
+	// only includes results beyond the token, up to the value specified by MaxResults.
+	NextToken *string `min:"1" type:"string"`
+
+	// The sort order to use in listing the specified set of address books. The
+	// supported sort key is AddressBookName.
+	SortCriteria []*Sort `type:"list"`
+}
+
+// String returns the string representation
+func (s SearchAddressBooksInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SearchAddressBooksInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SearchAddressBooksInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SearchAddressBooksInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.SortCriteria != nil {
+		for i, v := range s.SortCriteria {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "SortCriteria", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilters sets the Filters field's value.
+func (s *SearchAddressBooksInput) SetFilters(v []*Filter) *SearchAddressBooksInput {
+	s.Filters = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *SearchAddressBooksInput) SetMaxResults(v int64) *SearchAddressBooksInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *SearchAddressBooksInput) SetNextToken(v string) *SearchAddressBooksInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSortCriteria sets the SortCriteria field's value.
+func (s *SearchAddressBooksInput) SetSortCriteria(v []*Sort) *SearchAddressBooksInput {
+	s.SortCriteria = v
+	return s
+}
+
+type SearchAddressBooksOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The address books that meet the specified set of filter criteria, in sort
+	// order.
+	AddressBooks []*AddressBookData `type:"list"`
+
+	// The token returned to indicate that there is more data available.
+	NextToken *string `min:"1" type:"string"`
+
+	// The total number of address books returned.
+	TotalCount *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s SearchAddressBooksOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SearchAddressBooksOutput) GoString() string {
+	return s.String()
+}
+
+// SetAddressBooks sets the AddressBooks field's value.
+func (s *SearchAddressBooksOutput) SetAddressBooks(v []*AddressBookData) *SearchAddressBooksOutput {
+	s.AddressBooks = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *SearchAddressBooksOutput) SetNextToken(v string) *SearchAddressBooksOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTotalCount sets the TotalCount field's value.
+func (s *SearchAddressBooksOutput) SetTotalCount(v int64) *SearchAddressBooksOutput {
+	s.TotalCount = &v
+	return s
+}
+
+type SearchContactsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filters to use to list a specified set of address books. The supported
+	// filter keys are DisplayName, FirstName, LastName, and AddressBookArns.
+	Filters []*Filter `type:"list"`
+
+	// The maximum number of results to include in the response. If more results
+	// exist than the specified MaxResults value, a token is included in the response
+	// so that the remaining results can be retrieved.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An optional token returned from a prior request. Use this token for pagination
+	// of results from this action. If this parameter is specified, the response
+	// only includes results beyond the token, up to the value specified by MaxResults.
+	NextToken *string `min:"1" type:"string"`
+
+	// The sort order to use in listing the specified set of contacts. The supported
+	// sort keys are DisplayName, FirstName, and LastName.
+	SortCriteria []*Sort `type:"list"`
+}
+
+// String returns the string representation
+func (s SearchContactsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SearchContactsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SearchContactsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SearchContactsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.SortCriteria != nil {
+		for i, v := range s.SortCriteria {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "SortCriteria", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilters sets the Filters field's value.
+func (s *SearchContactsInput) SetFilters(v []*Filter) *SearchContactsInput {
+	s.Filters = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *SearchContactsInput) SetMaxResults(v int64) *SearchContactsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *SearchContactsInput) SetNextToken(v string) *SearchContactsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSortCriteria sets the SortCriteria field's value.
+func (s *SearchContactsInput) SetSortCriteria(v []*Sort) *SearchContactsInput {
+	s.SortCriteria = v
+	return s
+}
+
+type SearchContactsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The contacts that meet the specified set of filter criteria, in sort order.
+	Contacts []*ContactData `type:"list"`
+
+	// The token returned to indicate that there is more data available.
+	NextToken *string `min:"1" type:"string"`
+
+	// The total number of contacts returned.
+	TotalCount *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s SearchContactsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SearchContactsOutput) GoString() string {
+	return s.String()
+}
+
+// SetContacts sets the Contacts field's value.
+func (s *SearchContactsOutput) SetContacts(v []*ContactData) *SearchContactsOutput {
+	s.Contacts = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *SearchContactsOutput) SetNextToken(v string) *SearchContactsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTotalCount sets the TotalCount field's value.
+func (s *SearchContactsOutput) SetTotalCount(v int64) *SearchContactsOutput {
+	s.TotalCount = &v
+	return s
+}
+
 type SearchDevicesInput struct {
 	_ struct{} `type:"structure"`
 
 	// The filters to use to list a specified set of devices. Supported filter keys
 	// are DeviceName, DeviceStatus, DeviceStatusDetailCode, RoomName, DeviceType,
-	// DeviceSerialNumber, and UnassociatedOnly.
+	// DeviceSerialNumber, UnassociatedOnly, and ConnectionStatus (ONLINE and OFFLINE).
 	Filters []*Filter `type:"list"`
 
 	// The maximum number of results to include in the response. If more results
@@ -5551,7 +7935,8 @@ type SearchDevicesInput struct {
 	NextToken *string `min:"1" type:"string"`
 
 	// The sort order to use in listing the specified set of devices. Supported
-	// sort keys are DeviceName, DeviceStatus, RoomName, DeviceType, and DeviceSerialNumber.
+	// sort keys are DeviceName, DeviceStatus, RoomName, DeviceType, DeviceSerialNumber,
+	// and ConnectionStatus.
 	SortCriteria []*Sort `type:"list"`
 }
 
@@ -6679,6 +9064,179 @@ func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
 
+type UpdateAddressBookInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the room to update.
+	//
+	// AddressBookArn is a required field
+	AddressBookArn *string `type:"string" required:"true"`
+
+	// The updated description of the room.
+	Description *string `min:"1" type:"string"`
+
+	// The updated name of the room.
+	Name *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateAddressBookInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateAddressBookInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateAddressBookInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateAddressBookInput"}
+	if s.AddressBookArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddressBookArn"))
+	}
+	if s.Description != nil && len(*s.Description) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddressBookArn sets the AddressBookArn field's value.
+func (s *UpdateAddressBookInput) SetAddressBookArn(v string) *UpdateAddressBookInput {
+	s.AddressBookArn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateAddressBookInput) SetDescription(v string) *UpdateAddressBookInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateAddressBookInput) SetName(v string) *UpdateAddressBookInput {
+	s.Name = &v
+	return s
+}
+
+type UpdateAddressBookOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateAddressBookOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateAddressBookOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateContactInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the contact to update.
+	//
+	// ContactArn is a required field
+	ContactArn *string `type:"string" required:"true"`
+
+	// The updated display name of the contact.
+	DisplayName *string `min:"1" type:"string"`
+
+	// The updated first name of the contact.
+	FirstName *string `min:"1" type:"string"`
+
+	// The updated last name of the contact.
+	LastName *string `min:"1" type:"string"`
+
+	// The updated phone number of the contact.
+	PhoneNumber *string `type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateContactInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateContactInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateContactInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateContactInput"}
+	if s.ContactArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ContactArn"))
+	}
+	if s.DisplayName != nil && len(*s.DisplayName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DisplayName", 1))
+	}
+	if s.FirstName != nil && len(*s.FirstName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FirstName", 1))
+	}
+	if s.LastName != nil && len(*s.LastName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LastName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetContactArn sets the ContactArn field's value.
+func (s *UpdateContactInput) SetContactArn(v string) *UpdateContactInput {
+	s.ContactArn = &v
+	return s
+}
+
+// SetDisplayName sets the DisplayName field's value.
+func (s *UpdateContactInput) SetDisplayName(v string) *UpdateContactInput {
+	s.DisplayName = &v
+	return s
+}
+
+// SetFirstName sets the FirstName field's value.
+func (s *UpdateContactInput) SetFirstName(v string) *UpdateContactInput {
+	s.FirstName = &v
+	return s
+}
+
+// SetLastName sets the LastName field's value.
+func (s *UpdateContactInput) SetLastName(v string) *UpdateContactInput {
+	s.LastName = &v
+	return s
+}
+
+// SetPhoneNumber sets the PhoneNumber field's value.
+func (s *UpdateContactInput) SetPhoneNumber(v string) *UpdateContactInput {
+	s.PhoneNumber = &v
+	return s
+}
+
+type UpdateContactOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateContactOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateContactOutput) GoString() string {
+	return s.String()
+}
+
 type UpdateDeviceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7105,6 +9663,19 @@ func (s *UserData) SetUserArn(v string) *UserData {
 }
 
 const (
+	// ConnectionStatusOnline is a ConnectionStatus enum value
+	ConnectionStatusOnline = "ONLINE"
+
+	// ConnectionStatusOffline is a ConnectionStatus enum value
+	ConnectionStatusOffline = "OFFLINE"
+)
+
+const (
+	// DeviceEventTypeConnectionStatus is a DeviceEventType enum value
+	DeviceEventTypeConnectionStatus = "CONNECTION_STATUS"
+)
+
+const (
 	// DeviceStatusReady is a DeviceStatus enum value
 	DeviceStatusReady = "READY"
 
@@ -7140,6 +9711,9 @@ const (
 
 	// EnrollmentStatusRegistered is a EnrollmentStatus enum value
 	EnrollmentStatusRegistered = "REGISTERED"
+
+	// EnrollmentStatusDisassociating is a EnrollmentStatus enum value
+	EnrollmentStatusDisassociating = "DISASSOCIATING"
 
 	// EnrollmentStatusDeregistering is a EnrollmentStatus enum value
 	EnrollmentStatusDeregistering = "DEREGISTERING"

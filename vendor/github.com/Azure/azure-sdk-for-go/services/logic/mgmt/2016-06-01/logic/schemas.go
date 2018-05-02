@@ -41,9 +41,11 @@ func NewSchemasClientWithBaseURI(baseURI string, subscriptionID string) SchemasC
 }
 
 // CreateOrUpdate creates or updates an integration account schema.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
-// is the integration account schema name. schema is the integration account schema.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// schemaName - the integration account schema name.
+// schema - the integration account schema.
 func (client SchemasClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string, schema IntegrationAccountSchema) (result IntegrationAccountSchema, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: schema,
@@ -87,7 +89,7 @@ func (client SchemasClient) CreateOrUpdatePreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/schemas/{schemaName}", pathParameters),
@@ -117,9 +119,10 @@ func (client SchemasClient) CreateOrUpdateResponder(resp *http.Response) (result
 }
 
 // Delete deletes an integration account schema.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
-// is the integration account schema name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// schemaName - the integration account schema name.
 func (client SchemasClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, schemaName)
 	if err != nil {
@@ -184,9 +187,10 @@ func (client SchemasClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Get gets an integration account schema.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
-// is the integration account schema name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// schemaName - the integration account schema name.
 func (client SchemasClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string) (result IntegrationAccountSchema, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, schemaName)
 	if err != nil {
@@ -252,9 +256,11 @@ func (client SchemasClient) GetResponder(resp *http.Response) (result Integratio
 }
 
 // ListByIntegrationAccounts gets a list of integration account schemas.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. top is the
-// number of items to be included in the result. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client SchemasClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountSchemaListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

@@ -41,8 +41,9 @@ func NewIotHubResourceClientWithBaseURI(baseURI string, subscriptionID string) I
 }
 
 // CheckNameAvailability check if an IoT hub name is available.
-//
-// operationInputs is set the name parameter in the OperationInputs structure to the name of the IoT hub to check.
+// Parameters:
+// operationInputs - set the name parameter in the OperationInputs structure to the name of the IoT hub to
+// check.
 func (client IotHubResourceClient) CheckNameAvailability(ctx context.Context, operationInputs OperationInputs) (result IotHubNameAvailabilityInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: operationInputs,
@@ -83,7 +84,7 @@ func (client IotHubResourceClient) CheckNameAvailabilityPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Devices/checkNameAvailability", pathParameters),
@@ -113,10 +114,11 @@ func (client IotHubResourceClient) CheckNameAvailabilityResponder(resp *http.Res
 }
 
 // CreateEventHubConsumerGroup add a consumer group to an Event Hub-compatible endpoint in an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. eventHubEndpointName is the name of the Event Hub-compatible endpoint in the IoT hub. name is the name
-// of the consumer group to add.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// eventHubEndpointName - the name of the Event Hub-compatible endpoint in the IoT hub.
+// name - the name of the consumer group to add.
 func (client IotHubResourceClient) CreateEventHubConsumerGroup(ctx context.Context, resourceGroupName string, resourceName string, eventHubEndpointName string, name string) (result EventHubConsumerGroupInfo, err error) {
 	req, err := client.CreateEventHubConsumerGroupPreparer(ctx, resourceGroupName, resourceName, eventHubEndpointName, name)
 	if err != nil {
@@ -185,9 +187,10 @@ func (client IotHubResourceClient) CreateEventHubConsumerGroupResponder(resp *ht
 // CreateOrUpdate create or update the metadata of an Iot hub. The usual pattern to modify a property is to retrieve
 // the IoT hub metadata and security metadata, and then combine them with the modified values in a new body to update
 // the IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub to create or update. iotHubDescription is the IoT hub metadata and security metadata.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub to create or update.
+// iotHubDescription - the IoT hub metadata and security metadata.
 func (client IotHubResourceClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, iotHubDescription IotHubDescription) (result IotHubResourceCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: iotHubDescription,
@@ -251,7 +254,7 @@ func (client IotHubResourceClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}", pathParameters),
@@ -289,9 +292,9 @@ func (client IotHubResourceClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete delete an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub to delete.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub to delete.
 func (client IotHubResourceClient) Delete(ctx context.Context, resourceGroupName string, resourceName string) (result IotHubResourceDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -358,10 +361,11 @@ func (client IotHubResourceClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // DeleteEventHubConsumerGroup delete a consumer group from an Event Hub-compatible endpoint in an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. eventHubEndpointName is the name of the Event Hub-compatible endpoint in the IoT hub. name is the name
-// of the consumer group to delete.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// eventHubEndpointName - the name of the Event Hub-compatible endpoint in the IoT hub.
+// name - the name of the consumer group to delete.
 func (client IotHubResourceClient) DeleteEventHubConsumerGroup(ctx context.Context, resourceGroupName string, resourceName string, eventHubEndpointName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeleteEventHubConsumerGroupPreparer(ctx, resourceGroupName, resourceName, eventHubEndpointName, name)
 	if err != nil {
@@ -429,9 +433,10 @@ func (client IotHubResourceClient) DeleteEventHubConsumerGroupResponder(resp *ht
 // ExportDevices exports all the device identities in the IoT hub identity registry to an Azure Storage blob container.
 // For more information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-identity-registry#import-and-export-device-identities.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. exportDevicesParameters is the parameters that specify the export devices operation.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// exportDevicesParameters - the parameters that specify the export devices operation.
 func (client IotHubResourceClient) ExportDevices(ctx context.Context, resourceGroupName string, resourceName string, exportDevicesParameters ExportDevicesRequest) (result JobResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: exportDevicesParameters,
@@ -475,7 +480,7 @@ func (client IotHubResourceClient) ExportDevicesPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}/exportDevices", pathParameters),
@@ -505,9 +510,9 @@ func (client IotHubResourceClient) ExportDevicesResponder(resp *http.Response) (
 }
 
 // Get get the non-security related metadata of an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) Get(ctx context.Context, resourceGroupName string, resourceName string) (result IotHubDescription, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -572,10 +577,11 @@ func (client IotHubResourceClient) GetResponder(resp *http.Response) (result Iot
 }
 
 // GetEventHubConsumerGroup get a consumer group from the Event Hub-compatible device-to-cloud endpoint for an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. eventHubEndpointName is the name of the Event Hub-compatible endpoint in the IoT hub. name is the name
-// of the consumer group to retrieve.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// eventHubEndpointName - the name of the Event Hub-compatible endpoint in the IoT hub.
+// name - the name of the consumer group to retrieve.
 func (client IotHubResourceClient) GetEventHubConsumerGroup(ctx context.Context, resourceGroupName string, resourceName string, eventHubEndpointName string, name string) (result EventHubConsumerGroupInfo, err error) {
 	req, err := client.GetEventHubConsumerGroupPreparer(ctx, resourceGroupName, resourceName, eventHubEndpointName, name)
 	if err != nil {
@@ -643,9 +649,10 @@ func (client IotHubResourceClient) GetEventHubConsumerGroupResponder(resp *http.
 
 // GetJob get the details of a job from an IoT hub. For more information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-identity-registry.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. jobID is the job identifier.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// jobID - the job identifier.
 func (client IotHubResourceClient) GetJob(ctx context.Context, resourceGroupName string, resourceName string, jobID string) (result JobResponse, err error) {
 	req, err := client.GetJobPreparer(ctx, resourceGroupName, resourceName, jobID)
 	if err != nil {
@@ -712,9 +719,10 @@ func (client IotHubResourceClient) GetJobResponder(resp *http.Response) (result 
 
 // GetKeysForKeyName get a shared access policy by name from an IoT hub. For more information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-security.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. keyName is the name of the shared access policy.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// keyName - the name of the shared access policy.
 func (client IotHubResourceClient) GetKeysForKeyName(ctx context.Context, resourceGroupName string, resourceName string, keyName string) (result SharedAccessSignatureAuthorizationRule, err error) {
 	req, err := client.GetKeysForKeyNamePreparer(ctx, resourceGroupName, resourceName, keyName)
 	if err != nil {
@@ -780,9 +788,9 @@ func (client IotHubResourceClient) GetKeysForKeyNameResponder(resp *http.Respons
 }
 
 // GetQuotaMetrics get the quota metrics for an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) GetQuotaMetrics(ctx context.Context, resourceGroupName string, resourceName string) (result IotHubQuotaMetricInfoListResultPage, err error) {
 	result.fn = client.getQuotaMetricsNextResults
 	req, err := client.GetQuotaMetricsPreparer(ctx, resourceGroupName, resourceName)
@@ -875,9 +883,9 @@ func (client IotHubResourceClient) GetQuotaMetricsComplete(ctx context.Context, 
 }
 
 // GetStats get the statistics from an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) GetStats(ctx context.Context, resourceGroupName string, resourceName string) (result RegistryStatistics, err error) {
 	req, err := client.GetStatsPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -942,9 +950,9 @@ func (client IotHubResourceClient) GetStatsResponder(resp *http.Response) (resul
 }
 
 // GetValidSkus get the list of valid SKUs for an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) GetValidSkus(ctx context.Context, resourceGroupName string, resourceName string) (result IotHubSkuDescriptionListResultPage, err error) {
 	result.fn = client.getValidSkusNextResults
 	req, err := client.GetValidSkusPreparer(ctx, resourceGroupName, resourceName)
@@ -1039,9 +1047,10 @@ func (client IotHubResourceClient) GetValidSkusComplete(ctx context.Context, res
 // ImportDevices import, update, or delete device identities in the IoT hub identity registry from a blob. For more
 // information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-identity-registry#import-and-export-device-identities.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. importDevicesParameters is the parameters that specify the import devices operation.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// importDevicesParameters - the parameters that specify the import devices operation.
 func (client IotHubResourceClient) ImportDevices(ctx context.Context, resourceGroupName string, resourceName string, importDevicesParameters ImportDevicesRequest) (result JobResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: importDevicesParameters,
@@ -1085,7 +1094,7 @@ func (client IotHubResourceClient) ImportDevicesPreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}/importDevices", pathParameters),
@@ -1115,8 +1124,8 @@ func (client IotHubResourceClient) ImportDevicesResponder(resp *http.Response) (
 }
 
 // ListByResourceGroup get all the IoT hubs in a resource group.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hubs.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hubs.
 func (client IotHubResourceClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result IotHubDescriptionListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -1299,9 +1308,10 @@ func (client IotHubResourceClient) ListBySubscriptionComplete(ctx context.Contex
 
 // ListEventHubConsumerGroups get a list of the consumer groups in the Event Hub-compatible device-to-cloud endpoint in
 // an IoT hub.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub. eventHubEndpointName is the name of the Event Hub-compatible endpoint.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
+// eventHubEndpointName - the name of the Event Hub-compatible endpoint.
 func (client IotHubResourceClient) ListEventHubConsumerGroups(ctx context.Context, resourceGroupName string, resourceName string, eventHubEndpointName string) (result EventHubConsumerGroupsListResultPage, err error) {
 	result.fn = client.listEventHubConsumerGroupsNextResults
 	req, err := client.ListEventHubConsumerGroupsPreparer(ctx, resourceGroupName, resourceName, eventHubEndpointName)
@@ -1396,9 +1406,9 @@ func (client IotHubResourceClient) ListEventHubConsumerGroupsComplete(ctx contex
 
 // ListJobs get a list of all the jobs in an IoT hub. For more information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-identity-registry.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) ListJobs(ctx context.Context, resourceGroupName string, resourceName string) (result JobResponseListResultPage, err error) {
 	result.fn = client.listJobsNextResults
 	req, err := client.ListJobsPreparer(ctx, resourceGroupName, resourceName)
@@ -1492,9 +1502,9 @@ func (client IotHubResourceClient) ListJobsComplete(ctx context.Context, resourc
 
 // ListKeys get the security metadata for an IoT hub. For more information, see:
 // https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-security.
-//
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
-// IoT hub.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the IoT hub.
+// resourceName - the name of the IoT hub.
 func (client IotHubResourceClient) ListKeys(ctx context.Context, resourceGroupName string, resourceName string) (result SharedAccessSignatureAuthorizationRuleListResultPage, err error) {
 	result.fn = client.listKeysNextResults
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, resourceName)

@@ -22,44 +22,11 @@ package contentmoderator
 import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/v1.0/contentmoderator"
 
 type BaseClient = original.BaseClient
-
-func New(baseURL AzureRegionBaseURL) BaseClient {
-	return original.New(baseURL)
-}
-func NewWithoutDefaults(baseURL AzureRegionBaseURL) BaseClient {
-	return original.NewWithoutDefaults(baseURL)
-}
-
 type ImageModerationClient = original.ImageModerationClient
-
-func NewImageModerationClient(baseURL AzureRegionBaseURL) ImageModerationClient {
-	return original.NewImageModerationClient(baseURL)
-}
-
 type ListManagementImageClient = original.ListManagementImageClient
-
-func NewListManagementImageClient(baseURL AzureRegionBaseURL) ListManagementImageClient {
-	return original.NewListManagementImageClient(baseURL)
-}
-
 type ListManagementImageListsClient = original.ListManagementImageListsClient
-
-func NewListManagementImageListsClient(baseURL AzureRegionBaseURL) ListManagementImageListsClient {
-	return original.NewListManagementImageListsClient(baseURL)
-}
-
 type ListManagementTermClient = original.ListManagementTermClient
-
-func NewListManagementTermClient(baseURL AzureRegionBaseURL) ListManagementTermClient {
-	return original.NewListManagementTermClient(baseURL)
-}
-
 type ListManagementTermListsClient = original.ListManagementTermListsClient
-
-func NewListManagementTermListsClient(baseURL AzureRegionBaseURL) ListManagementTermListsClient {
-	return original.NewListManagementTermListsClient(baseURL)
-}
-
 type AzureRegionBaseURL = original.AzureRegionBaseURL
 
 const (
@@ -144,6 +111,7 @@ type RefreshIndexAdvancedInfoItem = original.RefreshIndexAdvancedInfoItem
 type Review = original.Review
 type Screen = original.Screen
 type SetObject = original.SetObject
+type SSN = original.SSN
 type Status = original.Status
 type String = original.String
 type Tag = original.Tag
@@ -159,13 +127,41 @@ type VideoFrameBodyItem = original.VideoFrameBodyItem
 type VideoFrameBodyItemMetadataItem = original.VideoFrameBodyItemMetadataItem
 type VideoFrameBodyItemReviewerResultTagsItem = original.VideoFrameBodyItemReviewerResultTagsItem
 type ReviewsClient = original.ReviewsClient
+type TextModerationClient = original.TextModerationClient
 
+func New(baseURL AzureRegionBaseURL) BaseClient {
+	return original.New(baseURL)
+}
+func NewWithoutDefaults(baseURL AzureRegionBaseURL) BaseClient {
+	return original.NewWithoutDefaults(baseURL)
+}
+func NewImageModerationClient(baseURL AzureRegionBaseURL) ImageModerationClient {
+	return original.NewImageModerationClient(baseURL)
+}
+func NewListManagementImageClient(baseURL AzureRegionBaseURL) ListManagementImageClient {
+	return original.NewListManagementImageClient(baseURL)
+}
+func NewListManagementImageListsClient(baseURL AzureRegionBaseURL) ListManagementImageListsClient {
+	return original.NewListManagementImageListsClient(baseURL)
+}
+func NewListManagementTermClient(baseURL AzureRegionBaseURL) ListManagementTermClient {
+	return original.NewListManagementTermClient(baseURL)
+}
+func NewListManagementTermListsClient(baseURL AzureRegionBaseURL) ListManagementTermListsClient {
+	return original.NewListManagementTermListsClient(baseURL)
+}
+func PossibleAzureRegionBaseURLValues() []AzureRegionBaseURL {
+	return original.PossibleAzureRegionBaseURLValues()
+}
+func PossibleStatusEnumValues() []StatusEnum {
+	return original.PossibleStatusEnumValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
 func NewReviewsClient(baseURL AzureRegionBaseURL) ReviewsClient {
 	return original.NewReviewsClient(baseURL)
 }
-
-type TextModerationClient = original.TextModerationClient
-
 func NewTextModerationClient(baseURL AzureRegionBaseURL) TextModerationClient {
 	return original.NewTextModerationClient(baseURL)
 }

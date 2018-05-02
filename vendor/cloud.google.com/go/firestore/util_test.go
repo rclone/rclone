@@ -54,7 +54,7 @@ func mustTimestampProto(t time.Time) *tspb.Timestamp {
 var cmpOpts = []cmp.Option{
 	cmp.AllowUnexported(DocumentRef{}, CollectionRef{}, DocumentSnapshot{},
 		Query{}, filter{}, order{}, fpv{}),
-	cmpopts.IgnoreTypes(Client{}),
+	cmpopts.IgnoreTypes(Client{}, &Client{}),
 }
 
 // testEqual implements equality for Firestore tests.
@@ -99,7 +99,11 @@ func newMock(t *testing.T) (*Client, *mockServer) {
 }
 
 func intval(i int) *pb.Value {
-	return &pb.Value{&pb.Value_IntegerValue{int64(i)}}
+	return int64val(int64(i))
+}
+
+func int64val(i int64) *pb.Value {
+	return &pb.Value{&pb.Value_IntegerValue{i}}
 }
 
 func boolval(b bool) *pb.Value {

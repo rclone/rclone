@@ -40,8 +40,8 @@ func NewClientWithBaseURI(baseURI string) Client {
 }
 
 // Get gets details about particular subscription.
-//
-// subscriptionID is id of the subscription.
+// Parameters:
+// subscriptionID - id of the subscription.
 func (client Client) Get(ctx context.Context, subscriptionID string) (result Subscription, err error) {
 	req, err := client.GetPreparer(ctx, subscriptionID)
 	if err != nil {
@@ -190,8 +190,8 @@ func (client Client) ListComplete(ctx context.Context) (result ListResultIterato
 }
 
 // ListLocations gets a list of the subscription locations.
-//
-// subscriptionID is id of the subscription
+// Parameters:
+// subscriptionID - id of the subscription
 func (client Client) ListLocations(ctx context.Context, subscriptionID string) (result LocationListResult, err error) {
 	req, err := client.ListLocationsPreparer(ctx, subscriptionID)
 	if err != nil {

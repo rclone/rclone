@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionsClient is the client for the JobCollections methods of the Scheduler service.
 type JobCollectionsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NewJobCollectionsClient creates an instance of the JobCollectionsClient client.
 func NewJobCollectionsClient(subscriptionID string) JobCollectionsClient {
 	return NewJobCollectionsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NewJobCollectionsClientWithBaseURI creates an instance of the JobCollectionsClient client.
 func NewJobCollectionsClientWithBaseURI(baseURI string, subscriptionID string) JobCollectionsClient {
 	return JobCollectionsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // CreateOrUpdate provisions a new job collection or updates an existing job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobCollection is the
@@ -65,6 +69,7 @@ func (client JobCollectionsClient) CreateOrUpdate(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client JobCollectionsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, jobCollectionName string, jobCollection JobCollectionDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -79,7 +84,7 @@ func (client JobCollectionsClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Scheduler/jobCollections/{jobCollectionName}", pathParameters),
@@ -88,6 +93,7 @@ func (client JobCollectionsClient) CreateOrUpdatePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client JobCollectionsClient) CreateOrUpdateSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) CreateOrUpdateResponder(resp *http.Response) (result JobCollectionDefinition, err error) {
@@ -108,6 +115,7 @@ func (client JobCollectionsClient) CreateOrUpdateResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Delete deletes a job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name.
@@ -133,6 +141,7 @@ func (client JobCollectionsClient) Delete(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DeletePreparer prepares the Delete request.
 func (client JobCollectionsClient) DeletePreparer(ctx context.Context, resourceGroupName string, jobCollectionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -154,6 +163,7 @@ func (client JobCollectionsClient) DeletePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -161,6 +171,7 @@ func (client JobCollectionsClient) DeleteSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -173,6 +184,7 @@ func (client JobCollectionsClient) DeleteResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Disable disables all of the jobs in the job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name.
@@ -198,6 +210,7 @@ func (client JobCollectionsClient) Disable(ctx context.Context, resourceGroupNam
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DisablePreparer prepares the Disable request.
 func (client JobCollectionsClient) DisablePreparer(ctx context.Context, resourceGroupName string, jobCollectionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -219,6 +232,7 @@ func (client JobCollectionsClient) DisablePreparer(ctx context.Context, resource
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DisableSender sends the Disable request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) DisableSender(req *http.Request) (*http.Response, error) {
@@ -226,6 +240,7 @@ func (client JobCollectionsClient) DisableSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DisableResponder handles the response to the Disable request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) DisableResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -238,6 +253,7 @@ func (client JobCollectionsClient) DisableResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Enable enables all of the jobs in the job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name.
@@ -263,6 +279,7 @@ func (client JobCollectionsClient) Enable(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // EnablePreparer prepares the Enable request.
 func (client JobCollectionsClient) EnablePreparer(ctx context.Context, resourceGroupName string, jobCollectionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -284,6 +301,7 @@ func (client JobCollectionsClient) EnablePreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // EnableSender sends the Enable request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) EnableSender(req *http.Request) (*http.Response, error) {
@@ -291,6 +309,7 @@ func (client JobCollectionsClient) EnableSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // EnableResponder handles the response to the Enable request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) EnableResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -303,6 +322,7 @@ func (client JobCollectionsClient) EnableResponder(resp *http.Response) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Get gets a job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name.
@@ -328,6 +348,7 @@ func (client JobCollectionsClient) Get(ctx context.Context, resourceGroupName st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // GetPreparer prepares the Get request.
 func (client JobCollectionsClient) GetPreparer(ctx context.Context, resourceGroupName string, jobCollectionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -349,6 +370,7 @@ func (client JobCollectionsClient) GetPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -356,6 +378,7 @@ func (client JobCollectionsClient) GetSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) GetResponder(resp *http.Response) (result JobCollectionDefinition, err error) {
@@ -369,6 +392,7 @@ func (client JobCollectionsClient) GetResponder(resp *http.Response) (result Job
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListByResourceGroup gets all job collections under specified resource group.
 //
 // resourceGroupName is the resource group name.
@@ -395,6 +419,7 @@ func (client JobCollectionsClient) ListByResourceGroup(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client JobCollectionsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -415,6 +440,7 @@ func (client JobCollectionsClient) ListByResourceGroupPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -422,6 +448,7 @@ func (client JobCollectionsClient) ListByResourceGroupSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) ListByResourceGroupResponder(resp *http.Response) (result JobCollectionListResult, err error) {
@@ -456,12 +483,14 @@ func (client JobCollectionsClient) listByResourceGroupNextResults(lastResults Jo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client JobCollectionsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result JobCollectionListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListBySubscription gets all job collections under specified subscription.
 func (client JobCollectionsClient) ListBySubscription(ctx context.Context) (result JobCollectionListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
@@ -486,6 +515,7 @@ func (client JobCollectionsClient) ListBySubscription(ctx context.Context) (resu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client JobCollectionsClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -505,6 +535,7 @@ func (client JobCollectionsClient) ListBySubscriptionPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -512,6 +543,7 @@ func (client JobCollectionsClient) ListBySubscriptionSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) ListBySubscriptionResponder(resp *http.Response) (result JobCollectionListResult, err error) {
@@ -546,12 +578,14 @@ func (client JobCollectionsClient) listBySubscriptionNextResults(lastResults Job
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
 func (client JobCollectionsClient) ListBySubscriptionComplete(ctx context.Context) (result JobCollectionListResultIterator, err error) {
 	result.page, err = client.ListBySubscription(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Patch patches an existing job collection.
 //
 // resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobCollection is the
@@ -578,6 +612,7 @@ func (client JobCollectionsClient) Patch(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // PatchPreparer prepares the Patch request.
 func (client JobCollectionsClient) PatchPreparer(ctx context.Context, resourceGroupName string, jobCollectionName string, jobCollection JobCollectionDefinition) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -592,7 +627,7 @@ func (client JobCollectionsClient) PatchPreparer(ctx context.Context, resourceGr
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Scheduler/jobCollections/{jobCollectionName}", pathParameters),
@@ -601,6 +636,7 @@ func (client JobCollectionsClient) PatchPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // PatchSender sends the Patch request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) PatchSender(req *http.Request) (*http.Response, error) {
@@ -608,6 +644,7 @@ func (client JobCollectionsClient) PatchSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // PatchResponder handles the response to the Patch request. The method always
 // closes the http.Response Body.
 func (client JobCollectionsClient) PatchResponder(resp *http.Response) (result JobCollectionDefinition, err error) {

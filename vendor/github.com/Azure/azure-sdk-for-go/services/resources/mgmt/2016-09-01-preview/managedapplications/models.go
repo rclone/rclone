@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceArtifactType enumerates the values for appliance artifact type.
 type ApplianceArtifactType string
 
@@ -35,6 +36,13 @@ const (
 	Template ApplianceArtifactType = "Template"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
+// PossibleApplianceArtifactTypeValues returns an array of possible values for the ApplianceArtifactType const type.
+func PossibleApplianceArtifactTypeValues() []ApplianceArtifactType {
+	return []ApplianceArtifactType{Custom, Template}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceLockLevel enumerates the values for appliance lock level.
 type ApplianceLockLevel string
 
@@ -47,6 +55,13 @@ const (
 	ReadOnly ApplianceLockLevel = "ReadOnly"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
+// PossibleApplianceLockLevelValues returns an array of possible values for the ApplianceLockLevel const type.
+func PossibleApplianceLockLevelValues() []ApplianceLockLevel {
+	return []ApplianceLockLevel{CanNotDelete, None, ReadOnly}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -75,6 +90,13 @@ const (
 	Updating ProvisioningState = "Updating"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{Accepted, Canceled, Created, Creating, Deleted, Deleting, Failed, Ready, Running, Succeeded, Updating}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ResourceIdentityType enumerates the values for resource identity type.
 type ResourceIdentityType string
 
@@ -83,6 +105,13 @@ const (
 	SystemAssigned ResourceIdentityType = "SystemAssigned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
+// PossibleResourceIdentityTypeValues returns an array of possible values for the ResourceIdentityType const type.
+func PossibleResourceIdentityTypeValues() []ResourceIdentityType {
+	return []ResourceIdentityType{SystemAssigned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Appliance information about appliance.
 type Appliance struct {
 	autorest.Response `json:"-"`
@@ -110,6 +139,7 @@ type Appliance struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // MarshalJSON is the custom marshaler for Appliance.
 func (a Appliance) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -149,6 +179,7 @@ func (a Appliance) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // UnmarshalJSON is the custom unmarshaler for Appliance struct.
 func (a *Appliance) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -263,6 +294,7 @@ func (a *Appliance) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceArtifact appliance artifact.
 type ApplianceArtifact struct {
 	// Name - The appliance artifact name.
@@ -273,6 +305,7 @@ type ApplianceArtifact struct {
 	Type ApplianceArtifactType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinition information about appliance definition.
 type ApplianceDefinition struct {
 	autorest.Response `json:"-"`
@@ -296,6 +329,7 @@ type ApplianceDefinition struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // MarshalJSON is the custom marshaler for ApplianceDefinition.
 func (ad ApplianceDefinition) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -329,6 +363,7 @@ func (ad ApplianceDefinition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // UnmarshalJSON is the custom unmarshaler for ApplianceDefinition struct.
 func (ad *ApplianceDefinition) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -425,6 +460,7 @@ func (ad *ApplianceDefinition) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionListResult list of appliance definitions.
 type ApplianceDefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -434,12 +470,14 @@ type ApplianceDefinitionListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionListResultIterator provides access to a complete listing of ApplianceDefinition values.
 type ApplianceDefinitionListResultIterator struct {
 	i    int
 	page ApplianceDefinitionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ApplianceDefinitionListResultIterator) Next() error {
@@ -456,16 +494,19 @@ func (iter *ApplianceDefinitionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ApplianceDefinitionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Response returns the raw server response from the last page request.
 func (iter ApplianceDefinitionListResultIterator) Response() ApplianceDefinitionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ApplianceDefinitionListResultIterator) Value() ApplianceDefinition {
@@ -475,6 +516,7 @@ func (iter ApplianceDefinitionListResultIterator) Value() ApplianceDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (adlr ApplianceDefinitionListResult) IsEmpty() bool {
 	return adlr.Value == nil || len(*adlr.Value) == 0
@@ -492,12 +534,14 @@ func (adlr ApplianceDefinitionListResult) applianceDefinitionListResultPreparer(
 		autorest.WithBaseURL(to.String(adlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionListResultPage contains a page of ApplianceDefinition values.
 type ApplianceDefinitionListResultPage struct {
 	fn   func(ApplianceDefinitionListResult) (ApplianceDefinitionListResult, error)
 	adlr ApplianceDefinitionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ApplianceDefinitionListResultPage) Next() error {
@@ -509,16 +553,19 @@ func (page *ApplianceDefinitionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ApplianceDefinitionListResultPage) NotDone() bool {
 	return !page.adlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Response returns the raw server response from the last page request.
 func (page ApplianceDefinitionListResultPage) Response() ApplianceDefinitionListResult {
 	return page.adlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ApplianceDefinitionListResultPage) Values() []ApplianceDefinition {
 	if page.adlr.IsEmpty() {
@@ -527,6 +574,7 @@ func (page ApplianceDefinitionListResultPage) Values() []ApplianceDefinition {
 	return *page.adlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionProperties the appliance definition properties.
 type ApplianceDefinitionProperties struct {
 	// LockLevel - The appliance lock level. Possible values include: 'CanNotDelete', 'ReadOnly', 'None'
@@ -543,6 +591,7 @@ type ApplianceDefinitionProperties struct {
 	PackageFileURI *string `json:"packageFileUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionsCreateOrUpdateByIDFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ApplianceDefinitionsCreateOrUpdateByIDFuture struct {
@@ -550,6 +599,7 @@ type ApplianceDefinitionsCreateOrUpdateByIDFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ApplianceDefinitionsCreateOrUpdateByIDFuture) Result(client ApplianceDefinitionsClient) (ad ApplianceDefinition, err error) {
@@ -592,6 +642,7 @@ func (future ApplianceDefinitionsCreateOrUpdateByIDFuture) Result(client Applian
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ApplianceDefinitionsCreateOrUpdateFuture struct {
@@ -599,6 +650,7 @@ type ApplianceDefinitionsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ApplianceDefinitionsCreateOrUpdateFuture) Result(client ApplianceDefinitionsClient) (ad ApplianceDefinition, err error) {
@@ -641,6 +693,7 @@ func (future ApplianceDefinitionsCreateOrUpdateFuture) Result(client ApplianceDe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionsDeleteByIDFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ApplianceDefinitionsDeleteByIDFuture struct {
@@ -648,6 +701,7 @@ type ApplianceDefinitionsDeleteByIDFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ApplianceDefinitionsDeleteByIDFuture) Result(client ApplianceDefinitionsClient) (ar autorest.Response, err error) {
@@ -690,6 +744,7 @@ func (future ApplianceDefinitionsDeleteByIDFuture) Result(client ApplianceDefini
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceDefinitionsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ApplianceDefinitionsDeleteFuture struct {
@@ -697,6 +752,7 @@ type ApplianceDefinitionsDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ApplianceDefinitionsDeleteFuture) Result(client ApplianceDefinitionsClient) (ar autorest.Response, err error) {
@@ -739,6 +795,7 @@ func (future ApplianceDefinitionsDeleteFuture) Result(client ApplianceDefinition
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceListResult list of appliances.
 type ApplianceListResult struct {
 	autorest.Response `json:"-"`
@@ -748,12 +805,14 @@ type ApplianceListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceListResultIterator provides access to a complete listing of Appliance values.
 type ApplianceListResultIterator struct {
 	i    int
 	page ApplianceListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ApplianceListResultIterator) Next() error {
@@ -770,16 +829,19 @@ func (iter *ApplianceListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ApplianceListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Response returns the raw server response from the last page request.
 func (iter ApplianceListResultIterator) Response() ApplianceListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ApplianceListResultIterator) Value() Appliance {
@@ -789,6 +851,7 @@ func (iter ApplianceListResultIterator) Value() Appliance {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (alr ApplianceListResult) IsEmpty() bool {
 	return alr.Value == nil || len(*alr.Value) == 0
@@ -806,12 +869,14 @@ func (alr ApplianceListResult) applianceListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(alr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceListResultPage contains a page of Appliance values.
 type ApplianceListResultPage struct {
 	fn  func(ApplianceListResult) (ApplianceListResult, error)
 	alr ApplianceListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ApplianceListResultPage) Next() error {
@@ -823,16 +888,19 @@ func (page *ApplianceListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ApplianceListResultPage) NotDone() bool {
 	return !page.alr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Response returns the raw server response from the last page request.
 func (page ApplianceListResultPage) Response() ApplianceListResult {
 	return page.alr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ApplianceListResultPage) Values() []Appliance {
 	if page.alr.IsEmpty() {
@@ -841,6 +909,7 @@ func (page ApplianceListResultPage) Values() []Appliance {
 	return *page.alr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancePatchable information about appliance.
 type AppliancePatchable struct {
 	// AppliancePropertiesPatchable - The appliance properties.
@@ -867,6 +936,7 @@ type AppliancePatchable struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // MarshalJSON is the custom marshaler for AppliancePatchable.
 func (ap AppliancePatchable) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -906,6 +976,7 @@ func (ap AppliancePatchable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // UnmarshalJSON is the custom unmarshaler for AppliancePatchable struct.
 func (ap *AppliancePatchable) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1020,6 +1091,7 @@ func (ap *AppliancePatchable) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceProperties the appliance properties.
 type ApplianceProperties struct {
 	// ManagedResourceGroupID - The managed resource group Id.
@@ -1036,6 +1108,7 @@ type ApplianceProperties struct {
 	UIDefinitionURI *string `json:"uiDefinitionUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancePropertiesPatchable the appliance properties.
 type AppliancePropertiesPatchable struct {
 	// ManagedResourceGroupID - The managed resource group Id.
@@ -1052,6 +1125,7 @@ type AppliancePropertiesPatchable struct {
 	UIDefinitionURI *string `json:"uiDefinitionUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ApplianceProviderAuthorization the appliance provider authorization.
 type ApplianceProviderAuthorization struct {
 	// PrincipalID - The provider's principal identifier. This is the identity that the provider will use to call ARM to manage the appliance resources.
@@ -1060,6 +1134,7 @@ type ApplianceProviderAuthorization struct {
 	RoleDefinitionID *string `json:"roleDefinitionId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancesCreateOrUpdateByIDFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type AppliancesCreateOrUpdateByIDFuture struct {
@@ -1067,6 +1142,7 @@ type AppliancesCreateOrUpdateByIDFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future AppliancesCreateOrUpdateByIDFuture) Result(client AppliancesClient) (a Appliance, err error) {
@@ -1109,6 +1185,7 @@ func (future AppliancesCreateOrUpdateByIDFuture) Result(client AppliancesClient)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type AppliancesCreateOrUpdateFuture struct {
@@ -1116,6 +1193,7 @@ type AppliancesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future AppliancesCreateOrUpdateFuture) Result(client AppliancesClient) (a Appliance, err error) {
@@ -1158,12 +1236,14 @@ func (future AppliancesCreateOrUpdateFuture) Result(client AppliancesClient) (a 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancesDeleteByIDFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type AppliancesDeleteByIDFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future AppliancesDeleteByIDFuture) Result(client AppliancesClient) (ar autorest.Response, err error) {
@@ -1206,12 +1286,14 @@ func (future AppliancesDeleteByIDFuture) Result(client AppliancesClient) (ar aut
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // AppliancesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type AppliancesDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future AppliancesDeleteFuture) Result(client AppliancesClient) (ar autorest.Response, err error) {
@@ -1254,6 +1336,7 @@ func (future AppliancesDeleteFuture) Result(client AppliancesClient) (ar autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // ErrorResponse error reponse indicates ARM appliance is not able to process the incoming request. The reason is
 // provided in the error message.
 type ErrorResponse struct {
@@ -1265,6 +1348,7 @@ type ErrorResponse struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // GenericResource resource information.
 type GenericResource struct {
 	// ManagedBy - ID of the resource that manages this resource.
@@ -1285,6 +1369,7 @@ type GenericResource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // MarshalJSON is the custom marshaler for GenericResource.
 func (gr GenericResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1315,6 +1400,7 @@ func (gr GenericResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Identity identity for the resource.
 type Identity struct {
 	// PrincipalID - The principal ID of resource identity.
@@ -1325,6 +1411,7 @@ type Identity struct {
 	Type ResourceIdentityType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Plan plan for the appliance.
 type Plan struct {
 	// Name - The plan name.
@@ -1339,6 +1426,7 @@ type Plan struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // PlanPatchable plan for the appliance.
 type PlanPatchable struct {
 	// Name - The plan name.
@@ -1353,6 +1441,7 @@ type PlanPatchable struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Resource resource information.
 type Resource struct {
 	// ID - Resource ID
@@ -1367,6 +1456,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1388,6 +1478,7 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2016-09-01-preview/managedapplications instead.
 // Sku SKU for the resource.
 type Sku struct {
 	// Name - The SKU name.

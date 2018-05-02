@@ -40,9 +40,9 @@ func NewSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) Su
 }
 
 // ListQuotas retrieves the subscription's current quota information in a particular region.
-//
-// location is the region in which to retrieve the subscription's quota information. You can find out which regions
-// Azure Stream Analytics is supported in here: https://azure.microsoft.com/en-us/regions/
+// Parameters:
+// location - the region in which to retrieve the subscription's quota information. You can find out which
+// regions Azure Stream Analytics is supported in here: https://azure.microsoft.com/en-us/regions/
 func (client SubscriptionsClient) ListQuotas(ctx context.Context, location string) (result SubscriptionQuotasListResult, err error) {
 	req, err := client.ListQuotasPreparer(ctx, location)
 	if err != nil {

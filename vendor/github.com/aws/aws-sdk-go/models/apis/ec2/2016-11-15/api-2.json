@@ -338,6 +338,15 @@
       "input":{"shape":"CreateEgressOnlyInternetGatewayRequest"},
       "output":{"shape":"CreateEgressOnlyInternetGatewayResult"}
     },
+    "CreateFleet":{
+      "name":"CreateFleet",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateFleetRequest"},
+      "output":{"shape":"CreateFleetResult"}
+    },
     "CreateFlowLogs":{
       "name":"CreateFlowLogs",
       "http":{
@@ -637,6 +646,15 @@
       },
       "input":{"shape":"DeleteEgressOnlyInternetGatewayRequest"},
       "output":{"shape":"DeleteEgressOnlyInternetGatewayResult"}
+    },
+    "DeleteFleets":{
+      "name":"DeleteFleets",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteFleetsRequest"},
+      "output":{"shape":"DeleteFleetsResult"}
     },
     "DeleteFlowLogs":{
       "name":"DeleteFlowLogs",
@@ -987,6 +1005,33 @@
       },
       "input":{"shape":"DescribeExportTasksRequest"},
       "output":{"shape":"DescribeExportTasksResult"}
+    },
+    "DescribeFleetHistory":{
+      "name":"DescribeFleetHistory",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeFleetHistoryRequest"},
+      "output":{"shape":"DescribeFleetHistoryResult"}
+    },
+    "DescribeFleetInstances":{
+      "name":"DescribeFleetInstances",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeFleetInstancesRequest"},
+      "output":{"shape":"DescribeFleetInstancesResult"}
+    },
+    "DescribeFleets":{
+      "name":"DescribeFleets",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeFleetsRequest"},
+      "output":{"shape":"DescribeFleetsResult"}
     },
     "DescribeFlowLogs":{
       "name":"DescribeFlowLogs",
@@ -1843,6 +1888,15 @@
       },
       "input":{"shape":"ImportVolumeRequest"},
       "output":{"shape":"ImportVolumeResult"}
+    },
+    "ModifyFleet":{
+      "name":"ModifyFleet",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ModifyFleetRequest"},
+      "output":{"shape":"ModifyFleetResult"}
     },
     "ModifyFpgaImageAttribute":{
       "name":"ModifyFpgaImageAttribute",
@@ -4082,6 +4136,39 @@
         }
       }
     },
+    "CreateFleetRequest":{
+      "type":"structure",
+      "required":[
+        "LaunchTemplateConfigs",
+        "TargetCapacitySpecification"
+      ],
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "ClientToken":{"shape":"String"},
+        "SpotOptions":{"shape":"SpotOptionsRequest"},
+        "ExcessCapacityTerminationPolicy":{"shape":"FleetExcessCapacityTerminationPolicy"},
+        "LaunchTemplateConfigs":{"shape":"FleetLaunchTemplateConfigListRequest"},
+        "TargetCapacitySpecification":{"shape":"TargetCapacitySpecificationRequest"},
+        "TerminateInstancesWithExpiration":{"shape":"Boolean"},
+        "Type":{"shape":"FleetType"},
+        "ValidFrom":{"shape":"DateTime"},
+        "ValidUntil":{"shape":"DateTime"},
+        "ReplaceUnhealthyInstances":{"shape":"Boolean"},
+        "TagSpecifications":{
+          "shape":"TagSpecificationList",
+          "locationName":"TagSpecification"
+        }
+      }
+    },
+    "CreateFleetResult":{
+      "type":"structure",
+      "members":{
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        }
+      }
+    },
     "CreateFlowLogsRequest":{
       "type":"structure",
       "required":[
@@ -5058,6 +5145,13 @@
       ]
     },
     "DateTime":{"type":"timestamp"},
+    "DefaultTargetCapacityType":{
+      "type":"string",
+      "enum":[
+        "spot",
+        "on-demand"
+      ]
+    },
     "DeleteCustomerGatewayRequest":{
       "type":"structure",
       "required":["CustomerGatewayId"],
@@ -5094,6 +5188,100 @@
         "ReturnCode":{
           "shape":"Boolean",
           "locationName":"returnCode"
+        }
+      }
+    },
+    "DeleteFleetError":{
+      "type":"structure",
+      "members":{
+        "Code":{
+          "shape":"DeleteFleetErrorCode",
+          "locationName":"code"
+        },
+        "Message":{
+          "shape":"String",
+          "locationName":"message"
+        }
+      }
+    },
+    "DeleteFleetErrorCode":{
+      "type":"string",
+      "enum":[
+        "fleetIdDoesNotExist",
+        "fleetIdMalformed",
+        "fleetNotInDeletableState",
+        "unexpectedError"
+      ]
+    },
+    "DeleteFleetErrorItem":{
+      "type":"structure",
+      "members":{
+        "Error":{
+          "shape":"DeleteFleetError",
+          "locationName":"error"
+        },
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        }
+      }
+    },
+    "DeleteFleetErrorSet":{
+      "type":"list",
+      "member":{
+        "shape":"DeleteFleetErrorItem",
+        "locationName":"item"
+      }
+    },
+    "DeleteFleetSuccessItem":{
+      "type":"structure",
+      "members":{
+        "CurrentFleetState":{
+          "shape":"FleetStateCode",
+          "locationName":"currentFleetState"
+        },
+        "PreviousFleetState":{
+          "shape":"FleetStateCode",
+          "locationName":"previousFleetState"
+        },
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        }
+      }
+    },
+    "DeleteFleetSuccessSet":{
+      "type":"list",
+      "member":{
+        "shape":"DeleteFleetSuccessItem",
+        "locationName":"item"
+      }
+    },
+    "DeleteFleetsRequest":{
+      "type":"structure",
+      "required":[
+        "FleetIds",
+        "TerminateInstances"
+      ],
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "FleetIds":{
+          "shape":"FleetIdSet",
+          "locationName":"FleetId"
+        },
+        "TerminateInstances":{"shape":"Boolean"}
+      }
+    },
+    "DeleteFleetsResult":{
+      "type":"structure",
+      "members":{
+        "SuccessfulFleetDeletions":{
+          "shape":"DeleteFleetSuccessSet",
+          "locationName":"successfulFleetDeletionSet"
+        },
+        "UnsuccessfulFleetDeletions":{
+          "shape":"DeleteFleetErrorSet",
+          "locationName":"unsuccessfulFleetDeletionSet"
         }
       }
     },
@@ -5915,6 +6103,106 @@
         "ExportTasks":{
           "shape":"ExportTaskList",
           "locationName":"exportTaskSet"
+        }
+      }
+    },
+    "DescribeFleetHistoryRequest":{
+      "type":"structure",
+      "required":[
+        "FleetId",
+        "StartTime"
+      ],
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "EventType":{"shape":"FleetEventType"},
+        "MaxResults":{"shape":"Integer"},
+        "NextToken":{"shape":"String"},
+        "FleetId":{"shape":"FleetIdentifier"},
+        "StartTime":{"shape":"DateTime"}
+      }
+    },
+    "DescribeFleetHistoryResult":{
+      "type":"structure",
+      "members":{
+        "HistoryRecords":{
+          "shape":"HistoryRecordSet",
+          "locationName":"historyRecordSet"
+        },
+        "LastEvaluatedTime":{
+          "shape":"DateTime",
+          "locationName":"lastEvaluatedTime"
+        },
+        "NextToken":{
+          "shape":"String",
+          "locationName":"nextToken"
+        },
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        },
+        "StartTime":{
+          "shape":"DateTime",
+          "locationName":"startTime"
+        }
+      }
+    },
+    "DescribeFleetInstancesRequest":{
+      "type":"structure",
+      "required":["FleetId"],
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "MaxResults":{"shape":"Integer"},
+        "NextToken":{"shape":"String"},
+        "FleetId":{"shape":"FleetIdentifier"},
+        "Filters":{
+          "shape":"FilterList",
+          "locationName":"Filter"
+        }
+      }
+    },
+    "DescribeFleetInstancesResult":{
+      "type":"structure",
+      "members":{
+        "ActiveInstances":{
+          "shape":"ActiveInstanceSet",
+          "locationName":"activeInstanceSet"
+        },
+        "NextToken":{
+          "shape":"String",
+          "locationName":"nextToken"
+        },
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        }
+      }
+    },
+    "DescribeFleetsRequest":{
+      "type":"structure",
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "MaxResults":{"shape":"Integer"},
+        "NextToken":{"shape":"String"},
+        "FleetIds":{
+          "shape":"FleetIdSet",
+          "locationName":"FleetId"
+        },
+        "Filters":{
+          "shape":"FilterList",
+          "locationName":"Filter"
+        }
+      }
+    },
+    "DescribeFleetsResult":{
+      "type":"structure",
+      "members":{
+        "NextToken":{
+          "shape":"String",
+          "locationName":"nextToken"
+        },
+        "Fleets":{
+          "shape":"FleetSet",
+          "locationName":"fleetSet"
         }
       }
     },
@@ -8806,6 +9094,193 @@
         "locationName":"Filter"
       }
     },
+    "FleetActivityStatus":{
+      "type":"string",
+      "enum":[
+        "error",
+        "pending-fulfillment",
+        "pending-termination",
+        "fulfilled"
+      ]
+    },
+    "FleetData":{
+      "type":"structure",
+      "members":{
+        "ActivityStatus":{
+          "shape":"FleetActivityStatus",
+          "locationName":"activityStatus"
+        },
+        "CreateTime":{
+          "shape":"DateTime",
+          "locationName":"createTime"
+        },
+        "FleetId":{
+          "shape":"FleetIdentifier",
+          "locationName":"fleetId"
+        },
+        "FleetState":{
+          "shape":"FleetStateCode",
+          "locationName":"fleetState"
+        },
+        "ClientToken":{
+          "shape":"String",
+          "locationName":"clientToken"
+        },
+        "ExcessCapacityTerminationPolicy":{
+          "shape":"FleetExcessCapacityTerminationPolicy",
+          "locationName":"excessCapacityTerminationPolicy"
+        },
+        "FulfilledCapacity":{
+          "shape":"Double",
+          "locationName":"fulfilledCapacity"
+        },
+        "FulfilledOnDemandCapacity":{
+          "shape":"Double",
+          "locationName":"fulfilledOnDemandCapacity"
+        },
+        "LaunchTemplateConfigs":{
+          "shape":"FleetLaunchTemplateConfigList",
+          "locationName":"launchTemplateConfigs"
+        },
+        "TargetCapacitySpecification":{
+          "shape":"TargetCapacitySpecification",
+          "locationName":"targetCapacitySpecification"
+        },
+        "TerminateInstancesWithExpiration":{
+          "shape":"Boolean",
+          "locationName":"terminateInstancesWithExpiration"
+        },
+        "Type":{
+          "shape":"FleetType",
+          "locationName":"type"
+        },
+        "ValidFrom":{
+          "shape":"DateTime",
+          "locationName":"validFrom"
+        },
+        "ValidUntil":{
+          "shape":"DateTime",
+          "locationName":"validUntil"
+        },
+        "ReplaceUnhealthyInstances":{
+          "shape":"Boolean",
+          "locationName":"replaceUnhealthyInstances"
+        },
+        "SpotOptions":{
+          "shape":"SpotOptions",
+          "locationName":"spotOptions"
+        },
+        "Tags":{
+          "shape":"TagList",
+          "locationName":"tagSet"
+        }
+      }
+    },
+    "FleetEventType":{
+      "type":"string",
+      "enum":[
+        "instance-change",
+        "fleet-change",
+        "service-error"
+      ]
+    },
+    "FleetExcessCapacityTerminationPolicy":{
+      "type":"string",
+      "enum":[
+        "no-termination",
+        "termination"
+      ]
+    },
+    "FleetIdSet":{
+      "type":"list",
+      "member":{"shape":"FleetIdentifier"}
+    },
+    "FleetIdentifier":{"type":"string"},
+    "FleetLaunchTemplateConfig":{
+      "type":"structure",
+      "members":{
+        "LaunchTemplateSpecification":{
+          "shape":"FleetLaunchTemplateSpecification",
+          "locationName":"launchTemplateSpecification"
+        },
+        "Overrides":{
+          "shape":"FleetLaunchTemplateOverridesList",
+          "locationName":"overrides"
+        }
+      }
+    },
+    "FleetLaunchTemplateConfigList":{
+      "type":"list",
+      "member":{
+        "shape":"FleetLaunchTemplateConfig",
+        "locationName":"item"
+      }
+    },
+    "FleetLaunchTemplateConfigListRequest":{
+      "type":"list",
+      "member":{
+        "shape":"FleetLaunchTemplateConfigRequest",
+        "locationName":"item"
+      },
+      "max":50
+    },
+    "FleetLaunchTemplateConfigRequest":{
+      "type":"structure",
+      "members":{
+        "LaunchTemplateSpecification":{"shape":"FleetLaunchTemplateSpecificationRequest"},
+        "Overrides":{"shape":"FleetLaunchTemplateOverridesListRequest"}
+      }
+    },
+    "FleetLaunchTemplateOverrides":{
+      "type":"structure",
+      "members":{
+        "InstanceType":{
+          "shape":"InstanceType",
+          "locationName":"instanceType"
+        },
+        "MaxPrice":{
+          "shape":"String",
+          "locationName":"maxPrice"
+        },
+        "SubnetId":{
+          "shape":"String",
+          "locationName":"subnetId"
+        },
+        "AvailabilityZone":{
+          "shape":"String",
+          "locationName":"availabilityZone"
+        },
+        "WeightedCapacity":{
+          "shape":"Double",
+          "locationName":"weightedCapacity"
+        }
+      }
+    },
+    "FleetLaunchTemplateOverridesList":{
+      "type":"list",
+      "member":{
+        "shape":"FleetLaunchTemplateOverrides",
+        "locationName":"item"
+      }
+    },
+    "FleetLaunchTemplateOverridesListRequest":{
+      "type":"list",
+      "member":{
+        "shape":"FleetLaunchTemplateOverridesRequest",
+        "locationName":"item"
+      },
+      "max":50
+    },
+    "FleetLaunchTemplateOverridesRequest":{
+      "type":"structure",
+      "members":{
+        "InstanceType":{"shape":"InstanceType"},
+        "MaxPrice":{"shape":"String"},
+        "SubnetId":{"shape":"String"},
+        "AvailabilityZone":{"shape":"String"},
+        "WeightedCapacity":{"shape":"Double"}
+      }
+    },
     "FleetLaunchTemplateSpecification":{
       "type":"structure",
       "members":{
@@ -8822,6 +9297,33 @@
           "locationName":"version"
         }
       }
+    },
+    "FleetLaunchTemplateSpecificationRequest":{
+      "type":"structure",
+      "members":{
+        "LaunchTemplateId":{"shape":"String"},
+        "LaunchTemplateName":{"shape":"LaunchTemplateName"},
+        "Version":{"shape":"String"}
+      }
+    },
+    "FleetSet":{
+      "type":"list",
+      "member":{
+        "shape":"FleetData",
+        "locationName":"item"
+      }
+    },
+    "FleetStateCode":{
+      "type":"string",
+      "enum":[
+        "submitted",
+        "active",
+        "deleted",
+        "failed",
+        "deleted-running",
+        "deleted-terminating",
+        "modifying"
+      ]
     },
     "FleetType":{
       "type":"string",
@@ -9275,6 +9777,30 @@
         }
       }
     },
+    "HistoryRecordEntry":{
+      "type":"structure",
+      "members":{
+        "EventInformation":{
+          "shape":"EventInformation",
+          "locationName":"eventInformation"
+        },
+        "EventType":{
+          "shape":"FleetEventType",
+          "locationName":"eventType"
+        },
+        "Timestamp":{
+          "shape":"DateTime",
+          "locationName":"timestamp"
+        }
+      }
+    },
+    "HistoryRecordSet":{
+      "type":"list",
+      "member":{
+        "shape":"HistoryRecordEntry",
+        "locationName":"item"
+      }
+    },
     "HistoryRecords":{
       "type":"list",
       "member":{
@@ -9320,6 +9846,14 @@
         "State":{
           "shape":"AllocationState",
           "locationName":"state"
+        },
+        "AllocationTime":{
+          "shape":"DateTime",
+          "locationName":"allocationTime"
+        },
+        "ReleaseTime":{
+          "shape":"DateTime",
+          "locationName":"releaseTime"
         }
       }
     },
@@ -12082,6 +12616,28 @@
       "type":"integer",
       "max":255,
       "min":5
+    },
+    "ModifyFleetRequest":{
+      "type":"structure",
+      "required":[
+        "FleetId",
+        "TargetCapacitySpecification"
+      ],
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "ExcessCapacityTerminationPolicy":{"shape":"FleetExcessCapacityTerminationPolicy"},
+        "FleetId":{"shape":"FleetIdentifier"},
+        "TargetCapacitySpecification":{"shape":"TargetCapacitySpecificationRequest"}
+      }
+    },
+    "ModifyFleetResult":{
+      "type":"structure",
+      "members":{
+        "Return":{
+          "shape":"Boolean",
+          "locationName":"return"
+        }
+      }
     },
     "ModifyFpgaImageAttributeRequest":{
       "type":"structure",
@@ -16401,6 +16957,13 @@
         }
       }
     },
+    "SpotAllocationStrategy":{
+      "type":"string",
+      "enum":[
+        "lowest-price",
+        "diversified"
+      ]
+    },
     "SpotDatafeedSubscription":{
       "type":"structure",
       "members":{
@@ -16566,6 +17129,10 @@
           "shape":"Double",
           "locationName":"fulfilledCapacity"
         },
+        "OnDemandFulfilledCapacity":{
+          "shape":"Double",
+          "locationName":"onDemandFulfilledCapacity"
+        },
         "IamFleetRole":{
           "shape":"String",
           "locationName":"iamFleetRole"
@@ -16585,6 +17152,10 @@
         "TargetCapacity":{
           "shape":"Integer",
           "locationName":"targetCapacity"
+        },
+        "OnDemandTargetCapacity":{
+          "shape":"Integer",
+          "locationName":"onDemandTargetCapacity"
         },
         "TerminateInstancesWithExpiration":{
           "shape":"Boolean",
@@ -16642,6 +17213,14 @@
         "shape":"SpotFleetTagSpecification",
         "locationName":"item"
       }
+    },
+    "SpotInstanceInterruptionBehavior":{
+      "type":"string",
+      "enum":[
+        "hibernate",
+        "stop",
+        "terminate"
+      ]
     },
     "SpotInstanceRequest":{
       "type":"structure",
@@ -16793,6 +17372,26 @@
         "BlockDurationMinutes":{"shape":"Integer"},
         "ValidUntil":{"shape":"DateTime"},
         "InstanceInterruptionBehavior":{"shape":"InstanceInterruptionBehavior"}
+      }
+    },
+    "SpotOptions":{
+      "type":"structure",
+      "members":{
+        "AllocationStrategy":{
+          "shape":"SpotAllocationStrategy",
+          "locationName":"allocationStrategy"
+        },
+        "InstanceInterruptionBehavior":{
+          "shape":"SpotInstanceInterruptionBehavior",
+          "locationName":"instanceInterruptionBehavior"
+        }
+      }
+    },
+    "SpotOptionsRequest":{
+      "type":"structure",
+      "members":{
+        "AllocationStrategy":{"shape":"SpotAllocationStrategy"},
+        "InstanceInterruptionBehavior":{"shape":"SpotInstanceInterruptionBehavior"}
       }
     },
     "SpotPlacement":{
@@ -17242,6 +17841,37 @@
       "member":{
         "shape":"TagSpecification",
         "locationName":"item"
+      }
+    },
+    "TargetCapacitySpecification":{
+      "type":"structure",
+      "members":{
+        "TotalTargetCapacity":{
+          "shape":"Integer",
+          "locationName":"totalTargetCapacity"
+        },
+        "OnDemandTargetCapacity":{
+          "shape":"Integer",
+          "locationName":"onDemandTargetCapacity"
+        },
+        "SpotTargetCapacity":{
+          "shape":"Integer",
+          "locationName":"spotTargetCapacity"
+        },
+        "DefaultTargetCapacityType":{
+          "shape":"DefaultTargetCapacityType",
+          "locationName":"defaultTargetCapacityType"
+        }
+      }
+    },
+    "TargetCapacitySpecificationRequest":{
+      "type":"structure",
+      "required":["TotalTargetCapacity"],
+      "members":{
+        "TotalTargetCapacity":{"shape":"Integer"},
+        "OnDemandTargetCapacity":{"shape":"Integer"},
+        "SpotTargetCapacity":{"shape":"Integer"},
+        "DefaultTargetCapacityType":{"shape":"DefaultTargetCapacityType"}
       }
     },
     "TargetConfiguration":{

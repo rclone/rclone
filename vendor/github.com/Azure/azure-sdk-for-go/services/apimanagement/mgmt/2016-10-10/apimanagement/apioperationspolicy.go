@@ -42,13 +42,15 @@ func NewAPIOperationsPolicyClientWithBaseURI(baseURI string, subscriptionID stri
 }
 
 // CreateOrUpdate creates or updates policy configuration for the API Operation level.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance. parameters is the
-// policy contents to apply. parameters will be closed upon successful return. Callers should ensure closure when
-// receiving an error.ifMatch is the entity state (Etag) version of the Api Operation policy to update. A value of
-// "*" can be used for If-Match to unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// parameters - the policy contents to apply.
+// ifMatch - the entity state (Etag) version of the Api Operation policy to update. A value of "*" can be used
+// for If-Match to unconditionally apply the operation.
 func (client APIOperationsPolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters io.ReadCloser, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -103,7 +105,7 @@ func (client APIOperationsPolicyClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/vnd.ms-azure-apim.policy+xml"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/operations/{operationId}/policy", pathParameters),
@@ -133,12 +135,14 @@ func (client APIOperationsPolicyClient) CreateOrUpdateResponder(resp *http.Respo
 }
 
 // Delete deletes the policy configuration at the Api Operation.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance. ifMatch is the entity
-// state (Etag) version of the Api operation policy to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
+// ifMatch - the entity state (Etag) version of the Api operation policy to update. A value of "*" can be used
+// for If-Match to unconditionally apply the operation.
 func (client APIOperationsPolicyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -221,10 +225,12 @@ func (client APIOperationsPolicyClient) DeleteResponder(resp *http.Response) (re
 }
 
 // Get get the policy configuration at the API Operation level.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
-// identifier within an API. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
+// operationID - operation identifier within an API. Must be unique in the current API Management service
+// instance.
 func (client APIOperationsPolicyClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string) (result ReadCloser, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

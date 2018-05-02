@@ -26,32 +26,8 @@ const (
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type FunctionsClient = original.FunctionsClient
-
-func NewFunctionsClient(subscriptionID string) FunctionsClient {
-	return original.NewFunctionsClient(subscriptionID)
-}
-func NewFunctionsClientWithBaseURI(baseURI string, subscriptionID string) FunctionsClient {
-	return original.NewFunctionsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type InputsClient = original.InputsClient
-
-func NewInputsClient(subscriptionID string) InputsClient {
-	return original.NewInputsClient(subscriptionID)
-}
-func NewInputsClientWithBaseURI(baseURI string, subscriptionID string) InputsClient {
-	return original.NewInputsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type BindingType = original.BindingType
 
 const (
@@ -290,43 +266,101 @@ type SubscriptionQuotasListResult = original.SubscriptionQuotasListResult
 type Transformation = original.Transformation
 type TransformationProperties = original.TransformationProperties
 type OperationsClient = original.OperationsClient
+type OutputsClient = original.OutputsClient
+type StreamingJobsClient = original.StreamingJobsClient
+type SubscriptionsClient = original.SubscriptionsClient
+type TransformationsClient = original.TransformationsClient
 
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func NewFunctionsClient(subscriptionID string) FunctionsClient {
+	return original.NewFunctionsClient(subscriptionID)
+}
+func NewFunctionsClientWithBaseURI(baseURI string, subscriptionID string) FunctionsClient {
+	return original.NewFunctionsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewInputsClient(subscriptionID string) InputsClient {
+	return original.NewInputsClient(subscriptionID)
+}
+func NewInputsClientWithBaseURI(baseURI string, subscriptionID string) InputsClient {
+	return original.NewInputsClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleBindingTypeValues() []BindingType {
+	return original.PossibleBindingTypeValues()
+}
+func PossibleCompatibilityLevelValues() []CompatibilityLevel {
+	return original.PossibleCompatibilityLevelValues()
+}
+func PossibleEncodingValues() []Encoding {
+	return original.PossibleEncodingValues()
+}
+func PossibleEventsOutOfOrderPolicyValues() []EventsOutOfOrderPolicy {
+	return original.PossibleEventsOutOfOrderPolicyValues()
+}
+func PossibleJSONOutputSerializationFormatValues() []JSONOutputSerializationFormat {
+	return original.PossibleJSONOutputSerializationFormatValues()
+}
+func PossibleOutputErrorPolicyValues() []OutputErrorPolicy {
+	return original.PossibleOutputErrorPolicyValues()
+}
+func PossibleOutputStartModeValues() []OutputStartMode {
+	return original.PossibleOutputStartModeValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleTypeValues() []Type {
+	return original.PossibleTypeValues()
+}
+func PossibleTypeBasicFunctionBindingValues() []TypeBasicFunctionBinding {
+	return original.PossibleTypeBasicFunctionBindingValues()
+}
+func PossibleTypeBasicFunctionPropertiesValues() []TypeBasicFunctionProperties {
+	return original.PossibleTypeBasicFunctionPropertiesValues()
+}
+func PossibleTypeBasicInputPropertiesValues() []TypeBasicInputProperties {
+	return original.PossibleTypeBasicInputPropertiesValues()
+}
+func PossibleTypeBasicOutputDataSourceValues() []TypeBasicOutputDataSource {
+	return original.PossibleTypeBasicOutputDataSourceValues()
+}
+func PossibleTypeBasicReferenceInputDataSourceValues() []TypeBasicReferenceInputDataSource {
+	return original.PossibleTypeBasicReferenceInputDataSourceValues()
+}
+func PossibleTypeBasicStreamInputDataSourceValues() []TypeBasicStreamInputDataSource {
+	return original.PossibleTypeBasicStreamInputDataSourceValues()
+}
+func PossibleUdfTypeValues() []UdfType {
+	return original.PossibleUdfTypeValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type OutputsClient = original.OutputsClient
-
 func NewOutputsClient(subscriptionID string) OutputsClient {
 	return original.NewOutputsClient(subscriptionID)
 }
 func NewOutputsClientWithBaseURI(baseURI string, subscriptionID string) OutputsClient {
 	return original.NewOutputsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type StreamingJobsClient = original.StreamingJobsClient
-
 func NewStreamingJobsClient(subscriptionID string) StreamingJobsClient {
 	return original.NewStreamingJobsClient(subscriptionID)
 }
 func NewStreamingJobsClientWithBaseURI(baseURI string, subscriptionID string) StreamingJobsClient {
 	return original.NewStreamingJobsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type SubscriptionsClient = original.SubscriptionsClient
-
 func NewSubscriptionsClient(subscriptionID string) SubscriptionsClient {
 	return original.NewSubscriptionsClient(subscriptionID)
 }
 func NewSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) SubscriptionsClient {
 	return original.NewSubscriptionsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type TransformationsClient = original.TransformationsClient
-
 func NewTransformationsClient(subscriptionID string) TransformationsClient {
 	return original.NewTransformationsClient(subscriptionID)
 }

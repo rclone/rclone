@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // OchestratorTypes enumerates the values for ochestrator types.
 type OchestratorTypes string
 
@@ -36,6 +37,13 @@ const (
 	SwarmPreview OchestratorTypes = "SwarmPreview"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
+// PossibleOchestratorTypesValues returns an array of possible values for the OchestratorTypes const type.
+func PossibleOchestratorTypesValues() []OchestratorTypes {
+	return []OchestratorTypes{DCOS, Mesos, SwarmPreview}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // VMSizeTypes enumerates the values for vm size types.
 type VMSizeTypes string
 
@@ -136,6 +144,13 @@ const (
 	StandardGS5 VMSizeTypes = "Standard_GS5"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
+// PossibleVMSizeTypesValues returns an array of possible values for the VMSizeTypes const type.
+func PossibleVMSizeTypesValues() []VMSizeTypes {
+	return []VMSizeTypes{StandardA0, StandardA1, StandardA10, StandardA11, StandardA2, StandardA3, StandardA4, StandardA5, StandardA6, StandardA7, StandardA8, StandardA9, StandardD1, StandardD11, StandardD11V2, StandardD12, StandardD12V2, StandardD13, StandardD13V2, StandardD14, StandardD14V2, StandardD1V2, StandardD2, StandardD2V2, StandardD3, StandardD3V2, StandardD4, StandardD4V2, StandardD5V2, StandardDS1, StandardDS11, StandardDS12, StandardDS13, StandardDS14, StandardDS2, StandardDS3, StandardDS4, StandardG1, StandardG2, StandardG3, StandardG4, StandardG5, StandardGS1, StandardGS2, StandardGS3, StandardGS4, StandardGS5}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // AgentPoolProfile profile for container service agent pool
 type AgentPoolProfile struct {
 	// Name - Unique name of the agent pool profile within the context of the subscription and resource group
@@ -150,6 +165,7 @@ type AgentPoolProfile struct {
 	Fqdn *string `json:"fqdn,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // ContainerService container service
 type ContainerService struct {
 	autorest.Response `json:"-"`
@@ -166,6 +182,7 @@ type ContainerService struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // MarshalJSON is the custom marshaler for ContainerService.
 func (cs ContainerService) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -190,6 +207,7 @@ func (cs ContainerService) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // UnmarshalJSON is the custom unmarshaler for ContainerService struct.
 func (cs *ContainerService) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -259,12 +277,14 @@ func (cs *ContainerService) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateOrUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CreateOrUpdateFuture) Result(client Client) (cs ContainerService, err error) {
@@ -307,12 +327,14 @@ func (future CreateOrUpdateFuture) Result(client Client) (cs ContainerService, e
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
@@ -355,12 +377,14 @@ func (future DeleteFuture) Result(client Client) (ar autorest.Response, err erro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // DiagnosticsProfile ...
 type DiagnosticsProfile struct {
 	// VMDiagnostics - Profile for container service VM diagnostic agent
 	VMDiagnostics *VMDiagnostics `json:"vmDiagnostics,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // LinuxProfile profile for Linux VM
 type LinuxProfile struct {
 	// AdminUsername - The administrator username to use for all Linux VMs
@@ -369,6 +393,7 @@ type LinuxProfile struct {
 	SSH *SSHConfiguration `json:"ssh,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // ListResult the List Container Service operation response
 type ListResult struct {
 	autorest.Response `json:"-"`
@@ -376,6 +401,7 @@ type ListResult struct {
 	Value *[]ContainerService `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // MasterProfile profile for container service master
 type MasterProfile struct {
 	// Count - Number of masters (VMs) in the container cluster
@@ -386,12 +412,14 @@ type MasterProfile struct {
 	Fqdn *string `json:"fqdn,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // OrchestratorProfile profile for Orchestrator
 type OrchestratorProfile struct {
 	// OrchestratorType - Specifies what orchestrator will be used to manage container cluster resources. Possible values include: 'Mesos', 'SwarmPreview', 'DCOS'
 	OrchestratorType OchestratorTypes `json:"orchestratorType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // Properties properties of container service
 type Properties struct {
 	// ProvisioningState - Gets the provisioning state, which only appears in the response.
@@ -410,6 +438,7 @@ type Properties struct {
 	DiagnosticsProfile *DiagnosticsProfile `json:"diagnosticsProfile,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // Resource the Resource model definition.
 type Resource struct {
 	// ID - Resource Id
@@ -424,6 +453,7 @@ type Resource struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // MarshalJSON is the custom marshaler for Resource.
 func (r Resource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -445,18 +475,21 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // SSHConfiguration SSH configuration for Linux based VMs running on Azure
 type SSHConfiguration struct {
 	// PublicKeys - Gets or sets the list of SSH public keys used to authenticate with Linux based VMs
 	PublicKeys *[]SSHPublicKey `json:"publicKeys,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // SSHPublicKey contains information about SSH certificate public key data.
 type SSHPublicKey struct {
 	// KeyData - Gets or sets Certificate public key used to authenticate with VM through SSH. The certificate must be in Pem format with or without headers.
 	KeyData *string `json:"keyData,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // VMDiagnostics describes VM Diagnostics.
 type VMDiagnostics struct {
 	// Enabled - Gets or sets whether VM Diagnostic Agent should be provisioned on the Virtual Machine.
@@ -465,6 +498,7 @@ type VMDiagnostics struct {
 	StorageURI *string `json:"storageUri,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2015-11-01-preview/containerservice instead.
 // WindowsProfile profile for Windows jumpbox
 type WindowsProfile struct {
 	// AdminUsername - The administrator username to use for Windows jumpbox

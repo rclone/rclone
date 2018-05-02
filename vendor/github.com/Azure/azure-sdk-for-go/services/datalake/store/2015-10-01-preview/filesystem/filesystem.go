@@ -26,16 +26,19 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Client is the creates an Azure Data Lake Store filesystem client.
 type Client struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // NewClient creates an instance of the Client client.
 func NewClient() Client {
 	return Client{New()}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Append appends to the specified file. This method does not support multiple concurrent appends to the file. NOTE:
 // Concurrent append and normal (serial) append CANNOT be used interchangeably. Once a file has been appended to using
 // either append option, it can only be appended to using that append option. Use the ConcurrentAppend option if you
@@ -68,6 +71,7 @@ func (client Client) Append(ctx context.Context, accountName string, directFileP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // AppendPreparer prepares the Append request.
 func (client Client) AppendPreparer(ctx context.Context, accountName string, directFilePath string, streamContents io.ReadCloser, offset *int64) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -90,7 +94,7 @@ func (client Client) AppendPreparer(ctx context.Context, accountName string, dir
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{directFilePath}", pathParameters),
@@ -99,6 +103,7 @@ func (client Client) AppendPreparer(ctx context.Context, accountName string, dir
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // AppendSender sends the Append request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) AppendSender(req *http.Request) (*http.Response, error) {
@@ -106,6 +111,7 @@ func (client Client) AppendSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // AppendResponder handles the response to the Append request. The method always
 // closes the http.Response Body.
 func (client Client) AppendResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -118,6 +124,7 @@ func (client Client) AppendResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CheckAccess checks if the specified access is available at the given path.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
@@ -145,6 +152,7 @@ func (client Client) CheckAccess(ctx context.Context, accountName string, pathPa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CheckAccessPreparer prepares the CheckAccess request.
 func (client Client) CheckAccessPreparer(ctx context.Context, accountName string, pathParameter string, fsaction string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -173,6 +181,7 @@ func (client Client) CheckAccessPreparer(ctx context.Context, accountName string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CheckAccessSender sends the CheckAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CheckAccessSender(req *http.Request) (*http.Response, error) {
@@ -180,6 +189,7 @@ func (client Client) CheckAccessSender(req *http.Request) (*http.Response, error
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CheckAccessResponder handles the response to the CheckAccess request. The method always
 // closes the http.Response Body.
 func (client Client) CheckAccessResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -192,6 +202,7 @@ func (client Client) CheckAccessResponder(resp *http.Response) (result autorest.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Concat concatenates the list of source files into the destination file, removing all source files upon success.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. destinationPath is the
@@ -226,6 +237,7 @@ func (client Client) Concat(ctx context.Context, accountName string, destination
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcatPreparer prepares the Concat request.
 func (client Client) ConcatPreparer(ctx context.Context, accountName string, destinationPath string, sources []string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -252,6 +264,7 @@ func (client Client) ConcatPreparer(ctx context.Context, accountName string, des
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcatSender sends the Concat request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ConcatSender(req *http.Request) (*http.Response, error) {
@@ -259,6 +272,7 @@ func (client Client) ConcatSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcatResponder handles the response to the Concat request. The method always
 // closes the http.Response Body.
 func (client Client) ConcatResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -271,6 +285,7 @@ func (client Client) ConcatResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcurrentAppend appends to the specified file. This method supports multiple concurrent appends to the file. NOTE:
 // ConcurrentAppend and normal (serial) Append CANNOT be used interchangeably; once a file has been appended to using
 // either of these append options, it can only be appended to using that append option. ConcurrentAppend DOES NOT
@@ -304,6 +319,7 @@ func (client Client) ConcurrentAppend(ctx context.Context, accountName string, f
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcurrentAppendPreparer prepares the ConcurrentAppend request.
 func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName string, filePath string, streamContents io.ReadCloser, appendMode AppendModeType) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -325,7 +341,7 @@ func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName s
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/WebHdfsExt/{filePath}", pathParameters),
@@ -335,6 +351,7 @@ func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcurrentAppendSender sends the ConcurrentAppend request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ConcurrentAppendSender(req *http.Request) (*http.Response, error) {
@@ -342,6 +359,7 @@ func (client Client) ConcurrentAppendSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ConcurrentAppendResponder handles the response to the ConcurrentAppend request. The method always
 // closes the http.Response Body.
 func (client Client) ConcurrentAppendResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -354,6 +372,7 @@ func (client Client) ConcurrentAppendResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Create creates a file with optionally specified content.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. directFilePath is the Data
@@ -383,6 +402,7 @@ func (client Client) Create(ctx context.Context, accountName string, directFileP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CreatePreparer prepares the Create request.
 func (client Client) CreatePreparer(ctx context.Context, accountName string, directFilePath string, streamContents io.ReadCloser, overwrite *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -405,7 +425,7 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, dir
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{directFilePath}", pathParameters),
@@ -417,6 +437,7 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, dir
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateSender(req *http.Request) (*http.Response, error) {
@@ -424,6 +445,7 @@ func (client Client) CreateSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client Client) CreateResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -436,6 +458,7 @@ func (client Client) CreateResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Delete deletes the requested file or directory, optionally recursively.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. filePath is the Data Lake
@@ -463,6 +486,7 @@ func (client Client) Delete(ctx context.Context, accountName string, filePath st
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // DeletePreparer prepares the Delete request.
 func (client Client) DeletePreparer(ctx context.Context, accountName string, filePath string, recursive *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -491,6 +515,7 @@ func (client Client) DeletePreparer(ctx context.Context, accountName string, fil
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -498,6 +523,7 @@ func (client Client) DeleteSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client Client) DeleteResponder(resp *http.Response) (result FileOperationResult, err error) {
@@ -511,6 +537,7 @@ func (client Client) DeleteResponder(resp *http.Response) (result FileOperationR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Flush flushes the specified file to the store. This forces an update to the metadata of the file (returned from
 // GetFileStatus), and is required by ConcurrentAppend once the file is done to populate finalized metadata.
 //
@@ -538,6 +565,7 @@ func (client Client) Flush(ctx context.Context, accountName string, flushFilePat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // FlushPreparer prepares the Flush request.
 func (client Client) FlushPreparer(ctx context.Context, accountName string, flushFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -565,6 +593,7 @@ func (client Client) FlushPreparer(ctx context.Context, accountName string, flus
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // FlushSender sends the Flush request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) FlushSender(req *http.Request) (*http.Response, error) {
@@ -572,6 +601,7 @@ func (client Client) FlushSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // FlushResponder handles the response to the Flush request. The method always
 // closes the http.Response Body.
 func (client Client) FlushResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -584,6 +614,7 @@ func (client Client) FlushResponder(resp *http.Response) (result autorest.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetACLStatus gets Access Control List (ACL) entries for the specified file or directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. ACLFilePath is the Data
@@ -610,6 +641,7 @@ func (client Client) GetACLStatus(ctx context.Context, accountName string, ACLFi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetACLStatusPreparer prepares the GetACLStatus request.
 func (client Client) GetACLStatusPreparer(ctx context.Context, accountName string, ACLFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -635,6 +667,7 @@ func (client Client) GetACLStatusPreparer(ctx context.Context, accountName strin
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetACLStatusSender sends the GetACLStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetACLStatusSender(req *http.Request) (*http.Response, error) {
@@ -642,6 +675,7 @@ func (client Client) GetACLStatusSender(req *http.Request) (*http.Response, erro
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetACLStatusResponder handles the response to the GetACLStatus request. The method always
 // closes the http.Response Body.
 func (client Client) GetACLStatusResponder(resp *http.Response) (result ACLStatusResult, err error) {
@@ -655,6 +689,7 @@ func (client Client) GetACLStatusResponder(resp *http.Response) (result ACLStatu
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetContentSummary gets the file content summary object specified by the file path.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. getContentSummaryFilePath
@@ -681,6 +716,7 @@ func (client Client) GetContentSummary(ctx context.Context, accountName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetContentSummaryPreparer prepares the GetContentSummary request.
 func (client Client) GetContentSummaryPreparer(ctx context.Context, accountName string, getContentSummaryFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -706,6 +742,7 @@ func (client Client) GetContentSummaryPreparer(ctx context.Context, accountName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetContentSummarySender sends the GetContentSummary request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetContentSummarySender(req *http.Request) (*http.Response, error) {
@@ -713,6 +750,7 @@ func (client Client) GetContentSummarySender(req *http.Request) (*http.Response,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetContentSummaryResponder handles the response to the GetContentSummary request. The method always
 // closes the http.Response Body.
 func (client Client) GetContentSummaryResponder(resp *http.Response) (result ContentSummaryResult, err error) {
@@ -726,6 +764,7 @@ func (client Client) GetContentSummaryResponder(resp *http.Response) (result Con
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetFileStatus get the file status object specified by the file path.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. getFilePath is the Data
@@ -752,6 +791,7 @@ func (client Client) GetFileStatus(ctx context.Context, accountName string, getF
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetFileStatusPreparer prepares the GetFileStatus request.
 func (client Client) GetFileStatusPreparer(ctx context.Context, accountName string, getFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -777,6 +817,7 @@ func (client Client) GetFileStatusPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetFileStatusSender sends the GetFileStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) GetFileStatusSender(req *http.Request) (*http.Response, error) {
@@ -784,6 +825,7 @@ func (client Client) GetFileStatusSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // GetFileStatusResponder handles the response to the GetFileStatus request. The method always
 // closes the http.Response Body.
 func (client Client) GetFileStatusResponder(resp *http.Response) (result FileStatusResult, err error) {
@@ -797,6 +839,7 @@ func (client Client) GetFileStatusResponder(resp *http.Response) (result FileSta
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ListFileStatus get the list of file status objects specified by the file path, with optional pagination parameters
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. listFilePath is the Data
@@ -828,6 +871,7 @@ func (client Client) ListFileStatus(ctx context.Context, accountName string, lis
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ListFileStatusPreparer prepares the ListFileStatus request.
 func (client Client) ListFileStatusPreparer(ctx context.Context, accountName string, listFilePath string, listSize *int32, listAfter string, listBefore string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -862,6 +906,7 @@ func (client Client) ListFileStatusPreparer(ctx context.Context, accountName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ListFileStatusSender sends the ListFileStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ListFileStatusSender(req *http.Request) (*http.Response, error) {
@@ -869,6 +914,7 @@ func (client Client) ListFileStatusSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ListFileStatusResponder handles the response to the ListFileStatus request. The method always
 // closes the http.Response Body.
 func (client Client) ListFileStatusResponder(resp *http.Response) (result FileStatusesResult, err error) {
@@ -882,6 +928,7 @@ func (client Client) ListFileStatusResponder(resp *http.Response) (result FileSt
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Mkdirs creates a directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
@@ -908,6 +955,7 @@ func (client Client) Mkdirs(ctx context.Context, accountName string, pathParamet
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MkdirsPreparer prepares the Mkdirs request.
 func (client Client) MkdirsPreparer(ctx context.Context, accountName string, pathParameter string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -933,6 +981,7 @@ func (client Client) MkdirsPreparer(ctx context.Context, accountName string, pat
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MkdirsSender sends the Mkdirs request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) MkdirsSender(req *http.Request) (*http.Response, error) {
@@ -940,6 +989,7 @@ func (client Client) MkdirsSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MkdirsResponder handles the response to the Mkdirs request. The method always
 // closes the http.Response Body.
 func (client Client) MkdirsResponder(resp *http.Response) (result FileOperationResult, err error) {
@@ -953,6 +1003,7 @@ func (client Client) MkdirsResponder(resp *http.Response) (result FileOperationR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ModifyACLEntries modifies existing Access Control List (ACL) entries on a file or folder.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. modifyACLFilePath is the
@@ -980,6 +1031,7 @@ func (client Client) ModifyACLEntries(ctx context.Context, accountName string, m
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ModifyACLEntriesPreparer prepares the ModifyACLEntries request.
 func (client Client) ModifyACLEntriesPreparer(ctx context.Context, accountName string, modifyACLFilePath string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1006,6 +1058,7 @@ func (client Client) ModifyACLEntriesPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ModifyACLEntriesSender sends the ModifyACLEntries request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) ModifyACLEntriesSender(req *http.Request) (*http.Response, error) {
@@ -1013,6 +1066,7 @@ func (client Client) ModifyACLEntriesSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // ModifyACLEntriesResponder handles the response to the ModifyACLEntries request. The method always
 // closes the http.Response Body.
 func (client Client) ModifyACLEntriesResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1025,6 +1079,7 @@ func (client Client) ModifyACLEntriesResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MsConcat concatenates the list of source files into the destination file, deleting all source files upon success.
 // This method accepts more source file paths than the Concat method. This method and the parameters it accepts are
 // subject to change for usability in an upcoming version.
@@ -1060,6 +1115,7 @@ func (client Client) MsConcat(ctx context.Context, accountName string, msConcatD
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MsConcatPreparer prepares the MsConcat request.
 func (client Client) MsConcatPreparer(ctx context.Context, accountName string, msConcatDestinationPath string, streamContents io.ReadCloser, deleteSourceDirectory *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1081,7 +1137,7 @@ func (client Client) MsConcatPreparer(ctx context.Context, accountName string, m
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{msConcatDestinationPath}", pathParameters),
@@ -1090,6 +1146,7 @@ func (client Client) MsConcatPreparer(ctx context.Context, accountName string, m
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MsConcatSender sends the MsConcat request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) MsConcatSender(req *http.Request) (*http.Response, error) {
@@ -1097,6 +1154,7 @@ func (client Client) MsConcatSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // MsConcatResponder handles the response to the MsConcat request. The method always
 // closes the http.Response Body.
 func (client Client) MsConcatResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1109,6 +1167,7 @@ func (client Client) MsConcatResponder(resp *http.Response) (result autorest.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Open opens and reads from the specified file.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. directFilePath is the Data
@@ -1135,6 +1194,7 @@ func (client Client) Open(ctx context.Context, accountName string, directFilePat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // OpenPreparer prepares the Open request.
 func (client Client) OpenPreparer(ctx context.Context, accountName string, directFilePath string, length *int64, offset *int64) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1167,6 +1227,7 @@ func (client Client) OpenPreparer(ctx context.Context, accountName string, direc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // OpenSender sends the Open request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) OpenSender(req *http.Request) (*http.Response, error) {
@@ -1174,6 +1235,7 @@ func (client Client) OpenSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // OpenResponder handles the response to the Open request. The method always
 // closes the http.Response Body.
 func (client Client) OpenResponder(resp *http.Response) (result ReadCloser, err error) {
@@ -1186,6 +1248,7 @@ func (client Client) OpenResponder(resp *http.Response) (result ReadCloser, err 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACL removes the existing Access Control List (ACL) of the specified file or directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. ACLFilePath is the Data
@@ -1212,6 +1275,7 @@ func (client Client) RemoveACL(ctx context.Context, accountName string, ACLFileP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLPreparer prepares the RemoveACL request.
 func (client Client) RemoveACLPreparer(ctx context.Context, accountName string, ACLFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1237,6 +1301,7 @@ func (client Client) RemoveACLPreparer(ctx context.Context, accountName string, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLSender sends the RemoveACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RemoveACLSender(req *http.Request) (*http.Response, error) {
@@ -1244,6 +1309,7 @@ func (client Client) RemoveACLSender(req *http.Request) (*http.Response, error) 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLResponder handles the response to the RemoveACL request. The method always
 // closes the http.Response Body.
 func (client Client) RemoveACLResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1256,6 +1322,7 @@ func (client Client) RemoveACLResponder(resp *http.Response) (result autorest.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLEntries removes existing Access Control List (ACL) entries for a file or folder.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. removeACLFilePath is the
@@ -1283,6 +1350,7 @@ func (client Client) RemoveACLEntries(ctx context.Context, accountName string, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLEntriesPreparer prepares the RemoveACLEntries request.
 func (client Client) RemoveACLEntriesPreparer(ctx context.Context, accountName string, removeACLFilePath string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1309,6 +1377,7 @@ func (client Client) RemoveACLEntriesPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLEntriesSender sends the RemoveACLEntries request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RemoveACLEntriesSender(req *http.Request) (*http.Response, error) {
@@ -1316,6 +1385,7 @@ func (client Client) RemoveACLEntriesSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveACLEntriesResponder handles the response to the RemoveACLEntries request. The method always
 // closes the http.Response Body.
 func (client Client) RemoveACLEntriesResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1328,6 +1398,7 @@ func (client Client) RemoveACLEntriesResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveDefaultACL removes the existing Default Access Control List (ACL) of the specified directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. defaultACLFilePath is the
@@ -1354,6 +1425,7 @@ func (client Client) RemoveDefaultACL(ctx context.Context, accountName string, d
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveDefaultACLPreparer prepares the RemoveDefaultACL request.
 func (client Client) RemoveDefaultACLPreparer(ctx context.Context, accountName string, defaultACLFilePath string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1379,6 +1451,7 @@ func (client Client) RemoveDefaultACLPreparer(ctx context.Context, accountName s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveDefaultACLSender sends the RemoveDefaultACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RemoveDefaultACLSender(req *http.Request) (*http.Response, error) {
@@ -1386,6 +1459,7 @@ func (client Client) RemoveDefaultACLSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RemoveDefaultACLResponder handles the response to the RemoveDefaultACL request. The method always
 // closes the http.Response Body.
 func (client Client) RemoveDefaultACLResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1398,6 +1472,7 @@ func (client Client) RemoveDefaultACLResponder(resp *http.Response) (result auto
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // Rename rename a file or directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. renameFilePath is the Data
@@ -1425,6 +1500,7 @@ func (client Client) Rename(ctx context.Context, accountName string, renameFileP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RenamePreparer prepares the Rename request.
 func (client Client) RenamePreparer(ctx context.Context, accountName string, renameFilePath string, destination string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1451,6 +1527,7 @@ func (client Client) RenamePreparer(ctx context.Context, accountName string, ren
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RenameSender sends the Rename request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RenameSender(req *http.Request) (*http.Response, error) {
@@ -1458,6 +1535,7 @@ func (client Client) RenameSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // RenameResponder handles the response to the Rename request. The method always
 // closes the http.Response Body.
 func (client Client) RenameResponder(resp *http.Response) (result FileOperationResult, err error) {
@@ -1471,6 +1549,7 @@ func (client Client) RenameResponder(resp *http.Response) (result FileOperationR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetACL sets the Access Control List (ACL) for a file or folder.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. setACLFilePath is the Data
@@ -1498,6 +1577,7 @@ func (client Client) SetACL(ctx context.Context, accountName string, setACLFileP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetACLPreparer prepares the SetACL request.
 func (client Client) SetACLPreparer(ctx context.Context, accountName string, setACLFilePath string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1524,6 +1604,7 @@ func (client Client) SetACLPreparer(ctx context.Context, accountName string, set
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetACLSender sends the SetACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) SetACLSender(req *http.Request) (*http.Response, error) {
@@ -1531,6 +1612,7 @@ func (client Client) SetACLSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetACLResponder handles the response to the SetACL request. The method always
 // closes the http.Response Body.
 func (client Client) SetACLResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1543,6 +1625,7 @@ func (client Client) SetACLResponder(resp *http.Response) (result autorest.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetFileExpiry sets or removes the expiration time on the specified file. This operation can only be executed against
 // files. Folders are not supported.
 //
@@ -1576,6 +1659,7 @@ func (client Client) SetFileExpiry(ctx context.Context, accountName string, file
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetFileExpiryPreparer prepares the SetFileExpiry request.
 func (client Client) SetFileExpiryPreparer(ctx context.Context, accountName string, filePath string, expiryOption ExpiryOptionType, expireTime *int64) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1605,6 +1689,7 @@ func (client Client) SetFileExpiryPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetFileExpirySender sends the SetFileExpiry request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) SetFileExpirySender(req *http.Request) (*http.Response, error) {
@@ -1612,6 +1697,7 @@ func (client Client) SetFileExpirySender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetFileExpiryResponder handles the response to the SetFileExpiry request. The method always
 // closes the http.Response Body.
 func (client Client) SetFileExpiryResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1624,6 +1710,7 @@ func (client Client) SetFileExpiryResponder(resp *http.Response) (result autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetOwner sets the owner of a file or directory.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. setOwnerFilePath is the
@@ -1652,6 +1739,7 @@ func (client Client) SetOwner(ctx context.Context, accountName string, setOwnerF
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetOwnerPreparer prepares the SetOwner request.
 func (client Client) SetOwnerPreparer(ctx context.Context, accountName string, setOwnerFilePath string, owner string, group string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1683,6 +1771,7 @@ func (client Client) SetOwnerPreparer(ctx context.Context, accountName string, s
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetOwnerSender sends the SetOwner request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) SetOwnerSender(req *http.Request) (*http.Response, error) {
@@ -1690,6 +1779,7 @@ func (client Client) SetOwnerSender(req *http.Request) (*http.Response, error) {
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetOwnerResponder handles the response to the SetOwner request. The method always
 // closes the http.Response Body.
 func (client Client) SetOwnerResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -1702,6 +1792,7 @@ func (client Client) SetOwnerResponder(resp *http.Response) (result autorest.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetPermission sets the permission of the file or folder.
 //
 // accountName is the Azure Data Lake Store account to execute filesystem operations on. setPermissionFilePath is
@@ -1729,6 +1820,7 @@ func (client Client) SetPermission(ctx context.Context, accountName string, setP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetPermissionPreparer prepares the SetPermission request.
 func (client Client) SetPermissionPreparer(ctx context.Context, accountName string, setPermissionFilePath string, permission string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
@@ -1757,6 +1849,7 @@ func (client Client) SetPermissionPreparer(ctx context.Context, accountName stri
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetPermissionSender sends the SetPermission request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) SetPermissionSender(req *http.Request) (*http.Response, error) {
@@ -1764,6 +1857,7 @@ func (client Client) SetPermissionSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/store/2015-10-01-preview/filesystem instead.
 // SetPermissionResponder handles the response to the SetPermission request. The method always
 // closes the http.Response Body.
 func (client Client) SetPermissionResponder(resp *http.Response) (result autorest.Response, err error) {

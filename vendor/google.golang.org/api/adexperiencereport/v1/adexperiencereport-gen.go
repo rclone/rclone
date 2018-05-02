@@ -1,4 +1,4 @@
-// Package adexperiencereport provides access to the Google Ad Experience Report API.
+// Package adexperiencereport provides access to the Ad Experience Report API.
 //
 // See https://developers.google.com/ad-experience-report/
 //
@@ -164,6 +164,8 @@ func (s *PlatformSummary) MarshalJSON() ([]byte, error) {
 }
 
 // SiteSummaryResponse: Response message for GetSiteSummary.
+// Do not confuse with same message in
+// google.chrome.abusiveexperiencereport.v1
 type SiteSummaryResponse struct {
 	// DesktopSummary: Summary for the desktop review of the site.
 	DesktopSummary *PlatformSummary `json:"desktopSummary,omitempty"`

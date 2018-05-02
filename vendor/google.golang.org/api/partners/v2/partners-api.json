@@ -1172,7 +1172,7 @@
       }
     }
   },
-  "revision": "20180202",
+  "revision": "20180403",
   "rootUrl": "https://partners.googleapis.com/",
   "schemas": {
     "AdWordsManagerAccountInfo": {
@@ -1940,7 +1940,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -3360,6 +3360,10 @@
       "description": "A resource representing a user of the Partners platform.",
       "id": "User",
       "properties": {
+        "afaInfoShared": {
+          "description": "Whether or not the user has opted to share their Academy for Ads info with\nGoogle Partners.",
+          "type": "boolean"
+        },
         "availableAdwordsManagerAccounts": {
           "description": "This is the list of AdWords Manager Accounts the user has edit access to.\nIf the user has edit access to multiple accounts, the user can choose the\npreferred account and we use this when a personal account is needed. Can\nbe empty meaning the user has access to no accounts.\n@OutputOnly",
           "items": {

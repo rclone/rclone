@@ -130,6 +130,9 @@ var unmarshalTests = []struct {
 		"bin: -0b101010",
 		map[string]interface{}{"bin": -42},
 	}, {
+		"bin: -0b1000000000000000000000000000000000000000000000000000000000000000",
+		map[string]interface{}{"bin": -9223372036854775808},
+	}, {
 		"decimal: +685_230",
 		map[string]int{"decimal": 685230},
 	},
@@ -241,6 +244,9 @@ var unmarshalTests = []struct {
 	}, {
 		"a: [1, 2]",
 		&struct{ A []int }{[]int{1, 2}},
+	}, {
+		"a: [1, 2]",
+		&struct{ A [2]int }{[2]int{1, 2}},
 	}, {
 		"a: 1",
 		&struct{ B int }{0},
@@ -399,6 +405,12 @@ var unmarshalTests = []struct {
 	{
 		"v: !!float '1.1'",
 		map[string]interface{}{"v": 1.1},
+	}, {
+		"v: !!float 0",
+		map[string]interface{}{"v": float64(0)},
+	}, {
+		"v: !!float -1",
+		map[string]interface{}{"v": float64(-1)},
 	}, {
 		"v: !!null ''",
 		map[string]interface{}{"v": nil},
@@ -728,6 +740,18 @@ func (s *S) TestUnmarshal(c *C) {
 	}
 }
 
+// TODO(v3): This test should also work when unmarshaling onto an interface{}.
+func (s *S) TestUnmarshalFullTimestamp(c *C) {
+	// Full timestamp in same format as encoded. This is confirmed to be
+	// properly decoded by Python as a timestamp as well.
+	var str = "2015-02-24T18:19:39.123456789-03:00"
+	var t time.Time
+	err := yaml.Unmarshal([]byte(str), &t)
+	c.Assert(err, IsNil)
+	c.Assert(t, Equals, time.Date(2015, 2, 24, 18, 19, 39, 123456789, t.Location()))
+	c.Assert(t.In(time.UTC), Equals, time.Date(2015, 2, 24, 21, 19, 39, 123456789, time.UTC))
+}
+
 func (s *S) TestDecoderSingleDocument(c *C) {
 	// Test that Decoder.Decode works as expected on
 	// all the unmarshal tests.
@@ -813,6 +837,7 @@ var unmarshalErrorTests = []struct {
 	{"v: !!float 'error'", "yaml: cannot decode !!str `error` as a !!float"},
 	{"v: [A,", "yaml: line 1: did not find expected node content"},
 	{"v:\n- [A,", "yaml: line 2: did not find expected node content"},
+	{"a:\n- b: *,", "yaml: line 2: did not find expected alphabetic or numeric character"},
 	{"a: *b\n", "yaml: unknown anchor 'b' referenced"},
 	{"a: &a\n  b: *a\n", "yaml: anchor 'a' value contains itself"},
 	{"value: -", "yaml: block sequence entries are not allowed in this context"},
@@ -1240,6 +1265,35 @@ type textUnmarshaler struct {
 func (t *textUnmarshaler) UnmarshalText(s []byte) error {
 	t.S = string(s)
 	return nil
+}
+
+func (s *S) TestFuzzCrashers(c *C) {
+	cases := []string{
+		// runtime error: index out of range
+		"\"\\0\\\r\n",
+
+		// should not happen
+		"  0: [\n] 0",
+		"? ? \"\n\" 0",
+		"    - {\n000}0",
+		"0:\n  0: [0\n] 0",
+		"    - \"\n000\"0",
+		"    - \"\n000\"\"",
+		"0:\n    - {\n000}0",
+		"0:\n    - \"\n000\"0",
+		"0:\n    - \"\n000\"\"",
+
+		// runtime error: index out of range
+		" \ufeff\n",
+		"? \ufeff\n",
+		"? \ufeff:\n",
+		"0: \ufeff\n",
+		"? \ufeff: \ufeff\n",
+	}
+	for _, data := range cases {
+		var v interface{}
+		_ = yaml.Unmarshal([]byte(data), &v)
+	}
 }
 
 //var data []byte

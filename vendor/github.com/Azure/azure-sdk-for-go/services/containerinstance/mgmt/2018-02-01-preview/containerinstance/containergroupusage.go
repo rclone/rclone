@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ContainerGroupUsageClient is the client for the ContainerGroupUsage methods of the Containerinstance service.
 type ContainerGroupUsageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // NewContainerGroupUsageClient creates an instance of the ContainerGroupUsageClient client.
 func NewContainerGroupUsageClient(subscriptionID string) ContainerGroupUsageClient {
 	return NewContainerGroupUsageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // NewContainerGroupUsageClientWithBaseURI creates an instance of the ContainerGroupUsageClient client.
 func NewContainerGroupUsageClientWithBaseURI(baseURI string, subscriptionID string) ContainerGroupUsageClient {
 	return ContainerGroupUsageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // List get the usage for a subscription
 //
 // location is the identifier for the physical azure location.
@@ -64,6 +68,7 @@ func (client ContainerGroupUsageClient) List(ctx context.Context, location strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ListPreparer prepares the List request.
 func (client ContainerGroupUsageClient) ListPreparer(ctx context.Context, location string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -84,6 +89,7 @@ func (client ContainerGroupUsageClient) ListPreparer(ctx context.Context, locati
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ContainerGroupUsageClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -91,6 +97,7 @@ func (client ContainerGroupUsageClient) ListSender(req *http.Request) (*http.Res
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerinstance/mgmt/2018-02-01-preview/containerinstance instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ContainerGroupUsageClient) ListResponder(resp *http.Response) (result UsageListResult, err error) {

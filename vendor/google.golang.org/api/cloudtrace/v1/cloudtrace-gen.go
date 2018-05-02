@@ -129,7 +129,7 @@ type ListTracesResponse struct {
 	// retrieving additional traces.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
-	// Traces: List of trace records returned.
+	// Traces: List of trace records as specified by the view parameter.
 	Traces []*Trace `json:"traces,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the

@@ -41,9 +41,11 @@ func NewCollectionClientWithBaseURI(baseURI string, subscriptionID string) Colle
 }
 
 // ListMetricDefinitions retrieves metric defintions for the given collection.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// databaseRid is cosmos DB database rid. collectionRid is cosmos DB collection rid.
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
 func (client CollectionClient) ListMetricDefinitions(ctx context.Context, resourceGroupName string, accountName string, databaseRid string, collectionRid string) (result MetricDefinitionsListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -121,12 +123,14 @@ func (client CollectionClient) ListMetricDefinitionsResponder(resp *http.Respons
 }
 
 // ListMetrics retrieves the metrics determined by the given filter for the given database account and collection.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// databaseRid is cosmos DB database rid. collectionRid is cosmos DB collection rid. filter is an OData filter
-// expression that describes a subset of metrics to return. The parameters that can be filtered are name.value
-// (name of the metric, can have an or of multiple names), startTime, endTime, and timeGrain. The supported
-// operator is eq.
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
+// filter - an OData filter expression that describes a subset of metrics to return. The parameters that can be
+// filtered are name.value (name of the metric, can have an or of multiple names), startTime, endTime, and
+// timeGrain. The supported operator is eq.
 func (client CollectionClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, databaseRid string, collectionRid string, filter string) (result MetricListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -205,11 +209,13 @@ func (client CollectionClient) ListMetricsResponder(resp *http.Response) (result
 }
 
 // ListUsages retrieves the usages (most recent storage data) for the given collection.
-//
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-// databaseRid is cosmos DB database rid. collectionRid is cosmos DB collection rid. filter is an OData filter
-// expression that describes a subset of usages to return. The supported parameter is name.value (name of the
-// metric, can have an or of multiple names).
+// Parameters:
+// resourceGroupName - name of an Azure resource group.
+// accountName - cosmos DB database account name.
+// databaseRid - cosmos DB database rid.
+// collectionRid - cosmos DB collection rid.
+// filter - an OData filter expression that describes a subset of usages to return. The supported parameter is
+// name.value (name of the metric, can have an or of multiple names).
 func (client CollectionClient) ListUsages(ctx context.Context, resourceGroupName string, accountName string, databaseRid string, collectionRid string, filter string) (result UsagesResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,

@@ -596,7 +596,7 @@
       }
     }
   },
-  "revision": "20180303",
+  "revision": "20180405",
   "rootUrl": "https://people.googleapis.com/",
   "schemas": {
     "Address": {
@@ -897,7 +897,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },

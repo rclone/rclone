@@ -36,6 +36,11 @@ const (
 	EndpointTypeWebHook EndpointType = "WebHook"
 )
 
+// PossibleEndpointTypeValues returns an array of possible values for the EndpointType const type.
+func PossibleEndpointTypeValues() []EndpointType {
+	return []EndpointType{EndpointTypeEventHub, EndpointTypeEventSubscriptionDestination, EndpointTypeWebHook}
+}
+
 // EventSubscriptionProvisioningState enumerates the values for event subscription provisioning state.
 type EventSubscriptionProvisioningState string
 
@@ -54,6 +59,11 @@ const (
 	Updating EventSubscriptionProvisioningState = "Updating"
 )
 
+// PossibleEventSubscriptionProvisioningStateValues returns an array of possible values for the EventSubscriptionProvisioningState const type.
+func PossibleEventSubscriptionProvisioningStateValues() []EventSubscriptionProvisioningState {
+	return []EventSubscriptionProvisioningState{Canceled, Creating, Deleting, Failed, Succeeded, Updating}
+}
+
 // ResourceRegionType enumerates the values for resource region type.
 type ResourceRegionType string
 
@@ -63,6 +73,11 @@ const (
 	// RegionalResource ...
 	RegionalResource ResourceRegionType = "RegionalResource"
 )
+
+// PossibleResourceRegionTypeValues returns an array of possible values for the ResourceRegionType const type.
+func PossibleResourceRegionTypeValues() []ResourceRegionType {
+	return []ResourceRegionType{GlobalResource, RegionalResource}
+}
 
 // TopicProvisioningState enumerates the values for topic provisioning state.
 type TopicProvisioningState string
@@ -82,6 +97,11 @@ const (
 	TopicProvisioningStateUpdating TopicProvisioningState = "Updating"
 )
 
+// PossibleTopicProvisioningStateValues returns an array of possible values for the TopicProvisioningState const type.
+func PossibleTopicProvisioningStateValues() []TopicProvisioningState {
+	return []TopicProvisioningState{TopicProvisioningStateCanceled, TopicProvisioningStateCreating, TopicProvisioningStateDeleting, TopicProvisioningStateFailed, TopicProvisioningStateSucceeded, TopicProvisioningStateUpdating}
+}
+
 // TopicTypeProvisioningState enumerates the values for topic type provisioning state.
 type TopicTypeProvisioningState string
 
@@ -100,6 +120,11 @@ const (
 	TopicTypeProvisioningStateUpdating TopicTypeProvisioningState = "Updating"
 )
 
+// PossibleTopicTypeProvisioningStateValues returns an array of possible values for the TopicTypeProvisioningState const type.
+func PossibleTopicTypeProvisioningStateValues() []TopicTypeProvisioningState {
+	return []TopicTypeProvisioningState{TopicTypeProvisioningStateCanceled, TopicTypeProvisioningStateCreating, TopicTypeProvisioningStateDeleting, TopicTypeProvisioningStateFailed, TopicTypeProvisioningStateSucceeded, TopicTypeProvisioningStateUpdating}
+}
+
 // EventHubEventSubscriptionDestination information about the event hub destination for an event subscription
 type EventHubEventSubscriptionDestination struct {
 	// EventHubEventSubscriptionDestinationProperties - Event Hub Properties of the event subscription destination
@@ -115,7 +140,9 @@ func (ehesd EventHubEventSubscriptionDestination) MarshalJSON() ([]byte, error) 
 	if ehesd.EventHubEventSubscriptionDestinationProperties != nil {
 		objectMap["properties"] = ehesd.EventHubEventSubscriptionDestinationProperties
 	}
-	objectMap["endpointType"] = ehesd.EndpointType
+	if ehesd.EndpointType != "" {
+		objectMap["endpointType"] = ehesd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -189,6 +216,24 @@ type EventSubscription struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Type of the resource
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for EventSubscription.
+func (es EventSubscription) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if es.EventSubscriptionProperties != nil {
+		objectMap["properties"] = es.EventSubscriptionProperties
+	}
+	if es.ID != nil {
+		objectMap["id"] = es.ID
+	}
+	if es.Name != nil {
+		objectMap["name"] = es.Name
+	}
+	if es.Type != nil {
+		objectMap["type"] = es.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for EventSubscription struct.
@@ -300,7 +345,9 @@ func unmarshalBasicEventSubscriptionDestinationArray(body []byte) ([]BasicEventS
 func (esd EventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	esd.EndpointType = EndpointTypeEventSubscriptionDestination
 	objectMap := make(map[string]interface{})
-	objectMap["endpointType"] = esd.EndpointType
+	if esd.EndpointType != "" {
+		objectMap["endpointType"] = esd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -636,6 +683,24 @@ type EventType struct {
 	Name *string `json:"name,omitempty"`
 	// Type - Type of the resource
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for EventType.
+func (et EventType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if et.EventTypeProperties != nil {
+		objectMap["properties"] = et.EventTypeProperties
+	}
+	if et.ID != nil {
+		objectMap["id"] = et.ID
+	}
+	if et.Name != nil {
+		objectMap["name"] = et.Name
+	}
+	if et.Type != nil {
+		objectMap["type"] = et.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for EventType struct.
@@ -1044,6 +1109,24 @@ type TopicTypeInfo struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for TopicTypeInfo.
+func (tti TopicTypeInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tti.TopicTypeProperties != nil {
+		objectMap["properties"] = tti.TopicTypeProperties
+	}
+	if tti.ID != nil {
+		objectMap["id"] = tti.ID
+	}
+	if tti.Name != nil {
+		objectMap["name"] = tti.Name
+	}
+	if tti.Type != nil {
+		objectMap["type"] = tti.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for TopicTypeInfo struct.
 func (tti *TopicTypeInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1183,7 +1266,9 @@ func (whesd WebHookEventSubscriptionDestination) MarshalJSON() ([]byte, error) {
 	if whesd.WebHookEventSubscriptionDestinationProperties != nil {
 		objectMap["properties"] = whesd.WebHookEventSubscriptionDestinationProperties
 	}
-	objectMap["endpointType"] = whesd.EndpointType
+	if whesd.EndpointType != "" {
+		objectMap["endpointType"] = whesd.EndpointType
+	}
 	return json.Marshal(objectMap)
 }
 

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // OperationClient is the this API describe ACE Provisioning ManagementPartner
 type OperationClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // NewOperationClient creates an instance of the OperationClient client.
 func NewOperationClient() OperationClient {
 	return NewOperationClientWithBaseURI(DefaultBaseURI)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // NewOperationClientWithBaseURI creates an instance of the OperationClient client.
 func NewOperationClientWithBaseURI(baseURI string) OperationClient {
 	return OperationClient{NewWithBaseURI(baseURI)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // List list all the operations.
 func (client OperationClient) List(ctx context.Context) (result OperationListPage, err error) {
 	result.fn = client.listNextResults
@@ -63,6 +67,7 @@ func (client OperationClient) List(ctx context.Context) (result OperationListPag
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // ListPreparer prepares the List request.
 func (client OperationClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2018-02-01"
@@ -78,6 +83,7 @@ func (client OperationClient) ListPreparer(ctx context.Context) (*http.Request, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client OperationClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -85,6 +91,7 @@ func (client OperationClient) ListSender(req *http.Request) (*http.Response, err
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client OperationClient) ListResponder(resp *http.Response) (result OperationList, err error) {
@@ -119,6 +126,7 @@ func (client OperationClient) listNextResults(lastResults OperationList) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/managementpartner/mgmt/2018-02-01/managementpartner instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client OperationClient) ListComplete(ctx context.Context) (result OperationListIterator, err error) {
 	result.page, err = client.List(ctx)

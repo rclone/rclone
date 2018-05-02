@@ -487,7 +487,9 @@ type CreateImageRequest struct {
 	// GIF
 	// format.
 	//
-	// The provided URL can be at most 2 kB in length.
+	// The provided URL can be at most 2 kB in length. The URL itself is
+	// saved
+	// with the image, and exposed via the Image.source_url field.
 	Url string `json:"url,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ElementProperties")
@@ -1136,7 +1138,7 @@ func (s *CreateShapeResponse) MarshalJSON() ([]byte, error) {
 //
 // NOTE: Chart creation requires at least one of the
 // spreadsheets.readonly,
-// spreadsheets, drive.readonly, or drive OAuth scopes.
+// spreadsheets, drive.readonly, drive.file, or drive OAuth scopes.
 type CreateSheetsChartRequest struct {
 	// ChartId: The ID of the specific chart in the Google Sheets
 	// spreadsheet.
@@ -2543,7 +2545,8 @@ func (s *LayoutReference) MarshalJSON() ([]byte, error) {
 }
 
 // Line: A PageElement kind representing a
-// line, curved connector, or bent connector.
+// non-connector line, straight connector, curved connector, or bent
+// connector.
 type Line struct {
 	// LineProperties: The properties of the line.
 	LineProperties *LineProperties `json:"lineProperties,omitempty"`
@@ -2579,6 +2582,9 @@ type Line struct {
 	//   "CURVED_CONNECTOR_5" - Curved connector 5 form. Corresponds to
 	// ECMA-376 ST_ShapeType
 	// 'curvedConnector5'.
+	//   "STRAIGHT_LINE" - Straight line. Corresponds to ECMA-376
+	// ST_ShapeType 'line'. This line
+	// type is not a connector.
 	LineType string `json:"lineType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "LineProperties") to
@@ -4049,6 +4055,10 @@ func (s *RefreshSheetsChartRequest) MarshalJSON() ([]byte, error) {
 
 // ReplaceAllShapesWithImageRequest: Replaces all shapes that match the
 // given criteria with the provided image.
+//
+// The images replacing the shapes are rectangular after being inserted
+// into
+// the presentation and do not take on the forms of the shapes.
 type ReplaceAllShapesWithImageRequest struct {
 	// ContainsText: If set, this request will replace all of the shapes
 	// that contain the
@@ -4096,7 +4106,9 @@ type ReplaceAllShapesWithImageRequest struct {
 	// GIF
 	// format.
 	//
-	// The provided URL can be at most 2 kB in length.
+	// The provided URL can be at most 2 kB in length. The URL itself is
+	// saved
+	// with the image, and exposed via the Image.source_url field.
 	ImageUrl string `json:"imageUrl,omitempty"`
 
 	// PageObjectIds: If non-empty, limits the matches to page elements only
@@ -4393,7 +4405,9 @@ type ReplaceImageRequest struct {
 	// GIF
 	// format.
 	//
-	// The provided URL can be at most 2 kB in length.
+	// The provided URL can be at most 2 kB in length. The URL itself is
+	// saved
+	// with the image, and exposed via the Image.source_url field.
 	Url string `json:"url,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ImageObjectId") to

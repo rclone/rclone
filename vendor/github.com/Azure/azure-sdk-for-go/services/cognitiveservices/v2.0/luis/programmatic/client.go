@@ -1,4 +1,4 @@
-// Package programmatic implements the Azure ARM Programmatic service API version v2.0.
+// Package programmatic implements the Azure ARM Programmatic service API version v2.0 preview.
 //
 //
 package programmatic

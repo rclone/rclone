@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // IntegrationAccountsClient is the REST API for Azure Logic Apps.
 type IntegrationAccountsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // NewIntegrationAccountsClient creates an instance of the IntegrationAccountsClient client.
 func NewIntegrationAccountsClient(subscriptionID string) IntegrationAccountsClient {
 	return NewIntegrationAccountsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // NewIntegrationAccountsClientWithBaseURI creates an instance of the IntegrationAccountsClient client.
 func NewIntegrationAccountsClientWithBaseURI(baseURI string, subscriptionID string) IntegrationAccountsClient {
 	return IntegrationAccountsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // CreateOrUpdate creates or updates an integration account.
 //
 // resourceGroupName is the resource group name. integrationAccountName is the integration account name.
@@ -65,6 +69,7 @@ func (client IntegrationAccountsClient) CreateOrUpdate(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client IntegrationAccountsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, integrationAccountName string, integrationAccount IntegrationAccount) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -79,7 +84,7 @@ func (client IntegrationAccountsClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}", pathParameters),
@@ -88,6 +93,7 @@ func (client IntegrationAccountsClient) CreateOrUpdatePreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client IntegrationAccountsClient) CreateOrUpdateSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) CreateOrUpdateResponder(resp *http.Response) (result IntegrationAccount, err error) {
@@ -108,6 +115,7 @@ func (client IntegrationAccountsClient) CreateOrUpdateResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // Delete deletes an integration account.
 //
 // resourceGroupName is the resource group name. integrationAccountName is the integration account name.
@@ -133,6 +141,7 @@ func (client IntegrationAccountsClient) Delete(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // DeletePreparer prepares the Delete request.
 func (client IntegrationAccountsClient) DeletePreparer(ctx context.Context, resourceGroupName string, integrationAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -154,6 +163,7 @@ func (client IntegrationAccountsClient) DeletePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -161,6 +171,7 @@ func (client IntegrationAccountsClient) DeleteSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -173,6 +184,7 @@ func (client IntegrationAccountsClient) DeleteResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // Get gets an integration account.
 //
 // resourceGroupName is the resource group name. integrationAccountName is the integration account name.
@@ -198,6 +210,7 @@ func (client IntegrationAccountsClient) Get(ctx context.Context, resourceGroupNa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // GetPreparer prepares the Get request.
 func (client IntegrationAccountsClient) GetPreparer(ctx context.Context, resourceGroupName string, integrationAccountName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -219,6 +232,7 @@ func (client IntegrationAccountsClient) GetPreparer(ctx context.Context, resourc
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -226,6 +240,7 @@ func (client IntegrationAccountsClient) GetSender(req *http.Request) (*http.Resp
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) GetResponder(resp *http.Response) (result IntegrationAccount, err error) {
@@ -239,6 +254,7 @@ func (client IntegrationAccountsClient) GetResponder(resp *http.Response) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListByResourceGroup gets a list of integration accounts by resource group.
 //
 // resourceGroupName is the resource group name. top is the number of items to be included in the result.
@@ -265,6 +281,7 @@ func (client IntegrationAccountsClient) ListByResourceGroup(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client IntegrationAccountsClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -288,6 +305,7 @@ func (client IntegrationAccountsClient) ListByResourceGroupPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -295,6 +313,7 @@ func (client IntegrationAccountsClient) ListByResourceGroupSender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) ListByResourceGroupResponder(resp *http.Response) (result IntegrationAccountListResult, err error) {
@@ -329,12 +348,14 @@ func (client IntegrationAccountsClient) listByResourceGroupNextResults(lastResul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IntegrationAccountsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, top *int32) (result IntegrationAccountListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, top)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListBySubscription gets a list of integration accounts by subscription.
 //
 // top is the number of items to be included in the result.
@@ -361,6 +382,7 @@ func (client IntegrationAccountsClient) ListBySubscription(ctx context.Context, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client IntegrationAccountsClient) ListBySubscriptionPreparer(ctx context.Context, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -383,6 +405,7 @@ func (client IntegrationAccountsClient) ListBySubscriptionPreparer(ctx context.C
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -390,6 +413,7 @@ func (client IntegrationAccountsClient) ListBySubscriptionSender(req *http.Reque
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) ListBySubscriptionResponder(resp *http.Response) (result IntegrationAccountListResult, err error) {
@@ -424,12 +448,14 @@ func (client IntegrationAccountsClient) listBySubscriptionNextResults(lastResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
 func (client IntegrationAccountsClient) ListBySubscriptionComplete(ctx context.Context, top *int32) (result IntegrationAccountListResultIterator, err error) {
 	result.page, err = client.ListBySubscription(ctx, top)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListCallbackURL lists the integration account callback URL.
 //
 // resourceGroupName is the resource group name. integrationAccountName is the integration account name. parameters
@@ -456,6 +482,7 @@ func (client IntegrationAccountsClient) ListCallbackURL(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListCallbackURLPreparer prepares the ListCallbackURL request.
 func (client IntegrationAccountsClient) ListCallbackURLPreparer(ctx context.Context, resourceGroupName string, integrationAccountName string, parameters ListCallbackURLParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -470,7 +497,7 @@ func (client IntegrationAccountsClient) ListCallbackURLPreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/listCallbackUrl", pathParameters),
@@ -479,6 +506,7 @@ func (client IntegrationAccountsClient) ListCallbackURLPreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListCallbackURLSender sends the ListCallbackURL request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) ListCallbackURLSender(req *http.Request) (*http.Response, error) {
@@ -486,6 +514,7 @@ func (client IntegrationAccountsClient) ListCallbackURLSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // ListCallbackURLResponder handles the response to the ListCallbackURL request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) ListCallbackURLResponder(resp *http.Response) (result CallbackURL, err error) {
@@ -499,6 +528,7 @@ func (client IntegrationAccountsClient) ListCallbackURLResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // Update updates an integration account.
 //
 // resourceGroupName is the resource group name. integrationAccountName is the integration account name.
@@ -525,6 +555,7 @@ func (client IntegrationAccountsClient) Update(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // UpdatePreparer prepares the Update request.
 func (client IntegrationAccountsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, integrationAccountName string, integrationAccount IntegrationAccount) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -539,7 +570,7 @@ func (client IntegrationAccountsClient) UpdatePreparer(ctx context.Context, reso
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}", pathParameters),
@@ -548,6 +579,7 @@ func (client IntegrationAccountsClient) UpdatePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationAccountsClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -555,6 +587,7 @@ func (client IntegrationAccountsClient) UpdateSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-08-01-preview/logic instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client IntegrationAccountsClient) UpdateResponder(resp *http.Response) (result IntegrationAccount, err error) {

@@ -45,6 +45,8 @@ type CallOptions struct {
 	BeginTransaction    []gax.CallOption
 	Commit              []gax.CallOption
 	Rollback            []gax.CallOption
+	PartitionQuery      []gax.CallOption
+	PartitionRead       []gax.CallOption
 }
 
 func defaultClientOptions() []option.ClientOption {
@@ -92,6 +94,8 @@ func defaultCallOptions() *CallOptions {
 		BeginTransaction:    retry[[2]string{"default", "idempotent"}],
 		Commit:              retry[[2]string{"long_running", "long_running"}],
 		Rollback:            retry[[2]string{"default", "idempotent"}],
+		PartitionQuery:      retry[[2]string{"default", "idempotent"}],
+		PartitionRead:       retry[[2]string{"default", "idempotent"}],
 	}
 }
 
@@ -403,6 +407,52 @@ func (c *Client) Rollback(ctx context.Context, req *spannerpb.RollbackRequest, o
 		return err
 	}, opts...)
 	return err
+}
+
+// PartitionQuery creates a set of partition tokens that can be used to execute a query
+// operation in parallel.  Each of the returned partition tokens can be used
+// by [ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql] to specify a subset
+// of the query result to read.  The same session and read-only transaction
+// must be used by the PartitionQueryRequest used to create the
+// partition tokens and the ExecuteSqlRequests that use the partition tokens.
+// Partition tokens become invalid when the session used to create them
+// is deleted or begins a new transaction.
+func (c *Client) PartitionQuery(ctx context.Context, req *spannerpb.PartitionQueryRequest, opts ...gax.CallOption) (*spannerpb.PartitionResponse, error) {
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	opts = append(c.CallOptions.PartitionQuery[0:len(c.CallOptions.PartitionQuery):len(c.CallOptions.PartitionQuery)], opts...)
+	var resp *spannerpb.PartitionResponse
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.client.PartitionQuery(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// PartitionRead creates a set of partition tokens that can be used to execute a read
+// operation in parallel.  Each of the returned partition tokens can be used
+// by [StreamingRead][google.spanner.v1.Spanner.StreamingRead] to specify a subset of the read
+// result to read.  The same session and read-only transaction must be used by
+// the PartitionReadRequest used to create the partition tokens and the
+// ReadRequests that use the partition tokens.
+// Partition tokens become invalid when the session used to create them
+// is deleted or begins a new transaction.
+func (c *Client) PartitionRead(ctx context.Context, req *spannerpb.PartitionReadRequest, opts ...gax.CallOption) (*spannerpb.PartitionResponse, error) {
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	opts = append(c.CallOptions.PartitionRead[0:len(c.CallOptions.PartitionRead):len(c.CallOptions.PartitionRead)], opts...)
+	var resp *spannerpb.PartitionResponse
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.client.PartitionRead(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // SessionIterator manages a stream of *spannerpb.Session.

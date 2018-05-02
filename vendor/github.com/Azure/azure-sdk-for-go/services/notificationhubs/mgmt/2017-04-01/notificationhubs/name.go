@@ -42,8 +42,8 @@ func NewNameClientWithBaseURI(baseURI string, subscriptionID string) NameClient 
 
 // CheckAvailability checks the availability of the given service namespace across all Azure subscriptions. This is
 // useful because the domain name is created based on the service namespace name.
-//
-// parameters is the namespace name.
+// Parameters:
+// parameters - the namespace name.
 func (client NameClient) CheckAvailability(ctx context.Context, parameters CheckNameAvailabilityRequestParameters) (result CheckNameAvailabilityResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -84,7 +84,7 @@ func (client NameClient) CheckAvailabilityPreparer(ctx context.Context, paramete
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.NotificationHubs/checkNameAvailability", pathParameters),

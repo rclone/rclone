@@ -114,6 +114,21 @@
         {"shape":"InternalServiceFault"}
       ]
     },
+    "GetMetricData":{
+      "name":"GetMetricData",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetMetricDataInput"},
+      "output":{
+        "shape":"GetMetricDataOutput",
+        "resultWrapper":"GetMetricDataResult"
+      },
+      "errors":[
+        {"shape":"InvalidNextToken"}
+      ]
+    },
     "GetMetricStatistics":{
       "name":"GetMetricStatistics",
       "http":{
@@ -362,6 +377,10 @@
       "key":{"shape":"ExtendedStatistic"},
       "value":{"shape":"DatapointValue"}
     },
+    "DatapointValues":{
+      "type":"list",
+      "member":{"shape":"DatapointValue"}
+    },
     "Datapoints":{
       "type":"list",
       "member":{"shape":"Datapoint"}
@@ -544,6 +563,30 @@
         "DashboardName":{"shape":"DashboardName"}
       }
     },
+    "GetMetricDataInput":{
+      "type":"structure",
+      "required":[
+        "MetricDataQueries",
+        "StartTime",
+        "EndTime"
+      ],
+      "members":{
+        "MetricDataQueries":{"shape":"MetricDataQueries"},
+        "StartTime":{"shape":"Timestamp"},
+        "EndTime":{"shape":"Timestamp"},
+        "NextToken":{"shape":"NextToken"},
+        "ScanBy":{"shape":"ScanBy"},
+        "MaxDatapoints":{"shape":"GetMetricDataMaxDatapoints"}
+      }
+    },
+    "GetMetricDataMaxDatapoints":{"type":"integer"},
+    "GetMetricDataOutput":{
+      "type":"structure",
+      "members":{
+        "MetricDataResults":{"shape":"MetricDataResults"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
     "GetMetricStatisticsInput":{
       "type":"structure",
       "required":[
@@ -703,6 +746,15 @@
       "min":1
     },
     "Message":{"type":"string"},
+    "MessageData":{
+      "type":"structure",
+      "members":{
+        "Code":{"shape":"MessageDataCode"},
+        "Value":{"shape":"MessageDataValue"}
+      }
+    },
+    "MessageDataCode":{"type":"string"},
+    "MessageDataValue":{"type":"string"},
     "Metric":{
       "type":"structure",
       "members":{
@@ -781,6 +833,40 @@
       "type":"list",
       "member":{"shape":"MetricDatum"}
     },
+    "MetricDataQueries":{
+      "type":"list",
+      "member":{"shape":"MetricDataQuery"}
+    },
+    "MetricDataQuery":{
+      "type":"structure",
+      "required":["Id"],
+      "members":{
+        "Id":{"shape":"MetricId"},
+        "MetricStat":{"shape":"MetricStat"},
+        "Expression":{"shape":"MetricExpression"},
+        "Label":{"shape":"MetricLabel"},
+        "ReturnData":{"shape":"ReturnData"}
+      }
+    },
+    "MetricDataResult":{
+      "type":"structure",
+      "members":{
+        "Id":{"shape":"MetricId"},
+        "Label":{"shape":"MetricLabel"},
+        "Timestamps":{"shape":"Timestamps"},
+        "Values":{"shape":"DatapointValues"},
+        "StatusCode":{"shape":"StatusCode"},
+        "Messages":{"shape":"MetricDataResultMessages"}
+      }
+    },
+    "MetricDataResultMessages":{
+      "type":"list",
+      "member":{"shape":"MessageData"}
+    },
+    "MetricDataResults":{
+      "type":"list",
+      "member":{"shape":"MetricDataResult"}
+    },
     "MetricDatum":{
       "type":"structure",
       "required":["MetricName"],
@@ -794,11 +880,35 @@
         "StorageResolution":{"shape":"StorageResolution"}
       }
     },
+    "MetricExpression":{
+      "type":"string",
+      "max":1024,
+      "min":1
+    },
+    "MetricId":{
+      "type":"string",
+      "max":255,
+      "min":1
+    },
     "MetricLabel":{"type":"string"},
     "MetricName":{
       "type":"string",
       "max":255,
       "min":1
+    },
+    "MetricStat":{
+      "type":"structure",
+      "required":[
+        "Metric",
+        "Period",
+        "Stat"
+      ],
+      "members":{
+        "Metric":{"shape":"Metric"},
+        "Period":{"shape":"Period"},
+        "Stat":{"shape":"Stat"},
+        "Unit":{"shape":"StandardUnit"}
+      }
     },
     "Metrics":{
       "type":"list",
@@ -914,6 +1024,14 @@
       },
       "exception":true
     },
+    "ReturnData":{"type":"boolean"},
+    "ScanBy":{
+      "type":"string",
+      "enum":[
+        "TimestampDescending",
+        "TimestampAscending"
+      ]
+    },
     "SetAlarmStateInput":{
       "type":"structure",
       "required":[
@@ -961,6 +1079,7 @@
         "None"
       ]
     },
+    "Stat":{"type":"string"},
     "StateReason":{
       "type":"string",
       "max":1023,
@@ -1010,12 +1129,24 @@
       "max":5,
       "min":1
     },
+    "StatusCode":{
+      "type":"string",
+      "enum":[
+        "Complete",
+        "InternalError",
+        "PartialData"
+      ]
+    },
     "StorageResolution":{
       "type":"integer",
       "min":1
     },
     "Threshold":{"type":"double"},
     "Timestamp":{"type":"timestamp"},
+    "Timestamps":{
+      "type":"list",
+      "member":{"shape":"Timestamp"}
+    },
     "TreatMissingData":{
       "type":"string",
       "max":255,

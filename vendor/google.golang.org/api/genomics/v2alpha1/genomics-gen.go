@@ -123,6 +123,50 @@ type WorkersService struct {
 	s *Service
 }
 
+// Accelerator: Carries information about an accelerator that can be
+// attached to a VM.
+type Accelerator struct {
+	// Count: How many accelerators of this type to attach.
+	Count int64 `json:"count,omitempty,string"`
+
+	// Type: The accelerator type string (eg nvidia-tesla-k80).
+	//
+	// Only NVIDIA GPU accelerators are currently supported.  If an NVIDIA
+	// GPU is
+	// attached, the required runtime libraries will be made available to
+	// all
+	// containers under `/usr/local/nvidia`.  The driver version to install
+	// must
+	// be specified using the NVIDIA driver version parameter on the
+	// virtual
+	// machine specification.  Note that attaching a GPU increases the
+	// worker VM
+	// startup time by a few minutes.
+	Type string `json:"type,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Count") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Count") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Accelerator) MarshalJSON() ([]byte, error) {
+	type NoMethod Accelerator
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Action: Action specifies a single action that runs a docker
 // container.
 type Action struct {
@@ -224,6 +268,11 @@ type Action struct {
 	// login` to access) this flag **must** be set so that a preceding
 	// action
 	// can establish the credentials required to fetch it.
+	//   "DISABLE_STANDARD_ERROR_CAPTURE" - Normally, a small portion of the
+	// container's standard error stream is
+	// captured and returned inside the ContainerStoppedEvent.  Setting
+	// this
+	// flag disables this functionality.
 	Flags []string `json:"flags,omitempty"`
 
 	// ImageUri: The URI to pull the container image from.  Note that all
@@ -495,6 +544,22 @@ type ContainerStoppedEvent struct {
 
 	// ExitStatus: The exit status of the container.
 	ExitStatus int64 `json:"exitStatus,omitempty"`
+
+	// Stderr: The tail end of any content written to standard error by the
+	// container.
+	// To prevent this from being recorded if the action is known to
+	// emit
+	// large amounts of debugging noise or sensitive information, set
+	// the
+	// DISABLE_STANDARD_ERROR_CAPTURE flag.
+	//
+	// Note that only a small amount of the end of the stream is captured
+	// here.
+	// The entire stream is stored in the /google/logs directory mounted
+	// into
+	// each action, and may be copied off the machine as described
+	// elsewhere.
+	Stderr string `json:"stderr,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ActionId") to
 	// unconditionally include in API requests. By default, fields with
@@ -958,6 +1023,10 @@ type Metadata struct {
 	// CreateTime: The time that the operation was created by the API.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// EndTime: The time at which execution was completed and resources were
+	// cleaned up.
+	EndTime string `json:"endTime,omitempty"`
+
 	// Events: The list of events that have happened so far during the
 	// execution of this
 	// operation.
@@ -968,6 +1037,10 @@ type Metadata struct {
 
 	// Pipeline: The pipeline this operation represents.
 	Pipeline *Pipeline `json:"pipeline,omitempty"`
+
+	// StartTime: The first time at which resources were allocated to
+	// execute the pipeline.
+	StartTime string `json:"startTime,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CreateTime") to
 	// unconditionally include in API requests. By default, fields with
@@ -1641,6 +1714,9 @@ func (s *UnexpectedExitStatusEvent) MarshalJSON() ([]byte, error) {
 // VirtualMachine: Carries information about a Compute Engine VM
 // resource.
 type VirtualMachine struct {
+	// Accelerators: The list of accelerators to attach to the VM.
+	Accelerators []*Accelerator `json:"accelerators,omitempty"`
+
 	// BootDiskSizeGb: The size of the boot disk, in gigabytes. The boot
 	// disk must be large
 	// enough to accommodate all of the docker images from each action in
@@ -1711,6 +1787,16 @@ type VirtualMachine struct {
 	// Network: The VM network configuration.
 	Network *Network `json:"network,omitempty"`
 
+	// NvidiaDriverVersion: The NVIDIA driver version to use when attaching
+	// an NVIDIA GPU accelerator.
+	// The version specified here must be compatible with the GPU
+	// libraries
+	// contained in the container being executed, and must be one of the
+	// drivers
+	// hosted in the 'nvidia-drivers-us-public' bucket on Google Cloud
+	// Storage.
+	NvidiaDriverVersion string `json:"nvidiaDriverVersion,omitempty"`
+
 	// Preemptible: If true, allocate a preemptible VM.
 	Preemptible bool `json:"preemptible,omitempty"`
 
@@ -1719,7 +1805,7 @@ type VirtualMachine struct {
 	// any permissions other than those required by the pipeline.
 	ServiceAccount *ServiceAccount `json:"serviceAccount,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "BootDiskSizeGb") to
+	// ForceSendFields is a list of field names (e.g. "Accelerators") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1727,13 +1813,12 @@ type VirtualMachine struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BootDiskSizeGb") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Accelerators") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 

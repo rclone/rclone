@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // ServerFarmsClient is the webSite Management Client
 type ServerFarmsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewServerFarmsClient creates an instance of the ServerFarmsClient client.
 func NewServerFarmsClient(subscriptionID string) ServerFarmsClient {
 	return NewServerFarmsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // NewServerFarmsClientWithBaseURI creates an instance of the ServerFarmsClient client.
 func NewServerFarmsClientWithBaseURI(baseURI string, subscriptionID string) ServerFarmsClient {
 	return ServerFarmsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateServerFarm sends the create or update server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan serverFarmEnvelope is details of
@@ -59,6 +63,7 @@ func (client ServerFarmsClient) CreateOrUpdateServerFarm(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateServerFarmPreparer prepares the CreateOrUpdateServerFarm request.
 func (client ServerFarmsClient) CreateOrUpdateServerFarmPreparer(ctx context.Context, resourceGroupName string, name string, serverFarmEnvelope ServerFarmWithRichSku, allowPendingState *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -76,7 +81,7 @@ func (client ServerFarmsClient) CreateOrUpdateServerFarmPreparer(ctx context.Con
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}", pathParameters),
@@ -85,6 +90,7 @@ func (client ServerFarmsClient) CreateOrUpdateServerFarmPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateServerFarmSender sends the CreateOrUpdateServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) CreateOrUpdateServerFarmSender(req *http.Request) (future ServerFarmsCreateOrUpdateServerFarmFuture, err error) {
@@ -100,6 +106,7 @@ func (client ServerFarmsClient) CreateOrUpdateServerFarmSender(req *http.Request
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateServerFarmResponder handles the response to the CreateOrUpdateServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) CreateOrUpdateServerFarmResponder(resp *http.Response) (result ServerFarmWithRichSku, err error) {
@@ -113,6 +120,7 @@ func (client ServerFarmsClient) CreateOrUpdateServerFarmResponder(resp *http.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateVnetRoute sends the create or update vnet route request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -139,6 +147,7 @@ func (client ServerFarmsClient) CreateOrUpdateVnetRoute(ctx context.Context, res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateVnetRoutePreparer prepares the CreateOrUpdateVnetRoute request.
 func (client ServerFarmsClient) CreateOrUpdateVnetRoutePreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string, route VnetRoute) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -155,7 +164,7 @@ func (client ServerFarmsClient) CreateOrUpdateVnetRoutePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/routes/{routeName}", pathParameters),
@@ -164,6 +173,7 @@ func (client ServerFarmsClient) CreateOrUpdateVnetRoutePreparer(ctx context.Cont
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateVnetRouteSender sends the CreateOrUpdateVnetRoute request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) CreateOrUpdateVnetRouteSender(req *http.Request) (*http.Response, error) {
@@ -171,6 +181,7 @@ func (client ServerFarmsClient) CreateOrUpdateVnetRouteSender(req *http.Request)
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // CreateOrUpdateVnetRouteResponder handles the response to the CreateOrUpdateVnetRoute request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) CreateOrUpdateVnetRouteResponder(resp *http.Response) (result VnetRoute, err error) {
@@ -184,6 +195,7 @@ func (client ServerFarmsClient) CreateOrUpdateVnetRouteResponder(resp *http.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteServerFarm sends the delete server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan
@@ -209,6 +221,7 @@ func (client ServerFarmsClient) DeleteServerFarm(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteServerFarmPreparer prepares the DeleteServerFarm request.
 func (client ServerFarmsClient) DeleteServerFarmPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -230,6 +243,7 @@ func (client ServerFarmsClient) DeleteServerFarmPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteServerFarmSender sends the DeleteServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) DeleteServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -237,6 +251,7 @@ func (client ServerFarmsClient) DeleteServerFarmSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteServerFarmResponder handles the response to the DeleteServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) DeleteServerFarmResponder(resp *http.Response) (result SetObject, err error) {
@@ -250,6 +265,7 @@ func (client ServerFarmsClient) DeleteServerFarmResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteVnetRoute sends the delete vnet route request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -276,6 +292,7 @@ func (client ServerFarmsClient) DeleteVnetRoute(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteVnetRoutePreparer prepares the DeleteVnetRoute request.
 func (client ServerFarmsClient) DeleteVnetRoutePreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -299,6 +316,7 @@ func (client ServerFarmsClient) DeleteVnetRoutePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteVnetRouteSender sends the DeleteVnetRoute request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) DeleteVnetRouteSender(req *http.Request) (*http.Response, error) {
@@ -306,6 +324,7 @@ func (client ServerFarmsClient) DeleteVnetRouteSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // DeleteVnetRouteResponder handles the response to the DeleteVnetRoute request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) DeleteVnetRouteResponder(resp *http.Response) (result SetObject, err error) {
@@ -319,6 +338,7 @@ func (client ServerFarmsClient) DeleteVnetRouteResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRouteForVnet sends the get route for vnet request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -345,6 +365,7 @@ func (client ServerFarmsClient) GetRouteForVnet(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRouteForVnetPreparer prepares the GetRouteForVnet request.
 func (client ServerFarmsClient) GetRouteForVnetPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -368,6 +389,7 @@ func (client ServerFarmsClient) GetRouteForVnetPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRouteForVnetSender sends the GetRouteForVnet request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetRouteForVnetSender(req *http.Request) (*http.Response, error) {
@@ -375,6 +397,7 @@ func (client ServerFarmsClient) GetRouteForVnetSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRouteForVnetResponder handles the response to the GetRouteForVnet request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetRouteForVnetResponder(resp *http.Response) (result ListVnetRoute, err error) {
@@ -388,6 +411,7 @@ func (client ServerFarmsClient) GetRouteForVnetResponder(resp *http.Response) (r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRoutesForVnet sends the get routes for vnet request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -413,6 +437,7 @@ func (client ServerFarmsClient) GetRoutesForVnet(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRoutesForVnetPreparer prepares the GetRoutesForVnet request.
 func (client ServerFarmsClient) GetRoutesForVnetPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -435,6 +460,7 @@ func (client ServerFarmsClient) GetRoutesForVnetPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRoutesForVnetSender sends the GetRoutesForVnet request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetRoutesForVnetSender(req *http.Request) (*http.Response, error) {
@@ -442,6 +468,7 @@ func (client ServerFarmsClient) GetRoutesForVnetSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetRoutesForVnetResponder handles the response to the GetRoutesForVnet request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetRoutesForVnetResponder(resp *http.Response) (result ListVnetRoute, err error) {
@@ -455,6 +482,7 @@ func (client ServerFarmsClient) GetRoutesForVnetResponder(resp *http.Response) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarm sends the get server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan
@@ -480,6 +508,7 @@ func (client ServerFarmsClient) GetServerFarm(ctx context.Context, resourceGroup
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmPreparer prepares the GetServerFarm request.
 func (client ServerFarmsClient) GetServerFarmPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -501,6 +530,7 @@ func (client ServerFarmsClient) GetServerFarmPreparer(ctx context.Context, resou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSender sends the GetServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -508,6 +538,7 @@ func (client ServerFarmsClient) GetServerFarmSender(req *http.Request) (*http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmResponder handles the response to the GetServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmResponder(resp *http.Response) (result ServerFarmWithRichSku, err error) {
@@ -521,6 +552,7 @@ func (client ServerFarmsClient) GetServerFarmResponder(resp *http.Response) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricDefintions sends the get server farm metric defintions request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan
@@ -547,6 +579,7 @@ func (client ServerFarmsClient) GetServerFarmMetricDefintions(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricDefintionsPreparer prepares the GetServerFarmMetricDefintions request.
 func (client ServerFarmsClient) GetServerFarmMetricDefintionsPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -568,6 +601,7 @@ func (client ServerFarmsClient) GetServerFarmMetricDefintionsPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricDefintionsSender sends the GetServerFarmMetricDefintions request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmMetricDefintionsSender(req *http.Request) (*http.Response, error) {
@@ -575,6 +609,7 @@ func (client ServerFarmsClient) GetServerFarmMetricDefintionsSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricDefintionsResponder handles the response to the GetServerFarmMetricDefintions request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmMetricDefintionsResponder(resp *http.Response) (result MetricDefinitionCollection, err error) {
@@ -609,12 +644,14 @@ func (client ServerFarmsClient) getServerFarmMetricDefintionsNextResults(lastRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricDefintionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ServerFarmsClient) GetServerFarmMetricDefintionsComplete(ctx context.Context, resourceGroupName string, name string) (result MetricDefinitionCollectionIterator, err error) {
 	result.page, err = client.GetServerFarmMetricDefintions(ctx, resourceGroupName, name)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetrics sends the get server farm metrics request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan details is if true, metrics are
@@ -644,6 +681,7 @@ func (client ServerFarmsClient) GetServerFarmMetrics(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricsPreparer prepares the GetServerFarmMetrics request.
 func (client ServerFarmsClient) GetServerFarmMetricsPreparer(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -671,6 +709,7 @@ func (client ServerFarmsClient) GetServerFarmMetricsPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricsSender sends the GetServerFarmMetrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmMetricsSender(req *http.Request) (*http.Response, error) {
@@ -678,6 +717,7 @@ func (client ServerFarmsClient) GetServerFarmMetricsSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricsResponder handles the response to the GetServerFarmMetrics request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmMetricsResponder(resp *http.Response) (result ResourceMetricCollection, err error) {
@@ -712,12 +752,14 @@ func (client ServerFarmsClient) getServerFarmMetricsNextResults(lastResults Reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmMetricsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ServerFarmsClient) GetServerFarmMetricsComplete(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionIterator, err error) {
 	result.page, err = client.GetServerFarmMetrics(ctx, resourceGroupName, name, details, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmOperation sends the get server farm operation request.
 //
 // resourceGroupName is name of resource group name is name of server farm operationID is id of Server farm
@@ -744,6 +786,7 @@ func (client ServerFarmsClient) GetServerFarmOperation(ctx context.Context, reso
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmOperationPreparer prepares the GetServerFarmOperation request.
 func (client ServerFarmsClient) GetServerFarmOperationPreparer(ctx context.Context, resourceGroupName string, name string, operationID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -766,6 +809,7 @@ func (client ServerFarmsClient) GetServerFarmOperationPreparer(ctx context.Conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmOperationSender sends the GetServerFarmOperation request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmOperationSender(req *http.Request) (*http.Response, error) {
@@ -773,6 +817,7 @@ func (client ServerFarmsClient) GetServerFarmOperationSender(req *http.Request) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmOperationResponder handles the response to the GetServerFarmOperation request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmOperationResponder(resp *http.Response) (result ServerFarmWithRichSku, err error) {
@@ -786,6 +831,7 @@ func (client ServerFarmsClient) GetServerFarmOperationResponder(resp *http.Respo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarms sends the get server farms request.
 //
 // resourceGroupName is name of resource group
@@ -812,6 +858,7 @@ func (client ServerFarmsClient) GetServerFarms(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmsPreparer prepares the GetServerFarms request.
 func (client ServerFarmsClient) GetServerFarmsPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -832,6 +879,7 @@ func (client ServerFarmsClient) GetServerFarmsPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmsSender sends the GetServerFarms request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmsSender(req *http.Request) (*http.Response, error) {
@@ -839,6 +887,7 @@ func (client ServerFarmsClient) GetServerFarmsSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmsResponder handles the response to the GetServerFarms request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmsResponder(resp *http.Response) (result ServerFarmCollection, err error) {
@@ -873,12 +922,14 @@ func (client ServerFarmsClient) getServerFarmsNextResults(lastResults ServerFarm
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ServerFarmsClient) GetServerFarmsComplete(ctx context.Context, resourceGroupName string) (result ServerFarmCollectionIterator, err error) {
 	result.page, err = client.GetServerFarms(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSites sends the get server farm sites request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan skipToken is skip to of web apps in
@@ -909,6 +960,7 @@ func (client ServerFarmsClient) GetServerFarmSites(ctx context.Context, resource
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSitesPreparer prepares the GetServerFarmSites request.
 func (client ServerFarmsClient) GetServerFarmSitesPreparer(ctx context.Context, resourceGroupName string, name string, skipToken string, filter string, top string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -939,6 +991,7 @@ func (client ServerFarmsClient) GetServerFarmSitesPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSitesSender sends the GetServerFarmSites request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmSitesSender(req *http.Request) (*http.Response, error) {
@@ -946,6 +999,7 @@ func (client ServerFarmsClient) GetServerFarmSitesSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSitesResponder handles the response to the GetServerFarmSites request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmSitesResponder(resp *http.Response) (result SiteCollection, err error) {
@@ -980,12 +1034,14 @@ func (client ServerFarmsClient) getServerFarmSitesNextResults(lastResults SiteCo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmSitesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ServerFarmsClient) GetServerFarmSitesComplete(ctx context.Context, resourceGroupName string, name string, skipToken string, filter string, top string) (result SiteCollectionIterator, err error) {
 	result.page, err = client.GetServerFarmSites(ctx, resourceGroupName, name, skipToken, filter, top)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmVnetGateway sends the get server farm vnet gateway request.
 //
 // resourceGroupName is name of resource group name is name of the App Service Plan vnetName is name of the virtual
@@ -1012,6 +1068,7 @@ func (client ServerFarmsClient) GetServerFarmVnetGateway(ctx context.Context, re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmVnetGatewayPreparer prepares the GetServerFarmVnetGateway request.
 func (client ServerFarmsClient) GetServerFarmVnetGatewayPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1035,6 +1092,7 @@ func (client ServerFarmsClient) GetServerFarmVnetGatewayPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmVnetGatewaySender sends the GetServerFarmVnetGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetServerFarmVnetGatewaySender(req *http.Request) (*http.Response, error) {
@@ -1042,6 +1100,7 @@ func (client ServerFarmsClient) GetServerFarmVnetGatewaySender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetServerFarmVnetGatewayResponder handles the response to the GetServerFarmVnetGateway request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetServerFarmVnetGatewayResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -1055,6 +1114,7 @@ func (client ServerFarmsClient) GetServerFarmVnetGatewayResponder(resp *http.Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetFromServerFarm sends the get vnet from server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -1080,6 +1140,7 @@ func (client ServerFarmsClient) GetVnetFromServerFarm(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetFromServerFarmPreparer prepares the GetVnetFromServerFarm request.
 func (client ServerFarmsClient) GetVnetFromServerFarmPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1102,6 +1163,7 @@ func (client ServerFarmsClient) GetVnetFromServerFarmPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetFromServerFarmSender sends the GetVnetFromServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetVnetFromServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -1109,6 +1171,7 @@ func (client ServerFarmsClient) GetVnetFromServerFarmSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetFromServerFarmResponder handles the response to the GetVnetFromServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetVnetFromServerFarmResponder(resp *http.Response) (result VnetInfo, err error) {
@@ -1122,6 +1185,7 @@ func (client ServerFarmsClient) GetVnetFromServerFarmResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetsForServerFarm sends the get vnets for server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan
@@ -1147,6 +1211,7 @@ func (client ServerFarmsClient) GetVnetsForServerFarm(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetsForServerFarmPreparer prepares the GetVnetsForServerFarm request.
 func (client ServerFarmsClient) GetVnetsForServerFarmPreparer(ctx context.Context, resourceGroupName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1168,6 +1233,7 @@ func (client ServerFarmsClient) GetVnetsForServerFarmPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetsForServerFarmSender sends the GetVnetsForServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) GetVnetsForServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -1175,6 +1241,7 @@ func (client ServerFarmsClient) GetVnetsForServerFarmSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // GetVnetsForServerFarmResponder handles the response to the GetVnetsForServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) GetVnetsForServerFarmResponder(resp *http.Response) (result ListVnetInfo, err error) {
@@ -1188,6 +1255,7 @@ func (client ServerFarmsClient) GetVnetsForServerFarmResponder(resp *http.Respon
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RebootWorkerForServerFarm sends the reboot worker for server farm request.
 //
 // resourceGroupName is name of resource group name is name of server farm workerName is name of worker machine,
@@ -1214,6 +1282,7 @@ func (client ServerFarmsClient) RebootWorkerForServerFarm(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RebootWorkerForServerFarmPreparer prepares the RebootWorkerForServerFarm request.
 func (client ServerFarmsClient) RebootWorkerForServerFarmPreparer(ctx context.Context, resourceGroupName string, name string, workerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1236,6 +1305,7 @@ func (client ServerFarmsClient) RebootWorkerForServerFarmPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RebootWorkerForServerFarmSender sends the RebootWorkerForServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) RebootWorkerForServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -1243,6 +1313,7 @@ func (client ServerFarmsClient) RebootWorkerForServerFarmSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RebootWorkerForServerFarmResponder handles the response to the RebootWorkerForServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) RebootWorkerForServerFarmResponder(resp *http.Response) (result SetObject, err error) {
@@ -1256,6 +1327,7 @@ func (client ServerFarmsClient) RebootWorkerForServerFarmResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSitesForServerFarm sends the restart sites for server farm request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan softRestart is soft restart applies
@@ -1283,6 +1355,7 @@ func (client ServerFarmsClient) RestartSitesForServerFarm(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSitesForServerFarmPreparer prepares the RestartSitesForServerFarm request.
 func (client ServerFarmsClient) RestartSitesForServerFarmPreparer(ctx context.Context, resourceGroupName string, name string, softRestart *bool) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1307,6 +1380,7 @@ func (client ServerFarmsClient) RestartSitesForServerFarmPreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSitesForServerFarmSender sends the RestartSitesForServerFarm request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) RestartSitesForServerFarmSender(req *http.Request) (*http.Response, error) {
@@ -1314,6 +1388,7 @@ func (client ServerFarmsClient) RestartSitesForServerFarmSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // RestartSitesForServerFarmResponder handles the response to the RestartSitesForServerFarm request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) RestartSitesForServerFarmResponder(resp *http.Response) (result SetObject, err error) {
@@ -1327,6 +1402,7 @@ func (client ServerFarmsClient) RestartSitesForServerFarmResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateServerFarmVnetGateway sends the update server farm vnet gateway request.
 //
 // resourceGroupName is the resource group name is the name of the App Service Plan vnetName is the name of the
@@ -1354,6 +1430,7 @@ func (client ServerFarmsClient) UpdateServerFarmVnetGateway(ctx context.Context,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateServerFarmVnetGatewayPreparer prepares the UpdateServerFarmVnetGateway request.
 func (client ServerFarmsClient) UpdateServerFarmVnetGatewayPreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1370,7 +1447,7 @@ func (client ServerFarmsClient) UpdateServerFarmVnetGatewayPreparer(ctx context.
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/gateways/{gatewayName}", pathParameters),
@@ -1379,6 +1456,7 @@ func (client ServerFarmsClient) UpdateServerFarmVnetGatewayPreparer(ctx context.
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateServerFarmVnetGatewaySender sends the UpdateServerFarmVnetGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) UpdateServerFarmVnetGatewaySender(req *http.Request) (*http.Response, error) {
@@ -1386,6 +1464,7 @@ func (client ServerFarmsClient) UpdateServerFarmVnetGatewaySender(req *http.Requ
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateServerFarmVnetGatewayResponder handles the response to the UpdateServerFarmVnetGateway request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) UpdateServerFarmVnetGatewayResponder(resp *http.Response) (result VnetGateway, err error) {
@@ -1399,6 +1478,7 @@ func (client ServerFarmsClient) UpdateServerFarmVnetGatewayResponder(resp *http.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateVnetRoute sends the update vnet route request.
 //
 // resourceGroupName is name of resource group name is name of App Service Plan vnetName is name of virtual network
@@ -1425,6 +1505,7 @@ func (client ServerFarmsClient) UpdateVnetRoute(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateVnetRoutePreparer prepares the UpdateVnetRoute request.
 func (client ServerFarmsClient) UpdateVnetRoutePreparer(ctx context.Context, resourceGroupName string, name string, vnetName string, routeName string, route VnetRoute) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -1441,7 +1522,7 @@ func (client ServerFarmsClient) UpdateVnetRoutePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}/virtualNetworkConnections/{vnetName}/routes/{routeName}", pathParameters),
@@ -1450,6 +1531,7 @@ func (client ServerFarmsClient) UpdateVnetRoutePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateVnetRouteSender sends the UpdateVnetRoute request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerFarmsClient) UpdateVnetRouteSender(req *http.Request) (*http.Response, error) {
@@ -1457,6 +1539,7 @@ func (client ServerFarmsClient) UpdateVnetRouteSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/web/mgmt/2015-08-preview/web instead.
 // UpdateVnetRouteResponder handles the response to the UpdateVnetRoute request. The method always
 // closes the http.Response Body.
 func (client ServerFarmsClient) UpdateVnetRouteResponder(resp *http.Response) (result VnetRoute, err error) {

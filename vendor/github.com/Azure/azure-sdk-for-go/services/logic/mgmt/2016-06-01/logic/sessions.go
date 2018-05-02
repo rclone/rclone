@@ -41,9 +41,11 @@ func NewSessionsClientWithBaseURI(baseURI string, subscriptionID string) Session
 }
 
 // CreateOrUpdate creates or updates an integration account session.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// sessionName is the integration account session name. session is the integration account session.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// sessionName - the integration account session name.
+// session - the integration account session.
 func (client SessionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, sessionName string, session IntegrationAccountSession) (result IntegrationAccountSession, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: session,
@@ -87,7 +89,7 @@ func (client SessionsClient) CreateOrUpdatePreparer(ctx context.Context, resourc
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/sessions/{sessionName}", pathParameters),
@@ -117,9 +119,10 @@ func (client SessionsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 }
 
 // Delete deletes an integration account session.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// sessionName is the integration account session name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// sessionName - the integration account session name.
 func (client SessionsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, sessionName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, sessionName)
 	if err != nil {
@@ -184,9 +187,10 @@ func (client SessionsClient) DeleteResponder(resp *http.Response) (result autore
 }
 
 // Get gets an integration account session.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
-// sessionName is the integration account session name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// sessionName - the integration account session name.
 func (client SessionsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, sessionName string) (result IntegrationAccountSession, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, sessionName)
 	if err != nil {
@@ -252,9 +256,11 @@ func (client SessionsClient) GetResponder(resp *http.Response) (result Integrati
 }
 
 // ListByIntegrationAccounts gets a list of integration account sessions.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. top is the
-// number of items to be included in the result. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client SessionsClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountSessionListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

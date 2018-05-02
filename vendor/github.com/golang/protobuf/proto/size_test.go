@@ -38,7 +38,7 @@ import (
 
 	. "github.com/golang/protobuf/proto"
 	proto3pb "github.com/golang/protobuf/proto/proto3_proto"
-	pb "github.com/golang/protobuf/proto/testdata"
+	pb "github.com/golang/protobuf/proto/test_proto"
 )
 
 var messageWithExtension1 = &pb.MyMessage{Count: Int32(7)}
@@ -57,6 +57,30 @@ func init() {
 	// Force messageWithExtension3 to have the extension encoded.
 	Marshal(messageWithExtension3)
 
+}
+
+// non-pointer custom message
+type nonptrMessage struct{}
+
+func (m nonptrMessage) ProtoMessage()  {}
+func (m nonptrMessage) Reset()         {}
+func (m nonptrMessage) String() string { return "" }
+
+func (m nonptrMessage) Marshal() ([]byte, error) {
+	return []byte{42}, nil
+}
+
+// custom message embedding a proto.Message
+type messageWithEmbedding struct {
+	*pb.OtherMessage
+}
+
+func (m *messageWithEmbedding) ProtoMessage()  {}
+func (m *messageWithEmbedding) Reset()         {}
+func (m *messageWithEmbedding) String() string { return "" }
+
+func (m *messageWithEmbedding) Marshal() ([]byte, error) {
+	return []byte{42}, nil
 }
 
 var SizeTests = []struct {
@@ -146,6 +170,9 @@ var SizeTests = []struct {
 	{"oneof group", &pb.Oneof{Union: &pb.Oneof_FGroup{&pb.Oneof_F_Group{X: Int32(52)}}}},
 	{"oneof largest tag", &pb.Oneof{Union: &pb.Oneof_F_Largest_Tag{1}}},
 	{"multiple oneofs", &pb.Oneof{Union: &pb.Oneof_F_Int32{1}, Tormato: &pb.Oneof_Value{2}}},
+
+	{"non-pointer message", nonptrMessage{}},
+	{"custom message with embedding", &messageWithEmbedding{&pb.OtherMessage{}}},
 }
 
 func TestSize(t *testing.T) {

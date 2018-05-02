@@ -42,10 +42,12 @@ func NewDpsCertificateClientWithBaseURI(baseURI string, subscriptionID string) D
 }
 
 // CreateOrUpdate add new certificate or update an existing certificate.
-//
-// resourceGroupName is resource group identifier. provisioningServiceName is the name of the provisioning service.
-// certificateName is the name of the certificate create or update. certificateDescription is the certificate body.
-// ifMatch is eTag of the certificate. This is required to update an existing certificate, and ignored while
+// Parameters:
+// resourceGroupName - resource group identifier.
+// provisioningServiceName - the name of the provisioning service.
+// certificateName - the name of the certificate create or update.
+// certificateDescription - the certificate body.
+// ifMatch - eTag of the certificate. This is required to update an existing certificate, and ignored while
 // creating a brand new certificate.
 func (client DpsCertificateClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, provisioningServiceName string, certificateName string, certificateDescription CertificateBodyDescription, ifMatch string) (result CertificateResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -90,7 +92,7 @@ func (client DpsCertificateClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}/certificates/{certificateName}", pathParameters),
@@ -124,15 +126,20 @@ func (client DpsCertificateClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete deletes the specified certificate assosciated with the Provisioning Service
-//
-// resourceGroupName is resource group identifier. ifMatch is eTag of the certificate provisioningServiceName is
-// the name of the provisioning service. certificateName is this is a mandatory field, and is the logical name of
-// the certificate that the provisioning service will access by. certificatename is this is optional, and it is the
-// Common Name of the certificate. certificaterawBytes is raw data within the certificate. certificateisVerified is
-// indicates if certificate has been verified by owner of the private key. certificatepurpose is a description that
-// mentions the purpose of the certificate. certificatecreated is time the certificate is created.
-// certificatelastUpdated is time the certificate is last updated. certificatehasPrivateKey is indicates if the
-// certificate contains a private key. certificatenonce is random number generated to indicate Proof of Possession.
+// Parameters:
+// resourceGroupName - resource group identifier.
+// ifMatch - eTag of the certificate
+// provisioningServiceName - the name of the provisioning service.
+// certificateName - this is a mandatory field, and is the logical name of the certificate that the
+// provisioning service will access by.
+// certificatename - this is optional, and it is the Common Name of the certificate.
+// certificaterawBytes - raw data within the certificate.
+// certificateisVerified - indicates if certificate has been verified by owner of the private key.
+// certificatepurpose - a description that mentions the purpose of the certificate.
+// certificatecreated - time the certificate is created.
+// certificatelastUpdated - time the certificate is last updated.
+// certificatehasPrivateKey - indicates if the certificate contains a private key.
+// certificatenonce - random number generated to indicate Proof of Possession.
 func (client DpsCertificateClient) Delete(ctx context.Context, resourceGroupName string, ifMatch string, provisioningServiceName string, certificateName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, ifMatch, provisioningServiceName, certificateName, certificatename, certificaterawBytes, certificateisVerified, certificatepurpose, certificatecreated, certificatelastUpdated, certificatehasPrivateKey, certificatenonce)
 	if err != nil {
@@ -222,16 +229,21 @@ func (client DpsCertificateClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // GenerateVerificationCode generate verification code for Proof of Possession.
-//
-// certificateName is the mandatory logical name of the certificate, that the provisioning service uses to access.
-// ifMatch is eTag of the certificate. This is required to update an existing certificate, and ignored while
-// creating a brand new certificate. resourceGroupName is name of resource group. provisioningServiceName is name
-// of provisioning service. certificatename is common Name for the certificate. certificaterawBytes is raw data of
-// certificate. certificateisVerified is indicates if the certificate has been verified by owner of the private
-// key. certificatepurpose is description mentioning the purpose of the certificate. certificatecreated is
-// certificate creation time. certificatelastUpdated is certificate last updated time. certificatehasPrivateKey is
-// indicates if the certificate contains private key. certificatenonce is random number generated to indicate Proof
-// of Possession.
+// Parameters:
+// certificateName - the mandatory logical name of the certificate, that the provisioning service uses to
+// access.
+// ifMatch - eTag of the certificate. This is required to update an existing certificate, and ignored while
+// creating a brand new certificate.
+// resourceGroupName - name of resource group.
+// provisioningServiceName - name of provisioning service.
+// certificatename - common Name for the certificate.
+// certificaterawBytes - raw data of certificate.
+// certificateisVerified - indicates if the certificate has been verified by owner of the private key.
+// certificatepurpose - description mentioning the purpose of the certificate.
+// certificatecreated - certificate creation time.
+// certificatelastUpdated - certificate last updated time.
+// certificatehasPrivateKey - indicates if the certificate contains private key.
+// certificatenonce - random number generated to indicate Proof of Possession.
 func (client DpsCertificateClient) GenerateVerificationCode(ctx context.Context, certificateName string, ifMatch string, resourceGroupName string, provisioningServiceName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (result VerificationCodeResponse, err error) {
 	req, err := client.GenerateVerificationCodePreparer(ctx, certificateName, ifMatch, resourceGroupName, provisioningServiceName, certificatename, certificaterawBytes, certificateisVerified, certificatepurpose, certificatecreated, certificatelastUpdated, certificatehasPrivateKey, certificatenonce)
 	if err != nil {
@@ -322,10 +334,11 @@ func (client DpsCertificateClient) GenerateVerificationCodeResponder(resp *http.
 }
 
 // Get get the certificate from the provisioning service.
-//
-// certificateName is name of the certificate to retrieve. resourceGroupName is resource group identifier.
-// provisioningServiceName is name of the provisioning service the certificate is associated with. ifMatch is eTag
-// of the certificate.
+// Parameters:
+// certificateName - name of the certificate to retrieve.
+// resourceGroupName - resource group identifier.
+// provisioningServiceName - name of the provisioning service the certificate is associated with.
+// ifMatch - eTag of the certificate.
 func (client DpsCertificateClient) Get(ctx context.Context, certificateName string, resourceGroupName string, provisioningServiceName string, ifMatch string) (result CertificateResponse, err error) {
 	req, err := client.GetPreparer(ctx, certificateName, resourceGroupName, provisioningServiceName, ifMatch)
 	if err != nil {
@@ -394,17 +407,90 @@ func (client DpsCertificateClient) GetResponder(resp *http.Response) (result Cer
 	return
 }
 
+// List get all the certificates tied to the provisioning service.
+// Parameters:
+// resourceGroupName - name of resource group.
+// provisioningServiceName - name of provisioning service to retrieve certificates for.
+func (client DpsCertificateClient) List(ctx context.Context, resourceGroupName string, provisioningServiceName string) (result CertificateListDescription, err error) {
+	req, err := client.ListPreparer(ctx, resourceGroupName, provisioningServiceName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "iothub.DpsCertificateClient", "List", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "iothub.DpsCertificateClient", "List", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "iothub.DpsCertificateClient", "List", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListPreparer prepares the List request.
+func (client DpsCertificateClient) ListPreparer(ctx context.Context, resourceGroupName string, provisioningServiceName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"provisioningServiceName": autorest.Encode("path", provisioningServiceName),
+		"resourceGroupName":       autorest.Encode("path", resourceGroupName),
+		"subscriptionId":          autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-11-15"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}/certificates", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListSender sends the List request. The method will close the
+// http.Response Body if it receives an error.
+func (client DpsCertificateClient) ListSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListResponder handles the response to the List request. The method always
+// closes the http.Response Body.
+func (client DpsCertificateClient) ListResponder(resp *http.Response) (result CertificateListDescription, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // VerifyCertificate verifies the certificate's private key possession by providing the leaf cert issued by the
 // verifying pre uploaded certificate.
-//
-// certificateName is the mandatory logical name of the certificate, that the provisioning service uses to access.
-// ifMatch is eTag of the certificate. request is the name of the certificate resourceGroupName is resource group
-// name. provisioningServiceName is provisioning service name. certificatename is common Name for the certificate.
-// certificaterawBytes is raw data of certificate. certificateisVerified is indicates if the certificate has been
-// verified by owner of the private key. certificatepurpose is describe the purpose of the certificate.
-// certificatecreated is certificate creation time. certificatelastUpdated is certificate last updated time.
-// certificatehasPrivateKey is indicates if the certificate contains private key. certificatenonce is random number
-// generated to indicate Proof of Possession.
+// Parameters:
+// certificateName - the mandatory logical name of the certificate, that the provisioning service uses to
+// access.
+// ifMatch - eTag of the certificate.
+// request - the name of the certificate
+// resourceGroupName - resource group name.
+// provisioningServiceName - provisioning service name.
+// certificatename - common Name for the certificate.
+// certificaterawBytes - raw data of certificate.
+// certificateisVerified - indicates if the certificate has been verified by owner of the private key.
+// certificatepurpose - describe the purpose of the certificate.
+// certificatecreated - certificate creation time.
+// certificatelastUpdated - certificate last updated time.
+// certificatehasPrivateKey - indicates if the certificate contains private key.
+// certificatenonce - random number generated to indicate Proof of Possession.
 func (client DpsCertificateClient) VerifyCertificate(ctx context.Context, certificateName string, ifMatch string, request VerificationCodeRequest, resourceGroupName string, provisioningServiceName string, certificatename string, certificaterawBytes []byte, certificateisVerified *bool, certificatepurpose CertificatePurpose, certificatecreated *date.Time, certificatelastUpdated *date.Time, certificatehasPrivateKey *bool, certificatenonce string) (result CertificateResponse, err error) {
 	req, err := client.VerifyCertificatePreparer(ctx, certificateName, ifMatch, request, resourceGroupName, provisioningServiceName, certificatename, certificaterawBytes, certificateisVerified, certificatepurpose, certificatecreated, certificatelastUpdated, certificatehasPrivateKey, certificatenonce)
 	if err != nil {
@@ -466,7 +552,7 @@ func (client DpsCertificateClient) VerifyCertificatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}/certificates/{certificateName}/verify", pathParameters),

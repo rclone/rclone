@@ -23,6 +23,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Transaction represents a Firestore transaction.
@@ -172,7 +173,7 @@ func (c *Client) RunTransaction(ctx context.Context, f func(context.Context, *Tr
 		}
 		// Use exponential backoff to avoid contention with other running
 		// transactions.
-		if cerr := gax.Sleep(ctx, backoff.Pause()); cerr != nil {
+		if cerr := sleep(ctx, backoff.Pause()); cerr != nil {
 			err = cerr
 			break
 		}
@@ -198,24 +199,21 @@ func (t *Transaction) rollback() {
 // Get gets the document in the context of the transaction. The transaction holds a
 // pessimistic lock on the returned document.
 func (t *Transaction) Get(dr *DocumentRef) (*DocumentSnapshot, error) {
-	if len(t.writes) > 0 {
-		t.readAfterWrite = true
-		return nil, errReadAfterWrite
-	}
-	docProto, err := t.c.c.GetDocument(t.ctx, &pb.GetDocumentRequest{
-		Name:                dr.Path,
-		ConsistencySelector: &pb.GetDocumentRequest_Transaction{t.id},
-	})
+	docsnaps, err := t.GetAll([]*DocumentRef{dr})
 	if err != nil {
 		return nil, err
 	}
-	return newDocumentSnapshot(dr, docProto, t.c)
+	ds := docsnaps[0]
+	if !ds.Exists() {
+		return ds, status.Errorf(codes.NotFound, "%q not found", dr.Path)
+	}
+	return ds, nil
 }
 
 // GetAll retrieves multiple documents with a single call. The DocumentSnapshots are
 // returned in the order of the given DocumentRefs. If a document is not present, the
-// corresponding DocumentSnapshot will be nil. The transaction holds a pessimistic
-// lock on all of the returned documents.
+// corresponding DocumentSnapshot's Exists method will return false. The transaction
+// holds a pessimistic lock on all of the returned documents.
 func (t *Transaction) GetAll(drs []*DocumentRef) ([]*DocumentSnapshot, error) {
 	if len(t.writes) > 0 {
 		t.readAfterWrite = true
@@ -238,9 +236,7 @@ func (t *Transaction) Documents(q Queryer) *DocumentIterator {
 		return &DocumentIterator{err: errReadAfterWrite}
 	}
 	return &DocumentIterator{
-		ctx: t.ctx,
-		q:   q.query(),
-		tid: t.id,
+		iter: newQueryDocumentIterator(t.ctx, q.query(), t.id),
 	}
 }
 

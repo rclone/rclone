@@ -488,16 +488,17 @@ func New(p client.ConfigProvider, cfgs ...*aws.Config) *{{ .StructName }} {
 	{{- else -}}
 		c := p.ClientConfig({{ EndpointsIDValue . }}, cfgs...)
 	{{- end }}
+
+	{{- if .Metadata.SigningName }}
+		if c.SigningNameDerived || len(c.SigningName) == 0{
+			c.SigningName = "{{ .Metadata.SigningName }}"
+		}
+	{{- end }}
 	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
 func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *{{ .StructName }} {
-	{{- if .Metadata.SigningName }}
-		if len(signingName) == 0 {
-			signingName = "{{ .Metadata.SigningName }}"
-		}
-	{{- end }}
     svc := &{{ .StructName }}{
     	Client: client.New(
     		cfg,
@@ -800,4 +801,53 @@ func (a *API) APIErrorsGoCode() string {
 	}
 
 	return strings.TrimSpace(buf.String())
+}
+
+// removeOperation removes an operation, its input/output shapes, as well as
+// any references/shapes that are unique to this operation.
+func (a *API) removeOperation(name string) {
+	fmt.Println("removing operation,", name)
+	op := a.Operations[name]
+
+	delete(a.Operations, name)
+	delete(a.Examples, name)
+
+	a.removeShape(op.InputRef.Shape)
+	a.removeShape(op.OutputRef.Shape)
+}
+
+// removeShape removes the given shape, and all form member's reference target
+// shapes. Will also remove member reference targeted shapes if those shapes do
+// not have any additional references.
+func (a *API) removeShape(s *Shape) {
+	fmt.Println("removing shape,", s.ShapeName)
+
+	delete(a.Shapes, s.ShapeName)
+
+	for name, ref := range s.MemberRefs {
+		a.removeShapeRef(ref)
+		delete(s.MemberRefs, name)
+	}
+
+	for _, ref := range []*ShapeRef{&s.MemberRef, &s.KeyRef, &s.ValueRef} {
+		if ref.Shape == nil {
+			continue
+		}
+		a.removeShapeRef(ref)
+		*ref = ShapeRef{}
+	}
+}
+
+// removeShapeRef removes the shape reference from its target shape. If the
+// reference was the last reference to the target shape, the shape will also be
+// removed.
+func (a *API) removeShapeRef(ref *ShapeRef) {
+	if ref.Shape == nil {
+		return
+	}
+
+	ref.Shape.removeRef(ref)
+	if len(ref.Shape.refs) == 0 {
+		a.removeShape(ref.Shape)
+	}
 }

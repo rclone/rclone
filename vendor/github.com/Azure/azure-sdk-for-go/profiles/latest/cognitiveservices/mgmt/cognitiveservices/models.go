@@ -22,36 +22,13 @@ package cognitiveservices
 import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/mgmt/2017-04-18/cognitiveservices"
 
 type AccountsClient = original.AccountsClient
-
-func NewAccountsClient(subscriptionID string) AccountsClient {
-	return original.NewAccountsClient(subscriptionID)
-}
-func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
-	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
-}
-
 type CheckSkuAvailabilityClient = original.CheckSkuAvailabilityClient
-
-func NewCheckSkuAvailabilityClient(subscriptionID string) CheckSkuAvailabilityClient {
-	return original.NewCheckSkuAvailabilityClient(subscriptionID)
-}
-func NewCheckSkuAvailabilityClientWithBaseURI(baseURI string, subscriptionID string) CheckSkuAvailabilityClient {
-	return original.NewCheckSkuAvailabilityClientWithBaseURI(baseURI, subscriptionID)
-}
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type KeyName = original.KeyName
 
 const (
@@ -62,28 +39,25 @@ const (
 type Kind = original.Kind
 
 const (
-	Academic           Kind = original.Academic
-	BingAutosuggest    Kind = original.BingAutosuggest
-	BingAutosuggestv7  Kind = original.BingAutosuggestv7
-	BingCustomSearch   Kind = original.BingCustomSearch
-	BingSearch         Kind = original.BingSearch
-	BingSearchv7       Kind = original.BingSearchv7
-	BingSpeech         Kind = original.BingSpeech
-	BingSpellCheck     Kind = original.BingSpellCheck
-	BingSpellCheckv7   Kind = original.BingSpellCheckv7
-	ComputerVision     Kind = original.ComputerVision
-	ContentModerator   Kind = original.ContentModerator
-	CustomSpeech       Kind = original.CustomSpeech
-	Emotion            Kind = original.Emotion
-	Face               Kind = original.Face
-	LUIS               Kind = original.LUIS
-	Recommendations    Kind = original.Recommendations
-	SpeakerRecognition Kind = original.SpeakerRecognition
-	Speech             Kind = original.Speech
-	SpeechTranslation  Kind = original.SpeechTranslation
-	TextAnalytics      Kind = original.TextAnalytics
-	TextTranslation    Kind = original.TextTranslation
-	WebLM              Kind = original.WebLM
+	BingAutosuggestv7      Kind = original.BingAutosuggestv7
+	BingCustomSearch       Kind = original.BingCustomSearch
+	BingSearchv7           Kind = original.BingSearchv7
+	BingSpeech             Kind = original.BingSpeech
+	BingSpellCheckv7       Kind = original.BingSpellCheckv7
+	ComputerVision         Kind = original.ComputerVision
+	ContentModerator       Kind = original.ContentModerator
+	CustomSpeech           Kind = original.CustomSpeech
+	CustomVisionPrediction Kind = original.CustomVisionPrediction
+	CustomVisionTraining   Kind = original.CustomVisionTraining
+	Emotion                Kind = original.Emotion
+	Face                   Kind = original.Face
+	LUIS                   Kind = original.LUIS
+	QnAMaker               Kind = original.QnAMaker
+	SpeakerRecognition     Kind = original.SpeakerRecognition
+	SpeechTranslation      Kind = original.SpeechTranslation
+	TextAnalytics          Kind = original.TextAnalytics
+	TextTranslation        Kind = original.TextTranslation
+	WebLM                  Kind = original.WebLM
 )
 
 type ProvisioningState = original.ProvisioningState
@@ -95,6 +69,29 @@ const (
 	Moving       ProvisioningState = original.Moving
 	ResolvingDNS ProvisioningState = original.ResolvingDNS
 	Succeeded    ProvisioningState = original.Succeeded
+)
+
+type QuotaUsageStatus = original.QuotaUsageStatus
+
+const (
+	Blocked   QuotaUsageStatus = original.Blocked
+	Included  QuotaUsageStatus = original.Included
+	InOverage QuotaUsageStatus = original.InOverage
+	Unknown   QuotaUsageStatus = original.Unknown
+)
+
+type ResourceSkuRestrictionsReasonCode = original.ResourceSkuRestrictionsReasonCode
+
+const (
+	NotAvailableForSubscription ResourceSkuRestrictionsReasonCode = original.NotAvailableForSubscription
+	QuotaID                     ResourceSkuRestrictionsReasonCode = original.QuotaID
+)
+
+type ResourceSkuRestrictionsType = original.ResourceSkuRestrictionsType
+
+const (
+	Location ResourceSkuRestrictionsType = original.Location
+	Zone     ResourceSkuRestrictionsType = original.Zone
 )
 
 type SkuName = original.SkuName
@@ -121,6 +118,18 @@ const (
 	Standard SkuTier = original.Standard
 )
 
+type UnitType = original.UnitType
+
+const (
+	Bytes          UnitType = original.Bytes
+	BytesPerSecond UnitType = original.BytesPerSecond
+	Count          UnitType = original.Count
+	CountPerSecond UnitType = original.CountPerSecond
+	Milliseconds   UnitType = original.Milliseconds
+	Percent        UnitType = original.Percent
+	Seconds        UnitType = original.Seconds
+)
+
 type Account = original.Account
 type AccountCreateParameters = original.AccountCreateParameters
 type AccountEnumerateSkusResult = original.AccountEnumerateSkusResult
@@ -135,6 +144,7 @@ type CheckSkuAvailabilityResult = original.CheckSkuAvailabilityResult
 type CheckSkuAvailabilityResultList = original.CheckSkuAvailabilityResultList
 type Error = original.Error
 type ErrorBody = original.ErrorBody
+type MetricName = original.MetricName
 type OperationDisplayInfo = original.OperationDisplayInfo
 type OperationEntity = original.OperationEntity
 type OperationEntityListResult = original.OperationEntityListResult
@@ -142,14 +152,74 @@ type OperationEntityListResultIterator = original.OperationEntityListResultItera
 type OperationEntityListResultPage = original.OperationEntityListResultPage
 type RegenerateKeyParameters = original.RegenerateKeyParameters
 type ResourceAndSku = original.ResourceAndSku
+type ResourceSku = original.ResourceSku
+type ResourceSkuRestrictionInfo = original.ResourceSkuRestrictionInfo
+type ResourceSkuRestrictions = original.ResourceSkuRestrictions
+type ResourceSkusResult = original.ResourceSkusResult
+type ResourceSkusResultIterator = original.ResourceSkusResultIterator
+type ResourceSkusResultPage = original.ResourceSkusResultPage
 type Sku = original.Sku
+type Usage = original.Usage
+type UsagesResult = original.UsagesResult
 type OperationsClient = original.OperationsClient
+type ResourceSkusClient = original.ResourceSkusClient
 
+func NewAccountsClient(subscriptionID string) AccountsClient {
+	return original.NewAccountsClient(subscriptionID)
+}
+func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) AccountsClient {
+	return original.NewAccountsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewCheckSkuAvailabilityClient(subscriptionID string) CheckSkuAvailabilityClient {
+	return original.NewCheckSkuAvailabilityClient(subscriptionID)
+}
+func NewCheckSkuAvailabilityClientWithBaseURI(baseURI string, subscriptionID string) CheckSkuAvailabilityClient {
+	return original.NewCheckSkuAvailabilityClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleKeyNameValues() []KeyName {
+	return original.PossibleKeyNameValues()
+}
+func PossibleKindValues() []Kind {
+	return original.PossibleKindValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleQuotaUsageStatusValues() []QuotaUsageStatus {
+	return original.PossibleQuotaUsageStatusValues()
+}
+func PossibleResourceSkuRestrictionsReasonCodeValues() []ResourceSkuRestrictionsReasonCode {
+	return original.PossibleResourceSkuRestrictionsReasonCodeValues()
+}
+func PossibleResourceSkuRestrictionsTypeValues() []ResourceSkuRestrictionsType {
+	return original.PossibleResourceSkuRestrictionsTypeValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleSkuTierValues() []SkuTier {
+	return original.PossibleSkuTierValues()
+}
+func PossibleUnitTypeValues() []UnitType {
+	return original.PossibleUnitTypeValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewResourceSkusClient(subscriptionID string) ResourceSkusClient {
+	return original.NewResourceSkusClient(subscriptionID)
+}
+func NewResourceSkusClientWithBaseURI(baseURI string, subscriptionID string) ResourceSkusClient {
+	return original.NewResourceSkusClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"

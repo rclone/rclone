@@ -2264,7 +2264,8 @@
         "binaryMediaTypes":{"shape":"ListOfString"},
         "minimumCompressionSize":{"shape":"NullableInteger"},
         "apiKeySource":{"shape":"ApiKeySourceType"},
-        "endpointConfiguration":{"shape":"EndpointConfiguration"}
+        "endpointConfiguration":{"shape":"EndpointConfiguration"},
+        "policy":{"shape":"String"}
       }
     },
     "CreateStageRequest":{
@@ -4568,7 +4569,8 @@
         "binaryMediaTypes":{"shape":"ListOfString"},
         "minimumCompressionSize":{"shape":"NullableInteger"},
         "apiKeySource":{"shape":"ApiKeySourceType"},
-        "endpointConfiguration":{"shape":"EndpointConfiguration"}
+        "endpointConfiguration":{"shape":"EndpointConfiguration"},
+        "policy":{"shape":"String"}
       }
     },
     "RestApis":{

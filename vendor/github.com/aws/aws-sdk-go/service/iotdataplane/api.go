@@ -14,7 +14,7 @@ const opDeleteThingShadow = "DeleteThingShadow"
 
 // DeleteThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteThingShadow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -114,7 +114,7 @@ const opGetThingShadow = "GetThingShadow"
 
 // GetThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the GetThingShadow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -214,7 +214,7 @@ const opPublish = "Publish"
 
 // PublishRequest generates a "aws/request.Request" representing the
 // client's request for the Publish operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -304,7 +304,7 @@ const opUpdateThingShadow = "UpdateThingShadow"
 
 // UpdateThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateThingShadow operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.

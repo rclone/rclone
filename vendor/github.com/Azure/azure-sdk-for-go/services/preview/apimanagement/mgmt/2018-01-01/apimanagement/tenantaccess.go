@@ -41,8 +41,9 @@ func NewTenantAccessClientWithBaseURI(baseURI string, subscriptionID string) Ten
 }
 
 // Get get tenant access information details.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessClient) Get(ctx context.Context, resourceGroupName string, serviceName string) (result AccessInformationContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -116,8 +117,9 @@ func (client TenantAccessClient) GetResponder(resp *http.Response) (result Acces
 }
 
 // RegeneratePrimaryKey regenerate primary access key.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -190,8 +192,9 @@ func (client TenantAccessClient) RegeneratePrimaryKeyResponder(resp *http.Respon
 }
 
 // RegenerateSecondaryKey regenerate secondary access key.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
 func (client TenantAccessClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -264,11 +267,12 @@ func (client TenantAccessClient) RegenerateSecondaryKeyResponder(resp *http.Resp
 }
 
 // Update update tenant access information details.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is parameters supplied to retrieve the Tenant Access Information. ifMatch is eTag of the Entity. ETag
-// should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// parameters - parameters supplied to retrieve the Tenant Access Information.
+// ifMatch - eTag of the Entity. ETag should match the current entity state from the header response of the GET
+// request or it should be * for unconditional update.
 func (client TenantAccessClient) Update(ctx context.Context, resourceGroupName string, serviceName string, parameters AccessInformationUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

@@ -4,7 +4,8 @@
 
 package main
 
-//go:generate gotext update -out catalog.go
+//go:generate gotext extract --lang=de,zh
+//go:generate gotext generate -out catalog.go
 
 import (
 	"golang.org/x/text/language"

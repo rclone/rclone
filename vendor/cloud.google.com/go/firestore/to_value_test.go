@@ -20,54 +20,58 @@ import (
 	"testing"
 	"time"
 
+	ts "github.com/golang/protobuf/ptypes/timestamp"
 	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
 
 	"google.golang.org/genproto/googleapis/type/latlng"
 )
 
 type testStruct1 struct {
-	B bool
-	I int
-	U uint32
-	F float64
-	S string
-	Y []byte
-	T time.Time
-	G *latlng.LatLng
-	L []int
-	M map[string]int
-	P *int
+	B  bool
+	I  int
+	U  uint32
+	F  float64
+	S  string
+	Y  []byte
+	T  time.Time
+	Ts *ts.Timestamp
+	G  *latlng.LatLng
+	L  []int
+	M  map[string]int
+	P  *int
 }
 
 var (
 	p = new(int)
 
 	testVal1 = testStruct1{
-		B: true,
-		I: 1,
-		U: 2,
-		F: 3.0,
-		S: "four",
-		Y: []byte{5},
-		T: tm,
-		G: ll,
-		L: []int{6},
-		M: map[string]int{"a": 7},
-		P: p,
+		B:  true,
+		I:  1,
+		U:  2,
+		F:  3.0,
+		S:  "four",
+		Y:  []byte{5},
+		T:  tm,
+		Ts: ptm,
+		G:  ll,
+		L:  []int{6},
+		M:  map[string]int{"a": 7},
+		P:  p,
 	}
 
 	mapVal1 = mapval(map[string]*pb.Value{
-		"B": boolval(true),
-		"I": intval(1),
-		"U": intval(2),
-		"F": floatval(3),
-		"S": &pb.Value{&pb.Value_StringValue{"four"}},
-		"Y": bytesval([]byte{5}),
-		"T": tsval(tm),
-		"G": geoval(ll),
-		"L": arrayval(intval(6)),
-		"M": mapval(map[string]*pb.Value{"a": intval(7)}),
-		"P": intval(8),
+		"B":  boolval(true),
+		"I":  intval(1),
+		"U":  intval(2),
+		"F":  floatval(3),
+		"S":  &pb.Value{&pb.Value_StringValue{"four"}},
+		"Y":  bytesval([]byte{5}),
+		"T":  tsval(tm),
+		"Ts": &pb.Value{&pb.Value_TimestampValue{ptm}},
+		"G":  geoval(ll),
+		"L":  arrayval(intval(6)),
+		"M":  mapval(map[string]*pb.Value{"a": intval(7)}),
+		"P":  intval(8),
 	})
 )
 
@@ -81,6 +85,7 @@ func TestToProtoValue(t *testing.T) {
 		{[]int(nil), nullValue},
 		{map[string]int(nil), nullValue},
 		{(*testStruct1)(nil), nullValue},
+		{(*ts.Timestamp)(nil), nullValue},
 		{(*latlng.LatLng)(nil), nullValue},
 		{(*DocumentRef)(nil), nullValue},
 		{true, boolval(true)},
@@ -90,6 +95,7 @@ func TestToProtoValue(t *testing.T) {
 		{"str", strval("str")},
 		{[]byte{1, 2}, bytesval([]byte{1, 2})},
 		{tm, tsval(tm)},
+		{ptm, &pb.Value{&pb.Value_TimestampValue{ptm}}},
 		{ll, geoval(ll)},
 		{[]int{1, 2}, arrayval(intval(1), intval(2))},
 		{&[]int{1, 2}, arrayval(intval(1), intval(2))},
@@ -234,19 +240,21 @@ func TestToProtoValueTags(t *testing.T) {
 }
 
 func TestToProtoValueEmbedded(t *testing.T) {
-	// Embedded time.Time or LatLng should behave like non-embedded.
+	// Embedded time.Time, LatLng, or Timestamp should behave like non-embedded.
 	type embed struct {
 		time.Time
 		*latlng.LatLng
+		*ts.Timestamp
 	}
 
-	got, _, err := toProtoValue(reflect.ValueOf(embed{tm, ll}))
+	got, _, err := toProtoValue(reflect.ValueOf(embed{tm, ll, ptm}))
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := mapval(map[string]*pb.Value{
-		"Time":   tsval(tm),
-		"LatLng": geoval(ll),
+		"Time":      tsval(tm),
+		"LatLng":    geoval(ll),
+		"Timestamp": &pb.Value{&pb.Value_TimestampValue{ptm}},
 	})
 	if !testEqual(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)

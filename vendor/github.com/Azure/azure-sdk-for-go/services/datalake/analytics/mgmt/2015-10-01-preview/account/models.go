@@ -26,6 +26,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountState enumerates the values for data lake analytics account state.
 type DataLakeAnalyticsAccountState string
 
@@ -36,6 +37,13 @@ const (
 	Suspended DataLakeAnalyticsAccountState = "suspended"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
+// PossibleDataLakeAnalyticsAccountStateValues returns an array of possible values for the DataLakeAnalyticsAccountState const type.
+func PossibleDataLakeAnalyticsAccountStateValues() []DataLakeAnalyticsAccountState {
+	return []DataLakeAnalyticsAccountState{Active, Suspended}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountStatus enumerates the values for data lake analytics account status.
 type DataLakeAnalyticsAccountStatus string
 
@@ -60,6 +68,13 @@ const (
 	Suspending DataLakeAnalyticsAccountStatus = "Suspending"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
+// PossibleDataLakeAnalyticsAccountStatusValues returns an array of possible values for the DataLakeAnalyticsAccountStatus const type.
+func PossibleDataLakeAnalyticsAccountStatusValues() []DataLakeAnalyticsAccountStatus {
+	return []DataLakeAnalyticsAccountStatus{Creating, Deleted, Deleting, Failed, Patching, Resuming, Running, Succeeded, Suspending}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
 
@@ -72,18 +87,27 @@ const (
 	OperationStatusSucceeded OperationStatus = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{OperationStatusFailed, OperationStatusInProgress, OperationStatusSucceeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddDataLakeStoreParameters additional Data Lake Store parameters.
 type AddDataLakeStoreParameters struct {
 	// Properties - the properties for the Data Lake Store account being added.
 	Properties *DataLakeStoreAccountInfoProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AddStorageAccountParameters additional Azure Storage account parameters.
 type AddStorageAccountParameters struct {
 	// Properties - the properties for the Azure Storage account being added.
 	Properties *StorageAccountProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // AzureAsyncOperationResult the response body contains the status of the specified asynchronous operation,
 // indicating whether it has succeeded, is inprogress, or has failed. Note that this status is distinct from the
 // HTTP status code returned for the Get Operation Status operation itself. If the asynchronous operation
@@ -96,6 +120,7 @@ type AzureAsyncOperationResult struct {
 	Error  *Error          `json:"error,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // BlobContainer azure Storage blob container information.
 type BlobContainer struct {
 	autorest.Response `json:"-"`
@@ -109,18 +134,21 @@ type BlobContainer struct {
 	Properties *BlobContainerProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // BlobContainerProperties azure Storage blob container properties information.
 type BlobContainerProperties struct {
 	// LastModifiedTime - the last modified time of the blob container.
 	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // CreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future CreateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {
@@ -163,6 +191,7 @@ func (future CreateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccount a Data Lake Analytics account object, containing all information associated with the
 // named Data Lake Analytics account.
 type DataLakeAnalyticsAccount struct {
@@ -181,6 +210,7 @@ type DataLakeAnalyticsAccount struct {
 	Properties *DataLakeAnalyticsAccountProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // MarshalJSON is the custom marshaler for DataLakeAnalyticsAccount.
 func (dlaa DataLakeAnalyticsAccount) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -205,6 +235,7 @@ func (dlaa DataLakeAnalyticsAccount) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListDataLakeStoreResult data Lake Account list information.
 type DataLakeAnalyticsAccountListDataLakeStoreResult struct {
 	autorest.Response `json:"-"`
@@ -216,6 +247,7 @@ type DataLakeAnalyticsAccountListDataLakeStoreResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListDataLakeStoreResultIterator provides access to a complete listing of
 // DataLakeStoreAccountInfo values.
 type DataLakeAnalyticsAccountListDataLakeStoreResultIterator struct {
@@ -223,6 +255,7 @@ type DataLakeAnalyticsAccountListDataLakeStoreResultIterator struct {
 	page DataLakeAnalyticsAccountListDataLakeStoreResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataLakeAnalyticsAccountListDataLakeStoreResultIterator) Next() error {
@@ -239,16 +272,19 @@ func (iter *DataLakeAnalyticsAccountListDataLakeStoreResultIterator) Next() erro
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataLakeAnalyticsAccountListDataLakeStoreResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter DataLakeAnalyticsAccountListDataLakeStoreResultIterator) Response() DataLakeAnalyticsAccountListDataLakeStoreResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataLakeAnalyticsAccountListDataLakeStoreResultIterator) Value() DataLakeStoreAccountInfo {
@@ -258,6 +294,7 @@ func (iter DataLakeAnalyticsAccountListDataLakeStoreResultIterator) Value() Data
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlaaldlsr DataLakeAnalyticsAccountListDataLakeStoreResult) IsEmpty() bool {
 	return dlaaldlsr.Value == nil || len(*dlaaldlsr.Value) == 0
@@ -275,12 +312,14 @@ func (dlaaldlsr DataLakeAnalyticsAccountListDataLakeStoreResult) dataLakeAnalyti
 		autorest.WithBaseURL(to.String(dlaaldlsr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListDataLakeStoreResultPage contains a page of DataLakeStoreAccountInfo values.
 type DataLakeAnalyticsAccountListDataLakeStoreResultPage struct {
 	fn        func(DataLakeAnalyticsAccountListDataLakeStoreResult) (DataLakeAnalyticsAccountListDataLakeStoreResult, error)
 	dlaaldlsr DataLakeAnalyticsAccountListDataLakeStoreResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataLakeAnalyticsAccountListDataLakeStoreResultPage) Next() error {
@@ -292,16 +331,19 @@ func (page *DataLakeAnalyticsAccountListDataLakeStoreResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataLakeAnalyticsAccountListDataLakeStoreResultPage) NotDone() bool {
 	return !page.dlaaldlsr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page DataLakeAnalyticsAccountListDataLakeStoreResultPage) Response() DataLakeAnalyticsAccountListDataLakeStoreResult {
 	return page.dlaaldlsr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataLakeAnalyticsAccountListDataLakeStoreResultPage) Values() []DataLakeStoreAccountInfo {
 	if page.dlaaldlsr.IsEmpty() {
@@ -310,6 +352,7 @@ func (page DataLakeAnalyticsAccountListDataLakeStoreResultPage) Values() []DataL
 	return *page.dlaaldlsr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListResult dataLakeAnalytics Account list information.
 type DataLakeAnalyticsAccountListResult struct {
 	autorest.Response `json:"-"`
@@ -319,6 +362,7 @@ type DataLakeAnalyticsAccountListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListResultIterator provides access to a complete listing of DataLakeAnalyticsAccount
 // values.
 type DataLakeAnalyticsAccountListResultIterator struct {
@@ -326,6 +370,7 @@ type DataLakeAnalyticsAccountListResultIterator struct {
 	page DataLakeAnalyticsAccountListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataLakeAnalyticsAccountListResultIterator) Next() error {
@@ -342,16 +387,19 @@ func (iter *DataLakeAnalyticsAccountListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataLakeAnalyticsAccountListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter DataLakeAnalyticsAccountListResultIterator) Response() DataLakeAnalyticsAccountListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataLakeAnalyticsAccountListResultIterator) Value() DataLakeAnalyticsAccount {
@@ -361,6 +409,7 @@ func (iter DataLakeAnalyticsAccountListResultIterator) Value() DataLakeAnalytics
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlaalr DataLakeAnalyticsAccountListResult) IsEmpty() bool {
 	return dlaalr.Value == nil || len(*dlaalr.Value) == 0
@@ -378,12 +427,14 @@ func (dlaalr DataLakeAnalyticsAccountListResult) dataLakeAnalyticsAccountListRes
 		autorest.WithBaseURL(to.String(dlaalr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListResultPage contains a page of DataLakeAnalyticsAccount values.
 type DataLakeAnalyticsAccountListResultPage struct {
 	fn     func(DataLakeAnalyticsAccountListResult) (DataLakeAnalyticsAccountListResult, error)
 	dlaalr DataLakeAnalyticsAccountListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataLakeAnalyticsAccountListResultPage) Next() error {
@@ -395,16 +446,19 @@ func (page *DataLakeAnalyticsAccountListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataLakeAnalyticsAccountListResultPage) NotDone() bool {
 	return !page.dlaalr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page DataLakeAnalyticsAccountListResultPage) Response() DataLakeAnalyticsAccountListResult {
 	return page.dlaalr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataLakeAnalyticsAccountListResultPage) Values() []DataLakeAnalyticsAccount {
 	if page.dlaalr.IsEmpty() {
@@ -413,6 +467,7 @@ func (page DataLakeAnalyticsAccountListResultPage) Values() []DataLakeAnalyticsA
 	return *page.dlaalr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListStorageAccountsResult azure Storage Account list information.
 type DataLakeAnalyticsAccountListStorageAccountsResult struct {
 	autorest.Response `json:"-"`
@@ -424,6 +479,7 @@ type DataLakeAnalyticsAccountListStorageAccountsResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListStorageAccountsResultIterator provides access to a complete listing of
 // StorageAccountInfo values.
 type DataLakeAnalyticsAccountListStorageAccountsResultIterator struct {
@@ -431,6 +487,7 @@ type DataLakeAnalyticsAccountListStorageAccountsResultIterator struct {
 	page DataLakeAnalyticsAccountListStorageAccountsResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DataLakeAnalyticsAccountListStorageAccountsResultIterator) Next() error {
@@ -447,16 +504,19 @@ func (iter *DataLakeAnalyticsAccountListStorageAccountsResultIterator) Next() er
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DataLakeAnalyticsAccountListStorageAccountsResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter DataLakeAnalyticsAccountListStorageAccountsResultIterator) Response() DataLakeAnalyticsAccountListStorageAccountsResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DataLakeAnalyticsAccountListStorageAccountsResultIterator) Value() StorageAccountInfo {
@@ -466,6 +526,7 @@ func (iter DataLakeAnalyticsAccountListStorageAccountsResultIterator) Value() St
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dlaalsar DataLakeAnalyticsAccountListStorageAccountsResult) IsEmpty() bool {
 	return dlaalsar.Value == nil || len(*dlaalsar.Value) == 0
@@ -483,12 +544,14 @@ func (dlaalsar DataLakeAnalyticsAccountListStorageAccountsResult) dataLakeAnalyt
 		autorest.WithBaseURL(to.String(dlaalsar.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountListStorageAccountsResultPage contains a page of StorageAccountInfo values.
 type DataLakeAnalyticsAccountListStorageAccountsResultPage struct {
 	fn       func(DataLakeAnalyticsAccountListStorageAccountsResult) (DataLakeAnalyticsAccountListStorageAccountsResult, error)
 	dlaalsar DataLakeAnalyticsAccountListStorageAccountsResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DataLakeAnalyticsAccountListStorageAccountsResultPage) Next() error {
@@ -500,16 +563,19 @@ func (page *DataLakeAnalyticsAccountListStorageAccountsResultPage) Next() error 
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DataLakeAnalyticsAccountListStorageAccountsResultPage) NotDone() bool {
 	return !page.dlaalsar.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page DataLakeAnalyticsAccountListStorageAccountsResultPage) Response() DataLakeAnalyticsAccountListStorageAccountsResult {
 	return page.dlaalsar
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DataLakeAnalyticsAccountListStorageAccountsResultPage) Values() []StorageAccountInfo {
 	if page.dlaalsar.IsEmpty() {
@@ -518,6 +584,7 @@ func (page DataLakeAnalyticsAccountListStorageAccountsResultPage) Values() []Sto
 	return *page.dlaalsar.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeAnalyticsAccountProperties the account specific properties that are associated with an underlying Data
 // Lake Analytics account.
 type DataLakeAnalyticsAccountProperties struct {
@@ -543,6 +610,7 @@ type DataLakeAnalyticsAccountProperties struct {
 	Endpoint *string `json:"endpoint,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountInfo data Lake Store account information.
 type DataLakeStoreAccountInfo struct {
 	autorest.Response `json:"-"`
@@ -552,18 +620,21 @@ type DataLakeStoreAccountInfo struct {
 	Properties *DataLakeStoreAccountInfoProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DataLakeStoreAccountInfoProperties data Lake Store account properties information.
 type DataLakeStoreAccountInfoProperties struct {
 	// Suffix - the optional suffix for the Data Lake Store account.
 	Suffix *string `json:"suffix,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
@@ -606,6 +677,7 @@ func (future DeleteFuture) Result(client Client) (ar autorest.Response, err erro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Error generic resource error information.
 type Error struct {
 	// Code - the HTTP status code or error code associated with this error
@@ -620,6 +692,7 @@ type Error struct {
 	InnerError *InnerError `json:"innerError,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ErrorDetails generic resource error details information.
 type ErrorDetails struct {
 	// Code - the HTTP status code or error code associated with this error
@@ -630,6 +703,7 @@ type ErrorDetails struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // InnerError generic resource inner error information.
 type InnerError struct {
 	// Trace - the stack trace for the error
@@ -638,6 +712,7 @@ type InnerError struct {
 	Context *string `json:"context,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListBlobContainersResult the list of blob containers associated with the storage account attached to the Data
 // Lake Analytics account.
 type ListBlobContainersResult struct {
@@ -648,12 +723,14 @@ type ListBlobContainersResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListBlobContainersResultIterator provides access to a complete listing of BlobContainer values.
 type ListBlobContainersResultIterator struct {
 	i    int
 	page ListBlobContainersResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ListBlobContainersResultIterator) Next() error {
@@ -670,16 +747,19 @@ func (iter *ListBlobContainersResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ListBlobContainersResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter ListBlobContainersResultIterator) Response() ListBlobContainersResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ListBlobContainersResultIterator) Value() BlobContainer {
@@ -689,6 +769,7 @@ func (iter ListBlobContainersResultIterator) Value() BlobContainer {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (lbcr ListBlobContainersResult) IsEmpty() bool {
 	return lbcr.Value == nil || len(*lbcr.Value) == 0
@@ -706,12 +787,14 @@ func (lbcr ListBlobContainersResult) listBlobContainersResultPreparer() (*http.R
 		autorest.WithBaseURL(to.String(lbcr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListBlobContainersResultPage contains a page of BlobContainer values.
 type ListBlobContainersResultPage struct {
 	fn   func(ListBlobContainersResult) (ListBlobContainersResult, error)
 	lbcr ListBlobContainersResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ListBlobContainersResultPage) Next() error {
@@ -723,16 +806,19 @@ func (page *ListBlobContainersResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ListBlobContainersResultPage) NotDone() bool {
 	return !page.lbcr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page ListBlobContainersResultPage) Response() ListBlobContainersResult {
 	return page.lbcr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ListBlobContainersResultPage) Values() []BlobContainer {
 	if page.lbcr.IsEmpty() {
@@ -741,6 +827,7 @@ func (page ListBlobContainersResultPage) Values() []BlobContainer {
 	return *page.lbcr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensResult the SAS response that contains the storage account, container and associated SAS token for
 // connection use.
 type ListSasTokensResult struct {
@@ -750,12 +837,14 @@ type ListSasTokensResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensResultIterator provides access to a complete listing of SasTokenInfo values.
 type ListSasTokensResultIterator struct {
 	i    int
 	page ListSasTokensResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ListSasTokensResultIterator) Next() error {
@@ -772,16 +861,19 @@ func (iter *ListSasTokensResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ListSasTokensResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (iter ListSasTokensResultIterator) Response() ListSasTokensResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ListSasTokensResultIterator) Value() SasTokenInfo {
@@ -791,6 +883,7 @@ func (iter ListSasTokensResultIterator) Value() SasTokenInfo {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (lstr ListSasTokensResult) IsEmpty() bool {
 	return lstr.Value == nil || len(*lstr.Value) == 0
@@ -808,12 +901,14 @@ func (lstr ListSasTokensResult) listSasTokensResultPreparer() (*http.Request, er
 		autorest.WithBaseURL(to.String(lstr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // ListSasTokensResultPage contains a page of SasTokenInfo values.
 type ListSasTokensResultPage struct {
 	fn   func(ListSasTokensResult) (ListSasTokensResult, error)
 	lstr ListSasTokensResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ListSasTokensResultPage) Next() error {
@@ -825,16 +920,19 @@ func (page *ListSasTokensResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ListSasTokensResultPage) NotDone() bool {
 	return !page.lstr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Response returns the raw server response from the last page request.
 func (page ListSasTokensResultPage) Response() ListSasTokensResult {
 	return page.lstr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ListSasTokensResultPage) Values() []SasTokenInfo {
 	if page.lstr.IsEmpty() {
@@ -843,12 +941,14 @@ func (page ListSasTokensResultPage) Values() []SasTokenInfo {
 	return *page.lstr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // SasTokenInfo SAS token information.
 type SasTokenInfo struct {
 	// AccessToken - the access token for the associated Azure Storage Container.
 	AccessToken *string `json:"accessToken,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // StorageAccountInfo azure Storage account information.
 type StorageAccountInfo struct {
 	autorest.Response `json:"-"`
@@ -858,6 +958,7 @@ type StorageAccountInfo struct {
 	Properties *StorageAccountProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // StorageAccountProperties azure Storage account properties information.
 type StorageAccountProperties struct {
 	// AccessKey - the access key associated with this Azure Storage account that will be used to connect to it.
@@ -866,12 +967,14 @@ type StorageAccountProperties struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // UpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type UpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datalake/analytics/mgmt/2015-10-01-preview/account instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future UpdateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {

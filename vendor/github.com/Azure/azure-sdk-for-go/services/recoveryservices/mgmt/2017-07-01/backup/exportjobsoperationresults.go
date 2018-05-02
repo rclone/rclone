@@ -42,9 +42,10 @@ func NewExportJobsOperationResultsClientWithBaseURI(baseURI string, subscription
 // Get gets the operation result of operation triggered by Export Jobs API. If the operation is successful, then it
 // also contains URL of a Blob and a SAS key to access the same. The blob contains exported jobs in JSON serialized
 // format.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. operationID is operationID which represents the export job.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// operationID - operationID which represents the export job.
 func (client ExportJobsOperationResultsClient) Get(ctx context.Context, vaultName string, resourceGroupName string, operationID string) (result OperationResultInfoBaseResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, operationID)
 	if err != nil {

@@ -46,9 +46,9 @@ func NewWithoutDefaults() BaseClient {
 }
 
 // PublishEvents publishes a batch of events to an Azure Event Grid topic.
-//
-// topicHostname is the host name of the topic, e.g. topic1.westus2-1.eventgrid.azure.net events is an array of
-// events to be published to Event Grid.
+// Parameters:
+// topicHostname - the host name of the topic, e.g. topic1.westus2-1.eventgrid.azure.net
+// events - an array of events to be published to Event Grid.
 func (client BaseClient) PublishEvents(ctx context.Context, topicHostname string, events []Event) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: events,
@@ -89,7 +89,7 @@ func (client BaseClient) PublishEventsPreparer(ctx context.Context, topicHostnam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{topicHostname}", urlParameters),
 		autorest.WithPath("/api/events"),

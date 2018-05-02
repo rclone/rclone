@@ -16,7 +16,7 @@ const opCreateApiKey = "CreateApiKey"
 
 // CreateApiKeyRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApiKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -112,7 +112,7 @@ const opCreateAuthorizer = "CreateAuthorizer"
 
 // CreateAuthorizerRequest generates a "aws/request.Request" representing the
 // client's request for the CreateAuthorizer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -204,7 +204,7 @@ const opCreateBasePathMapping = "CreateBasePathMapping"
 
 // CreateBasePathMappingRequest generates a "aws/request.Request" representing the
 // client's request for the CreateBasePathMapping operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -295,7 +295,7 @@ const opCreateDeployment = "CreateDeployment"
 
 // CreateDeploymentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDeployment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -394,7 +394,7 @@ const opCreateDocumentationPart = "CreateDocumentationPart"
 
 // CreateDocumentationPartRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDocumentationPart operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -486,7 +486,7 @@ const opCreateDocumentationVersion = "CreateDocumentationVersion"
 
 // CreateDocumentationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDocumentationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -578,7 +578,7 @@ const opCreateDomainName = "CreateDomainName"
 
 // CreateDomainNameRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDomainName operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -666,7 +666,7 @@ const opCreateModel = "CreateModel"
 
 // CreateModelRequest generates a "aws/request.Request" representing the
 // client's request for the CreateModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -760,7 +760,7 @@ const opCreateRequestValidator = "CreateRequestValidator"
 
 // CreateRequestValidatorRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRequestValidator operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -850,7 +850,7 @@ const opCreateResource = "CreateResource"
 
 // CreateResourceRequest generates a "aws/request.Request" representing the
 // client's request for the CreateResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -944,7 +944,7 @@ const opCreateRestApi = "CreateRestApi"
 
 // CreateRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the CreateRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1031,7 +1031,7 @@ const opCreateStage = "CreateStage"
 
 // CreateStageRequest generates a "aws/request.Request" representing the
 // client's request for the CreateStage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1126,7 +1126,7 @@ const opCreateUsagePlan = "CreateUsagePlan"
 
 // CreateUsagePlanRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUsagePlan operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1221,7 +1221,7 @@ const opCreateUsagePlanKey = "CreateUsagePlanKey"
 
 // CreateUsagePlanKeyRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUsagePlanKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1312,7 +1312,7 @@ const opCreateVpcLink = "CreateVpcLink"
 
 // CreateVpcLinkRequest generates a "aws/request.Request" representing the
 // client's request for the CreateVpcLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1399,7 +1399,7 @@ const opDeleteApiKey = "DeleteApiKey"
 
 // DeleteApiKeyRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApiKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1484,7 +1484,7 @@ const opDeleteAuthorizer = "DeleteAuthorizer"
 
 // DeleteAuthorizerRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteAuthorizer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1579,7 +1579,7 @@ const opDeleteBasePathMapping = "DeleteBasePathMapping"
 
 // DeleteBasePathMappingRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteBasePathMapping operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1672,7 +1672,7 @@ const opDeleteClientCertificate = "DeleteClientCertificate"
 
 // DeleteClientCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteClientCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1761,7 +1761,7 @@ const opDeleteDeployment = "DeleteDeployment"
 
 // DeleteDeploymentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDeployment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1851,7 +1851,7 @@ const opDeleteDocumentationPart = "DeleteDocumentationPart"
 
 // DeleteDocumentationPartRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDocumentationPart operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1942,7 +1942,7 @@ const opDeleteDocumentationVersion = "DeleteDocumentationVersion"
 
 // DeleteDocumentationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDocumentationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2033,7 +2033,7 @@ const opDeleteDomainName = "DeleteDomainName"
 
 // DeleteDomainNameRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDomainName operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2118,7 +2118,7 @@ const opDeleteGatewayResponse = "DeleteGatewayResponse"
 
 // DeleteGatewayResponseRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteGatewayResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2212,7 +2212,7 @@ const opDeleteIntegration = "DeleteIntegration"
 
 // DeleteIntegrationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteIntegration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2301,7 +2301,7 @@ const opDeleteIntegrationResponse = "DeleteIntegrationResponse"
 
 // DeleteIntegrationResponseRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteIntegrationResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2394,7 +2394,7 @@ const opDeleteMethod = "DeleteMethod"
 
 // DeleteMethodRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMethod operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2483,7 +2483,7 @@ const opDeleteMethodResponse = "DeleteMethodResponse"
 
 // DeleteMethodResponseRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMethodResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2576,7 +2576,7 @@ const opDeleteModel = "DeleteModel"
 
 // DeleteModelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2669,7 +2669,7 @@ const opDeleteRequestValidator = "DeleteRequestValidator"
 
 // DeleteRequestValidatorRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRequestValidator operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2762,7 +2762,7 @@ const opDeleteResource = "DeleteResource"
 
 // DeleteResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2855,7 +2855,7 @@ const opDeleteRestApi = "DeleteRestApi"
 
 // DeleteRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -2944,7 +2944,7 @@ const opDeleteStage = "DeleteStage"
 
 // DeleteStageRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteStage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3033,7 +3033,7 @@ const opDeleteUsagePlan = "DeleteUsagePlan"
 
 // DeleteUsagePlanRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUsagePlan operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3122,7 +3122,7 @@ const opDeleteUsagePlanKey = "DeleteUsagePlanKey"
 
 // DeleteUsagePlanKeyRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUsagePlanKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3216,7 +3216,7 @@ const opDeleteVpcLink = "DeleteVpcLink"
 
 // DeleteVpcLinkRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteVpcLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3305,7 +3305,7 @@ const opFlushStageAuthorizersCache = "FlushStageAuthorizersCache"
 
 // FlushStageAuthorizersCacheRequest generates a "aws/request.Request" representing the
 // client's request for the FlushStageAuthorizersCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3394,7 +3394,7 @@ const opFlushStageCache = "FlushStageCache"
 
 // FlushStageCacheRequest generates a "aws/request.Request" representing the
 // client's request for the FlushStageCache operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3483,7 +3483,7 @@ const opGenerateClientCertificate = "GenerateClientCertificate"
 
 // GenerateClientCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the GenerateClientCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3566,7 +3566,7 @@ const opGetAccount = "GetAccount"
 
 // GetAccountRequest generates a "aws/request.Request" representing the
 // client's request for the GetAccount operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3649,7 +3649,7 @@ const opGetApiKey = "GetApiKey"
 
 // GetApiKeyRequest generates a "aws/request.Request" representing the
 // client's request for the GetApiKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3732,7 +3732,7 @@ const opGetApiKeys = "GetApiKeys"
 
 // GetApiKeysRequest generates a "aws/request.Request" representing the
 // client's request for the GetApiKeys operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3872,7 +3872,7 @@ const opGetAuthorizer = "GetAuthorizer"
 
 // GetAuthorizerRequest generates a "aws/request.Request" representing the
 // client's request for the GetAuthorizer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -3957,7 +3957,7 @@ const opGetAuthorizers = "GetAuthorizers"
 
 // GetAuthorizersRequest generates a "aws/request.Request" representing the
 // client's request for the GetAuthorizers operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4046,7 +4046,7 @@ const opGetBasePathMapping = "GetBasePathMapping"
 
 // GetBasePathMappingRequest generates a "aws/request.Request" representing the
 // client's request for the GetBasePathMapping operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4129,7 +4129,7 @@ const opGetBasePathMappings = "GetBasePathMappings"
 
 // GetBasePathMappingsRequest generates a "aws/request.Request" representing the
 // client's request for the GetBasePathMappings operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4268,7 +4268,7 @@ const opGetClientCertificate = "GetClientCertificate"
 
 // GetClientCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the GetClientCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4351,7 +4351,7 @@ const opGetClientCertificates = "GetClientCertificates"
 
 // GetClientCertificatesRequest generates a "aws/request.Request" representing the
 // client's request for the GetClientCertificates operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4491,7 +4491,7 @@ const opGetDeployment = "GetDeployment"
 
 // GetDeploymentRequest generates a "aws/request.Request" representing the
 // client's request for the GetDeployment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4578,7 +4578,7 @@ const opGetDeployments = "GetDeployments"
 
 // GetDeploymentsRequest generates a "aws/request.Request" representing the
 // client's request for the GetDeployments operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4722,7 +4722,7 @@ const opGetDocumentationPart = "GetDocumentationPart"
 
 // GetDocumentationPartRequest generates a "aws/request.Request" representing the
 // client's request for the GetDocumentationPart operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4803,7 +4803,7 @@ const opGetDocumentationParts = "GetDocumentationParts"
 
 // GetDocumentationPartsRequest generates a "aws/request.Request" representing the
 // client's request for the GetDocumentationParts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4888,7 +4888,7 @@ const opGetDocumentationVersion = "GetDocumentationVersion"
 
 // GetDocumentationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the GetDocumentationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -4969,7 +4969,7 @@ const opGetDocumentationVersions = "GetDocumentationVersions"
 
 // GetDocumentationVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the GetDocumentationVersions operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5054,7 +5054,7 @@ const opGetDomainName = "GetDomainName"
 
 // GetDomainNameRequest generates a "aws/request.Request" representing the
 // client's request for the GetDomainName operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5142,7 +5142,7 @@ const opGetDomainNames = "GetDomainNames"
 
 // GetDomainNamesRequest generates a "aws/request.Request" representing the
 // client's request for the GetDomainNames operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5282,7 +5282,7 @@ const opGetExport = "GetExport"
 
 // GetExportRequest generates a "aws/request.Request" representing the
 // client's request for the GetExport operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5373,7 +5373,7 @@ const opGetGatewayResponse = "GetGatewayResponse"
 
 // GetGatewayResponseRequest generates a "aws/request.Request" representing the
 // client's request for the GetGatewayResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5456,7 +5456,7 @@ const opGetGatewayResponses = "GetGatewayResponses"
 
 // GetGatewayResponsesRequest generates a "aws/request.Request" representing the
 // client's request for the GetGatewayResponses operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5546,7 +5546,7 @@ const opGetIntegration = "GetIntegration"
 
 // GetIntegrationRequest generates a "aws/request.Request" representing the
 // client's request for the GetIntegration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5629,7 +5629,7 @@ const opGetIntegrationResponse = "GetIntegrationResponse"
 
 // GetIntegrationResponseRequest generates a "aws/request.Request" representing the
 // client's request for the GetIntegrationResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5712,7 +5712,7 @@ const opGetMethod = "GetMethod"
 
 // GetMethodRequest generates a "aws/request.Request" representing the
 // client's request for the GetMethod operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5795,7 +5795,7 @@ const opGetMethodResponse = "GetMethodResponse"
 
 // GetMethodResponseRequest generates a "aws/request.Request" representing the
 // client's request for the GetMethodResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5878,7 +5878,7 @@ const opGetModel = "GetModel"
 
 // GetModelRequest generates a "aws/request.Request" representing the
 // client's request for the GetModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -5961,7 +5961,7 @@ const opGetModelTemplate = "GetModelTemplate"
 
 // GetModelTemplateRequest generates a "aws/request.Request" representing the
 // client's request for the GetModelTemplate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6049,7 +6049,7 @@ const opGetModels = "GetModels"
 
 // GetModelsRequest generates a "aws/request.Request" representing the
 // client's request for the GetModels operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6192,7 +6192,7 @@ const opGetRequestValidator = "GetRequestValidator"
 
 // GetRequestValidatorRequest generates a "aws/request.Request" representing the
 // client's request for the GetRequestValidator operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6275,7 +6275,7 @@ const opGetRequestValidators = "GetRequestValidators"
 
 // GetRequestValidatorsRequest generates a "aws/request.Request" representing the
 // client's request for the GetRequestValidators operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6362,7 +6362,7 @@ const opGetResource = "GetResource"
 
 // GetResourceRequest generates a "aws/request.Request" representing the
 // client's request for the GetResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6445,7 +6445,7 @@ const opGetResources = "GetResources"
 
 // GetResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the GetResources operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6588,7 +6588,7 @@ const opGetRestApi = "GetRestApi"
 
 // GetRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the GetRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6671,7 +6671,7 @@ const opGetRestApis = "GetRestApis"
 
 // GetRestApisRequest generates a "aws/request.Request" representing the
 // client's request for the GetRestApis operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6811,7 +6811,7 @@ const opGetSdk = "GetSdk"
 
 // GetSdkRequest generates a "aws/request.Request" representing the
 // client's request for the GetSdk operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6902,7 +6902,7 @@ const opGetSdkType = "GetSdkType"
 
 // GetSdkTypeRequest generates a "aws/request.Request" representing the
 // client's request for the GetSdkType operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -6983,7 +6983,7 @@ const opGetSdkTypes = "GetSdkTypes"
 
 // GetSdkTypesRequest generates a "aws/request.Request" representing the
 // client's request for the GetSdkTypes operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7061,7 +7061,7 @@ const opGetStage = "GetStage"
 
 // GetStageRequest generates a "aws/request.Request" representing the
 // client's request for the GetStage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7144,7 +7144,7 @@ const opGetStages = "GetStages"
 
 // GetStagesRequest generates a "aws/request.Request" representing the
 // client's request for the GetStages operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7227,7 +7227,7 @@ const opGetTags = "GetTags"
 
 // GetTagsRequest generates a "aws/request.Request" representing the
 // client's request for the GetTags operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7317,7 +7317,7 @@ const opGetUsage = "GetUsage"
 
 // GetUsageRequest generates a "aws/request.Request" representing the
 // client's request for the GetUsage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7460,7 +7460,7 @@ const opGetUsagePlan = "GetUsagePlan"
 
 // GetUsagePlanRequest generates a "aws/request.Request" representing the
 // client's request for the GetUsagePlan operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7547,7 +7547,7 @@ const opGetUsagePlanKey = "GetUsagePlanKey"
 
 // GetUsagePlanKeyRequest generates a "aws/request.Request" representing the
 // client's request for the GetUsagePlanKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7634,7 +7634,7 @@ const opGetUsagePlanKeys = "GetUsagePlanKeys"
 
 // GetUsagePlanKeysRequest generates a "aws/request.Request" representing the
 // client's request for the GetUsagePlanKeys operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7778,7 +7778,7 @@ const opGetUsagePlans = "GetUsagePlans"
 
 // GetUsagePlansRequest generates a "aws/request.Request" representing the
 // client's request for the GetUsagePlans operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -7925,7 +7925,7 @@ const opGetVpcLink = "GetVpcLink"
 
 // GetVpcLinkRequest generates a "aws/request.Request" representing the
 // client's request for the GetVpcLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8008,7 +8008,7 @@ const opGetVpcLinks = "GetVpcLinks"
 
 // GetVpcLinksRequest generates a "aws/request.Request" representing the
 // client's request for the GetVpcLinks operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8148,7 +8148,7 @@ const opImportApiKeys = "ImportApiKeys"
 
 // ImportApiKeysRequest generates a "aws/request.Request" representing the
 // client's request for the ImportApiKeys operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8242,7 +8242,7 @@ const opImportDocumentationParts = "ImportDocumentationParts"
 
 // ImportDocumentationPartsRequest generates a "aws/request.Request" representing the
 // client's request for the ImportDocumentationParts operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8330,7 +8330,7 @@ const opImportRestApi = "ImportRestApi"
 
 // ImportRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the ImportRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8422,7 +8422,7 @@ const opPutGatewayResponse = "PutGatewayResponse"
 
 // PutGatewayResponseRequest generates a "aws/request.Request" representing the
 // client's request for the PutGatewayResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8513,7 +8513,7 @@ const opPutIntegration = "PutIntegration"
 
 // PutIntegrationRequest generates a "aws/request.Request" representing the
 // client's request for the PutIntegration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8604,7 +8604,7 @@ const opPutIntegrationResponse = "PutIntegrationResponse"
 
 // PutIntegrationResponseRequest generates a "aws/request.Request" representing the
 // client's request for the PutIntegrationResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8698,7 +8698,7 @@ const opPutMethod = "PutMethod"
 
 // PutMethodRequest generates a "aws/request.Request" representing the
 // client's request for the PutMethod operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8792,7 +8792,7 @@ const opPutMethodResponse = "PutMethodResponse"
 
 // PutMethodResponseRequest generates a "aws/request.Request" representing the
 // client's request for the PutMethodResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8886,7 +8886,7 @@ const opPutRestApi = "PutRestApi"
 
 // PutRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the PutRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -8983,7 +8983,7 @@ const opTagResource = "TagResource"
 
 // TagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the TagResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9023,7 +9023,7 @@ func (c *APIGateway) TagResourceRequest(input *TagResourceInput) (req *request.R
 
 // TagResource API operation for Amazon API Gateway.
 //
-// Adds or updates Tags on a gievn resource.
+// Adds or updates a tag on a given resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9079,7 +9079,7 @@ const opTestInvokeAuthorizer = "TestInvokeAuthorizer"
 
 // TestInvokeAuthorizerRequest generates a "aws/request.Request" representing the
 // client's request for the TestInvokeAuthorizer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9169,7 +9169,7 @@ const opTestInvokeMethod = "TestInvokeMethod"
 
 // TestInvokeMethodRequest generates a "aws/request.Request" representing the
 // client's request for the TestInvokeMethod operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9257,7 +9257,7 @@ const opUntagResource = "UntagResource"
 
 // UntagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UntagResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9297,7 +9297,7 @@ func (c *APIGateway) UntagResourceRequest(input *UntagResourceInput) (req *reque
 
 // UntagResource API operation for Amazon API Gateway.
 //
-// Removes Tags from a given resource.
+// Removes a tag from a given resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9350,7 +9350,7 @@ const opUpdateAccount = "UpdateAccount"
 
 // UpdateAccountRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateAccount operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9437,7 +9437,7 @@ const opUpdateApiKey = "UpdateApiKey"
 
 // UpdateApiKeyRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApiKey operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9528,7 +9528,7 @@ const opUpdateAuthorizer = "UpdateAuthorizer"
 
 // UpdateAuthorizerRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateAuthorizer operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9617,7 +9617,7 @@ const opUpdateBasePathMapping = "UpdateBasePathMapping"
 
 // UpdateBasePathMappingRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateBasePathMapping operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9708,7 +9708,7 @@ const opUpdateClientCertificate = "UpdateClientCertificate"
 
 // UpdateClientCertificateRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateClientCertificate operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9795,7 +9795,7 @@ const opUpdateDeployment = "UpdateDeployment"
 
 // UpdateDeploymentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDeployment operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9886,7 +9886,7 @@ const opUpdateDocumentationPart = "UpdateDocumentationPart"
 
 // UpdateDocumentationPartRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDocumentationPart operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -9978,7 +9978,7 @@ const opUpdateDocumentationVersion = "UpdateDocumentationVersion"
 
 // UpdateDocumentationVersionRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDocumentationVersion operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10067,7 +10067,7 @@ const opUpdateDomainName = "UpdateDomainName"
 
 // UpdateDomainNameRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateDomainName operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10158,7 +10158,7 @@ const opUpdateGatewayResponse = "UpdateGatewayResponse"
 
 // UpdateGatewayResponseRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGatewayResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10245,7 +10245,7 @@ const opUpdateIntegration = "UpdateIntegration"
 
 // UpdateIntegrationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateIntegration operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10336,7 +10336,7 @@ const opUpdateIntegrationResponse = "UpdateIntegrationResponse"
 
 // UpdateIntegrationResponseRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateIntegrationResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10427,7 +10427,7 @@ const opUpdateMethod = "UpdateMethod"
 
 // UpdateMethodRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMethod operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10518,7 +10518,7 @@ const opUpdateMethodResponse = "UpdateMethodResponse"
 
 // UpdateMethodResponseRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateMethodResponse operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10612,7 +10612,7 @@ const opUpdateModel = "UpdateModel"
 
 // UpdateModelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateModel operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10703,7 +10703,7 @@ const opUpdateRequestValidator = "UpdateRequestValidator"
 
 // UpdateRequestValidatorRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateRequestValidator operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10790,7 +10790,7 @@ const opUpdateResource = "UpdateResource"
 
 // UpdateResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateResource operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10881,7 +10881,7 @@ const opUpdateRestApi = "UpdateRestApi"
 
 // UpdateRestApiRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateRestApi operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -10972,7 +10972,7 @@ const opUpdateStage = "UpdateStage"
 
 // UpdateStageRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateStage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11063,7 +11063,7 @@ const opUpdateUsage = "UpdateUsage"
 
 // UpdateUsageRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateUsage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11151,7 +11151,7 @@ const opUpdateUsagePlan = "UpdateUsagePlan"
 
 // UpdateUsagePlanRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateUsagePlan operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11242,7 +11242,7 @@ const opUpdateVpcLink = "UpdateVpcLink"
 
 // UpdateVpcLinkRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateVpcLink operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -11623,11 +11623,11 @@ type Authorizer struct {
 	// The identifier for the authorizer resource.
 	Id *string `locationName:"id" type:"string"`
 
-	// The identity source for which authorization is requested. For a TOKEN authorizer,
-	// this is required and specifies the request header mapping expression for
-	// the custom header holding the authorization token submitted by the client.
-	// For example, if the token header name is Auth, the header mapping expression
-	// is method.request.header.Auth.
+	// The identity source for which authorization is requested. For a TOKEN or
+	// COGNITO_USER_POOLS authorizer, this is required and specifies the request
+	// header mapping expression for the custom header holding the authorization
+	// token submitted by the client. For example, if the token header name is Auth,
+	// the header mapping expression is method.request.header.Auth.
 	// For the REQUEST authorizer, this is required when authorization caching is
 	// enabled. The value is a comma-separated string of one or more mapping expressions
 	// of the specified request parameters. For example, if an Auth header, a Name
@@ -11640,16 +11640,14 @@ type Authorizer struct {
 	// response without calling the Lambda function. The valid value is a string
 	// of comma-separated mapping expressions of the specified request parameters.
 	// When the authorization caching is not enabled, this property is optional.
-	//
-	// For a COGNITO_USER_POOLS authorizer, this property is not used.
 	IdentitySource *string `locationName:"identitySource" type:"string"`
 
 	// A validation expression for the incoming identity token. For TOKEN authorizers,
-	// this value is a regular expression. API Gateway will match the incoming token
-	// from the client against the specified regular expression. It will invoke
-	// the authorizer's Lambda function there is a match. Otherwise, it will return
-	// a 401 Unauthorized response without calling the Lambda function. The validation
-	// expression does not apply to the REQUEST authorizer.
+	// this value is a regular expression. API Gateway will match the aud field
+	// of the incoming token from the client against the specified regular expression.
+	// It will invoke the authorizer's Lambda function when there is a match. Otherwise,
+	// it will return a 401 Unauthorized response without calling the Lambda function.
+	// The validation expression does not apply to the REQUEST authorizer.
 	IdentityValidationExpression *string `locationName:"identityValidationExpression" type:"string"`
 
 	// [Required] The name of the authorizer.
@@ -11660,10 +11658,10 @@ type Authorizer struct {
 	// For a TOKEN or REQUEST authorizer, this is not defined.
 	ProviderARNs []*string `locationName:"providerARNs" type:"list"`
 
-	// [Required] The authorizer type. Valid values are TOKEN for a Lambda function
-	// using a single authorization token submitted in a custom header, REQUEST
-	// for a Lambda function using incoming request parameters, and COGNITO_USER_POOLS
-	// for using an Amazon Cognito user pool.
+	// The authorizer type. Valid values are TOKEN for a Lambda function using a
+	// single authorization token submitted in a custom header, REQUEST for a Lambda
+	// function using incoming request parameters, and COGNITO_USER_POOLS for using
+	// an Amazon Cognito user pool.
 	Type *string `locationName:"type" type:"string" enum:"AuthorizerType"`
 }
 
@@ -12016,11 +12014,11 @@ type CreateAuthorizerInput struct {
 	// is usually of the form /2015-03-31/functions/[FunctionARN]/invocations.
 	AuthorizerUri *string `locationName:"authorizerUri" type:"string"`
 
-	// The identity source for which authorization is requested. For a TOKEN authorizer,
-	// this is required and specifies the request header mapping expression for
-	// the custom header holding the authorization token submitted by the client.
-	// For example, if the token header name is Auth, the header mapping expression
-	// is method.request.header.Auth.
+	// The identity source for which authorization is requested. For a TOKEN or
+	// COGNITO_USER_POOLS authorizer, this is required and specifies the request
+	// header mapping expression for the custom header holding the authorization
+	// token submitted by the client. For example, if the token header name is Auth,
+	// the header mapping expression is method.request.header.Auth.
 	// For the REQUEST authorizer, this is required when authorization caching is
 	// enabled. The value is a comma-separated string of one or more mapping expressions
 	// of the specified request parameters. For example, if an Auth header, a Name
@@ -12033,16 +12031,14 @@ type CreateAuthorizerInput struct {
 	// response without calling the Lambda function. The valid value is a string
 	// of comma-separated mapping expressions of the specified request parameters.
 	// When the authorization caching is not enabled, this property is optional.
-	//
-	// For a COGNITO_USER_POOLS authorizer, this property is not used.
 	IdentitySource *string `locationName:"identitySource" type:"string"`
 
 	// A validation expression for the incoming identity token. For TOKEN authorizers,
-	// this value is a regular expression. API Gateway will match the incoming token
-	// from the client against the specified regular expression. It will invoke
-	// the authorizer's Lambda function there is a match. Otherwise, it will return
-	// a 401 Unauthorized response without calling the Lambda function. The validation
-	// expression does not apply to the REQUEST authorizer.
+	// this value is a regular expression. API Gateway will match the aud field
+	// of the incoming token from the client against the specified regular expression.
+	// It will invoke the authorizer's Lambda function when there is a match. Otherwise,
+	// it will return a 401 Unauthorized response without calling the Lambda function.
+	// The validation expression does not apply to the REQUEST authorizer.
 	IdentityValidationExpression *string `locationName:"identityValidationExpression" type:"string"`
 
 	// [Required] The name of the authorizer.
@@ -12055,7 +12051,7 @@ type CreateAuthorizerInput struct {
 	// For a TOKEN or REQUEST authorizer, this is not defined.
 	ProviderARNs []*string `locationName:"providerARNs" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -12168,12 +12164,12 @@ type CreateBasePathMappingInput struct {
 	// a base path name after the domain name.
 	BasePath *string `locationName:"basePath" type:"string"`
 
-	// The domain name of the BasePathMapping resource to create.
+	// [Required] The domain name of the BasePathMapping resource to create.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `locationName:"restApiId" type:"string" required:"true"`
@@ -12252,7 +12248,7 @@ type CreateDeploymentInput struct {
 	// The description for the Deployment resource to create.
 	Description *string `locationName:"description" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -12516,7 +12512,7 @@ type CreateDomainNameInput struct {
 	// key.
 	CertificatePrivateKey *string `locationName:"certificatePrivateKey" type:"string"`
 
-	// (Required) The name of the DomainName resource.
+	// [Required] The name of the DomainName resource.
 	//
 	// DomainName is a required field
 	DomainName *string `locationName:"domainName" type:"string" required:"true"`
@@ -12616,7 +12612,7 @@ func (s *CreateDomainNameInput) SetRegionalCertificateName(v string) *CreateDoma
 type CreateModelInput struct {
 	_ struct{} `type:"structure"`
 
-	// The content-type for the model.
+	// [Required] The content-type for the model.
 	//
 	// ContentType is a required field
 	ContentType *string `locationName:"contentType" type:"string" required:"true"`
@@ -12624,18 +12620,18 @@ type CreateModelInput struct {
 	// The description of the model.
 	Description *string `locationName:"description" type:"string"`
 
-	// The name of the model. Must be alphanumeric.
+	// [Required] The name of the model. Must be alphanumeric.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" type:"string" required:"true"`
 
-	// The RestApi identifier under which the Model will be created.
+	// [Required] The RestApi identifier under which the Model will be created.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The schema for the model. For application/json models, this should be JSON-schema
-	// draft v4 (http://json-schema.org/documentation.html) model.
+	// The schema for the model. For application/json models, this should be JSON
+	// schema draft 4 (https://tools.ietf.org/html/draft-zyp-json-schema-04) model.
 	Schema *string `locationName:"schema" type:"string"`
 }
 
@@ -12705,7 +12701,7 @@ type CreateRequestValidatorInput struct {
 	// The name of the to-be-created RequestValidator.
 	Name *string `locationName:"name" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -12770,7 +12766,7 @@ func (s *CreateRequestValidatorInput) SetValidateRequestParameters(v bool) *Crea
 type CreateResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The parent resource's identifier.
+	// [Required] The parent resource's identifier.
 	//
 	// ParentId is a required field
 	ParentId *string `location:"uri" locationName:"parent_id" type:"string" required:"true"`
@@ -12780,7 +12776,7 @@ type CreateResourceInput struct {
 	// PathPart is a required field
 	PathPart *string `locationName:"pathPart" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -12837,8 +12833,8 @@ func (s *CreateResourceInput) SetRestApiId(v string) *CreateResourceInput {
 type CreateRestApiInput struct {
 	_ struct{} `type:"structure"`
 
-	// The source of the API key for metring requests according to a usage plan.
-	// Valid values are HEADER to read the API key from the X-API-Key header of
+	// The source of the API key for metering requests according to a usage plan.
+	// Valid values are: HEADER to read the API key from the X-API-Key header of
 	// a request.
 	// AUTHORIZER to read the API key from the UsageIdentifierKey from a custom
 	// authorizer.
@@ -12858,17 +12854,21 @@ type CreateRestApiInput struct {
 	// the API.
 	EndpointConfiguration *EndpointConfiguration `locationName:"endpointConfiguration" type:"structure"`
 
-	// A nullable integer used to enable (non-negative between 0 and 10485760 (10M)
-	// bytes, inclusive) or disable (null) compression on an API. When compression
-	// is enabled, compression or decompression are not applied on the payload if
-	// the payload size is smaller than this value. Setting it to zero allows compression
-	// for any payload size.
+	// A nullable integer that is used to enable compression (with non-negative
+	// between 0 and 10485760 (10M) bytes, inclusive) or disable compression (with
+	// a null value) on an API. When compression is enabled, compression or decompression
+	// is not applied on the payload if the payload size is smaller than this value.
+	// Setting it to zero allows compression for any payload size.
 	MinimumCompressionSize *int64 `locationName:"minimumCompressionSize" type:"integer"`
 
-	// The name of the RestApi.
+	// [Required] The name of the RestApi.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" type:"string" required:"true"`
+
+	// A stringified JSON policy document that applies to this RestApi regardless
+	// of the caller and Method
+	Policy *string `locationName:"policy" type:"string"`
 
 	// A version identifier for the API.
 	Version *string `locationName:"version" type:"string"`
@@ -12939,6 +12939,12 @@ func (s *CreateRestApiInput) SetName(v string) *CreateRestApiInput {
 	return s
 }
 
+// SetPolicy sets the Policy field's value.
+func (s *CreateRestApiInput) SetPolicy(v string) *CreateRestApiInput {
+	s.Policy = &v
+	return s
+}
+
 // SetVersion sets the Version field's value.
 func (s *CreateRestApiInput) SetVersion(v string) *CreateRestApiInput {
 	s.Version = &v
@@ -12969,7 +12975,7 @@ type CreateStageInput struct {
 	// The version of the associated API documentation.
 	DocumentationVersion *string `locationName:"documentationVersion" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -12979,9 +12985,9 @@ type CreateStageInput struct {
 	// StageName is a required field
 	StageName *string `locationName:"stageName" type:"string" required:"true"`
 
-	// Key/Value map of strings. Valid character set is [a-zA-Z+-=._:/]. Tag key
-	// can be up to 128 characters and must not start with "aws:". Tag value can
-	// be up to 256 characters.
+	// The key-value map of strings. The valid character set is [a-zA-Z+-=._:/].
+	// The tag key can be up to 128 characters and must not start with aws:. The
+	// tag value can be up to 256 characters.
 	Tags map[string]*string `locationName:"tags" type:"map"`
 
 	// A map that defines the stage variables for the new Stage resource. Variable
@@ -13091,7 +13097,7 @@ type CreateUsagePlanInput struct {
 	// The description of the usage plan.
 	Description *string `locationName:"description" type:"string"`
 
-	// The name of the usage plan.
+	// [Required] The name of the usage plan.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" type:"string" required:"true"`
@@ -13161,18 +13167,18 @@ func (s *CreateUsagePlanInput) SetThrottle(v *ThrottleSettings) *CreateUsagePlan
 type CreateUsagePlanKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of a UsagePlanKey resource for a plan customer.
+	// [Required] The identifier of a UsagePlanKey resource for a plan customer.
 	//
 	// KeyId is a required field
 	KeyId *string `locationName:"keyId" type:"string" required:"true"`
 
-	// The type of a UsagePlanKey resource for a plan customer.
+	// [Required] The type of a UsagePlanKey resource for a plan customer.
 	//
 	// KeyType is a required field
 	KeyType *string `locationName:"keyType" type:"string" required:"true"`
 
-	// The Id of the UsagePlan resource representing the usage plan containing the
-	// to-be-created UsagePlanKey resource representing a plan customer.
+	// [Required] The Id of the UsagePlan resource representing the usage plan containing
+	// the to-be-created UsagePlanKey resource representing a plan customer.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -13296,7 +13302,7 @@ func (s *CreateVpcLinkInput) SetTargetArns(v []*string) *CreateVpcLinkInput {
 type DeleteApiKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ApiKey resource to be deleted.
+	// [Required] The identifier of the ApiKey resource to be deleted.
 	//
 	// ApiKey is a required field
 	ApiKey *string `location:"uri" locationName:"api_Key" type:"string" required:"true"`
@@ -13349,12 +13355,12 @@ func (s DeleteApiKeyOutput) GoString() string {
 type DeleteAuthorizerInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Authorizer resource.
+	// [Required] The identifier of the Authorizer resource.
 	//
 	// AuthorizerId is a required field
 	AuthorizerId *string `location:"uri" locationName:"authorizer_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -13416,12 +13422,12 @@ func (s DeleteAuthorizerOutput) GoString() string {
 type DeleteBasePathMappingInput struct {
 	_ struct{} `type:"structure"`
 
-	// The base path name of the BasePathMapping resource to delete.
+	// [Required] The base path name of the BasePathMapping resource to delete.
 	//
 	// BasePath is a required field
 	BasePath *string `location:"uri" locationName:"base_path" type:"string" required:"true"`
 
-	// The domain name of the BasePathMapping resource to delete.
+	// [Required] The domain name of the BasePathMapping resource to delete.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -13483,7 +13489,7 @@ func (s DeleteBasePathMappingOutput) GoString() string {
 type DeleteClientCertificateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ClientCertificate resource to be deleted.
+	// [Required] The identifier of the ClientCertificate resource to be deleted.
 	//
 	// ClientCertificateId is a required field
 	ClientCertificateId *string `location:"uri" locationName:"clientcertificate_id" type:"string" required:"true"`
@@ -13536,12 +13542,12 @@ func (s DeleteClientCertificateOutput) GoString() string {
 type DeleteDeploymentInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Deployment resource to delete.
+	// [Required] The identifier of the Deployment resource to delete.
 	//
 	// DeploymentId is a required field
 	DeploymentId *string `location:"uri" locationName:"deployment_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -13737,7 +13743,7 @@ func (s DeleteDocumentationVersionOutput) GoString() string {
 type DeleteDomainNameInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the DomainName resource to be deleted.
+	// [Required] The name of the DomainName resource to be deleted.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -13791,8 +13797,8 @@ func (s DeleteDomainNameOutput) GoString() string {
 type DeleteGatewayResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The response type of the associated GatewayResponse. Valid values are ACCESS_DENIED
-	//
+	// [Required] The response type of the associated GatewayResponse. Valid values
+	// are ACCESS_DENIED
 	// API_CONFIGURATION_ERROR
 	// AUTHORIZER_FAILURE
 	//  AUTHORIZER_CONFIGURATION_ERROR
@@ -13811,12 +13817,12 @@ type DeleteGatewayResponseInput struct {
 	// RESOURCE_NOT_FOUND
 	// THROTTLED
 	// UNAUTHORIZED
-	// UNSUPPORTED_MEDIA_TYPES
+	// UNSUPPORTED_MEDIA_TYPE
 	//
 	// ResponseType is a required field
 	ResponseType *string `location:"uri" locationName:"response_type" type:"string" required:"true" enum:"GatewayResponseType"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -13878,17 +13884,17 @@ func (s DeleteGatewayResponseOutput) GoString() string {
 type DeleteIntegrationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies a delete integration request's HTTP method.
+	// [Required] Specifies a delete integration request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// Specifies a delete integration request's resource identifier.
+	// [Required] Specifies a delete integration request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -13959,22 +13965,22 @@ func (s DeleteIntegrationOutput) GoString() string {
 type DeleteIntegrationResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies a delete integration response request's HTTP method.
+	// [Required] Specifies a delete integration response request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// Specifies a delete integration response request's resource identifier.
+	// [Required] Specifies a delete integration response request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// Specifies a delete integration response request's status code.
+	// [Required] Specifies a delete integration response request's status code.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -14054,17 +14060,17 @@ func (s DeleteIntegrationResponseOutput) GoString() string {
 type DeleteMethodInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// The Resource identifier for the Method resource.
+	// [Required] The Resource identifier for the Method resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -14135,22 +14141,22 @@ func (s DeleteMethodOutput) GoString() string {
 type DeleteMethodResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// The Resource identifier for the MethodResponse resource.
+	// [Required] The Resource identifier for the MethodResponse resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The status code identifier for the MethodResponse resource.
+	// [Required] The status code identifier for the MethodResponse resource.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -14230,12 +14236,12 @@ func (s DeleteMethodResponseOutput) GoString() string {
 type DeleteModelInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the model to delete.
+	// [Required] The name of the model to delete.
 	//
 	// ModelName is a required field
 	ModelName *string `location:"uri" locationName:"model_name" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -14302,7 +14308,7 @@ type DeleteRequestValidatorInput struct {
 	// RequestValidatorId is a required field
 	RequestValidatorId *string `location:"uri" locationName:"requestvalidator_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -14364,12 +14370,12 @@ func (s DeleteRequestValidatorOutput) GoString() string {
 type DeleteResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Resource resource.
+	// [Required] The identifier of the Resource resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -14431,7 +14437,7 @@ func (s DeleteResourceOutput) GoString() string {
 type DeleteRestApiInput struct {
 	_ struct{} `type:"structure"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -14484,12 +14490,12 @@ func (s DeleteRestApiOutput) GoString() string {
 type DeleteStageInput struct {
 	_ struct{} `type:"structure"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The name of the Stage resource to delete.
+	// [Required] The name of the Stage resource to delete.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -14551,7 +14557,7 @@ func (s DeleteStageOutput) GoString() string {
 type DeleteUsagePlanInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Id of the to-be-deleted usage plan.
+	// [Required] The Id of the to-be-deleted usage plan.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -14591,13 +14597,13 @@ func (s *DeleteUsagePlanInput) SetUsagePlanId(v string) *DeleteUsagePlanInput {
 type DeleteUsagePlanKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Id of the UsagePlanKey resource to be deleted.
+	// [Required] The Id of the UsagePlanKey resource to be deleted.
 	//
 	// KeyId is a required field
 	KeyId *string `location:"uri" locationName:"keyId" type:"string" required:"true"`
 
-	// The Id of the UsagePlan resource representing the usage plan containing the
-	// to-be-deleted UsagePlanKey resource representing a plan customer.
+	// [Required] The Id of the UsagePlan resource representing the usage plan containing
+	// the to-be-deleted UsagePlanKey resource representing a plan customer.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -14933,12 +14939,11 @@ type DocumentationPartLocation struct {
 	// of the parent entity exactly.
 	StatusCode *string `locationName:"statusCode" type:"string"`
 
-	// The type of API entity to which the documentation content applies. It is
-	// a valid and required field for API entity types of API, AUTHORIZER, MODEL,
-	// RESOURCE, METHOD, PATH_PARAMETER, QUERY_PARAMETER, REQUEST_HEADER, REQUEST_BODY,
-	// RESPONSE, RESPONSE_HEADER, and RESPONSE_BODY. Content inheritance does not
-	// apply to any entity of the API, AUTHORIZER, METHOD, MODEL, REQUEST_BODY,
-	// or RESOURCE type.
+	// [Required] The type of API entity to which the documentation content applies.
+	// Valid values are API, AUTHORIZER, MODEL, RESOURCE, METHOD, PATH_PARAMETER,
+	// QUERY_PARAMETER, REQUEST_HEADER, REQUEST_BODY, RESPONSE, RESPONSE_HEADER,
+	// and RESPONSE_BODY. Content inheritance does not apply to any entity of the
+	// API, AUTHORIZER, METHOD, MODEL, REQUEST_BODY, or RESOURCE type.
 	//
 	// Type is a required field
 	Type *string `locationName:"type" type:"string" required:"true" enum:"DocumentationPartType"`
@@ -15087,7 +15092,7 @@ type DomainName struct {
 	// and AWS Regions and Endpoints for API Gateway (http://docs.aws.amazon.com/general/latest/gr/rande.html#apigateway_region).
 	DistributionHostedZoneId *string `locationName:"distributionHostedZoneId" type:"string"`
 
-	// The name of the DomainName resource.
+	// The custom domain name as an API host name, for example, my-api.example.com.
 	DomainName *string `locationName:"domainName" type:"string"`
 
 	// The endpoint configuration of this DomainName showing the endpoint types
@@ -15289,12 +15294,12 @@ func (s FlushStageAuthorizersCacheOutput) GoString() string {
 type FlushStageCacheInput struct {
 	_ struct{} `type:"structure"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The name of the stage to flush its cache.
+	// [Required] The name of the stage to flush its cache.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -15395,7 +15400,7 @@ func (s GetAccountInput) GoString() string {
 type GetApiKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ApiKey resource.
+	// [Required] The identifier of the ApiKey resource.
 	//
 	// ApiKey is a required field
 	ApiKey *string `location:"uri" locationName:"api_Key" type:"string" required:"true"`
@@ -15452,7 +15457,8 @@ type GetApiKeysInput struct {
 	// key values.
 	IncludeValues *bool `location:"querystring" locationName:"includeValues" type:"boolean"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The name of queried API keys.
@@ -15550,12 +15556,12 @@ func (s *GetApiKeysOutput) SetWarnings(v []*string) *GetApiKeysOutput {
 type GetAuthorizerInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Authorizer resource.
+	// [Required] The identifier of the Authorizer resource.
 	//
 	// AuthorizerId is a required field
 	AuthorizerId *string `location:"uri" locationName:"authorizer_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -15603,13 +15609,14 @@ func (s *GetAuthorizerInput) SetRestApiId(v string) *GetAuthorizerInput {
 type GetAuthorizersInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -15694,15 +15701,15 @@ func (s *GetAuthorizersOutput) SetPosition(v string) *GetAuthorizersOutput {
 type GetBasePathMappingInput struct {
 	_ struct{} `type:"structure"`
 
-	// The base path name that callers of the API must provide as part of the URL
-	// after the domain name. This value must be unique for all of the mappings
-	// across a single API. Leave this blank if you do not want callers to specify
-	// any base path name after the domain name.
+	// [Required] The base path name that callers of the API must provide as part
+	// of the URL after the domain name. This value must be unique for all of the
+	// mappings across a single API. Leave this blank if you do not want callers
+	// to specify any base path name after the domain name.
 	//
 	// BasePath is a required field
 	BasePath *string `location:"uri" locationName:"base_path" type:"string" required:"true"`
 
-	// The domain name of the BasePathMapping resource to be described.
+	// [Required] The domain name of the BasePathMapping resource to be described.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -15750,13 +15757,13 @@ func (s *GetBasePathMappingInput) SetDomainName(v string) *GetBasePathMappingInp
 type GetBasePathMappingsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The domain name of a BasePathMapping resource.
+	// [Required] The domain name of a BasePathMapping resource.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -15842,7 +15849,7 @@ func (s *GetBasePathMappingsOutput) SetPosition(v string) *GetBasePathMappingsOu
 type GetClientCertificateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ClientCertificate resource to be described.
+	// [Required] The identifier of the ClientCertificate resource to be described.
 	//
 	// ClientCertificateId is a required field
 	ClientCertificateId *string `location:"uri" locationName:"clientcertificate_id" type:"string" required:"true"`
@@ -15881,8 +15888,8 @@ func (s *GetClientCertificateInput) SetClientCertificateId(v string) *GetClientC
 type GetClientCertificatesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -15949,7 +15956,7 @@ func (s *GetClientCertificatesOutput) SetPosition(v string) *GetClientCertificat
 type GetDeploymentInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Deployment resource to get information about.
+	// [Required] The identifier of the Deployment resource to get information about.
 	//
 	// DeploymentId is a required field
 	DeploymentId *string `location:"uri" locationName:"deployment_id" type:"string" required:"true"`
@@ -15963,7 +15970,7 @@ type GetDeploymentInput struct {
 	// list containing only the "apisummary" string. For example, GET /restapis/{restapi_id}/deployments/{deployment_id}?embed=apisummary.
 	Embed []*string `location:"querystring" locationName:"embed" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -16017,14 +16024,14 @@ func (s *GetDeploymentInput) SetRestApiId(v string) *GetDeploymentInput {
 type GetDeploymentsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -16172,7 +16179,8 @@ func (s *GetDocumentationPartInput) SetRestApiId(v string) *GetDocumentationPart
 type GetDocumentationPartsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The status of the API documentation parts to retrieve. Valid values are DOCUMENTED
@@ -16354,7 +16362,8 @@ func (s *GetDocumentationVersionInput) SetRestApiId(v string) *GetDocumentationV
 type GetDocumentationVersionsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -16449,7 +16458,7 @@ func (s *GetDocumentationVersionsOutput) SetPosition(v string) *GetDocumentation
 type GetDomainNameInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the DomainName resource.
+	// [Required] The name of the DomainName resource.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -16488,8 +16497,8 @@ func (s *GetDomainNameInput) SetDomainName(v string) *GetDomainNameInput {
 type GetDomainNamesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -16561,7 +16570,7 @@ type GetExportInput struct {
 	// be specified in the Accept header for direct API requests.
 	Accepts *string `location:"header" locationName:"Accept" type:"string"`
 
-	// The type of export. Currently only 'swagger' is supported.
+	// [Required] The type of export. Currently only 'swagger' is supported.
 	//
 	// ExportType is a required field
 	ExportType *string `location:"uri" locationName:"export_type" type:"string" required:"true"`
@@ -16575,12 +16584,12 @@ type GetExportInput struct {
 	// tool
 	Parameters map[string]*string `location:"querystring" locationName:"parameters" type:"map"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The name of the Stage that will be exported.
+	// [Required] The name of the Stage that will be exported.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -16692,8 +16701,8 @@ func (s *GetExportOutput) SetContentType(v string) *GetExportOutput {
 type GetGatewayResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The response type of the associated GatewayResponse. Valid values are ACCESS_DENIED
-	//
+	// [Required] The response type of the associated GatewayResponse. Valid values
+	// are ACCESS_DENIED
 	// API_CONFIGURATION_ERROR
 	// AUTHORIZER_FAILURE
 	//  AUTHORIZER_CONFIGURATION_ERROR
@@ -16712,12 +16721,12 @@ type GetGatewayResponseInput struct {
 	// RESOURCE_NOT_FOUND
 	// THROTTLED
 	// UNAUTHORIZED
-	// UNSUPPORTED_MEDIA_TYPES
+	// UNSUPPORTED_MEDIA_TYPE
 	//
 	// ResponseType is a required field
 	ResponseType *string `location:"uri" locationName:"response_type" type:"string" required:"true" enum:"GatewayResponseType"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -16768,15 +16777,16 @@ func (s *GetGatewayResponseInput) SetRestApiId(v string) *GetGatewayResponseInpu
 type GetGatewayResponsesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The GatewayResponses collection
-	// does not support pagination and the limit does not apply here.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500. The GatewayResponses collection does not support
+	// pagination and the limit does not apply here.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set. The GatewayResponse
 	// collection does not support pagination and the position does not apply here.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17018,17 +17028,17 @@ func (s *GetGatewayResponsesOutput) SetPosition(v string) *GetGatewayResponsesOu
 type GetIntegrationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies a get integration request's HTTP method.
+	// [Required] Specifies a get integration request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// Specifies a get integration request's resource identifier
+	// [Required] Specifies a get integration request's resource identifier
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17085,22 +17095,22 @@ func (s *GetIntegrationInput) SetRestApiId(v string) *GetIntegrationInput {
 type GetIntegrationResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies a get integration response request's HTTP method.
+	// [Required] Specifies a get integration response request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// Specifies a get integration response request's resource identifier.
+	// [Required] Specifies a get integration response request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// Specifies a get integration response request's status code.
+	// [Required] Specifies a get integration response request's status code.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -17166,17 +17176,17 @@ func (s *GetIntegrationResponseInput) SetStatusCode(v string) *GetIntegrationRes
 type GetMethodInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the method request's HTTP method type.
+	// [Required] Specifies the method request's HTTP method type.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// The Resource identifier for the Method resource.
+	// [Required] The Resource identifier for the Method resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17233,22 +17243,22 @@ func (s *GetMethodInput) SetRestApiId(v string) *GetMethodInput {
 type GetMethodResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// The Resource identifier for the MethodResponse resource.
+	// [Required] The Resource identifier for the MethodResponse resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The status code for the MethodResponse resource.
+	// [Required] The status code for the MethodResponse resource.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -17319,12 +17329,12 @@ type GetModelInput struct {
 	// is false.
 	Flatten *bool `location:"querystring" locationName:"flatten" type:"boolean"`
 
-	// The name of the model as an identifier.
+	// [Required] The name of the model as an identifier.
 	//
 	// ModelName is a required field
 	ModelName *string `location:"uri" locationName:"model_name" type:"string" required:"true"`
 
-	// The RestApi identifier under which the Model exists.
+	// [Required] The RestApi identifier under which the Model exists.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17378,12 +17388,12 @@ func (s *GetModelInput) SetRestApiId(v string) *GetModelInput {
 type GetModelTemplateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the model for which to generate a template.
+	// [Required] The name of the model for which to generate a template.
 	//
 	// ModelName is a required field
 	ModelName *string `location:"uri" locationName:"model_name" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17458,14 +17468,14 @@ func (s *GetModelTemplateOutput) SetValue(v string) *GetModelTemplateOutput {
 type GetModelsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17555,7 +17565,7 @@ type GetRequestValidatorInput struct {
 	// RequestValidatorId is a required field
 	RequestValidatorId *string `location:"uri" locationName:"requestvalidator_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17603,13 +17613,14 @@ func (s *GetRequestValidatorInput) SetRestApiId(v string) *GetRequestValidatorIn
 type GetRequestValidatorsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17706,12 +17717,12 @@ type GetResourceInput struct {
 	// /restapis/{restapi_id}/resources/{resource_id}?embed=methods.
 	Embed []*string `location:"querystring" locationName:"embed" type:"list"`
 
-	// The identifier for the Resource resource.
+	// [Required] The identifier for the Resource resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17773,14 +17784,14 @@ type GetResourcesInput struct {
 	// /restapis/{restapi_id}/resources?embed=methods.
 	Embed []*string `location:"querystring" locationName:"embed" type:"list"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17871,7 +17882,7 @@ func (s *GetResourcesOutput) SetPosition(v string) *GetResourcesOutput {
 type GetRestApiInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the RestApi resource.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -17910,8 +17921,8 @@ func (s *GetRestApiInput) SetRestApiId(v string) *GetRestApiInput {
 type GetRestApisInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page. The value is 25 by default
-	// and could be between 1 - 500.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -17986,18 +17997,18 @@ type GetSdkInput struct {
 	// named serviceName and javaPackageName are required.
 	Parameters map[string]*string `location:"querystring" locationName:"parameters" type:"map"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The language for the generated SDK. Currently java, javascript, android,
-	// objectivec (for iOS), swift (for iOS), and ruby are supported.
+	// [Required] The language for the generated SDK. Currently java, javascript,
+	// android, objectivec (for iOS), swift (for iOS), and ruby are supported.
 	//
 	// SdkType is a required field
 	SdkType *string `location:"uri" locationName:"sdk_type" type:"string" required:"true"`
 
-	// The name of the Stage that the SDK will use.
+	// [Required] The name of the Stage that the SDK will use.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -18102,7 +18113,7 @@ func (s *GetSdkOutput) SetContentType(v string) *GetSdkOutput {
 type GetSdkTypeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the queried SdkType instance.
+	// [Required] The identifier of the queried SdkType instance.
 	//
 	// Id is a required field
 	Id *string `location:"uri" locationName:"sdktype_id" type:"string" required:"true"`
@@ -18141,7 +18152,8 @@ func (s *GetSdkTypeInput) SetId(v string) *GetSdkTypeInput {
 type GetSdkTypesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -18206,12 +18218,12 @@ func (s *GetSdkTypesOutput) SetPosition(v string) *GetSdkTypesOutput {
 type GetStageInput struct {
 	_ struct{} `type:"structure"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The name of the Stage resource to get information about.
+	// [Required] The name of the Stage resource to get information about.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -18262,7 +18274,7 @@ type GetStagesInput struct {
 	// The stages' deployment identifiers.
 	DeploymentId *string `location:"querystring" locationName:"deploymentId" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -18334,14 +18346,15 @@ type GetTagsInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Not currently supported) The maximum number of returned results per page.
+	// The default value is 25 and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// (Not currently supported) The current pagination position in the paged result
 	// set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// [Required] The ARN of a resource that can be tagged. At present, Stage is
-	// the only taggable resource.
+	// [Required] The ARN of a resource that can be tagged. The resource ARN must
+	// be URL-encoded. At present, Stage is the only taggable resource.
 	//
 	// ResourceArn is a required field
 	ResourceArn *string `location:"uri" locationName:"resource_arn" type:"string" required:"true"`
@@ -18388,11 +18401,11 @@ func (s *GetTagsInput) SetResourceArn(v string) *GetTagsInput {
 	return s
 }
 
-// A collection of Tags associated with a given resource.
+// The collection of tags. Each tag element is associated with a given resource.
 type GetTagsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A collection of Tags associated with a given resource.
+	// The collection of tags. Each tag element is associated with a given resource.
 	Tags map[string]*string `locationName:"tags" type:"map"`
 }
 
@@ -18417,7 +18430,7 @@ func (s *GetTagsOutput) SetTags(v map[string]*string) *GetTagsOutput {
 type GetUsageInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ending date (e.g., 2016-12-31) of the usage data.
+	// [Required] The ending date (e.g., 2016-12-31) of the usage data.
 	//
 	// EndDate is a required field
 	EndDate *string `location:"querystring" locationName:"endDate" type:"string" required:"true"`
@@ -18425,18 +18438,19 @@ type GetUsageInput struct {
 	// The Id of the API key associated with the resultant usage data.
 	KeyId *string `location:"querystring" locationName:"keyId" type:"string"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The starting date (e.g., 2016-01-01) of the usage data.
+	// [Required] The starting date (e.g., 2016-01-01) of the usage data.
 	//
 	// StartDate is a required field
 	StartDate *string `location:"querystring" locationName:"startDate" type:"string" required:"true"`
 
-	// The Id of the usage plan associated with the usage data.
+	// [Required] The Id of the usage plan associated with the usage data.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -18511,7 +18525,7 @@ func (s *GetUsageInput) SetUsagePlanId(v string) *GetUsageInput {
 type GetUsagePlanInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the UsagePlan resource to be retrieved.
+	// [Required] The identifier of the UsagePlan resource to be retrieved.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -18550,14 +18564,14 @@ func (s *GetUsagePlanInput) SetUsagePlanId(v string) *GetUsagePlanInput {
 type GetUsagePlanKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The key Id of the to-be-retrieved UsagePlanKey resource representing a plan
-	// customer.
+	// [Required] The key Id of the to-be-retrieved UsagePlanKey resource representing
+	// a plan customer.
 	//
 	// KeyId is a required field
 	KeyId *string `location:"uri" locationName:"keyId" type:"string" required:"true"`
 
-	// The Id of the UsagePlan resource representing the usage plan containing the
-	// to-be-retrieved UsagePlanKey resource representing a plan customer.
+	// [Required] The Id of the UsagePlan resource representing the usage plan containing
+	// the to-be-retrieved UsagePlanKey resource representing a plan customer.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -18606,7 +18620,8 @@ func (s *GetUsagePlanKeyInput) SetUsagePlanId(v string) *GetUsagePlanKeyInput {
 type GetUsagePlanKeysInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// A query parameter specifying the name of the to-be-returned usage plan keys.
@@ -18615,8 +18630,8 @@ type GetUsagePlanKeysInput struct {
 	// The current pagination position in the paged result set.
 	Position *string `location:"querystring" locationName:"position" type:"string"`
 
-	// The Id of the UsagePlan resource representing the usage plan containing the
-	// to-be-retrieved UsagePlanKey resource representing a plan customer.
+	// [Required] The Id of the UsagePlan resource representing the usage plan containing
+	// the to-be-retrieved UsagePlanKey resource representing a plan customer.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -18711,7 +18726,8 @@ type GetUsagePlansInput struct {
 	// The identifier of the API key associated with the usage plans.
 	KeyId *string `location:"querystring" locationName:"keyId" type:"string"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -18824,7 +18840,8 @@ func (s *GetVpcLinkInput) SetVpcLinkId(v string) *GetVpcLinkInput {
 type GetVpcLinksInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of returned results per page.
+	// The maximum number of returned results per page. The default value is 25
+	// and the maximum value is 500.
 	Limit *int64 `location:"querystring" locationName:"limit" type:"integer"`
 
 	// The current pagination position in the paged result set.
@@ -19107,9 +19124,9 @@ func (s *ImportDocumentationPartsOutput) SetWarnings(v []*string) *ImportDocumen
 type ImportRestApiInput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
-	// The POST request body containing external API definitions. Currently, only
-	// Swagger definition JSON files are supported. The maximum size of the API
-	// definition file is 2MB.
+	// [Required] The POST request body containing external API definitions. Currently,
+	// only Swagger definition JSON files are supported. The maximum size of the
+	// API definition file is 2MB.
 	//
 	// Body is a required field
 	Body []byte `locationName:"body" type:"blob" required:"true"`
@@ -19611,13 +19628,13 @@ type Method struct {
 	ApiKeyRequired *bool `locationName:"apiKeyRequired" type:"boolean"`
 
 	// A list of authorization scopes configured on the method. The scopes are used
-	// with a COGNITO_USER_POOL authorizer to authorize the method invocation. The
-	// authorization works by matching the method scopes against the scopes parsed
-	// from the access token in the incoming request. The method invocation is authorized
-	// if any method scopes matches a claimed scope in the access token. Otherwise,
-	// the invocation is not authorized. When the method scope is configured, the
-	// client must provide an access token instead of an identity token for authorization
-	// purposes.
+	// with a COGNITO_USER_POOLS authorizer to authorize the method invocation.
+	// The authorization works by matching the method scopes against the scopes
+	// parsed from the access token in the incoming request. The method invocation
+	// is authorized if any method scopes matches a claimed scope in the access
+	// token. Otherwise, the invocation is not authorized. When the method scope
+	// is configured, the client must provide an access token instead of an identity
+	// token for authorization purposes.
 	AuthorizationScopes []*string `locationName:"authorizationScopes" type:"list"`
 
 	// The method's authorization type. Valid values are NONE for open access, AWS_IAM
@@ -20070,12 +20087,12 @@ type Model struct {
 	// The name of the model. Must be an alphanumeric string.
 	Name *string `locationName:"name" type:"string"`
 
-	// The schema for the model. For application/json models, this should be JSON-schema
-	// draft v4 (http://json-schema.org/documentation.html) model. Do not include
-	// "\*/" characters in the description of any properties because such "\*/"
-	// characters may be interpreted as the closing marker for comments in some
-	// languages, such as Java or JavaScript, causing the installation of your API's
-	// SDK generated by API Gateway to fail.
+	// The schema for the model. For application/json models, this should be JSON
+	// schema draft 4 (https://tools.ietf.org/html/draft-zyp-json-schema-04) model.
+	// Do not include "\*/" characters in the description of any properties because
+	// such "\*/" characters may be interpreted as the closing marker for comments
+	// in some languages, such as Java or JavaScript, causing the installation of
+	// your API's SDK generated by API Gateway to fail.
 	Schema *string `locationName:"schema" type:"string"`
 }
 
@@ -20203,8 +20220,8 @@ type PutGatewayResponseInput struct {
 	// pairs.
 	ResponseTemplates map[string]*string `locationName:"responseTemplates" type:"map"`
 
-	// The response type of the associated GatewayResponse. Valid values are ACCESS_DENIED
-	//
+	// [Required] The response type of the associated GatewayResponse. Valid values
+	// are ACCESS_DENIED
 	// API_CONFIGURATION_ERROR
 	// AUTHORIZER_FAILURE
 	//  AUTHORIZER_CONFIGURATION_ERROR
@@ -20223,12 +20240,12 @@ type PutGatewayResponseInput struct {
 	// RESOURCE_NOT_FOUND
 	// THROTTLED
 	// UNAUTHORIZED
-	// UNSUPPORTED_MEDIA_TYPES
+	// UNSUPPORTED_MEDIA_TYPE
 	//
 	// ResponseType is a required field
 	ResponseType *string `location:"uri" locationName:"response_type" type:"string" required:"true" enum:"GatewayResponseType"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -20331,7 +20348,7 @@ type PutIntegrationInput struct {
 	// Specifies whether credentials are required for a put integration.
 	Credentials *string `locationName:"credentials" type:"string"`
 
-	// Specifies a put integration request's HTTP method.
+	// [Required] Specifies a put integration request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -20371,12 +20388,12 @@ type PutIntegrationInput struct {
 	// value.
 	RequestTemplates map[string]*string `locationName:"requestTemplates" type:"map"`
 
-	// Specifies a put integration request's resource ID.
+	// [Required] Specifies a put integration request's resource ID.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -20385,7 +20402,7 @@ type PutIntegrationInput struct {
 	// milliseconds or 29 seconds.
 	TimeoutInMillis *int64 `locationName:"timeoutInMillis" type:"integer"`
 
-	// Specifies a put integration input's type.
+	// [Required] Specifies a put integration input's type.
 	//
 	// Type is a required field
 	Type *string `locationName:"type" type:"string" required:"true" enum:"IntegrationType"`
@@ -20559,12 +20576,12 @@ type PutIntegrationResponseInput struct {
 	// from the integration response to the method response without modification.
 	ContentHandling *string `locationName:"contentHandling" type:"string" enum:"ContentHandlingStrategy"`
 
-	// Specifies a put integration response request's HTTP method.
+	// [Required] Specifies a put integration response request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// Specifies a put integration response request's resource identifier.
+	// [Required] Specifies a put integration response request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
@@ -20584,7 +20601,7 @@ type PutIntegrationResponseInput struct {
 	// Specifies a put integration response's templates.
 	ResponseTemplates map[string]*string `locationName:"responseTemplates" type:"map"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -20592,8 +20609,8 @@ type PutIntegrationResponseInput struct {
 	// Specifies the selection pattern of a put integration response.
 	SelectionPattern *string `locationName:"selectionPattern" type:"string"`
 
-	// Specifies the status code that is used to map the integration response to
-	// an existing MethodResponse.
+	// [Required] Specifies the status code that is used to map the integration
+	// response to an existing MethodResponse.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -20687,27 +20704,28 @@ type PutMethodInput struct {
 	ApiKeyRequired *bool `locationName:"apiKeyRequired" type:"boolean"`
 
 	// A list of authorization scopes configured on the method. The scopes are used
-	// with a COGNITO_USER_POOL authorizer to authorize the method invocation. The
-	// authorization works by matching the method scopes against the scopes parsed
-	// from the access token in the incoming request. The method invocation is authorized
-	// if any method scopes matches a claimed scope in the access token. Otherwise,
-	// the invocation is not authorized. When the method scope is configured, the
-	// client must provide an access token instead of an identity token for authorization
-	// purposes.
+	// with a COGNITO_USER_POOLS authorizer to authorize the method invocation.
+	// The authorization works by matching the method scopes against the scopes
+	// parsed from the access token in the incoming request. The method invocation
+	// is authorized if any method scopes matches a claimed scope in the access
+	// token. Otherwise, the invocation is not authorized. When the method scope
+	// is configured, the client must provide an access token instead of an identity
+	// token for authorization purposes.
 	AuthorizationScopes []*string `locationName:"authorizationScopes" type:"list"`
 
-	// The method's authorization type. Valid values are NONE for open access, AWS_IAM
-	// for using AWS IAM permissions, CUSTOM for using a custom authorizer, or COGNITO_USER_POOLS
-	// for using a Cognito user pool.
+	// [Required] The method's authorization type. Valid values are NONE for open
+	// access, AWS_IAM for using AWS IAM permissions, CUSTOM for using a custom
+	// authorizer, or COGNITO_USER_POOLS for using a Cognito user pool.
 	//
 	// AuthorizationType is a required field
 	AuthorizationType *string `locationName:"authorizationType" type:"string" required:"true"`
 
 	// Specifies the identifier of an Authorizer to use on this Method, if the type
-	// is CUSTOM.
+	// is CUSTOM or COGNITO_USER_POOLS. The authorizer identifier is generated by
+	// API Gateway when you created the authorizer.
 	AuthorizerId *string `locationName:"authorizerId" type:"string"`
 
-	// Specifies the method request's HTTP method type.
+	// [Required] Specifies the method request's HTTP method type.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -20735,12 +20753,12 @@ type PutMethodInput struct {
 	// The identifier of a RequestValidator for validating the method request.
 	RequestValidatorId *string `locationName:"requestValidatorId" type:"string"`
 
-	// The Resource identifier for the new Method resource.
+	// [Required] The Resource identifier for the new Method resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -20848,12 +20866,12 @@ func (s *PutMethodInput) SetRestApiId(v string) *PutMethodInput {
 type PutMethodResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
 
-	// The Resource identifier for the Method resource.
+	// [Required] The Resource identifier for the Method resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
@@ -20876,12 +20894,12 @@ type PutMethodResponseInput struct {
 	// where JSON-expression is a valid JSON expression without the $ prefix.)
 	ResponseParameters map[string]*bool `locationName:"responseParameters" type:"map"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The method response's status code.
+	// [Required] The method response's status code.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -20960,9 +20978,9 @@ func (s *PutMethodResponseInput) SetStatusCode(v string) *PutMethodResponseInput
 type PutRestApiInput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
-	// The PUT request body containing external API definitions. Currently, only
-	// Swagger definition JSON files are supported. The maximum size of the API
-	// definition file is 2MB.
+	// [Required] The PUT request body containing external API definitions. Currently,
+	// only Swagger definition JSON files are supported. The maximum size of the
+	// API definition file is 2MB.
 	//
 	// Body is a required field
 	Body []byte `locationName:"body" type:"blob" required:"true"`
@@ -20981,7 +20999,7 @@ type PutRestApiInput struct {
 	// ignore=documentation --body 'file:///path/to/imported-api-body.json.
 	Parameters map[string]*string `location:"querystring" locationName:"parameters" type:"map"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -21211,8 +21229,8 @@ func (s *Resource) SetResourceMethods(v map[string]*Method) *Resource {
 type RestApi struct {
 	_ struct{} `type:"structure"`
 
-	// The source of the API key for metring requests according to a usage plan.
-	// Valid values are HEADER to read the API key from the X-API-Key header of
+	// The source of the API key for metering requests according to a usage plan.
+	// Valid values are: HEADER to read the API key from the X-API-Key header of
 	// a request.
 	// AUTHORIZER to read the API key from the UsageIdentifierKey from a custom
 	// authorizer.
@@ -21236,15 +21254,19 @@ type RestApi struct {
 	// API Gateway.
 	Id *string `locationName:"id" type:"string"`
 
-	// A nullable integer used to enable (non-negative between 0 and 10485760 (10M)
-	// bytes, inclusive) or disable (null) compression on an API. When compression
-	// is enabled, compression or decompression are not applied on the payload if
-	// the payload size is smaller than this value. Setting it to zero allows compression
-	// for any payload size.
+	// A nullable integer that is used to enable compression (with non-negative
+	// between 0 and 10485760 (10M) bytes, inclusive) or disable compression (with
+	// a null value) on an API. When compression is enabled, compression or decompression
+	// is not applied on the payload if the payload size is smaller than this value.
+	// Setting it to zero allows compression for any payload size.
 	MinimumCompressionSize *int64 `locationName:"minimumCompressionSize" type:"integer"`
 
 	// The API's name.
 	Name *string `locationName:"name" type:"string"`
+
+	// A stringified JSON policy document that applies to this RestApi regardless
+	// of the caller and Method
+	Policy *string `locationName:"policy" type:"string"`
 
 	// A version identifier for the API.
 	Version *string `locationName:"version" type:"string"`
@@ -21309,6 +21331,12 @@ func (s *RestApi) SetMinimumCompressionSize(v int64) *RestApi {
 // SetName sets the Name field's value.
 func (s *RestApi) SetName(v string) *RestApi {
 	s.Name = &v
+	return s
+}
+
+// SetPolicy sets the Policy field's value.
+func (s *RestApi) SetPolicy(v string) *RestApi {
+	s.Policy = &v
 	return s
 }
 
@@ -21486,7 +21514,7 @@ type Stage struct {
 	// (URI) of a call to API Gateway.
 	StageName *string `locationName:"stageName" type:"string"`
 
-	// A collection of Tags associated with a given resource.
+	// The collection of tags. Each tag element is associated with a given resource.
 	Tags map[string]*string `locationName:"tags" type:"map"`
 
 	// A map that defines the stage variables for a Stage resource. Variable names
@@ -21628,19 +21656,19 @@ func (s *StageKey) SetStageName(v string) *StageKey {
 	return s
 }
 
-// Adds or updates Tags on a gievn resource.
+// Adds or updates a tag on a given resource.
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// [Required] The ARN of a resource that can be tagged. At present, Stage is
-	// the only taggable resource.
+	// [Required] The ARN of a resource that can be tagged. The resource ARN must
+	// be URL-encoded. At present, Stage is the only taggable resource.
 	//
 	// ResourceArn is a required field
 	ResourceArn *string `location:"uri" locationName:"resource_arn" type:"string" required:"true"`
 
-	// [Required] Key/Value map of strings. Valid character set is [a-zA-Z+-=._:/].
-	// Tag key can be up to 128 characters and must not start with "aws:". Tag value
-	// can be up to 256 characters.
+	// [Required] The key-value map of strings. The valid character set is [a-zA-Z+-=._:/].
+	// The tag key can be up to 128 characters and must not start with aws:. The
+	// tag value can be up to 256 characters.
 	//
 	// Tags is a required field
 	Tags map[string]*string `locationName:"tags" type:"map" required:"true"`
@@ -21705,7 +21733,7 @@ type TestInvokeAuthorizerInput struct {
 	// [Optional] A key-value map of additional context variables.
 	AdditionalContext map[string]*string `locationName:"additionalContext" type:"map"`
 
-	// Specifies a test invoke authorizer request's Authorizer ID.
+	// [Required] Specifies a test invoke authorizer request's Authorizer ID.
 	//
 	// AuthorizerId is a required field
 	AuthorizerId *string `location:"uri" locationName:"authorizer_id" type:"string" required:"true"`
@@ -21722,7 +21750,7 @@ type TestInvokeAuthorizerInput struct {
 	// request. Use this to specify path parameters and query string parameters.
 	PathWithQueryString *string `locationName:"pathWithQueryString" type:"string"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -21895,7 +21923,7 @@ type TestInvokeMethodInput struct {
 	// A key-value map of headers to simulate an incoming invocation request.
 	Headers map[string]*string `locationName:"headers" type:"map"`
 
-	// Specifies a test invoke method request's HTTP method.
+	// [Required] Specifies a test invoke method request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -21904,12 +21932,12 @@ type TestInvokeMethodInput struct {
 	// Use this to specify path parameters and query string parameters.
 	PathWithQueryString *string `locationName:"pathWithQueryString" type:"string"`
 
-	// Specifies a test invoke method request's resource ID.
+	// [Required] Specifies a test invoke method request's resource ID.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -22093,17 +22121,17 @@ func (s *ThrottleSettings) SetRateLimit(v float64) *ThrottleSettings {
 	return s
 }
 
-// Removes Tags from a given resource.
+// Removes a tag from a given resource.
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// [Required] The ARN of a resource that can be tagged. At present, Stage is
-	// the only taggable resource.
+	// [Required] The ARN of a resource that can be tagged. The resource ARN must
+	// be URL-encoded. At present, Stage is the only taggable resource.
 	//
 	// ResourceArn is a required field
 	ResourceArn *string `location:"uri" locationName:"resource_arn" type:"string" required:"true"`
 
-	// The Tag keys to delete.
+	// [Required] The Tag keys to delete.
 	//
 	// TagKeys is a required field
 	TagKeys []*string `location:"querystring" locationName:"tagKeys" type:"list" required:"true"`
@@ -22190,7 +22218,7 @@ func (s *UpdateAccountInput) SetPatchOperations(v []*PatchOperation) *UpdateAcco
 type UpdateApiKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ApiKey resource to be updated.
+	// [Required] The identifier of the ApiKey resource to be updated.
 	//
 	// ApiKey is a required field
 	ApiKey *string `location:"uri" locationName:"api_Key" type:"string" required:"true"`
@@ -22239,7 +22267,7 @@ func (s *UpdateApiKeyInput) SetPatchOperations(v []*PatchOperation) *UpdateApiKe
 type UpdateAuthorizerInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the Authorizer resource.
+	// [Required] The identifier of the Authorizer resource.
 	//
 	// AuthorizerId is a required field
 	AuthorizerId *string `location:"uri" locationName:"authorizer_id" type:"string" required:"true"`
@@ -22248,7 +22276,7 @@ type UpdateAuthorizerInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -22302,12 +22330,12 @@ func (s *UpdateAuthorizerInput) SetRestApiId(v string) *UpdateAuthorizerInput {
 type UpdateBasePathMappingInput struct {
 	_ struct{} `type:"structure"`
 
-	// The base path of the BasePathMapping resource to change.
+	// [Required] The base path of the BasePathMapping resource to change.
 	//
 	// BasePath is a required field
 	BasePath *string `location:"uri" locationName:"base_path" type:"string" required:"true"`
 
-	// The domain name of the BasePathMapping resource to change.
+	// [Required] The domain name of the BasePathMapping resource to change.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -22365,7 +22393,7 @@ func (s *UpdateBasePathMappingInput) SetPatchOperations(v []*PatchOperation) *Up
 type UpdateClientCertificateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the ClientCertificate resource to be updated.
+	// [Required] The identifier of the ClientCertificate resource to be updated.
 	//
 	// ClientCertificateId is a required field
 	ClientCertificateId *string `location:"uri" locationName:"clientcertificate_id" type:"string" required:"true"`
@@ -22424,7 +22452,7 @@ type UpdateDeploymentInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -22604,7 +22632,7 @@ func (s *UpdateDocumentationVersionInput) SetRestApiId(v string) *UpdateDocument
 type UpdateDomainNameInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the DomainName resource to be changed.
+	// [Required] The name of the DomainName resource to be changed.
 	//
 	// DomainName is a required field
 	DomainName *string `location:"uri" locationName:"domain_name" type:"string" required:"true"`
@@ -22657,8 +22685,8 @@ type UpdateGatewayResponseInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The response type of the associated GatewayResponse. Valid values are ACCESS_DENIED
-	//
+	// [Required] The response type of the associated GatewayResponse. Valid values
+	// are ACCESS_DENIED
 	// API_CONFIGURATION_ERROR
 	// AUTHORIZER_FAILURE
 	//  AUTHORIZER_CONFIGURATION_ERROR
@@ -22677,12 +22705,12 @@ type UpdateGatewayResponseInput struct {
 	// RESOURCE_NOT_FOUND
 	// THROTTLED
 	// UNAUTHORIZED
-	// UNSUPPORTED_MEDIA_TYPES
+	// UNSUPPORTED_MEDIA_TYPE
 	//
 	// ResponseType is a required field
 	ResponseType *string `location:"uri" locationName:"response_type" type:"string" required:"true" enum:"GatewayResponseType"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -22809,7 +22837,7 @@ type UpdateGatewayResponseOutput struct {
 	// RESOURCE_NOT_FOUND
 	// THROTTLED
 	// UNAUTHORIZED
-	// UNSUPPORTED_MEDIA_TYPES
+	// UNSUPPORTED_MEDIA_TYPE
 	ResponseType *string `locationName:"responseType" type:"string" enum:"GatewayResponseType"`
 
 	// The HTTP status code for this GatewayResponse.
@@ -22860,7 +22888,7 @@ func (s *UpdateGatewayResponseOutput) SetStatusCode(v string) *UpdateGatewayResp
 type UpdateIntegrationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Represents an update integration request's HTTP method.
+	// [Required] Represents an update integration request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -22869,12 +22897,12 @@ type UpdateIntegrationInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// Represents an update integration request's resource identifier.
+	// [Required] Represents an update integration request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -22937,7 +22965,7 @@ func (s *UpdateIntegrationInput) SetRestApiId(v string) *UpdateIntegrationInput 
 type UpdateIntegrationResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies an update integration response request's HTTP method.
+	// [Required] Specifies an update integration response request's HTTP method.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -22946,17 +22974,17 @@ type UpdateIntegrationResponseInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// Specifies an update integration response request's resource identifier.
+	// [Required] Specifies an update integration response request's resource identifier.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// Specifies an update integration response request's status code.
+	// [Required] Specifies an update integration response request's status code.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -23028,7 +23056,7 @@ func (s *UpdateIntegrationResponseInput) SetStatusCode(v string) *UpdateIntegrat
 type UpdateMethodInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -23037,12 +23065,12 @@ type UpdateMethodInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The Resource identifier for the Method resource.
+	// [Required] The Resource identifier for the Method resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -23105,7 +23133,7 @@ func (s *UpdateMethodInput) SetRestApiId(v string) *UpdateMethodInput {
 type UpdateMethodResponseInput struct {
 	_ struct{} `type:"structure"`
 
-	// The HTTP verb of the Method resource.
+	// [Required] The HTTP verb of the Method resource.
 	//
 	// HttpMethod is a required field
 	HttpMethod *string `location:"uri" locationName:"http_method" type:"string" required:"true"`
@@ -23114,17 +23142,17 @@ type UpdateMethodResponseInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The Resource identifier for the MethodResponse resource.
+	// [Required] The Resource identifier for the MethodResponse resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The status code for the MethodResponse resource.
+	// [Required] The status code for the MethodResponse resource.
 	//
 	// StatusCode is a required field
 	StatusCode *string `location:"uri" locationName:"status_code" type:"string" required:"true"`
@@ -23196,7 +23224,7 @@ func (s *UpdateMethodResponseInput) SetStatusCode(v string) *UpdateMethodRespons
 type UpdateModelInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the model to update.
+	// [Required] The name of the model to update.
 	//
 	// ModelName is a required field
 	ModelName *string `location:"uri" locationName:"model_name" type:"string" required:"true"`
@@ -23205,7 +23233,7 @@ type UpdateModelInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -23268,7 +23296,7 @@ type UpdateRequestValidatorInput struct {
 	// RequestValidatorId is a required field
 	RequestValidatorId *string `location:"uri" locationName:"requestvalidator_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -23387,12 +23415,12 @@ type UpdateResourceInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The identifier of the Resource resource.
+	// [Required] The identifier of the Resource resource.
 	//
 	// ResourceId is a required field
 	ResourceId *string `location:"uri" locationName:"resource_id" type:"string" required:"true"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -23450,7 +23478,7 @@ type UpdateRestApiInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
@@ -23499,12 +23527,12 @@ type UpdateStageInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The string identifier of the associated RestApi.
+	// [Required] The string identifier of the associated RestApi.
 	//
 	// RestApiId is a required field
 	RestApiId *string `location:"uri" locationName:"restapi_id" type:"string" required:"true"`
 
-	// The name of the Stage resource to change information about.
+	// [Required] The name of the Stage resource to change information about.
 	//
 	// StageName is a required field
 	StageName *string `location:"uri" locationName:"stage_name" type:"string" required:"true"`
@@ -23559,8 +23587,8 @@ func (s *UpdateStageInput) SetStageName(v string) *UpdateStageInput {
 type UpdateUsageInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the API key associated with the usage plan in which a temporary
-	// extension is granted to the remaining quota.
+	// [Required] The identifier of the API key associated with the usage plan in
+	// which a temporary extension is granted to the remaining quota.
 	//
 	// KeyId is a required field
 	KeyId *string `location:"uri" locationName:"keyId" type:"string" required:"true"`
@@ -23569,7 +23597,7 @@ type UpdateUsageInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The Id of the usage plan associated with the usage data.
+	// [Required] The Id of the usage plan associated with the usage data.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -23627,7 +23655,7 @@ type UpdateUsagePlanInput struct {
 	// the order specified in this list.
 	PatchOperations []*PatchOperation `locationName:"patchOperations" type:"list"`
 
-	// The Id of the to-be-updated usage plan.
+	// [Required] The Id of the to-be-updated usage plan.
 	//
 	// UsagePlanId is a required field
 	UsagePlanId *string `location:"uri" locationName:"usageplanId" type:"string" required:"true"`
@@ -24020,10 +24048,10 @@ const (
 	ApiKeysFormatCsv = "csv"
 )
 
-// [Required] The authorizer type. Valid values are TOKEN for a Lambda function
-// using a single authorization token submitted in a custom header, REQUEST
-// for a Lambda function using incoming request parameters, and COGNITO_USER_POOLS
-// for using an Amazon Cognito user pool.
+// The authorizer type. Valid values are TOKEN for a Lambda function using a
+// single authorization token submitted in a custom header, REQUEST for a Lambda
+// function using incoming request parameters, and COGNITO_USER_POOLS for using
+// an Amazon Cognito user pool.
 const (
 	// AuthorizerTypeToken is a AuthorizerType enum value
 	AuthorizerTypeToken = "TOKEN"

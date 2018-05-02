@@ -106,10 +106,17 @@ func (ac *AdminClient) Tables(ctx context.Context) ([]string, error) {
 	req := &btapb.ListTablesRequest{
 		Parent: prefix,
 	}
-	res, err := ac.tClient.ListTables(ctx, req)
+
+	var res *btapb.ListTablesResponse
+	err := gax.Invoke(ctx, func(ctx context.Context) error {
+		var err error
+		res, err = ac.tClient.ListTables(ctx, req)
+		return err
+	}, retryOptions...)
 	if err != nil {
 		return nil, err
 	}
+
 	names := make([]string, 0, len(res.Tables))
 	for _, tbl := range res.Tables {
 		names = append(names, strings.TrimPrefix(tbl.Name, prefix+"/tables/"))
@@ -227,10 +234,18 @@ func (ac *AdminClient) TableInfo(ctx context.Context, table string) (*TableInfo,
 	req := &btapb.GetTableRequest{
 		Name: prefix + "/tables/" + table,
 	}
-	res, err := ac.tClient.GetTable(ctx, req)
+
+	var res *btapb.Table
+
+	err := gax.Invoke(ctx, func(ctx context.Context) error {
+		var err error
+		res, err = ac.tClient.GetTable(ctx, req)
+		return err
+	}, retryOptions...)
 	if err != nil {
 		return nil, err
 	}
+
 	ti := &TableInfo{}
 	for name, fam := range res.ColumnFamilies {
 		ti.Families = append(ti.Families, name)

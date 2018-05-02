@@ -41,9 +41,10 @@ func NewAPIExportClientWithBaseURI(baseURI string, subscriptionID string) APIExp
 }
 
 // Get gets the details of the API specified by its identifier.
-//
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// apiid is API identifier. Must be unique in the current API Management service instance.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// serviceName - the name of the API Management service.
+// apiid - API identifier. Must be unique in the current API Management service instance.
 func (client APIExportClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string) (result APIExportResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,

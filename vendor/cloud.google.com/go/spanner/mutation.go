@@ -53,22 +53,22 @@ const (
 //
 // Many mutations can be applied in a single atomic commit. For purposes of
 // constraint checking (such as foreign key constraints), the operations can be
-// viewed as applying in same order as the mutations are supplied in (so that
-// e.g., a row and its logical "child" can be inserted in the same commit).
+// viewed as applying in the same order as the mutations are provided (so that, e.g.,
+// a row and its logical "child" can be inserted in the same commit).
 //
-//	- The Apply function applies series of mutations.
-//	- A ReadWriteTransaction applies a series of mutations as part of an
-//	  atomic read-modify-write operation.
-// Example:
+// The Apply function applies series of mutations. For example,
 //
-//	m := spanner.Insert("User",
-//		[]string{"user_id", "profile"},
-//		[]interface{}{UserID, profile})
-//	_, err := client.Apply(ctx, []*spanner.Mutation{m})
+//	 m := spanner.Insert("User",
+//		 []string{"user_id", "profile"},
+//		 []interface{}{UserID, profile})
+//	 _, err := client.Apply(ctx, []*spanner.Mutation{m})
 //
-// In this example, we insert a new row into the User table. The primary key
+// inserts a new row into the User table. The primary key
 // for the new row is UserID (presuming that "user_id" has been declared as the
 // primary key of the "User" table).
+//
+// To apply a series of mutations as part of an atomic read-modify-write operation,
+// use ReadWriteTransaction.
 //
 // Updating a row
 //

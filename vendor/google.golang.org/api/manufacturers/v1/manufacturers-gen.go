@@ -144,6 +144,9 @@ type Attributes struct {
 	// .
 	DisclosureDate string `json:"disclosureDate,omitempty"`
 
+	// ExcludedDestination: A list of excluded destinations.
+	ExcludedDestination []string `json:"excludedDestination,omitempty"`
+
 	// FeatureDescription: The rich format description of the product. For
 	// more information,
 	// see
@@ -175,6 +178,9 @@ type Attributes struct {
 	// see
 	// https://support.google.com/manufacturers/answer/6124116#image.
 	ImageLink *Image `json:"imageLink,omitempty"`
+
+	// IncludedDestination: A list of included destinations.
+	IncludedDestination []string `json:"includedDestination,omitempty"`
 
 	// ItemGroupId: The item group id of the product. For more information,
 	// see
@@ -372,6 +378,44 @@ func (s *Count) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// DestinationStatus: The destination status.
+type DestinationStatus struct {
+	// Destination: The name of the destination.
+	Destination string `json:"destination,omitempty"`
+
+	// Status: The status of the destination.
+	//
+	// Possible values:
+	//   "UNKNOWN" - Unspecified status, never used.
+	//   "ACTIVE" - The product is used for this destination.
+	//   "PENDING" - The decision is still pending.
+	//   "DISAPPROVED" - The product is disapproved. Please look at the
+	// issues.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Destination") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Destination") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DestinationStatus) MarshalJSON() ([]byte, error) {
+	type NoMethod DestinationStatus
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Empty: A generic empty message that you can re-use to avoid defining
 // duplicated
 // empty messages in your APIs. A typical example is to use it as the
@@ -507,6 +551,23 @@ type Issue struct {
 	// resolve it.
 	Description string `json:"description,omitempty"`
 
+	// Destination: The destination this issue applies to.
+	Destination string `json:"destination,omitempty"`
+
+	// Resolution: What needs to happen to resolve the issue.
+	//
+	// Possible values:
+	//   "RESOLUTION_UNSPECIFIED" - Unspecified resolution, never used.
+	//   "USER_ACTION" - The user who provided the data must act in order to
+	// resolve the issue
+	// (for example by correcting some data).
+	//   "PENDING_PROCESSING" - The issue will be resolved automatically
+	// (for example image crawl or
+	// Google review). No action is required now. Resolution might lead
+	// to
+	// another issue (for example if crawl fails).
+	Resolution string `json:"resolution,omitempty"`
+
 	// Severity: The severity of the issue.
 	//
 	// Possible values:
@@ -527,6 +588,9 @@ type Issue struct {
 
 	// Timestamp: The timestamp when this issue appeared.
 	Timestamp string `json:"timestamp,omitempty"`
+
+	// Title: Short title describing the nature of the issue.
+	Title string `json:"title,omitempty"`
 
 	// Type: The server-generated type of the issue, for
 	// example,
@@ -624,11 +688,17 @@ func (s *Price) MarshalJSON() ([]byte, error) {
 
 // Product: Product data.
 type Product struct {
+	// Attributes: Attributes of the product uploaded to the Manufacturer
+	// Center.
+	Attributes *Attributes `json:"attributes,omitempty"`
+
 	// ContentLanguage: The content language of the product as a two-letter
 	// ISO 639-1 language code
 	// (for example, en).
-	// @OutputOnly
 	ContentLanguage string `json:"contentLanguage,omitempty"`
+
+	// DestinationStatuses: The status of the destinations.
+	DestinationStatuses []*DestinationStatus `json:"destinationStatuses,omitempty"`
 
 	// FinalAttributes: Final attributes of the product. The final
 	// attributes are obtained by
@@ -637,23 +707,31 @@ type Product struct {
 	// attributes. Google systems only process, evaluate, review, and/or use
 	// final
 	// attributes.
-	// @OutputOnly
+	//
+	// This field is deprecated and will be removed end of July 2018. Please
+	// use
+	// attributes.
 	FinalAttributes *Attributes `json:"finalAttributes,omitempty"`
 
 	// Issues: A server-generated list of issues associated with the
 	// product.
-	// @OutputOnly
 	Issues []*Issue `json:"issues,omitempty"`
 
 	// ManuallyDeletedAttributes: Names of the attributes of the product
 	// deleted manually via the
 	// Manufacturer Center UI.
-	// @OutputOnly
+	//
+	// This field is deprecated and will be removed end of July 2018. Please
+	// use
+	// attributes.
 	ManuallyDeletedAttributes []string `json:"manuallyDeletedAttributes,omitempty"`
 
 	// ManuallyProvidedAttributes: Attributes of the product provided
 	// manually via the Manufacturer Center UI.
-	// @OutputOnly
+	//
+	// This field is deprecated and will be removed end of July 2018. Please
+	// use
+	// attributes.
 	ManuallyProvidedAttributes *Attributes `json:"manuallyProvidedAttributes,omitempty"`
 
 	// Name: Name in the format
@@ -672,40 +750,38 @@ type Product struct {
 	// see
 	//
 	// https://support.google.com/manufacturers/answer/6124116#id.
-	// @OutputOnl
-	// y
 	Name string `json:"name,omitempty"`
 
 	// Parent: Parent ID in the format
 	// `accounts/{account_id}`.
 	//
 	// `account_id` - The ID of the Manufacturer Center account.
-	// @OutputOnly
 	Parent string `json:"parent,omitempty"`
 
 	// ProductId: The ID of the product. For more information,
 	// see
 	// https://support.google.com/manufacturers/answer/6124116#id.
-	// @Outpu
-	// tOnly
 	ProductId string `json:"productId,omitempty"`
 
 	// TargetCountry: The target country of the product as a CLDR territory
 	// code (for example,
 	// US).
-	// @OutputOnly
 	TargetCountry string `json:"targetCountry,omitempty"`
 
 	// UploadedAttributes: Attributes of the product uploaded via the
 	// Manufacturer Center API or via
 	// feeds.
+	//
+	// This field is deprecated and will be removed end of July 2018. Please
+	// use
+	// attributes.
 	UploadedAttributes *Attributes `json:"uploadedAttributes,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "ContentLanguage") to
+	// ForceSendFields is a list of field names (e.g. "Attributes") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -713,13 +789,12 @@ type Product struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "ContentLanguage") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Attributes") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -933,6 +1008,27 @@ func (r *AccountsProductsService) Get(parent string, name string) *AccountsProdu
 	return c
 }
 
+// Include sets the optional parameter "include": The information to be
+// included in the response. Only sections listed here
+// will be returned.
+//
+// If this parameter is not specified, ATTRIBUTES and ISSUES are
+// returned.
+// This behavior is temporary and will be removed once all clients are
+// ready
+// or at the latest end of July 2018. After that no sections will be
+// returned.
+//
+// Possible values:
+//   "UNKNOWN"
+//   "ATTRIBUTES"
+//   "ISSUES"
+//   "DESTINATION_STATUSES"
+func (c *AccountsProductsGetCall) Include(include ...string) *AccountsProductsGetCall {
+	c.urlParams_.SetMulti("include", append([]string{}, include...))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -1037,6 +1133,18 @@ func (c *AccountsProductsGetCall) Do(opts ...googleapi.CallOption) (*Product, er
 	//     "name"
 	//   ],
 	//   "parameters": {
+	//     "include": {
+	//       "description": "The information to be included in the response. Only sections listed here\nwill be returned.\n\nIf this parameter is not specified, ATTRIBUTES and ISSUES are returned.\nThis behavior is temporary and will be removed once all clients are ready\nor at the latest end of July 2018. After that no sections will be returned.",
+	//       "enum": [
+	//         "UNKNOWN",
+	//         "ATTRIBUTES",
+	//         "ISSUES",
+	//         "DESTINATION_STATUSES"
+	//       ],
+	//       "location": "query",
+	//       "repeated": true,
+	//       "type": "string"
+	//     },
 	//     "name": {
 	//       "description": "Name in the format `{target_country}:{content_language}:{product_id}`.\n\n`target_country`   - The target country of the product as a CLDR territory\n                     code (for example, US).\n\n`content_language` - The content language of the product as a two-letter\n                     ISO 639-1 language code (for example, en).\n\n`product_id`     -   The ID of the product. For more information, see\n                     https://support.google.com/manufacturers/answer/6124116#id.",
 	//       "location": "path",
@@ -1078,6 +1186,27 @@ type AccountsProductsListCall struct {
 func (r *AccountsProductsService) List(parent string) *AccountsProductsListCall {
 	c := &AccountsProductsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
+	return c
+}
+
+// Include sets the optional parameter "include": The information to be
+// included in the response. Only sections listed here
+// will be returned.
+//
+// If this parameter is not specified, ATTRIBUTES and ISSUES are
+// returned.
+// This behavior is temporary and will be removed once all clients are
+// ready
+// or at the latest end of July 2018. After that no sections will be
+// returned.
+//
+// Possible values:
+//   "UNKNOWN"
+//   "ATTRIBUTES"
+//   "ISSUES"
+//   "DESTINATION_STATUSES"
+func (c *AccountsProductsListCall) Include(include ...string) *AccountsProductsListCall {
+	c.urlParams_.SetMulti("include", append([]string{}, include...))
 	return c
 }
 
@@ -1198,6 +1327,18 @@ func (c *AccountsProductsListCall) Do(opts ...googleapi.CallOption) (*ListProduc
 	//     "parent"
 	//   ],
 	//   "parameters": {
+	//     "include": {
+	//       "description": "The information to be included in the response. Only sections listed here\nwill be returned.\n\nIf this parameter is not specified, ATTRIBUTES and ISSUES are returned.\nThis behavior is temporary and will be removed once all clients are ready\nor at the latest end of July 2018. After that no sections will be returned.",
+	//       "enum": [
+	//         "UNKNOWN",
+	//         "ATTRIBUTES",
+	//         "ISSUES",
+	//         "DESTINATION_STATUSES"
+	//       ],
+	//       "location": "query",
+	//       "repeated": true,
+	//       "type": "string"
+	//     },
 	//     "pageSize": {
 	//       "description": "Maximum number of product statuses to return in the response, used for\npaging.",
 	//       "format": "int32",

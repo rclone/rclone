@@ -15,11 +15,11 @@
 package vision
 
 import (
-	gax "github.com/googleapis/gax-go"
+	"github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/cloud/vision/v1"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // AnnotateImage runs image detection and annotation for a single image.
@@ -50,7 +50,7 @@ func (c *ImageAnnotatorClient) annotateOne(ctx context.Context, img *pb.Image, i
 	// error because it preserves the code as a separate field.
 	// TODO(jba): preserve the details field.
 	if res.Error != nil {
-		return nil, grpc.Errorf(codes.Code(res.Error.Code), "%s", res.Error.Message)
+		return nil, status.Errorf(codes.Code(res.Error.Code), "%s", res.Error.Message)
 	}
 	return res, nil
 }

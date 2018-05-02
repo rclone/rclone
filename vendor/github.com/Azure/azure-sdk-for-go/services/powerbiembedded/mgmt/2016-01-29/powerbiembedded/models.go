@@ -34,6 +34,11 @@ const (
 	Key2 AccessKeyName = "key2"
 )
 
+// PossibleAccessKeyNameValues returns an array of possible values for the AccessKeyName const type.
+func PossibleAccessKeyNameValues() []AccessKeyName {
+	return []AccessKeyName{Key1, Key2}
+}
+
 // CheckNameReason enumerates the values for check name reason.
 type CheckNameReason string
 
@@ -43,6 +48,11 @@ const (
 	// Unavailable ...
 	Unavailable CheckNameReason = "Unavailable"
 )
+
+// PossibleCheckNameReasonValues returns an array of possible values for the CheckNameReason const type.
+func PossibleCheckNameReasonValues() []CheckNameReason {
+	return []CheckNameReason{Invalid, Unavailable}
+}
 
 // AzureSku ...
 type AzureSku struct {

@@ -41,8 +41,8 @@ func NewLocationsClientWithBaseURI(baseURI string, subscriptionID string, accept
 
 // Get returns the details about a location to which you can ship the disks associated with an import or export job. A
 // location is an Azure region.
-//
-// locationName is the name of the location. For example, West US or westus.
+// Parameters:
+// locationName - the name of the location. For example, West US or westus.
 func (client LocationsClient) Get(ctx context.Context, locationName string) (result Location, err error) {
 	req, err := client.GetPreparer(ctx, locationName)
 	if err != nil {

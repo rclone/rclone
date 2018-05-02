@@ -31,6 +31,11 @@ const (
 	AtScope Filter = "atScope()"
 )
 
+// PossibleFilterValues returns an array of possible values for the Filter const type.
+func PossibleFilterValues() []Filter {
+	return []Filter{AtScope}
+}
+
 // ResourceLink the resource link.
 type ResourceLink struct {
 	autorest.Response `json:"-"`

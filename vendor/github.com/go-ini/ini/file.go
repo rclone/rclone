@@ -228,7 +228,7 @@ func (f *File) Append(source interface{}, others ...interface{}) error {
 
 func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 	equalSign := "="
-	if PrettyFormat {
+	if PrettyFormat || PrettyEqual {
 		equalSign = " = "
 	}
 
@@ -305,6 +305,10 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 				} else {
 					key.Comment = key.Comment[:1] + " " + strings.TrimSpace(key.Comment[1:])
 				}
+
+				// Support multiline comments
+				key.Comment = strings.Replace(key.Comment, "\n", "\n; ", -1)
+
 				if _, err := buf.WriteString(key.Comment + LineBreak); err != nil {
 					return nil, err
 				}

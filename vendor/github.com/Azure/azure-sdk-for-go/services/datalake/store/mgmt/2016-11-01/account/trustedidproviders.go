@@ -42,10 +42,12 @@ func NewTrustedIDProvidersClientWithBaseURI(baseURI string, subscriptionID strin
 
 // CreateOrUpdate creates or updates the specified trusted identity provider. During update, the trusted identity
 // provider with the specified name will be replaced with this new provider
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. trustedIDProviderName is the name of the trusted identity provider. This is used for differentiation of
-// providers in the account. parameters is parameters supplied to create or replace the trusted identity provider.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// trustedIDProviderName - the name of the trusted identity provider. This is used for differentiation of
+// providers in the account.
+// parameters - parameters supplied to create or replace the trusted identity provider.
 func (client TrustedIDProvidersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, trustedIDProviderName string, parameters CreateOrUpdateTrustedIDProviderParameters) (result TrustedIDProvider, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -90,7 +92,7 @@ func (client TrustedIDProvidersClient) CreateOrUpdatePreparer(ctx context.Contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeStore/accounts/{accountName}/trustedIdProviders/{trustedIdProviderName}", pathParameters),
@@ -120,9 +122,10 @@ func (client TrustedIDProvidersClient) CreateOrUpdateResponder(resp *http.Respon
 }
 
 // Delete deletes the specified trusted identity provider from the specified Data Lake Store account
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. trustedIDProviderName is the name of the trusted identity provider to delete.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// trustedIDProviderName - the name of the trusted identity provider to delete.
 func (client TrustedIDProvidersClient) Delete(ctx context.Context, resourceGroupName string, accountName string, trustedIDProviderName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, trustedIDProviderName)
 	if err != nil {
@@ -187,9 +190,10 @@ func (client TrustedIDProvidersClient) DeleteResponder(resp *http.Response) (res
 }
 
 // Get gets the specified Data Lake Store trusted identity provider.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. trustedIDProviderName is the name of the trusted identity provider to retrieve.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// trustedIDProviderName - the name of the trusted identity provider to retrieve.
 func (client TrustedIDProvidersClient) Get(ctx context.Context, resourceGroupName string, accountName string, trustedIDProviderName string) (result TrustedIDProvider, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, trustedIDProviderName)
 	if err != nil {
@@ -255,9 +259,9 @@ func (client TrustedIDProvidersClient) GetResponder(resp *http.Response) (result
 }
 
 // ListByAccount lists the Data Lake Store trusted identity providers within the specified Data Lake Store account.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
 func (client TrustedIDProvidersClient) ListByAccount(ctx context.Context, resourceGroupName string, accountName string) (result TrustedIDProviderListResultPage, err error) {
 	result.fn = client.listByAccountNextResults
 	req, err := client.ListByAccountPreparer(ctx, resourceGroupName, accountName)
@@ -350,10 +354,12 @@ func (client TrustedIDProvidersClient) ListByAccountComplete(ctx context.Context
 }
 
 // Update updates the specified trusted identity provider.
-//
-// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
-// account. trustedIDProviderName is the name of the trusted identity provider. This is used for differentiation of
-// providers in the account. parameters is parameters supplied to update the trusted identity provider.
+// Parameters:
+// resourceGroupName - the name of the Azure resource group.
+// accountName - the name of the Data Lake Store account.
+// trustedIDProviderName - the name of the trusted identity provider. This is used for differentiation of
+// providers in the account.
+// parameters - parameters supplied to update the trusted identity provider.
 func (client TrustedIDProvidersClient) Update(ctx context.Context, resourceGroupName string, accountName string, trustedIDProviderName string, parameters *UpdateTrustedIDProviderParameters) (result TrustedIDProvider, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, trustedIDProviderName, parameters)
 	if err != nil {
@@ -391,7 +397,7 @@ func (client TrustedIDProvidersClient) UpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataLakeStore/accounts/{accountName}/trustedIdProviders/{trustedIdProviderName}", pathParameters),

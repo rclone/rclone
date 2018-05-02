@@ -26,21 +26,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // SummariesClient is the service Map API Reference
 type SummariesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewSummariesClient creates an instance of the SummariesClient client.
 func NewSummariesClient(subscriptionID string) SummariesClient {
 	return NewSummariesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewSummariesClientWithBaseURI creates an instance of the SummariesClient client.
 func NewSummariesClientWithBaseURI(baseURI string, subscriptionID string) SummariesClient {
 	return SummariesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetMachines returns summary information about the machines in the workspace.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -81,6 +85,7 @@ func (client SummariesClient) GetMachines(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetMachinesPreparer prepares the GetMachines request.
 func (client SummariesClient) GetMachinesPreparer(ctx context.Context, resourceGroupName string, workspaceName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -108,6 +113,7 @@ func (client SummariesClient) GetMachinesPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetMachinesSender sends the GetMachines request. The method will close the
 // http.Response Body if it receives an error.
 func (client SummariesClient) GetMachinesSender(req *http.Request) (*http.Response, error) {
@@ -115,6 +121,7 @@ func (client SummariesClient) GetMachinesSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetMachinesResponder handles the response to the GetMachines request. The method always
 // closes the http.Response Body.
 func (client SummariesClient) GetMachinesResponder(resp *http.Response) (result MachinesSummary, err error) {

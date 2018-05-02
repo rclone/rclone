@@ -42,10 +42,11 @@ func NewRecommendedElasticPoolsClientWithBaseURI(baseURI string, subscriptionID 
 }
 
 // Get gets a recommented elastic pool.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName
-// is the name of the recommended elastic pool to be retrieved.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// recommendedElasticPoolName - the name of the recommended elastic pool to be retrieved.
 func (client RecommendedElasticPoolsClient) Get(ctx context.Context, resourceGroupName string, serverName string, recommendedElasticPoolName string) (result RecommendedElasticPool, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, recommendedElasticPoolName)
 	if err != nil {
@@ -111,9 +112,10 @@ func (client RecommendedElasticPoolsClient) GetResponder(resp *http.Response) (r
 }
 
 // ListByServer returns recommended elastic pools.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
 func (client RecommendedElasticPoolsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result RecommendedElasticPoolListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
@@ -178,10 +180,11 @@ func (client RecommendedElasticPoolsClient) ListByServerResponder(resp *http.Res
 }
 
 // ListMetrics returns recommented elastic pool metrics.
-//
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
-// the Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName
-// is the name of the recommended elastic pool to be retrieved.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// recommendedElasticPoolName - the name of the recommended elastic pool to be retrieved.
 func (client RecommendedElasticPoolsClient) ListMetrics(ctx context.Context, resourceGroupName string, serverName string, recommendedElasticPoolName string) (result RecommendedElasticPoolListMetricsResult, err error) {
 	req, err := client.ListMetricsPreparer(ctx, resourceGroupName, serverName, recommendedElasticPoolName)
 	if err != nil {

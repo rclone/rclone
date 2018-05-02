@@ -33,6 +33,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 const prodAddr = "bigtable.googleapis.com:443"
@@ -83,6 +84,7 @@ func NewClientWithConfig(ctx context.Context, project, instance string, config C
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
+
 	return &Client{
 		conn:       conn,
 		client:     btpb.NewBigtableClient(conn),
@@ -148,7 +150,11 @@ func (t *Table) ReadRows(ctx context.Context, arg RowSet, f func(Row) bool, opts
 	ctx = mergeOutgoingMetadata(ctx, t.md)
 
 	var prevRowKey string
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	var err error
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/bigtable.ReadRows")
+	defer func() { traceEndSpan(ctx, err) }()
+	attrMap := make(map[string]interface{})
+	err = gax.Invoke(ctx, func(ctx context.Context) error {
 		if !arg.valid() {
 			// Empty row set, no need to make an API call.
 			// NOTE: we must return early if arg == RowList{} because reading
@@ -166,6 +172,7 @@ func (t *Table) ReadRows(ctx context.Context, arg RowSet, f func(Row) bool, opts
 		ctx, cancel := context.WithCancel(ctx) // for aborting the stream
 		defer cancel()
 
+		startTime := time.Now()
 		stream, err := t.c.client.ReadRows(ctx, req)
 		if err != nil {
 			return err
@@ -179,6 +186,10 @@ func (t *Table) ReadRows(ctx context.Context, arg RowSet, f func(Row) bool, opts
 			if err != nil {
 				// Reset arg for next Invoke call.
 				arg = arg.retainRowsAfter(prevRowKey)
+				attrMap["rowKey"] = prevRowKey
+				attrMap["error"] = err.Error()
+				attrMap["time_secs"] = time.Since(startTime).Seconds()
+				tracePrintf(ctx, attrMap, "Retry details in ReadRows")
 				return err
 			}
 
@@ -463,6 +474,9 @@ func (t *Table) Apply(ctx context.Context, row string, m *Mutation, opts ...Appl
 		}
 	}
 
+	var err error
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/bigtable/Apply")
+	defer func() { traceEndSpan(ctx, err) }()
 	var callOptions []gax.CallOption
 	if m.cond == nil {
 		req := &btpb.MutateRowRequest{
@@ -508,7 +522,7 @@ func (t *Table) Apply(ctx context.Context, row string, m *Mutation, opts ...Appl
 		callOptions = retryOptions
 	}
 	var cmRes *btpb.CheckAndMutateRowResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err = gax.Invoke(ctx, func(ctx context.Context) error {
 		var err error
 		cmRes, err = t.c.client.CheckAndMutateRow(ctx, req)
 		return err
@@ -643,7 +657,13 @@ func (t *Table) ApplyBulk(ctx context.Context, rowKeys []string, muts []*Mutatio
 	// entries will be reduced after each invocation to just what needs to be retried.
 	entries := make([]*entryErr, len(rowKeys))
 	copy(entries, origEntries)
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	var err error
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/bigtable/ApplyBulk")
+	defer func() { traceEndSpan(ctx, err) }()
+	attrMap := make(map[string]interface{})
+	err = gax.Invoke(ctx, func(ctx context.Context) error {
+		attrMap["rowCount"] = len(entries)
+		tracePrintf(ctx, attrMap, "Row count in ApplyBulk")
 		err := t.doApplyBulk(ctx, entries, opts...)
 		if err != nil {
 			// We want to retry the entire request with the current entries
@@ -653,11 +673,10 @@ func (t *Table) ApplyBulk(ctx context.Context, rowKeys []string, muts []*Mutatio
 		if len(entries) > 0 && len(idempotentRetryCodes) > 0 {
 			// We have at least one mutation that needs to be retried.
 			// Return an arbitrary error that is retryable according to callOptions.
-			return grpc.Errorf(idempotentRetryCodes[0], "Synthetic error: partial failure of ApplyBulk")
+			return status.Errorf(idempotentRetryCodes[0], "Synthetic error: partial failure of ApplyBulk")
 		}
 		return nil
 	}, retryOptions...)
-
 	if err != nil {
 		return nil, err
 	}
@@ -722,11 +741,11 @@ func (t *Table) doApplyBulk(ctx context.Context, entryErrs []*entryErr, opts ...
 		}
 
 		for i, entry := range res.Entries {
-			status := entry.Status
-			if status.Code == int32(codes.OK) {
+			s := entry.Status
+			if s.Code == int32(codes.OK) {
 				entryErrs[i].Err = nil
 			} else {
-				entryErrs[i].Err = grpc.Errorf(codes.Code(status.Code), status.Message)
+				entryErrs[i].Err = status.Errorf(codes.Code(s.Code), s.Message)
 			}
 		}
 		after(res)
@@ -825,4 +844,41 @@ func (m *ReadModifyWrite) Increment(family, column string, delta int64) {
 func mergeOutgoingMetadata(ctx context.Context, md metadata.MD) context.Context {
 	mdCopy, _ := metadata.FromOutgoingContext(ctx)
 	return metadata.NewOutgoingContext(ctx, metadata.Join(mdCopy, md))
+}
+
+func (t *Table) SampleRowKeys(ctx context.Context) ([]string, error) {
+	ctx = mergeOutgoingMetadata(ctx, t.md)
+	var sampledRowKeys []string
+	err := gax.Invoke(ctx, func(ctx context.Context) error {
+		sampledRowKeys = nil
+		req := &btpb.SampleRowKeysRequest{
+			TableName:    t.c.fullTableName(t.table),
+			AppProfileId: t.c.appProfile,
+		}
+		ctx, cancel := context.WithCancel(ctx) // for aborting the stream
+		defer cancel()
+
+		stream, err := t.c.client.SampleRowKeys(ctx, req)
+		if err != nil {
+			return err
+		}
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+
+			key := string(res.RowKey)
+			if key == "" {
+				continue
+			}
+
+			sampledRowKeys = append(sampledRowKeys, key)
+		}
+		return nil
+	}, retryOptions...)
+	return sampledRowKeys, err
 }

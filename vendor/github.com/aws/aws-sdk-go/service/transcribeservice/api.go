@@ -8,13 +8,200 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/jsonrpc"
 )
+
+const opCreateVocabulary = "CreateVocabulary"
+
+// CreateVocabularyRequest generates a "aws/request.Request" representing the
+// client's request for the CreateVocabulary operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateVocabulary for more information on using the CreateVocabulary
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateVocabularyRequest method.
+//    req, resp := client.CreateVocabularyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/CreateVocabulary
+func (c *TranscribeService) CreateVocabularyRequest(input *CreateVocabularyInput) (req *request.Request, output *CreateVocabularyOutput) {
+	op := &request.Operation{
+		Name:       opCreateVocabulary,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateVocabularyInput{}
+	}
+
+	output = &CreateVocabularyOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateVocabulary API operation for Amazon Transcribe Service.
+//
+// Creates a new custom vocabulary that you can use to change the way Amazon
+// Transcribe handles transcription of an audio file.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Transcribe Service's
+// API operation CreateVocabulary for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   There was an internal error. Check the error message and try your request
+//   again.
+//
+//   * ErrCodeConflictException "ConflictException"
+//   The JobName field is a duplicate of a previously entered job name. Resend
+//   your request with a different name.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/CreateVocabulary
+func (c *TranscribeService) CreateVocabulary(input *CreateVocabularyInput) (*CreateVocabularyOutput, error) {
+	req, out := c.CreateVocabularyRequest(input)
+	return out, req.Send()
+}
+
+// CreateVocabularyWithContext is the same as CreateVocabulary with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateVocabulary for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) CreateVocabularyWithContext(ctx aws.Context, input *CreateVocabularyInput, opts ...request.Option) (*CreateVocabularyOutput, error) {
+	req, out := c.CreateVocabularyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteVocabulary = "DeleteVocabulary"
+
+// DeleteVocabularyRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteVocabulary operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteVocabulary for more information on using the DeleteVocabulary
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteVocabularyRequest method.
+//    req, resp := client.DeleteVocabularyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/DeleteVocabulary
+func (c *TranscribeService) DeleteVocabularyRequest(input *DeleteVocabularyInput) (req *request.Request, output *DeleteVocabularyOutput) {
+	op := &request.Operation{
+		Name:       opDeleteVocabulary,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteVocabularyInput{}
+	}
+
+	output = &DeleteVocabularyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteVocabulary API operation for Amazon Transcribe Service.
+//
+// Deletes a vocabulary from Amazon Transcribe.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Transcribe Service's
+// API operation DeleteVocabulary for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   We can't find the requested transcription job or custom vocabulary. Check
+//   the name and try your request again.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   There was an internal error. Check the error message and try your request
+//   again.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/DeleteVocabulary
+func (c *TranscribeService) DeleteVocabulary(input *DeleteVocabularyInput) (*DeleteVocabularyOutput, error) {
+	req, out := c.DeleteVocabularyRequest(input)
+	return out, req.Send()
+}
+
+// DeleteVocabularyWithContext is the same as DeleteVocabulary with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteVocabulary for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) DeleteVocabularyWithContext(ctx aws.Context, input *DeleteVocabularyInput, opts ...request.Option) (*DeleteVocabularyOutput, error) {
+	req, out := c.DeleteVocabularyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
 
 const opGetTranscriptionJob = "GetTranscriptionJob"
 
 // GetTranscriptionJobRequest generates a "aws/request.Request" representing the
 // client's request for the GetTranscriptionJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -55,9 +242,9 @@ func (c *TranscribeService) GetTranscriptionJobRequest(input *GetTranscriptionJo
 // GetTranscriptionJob API operation for Amazon Transcribe Service.
 //
 // Returns information about a transcription job. To see the status of the job,
-// check the Status field. If the status is COMPLETE, the job is finished and
-// you can find the results at the location specified in the TranscriptionFileUri
-// field.
+// check the TranscriptionJobStatus field. If the status is COMPLETED, the job
+// is finished and you can find the results at the location specified in the
+// TranscriptionFileUri field.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -68,22 +255,22 @@ func (c *TranscribeService) GetTranscriptionJobRequest(input *GetTranscriptionJo
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   There is a problem with one of the input fields. Check the S3 bucket name,
-//   make sure that the job name is not a duplicate, and confirm that you are
-//   using the correct file format. Then resend your request.
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Either you have sent too many requests or your input file is longer than
-//   2 hours. Wait before you resend your request, or use a smaller file and resend
-//   the request.
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
 //
 //   * ErrCodeInternalFailureException "InternalFailureException"
 //   There was an internal error. Check the error message and try your request
 //   again.
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   We can't find the requested job. Check the job name and try your request
-//   again.
+//   We can't find the requested transcription job or custom vocabulary. Check
+//   the name and try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/GetTranscriptionJob
 func (c *TranscribeService) GetTranscriptionJob(input *GetTranscriptionJobInput) (*GetTranscriptionJobOutput, error) {
@@ -107,11 +294,105 @@ func (c *TranscribeService) GetTranscriptionJobWithContext(ctx aws.Context, inpu
 	return out, req.Send()
 }
 
+const opGetVocabulary = "GetVocabulary"
+
+// GetVocabularyRequest generates a "aws/request.Request" representing the
+// client's request for the GetVocabulary operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetVocabulary for more information on using the GetVocabulary
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetVocabularyRequest method.
+//    req, resp := client.GetVocabularyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/GetVocabulary
+func (c *TranscribeService) GetVocabularyRequest(input *GetVocabularyInput) (req *request.Request, output *GetVocabularyOutput) {
+	op := &request.Operation{
+		Name:       opGetVocabulary,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetVocabularyInput{}
+	}
+
+	output = &GetVocabularyOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetVocabulary API operation for Amazon Transcribe Service.
+//
+// Gets information about a vocabulary.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Transcribe Service's
+// API operation GetVocabulary for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   We can't find the requested transcription job or custom vocabulary. Check
+//   the name and try your request again.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   There was an internal error. Check the error message and try your request
+//   again.
+//
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/GetVocabulary
+func (c *TranscribeService) GetVocabulary(input *GetVocabularyInput) (*GetVocabularyOutput, error) {
+	req, out := c.GetVocabularyRequest(input)
+	return out, req.Send()
+}
+
+// GetVocabularyWithContext is the same as GetVocabulary with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetVocabulary for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) GetVocabularyWithContext(ctx aws.Context, input *GetVocabularyInput, opts ...request.Option) (*GetVocabularyOutput, error) {
+	req, out := c.GetVocabularyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListTranscriptionJobs = "ListTranscriptionJobs"
 
 // ListTranscriptionJobsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTranscriptionJobs operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -168,14 +449,14 @@ func (c *TranscribeService) ListTranscriptionJobsRequest(input *ListTranscriptio
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   There is a problem with one of the input fields. Check the S3 bucket name,
-//   make sure that the job name is not a duplicate, and confirm that you are
-//   using the correct file format. Then resend your request.
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Either you have sent too many requests or your input file is longer than
-//   2 hours. Wait before you resend your request, or use a smaller file and resend
-//   the request.
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
 //
 //   * ErrCodeInternalFailureException "InternalFailureException"
 //   There was an internal error. Check the error message and try your request
@@ -253,11 +534,158 @@ func (c *TranscribeService) ListTranscriptionJobsPagesWithContext(ctx aws.Contex
 	return p.Err()
 }
 
+const opListVocabularies = "ListVocabularies"
+
+// ListVocabulariesRequest generates a "aws/request.Request" representing the
+// client's request for the ListVocabularies operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListVocabularies for more information on using the ListVocabularies
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListVocabulariesRequest method.
+//    req, resp := client.ListVocabulariesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/ListVocabularies
+func (c *TranscribeService) ListVocabulariesRequest(input *ListVocabulariesInput) (req *request.Request, output *ListVocabulariesOutput) {
+	op := &request.Operation{
+		Name:       opListVocabularies,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListVocabulariesInput{}
+	}
+
+	output = &ListVocabulariesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListVocabularies API operation for Amazon Transcribe Service.
+//
+// Returns a list of vocabularies that match the specified criteria. If no criteria
+// are specified, returns the entire list of vocabularies.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Transcribe Service's
+// API operation ListVocabularies for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   There was an internal error. Check the error message and try your request
+//   again.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/ListVocabularies
+func (c *TranscribeService) ListVocabularies(input *ListVocabulariesInput) (*ListVocabulariesOutput, error) {
+	req, out := c.ListVocabulariesRequest(input)
+	return out, req.Send()
+}
+
+// ListVocabulariesWithContext is the same as ListVocabularies with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListVocabularies for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) ListVocabulariesWithContext(ctx aws.Context, input *ListVocabulariesInput, opts ...request.Option) (*ListVocabulariesOutput, error) {
+	req, out := c.ListVocabulariesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListVocabulariesPages iterates over the pages of a ListVocabularies operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListVocabularies method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListVocabularies operation.
+//    pageNum := 0
+//    err := client.ListVocabulariesPages(params,
+//        func(page *ListVocabulariesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *TranscribeService) ListVocabulariesPages(input *ListVocabulariesInput, fn func(*ListVocabulariesOutput, bool) bool) error {
+	return c.ListVocabulariesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListVocabulariesPagesWithContext same as ListVocabulariesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) ListVocabulariesPagesWithContext(ctx aws.Context, input *ListVocabulariesInput, fn func(*ListVocabulariesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListVocabulariesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListVocabulariesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListVocabulariesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opStartTranscriptionJob = "StartTranscriptionJob"
 
 // StartTranscriptionJobRequest generates a "aws/request.Request" representing the
 // client's request for the StartTranscriptionJob operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -308,14 +736,14 @@ func (c *TranscribeService) StartTranscriptionJobRequest(input *StartTranscripti
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   There is a problem with one of the input fields. Check the S3 bucket name,
-//   make sure that the job name is not a duplicate, and confirm that you are
-//   using the correct file format. Then resend your request.
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Either you have sent too many requests or your input file is longer than
-//   2 hours. Wait before you resend your request, or use a smaller file and resend
-//   the request.
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
 //
 //   * ErrCodeInternalFailureException "InternalFailureException"
 //   There was an internal error. Check the error message and try your request
@@ -345,6 +773,286 @@ func (c *TranscribeService) StartTranscriptionJobWithContext(ctx aws.Context, in
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+const opUpdateVocabulary = "UpdateVocabulary"
+
+// UpdateVocabularyRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateVocabulary operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateVocabulary for more information on using the UpdateVocabulary
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateVocabularyRequest method.
+//    req, resp := client.UpdateVocabularyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/UpdateVocabulary
+func (c *TranscribeService) UpdateVocabularyRequest(input *UpdateVocabularyInput) (req *request.Request, output *UpdateVocabularyOutput) {
+	op := &request.Operation{
+		Name:       opUpdateVocabulary,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateVocabularyInput{}
+	}
+
+	output = &UpdateVocabularyOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateVocabulary API operation for Amazon Transcribe Service.
+//
+// Updates an existing vocabulary with new values.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Transcribe Service's
+// API operation UpdateVocabulary for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//   Your request didn't pass one or more validation tests. For example, a name
+//   already exists when createing a resource or a name may not exist when getting
+//   a transcription job or custom vocabulary. See the exception Message field
+//   for more information.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Either you have sent too many requests or your input file is too long. Wait
+//   before you resend your request, or use a smaller file and resend the request.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   There was an internal error. Check the error message and try your request
+//   again.
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//   We can't find the requested transcription job or custom vocabulary. Check
+//   the name and try your request again.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/transcribe-2017-10-26/UpdateVocabulary
+func (c *TranscribeService) UpdateVocabulary(input *UpdateVocabularyInput) (*UpdateVocabularyOutput, error) {
+	req, out := c.UpdateVocabularyRequest(input)
+	return out, req.Send()
+}
+
+// UpdateVocabularyWithContext is the same as UpdateVocabulary with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateVocabulary for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *TranscribeService) UpdateVocabularyWithContext(ctx aws.Context, input *UpdateVocabularyInput, opts ...request.Option) (*UpdateVocabularyOutput, error) {
+	req, out := c.UpdateVocabularyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+type CreateVocabularyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The language code of the vocabulary entries.
+	//
+	// LanguageCode is a required field
+	LanguageCode *string `type:"string" required:"true" enum:"LanguageCode"`
+
+	// An array of strings that contains the vocabulary entries.
+	//
+	// Phrases is a required field
+	Phrases []*string `type:"list" required:"true"`
+
+	// The name of the vocabulary. The name must be unique within an AWS account.
+	// The name is case-sensitive.
+	//
+	// VocabularyName is a required field
+	VocabularyName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateVocabularyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVocabularyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateVocabularyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateVocabularyInput"}
+	if s.LanguageCode == nil {
+		invalidParams.Add(request.NewErrParamRequired("LanguageCode"))
+	}
+	if s.Phrases == nil {
+		invalidParams.Add(request.NewErrParamRequired("Phrases"))
+	}
+	if s.VocabularyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VocabularyName"))
+	}
+	if s.VocabularyName != nil && len(*s.VocabularyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VocabularyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *CreateVocabularyInput) SetLanguageCode(v string) *CreateVocabularyInput {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetPhrases sets the Phrases field's value.
+func (s *CreateVocabularyInput) SetPhrases(v []*string) *CreateVocabularyInput {
+	s.Phrases = v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *CreateVocabularyInput) SetVocabularyName(v string) *CreateVocabularyInput {
+	s.VocabularyName = &v
+	return s
+}
+
+type CreateVocabularyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// If the VocabularyState field is FAILED, this field contains information about
+	// why the job failed.
+	FailureReason *string `type:"string"`
+
+	// The language code of the vocabulary entries.
+	LanguageCode *string `type:"string" enum:"LanguageCode"`
+
+	// The date and time that the vocabulary was created.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the vocabulary.
+	VocabularyName *string `min:"1" type:"string"`
+
+	// The processing state of the vocabulary. When the VocabularyState field contains
+	// READY the vocabulary is ready to be used in a StartTranscriptionJob request.
+	VocabularyState *string `type:"string" enum:"VocabularyState"`
+}
+
+// String returns the string representation
+func (s CreateVocabularyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVocabularyOutput) GoString() string {
+	return s.String()
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *CreateVocabularyOutput) SetFailureReason(v string) *CreateVocabularyOutput {
+	s.FailureReason = &v
+	return s
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *CreateVocabularyOutput) SetLanguageCode(v string) *CreateVocabularyOutput {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *CreateVocabularyOutput) SetLastModifiedTime(v time.Time) *CreateVocabularyOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *CreateVocabularyOutput) SetVocabularyName(v string) *CreateVocabularyOutput {
+	s.VocabularyName = &v
+	return s
+}
+
+// SetVocabularyState sets the VocabularyState field's value.
+func (s *CreateVocabularyOutput) SetVocabularyState(v string) *CreateVocabularyOutput {
+	s.VocabularyState = &v
+	return s
+}
+
+type DeleteVocabularyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the vocabulary to delete.
+	//
+	// VocabularyName is a required field
+	VocabularyName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteVocabularyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVocabularyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteVocabularyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteVocabularyInput"}
+	if s.VocabularyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VocabularyName"))
+	}
+	if s.VocabularyName != nil && len(*s.VocabularyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VocabularyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *DeleteVocabularyInput) SetVocabularyName(v string) *DeleteVocabularyInput {
+	s.VocabularyName = &v
+	return s
+}
+
+type DeleteVocabularyOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteVocabularyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVocabularyOutput) GoString() string {
+	return s.String()
 }
 
 type GetTranscriptionJobInput struct {
@@ -411,10 +1119,126 @@ func (s *GetTranscriptionJobOutput) SetTranscriptionJob(v *TranscriptionJob) *Ge
 	return s
 }
 
+type GetVocabularyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the vocabulary to return information about. The name is case-sensitive.
+	//
+	// VocabularyName is a required field
+	VocabularyName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetVocabularyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetVocabularyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetVocabularyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetVocabularyInput"}
+	if s.VocabularyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VocabularyName"))
+	}
+	if s.VocabularyName != nil && len(*s.VocabularyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VocabularyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *GetVocabularyInput) SetVocabularyName(v string) *GetVocabularyInput {
+	s.VocabularyName = &v
+	return s
+}
+
+type GetVocabularyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The S3 location where the vocabulary is stored. Use this URI to get the contents
+	// of the vocabulary. The URI is available for a limited time.
+	DownloadUri *string `min:"1" type:"string"`
+
+	// If the VocabularyState field is FAILED, this field contains information about
+	// why the job failed.
+	FailureReason *string `type:"string"`
+
+	// The language code of the vocabulary entries.
+	LanguageCode *string `type:"string" enum:"LanguageCode"`
+
+	// The date and time that the vocabulary was last modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the vocabulary to return.
+	VocabularyName *string `min:"1" type:"string"`
+
+	// The processing state of the vocabulary.
+	VocabularyState *string `type:"string" enum:"VocabularyState"`
+}
+
+// String returns the string representation
+func (s GetVocabularyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetVocabularyOutput) GoString() string {
+	return s.String()
+}
+
+// SetDownloadUri sets the DownloadUri field's value.
+func (s *GetVocabularyOutput) SetDownloadUri(v string) *GetVocabularyOutput {
+	s.DownloadUri = &v
+	return s
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *GetVocabularyOutput) SetFailureReason(v string) *GetVocabularyOutput {
+	s.FailureReason = &v
+	return s
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *GetVocabularyOutput) SetLanguageCode(v string) *GetVocabularyOutput {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *GetVocabularyOutput) SetLastModifiedTime(v time.Time) *GetVocabularyOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *GetVocabularyOutput) SetVocabularyName(v string) *GetVocabularyOutput {
+	s.VocabularyName = &v
+	return s
+}
+
+// SetVocabularyState sets the VocabularyState field's value.
+func (s *GetVocabularyOutput) SetVocabularyState(v string) *GetVocabularyOutput {
+	s.VocabularyState = &v
+	return s
+}
+
 type ListTranscriptionJobsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of jobs to return in the response.
+	// When specified, the jobs returned in the list are limited to jobs whose name
+	// contains the specified string.
+	JobNameContains *string `min:"1" type:"string"`
+
+	// The maximum number of jobs to return in the response. If there are fewer
+	// results in the list, this response contains only the actual results.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// If the result of the previous request to ListTranscriptionJobs was truncated,
@@ -422,9 +1246,7 @@ type ListTranscriptionJobsInput struct {
 	NextToken *string `type:"string"`
 
 	// When specified, returns only transcription jobs with the specified status.
-	//
-	// Status is a required field
-	Status *string `type:"string" required:"true" enum:"TranscriptionJobStatus"`
+	Status *string `type:"string" enum:"TranscriptionJobStatus"`
 }
 
 // String returns the string representation
@@ -440,17 +1262,23 @@ func (s ListTranscriptionJobsInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ListTranscriptionJobsInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ListTranscriptionJobsInput"}
+	if s.JobNameContains != nil && len(*s.JobNameContains) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("JobNameContains", 1))
+	}
 	if s.MaxResults != nil && *s.MaxResults < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
-	}
-	if s.Status == nil {
-		invalidParams.Add(request.NewErrParamRequired("Status"))
 	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetJobNameContains sets the JobNameContains field's value.
+func (s *ListTranscriptionJobsInput) SetJobNameContains(v string) *ListTranscriptionJobsInput {
+	s.JobNameContains = &v
+	return s
 }
 
 // SetMaxResults sets the MaxResults field's value.
@@ -475,10 +1303,10 @@ type ListTranscriptionJobsOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The ListTranscriptionJobs operation returns a page of jobs at a time. The
-	// size of the page is set by the MaxResults parameter. If there are more jobs
-	// in the list than the page size, Amazon Transcribe returns the NextPage token.
-	// Include the token in the next request to the ListTranscriptionJobs operation
-	// to return in the next page of jobs.
+	// maximum size of the page is set by the MaxResults parameter. If there are
+	// more jobs in the list than the page size, Amazon Transcribe returns the NextPage
+	// token. Include the token in the next request to the ListTranscriptionJobs
+	// operation to return in the next page of jobs.
 	NextToken *string `type:"string"`
 
 	// The requested status of the jobs returned.
@@ -516,19 +1344,141 @@ func (s *ListTranscriptionJobsOutput) SetTranscriptionJobSummaries(v []*Transcri
 	return s
 }
 
+type ListVocabulariesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of vocabularies to return in the response. If there are
+	// fewer results in the list, this response contains only the actual results.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// When specified, the vocabularies returned in the list are limited to vocabularies
+	// whose name contains the specified string. The search is case-insensitive,
+	// ListVocabularies will return both "vocabularyname" and "VocabularyName" in
+	// the response list.
+	NameContains *string `min:"1" type:"string"`
+
+	// If the result of the previous request to ListVocabularies was truncated,
+	// include the NextToken to fetch the next set of jobs.
+	NextToken *string `type:"string"`
+
+	// When specified, only returns vocabularies with the VocabularyState field
+	// equal to the specified state.
+	StateEquals *string `type:"string" enum:"VocabularyState"`
+}
+
+// String returns the string representation
+func (s ListVocabulariesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVocabulariesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListVocabulariesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListVocabulariesInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NameContains != nil && len(*s.NameContains) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NameContains", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListVocabulariesInput) SetMaxResults(v int64) *ListVocabulariesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNameContains sets the NameContains field's value.
+func (s *ListVocabulariesInput) SetNameContains(v string) *ListVocabulariesInput {
+	s.NameContains = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVocabulariesInput) SetNextToken(v string) *ListVocabulariesInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStateEquals sets the StateEquals field's value.
+func (s *ListVocabulariesInput) SetStateEquals(v string) *ListVocabulariesInput {
+	s.StateEquals = &v
+	return s
+}
+
+type ListVocabulariesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ListVocabularies operation returns a page of vocabularies at a time.
+	// The maximum size of the page is set by the MaxResults parameter. If there
+	// are more jobs in the list than the page size, Amazon Transcribe returns the
+	// NextPage token. Include the token in the next request to the ListVocabularies
+	// operation to return in the next page of jobs.
+	NextToken *string `type:"string"`
+
+	// The requested vocabulary state.
+	Status *string `type:"string" enum:"TranscriptionJobStatus"`
+
+	// A list of objects that describe the vocabularies that match the search criteria
+	// in the request.
+	Vocabularies []*VocabularyInfo `type:"list"`
+}
+
+// String returns the string representation
+func (s ListVocabulariesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVocabulariesOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVocabulariesOutput) SetNextToken(v string) *ListVocabulariesOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ListVocabulariesOutput) SetStatus(v string) *ListVocabulariesOutput {
+	s.Status = &v
+	return s
+}
+
+// SetVocabularies sets the Vocabularies field's value.
+func (s *ListVocabulariesOutput) SetVocabularies(v []*VocabularyInfo) *ListVocabulariesOutput {
+	s.Vocabularies = v
+	return s
+}
+
 // Describes the input media file in a transcription request.
 type Media struct {
 	_ struct{} `type:"structure"`
 
-	// The S3 location of the input media file. The general form is:
+	// The S3 location of the input media file. The URI must be in the same region
+	// as the API endpoint that you are calling. The general form is:
 	//
 	// https://<aws-region>.amazonaws.com/<bucket-name>/<keyprefix>/<objectkey>
 	//
 	// For example:
 	//
-	// https://s3-us-west-2.amazonaws.com/examplebucket/example.mp4
+	// https://s3-us-east-1.amazonaws.com/examplebucket/example.mp4
 	//
-	// https://s3-us-west-2.amazonaws.com/examplebucket/mediadocs/example.mp4
+	// https://s3-us-east-1.amazonaws.com/examplebucket/mediadocs/example.mp4
+	//
+	// For more information about S3 object names, see Object Keys (http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#object-keys)
+	// in the Amazon S3 Developer Guide.
 	MediaFileUri *string `min:"1" type:"string"`
 }
 
@@ -561,6 +1511,70 @@ func (s *Media) SetMediaFileUri(v string) *Media {
 	return s
 }
 
+// Provides optional settings for the StartTranscriptionJob operation.
+type Settings struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of speakers to identify in the input audio. If there are
+	// more speakers in the audio than this number, multiple speakers will be identified
+	// as a single speaker. If you specify the MaxSpeakerLabels field, you must
+	// set the ShowSpeakerLabels field to true.
+	MaxSpeakerLabels *int64 `min:"2" type:"integer"`
+
+	// Determines whether the transcription job should use speaker recognition to
+	// identify different speakers in the input audio. If you set the ShowSpeakerLabels
+	// field to true, you must also set the maximum number of speaker labels MaxSpeakerLabels
+	// field.
+	ShowSpeakerLabels *bool `type:"boolean"`
+
+	// The name of a vocabulary to use when processing the transcription job.
+	VocabularyName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s Settings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Settings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Settings"}
+	if s.MaxSpeakerLabels != nil && *s.MaxSpeakerLabels < 2 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxSpeakerLabels", 2))
+	}
+	if s.VocabularyName != nil && len(*s.VocabularyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VocabularyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxSpeakerLabels sets the MaxSpeakerLabels field's value.
+func (s *Settings) SetMaxSpeakerLabels(v int64) *Settings {
+	s.MaxSpeakerLabels = &v
+	return s
+}
+
+// SetShowSpeakerLabels sets the ShowSpeakerLabels field's value.
+func (s *Settings) SetShowSpeakerLabels(v bool) *Settings {
+	s.ShowSpeakerLabels = &v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *Settings) SetVocabularyName(v string) *Settings {
+	s.VocabularyName = &v
+	return s
+}
+
 type StartTranscriptionJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -581,6 +1595,9 @@ type StartTranscriptionJobInput struct {
 
 	// The sample rate, in Hertz, of the audio track in the input media file.
 	MediaSampleRateHertz *int64 `min:"8000" type:"integer"`
+
+	// A Settings object that provides optional settings for a transcription job.
+	Settings *Settings `type:"structure"`
 
 	// The name of the job. The name must be unique within an AWS account.
 	//
@@ -624,6 +1641,11 @@ func (s *StartTranscriptionJobInput) Validate() error {
 			invalidParams.AddNested("Media", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -652,6 +1674,12 @@ func (s *StartTranscriptionJobInput) SetMediaFormat(v string) *StartTranscriptio
 // SetMediaSampleRateHertz sets the MediaSampleRateHertz field's value.
 func (s *StartTranscriptionJobInput) SetMediaSampleRateHertz(v int64) *StartTranscriptionJobInput {
 	s.MediaSampleRateHertz = &v
+	return s
+}
+
+// SetSettings sets the Settings field's value.
+func (s *StartTranscriptionJobInput) SetSettings(v *Settings) *StartTranscriptionJobInput {
+	s.Settings = v
 	return s
 }
 
@@ -688,16 +1716,8 @@ func (s *StartTranscriptionJobOutput) SetTranscriptionJob(v *TranscriptionJob) *
 type Transcript struct {
 	_ struct{} `type:"structure"`
 
-	// The S3 location where the transcription result is stored. The general form
-	// of this Uri is:
-	//
-	// https://<aws-region>.amazonaws.com/<bucket-name>/<keyprefix>/<objectkey>
-	//
-	// For example:
-	//
-	// https://s3-us-west-2.amazonaws.com/examplebucket/example.json
-	//
-	// https://s3-us-west-2.amazonaws.com/examplebucket/mediadocs/example.json
+	// The S3 location where the transcription result is stored. Use this URI to
+	// access the results of the transcription job.
 	TranscriptFileUri *string `min:"1" type:"string"`
 }
 
@@ -744,13 +1764,16 @@ type TranscriptionJob struct {
 	// The sample rate, in Hertz, of the audio track in the input media file.
 	MediaSampleRateHertz *int64 `min:"8000" type:"integer"`
 
+	// Optional settings for the transcription job.
+	Settings *Settings `type:"structure"`
+
 	// An object that describes the output of the transcription job.
 	Transcript *Transcript `type:"structure"`
 
 	// A name to identify the transcription job.
 	TranscriptionJobName *string `min:"1" type:"string"`
 
-	// The identifier assigned to the job when it was created.
+	// The status of the transcription job.
 	TranscriptionJobStatus *string `type:"string" enum:"TranscriptionJobStatus"`
 }
 
@@ -803,6 +1826,12 @@ func (s *TranscriptionJob) SetMediaFormat(v string) *TranscriptionJob {
 // SetMediaSampleRateHertz sets the MediaSampleRateHertz field's value.
 func (s *TranscriptionJob) SetMediaSampleRateHertz(v int64) *TranscriptionJob {
 	s.MediaSampleRateHertz = &v
+	return s
+}
+
+// SetSettings sets the Settings field's value.
+func (s *TranscriptionJob) SetSettings(v *Settings) *TranscriptionJob {
+	s.Settings = v
 	return s
 }
 
@@ -895,6 +1924,178 @@ func (s *TranscriptionJobSummary) SetTranscriptionJobStatus(v string) *Transcrip
 	return s
 }
 
+type UpdateVocabularyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The language code of the vocabulary entries.
+	//
+	// LanguageCode is a required field
+	LanguageCode *string `type:"string" required:"true" enum:"LanguageCode"`
+
+	// An array of strings containing the vocabulary entries.
+	//
+	// Phrases is a required field
+	Phrases []*string `type:"list" required:"true"`
+
+	// The name of the vocabulary to update. The name is case-sensitive.
+	//
+	// VocabularyName is a required field
+	VocabularyName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateVocabularyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateVocabularyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateVocabularyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateVocabularyInput"}
+	if s.LanguageCode == nil {
+		invalidParams.Add(request.NewErrParamRequired("LanguageCode"))
+	}
+	if s.Phrases == nil {
+		invalidParams.Add(request.NewErrParamRequired("Phrases"))
+	}
+	if s.VocabularyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("VocabularyName"))
+	}
+	if s.VocabularyName != nil && len(*s.VocabularyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VocabularyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *UpdateVocabularyInput) SetLanguageCode(v string) *UpdateVocabularyInput {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetPhrases sets the Phrases field's value.
+func (s *UpdateVocabularyInput) SetPhrases(v []*string) *UpdateVocabularyInput {
+	s.Phrases = v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *UpdateVocabularyInput) SetVocabularyName(v string) *UpdateVocabularyInput {
+	s.VocabularyName = &v
+	return s
+}
+
+type UpdateVocabularyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The language code of the vocabulary entries.
+	LanguageCode *string `type:"string" enum:"LanguageCode"`
+
+	// The date and time that the vocabulary was updated.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the vocabulary that was updated.
+	VocabularyName *string `min:"1" type:"string"`
+
+	// The processing state of the vocabulary. When the VocabularyState field contains
+	// READY the vocabulary is ready to be used in a StartTranscriptionJob request.
+	VocabularyState *string `type:"string" enum:"VocabularyState"`
+}
+
+// String returns the string representation
+func (s UpdateVocabularyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateVocabularyOutput) GoString() string {
+	return s.String()
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *UpdateVocabularyOutput) SetLanguageCode(v string) *UpdateVocabularyOutput {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *UpdateVocabularyOutput) SetLastModifiedTime(v time.Time) *UpdateVocabularyOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *UpdateVocabularyOutput) SetVocabularyName(v string) *UpdateVocabularyOutput {
+	s.VocabularyName = &v
+	return s
+}
+
+// SetVocabularyState sets the VocabularyState field's value.
+func (s *UpdateVocabularyOutput) SetVocabularyState(v string) *UpdateVocabularyOutput {
+	s.VocabularyState = &v
+	return s
+}
+
+// Provides information about a custom vocabulary.
+type VocabularyInfo struct {
+	_ struct{} `type:"structure"`
+
+	// The language code of the vocabulary entries.
+	LanguageCode *string `type:"string" enum:"LanguageCode"`
+
+	// The date and time that the vocabulary was last modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the vocabulary.
+	VocabularyName *string `min:"1" type:"string"`
+
+	// The processing state of the vocabulary. If the state is READY you can use
+	// the vocabulary in a StartTranscriptionJob request.
+	VocabularyState *string `type:"string" enum:"VocabularyState"`
+}
+
+// String returns the string representation
+func (s VocabularyInfo) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s VocabularyInfo) GoString() string {
+	return s.String()
+}
+
+// SetLanguageCode sets the LanguageCode field's value.
+func (s *VocabularyInfo) SetLanguageCode(v string) *VocabularyInfo {
+	s.LanguageCode = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *VocabularyInfo) SetLastModifiedTime(v time.Time) *VocabularyInfo {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetVocabularyName sets the VocabularyName field's value.
+func (s *VocabularyInfo) SetVocabularyName(v string) *VocabularyInfo {
+	s.VocabularyName = &v
+	return s
+}
+
+// SetVocabularyState sets the VocabularyState field's value.
+func (s *VocabularyInfo) SetVocabularyState(v string) *VocabularyInfo {
+	s.VocabularyState = &v
+	return s
+}
+
 const (
 	// LanguageCodeEnUs is a LanguageCode enum value
 	LanguageCodeEnUs = "en-US"
@@ -926,4 +2127,15 @@ const (
 
 	// TranscriptionJobStatusCompleted is a TranscriptionJobStatus enum value
 	TranscriptionJobStatusCompleted = "COMPLETED"
+)
+
+const (
+	// VocabularyStatePending is a VocabularyState enum value
+	VocabularyStatePending = "PENDING"
+
+	// VocabularyStateReady is a VocabularyState enum value
+	VocabularyStateReady = "READY"
+
+	// VocabularyStateFailed is a VocabularyState enum value
+	VocabularyStateFailed = "FAILED"
 )

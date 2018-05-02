@@ -118,7 +118,9 @@ func (s *pullStream) call(f func(pb.Subscriber_StreamingPullClient) error) error
 				gax.Sleep(s.ctx, bo.Pause())
 				continue
 			}
+			s.mu.Lock()
 			s.err = err
+			s.mu.Unlock()
 		}
 		return err
 	}

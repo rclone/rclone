@@ -132,6 +132,8 @@ func TestEncodeValue(t *testing.T) {
 			listProto(intProto(5), nullProto(), stringProto("bcd")),
 			listType(tInt),
 		},
+		// placeholder
+		{CommitTimestamp, stringProto(commitTimestampPlaceholderString), tTime},
 	} {
 		got, gotType, err := encodeValue(test.in)
 		if err != nil {

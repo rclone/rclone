@@ -302,6 +302,13 @@ func newServerForConfig(t *testing.T, config string, configVars map[string]strin
 	if testing.Short() {
 		t.Skip("skipping test due to -short")
 	}
+	u, err := user.Current()
+	if err != nil {
+		t.Fatalf("user.Current: %v", err)
+	}
+	if u.Name == "root" {
+		t.Skip("skipping test because current user is root")
+	}
 	dir, err := ioutil.TempDir("", "sshtest")
 	if err != nil {
 		t.Fatal(err)

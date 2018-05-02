@@ -42,12 +42,13 @@ func NewAccountClientWithBaseURI(baseURI string, subscriptionID string) AccountC
 
 // Create creates a new Batch account with the specified parameters. Existing accounts cannot be updated with this API
 // and should instead be updated with the Update Batch Account API.
-//
-// resourceGroupName is the name of the resource group that contains the new Batch account. accountName is a name
-// for the Batch account which must be unique within the region. Batch account names must be between 3 and 24
-// characters in length and must use only numbers and lowercase letters. This name is used as part of the DNS name
-// that is used to access the Batch service in the region in which the account is created. For example:
-// http://accountname.region.batch.azure.com/. parameters is additional parameters for account creation.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the new Batch account.
+// accountName - a name for the Batch account which must be unique within the region. Batch account names must
+// be between 3 and 24 characters in length and must use only numbers and lowercase letters. This name is used
+// as part of the DNS name that is used to access the Batch service in the region in which the account is
+// created. For example: http://accountname.region.batch.azure.com/.
+// parameters - additional parameters for account creation.
 func (client AccountClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters AccountCreateParameters) (result AccountCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -94,7 +95,7 @@ func (client AccountClient) CreatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}", pathParameters),
@@ -132,9 +133,9 @@ func (client AccountClient) CreateResponder(resp *http.Response) (result Account
 }
 
 // Delete deletes the specified Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account to be deleted. accountName
-// is the name of the account to be deleted.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account to be deleted.
+// accountName - the name of the account to be deleted.
 func (client AccountClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -210,9 +211,9 @@ func (client AccountClient) DeleteResponder(resp *http.Response) (result autores
 }
 
 // Get gets information about the specified Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the account.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the account.
 func (client AccountClient) Get(ctx context.Context, resourceGroupName string, accountName string) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -287,9 +288,9 @@ func (client AccountClient) GetResponder(resp *http.Response) (result Account, e
 }
 
 // GetKeys gets the account keys for the specified Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the account.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the account.
 func (client AccountClient) GetKeys(ctx context.Context, resourceGroupName string, accountName string) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -454,8 +455,8 @@ func (client AccountClient) ListComplete(ctx context.Context) (result AccountLis
 }
 
 // ListByResourceGroup gets information about the Batch accounts associated within the specified resource group.
-//
-// resourceGroupName is the name of the resource group whose Batch accounts to list.
+// Parameters:
+// resourceGroupName - the name of the resource group whose Batch accounts to list.
 func (client AccountClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result AccountListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -553,9 +554,10 @@ func (client AccountClient) ListByResourceGroupComplete(ctx context.Context, res
 }
 
 // RegenerateKey regenerates the specified account key for the Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the account. parameters is the type of key to regenerate.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the account.
+// parameters - the type of key to regenerate.
 func (client AccountClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, parameters AccountRegenerateKeyParameters) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -602,7 +604,7 @@ func (client AccountClient) RegenerateKeyPreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/regenerateKeys", pathParameters),
@@ -633,9 +635,9 @@ func (client AccountClient) RegenerateKeyResponder(resp *http.Response) (result 
 
 // SynchronizeAutoStorageKeys synchronizes access keys for the auto storage account configured for the specified Batch
 // account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the Batch account.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the Batch account.
 func (client AccountClient) SynchronizeAutoStorageKeys(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -709,9 +711,10 @@ func (client AccountClient) SynchronizeAutoStorageKeysResponder(resp *http.Respo
 }
 
 // Update updates the properties of an existing Batch account.
-//
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
-// the account. parameters is additional parameters for account update.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the Batch account.
+// accountName - the name of the account.
+// parameters - additional parameters for account update.
 func (client AccountClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters AccountUpdateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -758,7 +761,7 @@ func (client AccountClient) UpdatePreparer(ctx context.Context, resourceGroupNam
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}", pathParameters),

@@ -40,9 +40,10 @@ func NewAvailabilitySetsClientWithBaseURI(baseURI string, subscriptionID string)
 }
 
 // CreateOrUpdate create or update an availability set.
-//
-// resourceGroupName is the name of the resource group. name is the name of the availability set. parameters is
-// parameters supplied to the Create Availability Set operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// name - the name of the availability set.
+// parameters - parameters supplied to the Create Availability Set operation.
 func (client AvailabilitySetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, name string, parameters AvailabilitySet) (result AvailabilitySet, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -79,7 +80,7 @@ func (client AvailabilitySetsClient) CreateOrUpdatePreparer(ctx context.Context,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}", pathParameters),
@@ -109,8 +110,9 @@ func (client AvailabilitySetsClient) CreateOrUpdateResponder(resp *http.Response
 }
 
 // Delete delete an availability set.
-//
-// resourceGroupName is the name of the resource group. availabilitySetName is the name of the availability set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// availabilitySetName - the name of the availability set.
 func (client AvailabilitySetsClient) Delete(ctx context.Context, resourceGroupName string, availabilitySetName string) (result OperationStatusResponse, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, availabilitySetName)
 	if err != nil {
@@ -175,8 +177,9 @@ func (client AvailabilitySetsClient) DeleteResponder(resp *http.Response) (resul
 }
 
 // Get retrieves information about an availability set.
-//
-// resourceGroupName is the name of the resource group. availabilitySetName is the name of the availability set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// availabilitySetName - the name of the availability set.
 func (client AvailabilitySetsClient) Get(ctx context.Context, resourceGroupName string, availabilitySetName string) (result AvailabilitySet, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, availabilitySetName)
 	if err != nil {
@@ -241,8 +244,8 @@ func (client AvailabilitySetsClient) GetResponder(resp *http.Response) (result A
 }
 
 // List lists all availability sets in a resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client AvailabilitySetsClient) List(ctx context.Context, resourceGroupName string) (result AvailabilitySetListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -307,8 +310,9 @@ func (client AvailabilitySetsClient) ListResponder(resp *http.Response) (result 
 
 // ListAvailableSizes lists all available virtual machine sizes that can be used to create a new virtual machine in an
 // existing availability set.
-//
-// resourceGroupName is the name of the resource group. availabilitySetName is the name of the availability set.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// availabilitySetName - the name of the availability set.
 func (client AvailabilitySetsClient) ListAvailableSizes(ctx context.Context, resourceGroupName string, availabilitySetName string) (result VirtualMachineSizeListResult, err error) {
 	req, err := client.ListAvailableSizesPreparer(ctx, resourceGroupName, availabilitySetName)
 	if err != nil {

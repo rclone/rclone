@@ -27,6 +27,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AuthenticationType enumerates the values for authentication type.
 type AuthenticationType string
 
@@ -37,6 +38,13 @@ const (
 	SQL AuthenticationType = "SQL"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAuthenticationTypeValues returns an array of possible values for the AuthenticationType const type.
+func PossibleAuthenticationTypeValues() []AuthenticationType {
+	return []AuthenticationType{ADPassword, SQL}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningDisabledReason enumerates the values for automatic tuning disabled reason.
 type AutomaticTuningDisabledReason string
 
@@ -57,6 +65,13 @@ const (
 	QueryStoreReadOnly AutomaticTuningDisabledReason = "QueryStoreReadOnly"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningDisabledReasonValues returns an array of possible values for the AutomaticTuningDisabledReason const type.
+func PossibleAutomaticTuningDisabledReasonValues() []AutomaticTuningDisabledReason {
+	return []AutomaticTuningDisabledReason{AutoConfigured, Default, Disabled, InheritedFromServer, NotSupported, QueryStoreOff, QueryStoreReadOnly}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningMode enumerates the values for automatic tuning mode.
 type AutomaticTuningMode string
 
@@ -71,6 +86,13 @@ const (
 	Unspecified AutomaticTuningMode = "Unspecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningModeValues returns an array of possible values for the AutomaticTuningMode const type.
+func PossibleAutomaticTuningModeValues() []AutomaticTuningMode {
+	return []AutomaticTuningMode{Auto, Custom, Inherit, Unspecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningOptionModeActual enumerates the values for automatic tuning option mode actual.
 type AutomaticTuningOptionModeActual string
 
@@ -81,6 +103,13 @@ const (
 	On AutomaticTuningOptionModeActual = "On"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningOptionModeActualValues returns an array of possible values for the AutomaticTuningOptionModeActual const type.
+func PossibleAutomaticTuningOptionModeActualValues() []AutomaticTuningOptionModeActual {
+	return []AutomaticTuningOptionModeActual{Off, On}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningOptionModeDesired enumerates the values for automatic tuning option mode desired.
 type AutomaticTuningOptionModeDesired string
 
@@ -93,6 +122,13 @@ const (
 	AutomaticTuningOptionModeDesiredOn AutomaticTuningOptionModeDesired = "On"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningOptionModeDesiredValues returns an array of possible values for the AutomaticTuningOptionModeDesired const type.
+func PossibleAutomaticTuningOptionModeDesiredValues() []AutomaticTuningOptionModeDesired {
+	return []AutomaticTuningOptionModeDesired{AutomaticTuningOptionModeDesiredDefault, AutomaticTuningOptionModeDesiredOff, AutomaticTuningOptionModeDesiredOn}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningServerMode enumerates the values for automatic tuning server mode.
 type AutomaticTuningServerMode string
 
@@ -105,6 +141,13 @@ const (
 	AutomaticTuningServerModeUnspecified AutomaticTuningServerMode = "Unspecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningServerModeValues returns an array of possible values for the AutomaticTuningServerMode const type.
+func PossibleAutomaticTuningServerModeValues() []AutomaticTuningServerMode {
+	return []AutomaticTuningServerMode{AutomaticTuningServerModeAuto, AutomaticTuningServerModeCustom, AutomaticTuningServerModeUnspecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningServerReason enumerates the values for automatic tuning server reason.
 type AutomaticTuningServerReason string
 
@@ -117,6 +160,13 @@ const (
 	AutomaticTuningServerReasonDisabled AutomaticTuningServerReason = "Disabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleAutomaticTuningServerReasonValues returns an array of possible values for the AutomaticTuningServerReason const type.
+func PossibleAutomaticTuningServerReasonValues() []AutomaticTuningServerReason {
+	return []AutomaticTuningServerReason{AutomaticTuningServerReasonAutoConfigured, AutomaticTuningServerReasonDefault, AutomaticTuningServerReasonDisabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionPolicyState enumerates the values for backup long term retention policy state.
 type BackupLongTermRetentionPolicyState string
 
@@ -127,6 +177,13 @@ const (
 	BackupLongTermRetentionPolicyStateEnabled BackupLongTermRetentionPolicyState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleBackupLongTermRetentionPolicyStateValues returns an array of possible values for the BackupLongTermRetentionPolicyState const type.
+func PossibleBackupLongTermRetentionPolicyStateValues() []BackupLongTermRetentionPolicyState {
+	return []BackupLongTermRetentionPolicyState{BackupLongTermRetentionPolicyStateDisabled, BackupLongTermRetentionPolicyStateEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BlobAuditingPolicyState enumerates the values for blob auditing policy state.
 type BlobAuditingPolicyState string
 
@@ -137,6 +194,13 @@ const (
 	BlobAuditingPolicyStateEnabled BlobAuditingPolicyState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleBlobAuditingPolicyStateValues returns an array of possible values for the BlobAuditingPolicyState const type.
+func PossibleBlobAuditingPolicyStateValues() []BlobAuditingPolicyState {
+	return []BlobAuditingPolicyState{BlobAuditingPolicyStateDisabled, BlobAuditingPolicyStateEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CapabilityStatus enumerates the values for capability status.
 type CapabilityStatus string
 
@@ -151,6 +215,13 @@ const (
 	CapabilityStatusVisible CapabilityStatus = "Visible"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleCapabilityStatusValues returns an array of possible values for the CapabilityStatus const type.
+func PossibleCapabilityStatusValues() []CapabilityStatus {
+	return []CapabilityStatus{CapabilityStatusAvailable, CapabilityStatusDefault, CapabilityStatusDisabled, CapabilityStatusVisible}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CheckNameAvailabilityReason enumerates the values for check name availability reason.
 type CheckNameAvailabilityReason string
 
@@ -161,6 +232,13 @@ const (
 	Invalid CheckNameAvailabilityReason = "Invalid"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleCheckNameAvailabilityReasonValues returns an array of possible values for the CheckNameAvailabilityReason const type.
+func PossibleCheckNameAvailabilityReasonValues() []CheckNameAvailabilityReason {
+	return []CheckNameAvailabilityReason{AlreadyExists, Invalid}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateMode enumerates the values for create mode.
 type CreateMode string
 
@@ -183,6 +261,13 @@ const (
 	CreateModeRestoreLongTermRetentionBackup CreateMode = "RestoreLongTermRetentionBackup"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleCreateModeValues returns an array of possible values for the CreateMode const type.
+func PossibleCreateModeValues() []CreateMode {
+	return []CreateMode{CreateModeCopy, CreateModeDefault, CreateModeNonReadableSecondary, CreateModeOnlineSecondary, CreateModePointInTimeRestore, CreateModeRecovery, CreateModeRestore, CreateModeRestoreLongTermRetentionBackup}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseEdition enumerates the values for database edition.
 type DatabaseEdition string
 
@@ -211,6 +296,13 @@ const (
 	Web DatabaseEdition = "Web"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleDatabaseEditionValues returns an array of possible values for the DatabaseEdition const type.
+func PossibleDatabaseEditionValues() []DatabaseEdition {
+	return []DatabaseEdition{Basic, Business, DataWarehouse, Free, Premium, PremiumRS, Standard, Stretch, System, System2, Web}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingFunction enumerates the values for data masking function.
 type DataMaskingFunction string
 
@@ -229,6 +321,13 @@ const (
 	DataMaskingFunctionText DataMaskingFunction = "Text"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleDataMaskingFunctionValues returns an array of possible values for the DataMaskingFunction const type.
+func PossibleDataMaskingFunctionValues() []DataMaskingFunction {
+	return []DataMaskingFunction{DataMaskingFunctionCCN, DataMaskingFunctionDefault, DataMaskingFunctionEmail, DataMaskingFunctionNumber, DataMaskingFunctionSSN, DataMaskingFunctionText}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingRuleState enumerates the values for data masking rule state.
 type DataMaskingRuleState string
 
@@ -239,6 +338,13 @@ const (
 	DataMaskingRuleStateEnabled DataMaskingRuleState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleDataMaskingRuleStateValues returns an array of possible values for the DataMaskingRuleState const type.
+func PossibleDataMaskingRuleStateValues() []DataMaskingRuleState {
+	return []DataMaskingRuleState{DataMaskingRuleStateDisabled, DataMaskingRuleStateEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingState enumerates the values for data masking state.
 type DataMaskingState string
 
@@ -249,6 +355,13 @@ const (
 	DataMaskingStateEnabled DataMaskingState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleDataMaskingStateValues returns an array of possible values for the DataMaskingState const type.
+func PossibleDataMaskingStateValues() []DataMaskingState {
+	return []DataMaskingState{DataMaskingStateDisabled, DataMaskingStateEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolEdition enumerates the values for elastic pool edition.
 type ElasticPoolEdition string
 
@@ -261,6 +374,13 @@ const (
 	ElasticPoolEditionStandard ElasticPoolEdition = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleElasticPoolEditionValues returns an array of possible values for the ElasticPoolEdition const type.
+func PossibleElasticPoolEditionValues() []ElasticPoolEdition {
+	return []ElasticPoolEdition{ElasticPoolEditionBasic, ElasticPoolEditionPremium, ElasticPoolEditionStandard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolState enumerates the values for elastic pool state.
 type ElasticPoolState string
 
@@ -273,6 +393,13 @@ const (
 	ElasticPoolStateReady ElasticPoolState = "Ready"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleElasticPoolStateValues returns an array of possible values for the ElasticPoolState const type.
+func PossibleElasticPoolStateValues() []ElasticPoolState {
+	return []ElasticPoolState{ElasticPoolStateCreating, ElasticPoolStateDisabled, ElasticPoolStateReady}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupReplicationRole enumerates the values for failover group replication role.
 type FailoverGroupReplicationRole string
 
@@ -283,6 +410,13 @@ const (
 	Secondary FailoverGroupReplicationRole = "Secondary"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleFailoverGroupReplicationRoleValues returns an array of possible values for the FailoverGroupReplicationRole const type.
+func PossibleFailoverGroupReplicationRoleValues() []FailoverGroupReplicationRole {
+	return []FailoverGroupReplicationRole{Primary, Secondary}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GeoBackupPolicyState enumerates the values for geo backup policy state.
 type GeoBackupPolicyState string
 
@@ -293,6 +427,13 @@ const (
 	GeoBackupPolicyStateEnabled GeoBackupPolicyState = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleGeoBackupPolicyStateValues returns an array of possible values for the GeoBackupPolicyState const type.
+func PossibleGeoBackupPolicyStateValues() []GeoBackupPolicyState {
+	return []GeoBackupPolicyState{GeoBackupPolicyStateDisabled, GeoBackupPolicyStateEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IdentityType enumerates the values for identity type.
 type IdentityType string
 
@@ -301,6 +442,13 @@ const (
 	SystemAssigned IdentityType = "SystemAssigned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleIdentityTypeValues returns an array of possible values for the IdentityType const type.
+func PossibleIdentityTypeValues() []IdentityType {
+	return []IdentityType{SystemAssigned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ManagementOperationState enumerates the values for management operation state.
 type ManagementOperationState string
 
@@ -319,6 +467,13 @@ const (
 	Succeeded ManagementOperationState = "Succeeded"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleManagementOperationStateValues returns an array of possible values for the ManagementOperationState const type.
+func PossibleManagementOperationStateValues() []ManagementOperationState {
+	return []ManagementOperationState{CancelInProgress, Cancelled, Failed, InProgress, Pending, Succeeded}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MaxSizeUnits enumerates the values for max size units.
 type MaxSizeUnits string
 
@@ -333,6 +488,13 @@ const (
 	Terabytes MaxSizeUnits = "Terabytes"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleMaxSizeUnitsValues returns an array of possible values for the MaxSizeUnits const type.
+func PossibleMaxSizeUnitsValues() []MaxSizeUnits {
+	return []MaxSizeUnits{Gigabytes, Megabytes, Petabytes, Terabytes}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationOrigin enumerates the values for operation origin.
 type OperationOrigin string
 
@@ -343,6 +505,13 @@ const (
 	OperationOriginUser OperationOrigin = "user"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleOperationOriginValues returns an array of possible values for the OperationOrigin const type.
+func PossibleOperationOriginValues() []OperationOrigin {
+	return []OperationOrigin{OperationOriginSystem, OperationOriginUser}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // PerformanceLevelUnit enumerates the values for performance level unit.
 type PerformanceLevelUnit string
 
@@ -351,6 +520,13 @@ const (
 	DTU PerformanceLevelUnit = "DTU"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossiblePerformanceLevelUnitValues returns an array of possible values for the PerformanceLevelUnit const type.
+func PossiblePerformanceLevelUnitValues() []PerformanceLevelUnit {
+	return []PerformanceLevelUnit{DTU}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // PrimaryAggregationType enumerates the values for primary aggregation type.
 type PrimaryAggregationType string
 
@@ -369,6 +545,13 @@ const (
 	Total PrimaryAggregationType = "Total"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossiblePrimaryAggregationTypeValues returns an array of possible values for the PrimaryAggregationType const type.
+func PossiblePrimaryAggregationTypeValues() []PrimaryAggregationType {
+	return []PrimaryAggregationType{Average, Count, Maximum, Minimum, None, Total}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReadOnlyEndpointFailoverPolicy enumerates the values for read only endpoint failover policy.
 type ReadOnlyEndpointFailoverPolicy string
 
@@ -379,6 +562,13 @@ const (
 	ReadOnlyEndpointFailoverPolicyEnabled ReadOnlyEndpointFailoverPolicy = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleReadOnlyEndpointFailoverPolicyValues returns an array of possible values for the ReadOnlyEndpointFailoverPolicy const type.
+func PossibleReadOnlyEndpointFailoverPolicyValues() []ReadOnlyEndpointFailoverPolicy {
+	return []ReadOnlyEndpointFailoverPolicy{ReadOnlyEndpointFailoverPolicyDisabled, ReadOnlyEndpointFailoverPolicyEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReadScale enumerates the values for read scale.
 type ReadScale string
 
@@ -389,6 +579,13 @@ const (
 	ReadScaleEnabled ReadScale = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleReadScaleValues returns an array of possible values for the ReadScale const type.
+func PossibleReadScaleValues() []ReadScale {
+	return []ReadScale{ReadScaleDisabled, ReadScaleEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReadWriteEndpointFailoverPolicy enumerates the values for read write endpoint failover policy.
 type ReadWriteEndpointFailoverPolicy string
 
@@ -399,6 +596,13 @@ const (
 	Manual ReadWriteEndpointFailoverPolicy = "Manual"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleReadWriteEndpointFailoverPolicyValues returns an array of possible values for the ReadWriteEndpointFailoverPolicy const type.
+func PossibleReadWriteEndpointFailoverPolicyValues() []ReadWriteEndpointFailoverPolicy {
+	return []ReadWriteEndpointFailoverPolicy{Automatic, Manual}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecommendedIndexAction enumerates the values for recommended index action.
 type RecommendedIndexAction string
 
@@ -411,6 +615,13 @@ const (
 	Rebuild RecommendedIndexAction = "Rebuild"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleRecommendedIndexActionValues returns an array of possible values for the RecommendedIndexAction const type.
+func PossibleRecommendedIndexActionValues() []RecommendedIndexAction {
+	return []RecommendedIndexAction{Create, Drop, Rebuild}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecommendedIndexState enumerates the values for recommended index state.
 type RecommendedIndexState string
 
@@ -439,6 +650,13 @@ const (
 	RecommendedIndexStateVerifying RecommendedIndexState = "Verifying"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleRecommendedIndexStateValues returns an array of possible values for the RecommendedIndexState const type.
+func PossibleRecommendedIndexStateValues() []RecommendedIndexState {
+	return []RecommendedIndexState{RecommendedIndexStateActive, RecommendedIndexStateBlocked, RecommendedIndexStateExecuting, RecommendedIndexStateExpired, RecommendedIndexStateIgnored, RecommendedIndexStatePending, RecommendedIndexStatePendingRevert, RecommendedIndexStateReverted, RecommendedIndexStateReverting, RecommendedIndexStateSuccess, RecommendedIndexStateVerifying}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecommendedIndexType enumerates the values for recommended index type.
 type RecommendedIndexType string
 
@@ -453,6 +671,13 @@ const (
 	NONCLUSTERED RecommendedIndexType = "NONCLUSTERED"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleRecommendedIndexTypeValues returns an array of possible values for the RecommendedIndexType const type.
+func PossibleRecommendedIndexTypeValues() []RecommendedIndexType {
+	return []RecommendedIndexType{CLUSTERED, CLUSTEREDCOLUMNSTORE, COLUMNSTORE, NONCLUSTERED}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationRole enumerates the values for replication role.
 type ReplicationRole string
 
@@ -469,6 +694,13 @@ const (
 	ReplicationRoleSource ReplicationRole = "Source"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleReplicationRoleValues returns an array of possible values for the ReplicationRole const type.
+func PossibleReplicationRoleValues() []ReplicationRole {
+	return []ReplicationRole{ReplicationRoleCopy, ReplicationRoleNonReadableSecondary, ReplicationRolePrimary, ReplicationRoleSecondary, ReplicationRoleSource}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationState enumerates the values for replication state.
 type ReplicationState string
 
@@ -483,6 +715,13 @@ const (
 	SUSPENDED ReplicationState = "SUSPENDED"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleReplicationStateValues returns an array of possible values for the ReplicationState const type.
+func PossibleReplicationStateValues() []ReplicationState {
+	return []ReplicationState{CATCHUP, PENDING, SEEDING, SUSPENDED}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePointType enumerates the values for restore point type.
 type RestorePointType string
 
@@ -493,6 +732,13 @@ const (
 	DISCRETE RestorePointType = "DISCRETE"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleRestorePointTypeValues returns an array of possible values for the RestorePointType const type.
+func PossibleRestorePointTypeValues() []RestorePointType {
+	return []RestorePointType{CONTINUOUS, DISCRETE}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SampleName enumerates the values for sample name.
 type SampleName string
 
@@ -501,6 +747,13 @@ const (
 	AdventureWorksLT SampleName = "AdventureWorksLT"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSampleNameValues returns an array of possible values for the SampleName const type.
+func PossibleSampleNameValues() []SampleName {
+	return []SampleName{AdventureWorksLT}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SecurityAlertPolicyEmailAccountAdmins enumerates the values for security alert policy email account admins.
 type SecurityAlertPolicyEmailAccountAdmins string
 
@@ -511,6 +764,13 @@ const (
 	SecurityAlertPolicyEmailAccountAdminsEnabled SecurityAlertPolicyEmailAccountAdmins = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSecurityAlertPolicyEmailAccountAdminsValues returns an array of possible values for the SecurityAlertPolicyEmailAccountAdmins const type.
+func PossibleSecurityAlertPolicyEmailAccountAdminsValues() []SecurityAlertPolicyEmailAccountAdmins {
+	return []SecurityAlertPolicyEmailAccountAdmins{SecurityAlertPolicyEmailAccountAdminsDisabled, SecurityAlertPolicyEmailAccountAdminsEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SecurityAlertPolicyState enumerates the values for security alert policy state.
 type SecurityAlertPolicyState string
 
@@ -523,6 +783,13 @@ const (
 	SecurityAlertPolicyStateNew SecurityAlertPolicyState = "New"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSecurityAlertPolicyStateValues returns an array of possible values for the SecurityAlertPolicyState const type.
+func PossibleSecurityAlertPolicyStateValues() []SecurityAlertPolicyState {
+	return []SecurityAlertPolicyState{SecurityAlertPolicyStateDisabled, SecurityAlertPolicyStateEnabled, SecurityAlertPolicyStateNew}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SecurityAlertPolicyUseServerDefault enumerates the values for security alert policy use server default.
 type SecurityAlertPolicyUseServerDefault string
 
@@ -533,6 +800,13 @@ const (
 	SecurityAlertPolicyUseServerDefaultEnabled SecurityAlertPolicyUseServerDefault = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSecurityAlertPolicyUseServerDefaultValues returns an array of possible values for the SecurityAlertPolicyUseServerDefault const type.
+func PossibleSecurityAlertPolicyUseServerDefaultValues() []SecurityAlertPolicyUseServerDefault {
+	return []SecurityAlertPolicyUseServerDefault{SecurityAlertPolicyUseServerDefaultDisabled, SecurityAlertPolicyUseServerDefaultEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerConnectionType enumerates the values for server connection type.
 type ServerConnectionType string
 
@@ -545,6 +819,13 @@ const (
 	ServerConnectionTypeRedirect ServerConnectionType = "Redirect"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleServerConnectionTypeValues returns an array of possible values for the ServerConnectionType const type.
+func PossibleServerConnectionTypeValues() []ServerConnectionType {
+	return []ServerConnectionType{ServerConnectionTypeDefault, ServerConnectionTypeProxy, ServerConnectionTypeRedirect}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeyType enumerates the values for server key type.
 type ServerKeyType string
 
@@ -555,6 +836,13 @@ const (
 	ServiceManaged ServerKeyType = "ServiceManaged"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleServerKeyTypeValues returns an array of possible values for the ServerKeyType const type.
+func PossibleServerKeyTypeValues() []ServerKeyType {
+	return []ServerKeyType{AzureKeyVault, ServiceManaged}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceObjectiveName enumerates the values for service objective name.
 type ServiceObjectiveName string
 
@@ -691,6 +979,13 @@ const (
 	ServiceObjectiveNameSystem4L ServiceObjectiveName = "System4L"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleServiceObjectiveNameValues returns an array of possible values for the ServiceObjectiveName const type.
+func PossibleServiceObjectiveNameValues() []ServiceObjectiveName {
+	return []ServiceObjectiveName{ServiceObjectiveNameBasic, ServiceObjectiveNameDS100, ServiceObjectiveNameDS1000, ServiceObjectiveNameDS1200, ServiceObjectiveNameDS1500, ServiceObjectiveNameDS200, ServiceObjectiveNameDS2000, ServiceObjectiveNameDS300, ServiceObjectiveNameDS400, ServiceObjectiveNameDS500, ServiceObjectiveNameDS600, ServiceObjectiveNameDW100, ServiceObjectiveNameDW1000, ServiceObjectiveNameDW10000c, ServiceObjectiveNameDW1000c, ServiceObjectiveNameDW1200, ServiceObjectiveNameDW1500, ServiceObjectiveNameDW15000c, ServiceObjectiveNameDW1500c, ServiceObjectiveNameDW200, ServiceObjectiveNameDW2000, ServiceObjectiveNameDW2000c, ServiceObjectiveNameDW2500c, ServiceObjectiveNameDW300, ServiceObjectiveNameDW3000, ServiceObjectiveNameDW30000c, ServiceObjectiveNameDW3000c, ServiceObjectiveNameDW400, ServiceObjectiveNameDW500, ServiceObjectiveNameDW5000c, ServiceObjectiveNameDW600, ServiceObjectiveNameDW6000, ServiceObjectiveNameDW6000c, ServiceObjectiveNameDW7500c, ServiceObjectiveNameElasticPool, ServiceObjectiveNameFree, ServiceObjectiveNameP1, ServiceObjectiveNameP11, ServiceObjectiveNameP15, ServiceObjectiveNameP2, ServiceObjectiveNameP3, ServiceObjectiveNameP4, ServiceObjectiveNameP6, ServiceObjectiveNamePRS1, ServiceObjectiveNamePRS2, ServiceObjectiveNamePRS4, ServiceObjectiveNamePRS6, ServiceObjectiveNameS0, ServiceObjectiveNameS1, ServiceObjectiveNameS12, ServiceObjectiveNameS2, ServiceObjectiveNameS3, ServiceObjectiveNameS4, ServiceObjectiveNameS6, ServiceObjectiveNameS7, ServiceObjectiveNameS9, ServiceObjectiveNameSystem, ServiceObjectiveNameSystem0, ServiceObjectiveNameSystem1, ServiceObjectiveNameSystem2, ServiceObjectiveNameSystem2L, ServiceObjectiveNameSystem3, ServiceObjectiveNameSystem3L, ServiceObjectiveNameSystem4, ServiceObjectiveNameSystem4L}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // StorageKeyType enumerates the values for storage key type.
 type StorageKeyType string
 
@@ -701,6 +996,13 @@ const (
 	StorageAccessKey StorageKeyType = "StorageAccessKey"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleStorageKeyTypeValues returns an array of possible values for the StorageKeyType const type.
+func PossibleStorageKeyTypeValues() []StorageKeyType {
+	return []StorageKeyType{SharedAccessKey, StorageAccessKey}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentState enumerates the values for sync agent state.
 type SyncAgentState string
 
@@ -713,6 +1015,13 @@ const (
 	Online SyncAgentState = "Online"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncAgentStateValues returns an array of possible values for the SyncAgentState const type.
+func PossibleSyncAgentStateValues() []SyncAgentState {
+	return []SyncAgentState{NeverConnected, Offline, Online}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncConflictResolutionPolicy enumerates the values for sync conflict resolution policy.
 type SyncConflictResolutionPolicy string
 
@@ -723,6 +1032,13 @@ const (
 	MemberWin SyncConflictResolutionPolicy = "MemberWin"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncConflictResolutionPolicyValues returns an array of possible values for the SyncConflictResolutionPolicy const type.
+func PossibleSyncConflictResolutionPolicyValues() []SyncConflictResolutionPolicy {
+	return []SyncConflictResolutionPolicy{HubWin, MemberWin}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncDirection enumerates the values for sync direction.
 type SyncDirection string
 
@@ -735,6 +1051,13 @@ const (
 	OneWayMemberToHub SyncDirection = "OneWayMemberToHub"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncDirectionValues returns an array of possible values for the SyncDirection const type.
+func PossibleSyncDirectionValues() []SyncDirection {
+	return []SyncDirection{Bidirectional, OneWayHubToMember, OneWayMemberToHub}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupLogType enumerates the values for sync group log type.
 type SyncGroupLogType string
 
@@ -749,6 +1072,13 @@ const (
 	Warning SyncGroupLogType = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncGroupLogTypeValues returns an array of possible values for the SyncGroupLogType const type.
+func PossibleSyncGroupLogTypeValues() []SyncGroupLogType {
+	return []SyncGroupLogType{All, Error, Success, Warning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupState enumerates the values for sync group state.
 type SyncGroupState string
 
@@ -765,6 +1095,13 @@ const (
 	SyncGroupStateWarning SyncGroupState = "Warning"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncGroupStateValues returns an array of possible values for the SyncGroupState const type.
+func PossibleSyncGroupStateValues() []SyncGroupState {
+	return []SyncGroupState{SyncGroupStateError, SyncGroupStateGood, SyncGroupStateNotReady, SyncGroupStateProgressing, SyncGroupStateWarning}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberDbType enumerates the values for sync member db type.
 type SyncMemberDbType string
 
@@ -775,6 +1112,13 @@ const (
 	SQLServerDatabase SyncMemberDbType = "SqlServerDatabase"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncMemberDbTypeValues returns an array of possible values for the SyncMemberDbType const type.
+func PossibleSyncMemberDbTypeValues() []SyncMemberDbType {
+	return []SyncMemberDbType{AzureSQLDatabase, SQLServerDatabase}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberState enumerates the values for sync member state.
 type SyncMemberState string
 
@@ -817,6 +1161,13 @@ const (
 	UnReprovisioned SyncMemberState = "UnReprovisioned"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleSyncMemberStateValues returns an array of possible values for the SyncMemberState const type.
+func PossibleSyncMemberStateValues() []SyncMemberState {
+	return []SyncMemberState{DeProvisioned, DeProvisionFailed, DeProvisioning, DisabledBackupRestore, DisabledTombstoneCleanup, Provisioned, ProvisionFailed, Provisioning, ReprovisionFailed, Reprovisioning, SyncCancelled, SyncCancelling, SyncFailed, SyncInProgress, SyncSucceeded, SyncSucceededWithWarnings, UnProvisioned, UnReprovisioned}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionActivityStatus enumerates the values for transparent data encryption activity
 // status.
 type TransparentDataEncryptionActivityStatus string
@@ -828,6 +1179,13 @@ const (
 	Encrypting TransparentDataEncryptionActivityStatus = "Encrypting"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleTransparentDataEncryptionActivityStatusValues returns an array of possible values for the TransparentDataEncryptionActivityStatus const type.
+func PossibleTransparentDataEncryptionActivityStatusValues() []TransparentDataEncryptionActivityStatus {
+	return []TransparentDataEncryptionActivityStatus{Decrypting, Encrypting}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionStatus enumerates the values for transparent data encryption status.
 type TransparentDataEncryptionStatus string
 
@@ -838,6 +1196,13 @@ const (
 	TransparentDataEncryptionStatusEnabled TransparentDataEncryptionStatus = "Enabled"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleTransparentDataEncryptionStatusValues returns an array of possible values for the TransparentDataEncryptionStatus const type.
+func PossibleTransparentDataEncryptionStatusValues() []TransparentDataEncryptionStatus {
+	return []TransparentDataEncryptionStatus{TransparentDataEncryptionStatusDisabled, TransparentDataEncryptionStatusEnabled}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnitDefinitionType enumerates the values for unit definition type.
 type UnitDefinitionType string
 
@@ -856,6 +1221,13 @@ const (
 	UnitDefinitionTypeSeconds UnitDefinitionType = "Seconds"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleUnitDefinitionTypeValues returns an array of possible values for the UnitDefinitionType const type.
+func PossibleUnitDefinitionTypeValues() []UnitDefinitionType {
+	return []UnitDefinitionType{UnitDefinitionTypeBytes, UnitDefinitionTypeBytesPerSecond, UnitDefinitionTypeCount, UnitDefinitionTypeCountPerSecond, UnitDefinitionTypePercent, UnitDefinitionTypeSeconds}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnitType enumerates the values for unit type.
 type UnitType string
 
@@ -874,6 +1246,13 @@ const (
 	UnitTypeSeconds UnitType = "seconds"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleUnitTypeValues returns an array of possible values for the UnitType const type.
+func PossibleUnitTypeValues() []UnitType {
+	return []UnitType{UnitTypeBytes, UnitTypeBytesPerSecond, UnitTypeCount, UnitTypeCountPerSecond, UnitTypePercent, UnitTypeSeconds}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRuleState enumerates the values for virtual network rule state.
 type VirtualNetworkRuleState string
 
@@ -890,6 +1269,13 @@ const (
 	VirtualNetworkRuleStateUnknown VirtualNetworkRuleState = "Unknown"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// PossibleVirtualNetworkRuleStateValues returns an array of possible values for the VirtualNetworkRuleState const type.
+func PossibleVirtualNetworkRuleStateValues() []VirtualNetworkRuleState {
+	return []VirtualNetworkRuleState{VirtualNetworkRuleStateDeleting, VirtualNetworkRuleStateInitializing, VirtualNetworkRuleStateInProgress, VirtualNetworkRuleStateReady, VirtualNetworkRuleStateUnknown}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningOptions automatic tuning properties for individual advisors.
 type AutomaticTuningOptions struct {
 	// DesiredState - Automatic tuning option desired state. Possible values include: 'AutomaticTuningOptionModeDesiredOff', 'AutomaticTuningOptionModeDesiredOn', 'AutomaticTuningOptionModeDesiredDefault'
@@ -902,6 +1288,7 @@ type AutomaticTuningOptions struct {
 	ReasonDesc AutomaticTuningDisabledReason `json:"reasonDesc,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningServerOptions automatic tuning properties for individual advisors.
 type AutomaticTuningServerOptions struct {
 	// DesiredState - Automatic tuning option desired state. Possible values include: 'AutomaticTuningOptionModeDesiredOff', 'AutomaticTuningOptionModeDesiredOn', 'AutomaticTuningOptionModeDesiredDefault'
@@ -914,6 +1301,7 @@ type AutomaticTuningServerOptions struct {
 	ReasonDesc AutomaticTuningServerReason `json:"reasonDesc,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // AutomaticTuningServerProperties server-level Automatic Tuning properties.
 type AutomaticTuningServerProperties struct {
 	// DesiredState - Automatic tuning desired state. Possible values include: 'AutomaticTuningServerModeCustom', 'AutomaticTuningServerModeAuto', 'AutomaticTuningServerModeUnspecified'
@@ -924,17 +1312,23 @@ type AutomaticTuningServerProperties struct {
 	Options map[string]*AutomaticTuningServerOptions `json:"options"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for AutomaticTuningServerProperties.
 func (atsp AutomaticTuningServerProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["desiredState"] = atsp.DesiredState
-	objectMap["actualState"] = atsp.ActualState
+	if atsp.DesiredState != "" {
+		objectMap["desiredState"] = atsp.DesiredState
+	}
+	if atsp.ActualState != "" {
+		objectMap["actualState"] = atsp.ActualState
+	}
 	if atsp.Options != nil {
 		objectMap["options"] = atsp.Options
 	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionPoliciesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of
 // a long-running operation.
 type BackupLongTermRetentionPoliciesCreateOrUpdateFuture struct {
@@ -942,6 +1336,7 @@ type BackupLongTermRetentionPoliciesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future BackupLongTermRetentionPoliciesCreateOrUpdateFuture) Result(client BackupLongTermRetentionPoliciesClient) (bltrp BackupLongTermRetentionPolicy, err error) {
@@ -984,6 +1379,7 @@ func (future BackupLongTermRetentionPoliciesCreateOrUpdateFuture) Result(client 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionPolicy a backup long term retention policy
 type BackupLongTermRetentionPolicy struct {
 	autorest.Response `json:"-"`
@@ -999,6 +1395,29 @@ type BackupLongTermRetentionPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for BackupLongTermRetentionPolicy.
+func (bltrp BackupLongTermRetentionPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bltrp.Location != nil {
+		objectMap["location"] = bltrp.Location
+	}
+	if bltrp.BackupLongTermRetentionPolicyProperties != nil {
+		objectMap["properties"] = bltrp.BackupLongTermRetentionPolicyProperties
+	}
+	if bltrp.ID != nil {
+		objectMap["id"] = bltrp.ID
+	}
+	if bltrp.Name != nil {
+		objectMap["name"] = bltrp.Name
+	}
+	if bltrp.Type != nil {
+		objectMap["type"] = bltrp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for BackupLongTermRetentionPolicy struct.
 func (bltrp *BackupLongTermRetentionPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1059,6 +1478,7 @@ func (bltrp *BackupLongTermRetentionPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionPolicyListResult represents the response to a list long-term retention policies request.
 type BackupLongTermRetentionPolicyListResult struct {
 	autorest.Response `json:"-"`
@@ -1066,6 +1486,7 @@ type BackupLongTermRetentionPolicyListResult struct {
 	Value *[]BackupLongTermRetentionPolicy `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionPolicyProperties the properties of a backup long term retention policy
 type BackupLongTermRetentionPolicyProperties struct {
 	// State - The status of the backup long term retention policy. Possible values include: 'BackupLongTermRetentionPolicyStateDisabled', 'BackupLongTermRetentionPolicyStateEnabled'
@@ -1074,6 +1495,7 @@ type BackupLongTermRetentionPolicyProperties struct {
 	RecoveryServicesBackupPolicyResourceID *string `json:"recoveryServicesBackupPolicyResourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionVault a backup long term retention vault
 type BackupLongTermRetentionVault struct {
 	autorest.Response `json:"-"`
@@ -1089,6 +1511,29 @@ type BackupLongTermRetentionVault struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for BackupLongTermRetentionVault.
+func (bltrv BackupLongTermRetentionVault) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bltrv.Location != nil {
+		objectMap["location"] = bltrv.Location
+	}
+	if bltrv.BackupLongTermRetentionVaultProperties != nil {
+		objectMap["properties"] = bltrv.BackupLongTermRetentionVaultProperties
+	}
+	if bltrv.ID != nil {
+		objectMap["id"] = bltrv.ID
+	}
+	if bltrv.Name != nil {
+		objectMap["name"] = bltrv.Name
+	}
+	if bltrv.Type != nil {
+		objectMap["type"] = bltrv.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for BackupLongTermRetentionVault struct.
 func (bltrv *BackupLongTermRetentionVault) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1149,6 +1594,7 @@ func (bltrv *BackupLongTermRetentionVault) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionVaultListResult represents the response to a list vaults request.
 type BackupLongTermRetentionVaultListResult struct {
 	autorest.Response `json:"-"`
@@ -1156,12 +1602,14 @@ type BackupLongTermRetentionVaultListResult struct {
 	Value *[]BackupLongTermRetentionVault `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionVaultProperties the properties of a backup long term retention vault.
 type BackupLongTermRetentionVaultProperties struct {
 	// RecoveryServicesVaultResourceID - The azure recovery services vault resource id
 	RecoveryServicesVaultResourceID *string `json:"recoveryServicesVaultResourceId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // BackupLongTermRetentionVaultsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type BackupLongTermRetentionVaultsCreateOrUpdateFuture struct {
@@ -1169,6 +1617,7 @@ type BackupLongTermRetentionVaultsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future BackupLongTermRetentionVaultsCreateOrUpdateFuture) Result(client BackupLongTermRetentionVaultsClient) (bltrv BackupLongTermRetentionVault, err error) {
@@ -1211,6 +1660,7 @@ func (future BackupLongTermRetentionVaultsCreateOrUpdateFuture) Result(client Ba
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CheckNameAvailabilityRequest a request to check whether the specified name for a resource is available.
 type CheckNameAvailabilityRequest struct {
 	// Name - The name whose availability is to be checked.
@@ -1219,6 +1669,7 @@ type CheckNameAvailabilityRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CheckNameAvailabilityResponse a response indicating whether the specified name for a resource is available.
 type CheckNameAvailabilityResponse struct {
 	autorest.Response `json:"-"`
@@ -1232,6 +1683,7 @@ type CheckNameAvailabilityResponse struct {
 	Reason CheckNameAvailabilityReason `json:"reason,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // CreateDatabaseRestorePointDefinition contains the information necessary to perform a create database restore
 // point operation.
 type CreateDatabaseRestorePointDefinition struct {
@@ -1239,6 +1691,7 @@ type CreateDatabaseRestorePointDefinition struct {
 	RestorePointLabel *string `json:"restorePointLabel,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Database represents a database.
 type Database struct {
 	autorest.Response `json:"-"`
@@ -1258,6 +1711,7 @@ type Database struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for Database.
 func (d Database) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1285,6 +1739,7 @@ func (d Database) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for Database struct.
 func (d *Database) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1363,6 +1818,7 @@ func (d *Database) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseAutomaticTuning database-level Automatic Tuning.
 type DatabaseAutomaticTuning struct {
 	autorest.Response `json:"-"`
@@ -1376,6 +1832,26 @@ type DatabaseAutomaticTuning struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DatabaseAutomaticTuning.
+func (dat DatabaseAutomaticTuning) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dat.DatabaseAutomaticTuningProperties != nil {
+		objectMap["properties"] = dat.DatabaseAutomaticTuningProperties
+	}
+	if dat.ID != nil {
+		objectMap["id"] = dat.ID
+	}
+	if dat.Name != nil {
+		objectMap["name"] = dat.Name
+	}
+	if dat.Type != nil {
+		objectMap["type"] = dat.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DatabaseAutomaticTuning struct.
 func (dat *DatabaseAutomaticTuning) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1427,6 +1903,7 @@ func (dat *DatabaseAutomaticTuning) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseAutomaticTuningProperties database-level Automatic Tuning properties.
 type DatabaseAutomaticTuningProperties struct {
 	// DesiredState - Automatic tuning desired state. Possible values include: 'Inherit', 'Custom', 'Auto', 'Unspecified'
@@ -1437,17 +1914,23 @@ type DatabaseAutomaticTuningProperties struct {
 	Options map[string]*AutomaticTuningOptions `json:"options"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for DatabaseAutomaticTuningProperties.
 func (datp DatabaseAutomaticTuningProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["desiredState"] = datp.DesiredState
-	objectMap["actualState"] = datp.ActualState
+	if datp.DesiredState != "" {
+		objectMap["desiredState"] = datp.DesiredState
+	}
+	if datp.ActualState != "" {
+		objectMap["actualState"] = datp.ActualState
+	}
 	if datp.Options != nil {
 		objectMap["options"] = datp.Options
 	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseBlobAuditingPolicy a database blob auditing policy.
 type DatabaseBlobAuditingPolicy struct {
 	autorest.Response `json:"-"`
@@ -1463,6 +1946,29 @@ type DatabaseBlobAuditingPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DatabaseBlobAuditingPolicy.
+func (dbap DatabaseBlobAuditingPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dbap.Kind != nil {
+		objectMap["kind"] = dbap.Kind
+	}
+	if dbap.DatabaseBlobAuditingPolicyProperties != nil {
+		objectMap["properties"] = dbap.DatabaseBlobAuditingPolicyProperties
+	}
+	if dbap.ID != nil {
+		objectMap["id"] = dbap.ID
+	}
+	if dbap.Name != nil {
+		objectMap["name"] = dbap.Name
+	}
+	if dbap.Type != nil {
+		objectMap["type"] = dbap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DatabaseBlobAuditingPolicy struct.
 func (dbap *DatabaseBlobAuditingPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1523,6 +2029,7 @@ func (dbap *DatabaseBlobAuditingPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseBlobAuditingPolicyProperties properties of a database blob auditing policy.
 type DatabaseBlobAuditingPolicyProperties struct {
 	// State - Specifies the state of the policy. If state is Enabled, storageEndpoint and storageAccountAccessKey are required. Possible values include: 'BlobAuditingPolicyStateEnabled', 'BlobAuditingPolicyStateDisabled'
@@ -1541,6 +2048,7 @@ type DatabaseBlobAuditingPolicyProperties struct {
 	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseListResult represents the response to a list database request.
 type DatabaseListResult struct {
 	autorest.Response `json:"-"`
@@ -1548,6 +2056,7 @@ type DatabaseListResult struct {
 	Value *[]Database `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperation a database operation.
 type DatabaseOperation struct {
 	// DatabaseOperationProperties - Resource properties.
@@ -1560,6 +2069,26 @@ type DatabaseOperation struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DatabaseOperation.
+func (do DatabaseOperation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if do.DatabaseOperationProperties != nil {
+		objectMap["properties"] = do.DatabaseOperationProperties
+	}
+	if do.ID != nil {
+		objectMap["id"] = do.ID
+	}
+	if do.Name != nil {
+		objectMap["name"] = do.Name
+	}
+	if do.Type != nil {
+		objectMap["type"] = do.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DatabaseOperation struct.
 func (do *DatabaseOperation) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1611,6 +2140,7 @@ func (do *DatabaseOperation) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperationListResult the response to a list database operations request
 type DatabaseOperationListResult struct {
 	autorest.Response `json:"-"`
@@ -1620,12 +2150,14 @@ type DatabaseOperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperationListResultIterator provides access to a complete listing of DatabaseOperation values.
 type DatabaseOperationListResultIterator struct {
 	i    int
 	page DatabaseOperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *DatabaseOperationListResultIterator) Next() error {
@@ -1642,16 +2174,19 @@ func (iter *DatabaseOperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter DatabaseOperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter DatabaseOperationListResultIterator) Response() DatabaseOperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter DatabaseOperationListResultIterator) Value() DatabaseOperation {
@@ -1661,6 +2196,7 @@ func (iter DatabaseOperationListResultIterator) Value() DatabaseOperation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (dolr DatabaseOperationListResult) IsEmpty() bool {
 	return dolr.Value == nil || len(*dolr.Value) == 0
@@ -1678,12 +2214,14 @@ func (dolr DatabaseOperationListResult) databaseOperationListResultPreparer() (*
 		autorest.WithBaseURL(to.String(dolr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperationListResultPage contains a page of DatabaseOperation values.
 type DatabaseOperationListResultPage struct {
 	fn   func(DatabaseOperationListResult) (DatabaseOperationListResult, error)
 	dolr DatabaseOperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *DatabaseOperationListResultPage) Next() error {
@@ -1695,16 +2233,19 @@ func (page *DatabaseOperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page DatabaseOperationListResultPage) NotDone() bool {
 	return !page.dolr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page DatabaseOperationListResultPage) Response() DatabaseOperationListResult {
 	return page.dolr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page DatabaseOperationListResultPage) Values() []DatabaseOperation {
 	if page.dolr.IsEmpty() {
@@ -1713,6 +2254,7 @@ func (page DatabaseOperationListResultPage) Values() []DatabaseOperation {
 	return *page.dolr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseOperationProperties the properties of a database operation.
 type DatabaseOperationProperties struct {
 	// DatabaseName - The name of the database the operation is being performed on.
@@ -1737,8 +2279,15 @@ type DatabaseOperationProperties struct {
 	ErrorSeverity *int32 `json:"errorSeverity,omitempty"`
 	// IsUserError - Whether or not the error is a user error.
 	IsUserError *bool `json:"isUserError,omitempty"`
+	// EstimatedCompletionTime - The estimated completion time of the operation.
+	EstimatedCompletionTime *date.Time `json:"estimatedCompletionTime,omitempty"`
+	// Description - The operation description.
+	Description *string `json:"description,omitempty"`
+	// IsCancellable - Whether the operation can be cancelled.
+	IsCancellable *bool `json:"isCancellable,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseProperties represents the properties of a database.
 type DatabaseProperties struct {
 	// Collation - The collation of the database. If createMode is not Default, this value is ignored.
@@ -1803,6 +2352,7 @@ type DatabaseProperties struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesCreateImportOperationFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type DatabasesCreateImportOperationFuture struct {
@@ -1810,6 +2360,7 @@ type DatabasesCreateImportOperationFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesCreateImportOperationFuture) Result(client DatabasesClient) (ier ImportExportResponse, err error) {
@@ -1852,6 +2403,7 @@ func (future DatabasesCreateImportOperationFuture) Result(client DatabasesClient
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type DatabasesCreateOrUpdateFuture struct {
@@ -1859,6 +2411,7 @@ type DatabasesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesCreateOrUpdateFuture) Result(client DatabasesClient) (d Database, err error) {
@@ -1901,6 +2454,7 @@ func (future DatabasesCreateOrUpdateFuture) Result(client DatabasesClient) (d Da
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseSecurityAlertPolicy contains information about a database Threat Detection policy.
 type DatabaseSecurityAlertPolicy struct {
 	autorest.Response `json:"-"`
@@ -1918,6 +2472,32 @@ type DatabaseSecurityAlertPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DatabaseSecurityAlertPolicy.
+func (dsap DatabaseSecurityAlertPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dsap.Location != nil {
+		objectMap["location"] = dsap.Location
+	}
+	if dsap.Kind != nil {
+		objectMap["kind"] = dsap.Kind
+	}
+	if dsap.DatabaseSecurityAlertPolicyProperties != nil {
+		objectMap["properties"] = dsap.DatabaseSecurityAlertPolicyProperties
+	}
+	if dsap.ID != nil {
+		objectMap["id"] = dsap.ID
+	}
+	if dsap.Name != nil {
+		objectMap["name"] = dsap.Name
+	}
+	if dsap.Type != nil {
+		objectMap["type"] = dsap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DatabaseSecurityAlertPolicy struct.
 func (dsap *DatabaseSecurityAlertPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -1987,6 +2567,7 @@ func (dsap *DatabaseSecurityAlertPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseSecurityAlertPolicyProperties properties for a database Threat Detection policy.
 type DatabaseSecurityAlertPolicyProperties struct {
 	// State - Specifies the state of the policy. If state is Enabled, storageEndpoint and storageAccountAccessKey are required. Possible values include: 'SecurityAlertPolicyStateNew', 'SecurityAlertPolicyStateEnabled', 'SecurityAlertPolicyStateDisabled'
@@ -2007,12 +2588,14 @@ type DatabaseSecurityAlertPolicyProperties struct {
 	UseServerDefault SecurityAlertPolicyUseServerDefault `json:"useServerDefault,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesExportFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DatabasesExportFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesExportFuture) Result(client DatabasesClient) (ier ImportExportResponse, err error) {
@@ -2055,12 +2638,14 @@ func (future DatabasesExportFuture) Result(client DatabasesClient) (ier ImportEx
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesImportFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DatabasesImportFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesImportFuture) Result(client DatabasesClient) (ier ImportExportResponse, err error) {
@@ -2103,12 +2688,14 @@ func (future DatabasesImportFuture) Result(client DatabasesClient) (ier ImportEx
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesPauseFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DatabasesPauseFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesPauseFuture) Result(client DatabasesClient) (ar autorest.Response, err error) {
@@ -2151,12 +2738,14 @@ func (future DatabasesPauseFuture) Result(client DatabasesClient) (ar autorest.R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesResumeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DatabasesResumeFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesResumeFuture) Result(client DatabasesClient) (ar autorest.Response, err error) {
@@ -2199,12 +2788,14 @@ func (future DatabasesResumeFuture) Result(client DatabasesClient) (ar autorest.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabasesUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DatabasesUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future DatabasesUpdateFuture) Result(client DatabasesClient) (d Database, err error) {
@@ -2247,6 +2838,7 @@ func (future DatabasesUpdateFuture) Result(client DatabasesClient) (d Database, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseUpdate represents a database update.
 type DatabaseUpdate struct {
 	// Tags - Resource tags.
@@ -2261,6 +2853,7 @@ type DatabaseUpdate struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for DatabaseUpdate.
 func (du DatabaseUpdate) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2282,6 +2875,7 @@ func (du DatabaseUpdate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DatabaseUpdate struct.
 func (du *DatabaseUpdate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2342,6 +2936,7 @@ func (du *DatabaseUpdate) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseUsage the database usages.
 type DatabaseUsage struct {
 	// Name - The name of the usage metric.
@@ -2360,6 +2955,7 @@ type DatabaseUsage struct {
 	NextResetTime *date.Time `json:"nextResetTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DatabaseUsageListResult the response to a list database metrics request.
 type DatabaseUsageListResult struct {
 	autorest.Response `json:"-"`
@@ -2367,6 +2963,7 @@ type DatabaseUsageListResult struct {
 	Value *[]DatabaseUsage `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingPolicy represents a database data masking policy.
 type DataMaskingPolicy struct {
 	autorest.Response `json:"-"`
@@ -2384,6 +2981,32 @@ type DataMaskingPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DataMaskingPolicy.
+func (dmp DataMaskingPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dmp.DataMaskingPolicyProperties != nil {
+		objectMap["properties"] = dmp.DataMaskingPolicyProperties
+	}
+	if dmp.Location != nil {
+		objectMap["location"] = dmp.Location
+	}
+	if dmp.Kind != nil {
+		objectMap["kind"] = dmp.Kind
+	}
+	if dmp.ID != nil {
+		objectMap["id"] = dmp.ID
+	}
+	if dmp.Name != nil {
+		objectMap["name"] = dmp.Name
+	}
+	if dmp.Type != nil {
+		objectMap["type"] = dmp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DataMaskingPolicy struct.
 func (dmp *DataMaskingPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2453,6 +3076,7 @@ func (dmp *DataMaskingPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingPolicyProperties the properties of a database data masking policy.
 type DataMaskingPolicyProperties struct {
 	// DataMaskingState - The state of the data masking policy. Possible values include: 'DataMaskingStateDisabled', 'DataMaskingStateEnabled'
@@ -2465,6 +3089,7 @@ type DataMaskingPolicyProperties struct {
 	MaskingLevel *string `json:"maskingLevel,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingRule represents a database data masking rule.
 type DataMaskingRule struct {
 	autorest.Response `json:"-"`
@@ -2482,6 +3107,32 @@ type DataMaskingRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DataMaskingRule.
+func (dmr DataMaskingRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dmr.DataMaskingRuleProperties != nil {
+		objectMap["properties"] = dmr.DataMaskingRuleProperties
+	}
+	if dmr.Location != nil {
+		objectMap["location"] = dmr.Location
+	}
+	if dmr.Kind != nil {
+		objectMap["kind"] = dmr.Kind
+	}
+	if dmr.ID != nil {
+		objectMap["id"] = dmr.ID
+	}
+	if dmr.Name != nil {
+		objectMap["name"] = dmr.Name
+	}
+	if dmr.Type != nil {
+		objectMap["type"] = dmr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for DataMaskingRule struct.
 func (dmr *DataMaskingRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2551,6 +3202,7 @@ func (dmr *DataMaskingRule) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingRuleListResult the response to a list data masking rules request.
 type DataMaskingRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -2558,6 +3210,7 @@ type DataMaskingRuleListResult struct {
 	Value *[]DataMaskingRule `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // DataMaskingRuleProperties the properties of a database data masking rule.
 type DataMaskingRuleProperties struct {
 	// ID - The rule Id.
@@ -2586,6 +3239,101 @@ type DataMaskingRuleProperties struct {
 	ReplacementString *string `json:"replacementString,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// DataWarehouseUserActivities user activities of a data warehouse
+type DataWarehouseUserActivities struct {
+	autorest.Response `json:"-"`
+	// DataWarehouseUserActivitiesProperties - Resource properties.
+	*DataWarehouseUserActivitiesProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for DataWarehouseUserActivities.
+func (dwua DataWarehouseUserActivities) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dwua.DataWarehouseUserActivitiesProperties != nil {
+		objectMap["properties"] = dwua.DataWarehouseUserActivitiesProperties
+	}
+	if dwua.ID != nil {
+		objectMap["id"] = dwua.ID
+	}
+	if dwua.Name != nil {
+		objectMap["name"] = dwua.Name
+	}
+	if dwua.Type != nil {
+		objectMap["type"] = dwua.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// UnmarshalJSON is the custom unmarshaler for DataWarehouseUserActivities struct.
+func (dwua *DataWarehouseUserActivities) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var dataWarehouseUserActivitiesProperties DataWarehouseUserActivitiesProperties
+				err = json.Unmarshal(*v, &dataWarehouseUserActivitiesProperties)
+				if err != nil {
+					return err
+				}
+				dwua.DataWarehouseUserActivitiesProperties = &dataWarehouseUserActivitiesProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				dwua.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				dwua.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				dwua.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// DataWarehouseUserActivitiesProperties user activities of a data warehouse. This currently includes the count of
+// running or suspended queries. For more information, please view the sys.dm_pdw_exec_requests dynamic management
+// view (DMV).
+type DataWarehouseUserActivitiesProperties struct {
+	// ActiveQueriesCount - Count of running and suspended queries.
+	ActiveQueriesCount *int32 `json:"activeQueriesCount,omitempty"`
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EditionCapability the database edition capabilities.
 type EditionCapability struct {
 	// Name - The edition name.
@@ -2598,6 +3346,7 @@ type EditionCapability struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPool represents a database elastic pool.
 type ElasticPool struct {
 	autorest.Response `json:"-"`
@@ -2617,6 +3366,7 @@ type ElasticPool struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for ElasticPool.
 func (ep ElasticPool) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2644,6 +3394,7 @@ func (ep ElasticPool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ElasticPool struct.
 func (ep *ElasticPool) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2722,6 +3473,7 @@ func (ep *ElasticPool) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolActivity represents the activity on an elastic pool.
 type ElasticPoolActivity struct {
 	// Location - The geo-location where the resource lives
@@ -2736,6 +3488,29 @@ type ElasticPoolActivity struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ElasticPoolActivity.
+func (epa ElasticPoolActivity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if epa.Location != nil {
+		objectMap["location"] = epa.Location
+	}
+	if epa.ElasticPoolActivityProperties != nil {
+		objectMap["properties"] = epa.ElasticPoolActivityProperties
+	}
+	if epa.ID != nil {
+		objectMap["id"] = epa.ID
+	}
+	if epa.Name != nil {
+		objectMap["name"] = epa.Name
+	}
+	if epa.Type != nil {
+		objectMap["type"] = epa.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ElasticPoolActivity struct.
 func (epa *ElasticPoolActivity) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2796,6 +3571,7 @@ func (epa *ElasticPoolActivity) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolActivityListResult represents the response to a list elastic pool activity request.
 type ElasticPoolActivityListResult struct {
 	autorest.Response `json:"-"`
@@ -2803,6 +3579,7 @@ type ElasticPoolActivityListResult struct {
 	Value *[]ElasticPoolActivity `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolActivityProperties represents the properties of an elastic pool.
 type ElasticPoolActivityProperties struct {
 	// EndTime - The time the operation finished (ISO8601 format).
@@ -2847,6 +3624,7 @@ type ElasticPoolActivityProperties struct {
 	RequestedDtuGuarantee *int32 `json:"requestedDtuGuarantee,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolDatabaseActivity represents the activity on an elastic pool.
 type ElasticPoolDatabaseActivity struct {
 	// Location - The geo-location where the resource lives
@@ -2861,6 +3639,29 @@ type ElasticPoolDatabaseActivity struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ElasticPoolDatabaseActivity.
+func (epda ElasticPoolDatabaseActivity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if epda.Location != nil {
+		objectMap["location"] = epda.Location
+	}
+	if epda.ElasticPoolDatabaseActivityProperties != nil {
+		objectMap["properties"] = epda.ElasticPoolDatabaseActivityProperties
+	}
+	if epda.ID != nil {
+		objectMap["id"] = epda.ID
+	}
+	if epda.Name != nil {
+		objectMap["name"] = epda.Name
+	}
+	if epda.Type != nil {
+		objectMap["type"] = epda.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ElasticPoolDatabaseActivity struct.
 func (epda *ElasticPoolDatabaseActivity) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2921,6 +3722,7 @@ func (epda *ElasticPoolDatabaseActivity) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolDatabaseActivityListResult represents the response to a list elastic pool database activity request.
 type ElasticPoolDatabaseActivityListResult struct {
 	autorest.Response `json:"-"`
@@ -2928,6 +3730,7 @@ type ElasticPoolDatabaseActivityListResult struct {
 	Value *[]ElasticPoolDatabaseActivity `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolDatabaseActivityProperties represents the properties of an elastic pool database activity.
 type ElasticPoolDatabaseActivityProperties struct {
 	// DatabaseName - The database name.
@@ -2962,6 +3765,7 @@ type ElasticPoolDatabaseActivityProperties struct {
 	State *string `json:"state,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolDtuCapability the Elastic Pool DTU capability.
 type ElasticPoolDtuCapability struct {
 	// Limit - The maximum size of the database (see 'unit' for the units).
@@ -2980,6 +3784,7 @@ type ElasticPoolDtuCapability struct {
 	SupportedPerDatabaseMaxDtus *[]ElasticPoolPerDatabaseMaxDtuCapability `json:"supportedPerDatabaseMaxDtus,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolEditionCapability the elastic pool edition capabilities.
 type ElasticPoolEditionCapability struct {
 	// Name - The elastic pool edition name.
@@ -2992,6 +3797,7 @@ type ElasticPoolEditionCapability struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolListResult represents the response to a list elastic pool request.
 type ElasticPoolListResult struct {
 	autorest.Response `json:"-"`
@@ -2999,6 +3805,7 @@ type ElasticPoolListResult struct {
 	Value *[]ElasticPool `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolPerDatabaseMaxDtuCapability the max per-database DTU capability.
 type ElasticPoolPerDatabaseMaxDtuCapability struct {
 	// Limit - The maximum DTUs per database.
@@ -3009,6 +3816,7 @@ type ElasticPoolPerDatabaseMaxDtuCapability struct {
 	SupportedPerDatabaseMinDtus *[]ElasticPoolPerDatabaseMinDtuCapability `json:"supportedPerDatabaseMinDtus,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolPerDatabaseMinDtuCapability the minimum per-database DTU capability.
 type ElasticPoolPerDatabaseMinDtuCapability struct {
 	// Limit - The maximum DTUs per database.
@@ -3017,6 +3825,7 @@ type ElasticPoolPerDatabaseMinDtuCapability struct {
 	Status CapabilityStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolProperties represents the properties of an elastic pool.
 type ElasticPoolProperties struct {
 	// CreationDate - The creation date of the elastic pool (ISO8601 format).
@@ -3037,6 +3846,7 @@ type ElasticPoolProperties struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ElasticPoolsCreateOrUpdateFuture struct {
@@ -3044,6 +3854,7 @@ type ElasticPoolsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ElasticPoolsCreateOrUpdateFuture) Result(client ElasticPoolsClient) (ep ElasticPool, err error) {
@@ -3086,12 +3897,14 @@ func (future ElasticPoolsCreateOrUpdateFuture) Result(client ElasticPoolsClient)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ElasticPoolsUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ElasticPoolsUpdateFuture) Result(client ElasticPoolsClient) (ep ElasticPool, err error) {
@@ -3134,6 +3947,7 @@ func (future ElasticPoolsUpdateFuture) Result(client ElasticPoolsClient) (ep Ela
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolUpdate represents an elastic pool update.
 type ElasticPoolUpdate struct {
 	// Tags - Resource tags.
@@ -3148,6 +3962,7 @@ type ElasticPoolUpdate struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for ElasticPoolUpdate.
 func (epu ElasticPoolUpdate) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3169,6 +3984,7 @@ func (epu ElasticPoolUpdate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ElasticPoolUpdate struct.
 func (epu *ElasticPoolUpdate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3229,6 +4045,7 @@ func (epu *ElasticPoolUpdate) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtector the server encryption protector.
 type EncryptionProtector struct {
 	autorest.Response `json:"-"`
@@ -3246,6 +4063,32 @@ type EncryptionProtector struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for EncryptionProtector.
+func (ep EncryptionProtector) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ep.Kind != nil {
+		objectMap["kind"] = ep.Kind
+	}
+	if ep.Location != nil {
+		objectMap["location"] = ep.Location
+	}
+	if ep.EncryptionProtectorProperties != nil {
+		objectMap["properties"] = ep.EncryptionProtectorProperties
+	}
+	if ep.ID != nil {
+		objectMap["id"] = ep.ID
+	}
+	if ep.Name != nil {
+		objectMap["name"] = ep.Name
+	}
+	if ep.Type != nil {
+		objectMap["type"] = ep.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for EncryptionProtector struct.
 func (ep *EncryptionProtector) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3315,6 +4158,7 @@ func (ep *EncryptionProtector) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorListResult a list of server encryption protectors.
 type EncryptionProtectorListResult struct {
 	autorest.Response `json:"-"`
@@ -3324,12 +4168,14 @@ type EncryptionProtectorListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorListResultIterator provides access to a complete listing of EncryptionProtector values.
 type EncryptionProtectorListResultIterator struct {
 	i    int
 	page EncryptionProtectorListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *EncryptionProtectorListResultIterator) Next() error {
@@ -3346,16 +4192,19 @@ func (iter *EncryptionProtectorListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter EncryptionProtectorListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter EncryptionProtectorListResultIterator) Response() EncryptionProtectorListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter EncryptionProtectorListResultIterator) Value() EncryptionProtector {
@@ -3365,6 +4214,7 @@ func (iter EncryptionProtectorListResultIterator) Value() EncryptionProtector {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (eplr EncryptionProtectorListResult) IsEmpty() bool {
 	return eplr.Value == nil || len(*eplr.Value) == 0
@@ -3382,12 +4232,14 @@ func (eplr EncryptionProtectorListResult) encryptionProtectorListResultPreparer(
 		autorest.WithBaseURL(to.String(eplr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorListResultPage contains a page of EncryptionProtector values.
 type EncryptionProtectorListResultPage struct {
 	fn   func(EncryptionProtectorListResult) (EncryptionProtectorListResult, error)
 	eplr EncryptionProtectorListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *EncryptionProtectorListResultPage) Next() error {
@@ -3399,16 +4251,19 @@ func (page *EncryptionProtectorListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page EncryptionProtectorListResultPage) NotDone() bool {
 	return !page.eplr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page EncryptionProtectorListResultPage) Response() EncryptionProtectorListResult {
 	return page.eplr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page EncryptionProtectorListResultPage) Values() []EncryptionProtector {
 	if page.eplr.IsEmpty() {
@@ -3417,6 +4272,7 @@ func (page EncryptionProtectorListResultPage) Values() []EncryptionProtector {
 	return *page.eplr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorProperties properties for an encryption protector execution.
 type EncryptionProtectorProperties struct {
 	// Subregion - Subregion of the encryption protector.
@@ -3431,6 +4287,7 @@ type EncryptionProtectorProperties struct {
 	Thumbprint *string `json:"thumbprint,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // EncryptionProtectorsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type EncryptionProtectorsCreateOrUpdateFuture struct {
@@ -3438,6 +4295,7 @@ type EncryptionProtectorsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future EncryptionProtectorsCreateOrUpdateFuture) Result(client EncryptionProtectorsClient) (ep EncryptionProtector, err error) {
@@ -3480,6 +4338,7 @@ func (future EncryptionProtectorsCreateOrUpdateFuture) Result(client EncryptionP
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ExportRequest export database parameters.
 type ExportRequest struct {
 	// StorageKeyType - The type of the storage key to use. Possible values include: 'StorageAccessKey', 'SharedAccessKey'
@@ -3496,6 +4355,7 @@ type ExportRequest struct {
 	AuthenticationType AuthenticationType `json:"authenticationType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroup a failover group.
 type FailoverGroup struct {
 	autorest.Response `json:"-"`
@@ -3513,6 +4373,7 @@ type FailoverGroup struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for FailoverGroup.
 func (fg FailoverGroup) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -3537,6 +4398,7 @@ func (fg FailoverGroup) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for FailoverGroup struct.
 func (fg *FailoverGroup) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -3606,6 +4468,7 @@ func (fg *FailoverGroup) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupListResult a list of failover groups.
 type FailoverGroupListResult struct {
 	autorest.Response `json:"-"`
@@ -3615,12 +4478,14 @@ type FailoverGroupListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupListResultIterator provides access to a complete listing of FailoverGroup values.
 type FailoverGroupListResultIterator struct {
 	i    int
 	page FailoverGroupListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *FailoverGroupListResultIterator) Next() error {
@@ -3637,16 +4502,19 @@ func (iter *FailoverGroupListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter FailoverGroupListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter FailoverGroupListResultIterator) Response() FailoverGroupListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter FailoverGroupListResultIterator) Value() FailoverGroup {
@@ -3656,6 +4524,7 @@ func (iter FailoverGroupListResultIterator) Value() FailoverGroup {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (fglr FailoverGroupListResult) IsEmpty() bool {
 	return fglr.Value == nil || len(*fglr.Value) == 0
@@ -3673,12 +4542,14 @@ func (fglr FailoverGroupListResult) failoverGroupListResultPreparer() (*http.Req
 		autorest.WithBaseURL(to.String(fglr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupListResultPage contains a page of FailoverGroup values.
 type FailoverGroupListResultPage struct {
 	fn   func(FailoverGroupListResult) (FailoverGroupListResult, error)
 	fglr FailoverGroupListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *FailoverGroupListResultPage) Next() error {
@@ -3690,16 +4561,19 @@ func (page *FailoverGroupListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page FailoverGroupListResultPage) NotDone() bool {
 	return !page.fglr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page FailoverGroupListResultPage) Response() FailoverGroupListResult {
 	return page.fglr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page FailoverGroupListResultPage) Values() []FailoverGroup {
 	if page.fglr.IsEmpty() {
@@ -3708,6 +4582,7 @@ func (page FailoverGroupListResultPage) Values() []FailoverGroup {
 	return *page.fglr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupProperties properties of a failover group.
 type FailoverGroupProperties struct {
 	// ReadWriteEndpoint - Read-write endpoint of the failover group instance.
@@ -3724,12 +4599,14 @@ type FailoverGroupProperties struct {
 	Databases *[]string `json:"databases,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupReadOnlyEndpoint read-only endpoint of the failover group instance.
 type FailoverGroupReadOnlyEndpoint struct {
 	// FailoverPolicy - Failover policy of the read-only endpoint for the failover group. Possible values include: 'ReadOnlyEndpointFailoverPolicyDisabled', 'ReadOnlyEndpointFailoverPolicyEnabled'
 	FailoverPolicy ReadOnlyEndpointFailoverPolicy `json:"failoverPolicy,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupReadWriteEndpoint read-write endpoint of the failover group instance.
 type FailoverGroupReadWriteEndpoint struct {
 	// FailoverPolicy - Failover policy of the read-write endpoint for the failover group. If failoverPolicy is Automatic then failoverWithDataLossGracePeriodMinutes is required. Possible values include: 'Manual', 'Automatic'
@@ -3738,6 +4615,7 @@ type FailoverGroupReadWriteEndpoint struct {
 	FailoverWithDataLossGracePeriodMinutes *int32 `json:"failoverWithDataLossGracePeriodMinutes,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type FailoverGroupsCreateOrUpdateFuture struct {
@@ -3745,6 +4623,7 @@ type FailoverGroupsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FailoverGroupsCreateOrUpdateFuture) Result(client FailoverGroupsClient) (fg FailoverGroup, err error) {
@@ -3787,12 +4666,14 @@ func (future FailoverGroupsCreateOrUpdateFuture) Result(client FailoverGroupsCli
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type FailoverGroupsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FailoverGroupsDeleteFuture) Result(client FailoverGroupsClient) (ar autorest.Response, err error) {
@@ -3835,6 +4716,7 @@ func (future FailoverGroupsDeleteFuture) Result(client FailoverGroupsClient) (ar
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupsFailoverFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type FailoverGroupsFailoverFuture struct {
@@ -3842,6 +4724,7 @@ type FailoverGroupsFailoverFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FailoverGroupsFailoverFuture) Result(client FailoverGroupsClient) (fg FailoverGroup, err error) {
@@ -3884,6 +4767,7 @@ func (future FailoverGroupsFailoverFuture) Result(client FailoverGroupsClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupsForceFailoverAllowDataLossFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type FailoverGroupsForceFailoverAllowDataLossFuture struct {
@@ -3891,6 +4775,7 @@ type FailoverGroupsForceFailoverAllowDataLossFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FailoverGroupsForceFailoverAllowDataLossFuture) Result(client FailoverGroupsClient) (fg FailoverGroup, err error) {
@@ -3933,12 +4818,14 @@ func (future FailoverGroupsForceFailoverAllowDataLossFuture) Result(client Failo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type FailoverGroupsUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future FailoverGroupsUpdateFuture) Result(client FailoverGroupsClient) (fg FailoverGroup, err error) {
@@ -3981,6 +4868,7 @@ func (future FailoverGroupsUpdateFuture) Result(client FailoverGroupsClient) (fg
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupUpdate a failover group update request.
 type FailoverGroupUpdate struct {
 	// FailoverGroupUpdateProperties - Resource properties.
@@ -3989,6 +4877,7 @@ type FailoverGroupUpdate struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for FailoverGroupUpdate.
 func (fgu FailoverGroupUpdate) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -4001,6 +4890,7 @@ func (fgu FailoverGroupUpdate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for FailoverGroupUpdate struct.
 func (fgu *FailoverGroupUpdate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4034,6 +4924,7 @@ func (fgu *FailoverGroupUpdate) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FailoverGroupUpdateProperties properties of a failover group update.
 type FailoverGroupUpdateProperties struct {
 	// ReadWriteEndpoint - Read-write endpoint of the failover group instance.
@@ -4044,6 +4935,7 @@ type FailoverGroupUpdateProperties struct {
 	Databases *[]string `json:"databases,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FirewallRule represents a server firewall rule.
 type FirewallRule struct {
 	autorest.Response `json:"-"`
@@ -4061,6 +4953,32 @@ type FirewallRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for FirewallRule.
+func (fr FirewallRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fr.Kind != nil {
+		objectMap["kind"] = fr.Kind
+	}
+	if fr.Location != nil {
+		objectMap["location"] = fr.Location
+	}
+	if fr.FirewallRuleProperties != nil {
+		objectMap["properties"] = fr.FirewallRuleProperties
+	}
+	if fr.ID != nil {
+		objectMap["id"] = fr.ID
+	}
+	if fr.Name != nil {
+		objectMap["name"] = fr.Name
+	}
+	if fr.Type != nil {
+		objectMap["type"] = fr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
 func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4130,6 +5048,7 @@ func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FirewallRuleListResult represents the response to a List Firewall Rules request.
 type FirewallRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -4137,6 +5056,7 @@ type FirewallRuleListResult struct {
 	Value *[]FirewallRule `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // FirewallRuleProperties represents the properties of a server firewall rule.
 type FirewallRuleProperties struct {
 	// StartIPAddress - The start IP address of the firewall rule. Must be IPv4 format. Use value '0.0.0.0' to represent all Azure-internal IP addresses.
@@ -4145,6 +5065,7 @@ type FirewallRuleProperties struct {
 	EndIPAddress *string `json:"endIpAddress,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GeoBackupPolicy a database geo backup policy.
 type GeoBackupPolicy struct {
 	autorest.Response `json:"-"`
@@ -4162,6 +5083,32 @@ type GeoBackupPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for GeoBackupPolicy.
+func (gbp GeoBackupPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gbp.GeoBackupPolicyProperties != nil {
+		objectMap["properties"] = gbp.GeoBackupPolicyProperties
+	}
+	if gbp.Kind != nil {
+		objectMap["kind"] = gbp.Kind
+	}
+	if gbp.Location != nil {
+		objectMap["location"] = gbp.Location
+	}
+	if gbp.ID != nil {
+		objectMap["id"] = gbp.ID
+	}
+	if gbp.Name != nil {
+		objectMap["name"] = gbp.Name
+	}
+	if gbp.Type != nil {
+		objectMap["type"] = gbp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for GeoBackupPolicy struct.
 func (gbp *GeoBackupPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4231,6 +5178,7 @@ func (gbp *GeoBackupPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GeoBackupPolicyListResult the response to a list geo backup policies request.
 type GeoBackupPolicyListResult struct {
 	autorest.Response `json:"-"`
@@ -4238,6 +5186,7 @@ type GeoBackupPolicyListResult struct {
 	Value *[]GeoBackupPolicy `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // GeoBackupPolicyProperties the properties of the geo backup policy.
 type GeoBackupPolicyProperties struct {
 	// State - The state of the geo backup policy. Possible values include: 'GeoBackupPolicyStateDisabled', 'GeoBackupPolicyStateEnabled'
@@ -4246,6 +5195,7 @@ type GeoBackupPolicyProperties struct {
 	StorageType *string `json:"storageType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ImportExportResponse response for Import/Export Get operation.
 type ImportExportResponse struct {
 	autorest.Response `json:"-"`
@@ -4259,6 +5209,26 @@ type ImportExportResponse struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ImportExportResponse.
+func (ier ImportExportResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ier.ImportExportResponseProperties != nil {
+		objectMap["properties"] = ier.ImportExportResponseProperties
+	}
+	if ier.ID != nil {
+		objectMap["id"] = ier.ID
+	}
+	if ier.Name != nil {
+		objectMap["name"] = ier.Name
+	}
+	if ier.Type != nil {
+		objectMap["type"] = ier.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ImportExportResponse struct.
 func (ier *ImportExportResponse) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4310,6 +5280,7 @@ func (ier *ImportExportResponse) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ImportExportResponseProperties response for Import/Export Status operation.
 type ImportExportResponseProperties struct {
 	// RequestType - The request type of the operation.
@@ -4332,6 +5303,7 @@ type ImportExportResponseProperties struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ImportExtensionProperties represents the properties for an import operation
 type ImportExtensionProperties struct {
 	// OperationMode - The type of import operation being performed. This is always Import.
@@ -4350,6 +5322,7 @@ type ImportExtensionProperties struct {
 	AuthenticationType AuthenticationType `json:"authenticationType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ImportExtensionRequest import database parameters.
 type ImportExtensionRequest struct {
 	// Name - The name of the extension.
@@ -4360,6 +5333,23 @@ type ImportExtensionRequest struct {
 	*ImportExtensionProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ImportExtensionRequest.
+func (ier ImportExtensionRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ier.Name != nil {
+		objectMap["name"] = ier.Name
+	}
+	if ier.Type != nil {
+		objectMap["type"] = ier.Type
+	}
+	if ier.ImportExtensionProperties != nil {
+		objectMap["properties"] = ier.ImportExtensionProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ImportExtensionRequest struct.
 func (ier *ImportExtensionRequest) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4402,6 +5392,7 @@ func (ier *ImportExtensionRequest) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ImportRequest import database parameters.
 type ImportRequest struct {
 	// DatabaseName - The name of the database to import.
@@ -4426,6 +5417,7 @@ type ImportRequest struct {
 	AuthenticationType AuthenticationType `json:"authenticationType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // LocationCapabilities the capabilities for a location.
 type LocationCapabilities struct {
 	autorest.Response `json:"-"`
@@ -4437,6 +5429,7 @@ type LocationCapabilities struct {
 	SupportedServerVersions *[]ServerVersionCapability `json:"supportedServerVersions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MaxSizeCapability the maximum size limits for a database.
 type MaxSizeCapability struct {
 	// Limit - The maximum size of the database (see 'unit' for the units).
@@ -4447,6 +5440,7 @@ type MaxSizeCapability struct {
 	Status CapabilityStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Metric database metrics.
 type Metric struct {
 	// StartTime - The start time for the metric (ISO-8601 format).
@@ -4463,6 +5457,7 @@ type Metric struct {
 	MetricValues *[]MetricValue `json:"metricValues,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricAvailability a metric availability value.
 type MetricAvailability struct {
 	// Retention - The length of retention for the database metric.
@@ -4471,6 +5466,7 @@ type MetricAvailability struct {
 	TimeGrain *string `json:"timeGrain,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricDefinition a database metric definition.
 type MetricDefinition struct {
 	// Name - The name information for the metric.
@@ -4485,6 +5481,7 @@ type MetricDefinition struct {
 	MetricAvailabilities *[]MetricAvailability `json:"metricAvailabilities,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricDefinitionListResult the response to a list database metric definitions request.
 type MetricDefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -4492,6 +5489,7 @@ type MetricDefinitionListResult struct {
 	Value *[]MetricDefinition `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricListResult the response to a list database metrics request.
 type MetricListResult struct {
 	autorest.Response `json:"-"`
@@ -4499,6 +5497,7 @@ type MetricListResult struct {
 	Value *[]Metric `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricName a database metric name.
 type MetricName struct {
 	// Value - The name of the database metric.
@@ -4507,6 +5506,7 @@ type MetricName struct {
 	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MetricValue represents database metrics.
 type MetricValue struct {
 	// Count - The number of values for the metric.
@@ -4523,6 +5523,7 @@ type MetricValue struct {
 	Total *float64 `json:"total,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Operation SQL REST API operation definition.
 type Operation struct {
 	// Name - The name of the operation being performed on this particular object.
@@ -4535,6 +5536,7 @@ type Operation struct {
 	Properties map[string]interface{} `json:"properties"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for Operation.
 func (o Operation) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -4544,13 +5546,16 @@ func (o Operation) MarshalJSON() ([]byte, error) {
 	if o.Display != nil {
 		objectMap["display"] = o.Display
 	}
-	objectMap["origin"] = o.Origin
+	if o.Origin != "" {
+		objectMap["origin"] = o.Origin
+	}
 	if o.Properties != nil {
 		objectMap["properties"] = o.Properties
 	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationDisplay display metadata associated with the operation.
 type OperationDisplay struct {
 	// Provider - The localized friendly form of the resource provider name.
@@ -4563,6 +5568,7 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationImpact the impact of an operation, both in absolute and relative terms.
 type OperationImpact struct {
 	// Name - The name of the impact dimension.
@@ -4575,6 +5581,7 @@ type OperationImpact struct {
 	ChangeValueRelative *float64 `json:"changeValueRelative,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationListResult result of the request to list SQL operations.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
@@ -4584,12 +5591,14 @@ type OperationListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationListResultIterator provides access to a complete listing of Operation values.
 type OperationListResultIterator struct {
 	i    int
 	page OperationListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *OperationListResultIterator) Next() error {
@@ -4606,16 +5615,19 @@ func (iter *OperationListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter OperationListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter OperationListResultIterator) Response() OperationListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter OperationListResultIterator) Value() Operation {
@@ -4625,6 +5637,7 @@ func (iter OperationListResultIterator) Value() Operation {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (olr OperationListResult) IsEmpty() bool {
 	return olr.Value == nil || len(*olr.Value) == 0
@@ -4642,12 +5655,14 @@ func (olr OperationListResult) operationListResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(olr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // OperationListResultPage contains a page of Operation values.
 type OperationListResultPage struct {
 	fn  func(OperationListResult) (OperationListResult, error)
 	olr OperationListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *OperationListResultPage) Next() error {
@@ -4659,16 +5674,19 @@ func (page *OperationListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page OperationListResultPage) NotDone() bool {
 	return !page.olr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page OperationListResultPage) Response() OperationListResult {
 	return page.olr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page OperationListResultPage) Values() []Operation {
 	if page.olr.IsEmpty() {
@@ -4677,6 +5695,7 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // PartnerInfo partner server information for the failover group.
 type PartnerInfo struct {
 	// ID - Resource identifier of the partner server.
@@ -4687,6 +5706,7 @@ type PartnerInfo struct {
 	ReplicationRole FailoverGroupReplicationRole `json:"replicationRole,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // PerformanceLevel a possible performance level of a service objective capability.
 type PerformanceLevel struct {
 	// Unit - Unit type used to measure service objective performance level. Possible values include: 'DTU'
@@ -4695,6 +5715,7 @@ type PerformanceLevel struct {
 	Value *int32 `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ProxyResource ARM proxy resource.
 type ProxyResource struct {
 	// ID - Resource ID.
@@ -4705,121 +5726,7 @@ type ProxyResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// RecommendedElasticPool represents a recommented elastic pool.
-type RecommendedElasticPool struct {
-	autorest.Response `json:"-"`
-	// RecommendedElasticPoolProperties - The properites representing the resource.
-	*RecommendedElasticPoolProperties `json:"properties,omitempty"`
-	// ID - Resource ID.
-	ID *string `json:"id,omitempty"`
-	// Name - Resource name.
-	Name *string `json:"name,omitempty"`
-	// Type - Resource type.
-	Type *string `json:"type,omitempty"`
-}
-
-// UnmarshalJSON is the custom unmarshaler for RecommendedElasticPool struct.
-func (rep *RecommendedElasticPool) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	for k, v := range m {
-		switch k {
-		case "properties":
-			if v != nil {
-				var recommendedElasticPoolProperties RecommendedElasticPoolProperties
-				err = json.Unmarshal(*v, &recommendedElasticPoolProperties)
-				if err != nil {
-					return err
-				}
-				rep.RecommendedElasticPoolProperties = &recommendedElasticPoolProperties
-			}
-		case "id":
-			if v != nil {
-				var ID string
-				err = json.Unmarshal(*v, &ID)
-				if err != nil {
-					return err
-				}
-				rep.ID = &ID
-			}
-		case "name":
-			if v != nil {
-				var name string
-				err = json.Unmarshal(*v, &name)
-				if err != nil {
-					return err
-				}
-				rep.Name = &name
-			}
-		case "type":
-			if v != nil {
-				var typeVar string
-				err = json.Unmarshal(*v, &typeVar)
-				if err != nil {
-					return err
-				}
-				rep.Type = &typeVar
-			}
-		}
-	}
-
-	return nil
-}
-
-// RecommendedElasticPoolListMetricsResult represents the response to a list recommended elastic pool metrics
-// request.
-type RecommendedElasticPoolListMetricsResult struct {
-	autorest.Response `json:"-"`
-	// Value - The list of recommended elastic pools metrics.
-	Value *[]RecommendedElasticPoolMetric `json:"value,omitempty"`
-}
-
-// RecommendedElasticPoolListResult represents the response to a list recommended elastic pool request.
-type RecommendedElasticPoolListResult struct {
-	autorest.Response `json:"-"`
-	// Value - The list of recommended elastic pools hosted in the server.
-	Value *[]RecommendedElasticPool `json:"value,omitempty"`
-}
-
-// RecommendedElasticPoolMetric represents recommended elastic pool metric.
-type RecommendedElasticPoolMetric struct {
-	// DateTime - The time of metric (ISO8601 format).
-	DateTime *date.Time `json:"dateTime,omitempty"`
-	// Dtu - Gets or sets the DTUs (Database Transaction Units). See https://azure.microsoft.com/documentation/articles/sql-database-what-is-a-dtu/
-	Dtu *float64 `json:"dtu,omitempty"`
-	// SizeGB - Gets or sets size in gigabytes.
-	SizeGB *float64 `json:"sizeGB,omitempty"`
-}
-
-// RecommendedElasticPoolProperties represents the properties of a recommented elastic pool.
-type RecommendedElasticPoolProperties struct {
-	// DatabaseEdition - The edition of the recommended elastic pool. The ElasticPoolEdition enumeration contains all the valid editions. Possible values include: 'ElasticPoolEditionBasic', 'ElasticPoolEditionStandard', 'ElasticPoolEditionPremium'
-	DatabaseEdition ElasticPoolEdition `json:"databaseEdition,omitempty"`
-	// Dtu - The DTU for the recommended elastic pool.
-	Dtu *float64 `json:"dtu,omitempty"`
-	// DatabaseDtuMin - The minimum DTU for the database.
-	DatabaseDtuMin *float64 `json:"databaseDtuMin,omitempty"`
-	// DatabaseDtuMax - The maximum DTU for the database.
-	DatabaseDtuMax *float64 `json:"databaseDtuMax,omitempty"`
-	// StorageMB - Gets storage size in megabytes.
-	StorageMB *float64 `json:"storageMB,omitempty"`
-	// ObservationPeriodStart - The observation period start (ISO8601 format).
-	ObservationPeriodStart *date.Time `json:"observationPeriodStart,omitempty"`
-	// ObservationPeriodEnd - The observation period start (ISO8601 format).
-	ObservationPeriodEnd *date.Time `json:"observationPeriodEnd,omitempty"`
-	// MaxObservedDtu - Gets maximum observed DTU.
-	MaxObservedDtu *float64 `json:"maxObservedDtu,omitempty"`
-	// MaxObservedStorageMB - Gets maximum observed storage in megabytes.
-	MaxObservedStorageMB *float64 `json:"maxObservedStorageMB,omitempty"`
-	// Databases - The list of databases in this pool. Expanded property
-	Databases *[]Database `json:"databases,omitempty"`
-	// Metrics - The list of databases housed in the server. Expanded property
-	Metrics *[]RecommendedElasticPoolMetric `json:"metrics,omitempty"`
-}
-
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecommendedIndex represents a database recommended index.
 type RecommendedIndex struct {
 	// RecommendedIndexProperties - The properties representing the resource.
@@ -4832,6 +5739,26 @@ type RecommendedIndex struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for RecommendedIndex.
+func (ri RecommendedIndex) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ri.RecommendedIndexProperties != nil {
+		objectMap["properties"] = ri.RecommendedIndexProperties
+	}
+	if ri.ID != nil {
+		objectMap["id"] = ri.ID
+	}
+	if ri.Name != nil {
+		objectMap["name"] = ri.Name
+	}
+	if ri.Type != nil {
+		objectMap["type"] = ri.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for RecommendedIndex struct.
 func (ri *RecommendedIndex) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4883,6 +5810,7 @@ func (ri *RecommendedIndex) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecommendedIndexProperties represents the properties of a database recommended index.
 type RecommendedIndexProperties struct {
 	// Action - The proposed index action. You can create a missing index, drop an unused index, or rebuild an existing index to improve its performance. Possible values include: 'Create', 'Drop', 'Rebuild'
@@ -4911,6 +5839,7 @@ type RecommendedIndexProperties struct {
 	ReportedImpact *[]OperationImpact `json:"reportedImpact,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecoverableDatabase a recoverable database
 type RecoverableDatabase struct {
 	autorest.Response `json:"-"`
@@ -4924,6 +5853,26 @@ type RecoverableDatabase struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for RecoverableDatabase.
+func (rd RecoverableDatabase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rd.RecoverableDatabaseProperties != nil {
+		objectMap["properties"] = rd.RecoverableDatabaseProperties
+	}
+	if rd.ID != nil {
+		objectMap["id"] = rd.ID
+	}
+	if rd.Name != nil {
+		objectMap["name"] = rd.Name
+	}
+	if rd.Type != nil {
+		objectMap["type"] = rd.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for RecoverableDatabase struct.
 func (rd *RecoverableDatabase) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4975,6 +5924,7 @@ func (rd *RecoverableDatabase) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecoverableDatabaseListResult the response to a list recoverable databases request
 type RecoverableDatabaseListResult struct {
 	autorest.Response `json:"-"`
@@ -4982,6 +5932,7 @@ type RecoverableDatabaseListResult struct {
 	Value *[]RecoverableDatabase `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RecoverableDatabaseProperties the properties of a recoverable database
 type RecoverableDatabaseProperties struct {
 	// Edition - The edition of the database
@@ -4994,6 +5945,7 @@ type RecoverableDatabaseProperties struct {
 	LastAvailableBackupDate *date.Time `json:"lastAvailableBackupDate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationLink represents a database replication link.
 type ReplicationLink struct {
 	autorest.Response `json:"-"`
@@ -5009,6 +5961,29 @@ type ReplicationLink struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ReplicationLink.
+func (rl ReplicationLink) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rl.Location != nil {
+		objectMap["location"] = rl.Location
+	}
+	if rl.ReplicationLinkProperties != nil {
+		objectMap["properties"] = rl.ReplicationLinkProperties
+	}
+	if rl.ID != nil {
+		objectMap["id"] = rl.ID
+	}
+	if rl.Name != nil {
+		objectMap["name"] = rl.Name
+	}
+	if rl.Type != nil {
+		objectMap["type"] = rl.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ReplicationLink struct.
 func (rl *ReplicationLink) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5069,6 +6044,7 @@ func (rl *ReplicationLink) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationLinkListResult represents the response to a List database replication link request.
 type ReplicationLinkListResult struct {
 	autorest.Response `json:"-"`
@@ -5076,6 +6052,7 @@ type ReplicationLinkListResult struct {
 	Value *[]ReplicationLink `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationLinkProperties represents the properties of a database replication link.
 type ReplicationLinkProperties struct {
 	// IsTerminationAllowed - Legacy value indicating whether termination is allowed.  Currently always returns true.
@@ -5100,6 +6077,7 @@ type ReplicationLinkProperties struct {
 	ReplicationState ReplicationState `json:"replicationState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationLinksFailoverAllowDataLossFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ReplicationLinksFailoverAllowDataLossFuture struct {
@@ -5107,6 +6085,7 @@ type ReplicationLinksFailoverAllowDataLossFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ReplicationLinksFailoverAllowDataLossFuture) Result(client ReplicationLinksClient) (ar autorest.Response, err error) {
@@ -5149,6 +6128,7 @@ func (future ReplicationLinksFailoverAllowDataLossFuture) Result(client Replicat
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ReplicationLinksFailoverFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ReplicationLinksFailoverFuture struct {
@@ -5156,6 +6136,7 @@ type ReplicationLinksFailoverFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ReplicationLinksFailoverFuture) Result(client ReplicationLinksClient) (ar autorest.Response, err error) {
@@ -5198,6 +6179,7 @@ func (future ReplicationLinksFailoverFuture) Result(client ReplicationLinksClien
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Resource ARM resource.
 type Resource struct {
 	// ID - Resource ID.
@@ -5208,6 +6190,7 @@ type Resource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ResourceIdentity azure Active Directory identity configuration for a resource.
 type ResourceIdentity struct {
 	// PrincipalID - The Azure Active Directory principal id.
@@ -5218,12 +6201,14 @@ type ResourceIdentity struct {
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ResourceMoveDefinition contains the information necessary to perform a resource move (rename).
 type ResourceMoveDefinition struct {
 	// ID - The target ID for the resource
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorableDroppedDatabase a restorable dropped database
 type RestorableDroppedDatabase struct {
 	autorest.Response `json:"-"`
@@ -5239,6 +6224,29 @@ type RestorableDroppedDatabase struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for RestorableDroppedDatabase.
+func (rdd RestorableDroppedDatabase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rdd.Location != nil {
+		objectMap["location"] = rdd.Location
+	}
+	if rdd.RestorableDroppedDatabaseProperties != nil {
+		objectMap["properties"] = rdd.RestorableDroppedDatabaseProperties
+	}
+	if rdd.ID != nil {
+		objectMap["id"] = rdd.ID
+	}
+	if rdd.Name != nil {
+		objectMap["name"] = rdd.Name
+	}
+	if rdd.Type != nil {
+		objectMap["type"] = rdd.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for RestorableDroppedDatabase struct.
 func (rdd *RestorableDroppedDatabase) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5299,6 +6307,7 @@ func (rdd *RestorableDroppedDatabase) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorableDroppedDatabaseListResult the response to a list restorable dropped databases request
 type RestorableDroppedDatabaseListResult struct {
 	autorest.Response `json:"-"`
@@ -5306,6 +6315,7 @@ type RestorableDroppedDatabaseListResult struct {
 	Value *[]RestorableDroppedDatabase `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorableDroppedDatabaseProperties the properties of a restorable dropped database
 type RestorableDroppedDatabaseProperties struct {
 	// DatabaseName - The name of the database
@@ -5326,6 +6336,7 @@ type RestorableDroppedDatabaseProperties struct {
 	EarliestRestoreDate *date.Time `json:"earliestRestoreDate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePoint database restore points.
 type RestorePoint struct {
 	autorest.Response `json:"-"`
@@ -5341,6 +6352,29 @@ type RestorePoint struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for RestorePoint.
+func (rp RestorePoint) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rp.Location != nil {
+		objectMap["location"] = rp.Location
+	}
+	if rp.RestorePointProperties != nil {
+		objectMap["properties"] = rp.RestorePointProperties
+	}
+	if rp.ID != nil {
+		objectMap["id"] = rp.ID
+	}
+	if rp.Name != nil {
+		objectMap["name"] = rp.Name
+	}
+	if rp.Type != nil {
+		objectMap["type"] = rp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for RestorePoint struct.
 func (rp *RestorePoint) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5401,6 +6435,7 @@ func (rp *RestorePoint) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePointListResult a list of long term retention bacukps.
 type RestorePointListResult struct {
 	autorest.Response `json:"-"`
@@ -5410,6 +6445,7 @@ type RestorePointListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePointProperties properties of a database restore point
 type RestorePointProperties struct {
 	// RestorePointType - The type of restore point. Possible values include: 'CONTINUOUS', 'DISCRETE'
@@ -5422,12 +6458,14 @@ type RestorePointProperties struct {
 	RestorePointLabel *string `json:"restorePointLabel,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // RestorePointsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type RestorePointsCreateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future RestorePointsCreateFuture) Result(client RestorePointsClient) (rp RestorePoint, err error) {
@@ -5470,6 +6508,7 @@ func (future RestorePointsCreateFuture) Result(client RestorePointsClient) (rp R
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Server an Azure SQL Database server.
 type Server struct {
 	autorest.Response `json:"-"`
@@ -5491,6 +6530,7 @@ type Server struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for Server.
 func (s Server) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -5521,6 +6561,7 @@ func (s Server) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for Server struct.
 func (s *Server) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5608,6 +6649,7 @@ func (s *Server) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAdministratorListResult the response to a list Active Directory Administrators request.
 type ServerAdministratorListResult struct {
 	autorest.Response `json:"-"`
@@ -5615,6 +6657,7 @@ type ServerAdministratorListResult struct {
 	Value *[]ServerAzureADAdministrator `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAdministratorProperties the properties of an server Administrator.
 type ServerAdministratorProperties struct {
 	// AdministratorType - The type of administrator.
@@ -5627,6 +6670,7 @@ type ServerAdministratorProperties struct {
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAutomaticTuning server-level Automatic Tuning.
 type ServerAutomaticTuning struct {
 	autorest.Response `json:"-"`
@@ -5640,6 +6684,26 @@ type ServerAutomaticTuning struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerAutomaticTuning.
+func (sat ServerAutomaticTuning) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sat.AutomaticTuningServerProperties != nil {
+		objectMap["properties"] = sat.AutomaticTuningServerProperties
+	}
+	if sat.ID != nil {
+		objectMap["id"] = sat.ID
+	}
+	if sat.Name != nil {
+		objectMap["name"] = sat.Name
+	}
+	if sat.Type != nil {
+		objectMap["type"] = sat.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerAutomaticTuning struct.
 func (sat *ServerAutomaticTuning) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5691,6 +6755,7 @@ func (sat *ServerAutomaticTuning) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAzureADAdministrator an server Active Directory Administrator.
 type ServerAzureADAdministrator struct {
 	autorest.Response `json:"-"`
@@ -5704,6 +6769,26 @@ type ServerAzureADAdministrator struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerAzureADAdministrator.
+func (saaa ServerAzureADAdministrator) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if saaa.ServerAdministratorProperties != nil {
+		objectMap["properties"] = saaa.ServerAdministratorProperties
+	}
+	if saaa.ID != nil {
+		objectMap["id"] = saaa.ID
+	}
+	if saaa.Name != nil {
+		objectMap["name"] = saaa.Name
+	}
+	if saaa.Type != nil {
+		objectMap["type"] = saaa.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerAzureADAdministrator struct.
 func (saaa *ServerAzureADAdministrator) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5755,6 +6840,7 @@ func (saaa *ServerAzureADAdministrator) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAzureADAdministratorsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ServerAzureADAdministratorsCreateOrUpdateFuture struct {
@@ -5762,6 +6848,7 @@ type ServerAzureADAdministratorsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerAzureADAdministratorsCreateOrUpdateFuture) Result(client ServerAzureADAdministratorsClient) (saaa ServerAzureADAdministrator, err error) {
@@ -5804,6 +6891,7 @@ func (future ServerAzureADAdministratorsCreateOrUpdateFuture) Result(client Serv
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerAzureADAdministratorsDeleteFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ServerAzureADAdministratorsDeleteFuture struct {
@@ -5811,6 +6899,7 @@ type ServerAzureADAdministratorsDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerAzureADAdministratorsDeleteFuture) Result(client ServerAzureADAdministratorsClient) (saaa ServerAzureADAdministrator, err error) {
@@ -5853,6 +6942,7 @@ func (future ServerAzureADAdministratorsDeleteFuture) Result(client ServerAzureA
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerCommunicationLink server communication link.
 type ServerCommunicationLink struct {
 	autorest.Response `json:"-"`
@@ -5870,6 +6960,32 @@ type ServerCommunicationLink struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerCommunicationLink.
+func (scl ServerCommunicationLink) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scl.ServerCommunicationLinkProperties != nil {
+		objectMap["properties"] = scl.ServerCommunicationLinkProperties
+	}
+	if scl.Location != nil {
+		objectMap["location"] = scl.Location
+	}
+	if scl.Kind != nil {
+		objectMap["kind"] = scl.Kind
+	}
+	if scl.ID != nil {
+		objectMap["id"] = scl.ID
+	}
+	if scl.Name != nil {
+		objectMap["name"] = scl.Name
+	}
+	if scl.Type != nil {
+		objectMap["type"] = scl.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerCommunicationLink struct.
 func (scl *ServerCommunicationLink) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5939,6 +7055,7 @@ func (scl *ServerCommunicationLink) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerCommunicationLinkListResult a list of server communication links.
 type ServerCommunicationLinkListResult struct {
 	autorest.Response `json:"-"`
@@ -5946,6 +7063,7 @@ type ServerCommunicationLinkListResult struct {
 	Value *[]ServerCommunicationLink `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerCommunicationLinkProperties the properties of a server communication link.
 type ServerCommunicationLinkProperties struct {
 	// State - The state.
@@ -5954,6 +7072,7 @@ type ServerCommunicationLinkProperties struct {
 	PartnerServer *string `json:"partnerServer,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerCommunicationLinksCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ServerCommunicationLinksCreateOrUpdateFuture struct {
@@ -5961,6 +7080,7 @@ type ServerCommunicationLinksCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerCommunicationLinksCreateOrUpdateFuture) Result(client ServerCommunicationLinksClient) (scl ServerCommunicationLink, err error) {
@@ -6003,6 +7123,7 @@ func (future ServerCommunicationLinksCreateOrUpdateFuture) Result(client ServerC
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerConnectionPolicy a server secure connection policy.
 type ServerConnectionPolicy struct {
 	autorest.Response `json:"-"`
@@ -6020,6 +7141,32 @@ type ServerConnectionPolicy struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerConnectionPolicy.
+func (scp ServerConnectionPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scp.Kind != nil {
+		objectMap["kind"] = scp.Kind
+	}
+	if scp.Location != nil {
+		objectMap["location"] = scp.Location
+	}
+	if scp.ServerConnectionPolicyProperties != nil {
+		objectMap["properties"] = scp.ServerConnectionPolicyProperties
+	}
+	if scp.ID != nil {
+		objectMap["id"] = scp.ID
+	}
+	if scp.Name != nil {
+		objectMap["name"] = scp.Name
+	}
+	if scp.Type != nil {
+		objectMap["type"] = scp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerConnectionPolicy struct.
 func (scp *ServerConnectionPolicy) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6089,12 +7236,14 @@ func (scp *ServerConnectionPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerConnectionPolicyProperties the properties of a server secure connection policy.
 type ServerConnectionPolicyProperties struct {
 	// ConnectionType - The server connection type. Possible values include: 'ServerConnectionTypeDefault', 'ServerConnectionTypeProxy', 'ServerConnectionTypeRedirect'
 	ConnectionType ServerConnectionType `json:"connectionType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAlias a server DNS alias.
 type ServerDNSAlias struct {
 	autorest.Response `json:"-"`
@@ -6108,6 +7257,26 @@ type ServerDNSAlias struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerDNSAlias.
+func (sda ServerDNSAlias) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sda.ServerDNSAliasProperties != nil {
+		objectMap["properties"] = sda.ServerDNSAliasProperties
+	}
+	if sda.ID != nil {
+		objectMap["id"] = sda.ID
+	}
+	if sda.Name != nil {
+		objectMap["name"] = sda.Name
+	}
+	if sda.Type != nil {
+		objectMap["type"] = sda.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerDNSAlias struct.
 func (sda *ServerDNSAlias) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6159,12 +7328,14 @@ func (sda *ServerDNSAlias) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasAcquisition a server DNS alias acquisition request.
 type ServerDNSAliasAcquisition struct {
 	// OldServerDNSAliasID - The id of the server alias that will be acquired to point to this server instead.
 	OldServerDNSAliasID *string `json:"oldServerDnsAliasId,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasesAcquireFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServerDNSAliasesAcquireFuture struct {
@@ -6172,6 +7343,7 @@ type ServerDNSAliasesAcquireFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerDNSAliasesAcquireFuture) Result(client ServerDNSAliasesClient) (ar autorest.Response, err error) {
@@ -6214,6 +7386,7 @@ func (future ServerDNSAliasesAcquireFuture) Result(client ServerDNSAliasesClient
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServerDNSAliasesCreateOrUpdateFuture struct {
@@ -6221,6 +7394,7 @@ type ServerDNSAliasesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerDNSAliasesCreateOrUpdateFuture) Result(client ServerDNSAliasesClient) (sda ServerDNSAlias, err error) {
@@ -6263,6 +7437,7 @@ func (future ServerDNSAliasesCreateOrUpdateFuture) Result(client ServerDNSAliase
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServerDNSAliasesDeleteFuture struct {
@@ -6270,6 +7445,7 @@ type ServerDNSAliasesDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerDNSAliasesDeleteFuture) Result(client ServerDNSAliasesClient) (ar autorest.Response, err error) {
@@ -6312,6 +7488,7 @@ func (future ServerDNSAliasesDeleteFuture) Result(client ServerDNSAliasesClient)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasListResult a list of server DNS aliases.
 type ServerDNSAliasListResult struct {
 	autorest.Response `json:"-"`
@@ -6321,12 +7498,14 @@ type ServerDNSAliasListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasListResultIterator provides access to a complete listing of ServerDNSAlias values.
 type ServerDNSAliasListResultIterator struct {
 	i    int
 	page ServerDNSAliasListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServerDNSAliasListResultIterator) Next() error {
@@ -6343,16 +7522,19 @@ func (iter *ServerDNSAliasListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServerDNSAliasListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter ServerDNSAliasListResultIterator) Response() ServerDNSAliasListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServerDNSAliasListResultIterator) Value() ServerDNSAlias {
@@ -6362,6 +7544,7 @@ func (iter ServerDNSAliasListResultIterator) Value() ServerDNSAlias {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sdalr ServerDNSAliasListResult) IsEmpty() bool {
 	return sdalr.Value == nil || len(*sdalr.Value) == 0
@@ -6379,12 +7562,14 @@ func (sdalr ServerDNSAliasListResult) serverDNSAliasListResultPreparer() (*http.
 		autorest.WithBaseURL(to.String(sdalr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasListResultPage contains a page of ServerDNSAlias values.
 type ServerDNSAliasListResultPage struct {
 	fn    func(ServerDNSAliasListResult) (ServerDNSAliasListResult, error)
 	sdalr ServerDNSAliasListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServerDNSAliasListResultPage) Next() error {
@@ -6396,16 +7581,19 @@ func (page *ServerDNSAliasListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServerDNSAliasListResultPage) NotDone() bool {
 	return !page.sdalr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page ServerDNSAliasListResultPage) Response() ServerDNSAliasListResult {
 	return page.sdalr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServerDNSAliasListResultPage) Values() []ServerDNSAlias {
 	if page.sdalr.IsEmpty() {
@@ -6414,12 +7602,14 @@ func (page ServerDNSAliasListResultPage) Values() []ServerDNSAlias {
 	return *page.sdalr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerDNSAliasProperties properties of a server DNS alias.
 type ServerDNSAliasProperties struct {
 	// AzureDNSRecord - The fully qualified DNS record for alias
 	AzureDNSRecord *string `json:"azureDnsRecord,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKey a server key.
 type ServerKey struct {
 	autorest.Response `json:"-"`
@@ -6437,6 +7627,32 @@ type ServerKey struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServerKey.
+func (sk ServerKey) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sk.Kind != nil {
+		objectMap["kind"] = sk.Kind
+	}
+	if sk.Location != nil {
+		objectMap["location"] = sk.Location
+	}
+	if sk.ServerKeyProperties != nil {
+		objectMap["properties"] = sk.ServerKeyProperties
+	}
+	if sk.ID != nil {
+		objectMap["id"] = sk.ID
+	}
+	if sk.Name != nil {
+		objectMap["name"] = sk.Name
+	}
+	if sk.Type != nil {
+		objectMap["type"] = sk.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerKey struct.
 func (sk *ServerKey) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6506,6 +7722,7 @@ func (sk *ServerKey) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeyListResult a list of server keys.
 type ServerKeyListResult struct {
 	autorest.Response `json:"-"`
@@ -6515,12 +7732,14 @@ type ServerKeyListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeyListResultIterator provides access to a complete listing of ServerKey values.
 type ServerKeyListResultIterator struct {
 	i    int
 	page ServerKeyListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServerKeyListResultIterator) Next() error {
@@ -6537,16 +7756,19 @@ func (iter *ServerKeyListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServerKeyListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter ServerKeyListResultIterator) Response() ServerKeyListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServerKeyListResultIterator) Value() ServerKey {
@@ -6556,6 +7778,7 @@ func (iter ServerKeyListResultIterator) Value() ServerKey {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sklr ServerKeyListResult) IsEmpty() bool {
 	return sklr.Value == nil || len(*sklr.Value) == 0
@@ -6573,12 +7796,14 @@ func (sklr ServerKeyListResult) serverKeyListResultPreparer() (*http.Request, er
 		autorest.WithBaseURL(to.String(sklr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeyListResultPage contains a page of ServerKey values.
 type ServerKeyListResultPage struct {
 	fn   func(ServerKeyListResult) (ServerKeyListResult, error)
 	sklr ServerKeyListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServerKeyListResultPage) Next() error {
@@ -6590,16 +7815,19 @@ func (page *ServerKeyListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServerKeyListResultPage) NotDone() bool {
 	return !page.sklr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page ServerKeyListResultPage) Response() ServerKeyListResult {
 	return page.sklr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServerKeyListResultPage) Values() []ServerKey {
 	if page.sklr.IsEmpty() {
@@ -6608,6 +7836,7 @@ func (page ServerKeyListResultPage) Values() []ServerKey {
 	return *page.sklr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeyProperties properties for a server key execution.
 type ServerKeyProperties struct {
 	// Subregion - Subregion of the server key.
@@ -6622,6 +7851,7 @@ type ServerKeyProperties struct {
 	CreationDate *date.Time `json:"creationDate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeysCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServerKeysCreateOrUpdateFuture struct {
@@ -6629,6 +7859,7 @@ type ServerKeysCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerKeysCreateOrUpdateFuture) Result(client ServerKeysClient) (sk ServerKey, err error) {
@@ -6671,12 +7902,14 @@ func (future ServerKeysCreateOrUpdateFuture) Result(client ServerKeysClient) (sk
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerKeysDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServerKeysDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServerKeysDeleteFuture) Result(client ServerKeysClient) (ar autorest.Response, err error) {
@@ -6719,6 +7952,7 @@ func (future ServerKeysDeleteFuture) Result(client ServerKeysClient) (ar autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerListResult a list of servers.
 type ServerListResult struct {
 	autorest.Response `json:"-"`
@@ -6728,12 +7962,14 @@ type ServerListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerListResultIterator provides access to a complete listing of Server values.
 type ServerListResultIterator struct {
 	i    int
 	page ServerListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ServerListResultIterator) Next() error {
@@ -6750,16 +7986,19 @@ func (iter *ServerListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ServerListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter ServerListResultIterator) Response() ServerListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ServerListResultIterator) Value() Server {
@@ -6769,6 +8008,7 @@ func (iter ServerListResultIterator) Value() Server {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (slr ServerListResult) IsEmpty() bool {
 	return slr.Value == nil || len(*slr.Value) == 0
@@ -6786,12 +8026,14 @@ func (slr ServerListResult) serverListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(slr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerListResultPage contains a page of Server values.
 type ServerListResultPage struct {
 	fn  func(ServerListResult) (ServerListResult, error)
 	slr ServerListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ServerListResultPage) Next() error {
@@ -6803,16 +8045,19 @@ func (page *ServerListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ServerListResultPage) NotDone() bool {
 	return !page.slr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page ServerListResultPage) Response() ServerListResult {
 	return page.slr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ServerListResultPage) Values() []Server {
 	if page.slr.IsEmpty() {
@@ -6821,6 +8066,7 @@ func (page ServerListResultPage) Values() []Server {
 	return *page.slr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerProperties the properties of a server.
 type ServerProperties struct {
 	// AdministratorLogin - Administrator username for the server. Once created it cannot be changed.
@@ -6835,6 +8081,7 @@ type ServerProperties struct {
 	FullyQualifiedDomainName *string `json:"fullyQualifiedDomainName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServersCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type ServersCreateOrUpdateFuture struct {
@@ -6842,6 +8089,7 @@ type ServersCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersCreateOrUpdateFuture) Result(client ServersClient) (s Server, err error) {
@@ -6884,12 +8132,14 @@ func (future ServersCreateOrUpdateFuture) Result(client ServersClient) (s Server
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersDeleteFuture) Result(client ServersClient) (ar autorest.Response, err error) {
@@ -6932,12 +8182,14 @@ func (future ServersDeleteFuture) Result(client ServersClient) (ar autorest.Resp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServersUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ServersUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future ServersUpdateFuture) Result(client ServersClient) (s Server, err error) {
@@ -6980,6 +8232,7 @@ func (future ServersUpdateFuture) Result(client ServersClient) (s Server, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerUpdate an update request for an Azure SQL Database server.
 type ServerUpdate struct {
 	// ServerProperties - Resource properties.
@@ -6988,6 +8241,7 @@ type ServerUpdate struct {
 	Tags map[string]*string `json:"tags"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for ServerUpdate.
 func (su ServerUpdate) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -7000,6 +8254,7 @@ func (su ServerUpdate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServerUpdate struct.
 func (su *ServerUpdate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7033,6 +8288,7 @@ func (su *ServerUpdate) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerUsage represents server metrics.
 type ServerUsage struct {
 	// Name - Name of the server usage metric.
@@ -7051,6 +8307,7 @@ type ServerUsage struct {
 	NextResetTime *date.Time `json:"nextResetTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerUsageListResult represents the response to a list server metrics request.
 type ServerUsageListResult struct {
 	autorest.Response `json:"-"`
@@ -7058,6 +8315,7 @@ type ServerUsageListResult struct {
 	Value *[]ServerUsage `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServerVersionCapability the server capabilities.
 type ServerVersionCapability struct {
 	// Name - The server version name.
@@ -7070,6 +8328,7 @@ type ServerVersionCapability struct {
 	SupportedElasticPoolEditions *[]ElasticPoolEditionCapability `json:"supportedElasticPoolEditions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceObjective represents a database service objective.
 type ServiceObjective struct {
 	autorest.Response `json:"-"`
@@ -7083,6 +8342,26 @@ type ServiceObjective struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServiceObjective.
+func (so ServiceObjective) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if so.ServiceObjectiveProperties != nil {
+		objectMap["properties"] = so.ServiceObjectiveProperties
+	}
+	if so.ID != nil {
+		objectMap["id"] = so.ID
+	}
+	if so.Name != nil {
+		objectMap["name"] = so.Name
+	}
+	if so.Type != nil {
+		objectMap["type"] = so.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServiceObjective struct.
 func (so *ServiceObjective) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7134,6 +8413,7 @@ func (so *ServiceObjective) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceObjectiveCapability the service objectives capability.
 type ServiceObjectiveCapability struct {
 	// Name - The service objective name.
@@ -7150,6 +8430,32 @@ type ServiceObjectiveCapability struct {
 	IncludedMaxSize *MaxSizeCapability `json:"includedMaxSize,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServiceObjectiveCapability.
+func (soc ServiceObjectiveCapability) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if soc.Name != nil {
+		objectMap["name"] = soc.Name
+	}
+	if soc.Status != "" {
+		objectMap["status"] = soc.Status
+	}
+	if soc.PerformanceLevel != nil {
+		objectMap["performanceLevel"] = soc.PerformanceLevel
+	}
+	if soc.ID != nil {
+		objectMap["id"] = soc.ID
+	}
+	if soc.SupportedMaxSizes != nil {
+		objectMap["supportedMaxSizes"] = soc.SupportedMaxSizes
+	}
+	if soc.IncludedMaxSize != nil {
+		objectMap["includedMaxSize"] = soc.IncludedMaxSize
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServiceObjectiveCapability struct.
 func (soc *ServiceObjectiveCapability) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7219,6 +8525,7 @@ func (soc *ServiceObjectiveCapability) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceObjectiveListResult represents the response to a get database service objectives request.
 type ServiceObjectiveListResult struct {
 	autorest.Response `json:"-"`
@@ -7226,6 +8533,7 @@ type ServiceObjectiveListResult struct {
 	Value *[]ServiceObjective `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceObjectiveProperties represents the properties of a database service objective.
 type ServiceObjectiveProperties struct {
 	// ServiceObjectiveName - The name for the service objective.
@@ -7240,6 +8548,7 @@ type ServiceObjectiveProperties struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceTierAdvisor represents a Service Tier Advisor.
 type ServiceTierAdvisor struct {
 	autorest.Response `json:"-"`
@@ -7253,6 +8562,26 @@ type ServiceTierAdvisor struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for ServiceTierAdvisor.
+func (sta ServiceTierAdvisor) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sta.ServiceTierAdvisorProperties != nil {
+		objectMap["properties"] = sta.ServiceTierAdvisorProperties
+	}
+	if sta.ID != nil {
+		objectMap["id"] = sta.ID
+	}
+	if sta.Name != nil {
+		objectMap["name"] = sta.Name
+	}
+	if sta.Type != nil {
+		objectMap["type"] = sta.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for ServiceTierAdvisor struct.
 func (sta *ServiceTierAdvisor) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7304,6 +8633,7 @@ func (sta *ServiceTierAdvisor) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceTierAdvisorListResult represents the response to a list service tier advisor request.
 type ServiceTierAdvisorListResult struct {
 	autorest.Response `json:"-"`
@@ -7311,6 +8641,7 @@ type ServiceTierAdvisorListResult struct {
 	Value *[]ServiceTierAdvisor `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ServiceTierAdvisorProperties represents the properties of a Service Tier Advisor.
 type ServiceTierAdvisorProperties struct {
 	// ObservationPeriodStart - The observation period start (ISO8601 format).
@@ -7353,6 +8684,7 @@ type ServiceTierAdvisorProperties struct {
 	Confidence *float64 `json:"confidence,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SloUsageMetric a Slo Usage Metric.
 type SloUsageMetric struct {
 	// ServiceLevelObjective - The serviceLevelObjective for SLO usage metric. Possible values include: 'ServiceObjectiveNameSystem', 'ServiceObjectiveNameSystem0', 'ServiceObjectiveNameSystem1', 'ServiceObjectiveNameSystem2', 'ServiceObjectiveNameSystem3', 'ServiceObjectiveNameSystem4', 'ServiceObjectiveNameSystem2L', 'ServiceObjectiveNameSystem3L', 'ServiceObjectiveNameSystem4L', 'ServiceObjectiveNameFree', 'ServiceObjectiveNameBasic', 'ServiceObjectiveNameS0', 'ServiceObjectiveNameS1', 'ServiceObjectiveNameS2', 'ServiceObjectiveNameS3', 'ServiceObjectiveNameS4', 'ServiceObjectiveNameS6', 'ServiceObjectiveNameS7', 'ServiceObjectiveNameS9', 'ServiceObjectiveNameS12', 'ServiceObjectiveNameP1', 'ServiceObjectiveNameP2', 'ServiceObjectiveNameP3', 'ServiceObjectiveNameP4', 'ServiceObjectiveNameP6', 'ServiceObjectiveNameP11', 'ServiceObjectiveNameP15', 'ServiceObjectiveNamePRS1', 'ServiceObjectiveNamePRS2', 'ServiceObjectiveNamePRS4', 'ServiceObjectiveNamePRS6', 'ServiceObjectiveNameDW100', 'ServiceObjectiveNameDW200', 'ServiceObjectiveNameDW300', 'ServiceObjectiveNameDW400', 'ServiceObjectiveNameDW500', 'ServiceObjectiveNameDW600', 'ServiceObjectiveNameDW1000', 'ServiceObjectiveNameDW1200', 'ServiceObjectiveNameDW1000c', 'ServiceObjectiveNameDW1500', 'ServiceObjectiveNameDW1500c', 'ServiceObjectiveNameDW2000', 'ServiceObjectiveNameDW2000c', 'ServiceObjectiveNameDW3000', 'ServiceObjectiveNameDW2500c', 'ServiceObjectiveNameDW3000c', 'ServiceObjectiveNameDW6000', 'ServiceObjectiveNameDW5000c', 'ServiceObjectiveNameDW6000c', 'ServiceObjectiveNameDW7500c', 'ServiceObjectiveNameDW10000c', 'ServiceObjectiveNameDW15000c', 'ServiceObjectiveNameDW30000c', 'ServiceObjectiveNameDS100', 'ServiceObjectiveNameDS200', 'ServiceObjectiveNameDS300', 'ServiceObjectiveNameDS400', 'ServiceObjectiveNameDS500', 'ServiceObjectiveNameDS600', 'ServiceObjectiveNameDS1000', 'ServiceObjectiveNameDS1200', 'ServiceObjectiveNameDS1500', 'ServiceObjectiveNameDS2000', 'ServiceObjectiveNameElasticPool'
@@ -7363,6 +8695,7 @@ type SloUsageMetric struct {
 	InRangeTimeRatio *float64 `json:"inRangeTimeRatio,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsage usage Metric of a Subscription in a Location.
 type SubscriptionUsage struct {
 	autorest.Response `json:"-"`
@@ -7376,6 +8709,26 @@ type SubscriptionUsage struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for SubscriptionUsage.
+func (su SubscriptionUsage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if su.SubscriptionUsageProperties != nil {
+		objectMap["properties"] = su.SubscriptionUsageProperties
+	}
+	if su.ID != nil {
+		objectMap["id"] = su.ID
+	}
+	if su.Name != nil {
+		objectMap["name"] = su.Name
+	}
+	if su.Type != nil {
+		objectMap["type"] = su.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for SubscriptionUsage struct.
 func (su *SubscriptionUsage) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7427,6 +8780,7 @@ func (su *SubscriptionUsage) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsageListResult a list of subscription usage metrics in a location.
 type SubscriptionUsageListResult struct {
 	autorest.Response `json:"-"`
@@ -7436,12 +8790,14 @@ type SubscriptionUsageListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsageListResultIterator provides access to a complete listing of SubscriptionUsage values.
 type SubscriptionUsageListResultIterator struct {
 	i    int
 	page SubscriptionUsageListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SubscriptionUsageListResultIterator) Next() error {
@@ -7458,16 +8814,19 @@ func (iter *SubscriptionUsageListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SubscriptionUsageListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SubscriptionUsageListResultIterator) Response() SubscriptionUsageListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SubscriptionUsageListResultIterator) Value() SubscriptionUsage {
@@ -7477,6 +8836,7 @@ func (iter SubscriptionUsageListResultIterator) Value() SubscriptionUsage {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sulr SubscriptionUsageListResult) IsEmpty() bool {
 	return sulr.Value == nil || len(*sulr.Value) == 0
@@ -7494,12 +8854,14 @@ func (sulr SubscriptionUsageListResult) subscriptionUsageListResultPreparer() (*
 		autorest.WithBaseURL(to.String(sulr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsageListResultPage contains a page of SubscriptionUsage values.
 type SubscriptionUsageListResultPage struct {
 	fn   func(SubscriptionUsageListResult) (SubscriptionUsageListResult, error)
 	sulr SubscriptionUsageListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SubscriptionUsageListResultPage) Next() error {
@@ -7511,16 +8873,19 @@ func (page *SubscriptionUsageListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SubscriptionUsageListResultPage) NotDone() bool {
 	return !page.sulr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SubscriptionUsageListResultPage) Response() SubscriptionUsageListResult {
 	return page.sulr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SubscriptionUsageListResultPage) Values() []SubscriptionUsage {
 	if page.sulr.IsEmpty() {
@@ -7529,6 +8894,7 @@ func (page SubscriptionUsageListResultPage) Values() []SubscriptionUsage {
 	return *page.sulr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SubscriptionUsageProperties properties of a subscription usage.
 type SubscriptionUsageProperties struct {
 	// DisplayName - User-readable name of the metric.
@@ -7541,6 +8907,7 @@ type SubscriptionUsageProperties struct {
 	Unit *string `json:"unit,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgent an Azure SQL Database sync agent.
 type SyncAgent struct {
 	autorest.Response `json:"-"`
@@ -7554,6 +8921,26 @@ type SyncAgent struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for SyncAgent.
+func (sa SyncAgent) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sa.SyncAgentProperties != nil {
+		objectMap["properties"] = sa.SyncAgentProperties
+	}
+	if sa.ID != nil {
+		objectMap["id"] = sa.ID
+	}
+	if sa.Name != nil {
+		objectMap["name"] = sa.Name
+	}
+	if sa.Type != nil {
+		objectMap["type"] = sa.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for SyncAgent struct.
 func (sa *SyncAgent) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7605,6 +8992,7 @@ func (sa *SyncAgent) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentKeyProperties properties of an Azure SQL Database sync agent key.
 type SyncAgentKeyProperties struct {
 	autorest.Response `json:"-"`
@@ -7612,6 +9000,7 @@ type SyncAgentKeyProperties struct {
 	SyncAgentKey *string `json:"syncAgentKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentLinkedDatabase an Azure SQL Database sync agent linked database.
 type SyncAgentLinkedDatabase struct {
 	// SyncAgentLinkedDatabaseProperties - Resource properties.
@@ -7624,6 +9013,26 @@ type SyncAgentLinkedDatabase struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for SyncAgentLinkedDatabase.
+func (sald SyncAgentLinkedDatabase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sald.SyncAgentLinkedDatabaseProperties != nil {
+		objectMap["properties"] = sald.SyncAgentLinkedDatabaseProperties
+	}
+	if sald.ID != nil {
+		objectMap["id"] = sald.ID
+	}
+	if sald.Name != nil {
+		objectMap["name"] = sald.Name
+	}
+	if sald.Type != nil {
+		objectMap["type"] = sald.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for SyncAgentLinkedDatabase struct.
 func (sald *SyncAgentLinkedDatabase) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7675,6 +9084,7 @@ func (sald *SyncAgentLinkedDatabase) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentLinkedDatabaseListResult a list of sync agent linked databases.
 type SyncAgentLinkedDatabaseListResult struct {
 	autorest.Response `json:"-"`
@@ -7684,6 +9094,7 @@ type SyncAgentLinkedDatabaseListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentLinkedDatabaseListResultIterator provides access to a complete listing of SyncAgentLinkedDatabase
 // values.
 type SyncAgentLinkedDatabaseListResultIterator struct {
@@ -7691,6 +9102,7 @@ type SyncAgentLinkedDatabaseListResultIterator struct {
 	page SyncAgentLinkedDatabaseListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncAgentLinkedDatabaseListResultIterator) Next() error {
@@ -7707,16 +9119,19 @@ func (iter *SyncAgentLinkedDatabaseListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncAgentLinkedDatabaseListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncAgentLinkedDatabaseListResultIterator) Response() SyncAgentLinkedDatabaseListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncAgentLinkedDatabaseListResultIterator) Value() SyncAgentLinkedDatabase {
@@ -7726,6 +9141,7 @@ func (iter SyncAgentLinkedDatabaseListResultIterator) Value() SyncAgentLinkedDat
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (saldlr SyncAgentLinkedDatabaseListResult) IsEmpty() bool {
 	return saldlr.Value == nil || len(*saldlr.Value) == 0
@@ -7743,12 +9159,14 @@ func (saldlr SyncAgentLinkedDatabaseListResult) syncAgentLinkedDatabaseListResul
 		autorest.WithBaseURL(to.String(saldlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentLinkedDatabaseListResultPage contains a page of SyncAgentLinkedDatabase values.
 type SyncAgentLinkedDatabaseListResultPage struct {
 	fn     func(SyncAgentLinkedDatabaseListResult) (SyncAgentLinkedDatabaseListResult, error)
 	saldlr SyncAgentLinkedDatabaseListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncAgentLinkedDatabaseListResultPage) Next() error {
@@ -7760,16 +9178,19 @@ func (page *SyncAgentLinkedDatabaseListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncAgentLinkedDatabaseListResultPage) NotDone() bool {
 	return !page.saldlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncAgentLinkedDatabaseListResultPage) Response() SyncAgentLinkedDatabaseListResult {
 	return page.saldlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncAgentLinkedDatabaseListResultPage) Values() []SyncAgentLinkedDatabase {
 	if page.saldlr.IsEmpty() {
@@ -7778,6 +9199,7 @@ func (page SyncAgentLinkedDatabaseListResultPage) Values() []SyncAgentLinkedData
 	return *page.saldlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentLinkedDatabaseProperties properties of an Azure SQL Database sync agent linked database.
 type SyncAgentLinkedDatabaseProperties struct {
 	// DatabaseType - Type of the sync agent linked database. Possible values include: 'AzureSQLDatabase', 'SQLServerDatabase'
@@ -7794,6 +9216,7 @@ type SyncAgentLinkedDatabaseProperties struct {
 	UserName *string `json:"userName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentListResult a list of sync agents.
 type SyncAgentListResult struct {
 	autorest.Response `json:"-"`
@@ -7803,12 +9226,14 @@ type SyncAgentListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentListResultIterator provides access to a complete listing of SyncAgent values.
 type SyncAgentListResultIterator struct {
 	i    int
 	page SyncAgentListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncAgentListResultIterator) Next() error {
@@ -7825,16 +9250,19 @@ func (iter *SyncAgentListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncAgentListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncAgentListResultIterator) Response() SyncAgentListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncAgentListResultIterator) Value() SyncAgent {
@@ -7844,6 +9272,7 @@ func (iter SyncAgentListResultIterator) Value() SyncAgent {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (salr SyncAgentListResult) IsEmpty() bool {
 	return salr.Value == nil || len(*salr.Value) == 0
@@ -7861,12 +9290,14 @@ func (salr SyncAgentListResult) syncAgentListResultPreparer() (*http.Request, er
 		autorest.WithBaseURL(to.String(salr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentListResultPage contains a page of SyncAgent values.
 type SyncAgentListResultPage struct {
 	fn   func(SyncAgentListResult) (SyncAgentListResult, error)
 	salr SyncAgentListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncAgentListResultPage) Next() error {
@@ -7878,16 +9309,19 @@ func (page *SyncAgentListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncAgentListResultPage) NotDone() bool {
 	return !page.salr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncAgentListResultPage) Response() SyncAgentListResult {
 	return page.salr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncAgentListResultPage) Values() []SyncAgent {
 	if page.salr.IsEmpty() {
@@ -7896,6 +9330,7 @@ func (page SyncAgentListResultPage) Values() []SyncAgent {
 	return *page.salr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentProperties properties of an Azure SQL Database sync agent.
 type SyncAgentProperties struct {
 	// Name - Name of the sync agent.
@@ -7914,6 +9349,7 @@ type SyncAgentProperties struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type SyncAgentsCreateOrUpdateFuture struct {
@@ -7921,6 +9357,7 @@ type SyncAgentsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncAgentsCreateOrUpdateFuture) Result(client SyncAgentsClient) (sa SyncAgent, err error) {
@@ -7963,12 +9400,14 @@ func (future SyncAgentsCreateOrUpdateFuture) Result(client SyncAgentsClient) (sa
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncAgentsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SyncAgentsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncAgentsDeleteFuture) Result(client SyncAgentsClient) (ar autorest.Response, err error) {
@@ -8011,6 +9450,7 @@ func (future SyncAgentsDeleteFuture) Result(client SyncAgentsClient) (ar autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncDatabaseIDListResult a list of sync database ID properties.
 type SyncDatabaseIDListResult struct {
 	autorest.Response `json:"-"`
@@ -8020,12 +9460,14 @@ type SyncDatabaseIDListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncDatabaseIDListResultIterator provides access to a complete listing of SyncDatabaseIDProperties values.
 type SyncDatabaseIDListResultIterator struct {
 	i    int
 	page SyncDatabaseIDListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncDatabaseIDListResultIterator) Next() error {
@@ -8042,16 +9484,19 @@ func (iter *SyncDatabaseIDListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncDatabaseIDListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncDatabaseIDListResultIterator) Response() SyncDatabaseIDListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncDatabaseIDListResultIterator) Value() SyncDatabaseIDProperties {
@@ -8061,6 +9506,7 @@ func (iter SyncDatabaseIDListResultIterator) Value() SyncDatabaseIDProperties {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sdilr SyncDatabaseIDListResult) IsEmpty() bool {
 	return sdilr.Value == nil || len(*sdilr.Value) == 0
@@ -8078,12 +9524,14 @@ func (sdilr SyncDatabaseIDListResult) syncDatabaseIDListResultPreparer() (*http.
 		autorest.WithBaseURL(to.String(sdilr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncDatabaseIDListResultPage contains a page of SyncDatabaseIDProperties values.
 type SyncDatabaseIDListResultPage struct {
 	fn    func(SyncDatabaseIDListResult) (SyncDatabaseIDListResult, error)
 	sdilr SyncDatabaseIDListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncDatabaseIDListResultPage) Next() error {
@@ -8095,16 +9543,19 @@ func (page *SyncDatabaseIDListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncDatabaseIDListResultPage) NotDone() bool {
 	return !page.sdilr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncDatabaseIDListResultPage) Response() SyncDatabaseIDListResult {
 	return page.sdilr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncDatabaseIDListResultPage) Values() []SyncDatabaseIDProperties {
 	if page.sdilr.IsEmpty() {
@@ -8113,12 +9564,14 @@ func (page SyncDatabaseIDListResultPage) Values() []SyncDatabaseIDProperties {
 	return *page.sdilr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncDatabaseIDProperties properties of the sync database id.
 type SyncDatabaseIDProperties struct {
 	// ID - ARM resource id of sync database.
 	ID *string `json:"id,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaProperties properties of the database full schema.
 type SyncFullSchemaProperties struct {
 	// Tables - List of tables in the database full schema.
@@ -8127,6 +9580,7 @@ type SyncFullSchemaProperties struct {
 	LastUpdateTime *date.Time `json:"lastUpdateTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaPropertiesListResult a list of sync schema properties.
 type SyncFullSchemaPropertiesListResult struct {
 	autorest.Response `json:"-"`
@@ -8136,6 +9590,7 @@ type SyncFullSchemaPropertiesListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaPropertiesListResultIterator provides access to a complete listing of SyncFullSchemaProperties
 // values.
 type SyncFullSchemaPropertiesListResultIterator struct {
@@ -8143,6 +9598,7 @@ type SyncFullSchemaPropertiesListResultIterator struct {
 	page SyncFullSchemaPropertiesListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncFullSchemaPropertiesListResultIterator) Next() error {
@@ -8159,16 +9615,19 @@ func (iter *SyncFullSchemaPropertiesListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncFullSchemaPropertiesListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncFullSchemaPropertiesListResultIterator) Response() SyncFullSchemaPropertiesListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncFullSchemaPropertiesListResultIterator) Value() SyncFullSchemaProperties {
@@ -8178,6 +9637,7 @@ func (iter SyncFullSchemaPropertiesListResultIterator) Value() SyncFullSchemaPro
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sfsplr SyncFullSchemaPropertiesListResult) IsEmpty() bool {
 	return sfsplr.Value == nil || len(*sfsplr.Value) == 0
@@ -8195,12 +9655,14 @@ func (sfsplr SyncFullSchemaPropertiesListResult) syncFullSchemaPropertiesListRes
 		autorest.WithBaseURL(to.String(sfsplr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaPropertiesListResultPage contains a page of SyncFullSchemaProperties values.
 type SyncFullSchemaPropertiesListResultPage struct {
 	fn     func(SyncFullSchemaPropertiesListResult) (SyncFullSchemaPropertiesListResult, error)
 	sfsplr SyncFullSchemaPropertiesListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncFullSchemaPropertiesListResultPage) Next() error {
@@ -8212,16 +9674,19 @@ func (page *SyncFullSchemaPropertiesListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncFullSchemaPropertiesListResultPage) NotDone() bool {
 	return !page.sfsplr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncFullSchemaPropertiesListResultPage) Response() SyncFullSchemaPropertiesListResult {
 	return page.sfsplr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncFullSchemaPropertiesListResultPage) Values() []SyncFullSchemaProperties {
 	if page.sfsplr.IsEmpty() {
@@ -8230,6 +9695,7 @@ func (page SyncFullSchemaPropertiesListResultPage) Values() []SyncFullSchemaProp
 	return *page.sfsplr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaTable properties of the table in the database full schema.
 type SyncFullSchemaTable struct {
 	// Columns - List of columns in the table of database full schema.
@@ -8244,6 +9710,7 @@ type SyncFullSchemaTable struct {
 	QuotedName *string `json:"quotedName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncFullSchemaTableColumn properties of the column in the table of database full schema.
 type SyncFullSchemaTableColumn struct {
 	// DataSize - Data size of the column.
@@ -8262,6 +9729,7 @@ type SyncFullSchemaTableColumn struct {
 	QuotedName *string `json:"quotedName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroup an Azure SQL Database sync group.
 type SyncGroup struct {
 	autorest.Response `json:"-"`
@@ -8275,6 +9743,26 @@ type SyncGroup struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for SyncGroup.
+func (sg SyncGroup) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sg.SyncGroupProperties != nil {
+		objectMap["properties"] = sg.SyncGroupProperties
+	}
+	if sg.ID != nil {
+		objectMap["id"] = sg.ID
+	}
+	if sg.Name != nil {
+		objectMap["name"] = sg.Name
+	}
+	if sg.Type != nil {
+		objectMap["type"] = sg.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for SyncGroup struct.
 func (sg *SyncGroup) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8326,6 +9814,7 @@ func (sg *SyncGroup) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupListResult a list of sync groups.
 type SyncGroupListResult struct {
 	autorest.Response `json:"-"`
@@ -8335,12 +9824,14 @@ type SyncGroupListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupListResultIterator provides access to a complete listing of SyncGroup values.
 type SyncGroupListResultIterator struct {
 	i    int
 	page SyncGroupListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncGroupListResultIterator) Next() error {
@@ -8357,16 +9848,19 @@ func (iter *SyncGroupListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncGroupListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncGroupListResultIterator) Response() SyncGroupListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncGroupListResultIterator) Value() SyncGroup {
@@ -8376,6 +9870,7 @@ func (iter SyncGroupListResultIterator) Value() SyncGroup {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sglr SyncGroupListResult) IsEmpty() bool {
 	return sglr.Value == nil || len(*sglr.Value) == 0
@@ -8393,12 +9888,14 @@ func (sglr SyncGroupListResult) syncGroupListResultPreparer() (*http.Request, er
 		autorest.WithBaseURL(to.String(sglr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupListResultPage contains a page of SyncGroup values.
 type SyncGroupListResultPage struct {
 	fn   func(SyncGroupListResult) (SyncGroupListResult, error)
 	sglr SyncGroupListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncGroupListResultPage) Next() error {
@@ -8410,16 +9907,19 @@ func (page *SyncGroupListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncGroupListResultPage) NotDone() bool {
 	return !page.sglr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncGroupListResultPage) Response() SyncGroupListResult {
 	return page.sglr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncGroupListResultPage) Values() []SyncGroup {
 	if page.sglr.IsEmpty() {
@@ -8428,6 +9928,7 @@ func (page SyncGroupListResultPage) Values() []SyncGroup {
 	return *page.sglr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupLogListResult a list of sync group log properties.
 type SyncGroupLogListResult struct {
 	autorest.Response `json:"-"`
@@ -8437,12 +9938,14 @@ type SyncGroupLogListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupLogListResultIterator provides access to a complete listing of SyncGroupLogProperties values.
 type SyncGroupLogListResultIterator struct {
 	i    int
 	page SyncGroupLogListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncGroupLogListResultIterator) Next() error {
@@ -8459,16 +9962,19 @@ func (iter *SyncGroupLogListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncGroupLogListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncGroupLogListResultIterator) Response() SyncGroupLogListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncGroupLogListResultIterator) Value() SyncGroupLogProperties {
@@ -8478,6 +9984,7 @@ func (iter SyncGroupLogListResultIterator) Value() SyncGroupLogProperties {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (sgllr SyncGroupLogListResult) IsEmpty() bool {
 	return sgllr.Value == nil || len(*sgllr.Value) == 0
@@ -8495,12 +10002,14 @@ func (sgllr SyncGroupLogListResult) syncGroupLogListResultPreparer() (*http.Requ
 		autorest.WithBaseURL(to.String(sgllr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupLogListResultPage contains a page of SyncGroupLogProperties values.
 type SyncGroupLogListResultPage struct {
 	fn    func(SyncGroupLogListResult) (SyncGroupLogListResult, error)
 	sgllr SyncGroupLogListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncGroupLogListResultPage) Next() error {
@@ -8512,16 +10021,19 @@ func (page *SyncGroupLogListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncGroupLogListResultPage) NotDone() bool {
 	return !page.sgllr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncGroupLogListResultPage) Response() SyncGroupLogListResult {
 	return page.sgllr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncGroupLogListResultPage) Values() []SyncGroupLogProperties {
 	if page.sgllr.IsEmpty() {
@@ -8530,6 +10042,7 @@ func (page SyncGroupLogListResultPage) Values() []SyncGroupLogProperties {
 	return *page.sgllr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupLogProperties properties of an Azure SQL Database sync group log.
 type SyncGroupLogProperties struct {
 	// Timestamp - Timestamp of the sync group log.
@@ -8546,6 +10059,7 @@ type SyncGroupLogProperties struct {
 	OperationStatus *string `json:"operationStatus,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupProperties properties of a sync group.
 type SyncGroupProperties struct {
 	// Interval - Sync interval of the sync group.
@@ -8566,6 +10080,7 @@ type SyncGroupProperties struct {
 	Schema *SyncGroupSchema `json:"schema,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupSchema properties of sync group schema.
 type SyncGroupSchema struct {
 	// Tables - List of tables in sync group schema.
@@ -8574,6 +10089,7 @@ type SyncGroupSchema struct {
 	MasterSyncMemberName *string `json:"masterSyncMemberName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupSchemaTable properties of table in sync group schema.
 type SyncGroupSchemaTable struct {
 	// Columns - List of columns in sync group schema.
@@ -8582,6 +10098,7 @@ type SyncGroupSchemaTable struct {
 	QuotedName *string `json:"quotedName,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupSchemaTableColumn properties of column in sync group table.
 type SyncGroupSchemaTableColumn struct {
 	// QuotedName - Quoted name of sync group table column.
@@ -8592,6 +10109,7 @@ type SyncGroupSchemaTableColumn struct {
 	DataType *string `json:"dataType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type SyncGroupsCreateOrUpdateFuture struct {
@@ -8599,6 +10117,7 @@ type SyncGroupsCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncGroupsCreateOrUpdateFuture) Result(client SyncGroupsClient) (sg SyncGroup, err error) {
@@ -8641,12 +10160,14 @@ func (future SyncGroupsCreateOrUpdateFuture) Result(client SyncGroupsClient) (sg
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SyncGroupsDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncGroupsDeleteFuture) Result(client SyncGroupsClient) (ar autorest.Response, err error) {
@@ -8689,6 +10210,7 @@ func (future SyncGroupsDeleteFuture) Result(client SyncGroupsClient) (ar autores
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupsRefreshHubSchemaFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type SyncGroupsRefreshHubSchemaFuture struct {
@@ -8696,6 +10218,7 @@ type SyncGroupsRefreshHubSchemaFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncGroupsRefreshHubSchemaFuture) Result(client SyncGroupsClient) (ar autorest.Response, err error) {
@@ -8738,12 +10261,14 @@ func (future SyncGroupsRefreshHubSchemaFuture) Result(client SyncGroupsClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncGroupsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SyncGroupsUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncGroupsUpdateFuture) Result(client SyncGroupsClient) (sg SyncGroup, err error) {
@@ -8786,6 +10311,7 @@ func (future SyncGroupsUpdateFuture) Result(client SyncGroupsClient) (sg SyncGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMember an Azure SQL Database sync member.
 type SyncMember struct {
 	autorest.Response `json:"-"`
@@ -8799,6 +10325,26 @@ type SyncMember struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for SyncMember.
+func (sm SyncMember) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sm.SyncMemberProperties != nil {
+		objectMap["properties"] = sm.SyncMemberProperties
+	}
+	if sm.ID != nil {
+		objectMap["id"] = sm.ID
+	}
+	if sm.Name != nil {
+		objectMap["name"] = sm.Name
+	}
+	if sm.Type != nil {
+		objectMap["type"] = sm.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for SyncMember struct.
 func (sm *SyncMember) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8850,6 +10396,7 @@ func (sm *SyncMember) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberListResult a list of Azure SQL Database sync members.
 type SyncMemberListResult struct {
 	autorest.Response `json:"-"`
@@ -8859,12 +10406,14 @@ type SyncMemberListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberListResultIterator provides access to a complete listing of SyncMember values.
 type SyncMemberListResultIterator struct {
 	i    int
 	page SyncMemberListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *SyncMemberListResultIterator) Next() error {
@@ -8881,16 +10430,19 @@ func (iter *SyncMemberListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter SyncMemberListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter SyncMemberListResultIterator) Response() SyncMemberListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter SyncMemberListResultIterator) Value() SyncMember {
@@ -8900,6 +10452,7 @@ func (iter SyncMemberListResultIterator) Value() SyncMember {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (smlr SyncMemberListResult) IsEmpty() bool {
 	return smlr.Value == nil || len(*smlr.Value) == 0
@@ -8917,12 +10470,14 @@ func (smlr SyncMemberListResult) syncMemberListResultPreparer() (*http.Request, 
 		autorest.WithBaseURL(to.String(smlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberListResultPage contains a page of SyncMember values.
 type SyncMemberListResultPage struct {
 	fn   func(SyncMemberListResult) (SyncMemberListResult, error)
 	smlr SyncMemberListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *SyncMemberListResultPage) Next() error {
@@ -8934,16 +10489,19 @@ func (page *SyncMemberListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page SyncMemberListResultPage) NotDone() bool {
 	return !page.smlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page SyncMemberListResultPage) Response() SyncMemberListResult {
 	return page.smlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page SyncMemberListResultPage) Values() []SyncMember {
 	if page.smlr.IsEmpty() {
@@ -8952,6 +10510,7 @@ func (page SyncMemberListResultPage) Values() []SyncMember {
 	return *page.smlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMemberProperties properties of a sync member.
 type SyncMemberProperties struct {
 	// DatabaseType - Database type of the sync member. Possible values include: 'AzureSQLDatabase', 'SQLServerDatabase'
@@ -8974,6 +10533,7 @@ type SyncMemberProperties struct {
 	SyncState SyncMemberState `json:"syncState,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMembersCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type SyncMembersCreateOrUpdateFuture struct {
@@ -8981,6 +10541,7 @@ type SyncMembersCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncMembersCreateOrUpdateFuture) Result(client SyncMembersClient) (sm SyncMember, err error) {
@@ -9023,12 +10584,14 @@ func (future SyncMembersCreateOrUpdateFuture) Result(client SyncMembersClient) (
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMembersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SyncMembersDeleteFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncMembersDeleteFuture) Result(client SyncMembersClient) (ar autorest.Response, err error) {
@@ -9071,6 +10634,7 @@ func (future SyncMembersDeleteFuture) Result(client SyncMembersClient) (ar autor
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMembersRefreshMemberSchemaFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type SyncMembersRefreshMemberSchemaFuture struct {
@@ -9078,6 +10642,7 @@ type SyncMembersRefreshMemberSchemaFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncMembersRefreshMemberSchemaFuture) Result(client SyncMembersClient) (ar autorest.Response, err error) {
@@ -9120,12 +10685,14 @@ func (future SyncMembersRefreshMemberSchemaFuture) Result(client SyncMembersClie
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // SyncMembersUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SyncMembersUpdateFuture struct {
 	azure.Future
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future SyncMembersUpdateFuture) Result(client SyncMembersClient) (sm SyncMember, err error) {
@@ -9168,6 +10735,7 @@ func (future SyncMembersUpdateFuture) Result(client SyncMembersClient) (sm SyncM
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TrackedResource ARM tracked top level resource.
 type TrackedResource struct {
 	// Tags - Resource tags.
@@ -9182,6 +10750,7 @@ type TrackedResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // MarshalJSON is the custom marshaler for TrackedResource.
 func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -9203,6 +10772,7 @@ func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryption represents a database transparent data encryption configuration.
 type TransparentDataEncryption struct {
 	autorest.Response `json:"-"`
@@ -9218,6 +10788,29 @@ type TransparentDataEncryption struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for TransparentDataEncryption.
+func (tde TransparentDataEncryption) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tde.Location != nil {
+		objectMap["location"] = tde.Location
+	}
+	if tde.TransparentDataEncryptionProperties != nil {
+		objectMap["properties"] = tde.TransparentDataEncryptionProperties
+	}
+	if tde.ID != nil {
+		objectMap["id"] = tde.ID
+	}
+	if tde.Name != nil {
+		objectMap["name"] = tde.Name
+	}
+	if tde.Type != nil {
+		objectMap["type"] = tde.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for TransparentDataEncryption struct.
 func (tde *TransparentDataEncryption) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -9278,6 +10871,7 @@ func (tde *TransparentDataEncryption) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionActivity represents a database transparent data encryption Scan.
 type TransparentDataEncryptionActivity struct {
 	// Location - Resource location.
@@ -9292,6 +10886,29 @@ type TransparentDataEncryptionActivity struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for TransparentDataEncryptionActivity.
+func (tdea TransparentDataEncryptionActivity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tdea.Location != nil {
+		objectMap["location"] = tdea.Location
+	}
+	if tdea.TransparentDataEncryptionActivityProperties != nil {
+		objectMap["properties"] = tdea.TransparentDataEncryptionActivityProperties
+	}
+	if tdea.ID != nil {
+		objectMap["id"] = tdea.ID
+	}
+	if tdea.Name != nil {
+		objectMap["name"] = tdea.Name
+	}
+	if tdea.Type != nil {
+		objectMap["type"] = tdea.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for TransparentDataEncryptionActivity struct.
 func (tdea *TransparentDataEncryptionActivity) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -9352,6 +10969,7 @@ func (tdea *TransparentDataEncryptionActivity) UnmarshalJSON(body []byte) error 
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionActivityListResult represents the response to a list database transparent data
 // encryption activity request.
 type TransparentDataEncryptionActivityListResult struct {
@@ -9360,6 +10978,7 @@ type TransparentDataEncryptionActivityListResult struct {
 	Value *[]TransparentDataEncryptionActivity `json:"value,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionActivityProperties represents the properties of a database transparent data encryption
 // Scan.
 type TransparentDataEncryptionActivityProperties struct {
@@ -9369,12 +10988,14 @@ type TransparentDataEncryptionActivityProperties struct {
 	PercentComplete *float64 `json:"percentComplete,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // TransparentDataEncryptionProperties represents the properties of a database transparent data encryption.
 type TransparentDataEncryptionProperties struct {
 	// Status - The status of the database transparent data encryption. Possible values include: 'TransparentDataEncryptionStatusEnabled', 'TransparentDataEncryptionStatusDisabled'
 	Status TransparentDataEncryptionStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRule a virtual network rule.
 type VirtualNetworkRule struct {
 	autorest.Response `json:"-"`
@@ -9388,6 +11009,26 @@ type VirtualNetworkRule struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
+// MarshalJSON is the custom marshaler for VirtualNetworkRule.
+func (vnr VirtualNetworkRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vnr.VirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = vnr.VirtualNetworkRuleProperties
+	}
+	if vnr.ID != nil {
+		objectMap["id"] = vnr.ID
+	}
+	if vnr.Name != nil {
+		objectMap["name"] = vnr.Name
+	}
+	if vnr.Type != nil {
+		objectMap["type"] = vnr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // UnmarshalJSON is the custom unmarshaler for VirtualNetworkRule struct.
 func (vnr *VirtualNetworkRule) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -9439,6 +11080,7 @@ func (vnr *VirtualNetworkRule) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRuleListResult a list of virtual network rules.
 type VirtualNetworkRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -9448,12 +11090,14 @@ type VirtualNetworkRuleListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRuleListResultIterator provides access to a complete listing of VirtualNetworkRule values.
 type VirtualNetworkRuleListResultIterator struct {
 	i    int
 	page VirtualNetworkRuleListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *VirtualNetworkRuleListResultIterator) Next() error {
@@ -9470,16 +11114,19 @@ func (iter *VirtualNetworkRuleListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter VirtualNetworkRuleListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (iter VirtualNetworkRuleListResultIterator) Response() VirtualNetworkRuleListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter VirtualNetworkRuleListResultIterator) Value() VirtualNetworkRule {
@@ -9489,6 +11136,7 @@ func (iter VirtualNetworkRuleListResultIterator) Value() VirtualNetworkRule {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (vnrlr VirtualNetworkRuleListResult) IsEmpty() bool {
 	return vnrlr.Value == nil || len(*vnrlr.Value) == 0
@@ -9506,12 +11154,14 @@ func (vnrlr VirtualNetworkRuleListResult) virtualNetworkRuleListResultPreparer()
 		autorest.WithBaseURL(to.String(vnrlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRuleListResultPage contains a page of VirtualNetworkRule values.
 type VirtualNetworkRuleListResultPage struct {
 	fn    func(VirtualNetworkRuleListResult) (VirtualNetworkRuleListResult, error)
 	vnrlr VirtualNetworkRuleListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *VirtualNetworkRuleListResultPage) Next() error {
@@ -9523,16 +11173,19 @@ func (page *VirtualNetworkRuleListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page VirtualNetworkRuleListResultPage) NotDone() bool {
 	return !page.vnrlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Response returns the raw server response from the last page request.
 func (page VirtualNetworkRuleListResultPage) Response() VirtualNetworkRuleListResult {
 	return page.vnrlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page VirtualNetworkRuleListResultPage) Values() []VirtualNetworkRule {
 	if page.vnrlr.IsEmpty() {
@@ -9541,6 +11194,7 @@ func (page VirtualNetworkRuleListResultPage) Values() []VirtualNetworkRule {
 	return *page.vnrlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRuleProperties properties of a virtual network rule.
 type VirtualNetworkRuleProperties struct {
 	// VirtualNetworkSubnetID - The ARM resource id of the virtual network subnet.
@@ -9551,6 +11205,7 @@ type VirtualNetworkRuleProperties struct {
 	State VirtualNetworkRuleState `json:"state,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRulesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type VirtualNetworkRulesCreateOrUpdateFuture struct {
@@ -9558,6 +11213,7 @@ type VirtualNetworkRulesCreateOrUpdateFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualNetworkRulesCreateOrUpdateFuture) Result(client VirtualNetworkRulesClient) (vnr VirtualNetworkRule, err error) {
@@ -9600,6 +11256,7 @@ func (future VirtualNetworkRulesCreateOrUpdateFuture) Result(client VirtualNetwo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // VirtualNetworkRulesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
 // operation.
 type VirtualNetworkRulesDeleteFuture struct {
@@ -9607,6 +11264,7 @@ type VirtualNetworkRulesDeleteFuture struct {
 	req *http.Request
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
 func (future VirtualNetworkRulesDeleteFuture) Result(client VirtualNetworkRulesClient) (ar autorest.Response, err error) {

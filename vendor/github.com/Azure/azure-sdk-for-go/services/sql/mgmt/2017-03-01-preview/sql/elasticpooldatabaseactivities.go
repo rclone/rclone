@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ElasticPoolDatabaseActivitiesClient is the the Azure SQL Database management API provides a RESTful set of web
 // services that interact with Azure SQL Database services to manage your databases. The API enables you to create,
 // retrieve, update, and delete databases.
@@ -31,17 +32,20 @@ type ElasticPoolDatabaseActivitiesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewElasticPoolDatabaseActivitiesClient creates an instance of the ElasticPoolDatabaseActivitiesClient client.
 func NewElasticPoolDatabaseActivitiesClient(subscriptionID string) ElasticPoolDatabaseActivitiesClient {
 	return NewElasticPoolDatabaseActivitiesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // NewElasticPoolDatabaseActivitiesClientWithBaseURI creates an instance of the ElasticPoolDatabaseActivitiesClient
 // client.
 func NewElasticPoolDatabaseActivitiesClientWithBaseURI(baseURI string, subscriptionID string) ElasticPoolDatabaseActivitiesClient {
 	return ElasticPoolDatabaseActivitiesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByElasticPool returns activity on databases inside of an elastic pool.
 //
 // resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
@@ -69,6 +73,7 @@ func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPool(ctx context.
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByElasticPoolPreparer prepares the ListByElasticPool request.
 func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPoolPreparer(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,6 +96,7 @@ func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPoolPreparer(ctx 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByElasticPoolSender sends the ListByElasticPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPoolSender(req *http.Request) (*http.Response, error) {
@@ -98,6 +104,7 @@ func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPoolSender(req *h
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql instead.
 // ListByElasticPoolResponder handles the response to the ListByElasticPool request. The method always
 // closes the http.Response Body.
 func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPoolResponder(resp *http.Response) (result ElasticPoolDatabaseActivityListResult, err error) {

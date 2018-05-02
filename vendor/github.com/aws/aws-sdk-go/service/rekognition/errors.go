@@ -58,6 +58,12 @@ const (
 
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
+	//
+	// An Amazon Rekognition service limit was exceeded. For example, if you start
+	// too many Rekognition Video jobs concurrently, calls to start operations (StartLabelDetection,
+	// for example) will raise a LimitExceededException exception (HTTP status code:
+	// 400) until the number of concurrently running jobs is below the Amazon Rekognition
+	// service limit.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeProvisionedThroughputExceededException for service response error code

@@ -26,7 +26,7 @@ import (
 //    // myFunc uses an SDK service client to make a request to
 //    // Alexa For Business.
 //    func myFunc(svc alexaforbusinessiface.AlexaForBusinessAPI) bool {
-//        // Make svc.AssociateDeviceWithRoom request
+//        // Make svc.AssociateContactWithAddressBook request
 //    }
 //
 //    func main() {
@@ -42,7 +42,7 @@ import (
 //    type mockAlexaForBusinessClient struct {
 //        alexaforbusinessiface.AlexaForBusinessAPI
 //    }
-//    func (m *mockAlexaForBusinessClient) AssociateDeviceWithRoom(input *alexaforbusiness.AssociateDeviceWithRoomInput) (*alexaforbusiness.AssociateDeviceWithRoomOutput, error) {
+//    func (m *mockAlexaForBusinessClient) AssociateContactWithAddressBook(input *alexaforbusiness.AssociateContactWithAddressBookInput) (*alexaforbusiness.AssociateContactWithAddressBookOutput, error) {
 //        // mock response/functionality
 //    }
 //
@@ -60,6 +60,10 @@ import (
 // and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type AlexaForBusinessAPI interface {
+	AssociateContactWithAddressBook(*alexaforbusiness.AssociateContactWithAddressBookInput) (*alexaforbusiness.AssociateContactWithAddressBookOutput, error)
+	AssociateContactWithAddressBookWithContext(aws.Context, *alexaforbusiness.AssociateContactWithAddressBookInput, ...request.Option) (*alexaforbusiness.AssociateContactWithAddressBookOutput, error)
+	AssociateContactWithAddressBookRequest(*alexaforbusiness.AssociateContactWithAddressBookInput) (*request.Request, *alexaforbusiness.AssociateContactWithAddressBookOutput)
+
 	AssociateDeviceWithRoom(*alexaforbusiness.AssociateDeviceWithRoomInput) (*alexaforbusiness.AssociateDeviceWithRoomOutput, error)
 	AssociateDeviceWithRoomWithContext(aws.Context, *alexaforbusiness.AssociateDeviceWithRoomInput, ...request.Option) (*alexaforbusiness.AssociateDeviceWithRoomOutput, error)
 	AssociateDeviceWithRoomRequest(*alexaforbusiness.AssociateDeviceWithRoomInput) (*request.Request, *alexaforbusiness.AssociateDeviceWithRoomOutput)
@@ -67,6 +71,14 @@ type AlexaForBusinessAPI interface {
 	AssociateSkillGroupWithRoom(*alexaforbusiness.AssociateSkillGroupWithRoomInput) (*alexaforbusiness.AssociateSkillGroupWithRoomOutput, error)
 	AssociateSkillGroupWithRoomWithContext(aws.Context, *alexaforbusiness.AssociateSkillGroupWithRoomInput, ...request.Option) (*alexaforbusiness.AssociateSkillGroupWithRoomOutput, error)
 	AssociateSkillGroupWithRoomRequest(*alexaforbusiness.AssociateSkillGroupWithRoomInput) (*request.Request, *alexaforbusiness.AssociateSkillGroupWithRoomOutput)
+
+	CreateAddressBook(*alexaforbusiness.CreateAddressBookInput) (*alexaforbusiness.CreateAddressBookOutput, error)
+	CreateAddressBookWithContext(aws.Context, *alexaforbusiness.CreateAddressBookInput, ...request.Option) (*alexaforbusiness.CreateAddressBookOutput, error)
+	CreateAddressBookRequest(*alexaforbusiness.CreateAddressBookInput) (*request.Request, *alexaforbusiness.CreateAddressBookOutput)
+
+	CreateContact(*alexaforbusiness.CreateContactInput) (*alexaforbusiness.CreateContactOutput, error)
+	CreateContactWithContext(aws.Context, *alexaforbusiness.CreateContactInput, ...request.Option) (*alexaforbusiness.CreateContactOutput, error)
+	CreateContactRequest(*alexaforbusiness.CreateContactInput) (*request.Request, *alexaforbusiness.CreateContactOutput)
 
 	CreateProfile(*alexaforbusiness.CreateProfileInput) (*alexaforbusiness.CreateProfileOutput, error)
 	CreateProfileWithContext(aws.Context, *alexaforbusiness.CreateProfileInput, ...request.Option) (*alexaforbusiness.CreateProfileOutput, error)
@@ -83,6 +95,14 @@ type AlexaForBusinessAPI interface {
 	CreateUser(*alexaforbusiness.CreateUserInput) (*alexaforbusiness.CreateUserOutput, error)
 	CreateUserWithContext(aws.Context, *alexaforbusiness.CreateUserInput, ...request.Option) (*alexaforbusiness.CreateUserOutput, error)
 	CreateUserRequest(*alexaforbusiness.CreateUserInput) (*request.Request, *alexaforbusiness.CreateUserOutput)
+
+	DeleteAddressBook(*alexaforbusiness.DeleteAddressBookInput) (*alexaforbusiness.DeleteAddressBookOutput, error)
+	DeleteAddressBookWithContext(aws.Context, *alexaforbusiness.DeleteAddressBookInput, ...request.Option) (*alexaforbusiness.DeleteAddressBookOutput, error)
+	DeleteAddressBookRequest(*alexaforbusiness.DeleteAddressBookInput) (*request.Request, *alexaforbusiness.DeleteAddressBookOutput)
+
+	DeleteContact(*alexaforbusiness.DeleteContactInput) (*alexaforbusiness.DeleteContactOutput, error)
+	DeleteContactWithContext(aws.Context, *alexaforbusiness.DeleteContactInput, ...request.Option) (*alexaforbusiness.DeleteContactOutput, error)
+	DeleteContactRequest(*alexaforbusiness.DeleteContactInput) (*request.Request, *alexaforbusiness.DeleteContactOutput)
 
 	DeleteProfile(*alexaforbusiness.DeleteProfileInput) (*alexaforbusiness.DeleteProfileOutput, error)
 	DeleteProfileWithContext(aws.Context, *alexaforbusiness.DeleteProfileInput, ...request.Option) (*alexaforbusiness.DeleteProfileOutput, error)
@@ -104,6 +124,10 @@ type AlexaForBusinessAPI interface {
 	DeleteUserWithContext(aws.Context, *alexaforbusiness.DeleteUserInput, ...request.Option) (*alexaforbusiness.DeleteUserOutput, error)
 	DeleteUserRequest(*alexaforbusiness.DeleteUserInput) (*request.Request, *alexaforbusiness.DeleteUserOutput)
 
+	DisassociateContactFromAddressBook(*alexaforbusiness.DisassociateContactFromAddressBookInput) (*alexaforbusiness.DisassociateContactFromAddressBookOutput, error)
+	DisassociateContactFromAddressBookWithContext(aws.Context, *alexaforbusiness.DisassociateContactFromAddressBookInput, ...request.Option) (*alexaforbusiness.DisassociateContactFromAddressBookOutput, error)
+	DisassociateContactFromAddressBookRequest(*alexaforbusiness.DisassociateContactFromAddressBookInput) (*request.Request, *alexaforbusiness.DisassociateContactFromAddressBookOutput)
+
 	DisassociateDeviceFromRoom(*alexaforbusiness.DisassociateDeviceFromRoomInput) (*alexaforbusiness.DisassociateDeviceFromRoomOutput, error)
 	DisassociateDeviceFromRoomWithContext(aws.Context, *alexaforbusiness.DisassociateDeviceFromRoomInput, ...request.Option) (*alexaforbusiness.DisassociateDeviceFromRoomOutput, error)
 	DisassociateDeviceFromRoomRequest(*alexaforbusiness.DisassociateDeviceFromRoomInput) (*request.Request, *alexaforbusiness.DisassociateDeviceFromRoomOutput)
@@ -111,6 +135,14 @@ type AlexaForBusinessAPI interface {
 	DisassociateSkillGroupFromRoom(*alexaforbusiness.DisassociateSkillGroupFromRoomInput) (*alexaforbusiness.DisassociateSkillGroupFromRoomOutput, error)
 	DisassociateSkillGroupFromRoomWithContext(aws.Context, *alexaforbusiness.DisassociateSkillGroupFromRoomInput, ...request.Option) (*alexaforbusiness.DisassociateSkillGroupFromRoomOutput, error)
 	DisassociateSkillGroupFromRoomRequest(*alexaforbusiness.DisassociateSkillGroupFromRoomInput) (*request.Request, *alexaforbusiness.DisassociateSkillGroupFromRoomOutput)
+
+	GetAddressBook(*alexaforbusiness.GetAddressBookInput) (*alexaforbusiness.GetAddressBookOutput, error)
+	GetAddressBookWithContext(aws.Context, *alexaforbusiness.GetAddressBookInput, ...request.Option) (*alexaforbusiness.GetAddressBookOutput, error)
+	GetAddressBookRequest(*alexaforbusiness.GetAddressBookInput) (*request.Request, *alexaforbusiness.GetAddressBookOutput)
+
+	GetContact(*alexaforbusiness.GetContactInput) (*alexaforbusiness.GetContactOutput, error)
+	GetContactWithContext(aws.Context, *alexaforbusiness.GetContactInput, ...request.Option) (*alexaforbusiness.GetContactOutput, error)
+	GetContactRequest(*alexaforbusiness.GetContactInput) (*request.Request, *alexaforbusiness.GetContactOutput)
 
 	GetDevice(*alexaforbusiness.GetDeviceInput) (*alexaforbusiness.GetDeviceOutput, error)
 	GetDeviceWithContext(aws.Context, *alexaforbusiness.GetDeviceInput, ...request.Option) (*alexaforbusiness.GetDeviceOutput, error)
@@ -131,6 +163,13 @@ type AlexaForBusinessAPI interface {
 	GetSkillGroup(*alexaforbusiness.GetSkillGroupInput) (*alexaforbusiness.GetSkillGroupOutput, error)
 	GetSkillGroupWithContext(aws.Context, *alexaforbusiness.GetSkillGroupInput, ...request.Option) (*alexaforbusiness.GetSkillGroupOutput, error)
 	GetSkillGroupRequest(*alexaforbusiness.GetSkillGroupInput) (*request.Request, *alexaforbusiness.GetSkillGroupOutput)
+
+	ListDeviceEvents(*alexaforbusiness.ListDeviceEventsInput) (*alexaforbusiness.ListDeviceEventsOutput, error)
+	ListDeviceEventsWithContext(aws.Context, *alexaforbusiness.ListDeviceEventsInput, ...request.Option) (*alexaforbusiness.ListDeviceEventsOutput, error)
+	ListDeviceEventsRequest(*alexaforbusiness.ListDeviceEventsInput) (*request.Request, *alexaforbusiness.ListDeviceEventsOutput)
+
+	ListDeviceEventsPages(*alexaforbusiness.ListDeviceEventsInput, func(*alexaforbusiness.ListDeviceEventsOutput, bool) bool) error
+	ListDeviceEventsPagesWithContext(aws.Context, *alexaforbusiness.ListDeviceEventsInput, func(*alexaforbusiness.ListDeviceEventsOutput, bool) bool, ...request.Option) error
 
 	ListSkills(*alexaforbusiness.ListSkillsInput) (*alexaforbusiness.ListSkillsOutput, error)
 	ListSkillsWithContext(aws.Context, *alexaforbusiness.ListSkillsInput, ...request.Option) (*alexaforbusiness.ListSkillsOutput, error)
@@ -157,6 +196,20 @@ type AlexaForBusinessAPI interface {
 	RevokeInvitation(*alexaforbusiness.RevokeInvitationInput) (*alexaforbusiness.RevokeInvitationOutput, error)
 	RevokeInvitationWithContext(aws.Context, *alexaforbusiness.RevokeInvitationInput, ...request.Option) (*alexaforbusiness.RevokeInvitationOutput, error)
 	RevokeInvitationRequest(*alexaforbusiness.RevokeInvitationInput) (*request.Request, *alexaforbusiness.RevokeInvitationOutput)
+
+	SearchAddressBooks(*alexaforbusiness.SearchAddressBooksInput) (*alexaforbusiness.SearchAddressBooksOutput, error)
+	SearchAddressBooksWithContext(aws.Context, *alexaforbusiness.SearchAddressBooksInput, ...request.Option) (*alexaforbusiness.SearchAddressBooksOutput, error)
+	SearchAddressBooksRequest(*alexaforbusiness.SearchAddressBooksInput) (*request.Request, *alexaforbusiness.SearchAddressBooksOutput)
+
+	SearchAddressBooksPages(*alexaforbusiness.SearchAddressBooksInput, func(*alexaforbusiness.SearchAddressBooksOutput, bool) bool) error
+	SearchAddressBooksPagesWithContext(aws.Context, *alexaforbusiness.SearchAddressBooksInput, func(*alexaforbusiness.SearchAddressBooksOutput, bool) bool, ...request.Option) error
+
+	SearchContacts(*alexaforbusiness.SearchContactsInput) (*alexaforbusiness.SearchContactsOutput, error)
+	SearchContactsWithContext(aws.Context, *alexaforbusiness.SearchContactsInput, ...request.Option) (*alexaforbusiness.SearchContactsOutput, error)
+	SearchContactsRequest(*alexaforbusiness.SearchContactsInput) (*request.Request, *alexaforbusiness.SearchContactsOutput)
+
+	SearchContactsPages(*alexaforbusiness.SearchContactsInput, func(*alexaforbusiness.SearchContactsOutput, bool) bool) error
+	SearchContactsPagesWithContext(aws.Context, *alexaforbusiness.SearchContactsInput, func(*alexaforbusiness.SearchContactsOutput, bool) bool, ...request.Option) error
 
 	SearchDevices(*alexaforbusiness.SearchDevicesInput) (*alexaforbusiness.SearchDevicesOutput, error)
 	SearchDevicesWithContext(aws.Context, *alexaforbusiness.SearchDevicesInput, ...request.Option) (*alexaforbusiness.SearchDevicesOutput, error)
@@ -208,6 +261,14 @@ type AlexaForBusinessAPI interface {
 	UntagResource(*alexaforbusiness.UntagResourceInput) (*alexaforbusiness.UntagResourceOutput, error)
 	UntagResourceWithContext(aws.Context, *alexaforbusiness.UntagResourceInput, ...request.Option) (*alexaforbusiness.UntagResourceOutput, error)
 	UntagResourceRequest(*alexaforbusiness.UntagResourceInput) (*request.Request, *alexaforbusiness.UntagResourceOutput)
+
+	UpdateAddressBook(*alexaforbusiness.UpdateAddressBookInput) (*alexaforbusiness.UpdateAddressBookOutput, error)
+	UpdateAddressBookWithContext(aws.Context, *alexaforbusiness.UpdateAddressBookInput, ...request.Option) (*alexaforbusiness.UpdateAddressBookOutput, error)
+	UpdateAddressBookRequest(*alexaforbusiness.UpdateAddressBookInput) (*request.Request, *alexaforbusiness.UpdateAddressBookOutput)
+
+	UpdateContact(*alexaforbusiness.UpdateContactInput) (*alexaforbusiness.UpdateContactOutput, error)
+	UpdateContactWithContext(aws.Context, *alexaforbusiness.UpdateContactInput, ...request.Option) (*alexaforbusiness.UpdateContactOutput, error)
+	UpdateContactRequest(*alexaforbusiness.UpdateContactInput) (*request.Request, *alexaforbusiness.UpdateContactOutput)
 
 	UpdateDevice(*alexaforbusiness.UpdateDeviceInput) (*alexaforbusiness.UpdateDeviceOutput, error)
 	UpdateDeviceWithContext(aws.Context, *alexaforbusiness.UpdateDeviceInput, ...request.Option) (*alexaforbusiness.UpdateDeviceOutput, error)

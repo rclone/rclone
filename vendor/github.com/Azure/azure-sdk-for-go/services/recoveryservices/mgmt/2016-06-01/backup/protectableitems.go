@@ -41,14 +41,15 @@ func NewProtectableItemsClientWithBaseURI(baseURI string, subscriptionID string)
 
 // List based on the query filter and the pagination parameters, this operation provides a pageable list of objects
 // within the subscription that can be protected.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is using the following query filters, you can sort a
-// specific backup item based on: type of backup item, status, name of the item, and more.  providerType eq {
-// AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql } and status eq { NotProtected , Protecting , Protected } and
-// friendlyName {name} and skipToken eq {string which provides the next set of list} and topToken eq {int} and
-// backupManagementType eq { AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }. skipToken is the Skip Token
-// filter.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - using the following query filters, you can sort a specific backup item based on: type of backup
+// item, status, name of the item, and more.  providerType eq { AzureIaasVM, MAB, DPM, AzureBackupServer,
+// AzureSql } and status eq { NotProtected , Protecting , Protected } and friendlyName {name} and skipToken eq
+// {string which provides the next set of list} and topToken eq {int} and backupManagementType eq {
+// AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }.
+// skipToken - the Skip Token filter.
 func (client ProtectableItemsClient) List(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result WorkloadProtectableItemResourceListPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

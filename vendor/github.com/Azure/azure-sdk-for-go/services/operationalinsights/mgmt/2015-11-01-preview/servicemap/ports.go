@@ -26,21 +26,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // PortsClient is the service Map API Reference
 type PortsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewPortsClient creates an instance of the PortsClient client.
 func NewPortsClient(subscriptionID string) PortsClient {
 	return NewPortsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // NewPortsClientWithBaseURI creates an instance of the PortsClient client.
 func NewPortsClientWithBaseURI(baseURI string, subscriptionID string) PortsClient {
 	return PortsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // Get returns the specified port. The port must be live during the specified time interval. If the port is not live
 // during the interval, status 404 (Not Found) is returned.
 //
@@ -89,6 +93,7 @@ func (client PortsClient) Get(ctx context.Context, resourceGroupName string, wor
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetPreparer prepares the Get request.
 func (client PortsClient) GetPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -118,6 +123,7 @@ func (client PortsClient) GetPreparer(ctx context.Context, resourceGroupName str
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -125,6 +131,7 @@ func (client PortsClient) GetSender(req *http.Request) (*http.Response, error) {
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client PortsClient) GetResponder(resp *http.Response) (result Port, err error) {
@@ -138,6 +145,7 @@ func (client PortsClient) GetResponder(resp *http.Response) (result Port, err er
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLiveness obtains the liveness status of the port during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -185,6 +193,7 @@ func (client PortsClient) GetLiveness(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessPreparer prepares the GetLiveness request.
 func (client PortsClient) GetLivenessPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -214,6 +223,7 @@ func (client PortsClient) GetLivenessPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessSender sends the GetLiveness request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) GetLivenessSender(req *http.Request) (*http.Response, error) {
@@ -221,6 +231,7 @@ func (client PortsClient) GetLivenessSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // GetLivenessResponder handles the response to the GetLiveness request. The method always
 // closes the http.Response Body.
 func (client PortsClient) GetLivenessResponder(resp *http.Response) (result Liveness, err error) {
@@ -234,6 +245,7 @@ func (client PortsClient) GetLivenessResponder(resp *http.Response) (result Live
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListAcceptingProcesses returns a collection of processes accepting on the specified port
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -282,6 +294,7 @@ func (client PortsClient) ListAcceptingProcesses(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListAcceptingProcessesPreparer prepares the ListAcceptingProcesses request.
 func (client PortsClient) ListAcceptingProcessesPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -311,6 +324,7 @@ func (client PortsClient) ListAcceptingProcessesPreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListAcceptingProcessesSender sends the ListAcceptingProcesses request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) ListAcceptingProcessesSender(req *http.Request) (*http.Response, error) {
@@ -318,6 +332,7 @@ func (client PortsClient) ListAcceptingProcessesSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListAcceptingProcessesResponder handles the response to the ListAcceptingProcesses request. The method always
 // closes the http.Response Body.
 func (client PortsClient) ListAcceptingProcessesResponder(resp *http.Response) (result ProcessCollection, err error) {
@@ -352,12 +367,14 @@ func (client PortsClient) listAcceptingProcessesNextResults(lastResults ProcessC
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListAcceptingProcessesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PortsClient) ListAcceptingProcessesComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result ProcessCollectionIterator, err error) {
 	result.page, err = client.ListAcceptingProcesses(ctx, resourceGroupName, workspaceName, machineName, portName, startTime, endTime)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnections returns a collection of connections established via the specified port.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
@@ -406,6 +423,7 @@ func (client PortsClient) ListConnections(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsPreparer prepares the ListConnections request.
 func (client PortsClient) ListConnectionsPreparer(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -435,6 +453,7 @@ func (client PortsClient) ListConnectionsPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsSender sends the ListConnections request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) ListConnectionsSender(req *http.Request) (*http.Response, error) {
@@ -442,6 +461,7 @@ func (client PortsClient) ListConnectionsSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsResponder handles the response to the ListConnections request. The method always
 // closes the http.Response Body.
 func (client PortsClient) ListConnectionsResponder(resp *http.Response) (result ConnectionCollection, err error) {
@@ -476,6 +496,7 @@ func (client PortsClient) listConnectionsNextResults(lastResults ConnectionColle
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/servicemap instead.
 // ListConnectionsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client PortsClient) ListConnectionsComplete(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result ConnectionCollectionIterator, err error) {
 	result.page, err = client.ListConnections(ctx, resourceGroupName, workspaceName, machineName, portName, startTime, endTime)

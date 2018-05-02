@@ -39,14 +39,15 @@ func NewPersonGroupPersonClient(azureRegion AzureRegions) PersonGroupPersonClien
 
 // AddPersonFaceFromStream add a representative face to a person for identification. The input face is specified as an
 // image with a targetFace rectangle.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
-// imageParameter is an image stream. imageParameter will be closed upon successful return. Callers should ensure
-// closure when receiving an error.userData is user-specified data about the face for any purpose. The maximum
-// length is 1KB. targetFace is a face rectangle to specify the target face to be added to a person in the format
-// of "targetFace=left,top,width,height". E.g. "targetFace=10,10,100,100". If there is more than one face in the
-// image, targetFace is required to specify which face to add. No targetFace means there is only one face detected
-// in the entire image.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// imageParameter - an image stream.
+// userData - user-specified data about the face for any purpose. The maximum length is 1KB.
+// targetFace - a face rectangle to specify the target face to be added to a person in the format of
+// "targetFace=left,top,width,height". E.g. "targetFace=10,10,100,100". If there is more than one face in the
+// image, targetFace is required to specify which face to add. No targetFace means there is only one face
+// detected in the entire image.
 func (client PersonGroupPersonClient) AddPersonFaceFromStream(ctx context.Context, personGroupID string, personID uuid.UUID, imageParameter io.ReadCloser, userData string, targetFace []int32) (result PersistedFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -98,7 +99,7 @@ func (client PersonGroupPersonClient) AddPersonFaceFromStreamPreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsOctetStream(),
+		autorest.AsContentType("application/octet-stream"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}/persons/{personId}/persistedFaces", pathParameters),
@@ -129,13 +130,15 @@ func (client PersonGroupPersonClient) AddPersonFaceFromStreamResponder(resp *htt
 
 // AddPersonFaceFromURL add a representative face to a person for identification. The input face is specified as an
 // image with a targetFace rectangle.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
-// imageURL is a JSON document with a URL pointing to the image that is to be analyzed. userData is user-specified
-// data about the face for any purpose. The maximum length is 1KB. targetFace is a face rectangle to specify the
-// target face to be added to a person in the format of "targetFace=left,top,width,height". E.g.
-// "targetFace=10,10,100,100". If there is more than one face in the image, targetFace is required to specify which
-// face to add. No targetFace means there is only one face detected in the entire image.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// imageURL - a JSON document with a URL pointing to the image that is to be analyzed.
+// userData - user-specified data about the face for any purpose. The maximum length is 1KB.
+// targetFace - a face rectangle to specify the target face to be added to a person in the format of
+// "targetFace=left,top,width,height". E.g. "targetFace=10,10,100,100". If there is more than one face in the
+// image, targetFace is required to specify which face to add. No targetFace means there is only one face
+// detected in the entire image.
 func (client PersonGroupPersonClient) AddPersonFaceFromURL(ctx context.Context, personGroupID string, personID uuid.UUID, imageURL ImageURL, userData string, targetFace []int32) (result PersistedFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -189,7 +192,7 @@ func (client PersonGroupPersonClient) AddPersonFaceFromURLPreparer(ctx context.C
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}/persons/{personId}/persistedFaces", pathParameters),
@@ -219,8 +222,9 @@ func (client PersonGroupPersonClient) AddPersonFaceFromURLResponder(resp *http.R
 }
 
 // Create create a new person in a specified person group.
-//
-// personGroupID is id referencing a particular person group. body is request body for creating new person.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// body - request body for creating new person.
 func (client PersonGroupPersonClient) Create(ctx context.Context, personGroupID string, body NameAndUserDataContract) (result Person, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -266,7 +270,7 @@ func (client PersonGroupPersonClient) CreatePreparer(ctx context.Context, person
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}/persons", pathParameters),
@@ -295,8 +299,9 @@ func (client PersonGroupPersonClient) CreateResponder(resp *http.Response) (resu
 }
 
 // Delete delete an existing person from a person group. Persisted face images of the person will also be deleted.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
 func (client PersonGroupPersonClient) Delete(ctx context.Context, personGroupID string, personID uuid.UUID) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -364,9 +369,10 @@ func (client PersonGroupPersonClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // DeleteFace delete a face from a person. Relative image for the persisted face will also be deleted.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
-// persistedFaceID is id referencing a particular persistedFaceId of an existing face.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// persistedFaceID - id referencing a particular persistedFaceId of an existing face.
 func (client PersonGroupPersonClient) DeleteFace(ctx context.Context, personGroupID string, personID uuid.UUID, persistedFaceID uuid.UUID) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -435,8 +441,9 @@ func (client PersonGroupPersonClient) DeleteFaceResponder(resp *http.Response) (
 }
 
 // Get retrieve a person's information, including registered persisted faces, name and userData.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
 func (client PersonGroupPersonClient) Get(ctx context.Context, personGroupID string, personID uuid.UUID) (result Person, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -506,9 +513,10 @@ func (client PersonGroupPersonClient) GetResponder(resp *http.Response) (result 
 
 // GetFace retrieve information about a persisted face (specified by persistedFaceId, personId and its belonging
 // personGroupId).
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
-// persistedFaceID is id referencing a particular persistedFaceId of an existing face.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// persistedFaceID - id referencing a particular persistedFaceId of an existing face.
 func (client PersonGroupPersonClient) GetFace(ctx context.Context, personGroupID string, personID uuid.UUID, persistedFaceID uuid.UUID) (result PersistedFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -579,10 +587,10 @@ func (client PersonGroupPersonClient) GetFaceResponder(resp *http.Response) (res
 
 // List list all persons in a person group, and retrieve person information (including personId, name, userData and
 // persistedFaceIds of registered faces of the person).
-//
-// personGroupID is id referencing a particular person group. start is starting person id to return (used to list a
-// range of persons). top is number of persons to return starting with the person id indicated by the 'start'
-// parameter.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// start - starting person id to return (used to list a range of persons).
+// top - number of persons to return starting with the person id indicated by the 'start' parameter.
 func (client PersonGroupPersonClient) List(ctx context.Context, personGroupID string, start string, top *int32) (result ListPerson, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -664,9 +672,10 @@ func (client PersonGroupPersonClient) ListResponder(resp *http.Response) (result
 }
 
 // Update update name or userData of a person.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person. body
-// is request body for person update operation.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// body - request body for person update operation.
 func (client PersonGroupPersonClient) Update(ctx context.Context, personGroupID string, personID uuid.UUID, body NameAndUserDataContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -708,7 +717,7 @@ func (client PersonGroupPersonClient) UpdatePreparer(ctx context.Context, person
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}/persons/{personId}", pathParameters),
@@ -736,10 +745,11 @@ func (client PersonGroupPersonClient) UpdateResponder(resp *http.Response) (resu
 }
 
 // UpdateFace update a person persisted face's userData field.
-//
-// personGroupID is id referencing a particular person group. personID is id referencing a particular person.
-// persistedFaceID is id referencing a particular persistedFaceId of an existing face. body is request body for
-// updating persisted face.
+// Parameters:
+// personGroupID - id referencing a particular person group.
+// personID - id referencing a particular person.
+// persistedFaceID - id referencing a particular persistedFaceId of an existing face.
+// body - request body for updating persisted face.
 func (client PersonGroupPersonClient) UpdateFace(ctx context.Context, personGroupID string, personID uuid.UUID, persistedFaceID uuid.UUID, body UpdatePersonFaceRequest) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
@@ -782,7 +792,7 @@ func (client PersonGroupPersonClient) UpdateFacePreparer(ctx context.Context, pe
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
 		autorest.WithPathParameters("/persongroups/{personGroupId}/persons/{personId}/persistedFaces/{persistedFaceId}", pathParameters),

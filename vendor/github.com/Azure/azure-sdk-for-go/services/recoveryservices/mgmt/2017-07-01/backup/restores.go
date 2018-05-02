@@ -41,12 +41,14 @@ func NewRestoresClientWithBaseURI(baseURI string, subscriptionID string) Restore
 
 // Trigger restores the specified backed up data. This is an asynchronous operation. To know the status of this API
 // call, use GetProtectedItemOperationResult API.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. fabricName is fabric name associated with the backed up items.
-// containerName is container name associated with the backed up items. protectedItemName is backed up item to be
-// restored. recoveryPointID is recovery point ID which represents the backed up data to be restored. parameters is
-// resource restore request
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// fabricName - fabric name associated with the backed up items.
+// containerName - container name associated with the backed up items.
+// protectedItemName - backed up item to be restored.
+// recoveryPointID - recovery point ID which represents the backed up data to be restored.
+// parameters - resource restore request
 func (client RestoresClient) Trigger(ctx context.Context, vaultName string, resourceGroupName string, fabricName string, containerName string, protectedItemName string, recoveryPointID string, parameters RestoreRequestResource) (result autorest.Response, err error) {
 	req, err := client.TriggerPreparer(ctx, vaultName, resourceGroupName, fabricName, containerName, protectedItemName, recoveryPointID, parameters)
 	if err != nil {
@@ -87,7 +89,7 @@ func (client RestoresClient) TriggerPreparer(ctx context.Context, vaultName stri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupFabrics/{fabricName}/protectionContainers/{containerName}/protectedItems/{protectedItemName}/recoveryPoints/{recoveryPointId}/restore", pathParameters),

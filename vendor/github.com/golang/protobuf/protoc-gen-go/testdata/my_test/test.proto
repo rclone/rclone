@@ -34,6 +34,8 @@ syntax = "proto2";
 // This package holds interesting messages.
 package my.test;  // dotted package name
 
+option go_package = "github.com/golang/protobuf/protoc-gen-go/testdata/my_test;test";
+
 //import "imp.proto";
 import "multi/multi1.proto";  // unused import
 
@@ -145,7 +147,7 @@ message Communique {
     Days today = 10;
     bool maybe = 11;
     sint32 delta = 12;  // name will conflict with Delta below
-    Reply msg = 13;
+    Reply msg = 16;  // requires two bytes to encode field tag
     group SomeGroup = 14 {
       optional string member = 15;
     }

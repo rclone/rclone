@@ -1554,7 +1554,7 @@
       }
     }
   },
-  "revision": "20180314",
+  "revision": "20180413",
   "rootUrl": "https://dataflow.googleapis.com/",
   "schemas": {
     "ApproximateProgress": {
@@ -1657,6 +1657,10 @@
         "time": {
           "description": "The time this event was emitted to indicate a new target or current\nnum_workers value.",
           "format": "google-datetime",
+          "type": "string"
+        },
+        "workerPool": {
+          "description": "A short and friendly name for the worker pool this event refers to,\npopulated from the value of PoolStageRelation::user_pool_name.",
           "type": "string"
         }
       },
@@ -3144,6 +3148,10 @@
         },
         "distribution": {
           "description": "A struct value describing properties of a distribution of numeric values.",
+          "type": "any"
+        },
+        "gauge": {
+          "description": "A struct value describing properties of a Gauge.\nMetrics of gauge type show the value of a metric across time, and is\naggregated based on the newest value.",
           "type": "any"
         },
         "internal": {

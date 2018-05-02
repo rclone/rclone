@@ -43,8 +43,9 @@ func NewReplicationRecoveryServicesProvidersClientWithBaseURI(baseURI string, su
 }
 
 // Delete the operation to removes/delete(unregister) a recovery services provider from the vault
-//
-// fabricName is fabric name. providerName is recovery services provider name.
+// Parameters:
+// fabricName - fabric name.
+// providerName - recovery services provider name.
 func (client ReplicationRecoveryServicesProvidersClient) Delete(ctx context.Context, fabricName string, providerName string) (result ReplicationRecoveryServicesProvidersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, fabricName, providerName)
 	if err != nil {
@@ -112,8 +113,9 @@ func (client ReplicationRecoveryServicesProvidersClient) DeleteResponder(resp *h
 }
 
 // Get gets the details of registered recovery services provider.
-//
-// fabricName is fabric name. providerName is recovery services provider name
+// Parameters:
+// fabricName - fabric name.
+// providerName - recovery services provider name
 func (client ReplicationRecoveryServicesProvidersClient) Get(ctx context.Context, fabricName string, providerName string) (result RecoveryServicesProvider, err error) {
 	req, err := client.GetPreparer(ctx, fabricName, providerName)
 	if err != nil {
@@ -272,8 +274,8 @@ func (client ReplicationRecoveryServicesProvidersClient) ListComplete(ctx contex
 }
 
 // ListByReplicationFabrics lists the registered recovery services providers for the specified fabric.
-//
-// fabricName is fabric name
+// Parameters:
+// fabricName - fabric name
 func (client ReplicationRecoveryServicesProvidersClient) ListByReplicationFabrics(ctx context.Context, fabricName string) (result RecoveryServicesProviderCollectionPage, err error) {
 	result.fn = client.listByReplicationFabricsNextResults
 	req, err := client.ListByReplicationFabricsPreparer(ctx, fabricName)
@@ -367,8 +369,9 @@ func (client ReplicationRecoveryServicesProvidersClient) ListByReplicationFabric
 }
 
 // Purge the operation to purge(force delete) a recovery services provider from the vault.
-//
-// fabricName is fabric name. providerName is recovery services provider name.
+// Parameters:
+// fabricName - fabric name.
+// providerName - recovery services provider name.
 func (client ReplicationRecoveryServicesProvidersClient) Purge(ctx context.Context, fabricName string, providerName string) (result ReplicationRecoveryServicesProvidersPurgeFuture, err error) {
 	req, err := client.PurgePreparer(ctx, fabricName, providerName)
 	if err != nil {
@@ -436,8 +439,9 @@ func (client ReplicationRecoveryServicesProvidersClient) PurgeResponder(resp *ht
 }
 
 // RefreshProvider the operation to refresh the information from the recovery services provider.
-//
-// fabricName is fabric name. providerName is recovery services provider name.
+// Parameters:
+// fabricName - fabric name.
+// providerName - recovery services provider name.
 func (client ReplicationRecoveryServicesProvidersClient) RefreshProvider(ctx context.Context, fabricName string, providerName string) (result ReplicationRecoveryServicesProvidersRefreshProviderFuture, err error) {
 	req, err := client.RefreshProviderPreparer(ctx, fabricName, providerName)
 	if err != nil {

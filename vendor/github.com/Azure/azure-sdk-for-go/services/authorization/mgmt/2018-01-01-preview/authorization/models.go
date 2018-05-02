@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ClassicAdministrator classic Administrators
 type ClassicAdministrator struct {
 	// ID - The ID of the administrator.
@@ -36,6 +37,26 @@ type ClassicAdministrator struct {
 	*ClassicAdministratorProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
+// MarshalJSON is the custom marshaler for ClassicAdministrator.
+func (ca ClassicAdministrator) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ca.ID != nil {
+		objectMap["id"] = ca.ID
+	}
+	if ca.Name != nil {
+		objectMap["name"] = ca.Name
+	}
+	if ca.Type != nil {
+		objectMap["type"] = ca.Type
+	}
+	if ca.ClassicAdministratorProperties != nil {
+		objectMap["properties"] = ca.ClassicAdministratorProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // UnmarshalJSON is the custom unmarshaler for ClassicAdministrator struct.
 func (ca *ClassicAdministrator) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -87,6 +108,7 @@ func (ca *ClassicAdministrator) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ClassicAdministratorListResult classicAdministrator list result information.
 type ClassicAdministratorListResult struct {
 	autorest.Response `json:"-"`
@@ -96,12 +118,14 @@ type ClassicAdministratorListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ClassicAdministratorListResultIterator provides access to a complete listing of ClassicAdministrator values.
 type ClassicAdministratorListResultIterator struct {
 	i    int
 	page ClassicAdministratorListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ClassicAdministratorListResultIterator) Next() error {
@@ -118,16 +142,19 @@ func (iter *ClassicAdministratorListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ClassicAdministratorListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (iter ClassicAdministratorListResultIterator) Response() ClassicAdministratorListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ClassicAdministratorListResultIterator) Value() ClassicAdministrator {
@@ -137,6 +164,7 @@ func (iter ClassicAdministratorListResultIterator) Value() ClassicAdministrator 
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (calr ClassicAdministratorListResult) IsEmpty() bool {
 	return calr.Value == nil || len(*calr.Value) == 0
@@ -154,12 +182,14 @@ func (calr ClassicAdministratorListResult) classicAdministratorListResultPrepare
 		autorest.WithBaseURL(to.String(calr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ClassicAdministratorListResultPage contains a page of ClassicAdministrator values.
 type ClassicAdministratorListResultPage struct {
 	fn   func(ClassicAdministratorListResult) (ClassicAdministratorListResult, error)
 	calr ClassicAdministratorListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ClassicAdministratorListResultPage) Next() error {
@@ -171,16 +201,19 @@ func (page *ClassicAdministratorListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ClassicAdministratorListResultPage) NotDone() bool {
 	return !page.calr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (page ClassicAdministratorListResultPage) Response() ClassicAdministratorListResult {
 	return page.calr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ClassicAdministratorListResultPage) Values() []ClassicAdministrator {
 	if page.calr.IsEmpty() {
@@ -189,6 +222,7 @@ func (page ClassicAdministratorListResultPage) Values() []ClassicAdministrator {
 	return *page.calr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ClassicAdministratorProperties classic Administrator properties.
 type ClassicAdministratorProperties struct {
 	// EmailAddress - The email address of the administrator.
@@ -197,6 +231,7 @@ type ClassicAdministratorProperties struct {
 	Role *string `json:"role,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Permission role definition permissions.
 type Permission struct {
 	// Actions - Allowed actions.
@@ -209,6 +244,7 @@ type Permission struct {
 	NotDataActions *[]string `json:"notDataActions,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // PermissionGetResult permissions information.
 type PermissionGetResult struct {
 	autorest.Response `json:"-"`
@@ -218,12 +254,14 @@ type PermissionGetResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // PermissionGetResultIterator provides access to a complete listing of Permission values.
 type PermissionGetResultIterator struct {
 	i    int
 	page PermissionGetResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *PermissionGetResultIterator) Next() error {
@@ -240,16 +278,19 @@ func (iter *PermissionGetResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter PermissionGetResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (iter PermissionGetResultIterator) Response() PermissionGetResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter PermissionGetResultIterator) Value() Permission {
@@ -259,6 +300,7 @@ func (iter PermissionGetResultIterator) Value() Permission {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (pgr PermissionGetResult) IsEmpty() bool {
 	return pgr.Value == nil || len(*pgr.Value) == 0
@@ -276,12 +318,14 @@ func (pgr PermissionGetResult) permissionGetResultPreparer() (*http.Request, err
 		autorest.WithBaseURL(to.String(pgr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // PermissionGetResultPage contains a page of Permission values.
 type PermissionGetResultPage struct {
 	fn  func(PermissionGetResult) (PermissionGetResult, error)
 	pgr PermissionGetResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *PermissionGetResultPage) Next() error {
@@ -293,16 +337,19 @@ func (page *PermissionGetResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page PermissionGetResultPage) NotDone() bool {
 	return !page.pgr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (page PermissionGetResultPage) Response() PermissionGetResult {
 	return page.pgr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page PermissionGetResultPage) Values() []Permission {
 	if page.pgr.IsEmpty() {
@@ -311,6 +358,7 @@ func (page PermissionGetResultPage) Values() []Permission {
 	return *page.pgr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ProviderOperation operation
 type ProviderOperation struct {
 	// Name - The operation name.
@@ -327,6 +375,7 @@ type ProviderOperation struct {
 	IsDataAction *bool `json:"isDataAction,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ProviderOperationsMetadata provider Operations metadata
 type ProviderOperationsMetadata struct {
 	autorest.Response `json:"-"`
@@ -344,6 +393,7 @@ type ProviderOperationsMetadata struct {
 	Operations *[]ProviderOperation `json:"operations,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ProviderOperationsMetadataListResult provider operations metadata list
 type ProviderOperationsMetadataListResult struct {
 	autorest.Response `json:"-"`
@@ -353,6 +403,7 @@ type ProviderOperationsMetadataListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ProviderOperationsMetadataListResultIterator provides access to a complete listing of ProviderOperationsMetadata
 // values.
 type ProviderOperationsMetadataListResultIterator struct {
@@ -360,6 +411,7 @@ type ProviderOperationsMetadataListResultIterator struct {
 	page ProviderOperationsMetadataListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *ProviderOperationsMetadataListResultIterator) Next() error {
@@ -376,16 +428,19 @@ func (iter *ProviderOperationsMetadataListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter ProviderOperationsMetadataListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (iter ProviderOperationsMetadataListResultIterator) Response() ProviderOperationsMetadataListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter ProviderOperationsMetadataListResultIterator) Value() ProviderOperationsMetadata {
@@ -395,6 +450,7 @@ func (iter ProviderOperationsMetadataListResultIterator) Value() ProviderOperati
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (pomlr ProviderOperationsMetadataListResult) IsEmpty() bool {
 	return pomlr.Value == nil || len(*pomlr.Value) == 0
@@ -412,12 +468,14 @@ func (pomlr ProviderOperationsMetadataListResult) providerOperationsMetadataList
 		autorest.WithBaseURL(to.String(pomlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ProviderOperationsMetadataListResultPage contains a page of ProviderOperationsMetadata values.
 type ProviderOperationsMetadataListResultPage struct {
 	fn    func(ProviderOperationsMetadataListResult) (ProviderOperationsMetadataListResult, error)
 	pomlr ProviderOperationsMetadataListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *ProviderOperationsMetadataListResultPage) Next() error {
@@ -429,16 +487,19 @@ func (page *ProviderOperationsMetadataListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page ProviderOperationsMetadataListResultPage) NotDone() bool {
 	return !page.pomlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (page ProviderOperationsMetadataListResultPage) Response() ProviderOperationsMetadataListResult {
 	return page.pomlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page ProviderOperationsMetadataListResultPage) Values() []ProviderOperationsMetadata {
 	if page.pomlr.IsEmpty() {
@@ -447,6 +508,7 @@ func (page ProviderOperationsMetadataListResultPage) Values() []ProviderOperatio
 	return *page.pomlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // ResourceType resource Type
 type ResourceType struct {
 	// Name - The resource type name.
@@ -457,6 +519,7 @@ type ResourceType struct {
 	Operations *[]ProviderOperation `json:"operations,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignment role Assignments
 type RoleAssignment struct {
 	autorest.Response `json:"-"`
@@ -470,6 +533,26 @@ type RoleAssignment struct {
 	*RoleAssignmentPropertiesWithScope `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
+// MarshalJSON is the custom marshaler for RoleAssignment.
+func (ra RoleAssignment) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ra.ID != nil {
+		objectMap["id"] = ra.ID
+	}
+	if ra.Name != nil {
+		objectMap["name"] = ra.Name
+	}
+	if ra.Type != nil {
+		objectMap["type"] = ra.Type
+	}
+	if ra.RoleAssignmentPropertiesWithScope != nil {
+		objectMap["properties"] = ra.RoleAssignmentPropertiesWithScope
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // UnmarshalJSON is the custom unmarshaler for RoleAssignment struct.
 func (ra *RoleAssignment) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -521,12 +604,24 @@ func (ra *RoleAssignment) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentCreateParameters role assignment create parameters.
 type RoleAssignmentCreateParameters struct {
 	// RoleAssignmentProperties - Role assignment properties.
 	*RoleAssignmentProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
+// MarshalJSON is the custom marshaler for RoleAssignmentCreateParameters.
+func (racp RoleAssignmentCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if racp.RoleAssignmentProperties != nil {
+		objectMap["properties"] = racp.RoleAssignmentProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // UnmarshalJSON is the custom unmarshaler for RoleAssignmentCreateParameters struct.
 func (racp *RoleAssignmentCreateParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -551,6 +646,7 @@ func (racp *RoleAssignmentCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentFilter role Assignments filter
 type RoleAssignmentFilter struct {
 	// PrincipalID - Returns role assignment of the specific principal.
@@ -559,6 +655,7 @@ type RoleAssignmentFilter struct {
 	CanDelegate *bool `json:"canDelegate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentListResult role assignment list operation result.
 type RoleAssignmentListResult struct {
 	autorest.Response `json:"-"`
@@ -568,12 +665,14 @@ type RoleAssignmentListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentListResultIterator provides access to a complete listing of RoleAssignment values.
 type RoleAssignmentListResultIterator struct {
 	i    int
 	page RoleAssignmentListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *RoleAssignmentListResultIterator) Next() error {
@@ -590,16 +689,19 @@ func (iter *RoleAssignmentListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter RoleAssignmentListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (iter RoleAssignmentListResultIterator) Response() RoleAssignmentListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter RoleAssignmentListResultIterator) Value() RoleAssignment {
@@ -609,6 +711,7 @@ func (iter RoleAssignmentListResultIterator) Value() RoleAssignment {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (ralr RoleAssignmentListResult) IsEmpty() bool {
 	return ralr.Value == nil || len(*ralr.Value) == 0
@@ -626,12 +729,14 @@ func (ralr RoleAssignmentListResult) roleAssignmentListResultPreparer() (*http.R
 		autorest.WithBaseURL(to.String(ralr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentListResultPage contains a page of RoleAssignment values.
 type RoleAssignmentListResultPage struct {
 	fn   func(RoleAssignmentListResult) (RoleAssignmentListResult, error)
 	ralr RoleAssignmentListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *RoleAssignmentListResultPage) Next() error {
@@ -643,16 +748,19 @@ func (page *RoleAssignmentListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page RoleAssignmentListResultPage) NotDone() bool {
 	return !page.ralr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (page RoleAssignmentListResultPage) Response() RoleAssignmentListResult {
 	return page.ralr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page RoleAssignmentListResultPage) Values() []RoleAssignment {
 	if page.ralr.IsEmpty() {
@@ -661,6 +769,7 @@ func (page RoleAssignmentListResultPage) Values() []RoleAssignment {
 	return *page.ralr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentProperties role assignment properties.
 type RoleAssignmentProperties struct {
 	// RoleDefinitionID - The role definition ID used in the role assignment.
@@ -671,6 +780,7 @@ type RoleAssignmentProperties struct {
 	CanDelegate *bool `json:"canDelegate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleAssignmentPropertiesWithScope role assignment properties with scope.
 type RoleAssignmentPropertiesWithScope struct {
 	// Scope - The role assignment scope.
@@ -683,6 +793,7 @@ type RoleAssignmentPropertiesWithScope struct {
 	CanDelegate *bool `json:"canDelegate,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinition role definition.
 type RoleDefinition struct {
 	autorest.Response `json:"-"`
@@ -696,6 +807,26 @@ type RoleDefinition struct {
 	*RoleDefinitionProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
+// MarshalJSON is the custom marshaler for RoleDefinition.
+func (rd RoleDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rd.ID != nil {
+		objectMap["id"] = rd.ID
+	}
+	if rd.Name != nil {
+		objectMap["name"] = rd.Name
+	}
+	if rd.Type != nil {
+		objectMap["type"] = rd.Type
+	}
+	if rd.RoleDefinitionProperties != nil {
+		objectMap["properties"] = rd.RoleDefinitionProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // UnmarshalJSON is the custom unmarshaler for RoleDefinition struct.
 func (rd *RoleDefinition) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -747,12 +878,16 @@ func (rd *RoleDefinition) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinitionFilter role Definitions filter
 type RoleDefinitionFilter struct {
 	// RoleName - Returns role definition with the specific name.
 	RoleName *string `json:"roleName,omitempty"`
+	// Type - Returns role definition with the specific type.
+	Type *string `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinitionListResult role definition list operation result.
 type RoleDefinitionListResult struct {
 	autorest.Response `json:"-"`
@@ -762,12 +897,14 @@ type RoleDefinitionListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinitionListResultIterator provides access to a complete listing of RoleDefinition values.
 type RoleDefinitionListResultIterator struct {
 	i    int
 	page RoleDefinitionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *RoleDefinitionListResultIterator) Next() error {
@@ -784,16 +921,19 @@ func (iter *RoleDefinitionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter RoleDefinitionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (iter RoleDefinitionListResultIterator) Response() RoleDefinitionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter RoleDefinitionListResultIterator) Value() RoleDefinition {
@@ -803,6 +943,7 @@ func (iter RoleDefinitionListResultIterator) Value() RoleDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (rdlr RoleDefinitionListResult) IsEmpty() bool {
 	return rdlr.Value == nil || len(*rdlr.Value) == 0
@@ -820,12 +961,14 @@ func (rdlr RoleDefinitionListResult) roleDefinitionListResultPreparer() (*http.R
 		autorest.WithBaseURL(to.String(rdlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinitionListResultPage contains a page of RoleDefinition values.
 type RoleDefinitionListResultPage struct {
 	fn   func(RoleDefinitionListResult) (RoleDefinitionListResult, error)
 	rdlr RoleDefinitionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *RoleDefinitionListResultPage) Next() error {
@@ -837,16 +980,19 @@ func (page *RoleDefinitionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page RoleDefinitionListResultPage) NotDone() bool {
 	return !page.rdlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Response returns the raw server response from the last page request.
 func (page RoleDefinitionListResultPage) Response() RoleDefinitionListResult {
 	return page.rdlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page RoleDefinitionListResultPage) Values() []RoleDefinition {
 	if page.rdlr.IsEmpty() {
@@ -855,6 +1001,7 @@ func (page RoleDefinitionListResultPage) Values() []RoleDefinition {
 	return *page.rdlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization instead.
 // RoleDefinitionProperties role definition properties.
 type RoleDefinitionProperties struct {
 	// RoleName - The role name.

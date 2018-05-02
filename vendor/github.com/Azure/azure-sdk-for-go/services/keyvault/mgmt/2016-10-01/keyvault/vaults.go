@@ -42,8 +42,8 @@ func NewVaultsClientWithBaseURI(baseURI string, subscriptionID string) VaultsCli
 }
 
 // CheckNameAvailability checks that the vault name is valid and is not already in use.
-//
-// vaultName is the name of the vault.
+// Parameters:
+// vaultName - the name of the vault.
 func (client VaultsClient) CheckNameAvailability(ctx context.Context, vaultName VaultCheckNameAvailabilityParameters) (result CheckNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: vaultName,
@@ -85,7 +85,7 @@ func (client VaultsClient) CheckNameAvailabilityPreparer(ctx context.Context, va
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability", pathParameters),
@@ -115,9 +115,10 @@ func (client VaultsClient) CheckNameAvailabilityResponder(resp *http.Response) (
 }
 
 // CreateOrUpdate create or update a key vault in the specified subscription.
-//
-// resourceGroupName is the name of the Resource Group to which the server belongs. vaultName is name of the vault
-// parameters is parameters to create or update the vault
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the server belongs.
+// vaultName - name of the vault
+// parameters - parameters to create or update the vault
 func (client VaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, vaultName string, parameters VaultCreateOrUpdateParameters) (result Vault, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: vaultName,
@@ -167,7 +168,7 @@ func (client VaultsClient) CreateOrUpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}", pathParameters),
@@ -197,9 +198,9 @@ func (client VaultsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 }
 
 // Delete deletes the specified Azure key vault.
-//
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
-// vault to delete
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the vault belongs.
+// vaultName - the name of the vault to delete
 func (client VaultsClient) Delete(ctx context.Context, resourceGroupName string, vaultName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -263,9 +264,9 @@ func (client VaultsClient) DeleteResponder(resp *http.Response) (result autorest
 }
 
 // Get gets the specified Azure key vault.
-//
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
-// vault.
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the vault belongs.
+// vaultName - the name of the vault.
 func (client VaultsClient) Get(ctx context.Context, resourceGroupName string, vaultName string) (result Vault, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -330,8 +331,9 @@ func (client VaultsClient) GetResponder(resp *http.Response) (result Vault, err 
 }
 
 // GetDeleted gets the deleted Azure key vault.
-//
-// vaultName is the name of the vault. location is the location of the deleted vault.
+// Parameters:
+// vaultName - the name of the vault.
+// location - the location of the deleted vault.
 func (client VaultsClient) GetDeleted(ctx context.Context, vaultName string, location string) (result DeletedVault, err error) {
 	req, err := client.GetDeletedPreparer(ctx, vaultName, location)
 	if err != nil {
@@ -396,8 +398,8 @@ func (client VaultsClient) GetDeletedResponder(resp *http.Response) (result Dele
 }
 
 // List the List operation gets information about the vaults associated with the subscription.
-//
-// top is maximum number of results to return.
+// Parameters:
+// top - maximum number of results to return.
 func (client VaultsClient) List(ctx context.Context, top *int32) (result ResourceListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, top)
@@ -493,9 +495,9 @@ func (client VaultsClient) ListComplete(ctx context.Context, top *int32) (result
 
 // ListByResourceGroup the List operation gets information about the vaults associated with the subscription and within
 // the specified resource group.
-//
-// resourceGroupName is the name of the Resource Group to which the vault belongs. top is maximum number of results
-// to return.
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the vault belongs.
+// top - maximum number of results to return.
 func (client VaultsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32) (result VaultListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top)
@@ -590,8 +592,8 @@ func (client VaultsClient) ListByResourceGroupComplete(ctx context.Context, reso
 }
 
 // ListBySubscription the List operation gets information about the vaults associated with the subscription.
-//
-// top is maximum number of results to return.
+// Parameters:
+// top - maximum number of results to return.
 func (client VaultsClient) ListBySubscription(ctx context.Context, top *int32) (result VaultListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, top)
@@ -775,8 +777,9 @@ func (client VaultsClient) ListDeletedComplete(ctx context.Context) (result Dele
 }
 
 // PurgeDeleted permanently deletes the specified vault. aka Purges the deleted Azure key vault.
-//
-// vaultName is the name of the soft-deleted vault. location is the location of the soft-deleted vault.
+// Parameters:
+// vaultName - the name of the soft-deleted vault.
+// location - the location of the soft-deleted vault.
 func (client VaultsClient) PurgeDeleted(ctx context.Context, vaultName string, location string) (result VaultsPurgeDeletedFuture, err error) {
 	req, err := client.PurgeDeletedPreparer(ctx, vaultName, location)
 	if err != nil {
@@ -842,9 +845,10 @@ func (client VaultsClient) PurgeDeletedResponder(resp *http.Response) (result au
 }
 
 // Update update a key vault in the specified subscription.
-//
-// resourceGroupName is the name of the Resource Group to which the server belongs. vaultName is name of the vault
-// parameters is parameters to patch the vault
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the server belongs.
+// vaultName - name of the vault
+// parameters - parameters to patch the vault
 func (client VaultsClient) Update(ctx context.Context, resourceGroupName string, vaultName string, parameters VaultPatchParameters) (result Vault, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: vaultName,
@@ -887,7 +891,7 @@ func (client VaultsClient) UpdatePreparer(ctx context.Context, resourceGroupName
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}", pathParameters),
@@ -917,9 +921,11 @@ func (client VaultsClient) UpdateResponder(resp *http.Response) (result Vault, e
 }
 
 // UpdateAccessPolicy update access policies in a key vault in the specified subscription.
-//
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is name of the vault
-// operationKind is name of the operation parameters is access policy to merge into the vault
+// Parameters:
+// resourceGroupName - the name of the Resource Group to which the vault belongs.
+// vaultName - name of the vault
+// operationKind - name of the operation
+// parameters - access policy to merge into the vault
 func (client VaultsClient) UpdateAccessPolicy(ctx context.Context, resourceGroupName string, vaultName string, operationKind AccessPolicyUpdateKind, parameters VaultAccessPolicyParameters) (result VaultAccessPolicyParameters, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: vaultName,
@@ -966,7 +972,7 @@ func (client VaultsClient) UpdateAccessPolicyPreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}/accessPolicies/{operationKind}", pathParameters),

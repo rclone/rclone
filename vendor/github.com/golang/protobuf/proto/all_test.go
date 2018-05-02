@@ -41,11 +41,12 @@ import (
 	"reflect"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	. "github.com/golang/protobuf/proto"
-	. "github.com/golang/protobuf/proto/testdata"
+	. "github.com/golang/protobuf/proto/test_proto"
 )
 
 var globalO *Buffer
@@ -114,6 +115,8 @@ func initGoTest(setdefaults bool) *GoTest {
 		pb.F_BytesDefaulted = Default_GoTest_F_BytesDefaulted
 		pb.F_Sint32Defaulted = Int32(Default_GoTest_F_Sint32Defaulted)
 		pb.F_Sint64Defaulted = Int64(Default_GoTest_F_Sint64Defaulted)
+		pb.F_Sfixed32Defaulted = Int32(Default_GoTest_F_Sfixed32Defaulted)
+		pb.F_Sfixed64Defaulted = Int64(Default_GoTest_F_Sfixed64Defaulted)
 	}
 
 	pb.Kind = GoTest_TIME.Enum()
@@ -131,133 +134,11 @@ func initGoTest(setdefaults bool) *GoTest {
 	pb.F_BytesRequired = []byte("bytes")
 	pb.F_Sint32Required = Int32(-32)
 	pb.F_Sint64Required = Int64(-64)
+	pb.F_Sfixed32Required = Int32(-32)
+	pb.F_Sfixed64Required = Int64(-64)
 	pb.Requiredgroup = initGoTest_RequiredGroup()
 
 	return pb
-}
-
-func fail(msg string, b *bytes.Buffer, s string, t *testing.T) {
-	data := b.Bytes()
-	ld := len(data)
-	ls := len(s) / 2
-
-	fmt.Printf("fail %s ld=%d ls=%d\n", msg, ld, ls)
-
-	// find the interesting spot - n
-	n := ls
-	if ld < ls {
-		n = ld
-	}
-	j := 0
-	for i := 0; i < n; i++ {
-		bs := hex(s[j])*16 + hex(s[j+1])
-		j += 2
-		if data[i] == bs {
-			continue
-		}
-		n = i
-		break
-	}
-	l := n - 10
-	if l < 0 {
-		l = 0
-	}
-	h := n + 10
-
-	// find the interesting spot - n
-	fmt.Printf("is[%d]:", l)
-	for i := l; i < h; i++ {
-		if i >= ld {
-			fmt.Printf(" --")
-			continue
-		}
-		fmt.Printf(" %.2x", data[i])
-	}
-	fmt.Printf("\n")
-
-	fmt.Printf("sb[%d]:", l)
-	for i := l; i < h; i++ {
-		if i >= ls {
-			fmt.Printf(" --")
-			continue
-		}
-		bs := hex(s[j])*16 + hex(s[j+1])
-		j += 2
-		fmt.Printf(" %.2x", bs)
-	}
-	fmt.Printf("\n")
-
-	t.Fail()
-
-	//	t.Errorf("%s: \ngood: %s\nbad: %x", msg, s, b.Bytes())
-	// Print the output in a partially-decoded format; can
-	// be helpful when updating the test.  It produces the output
-	// that is pasted, with minor edits, into the argument to verify().
-	//	data := b.Bytes()
-	//	nesting := 0
-	//	for b.Len() > 0 {
-	//		start := len(data) - b.Len()
-	//		var u uint64
-	//		u, err := DecodeVarint(b)
-	//		if err != nil {
-	//			fmt.Printf("decode error on varint:", err)
-	//			return
-	//		}
-	//		wire := u & 0x7
-	//		tag := u >> 3
-	//		switch wire {
-	//		case WireVarint:
-	//			v, err := DecodeVarint(b)
-	//			if err != nil {
-	//				fmt.Printf("decode error on varint:", err)
-	//				return
-	//			}
-	//			fmt.Printf("\t\t\"%x\"  // field %d, encoding %d, value %d\n",
-	//				data[start:len(data)-b.Len()], tag, wire, v)
-	//		case WireFixed32:
-	//			v, err := DecodeFixed32(b)
-	//			if err != nil {
-	//				fmt.Printf("decode error on fixed32:", err)
-	//				return
-	//			}
-	//			fmt.Printf("\t\t\"%x\"  // field %d, encoding %d, value %d\n",
-	//				data[start:len(data)-b.Len()], tag, wire, v)
-	//		case WireFixed64:
-	//			v, err := DecodeFixed64(b)
-	//			if err != nil {
-	//				fmt.Printf("decode error on fixed64:", err)
-	//				return
-	//			}
-	//			fmt.Printf("\t\t\"%x\"  // field %d, encoding %d, value %d\n",
-	//				data[start:len(data)-b.Len()], tag, wire, v)
-	//		case WireBytes:
-	//			nb, err := DecodeVarint(b)
-	//			if err != nil {
-	//				fmt.Printf("decode error on bytes:", err)
-	//				return
-	//			}
-	//			after_tag := len(data) - b.Len()
-	//			str := make([]byte, nb)
-	//			_, err = b.Read(str)
-	//			if err != nil {
-	//				fmt.Printf("decode error on bytes:", err)
-	//				return
-	//			}
-	//			fmt.Printf("\t\t\"%x\" \"%x\"  // field %d, encoding %d (FIELD)\n",
-	//				data[start:after_tag], str, tag, wire)
-	//		case WireStartGroup:
-	//			nesting++
-	//			fmt.Printf("\t\t\"%x\"\t\t// start group field %d level %d\n",
-	//				data[start:len(data)-b.Len()], tag, nesting)
-	//		case WireEndGroup:
-	//			fmt.Printf("\t\t\"%x\"\t\t// end group field %d level %d\n",
-	//				data[start:len(data)-b.Len()], tag, nesting)
-	//			nesting--
-	//		default:
-	//			fmt.Printf("unrecognized wire type %d\n", wire)
-	//			return
-	//		}
-	//	}
 }
 
 func hex(c uint8) uint8 {
@@ -482,6 +363,48 @@ func TestMarshalerEncoding(t *testing.T) {
 	}
 }
 
+// Ensure that Buffer.Marshal uses O(N) memory for N messages
+func TestBufferMarshalAllocs(t *testing.T) {
+	value := &OtherMessage{Key: Int64(1)}
+	msg := &MyMessage{Count: Int32(1), Others: []*OtherMessage{value}}
+
+	reallocSize := func(t *testing.T, items int, prealloc int) (int64, int64) {
+		var b Buffer
+		b.SetBuf(make([]byte, 0, prealloc))
+
+		var allocSpace int64
+		prevCap := cap(b.Bytes())
+		for i := 0; i < items; i++ {
+			err := b.Marshal(msg)
+			if err != nil {
+				t.Errorf("Marshal err = %q", err)
+				break
+			}
+			if c := cap(b.Bytes()); prevCap != c {
+				allocSpace += int64(c)
+				prevCap = c
+			}
+		}
+		needSpace := int64(len(b.Bytes()))
+		return allocSpace, needSpace
+	}
+
+	for _, prealloc := range []int{0, 100, 10000} {
+		for _, items := range []int{1, 2, 5, 10, 20, 50, 100, 200, 500, 1000} {
+			runtimeSpace, need := reallocSize(t, items, prealloc)
+			totalSpace := int64(prealloc) + runtimeSpace
+
+			runtimeRatio := float64(runtimeSpace) / float64(need)
+			totalRatio := float64(totalSpace) / float64(need)
+
+			if totalRatio < 1 || runtimeRatio > 4 {
+				t.Errorf("needed %dB, allocated %dB total (ratio %.1f), allocated %dB at runtime (ratio %.1f)",
+					need, totalSpace, totalRatio, runtimeSpace, runtimeRatio)
+			}
+		}
+	}
+}
+
 // Simple tests for bytes
 func TestBytesPrimitives(t *testing.T) {
 	o := old()
@@ -519,7 +442,7 @@ func TestRequiredBit(t *testing.T) {
 	err := o.Marshal(pb)
 	if err == nil {
 		t.Error("did not catch missing required fields")
-	} else if strings.Index(err.Error(), "Kind") < 0 {
+	} else if !strings.Contains(err.Error(), "Kind") {
 		t.Error("wrong error type:", err)
 	}
 }
@@ -612,7 +535,9 @@ func TestEncodeDecode1(t *testing.T) {
 			"b404"+ // field 70, encoding 4, end group
 			"aa0605"+"6279746573"+ // field 101, encoding 2, string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
-			"b8067f") // field 103, encoding 0, 0x7f zigzag64
+			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff") // field 105, encoding 1, -64 fixed64
 }
 
 // All required fields set, defaults provided.
@@ -647,9 +572,13 @@ func TestEncodeDecode2(t *testing.T) {
 			"aa0605"+"6279746573"+ // field 101, encoding 2 string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
 			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff"+ // field 105, encoding 1, -64 fixed64
 			"8a1907"+"4269676e6f7365"+ // field 401, encoding 2, string "Bignose"
 			"90193f"+ // field 402, encoding 0, value 63
-			"98197f") // field 403, encoding 0, value 127
+			"98197f"+ // field 403, encoding 0, value 127
+			"a519e0ffffff"+ // field 404, encoding 5, -32 fixed32
+			"a919c0ffffffffffffff") // field 405, encoding 1, -64 fixed64
 
 }
 
@@ -669,6 +598,8 @@ func TestEncodeDecode3(t *testing.T) {
 	pb.F_BytesDefaulted = []byte("Bignose")
 	pb.F_Sint32Defaulted = Int32(-32)
 	pb.F_Sint64Defaulted = Int64(-64)
+	pb.F_Sfixed32Defaulted = Int32(-32)
+	pb.F_Sfixed64Defaulted = Int64(-64)
 
 	overify(t, pb,
 		"0807"+ // field 1, encoding 0, value 7
@@ -699,9 +630,13 @@ func TestEncodeDecode3(t *testing.T) {
 			"aa0605"+"6279746573"+ // field 101, encoding 2 string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
 			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff"+ // field 105, encoding 1, -64 fixed64
 			"8a1907"+"4269676e6f7365"+ // field 401, encoding 2, string "Bignose"
 			"90193f"+ // field 402, encoding 0, value 63
-			"98197f") // field 403, encoding 0, value 127
+			"98197f"+ // field 403, encoding 0, value 127
+			"a519e0ffffff"+ // field 404, encoding 5, -32 fixed32
+			"a919c0ffffffffffffff") // field 405, encoding 1, -64 fixed64
 
 }
 
@@ -724,6 +659,8 @@ func TestEncodeDecode4(t *testing.T) {
 	pb.F_BytesOptional = []byte("Bignose")
 	pb.F_Sint32Optional = Int32(-32)
 	pb.F_Sint64Optional = Int64(-64)
+	pb.F_Sfixed32Optional = Int32(-32)
+	pb.F_Sfixed64Optional = Int64(-64)
 	pb.Optionalgroup = initGoTest_OptionalGroup()
 
 	overify(t, pb,
@@ -771,12 +708,18 @@ func TestEncodeDecode4(t *testing.T) {
 			"aa0605"+"6279746573"+ // field 101, encoding 2 string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
 			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff"+ // field 105, encoding 1, -64 fixed64
 			"ea1207"+"4269676e6f7365"+ // field 301, encoding 2, string "Bignose"
 			"f0123f"+ // field 302, encoding 0, value 63
 			"f8127f"+ // field 303, encoding 0, value 127
+			"8513e0ffffff"+ // field 304, encoding 5, -32 fixed32
+			"8913c0ffffffffffffff"+ // field 305, encoding 1, -64 fixed64
 			"8a1907"+"4269676e6f7365"+ // field 401, encoding 2, string "Bignose"
 			"90193f"+ // field 402, encoding 0, value 63
-			"98197f") // field 403, encoding 0, value 127
+			"98197f"+ // field 403, encoding 0, value 127
+			"a519e0ffffff"+ // field 404, encoding 5, -32 fixed32
+			"a919c0ffffffffffffff") // field 405, encoding 1, -64 fixed64
 
 }
 
@@ -797,6 +740,8 @@ func TestEncodeDecode5(t *testing.T) {
 	pb.F_BytesRepeated = [][]byte{[]byte("big"), []byte("nose")}
 	pb.F_Sint32Repeated = []int32{32, -32}
 	pb.F_Sint64Repeated = []int64{64, -64}
+	pb.F_Sfixed32Repeated = []int32{32, -32}
+	pb.F_Sfixed64Repeated = []int64{64, -64}
 	pb.Repeatedgroup = []*GoTest_RepeatedGroup{initGoTest_RepeatedGroup(), initGoTest_RepeatedGroup()}
 
 	overify(t, pb,
@@ -856,15 +801,23 @@ func TestEncodeDecode5(t *testing.T) {
 			"aa0605"+"6279746573"+ // field 101, encoding 2 string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
 			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff"+ // field 105, encoding 1, -64 fixed64
 			"ca0c03"+"626967"+ // field 201, encoding 2, string "big"
 			"ca0c04"+"6e6f7365"+ // field 201, encoding 2, string "nose"
 			"d00c40"+ // field 202, encoding 0, value 32
 			"d00c3f"+ // field 202, encoding 0, value -32
 			"d80c8001"+ // field 203, encoding 0, value 64
 			"d80c7f"+ // field 203, encoding 0, value -64
+			"e50c20000000"+ // field 204, encoding 5, 32 fixed32
+			"e50ce0ffffff"+ // field 204, encoding 5, -32 fixed32
+			"e90c4000000000000000"+ // field 205, encoding 1, 64 fixed64
+			"e90cc0ffffffffffffff"+ // field 205, encoding 1, -64 fixed64
 			"8a1907"+"4269676e6f7365"+ // field 401, encoding 2, string "Bignose"
 			"90193f"+ // field 402, encoding 0, value 63
-			"98197f") // field 403, encoding 0, value 127
+			"98197f"+ // field 403, encoding 0, value 127
+			"a519e0ffffff"+ // field 404, encoding 5, -32 fixed32
+			"a919c0ffffffffffffff") // field 405, encoding 1, -64 fixed64
 
 }
 
@@ -882,6 +835,8 @@ func TestEncodeDecode6(t *testing.T) {
 	pb.F_DoubleRepeatedPacked = []float64{64., 65.}
 	pb.F_Sint32RepeatedPacked = []int32{32, -32}
 	pb.F_Sint64RepeatedPacked = []int64{64, -64}
+	pb.F_Sfixed32RepeatedPacked = []int32{32, -32}
+	pb.F_Sfixed64RepeatedPacked = []int64{64, -64}
 
 	overify(t, pb,
 		"0807"+ // field 1, encoding 0, value 7
@@ -917,10 +872,17 @@ func TestEncodeDecode6(t *testing.T) {
 			"aa0605"+"6279746573"+ // field 101, encoding 2 string "bytes"
 			"b0063f"+ // field 102, encoding 0, 0x3f zigzag32
 			"b8067f"+ // field 103, encoding 0, 0x7f zigzag64
+			"c506e0ffffff"+ // field 104, encoding 5, -32 fixed32
+			"c906c0ffffffffffffff"+ // field 105, encoding 1, -64 fixed64
 			"b21f02"+ // field 502, encoding 2, 2 bytes
 			"403f"+ // value 32, value -32
 			"ba1f03"+ // field 503, encoding 2, 3 bytes
-			"80017f") // value 64, value -64
+			"80017f"+ // value 64, value -64
+			"c21f08"+ // field 504, encoding 2, 8 bytes
+			"20000000e0ffffff"+ // value 32, value -32
+			"ca1f10"+ // field 505, encoding 2, 16 bytes
+			"4000000000000000c0ffffffffffffff") // value 64, value -64
+
 }
 
 // Test that we can encode empty bytes fields.
@@ -1167,13 +1129,10 @@ func TestBigRepeated(t *testing.T) {
 		if pbd.Repeatedgroup[i] == nil { // TODO: more checking?
 			t.Error("pbd.Repeatedgroup bad")
 		}
-		var x uint64
-		x = uint64(pbd.F_Sint64Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Sint64Repeated[i]); x != i {
 			t.Error("pbd.F_Sint64Repeated bad", x, i)
 		}
-		x = uint64(pbd.F_Sint32Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Sint32Repeated[i]); x != i {
 			t.Error("pbd.F_Sint32Repeated bad", x, i)
 		}
 		s := fmt.Sprint(i)
@@ -1181,39 +1140,31 @@ func TestBigRepeated(t *testing.T) {
 		if pbd.F_StringRepeated[i] != s {
 			t.Error("pbd.F_Sint32Repeated bad", pbd.F_StringRepeated[i], i)
 		}
-		x = uint64(pbd.F_DoubleRepeated[i])
-		if x != i {
+		if x := uint64(pbd.F_DoubleRepeated[i]); x != i {
 			t.Error("pbd.F_DoubleRepeated bad", x, i)
 		}
-		x = uint64(pbd.F_FloatRepeated[i])
-		if x != i {
+		if x := uint64(pbd.F_FloatRepeated[i]); x != i {
 			t.Error("pbd.F_FloatRepeated bad", x, i)
 		}
-		x = pbd.F_Uint64Repeated[i]
-		if x != i {
+		if x := pbd.F_Uint64Repeated[i]; x != i {
 			t.Error("pbd.F_Uint64Repeated bad", x, i)
 		}
-		x = uint64(pbd.F_Uint32Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Uint32Repeated[i]); x != i {
 			t.Error("pbd.F_Uint32Repeated bad", x, i)
 		}
-		x = pbd.F_Fixed64Repeated[i]
-		if x != i {
+		if x := pbd.F_Fixed64Repeated[i]; x != i {
 			t.Error("pbd.F_Fixed64Repeated bad", x, i)
 		}
-		x = uint64(pbd.F_Fixed32Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Fixed32Repeated[i]); x != i {
 			t.Error("pbd.F_Fixed32Repeated bad", x, i)
 		}
-		x = uint64(pbd.F_Int64Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Int64Repeated[i]); x != i {
 			t.Error("pbd.F_Int64Repeated bad", x, i)
 		}
-		x = uint64(pbd.F_Int32Repeated[i])
-		if x != i {
+		if x := uint64(pbd.F_Int32Repeated[i]); x != i {
 			t.Error("pbd.F_Int32Repeated bad", x, i)
 		}
-		if pbd.F_BoolRepeated[i] != (i%2 == 0) {
+		if x := pbd.F_BoolRepeated[i]; x != (i%2 == 0) {
 			t.Error("pbd.F_BoolRepeated bad", x, i)
 		}
 		if pbd.RepeatedField[i] == nil { // TODO: more checking?
@@ -1222,21 +1173,25 @@ func TestBigRepeated(t *testing.T) {
 	}
 }
 
-// Verify we give a useful message when decoding to the wrong structure type.
-func TestTypeMismatch(t *testing.T) {
-	pb1 := initGoTest(true)
+func TestBadWireTypeUnknown(t *testing.T) {
+	var b []byte
+	fmt.Sscanf("0a01780d00000000080b101612036161611521000000202c220362626225370000002203636363214200000000000000584d5a036464645900000000000056405d63000000", "%x", &b)
 
-	// Marshal
-	o := old()
-	o.Marshal(pb1)
+	m := new(MyMessage)
+	if err := Unmarshal(b, m); err != nil {
+		t.Errorf("unexpected Unmarshal error: %v", err)
+	}
 
-	// Now Unmarshal it to the wrong type.
-	pb2 := initGoTestField()
-	err := o.Unmarshal(pb2)
-	if err == nil {
-		t.Error("expected error, got no error")
-	} else if !strings.Contains(err.Error(), "bad wiretype") {
-		t.Error("expected bad wiretype error, got", err)
+	var unknown []byte
+	fmt.Sscanf("0a01780d0000000010161521000000202c2537000000214200000000000000584d5a036464645d63000000", "%x", &unknown)
+	if !bytes.Equal(m.XXX_unrecognized, unknown) {
+		t.Errorf("unknown bytes mismatch:\ngot  %x\nwant %x", m.XXX_unrecognized, unknown)
+	}
+	DiscardUnknown(m)
+
+	want := &MyMessage{Count: Int32(11), Name: String("aaa"), Pet: []string{"bbb", "ccc"}, Bigfloat: Float64(88)}
+	if !Equal(m, want) {
+		t.Errorf("message mismatch:\ngot  %v\nwant %v", m, want)
 	}
 }
 
@@ -1331,7 +1286,8 @@ func TestRequiredFieldEnforcement(t *testing.T) {
 	err = Unmarshal(buf, pb)
 	if err == nil {
 		t.Error("unmarshal: expected error, got nil")
-	} else if _, ok := err.(*RequiredNotSetError); !ok || !strings.Contains(err.Error(), "{Unknown}") {
+	} else if _, ok := err.(*RequiredNotSetError); !ok || !strings.Contains(err.Error(), "Type") && !strings.Contains(err.Error(), "{Unknown}") {
+		// TODO: remove unknown cases once we commit to the new unmarshaler.
 		t.Errorf("unmarshal: bad error type: %v", err)
 	}
 }
@@ -1348,7 +1304,7 @@ func TestRequiredFieldEnforcementGroups(t *testing.T) {
 	buf := []byte{11, 12}
 	if err := Unmarshal(buf, pb); err == nil {
 		t.Error("unmarshal: expected error, got nil")
-	} else if _, ok := err.(*RequiredNotSetError); !ok || !strings.Contains(err.Error(), "Group.{Unknown}") {
+	} else if _, ok := err.(*RequiredNotSetError); !ok || !strings.Contains(err.Error(), "Group.Field") && !strings.Contains(err.Error(), "Group.{Unknown}") {
 		t.Errorf("unmarshal: bad error type: %v", err)
 	}
 }
@@ -1385,18 +1341,7 @@ func (*NNIMessage) Reset()         {}
 func (*NNIMessage) String() string { return "" }
 func (*NNIMessage) ProtoMessage()  {}
 
-// A type that implements the Marshaler interface and is nillable.
-type nillableMessage struct {
-	x uint64
-}
-
-func (nm *nillableMessage) Marshal() ([]byte, error) {
-	return EncodeVarint(nm.x), nil
-}
-
-type NMMessage struct {
-	nm *nillableMessage
-}
+type NMMessage struct{}
 
 func (*NMMessage) Reset()         {}
 func (*NMMessage) String() string { return "" }
@@ -1595,6 +1540,14 @@ func TestVarintOverflow(t *testing.T) {
 	}
 }
 
+func TestBytesWithInvalidLengthInGroup(t *testing.T) {
+	// Overflowing a 64-bit length should not be allowed.
+	b := []byte{0xbb, 0x30, 0xb2, 0x30, 0xb0, 0xb2, 0x83, 0xf1, 0xb0, 0xb2, 0xef, 0xbf, 0xbd, 0x01}
+	if err := Unmarshal(b, new(MyMessage)); err == nil {
+		t.Fatalf("Overflowed uint64 length without error")
+	}
+}
+
 func TestUnmarshalFuzz(t *testing.T) {
 	const N = 1000
 	seed := time.Now().UnixNano()
@@ -1664,6 +1617,28 @@ func TestExtensionMarshalOrder(t *testing.T) {
 		}
 		if !bytes.Equal(b, orig) {
 			t.Errorf("Bytes differ on attempt #%d", i)
+		}
+	}
+}
+
+func TestExtensionMapFieldMarshalDeterministic(t *testing.T) {
+	m := &MyMessage{Count: Int(123)}
+	if err := SetExtension(m, E_Ext_More, &Ext{MapField: map[int32]int32{1: 1, 2: 2, 3: 3, 4: 4}}); err != nil {
+		t.Fatalf("SetExtension: %v", err)
+	}
+	marshal := func(m Message) []byte {
+		var b Buffer
+		b.SetDeterministic(true)
+		if err := b.Marshal(m); err != nil {
+			t.Fatalf("Marshal failed: %v", err)
+		}
+		return b.Bytes()
+	}
+
+	want := marshal(m)
+	for i := 0; i < 100; i++ {
+		if got := marshal(m); !bytes.Equal(got, want) {
+			t.Errorf("Marshal produced inconsistent output with determinism enabled (pass %d).\n got %v\nwant %v", i, got, want)
 		}
 	}
 }
@@ -1802,6 +1777,43 @@ func TestUnmarshalMergesMessages(t *testing.T) {
 	}
 }
 
+func TestUnmarshalMergesGroups(t *testing.T) {
+	// If a nested group occurs twice in the input,
+	// the fields should be merged when decoding.
+	a := &GroupNew{
+		G: &GroupNew_G{
+			X: Int32(7),
+			Y: Int32(8),
+		},
+	}
+	aData, err := Marshal(a)
+	if err != nil {
+		t.Fatalf("Marshal(a): %v", err)
+	}
+	b := &GroupNew{
+		G: &GroupNew_G{
+			X: Int32(9),
+		},
+	}
+	bData, err := Marshal(b)
+	if err != nil {
+		t.Fatalf("Marshal(b): %v", err)
+	}
+	want := &GroupNew{
+		G: &GroupNew_G{
+			X: Int32(9),
+			Y: Int32(8),
+		},
+	}
+	got := new(GroupNew)
+	if err := Unmarshal(append(aData, bData...), got); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if !Equal(got, want) {
+		t.Errorf("\n got %v\nwant %v", got, want)
+	}
+}
+
 func TestEncodingSizes(t *testing.T) {
 	tests := []struct {
 		m Message
@@ -1845,7 +1857,9 @@ func TestRequiredNotSetError(t *testing.T) {
 		"b404" + // field 70, encoding 4, end group
 		"aa0605" + "6279746573" + // field 101, encoding 2, string "bytes"
 		"b0063f" + // field 102, encoding 0, 0x3f zigzag32
-		"b8067f" // field 103, encoding 0, 0x7f zigzag64
+		"b8067f" + // field 103, encoding 0, 0x7f zigzag64
+		"c506e0ffffff" + // field 104, encoding 5, -32 fixed32
+		"c906c0ffffffffffffff" // field 105, encoding 1, -64 fixed64
 
 	o := old()
 	bytes, err := Marshal(pb)
@@ -1854,7 +1868,7 @@ func TestRequiredNotSetError(t *testing.T) {
 		o.DebugPrint("", bytes)
 		t.Fatalf("expected = %s", expected)
 	}
-	if strings.Index(err.Error(), "RequiredField.Label") < 0 {
+	if !strings.Contains(err.Error(), "RequiredField.Label") {
 		t.Errorf("marshal-1 wrong err msg: %v", err)
 	}
 	if !equal(bytes, expected, t) {
@@ -1870,7 +1884,7 @@ func TestRequiredNotSetError(t *testing.T) {
 		o.DebugPrint("", bytes)
 		t.Fatalf("string = %s", expected)
 	}
-	if strings.Index(err.Error(), "RequiredField.{Unknown}") < 0 {
+	if !strings.Contains(err.Error(), "RequiredField.Label") && !strings.Contains(err.Error(), "RequiredField.{Unknown}") {
 		t.Errorf("unmarshal wrong err msg: %v", err)
 	}
 	bytes, err = Marshal(pbd)
@@ -1879,12 +1893,31 @@ func TestRequiredNotSetError(t *testing.T) {
 		o.DebugPrint("", bytes)
 		t.Fatalf("string = %s", expected)
 	}
-	if strings.Index(err.Error(), "RequiredField.Label") < 0 {
+	if !strings.Contains(err.Error(), "RequiredField.Label") {
 		t.Errorf("marshal-2 wrong err msg: %v", err)
 	}
 	if !equal(bytes, expected, t) {
 		o.DebugPrint("neq 2", bytes)
 		t.Fatalf("string = %s", expected)
+	}
+}
+
+func TestRequiredNotSetErrorWithBadWireTypes(t *testing.T) {
+	// Required field expects a varint, and properly found a varint.
+	if err := Unmarshal([]byte{0x08, 0x00}, new(GoEnum)); err != nil {
+		t.Errorf("Unmarshal = %v, want nil", err)
+	}
+	// Required field expects a varint, but found a fixed32 instead.
+	if err := Unmarshal([]byte{0x0d, 0x00, 0x00, 0x00, 0x00}, new(GoEnum)); err == nil {
+		t.Errorf("Unmarshal = nil, want RequiredNotSetError")
+	}
+	// Required field expects a varint, and found both a varint and fixed32 (ignored).
+	m := new(GoEnum)
+	if err := Unmarshal([]byte{0x08, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00}, m); err != nil {
+		t.Errorf("Unmarshal = %v, want nil", err)
+	}
+	if !bytes.Equal(m.XXX_unrecognized, []byte{0x0d, 0x00, 0x00, 0x00, 0x00}) {
+		t.Errorf("expected fixed32 to appear as unknown bytes: %x", m.XXX_unrecognized)
 	}
 }
 
@@ -1946,6 +1979,32 @@ func TestMapFieldMarshal(t *testing.T) {
 	(new(Buffer)).DebugPrint("Dump of b", b)
 }
 
+func TestMapFieldDeterministicMarshal(t *testing.T) {
+	m := &MessageWithMap{
+		NameMapping: map[int32]string{
+			1: "Rob",
+			4: "Ian",
+			8: "Dave",
+		},
+	}
+
+	marshal := func(m Message) []byte {
+		var b Buffer
+		b.SetDeterministic(true)
+		if err := b.Marshal(m); err != nil {
+			t.Fatalf("Marshal failed: %v", err)
+		}
+		return b.Bytes()
+	}
+
+	want := marshal(m)
+	for i := 0; i < 10; i++ {
+		if got := marshal(m); !bytes.Equal(got, want) {
+			t.Errorf("Marshal produced inconsistent output with determinism enabled (pass %d).\n got %v\nwant %v", i, got, want)
+		}
+	}
+}
+
 func TestMapFieldRoundTrips(t *testing.T) {
 	m := &MessageWithMap{
 		NameMapping: map[int32]string{
@@ -1954,7 +2013,7 @@ func TestMapFieldRoundTrips(t *testing.T) {
 			8: "Dave",
 		},
 		MsgMapping: map[int64]*FloatingPoint{
-			0x7001: &FloatingPoint{F: Float64(2.0)},
+			0x7001: {F: Float64(2.0)},
 		},
 		ByteMapping: map[bool][]byte{
 			false: []byte("that's not right!"),
@@ -1970,14 +2029,8 @@ func TestMapFieldRoundTrips(t *testing.T) {
 	if err := Unmarshal(b, m2); err != nil {
 		t.Fatalf("Unmarshal: %v", err)
 	}
-	for _, pair := range [][2]interface{}{
-		{m.NameMapping, m2.NameMapping},
-		{m.MsgMapping, m2.MsgMapping},
-		{m.ByteMapping, m2.ByteMapping},
-	} {
-		if !reflect.DeepEqual(pair[0], pair[1]) {
-			t.Errorf("Map did not survive a round trip.\ninitial: %v\n  final: %v", pair[0], pair[1])
-		}
+	if !Equal(m, m2) {
+		t.Errorf("Map did not survive a round trip.\ninitial: %v\n  final: %v", m, m2)
 	}
 }
 
@@ -2005,7 +2058,7 @@ func TestMapFieldWithNil(t *testing.T) {
 func TestMapFieldWithNilBytes(t *testing.T) {
 	m1 := &MessageWithMap{
 		ByteMapping: map[bool][]byte{
-			false: []byte{},
+			false: {},
 			true:  nil,
 		},
 	}
@@ -2119,6 +2172,22 @@ func TestOneof(t *testing.T) {
 	}
 }
 
+func TestOneofNilBytes(t *testing.T) {
+	// A oneof with nil byte slice should marshal to tag + 0 (size), with no error.
+	m := &Communique{Union: &Communique_Data{Data: nil}}
+	b, err := Marshal(m)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+	want := []byte{
+		7<<3 | 2, // tag 7, wire type 2
+		0,        // size
+	}
+	if !bytes.Equal(b, want) {
+		t.Errorf("Wrong result of Marshal: got %x, want %x", b, want)
+	}
+}
+
 func TestInefficientPackedBool(t *testing.T) {
 	// https://github.com/golang/protobuf/issues/76
 	inp := []byte{
@@ -2129,6 +2198,69 @@ func TestInefficientPackedBool(t *testing.T) {
 	}
 	if err := Unmarshal(inp, new(MoreRepeated)); err != nil {
 		t.Error(err)
+	}
+}
+
+// Make sure pure-reflect-based implementation handles
+// []int32-[]enum conversion correctly.
+func TestRepeatedEnum2(t *testing.T) {
+	pb := &RepeatedEnum{
+		Color: []RepeatedEnum_Color{RepeatedEnum_RED},
+	}
+	b, err := Marshal(pb)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+	x := new(RepeatedEnum)
+	err = Unmarshal(b, x)
+	if err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if !Equal(pb, x) {
+		t.Errorf("Incorrect result: want: %v got: %v", pb, x)
+	}
+}
+
+// TestConcurrentMarshal makes sure that it is safe to marshal
+// same message in multiple goroutines concurrently.
+func TestConcurrentMarshal(t *testing.T) {
+	pb := initGoTest(true)
+	const N = 100
+	b := make([][]byte, N)
+
+	var wg sync.WaitGroup
+	for i := 0; i < N; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			var err error
+			b[i], err = Marshal(pb)
+			if err != nil {
+				t.Errorf("marshal error: %v", err)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	for i := 1; i < N; i++ {
+		if !bytes.Equal(b[0], b[i]) {
+			t.Errorf("concurrent marshal result not same: b[0] = %v, b[%d] = %v", b[0], i, b[i])
+		}
+	}
+}
+
+func TestInvalidUTF8(t *testing.T) {
+	const wire = "\x12\x04\xde\xea\xca\xfe"
+
+	var m GoTest
+	if err := Unmarshal([]byte(wire), &m); err == nil {
+		t.Errorf("Unmarshal error: got nil, want non-nil")
+	}
+
+	m.Reset()
+	m.Table = String(wire[2:])
+	if _, err := Marshal(&m); err == nil {
+		t.Errorf("Marshal error: got nil, want non-nil")
 	}
 }
 

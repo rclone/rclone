@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // UserMetricsKeysClient is the client for the UserMetricsKeys methods of the Trafficmanager service.
 type UserMetricsKeysClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewUserMetricsKeysClient creates an instance of the UserMetricsKeysClient client.
 func NewUserMetricsKeysClient(subscriptionID string) UserMetricsKeysClient {
 	return NewUserMetricsKeysClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewUserMetricsKeysClientWithBaseURI creates an instance of the UserMetricsKeysClient client.
 func NewUserMetricsKeysClientWithBaseURI(baseURI string, subscriptionID string) UserMetricsKeysClient {
 	return UserMetricsKeysClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdate create or update a subscription-level key used for Real User Metrics collection.
 func (client UserMetricsKeysClient) CreateOrUpdate(ctx context.Context) (result UserMetricsKeyModel, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx)
@@ -62,6 +66,7 @@ func (client UserMetricsKeysClient) CreateOrUpdate(ctx context.Context) (result 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client UserMetricsKeysClient) CreateOrUpdatePreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,6 +86,7 @@ func (client UserMetricsKeysClient) CreateOrUpdatePreparer(ctx context.Context) 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserMetricsKeysClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -88,6 +94,7 @@ func (client UserMetricsKeysClient) CreateOrUpdateSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client UserMetricsKeysClient) CreateOrUpdateResponder(resp *http.Response) (result UserMetricsKeyModel, err error) {
@@ -101,6 +108,7 @@ func (client UserMetricsKeysClient) CreateOrUpdateResponder(resp *http.Response)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Delete delete a subscription-level key used for Real User Metrics collection.
 func (client UserMetricsKeysClient) Delete(ctx context.Context) (result DeleteOperationResult, err error) {
 	req, err := client.DeletePreparer(ctx)
@@ -124,6 +132,7 @@ func (client UserMetricsKeysClient) Delete(ctx context.Context) (result DeleteOp
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeletePreparer prepares the Delete request.
 func (client UserMetricsKeysClient) DeletePreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -143,6 +152,7 @@ func (client UserMetricsKeysClient) DeletePreparer(ctx context.Context) (*http.R
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserMetricsKeysClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -150,6 +160,7 @@ func (client UserMetricsKeysClient) DeleteSender(req *http.Request) (*http.Respo
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client UserMetricsKeysClient) DeleteResponder(resp *http.Response) (result DeleteOperationResult, err error) {
@@ -163,6 +174,7 @@ func (client UserMetricsKeysClient) DeleteResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // Get get the subscription-level key used for Real User Metrics collection.
 func (client UserMetricsKeysClient) Get(ctx context.Context) (result UserMetricsKeyModel, err error) {
 	req, err := client.GetPreparer(ctx)
@@ -186,6 +198,7 @@ func (client UserMetricsKeysClient) Get(ctx context.Context) (result UserMetrics
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetPreparer prepares the Get request.
 func (client UserMetricsKeysClient) GetPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -205,6 +218,7 @@ func (client UserMetricsKeysClient) GetPreparer(ctx context.Context) (*http.Requ
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserMetricsKeysClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -212,6 +226,7 @@ func (client UserMetricsKeysClient) GetSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client UserMetricsKeysClient) GetResponder(resp *http.Response) (result UserMetricsKeyModel, err error) {

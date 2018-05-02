@@ -25,22 +25,26 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // AssignmentsClient is the to manage and control access to your resources, you can define customized policies and
 // assign them at a scope.
 type AssignmentsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // NewAssignmentsClient creates an instance of the AssignmentsClient client.
 func NewAssignmentsClient(subscriptionID string) AssignmentsClient {
 	return NewAssignmentsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // NewAssignmentsClientWithBaseURI creates an instance of the AssignmentsClient client.
 func NewAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) AssignmentsClient {
 	return AssignmentsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // Create policy assignments are inherited by child resources. For example, when you apply a policy to a resource group
 // that policy is assigned to all resources in the group.
 //
@@ -68,6 +72,7 @@ func (client AssignmentsClient) Create(ctx context.Context, scope string, policy
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreatePreparer prepares the Create request.
 func (client AssignmentsClient) CreatePreparer(ctx context.Context, scope string, policyAssignmentName string, parameters Assignment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,7 +86,7 @@ func (client AssignmentsClient) CreatePreparer(ctx context.Context, scope string
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{scope}/providers/Microsoft.Authorization/policyassignments/{policyAssignmentName}", pathParameters),
@@ -90,6 +95,7 @@ func (client AssignmentsClient) CreatePreparer(ctx context.Context, scope string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) CreateSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client AssignmentsClient) CreateSender(req *http.Request) (*http.Response,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) CreateResponder(resp *http.Response) (result Assignment, err error) {
@@ -110,6 +117,7 @@ func (client AssignmentsClient) CreateResponder(resp *http.Response) (result Ass
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateByID policy assignments are inherited by child resources. For example, when you apply a policy to a resource
 // group that policy is assigned to all resources in the group. When providing a scope for the assigment, use
 // '/subscriptions/{subscription-id}/' for subscriptions,
@@ -142,6 +150,7 @@ func (client AssignmentsClient) CreateByID(ctx context.Context, policyAssignment
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateByIDPreparer prepares the CreateByID request.
 func (client AssignmentsClient) CreateByIDPreparer(ctx context.Context, policyAssignmentID string, parameters Assignment) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -154,7 +163,7 @@ func (client AssignmentsClient) CreateByIDPreparer(ctx context.Context, policyAs
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{policyAssignmentId}", pathParameters),
@@ -163,6 +172,7 @@ func (client AssignmentsClient) CreateByIDPreparer(ctx context.Context, policyAs
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateByIDSender sends the CreateByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) CreateByIDSender(req *http.Request) (*http.Response, error) {
@@ -170,6 +180,7 @@ func (client AssignmentsClient) CreateByIDSender(req *http.Request) (*http.Respo
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // CreateByIDResponder handles the response to the CreateByID request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) CreateByIDResponder(resp *http.Response) (result Assignment, err error) {
@@ -183,6 +194,7 @@ func (client AssignmentsClient) CreateByIDResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // Delete deletes a policy assignment.
 //
 // scope is the scope of the policy assignment. policyAssignmentName is the name of the policy assignment to
@@ -209,6 +221,7 @@ func (client AssignmentsClient) Delete(ctx context.Context, scope string, policy
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeletePreparer prepares the Delete request.
 func (client AssignmentsClient) DeletePreparer(ctx context.Context, scope string, policyAssignmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -229,6 +242,7 @@ func (client AssignmentsClient) DeletePreparer(ctx context.Context, scope string
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -236,6 +250,7 @@ func (client AssignmentsClient) DeleteSender(req *http.Request) (*http.Response,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) DeleteResponder(resp *http.Response) (result Assignment, err error) {
@@ -249,6 +264,7 @@ func (client AssignmentsClient) DeleteResponder(resp *http.Response) (result Ass
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteByID when providing a scope for the assigment, use '/subscriptions/{subscription-id}/' for subscriptions,
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}' for resource groups, and
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider-namespace}/{resource-type}/{resource-name}'
@@ -278,6 +294,7 @@ func (client AssignmentsClient) DeleteByID(ctx context.Context, policyAssignment
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteByIDPreparer prepares the DeleteByID request.
 func (client AssignmentsClient) DeleteByIDPreparer(ctx context.Context, policyAssignmentID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -297,6 +314,7 @@ func (client AssignmentsClient) DeleteByIDPreparer(ctx context.Context, policyAs
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteByIDSender sends the DeleteByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) DeleteByIDSender(req *http.Request) (*http.Response, error) {
@@ -304,6 +322,7 @@ func (client AssignmentsClient) DeleteByIDSender(req *http.Request) (*http.Respo
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // DeleteByIDResponder handles the response to the DeleteByID request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) DeleteByIDResponder(resp *http.Response) (result Assignment, err error) {
@@ -317,6 +336,7 @@ func (client AssignmentsClient) DeleteByIDResponder(resp *http.Response) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // Get gets a policy assignment.
 //
 // scope is the scope of the policy assignment. policyAssignmentName is the name of the policy assignment to get.
@@ -342,6 +362,7 @@ func (client AssignmentsClient) Get(ctx context.Context, scope string, policyAss
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetPreparer prepares the Get request.
 func (client AssignmentsClient) GetPreparer(ctx context.Context, scope string, policyAssignmentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -362,6 +383,7 @@ func (client AssignmentsClient) GetPreparer(ctx context.Context, scope string, p
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -369,6 +391,7 @@ func (client AssignmentsClient) GetSender(req *http.Request) (*http.Response, er
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) GetResponder(resp *http.Response) (result Assignment, err error) {
@@ -382,6 +405,7 @@ func (client AssignmentsClient) GetResponder(resp *http.Response) (result Assign
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetByID when providing a scope for the assigment, use '/subscriptions/{subscription-id}/' for subscriptions,
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}' for resource groups, and
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider-namespace}/{resource-type}/{resource-name}'
@@ -411,6 +435,7 @@ func (client AssignmentsClient) GetByID(ctx context.Context, policyAssignmentID 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetByIDPreparer prepares the GetByID request.
 func (client AssignmentsClient) GetByIDPreparer(ctx context.Context, policyAssignmentID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -430,6 +455,7 @@ func (client AssignmentsClient) GetByIDPreparer(ctx context.Context, policyAssig
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetByIDSender sends the GetByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) GetByIDSender(req *http.Request) (*http.Response, error) {
@@ -437,6 +463,7 @@ func (client AssignmentsClient) GetByIDSender(req *http.Request) (*http.Response
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // GetByIDResponder handles the response to the GetByID request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) GetByIDResponder(resp *http.Response) (result Assignment, err error) {
@@ -450,6 +477,7 @@ func (client AssignmentsClient) GetByIDResponder(resp *http.Response) (result As
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // List gets all the policy assignments for a subscription.
 //
 // filter is the filter to apply on the operation.
@@ -476,6 +504,7 @@ func (client AssignmentsClient) List(ctx context.Context, filter string) (result
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListPreparer prepares the List request.
 func (client AssignmentsClient) ListPreparer(ctx context.Context, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -498,6 +527,7 @@ func (client AssignmentsClient) ListPreparer(ctx context.Context, filter string)
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -505,6 +535,7 @@ func (client AssignmentsClient) ListSender(req *http.Request) (*http.Response, e
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) ListResponder(resp *http.Response) (result AssignmentListResult, err error) {
@@ -539,12 +570,14 @@ func (client AssignmentsClient) listNextResults(lastResults AssignmentListResult
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AssignmentsClient) ListComplete(ctx context.Context, filter string) (result AssignmentListResultIterator, err error) {
 	result.page, err = client.List(ctx, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResource gets policy assignments for a  resource.
 //
 // resourceGroupName is the name of the resource group containing the resource. The name is case insensitive.
@@ -582,6 +615,7 @@ func (client AssignmentsClient) ListForResource(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourcePreparer prepares the ListForResource request.
 func (client AssignmentsClient) ListForResourcePreparer(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -609,6 +643,7 @@ func (client AssignmentsClient) ListForResourcePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceSender sends the ListForResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) ListForResourceSender(req *http.Request) (*http.Response, error) {
@@ -616,6 +651,7 @@ func (client AssignmentsClient) ListForResourceSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceResponder handles the response to the ListForResource request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) ListForResourceResponder(resp *http.Response) (result AssignmentListResult, err error) {
@@ -650,12 +686,14 @@ func (client AssignmentsClient) listForResourceNextResults(lastResults Assignmen
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AssignmentsClient) ListForResourceComplete(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result AssignmentListResultIterator, err error) {
 	result.page, err = client.ListForResource(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceGroup gets policy assignments for the resource group.
 //
 // resourceGroupName is the name of the resource group that contains policy assignments. filter is the filter to
@@ -691,6 +729,7 @@ func (client AssignmentsClient) ListForResourceGroup(ctx context.Context, resour
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceGroupPreparer prepares the ListForResourceGroup request.
 func (client AssignmentsClient) ListForResourceGroupPreparer(ctx context.Context, resourceGroupName string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -714,6 +753,7 @@ func (client AssignmentsClient) ListForResourceGroupPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AssignmentsClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -721,6 +761,7 @@ func (client AssignmentsClient) ListForResourceGroupSender(req *http.Request) (*
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
 // closes the http.Response Body.
 func (client AssignmentsClient) ListForResourceGroupResponder(resp *http.Response) (result AssignmentListResult, err error) {
@@ -755,6 +796,7 @@ func (client AssignmentsClient) listForResourceGroupNextResults(lastResults Assi
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2015-10-01-preview/policy instead.
 // ListForResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AssignmentsClient) ListForResourceGroupComplete(ctx context.Context, resourceGroupName string, filter string) (result AssignmentListResultIterator, err error) {
 	result.page, err = client.ListForResourceGroup(ctx, resourceGroupName, filter)

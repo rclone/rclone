@@ -40,8 +40,8 @@ func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) Locatio
 }
 
 // GetQuotas gets the Batch service quotas for the specified subscription at the given location.
-//
-// locationName is the desired region for the quotas.
+// Parameters:
+// locationName - the desired region for the quotas.
 func (client LocationClient) GetQuotas(ctx context.Context, locationName string) (result LocationQuota, err error) {
 	req, err := client.GetQuotasPreparer(ctx, locationName)
 	if err != nil {

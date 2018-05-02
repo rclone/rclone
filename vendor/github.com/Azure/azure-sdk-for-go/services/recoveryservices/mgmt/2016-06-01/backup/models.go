@@ -47,6 +47,11 @@ const (
 	VM DataSourceType = "VM"
 )
 
+// PossibleDataSourceTypeValues returns an array of possible values for the DataSourceType const type.
+func PossibleDataSourceTypeValues() []DataSourceType {
+	return []DataSourceType{AzureSQLDb, DPMUnknown, Exchange, FileFolder, Invalid, Sharepoint, SQLDB, VM}
+}
+
 // DayOfWeek enumerates the values for day of week.
 type DayOfWeek string
 
@@ -67,6 +72,11 @@ const (
 	Wednesday DayOfWeek = "Wednesday"
 )
 
+// PossibleDayOfWeekValues returns an array of possible values for the DayOfWeek const type.
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return []DayOfWeek{Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday}
+}
+
 // EngineType enumerates the values for engine type.
 type EngineType string
 
@@ -78,6 +88,11 @@ const (
 	// BackupEngineTypeDpmBackupEngine ...
 	BackupEngineTypeDpmBackupEngine EngineType = "DpmBackupEngine"
 )
+
+// PossibleEngineTypeValues returns an array of possible values for the EngineType const type.
+func PossibleEngineTypeValues() []EngineType {
+	return []EngineType{BackupEngineTypeAzureBackupServerEngine, BackupEngineTypeBackupEngineBase, BackupEngineTypeDpmBackupEngine}
+}
 
 // HTTPStatusCode enumerates the values for http status code.
 type HTTPStatusCode string
@@ -179,6 +194,11 @@ const (
 	UseProxy HTTPStatusCode = "UseProxy"
 )
 
+// PossibleHTTPStatusCodeValues returns an array of possible values for the HTTPStatusCode const type.
+func PossibleHTTPStatusCodeValues() []HTTPStatusCode {
+	return []HTTPStatusCode{Accepted, Ambiguous, BadGateway, BadRequest, Conflict, Continue, Created, ExpectationFailed, Forbidden, Found, GatewayTimeout, Gone, HTTPVersionNotSupported, InternalServerError, LengthRequired, MethodNotAllowed, Moved, MovedPermanently, MultipleChoices, NoContent, NonAuthoritativeInformation, NotAcceptable, NotFound, NotImplemented, NotModified, OK, PartialContent, PaymentRequired, PreconditionFailed, ProxyAuthenticationRequired, Redirect, RedirectKeepVerb, RedirectMethod, RequestedRangeNotSatisfiable, RequestEntityTooLarge, RequestTimeout, RequestURITooLong, ResetContent, SeeOther, ServiceUnavailable, SwitchingProtocols, TemporaryRedirect, Unauthorized, UnsupportedMediaType, Unused, UpgradeRequired, UseProxy}
+}
+
 // ItemType enumerates the values for item type.
 type ItemType string
 
@@ -201,6 +221,11 @@ const (
 	ItemTypeVM ItemType = "VM"
 )
 
+// PossibleItemTypeValues returns an array of possible values for the ItemType const type.
+func PossibleItemTypeValues() []ItemType {
+	return []ItemType{ItemTypeAzureSQLDb, ItemTypeDPMUnknown, ItemTypeExchange, ItemTypeFileFolder, ItemTypeInvalid, ItemTypeSharepoint, ItemTypeSQLDB, ItemTypeVM}
+}
+
 // JobOperationType enumerates the values for job operation type.
 type JobOperationType string
 
@@ -218,6 +243,11 @@ const (
 	// JobOperationTypeRestore ...
 	JobOperationTypeRestore JobOperationType = "Restore"
 )
+
+// PossibleJobOperationTypeValues returns an array of possible values for the JobOperationType const type.
+func PossibleJobOperationTypeValues() []JobOperationType {
+	return []JobOperationType{JobOperationTypeBackup, JobOperationTypeConfigureBackup, JobOperationTypeDeleteBackupData, JobOperationTypeDisableBackup, JobOperationTypeInvalid, JobOperationTypeRestore}
+}
 
 // JobStatus enumerates the values for job status.
 type JobStatus string
@@ -239,6 +269,11 @@ const (
 	JobStatusInvalid JobStatus = "Invalid"
 )
 
+// PossibleJobStatusValues returns an array of possible values for the JobStatus const type.
+func PossibleJobStatusValues() []JobStatus {
+	return []JobStatus{JobStatusCancelled, JobStatusCancelling, JobStatusCompleted, JobStatusCompletedWithWarnings, JobStatusFailed, JobStatusInProgress, JobStatusInvalid}
+}
+
 // JobSupportedAction enumerates the values for job supported action.
 type JobSupportedAction string
 
@@ -250,6 +285,11 @@ const (
 	// JobSupportedActionRetriable ...
 	JobSupportedActionRetriable JobSupportedAction = "Retriable"
 )
+
+// PossibleJobSupportedActionValues returns an array of possible values for the JobSupportedAction const type.
+func PossibleJobSupportedActionValues() []JobSupportedAction {
+	return []JobSupportedAction{JobSupportedActionCancellable, JobSupportedActionInvalid, JobSupportedActionRetriable}
+}
 
 // JobType enumerates the values for job type.
 type JobType string
@@ -264,6 +304,11 @@ const (
 	// JobTypeMabJob ...
 	JobTypeMabJob JobType = "MabJob"
 )
+
+// PossibleJobTypeValues returns an array of possible values for the JobType const type.
+func PossibleJobTypeValues() []JobType {
+	return []JobType{JobTypeAzureIaaSVMJob, JobTypeDpmJob, JobTypeJob, JobTypeMabJob}
+}
 
 // MabServerType enumerates the values for mab server type.
 type MabServerType string
@@ -293,6 +338,11 @@ const (
 	MabServerTypeWindowsServer MabServerType = "WindowsServer"
 )
 
+// PossibleMabServerTypeValues returns an array of possible values for the MabServerType const type.
+func PossibleMabServerTypeValues() []MabServerType {
+	return []MabServerType{MabServerTypeAzureSQLContainer, MabServerTypeClusterResource, MabServerTypeDPMContainer, MabServerTypeDPMVenusContainer, MabServerTypeIaasVMContainer, MabServerTypeIaasVMServiceContainer, MabServerTypeInvalid, MabServerTypeMABContainer, MabServerTypeUnknown, MabServerTypeWindows, MabServerTypeWindowsServer}
+}
+
 // ManagementType enumerates the values for management type.
 type ManagementType string
 
@@ -311,6 +361,11 @@ const (
 	ManagementTypeMAB ManagementType = "MAB"
 )
 
+// PossibleManagementTypeValues returns an array of possible values for the ManagementType const type.
+func PossibleManagementTypeValues() []ManagementType {
+	return []ManagementType{ManagementTypeAzureBackupServer, ManagementTypeAzureIaasVM, ManagementTypeAzureSQL, ManagementTypeDPM, ManagementTypeInvalid, ManagementTypeMAB}
+}
+
 // ManagementTypeBasicProtectionPolicy enumerates the values for management type basic protection policy.
 type ManagementTypeBasicProtectionPolicy string
 
@@ -324,6 +379,11 @@ const (
 	// BackupManagementTypeProtectionPolicy ...
 	BackupManagementTypeProtectionPolicy ManagementTypeBasicProtectionPolicy = "ProtectionPolicy"
 )
+
+// PossibleManagementTypeBasicProtectionPolicyValues returns an array of possible values for the ManagementTypeBasicProtectionPolicy const type.
+func PossibleManagementTypeBasicProtectionPolicyValues() []ManagementTypeBasicProtectionPolicy {
+	return []ManagementTypeBasicProtectionPolicy{BackupManagementTypeAzureIaasVM, BackupManagementTypeAzureSQL, BackupManagementTypeMAB, BackupManagementTypeProtectionPolicy}
+}
 
 // MonthOfYear enumerates the values for month of year.
 type MonthOfYear string
@@ -357,6 +417,11 @@ const (
 	MonthOfYearSeptember MonthOfYear = "September"
 )
 
+// PossibleMonthOfYearValues returns an array of possible values for the MonthOfYear const type.
+func PossibleMonthOfYearValues() []MonthOfYear {
+	return []MonthOfYear{MonthOfYearApril, MonthOfYearAugust, MonthOfYearDecember, MonthOfYearFebruary, MonthOfYearInvalid, MonthOfYearJanuary, MonthOfYearJuly, MonthOfYearJune, MonthOfYearMarch, MonthOfYearMay, MonthOfYearNovember, MonthOfYearOctober, MonthOfYearSeptember}
+}
+
 // ObjectType enumerates the values for object type.
 type ObjectType string
 
@@ -371,6 +436,11 @@ const (
 	ObjectTypeOperationStatusProvisionILRExtendedInfo ObjectType = "OperationStatusProvisionILRExtendedInfo"
 )
 
+// PossibleObjectTypeValues returns an array of possible values for the ObjectType const type.
+func PossibleObjectTypeValues() []ObjectType {
+	return []ObjectType{ObjectTypeOperationStatusExtendedInfo, ObjectTypeOperationStatusJobExtendedInfo, ObjectTypeOperationStatusJobsExtendedInfo, ObjectTypeOperationStatusProvisionILRExtendedInfo}
+}
+
 // ObjectTypeBasicBackupRequest enumerates the values for object type basic backup request.
 type ObjectTypeBasicBackupRequest string
 
@@ -381,6 +451,11 @@ const (
 	ObjectTypeIaasVMBackupRequest ObjectTypeBasicBackupRequest = "IaasVMBackupRequest"
 )
 
+// PossibleObjectTypeBasicBackupRequestValues returns an array of possible values for the ObjectTypeBasicBackupRequest const type.
+func PossibleObjectTypeBasicBackupRequestValues() []ObjectTypeBasicBackupRequest {
+	return []ObjectTypeBasicBackupRequest{ObjectTypeBackupRequest, ObjectTypeIaasVMBackupRequest}
+}
+
 // ObjectTypeBasicILRRequest enumerates the values for object type basic ilr request.
 type ObjectTypeBasicILRRequest string
 
@@ -390,6 +465,11 @@ const (
 	// ObjectTypeILRRequest ...
 	ObjectTypeILRRequest ObjectTypeBasicILRRequest = "ILRRequest"
 )
+
+// PossibleObjectTypeBasicILRRequestValues returns an array of possible values for the ObjectTypeBasicILRRequest const type.
+func PossibleObjectTypeBasicILRRequestValues() []ObjectTypeBasicILRRequest {
+	return []ObjectTypeBasicILRRequest{ObjectTypeIaasVMILRRegistrationRequest, ObjectTypeILRRequest}
+}
 
 // ObjectTypeBasicOperationResultInfoBase enumerates the values for object type basic operation result info
 // base.
@@ -404,6 +484,11 @@ const (
 	ObjectTypeOperationResultInfoBase ObjectTypeBasicOperationResultInfoBase = "OperationResultInfoBase"
 )
 
+// PossibleObjectTypeBasicOperationResultInfoBaseValues returns an array of possible values for the ObjectTypeBasicOperationResultInfoBase const type.
+func PossibleObjectTypeBasicOperationResultInfoBaseValues() []ObjectTypeBasicOperationResultInfoBase {
+	return []ObjectTypeBasicOperationResultInfoBase{ObjectTypeExportJobsOperationResultInfo, ObjectTypeOperationResultInfo, ObjectTypeOperationResultInfoBase}
+}
+
 // ObjectTypeBasicRecoveryPoint enumerates the values for object type basic recovery point.
 type ObjectTypeBasicRecoveryPoint string
 
@@ -416,6 +501,11 @@ const (
 	ObjectTypeRecoveryPoint ObjectTypeBasicRecoveryPoint = "RecoveryPoint"
 )
 
+// PossibleObjectTypeBasicRecoveryPointValues returns an array of possible values for the ObjectTypeBasicRecoveryPoint const type.
+func PossibleObjectTypeBasicRecoveryPointValues() []ObjectTypeBasicRecoveryPoint {
+	return []ObjectTypeBasicRecoveryPoint{ObjectTypeGenericRecoveryPoint, ObjectTypeIaasVMRecoveryPoint, ObjectTypeRecoveryPoint}
+}
+
 // ObjectTypeBasicRestoreRequest enumerates the values for object type basic restore request.
 type ObjectTypeBasicRestoreRequest string
 
@@ -425,6 +515,11 @@ const (
 	// ObjectTypeRestoreRequest ...
 	ObjectTypeRestoreRequest ObjectTypeBasicRestoreRequest = "RestoreRequest"
 )
+
+// PossibleObjectTypeBasicRestoreRequestValues returns an array of possible values for the ObjectTypeBasicRestoreRequest const type.
+func PossibleObjectTypeBasicRestoreRequestValues() []ObjectTypeBasicRestoreRequest {
+	return []ObjectTypeBasicRestoreRequest{ObjectTypeIaasVMRestoreRequest, ObjectTypeRestoreRequest}
+}
 
 // OperationStatusValues enumerates the values for operation status values.
 type OperationStatusValues string
@@ -442,6 +537,11 @@ const (
 	OperationStatusValuesSucceeded OperationStatusValues = "Succeeded"
 )
 
+// PossibleOperationStatusValuesValues returns an array of possible values for the OperationStatusValues const type.
+func PossibleOperationStatusValuesValues() []OperationStatusValues {
+	return []OperationStatusValues{OperationStatusValuesCanceled, OperationStatusValuesFailed, OperationStatusValuesInProgress, OperationStatusValuesInvalid, OperationStatusValuesSucceeded}
+}
+
 // ProtectableItemType enumerates the values for protectable item type.
 type ProtectableItemType string
 
@@ -455,6 +555,11 @@ const (
 	// ProtectableItemTypeWorkloadProtectableItem ...
 	ProtectableItemTypeWorkloadProtectableItem ProtectableItemType = "WorkloadProtectableItem"
 )
+
+// PossibleProtectableItemTypeValues returns an array of possible values for the ProtectableItemType const type.
+func PossibleProtectableItemTypeValues() []ProtectableItemType {
+	return []ProtectableItemType{ProtectableItemTypeIaaSVMProtectableItem, ProtectableItemTypeMicrosoftClassicComputevirtualMachines, ProtectableItemTypeMicrosoftComputevirtualMachines, ProtectableItemTypeWorkloadProtectableItem}
+}
 
 // ProtectableObjectType enumerates the values for protectable object type.
 type ProtectableObjectType string
@@ -474,6 +579,11 @@ const (
 	ProtectableObjectTypeProtectionContainer ProtectableObjectType = "ProtectionContainer"
 )
 
+// PossibleProtectableObjectTypeValues returns an array of possible values for the ProtectableObjectType const type.
+func PossibleProtectableObjectTypeValues() []ProtectableObjectType {
+	return []ProtectableObjectType{ProtectableObjectTypeAzureSQLContainer, ProtectableObjectTypeIaaSVMContainer, ProtectableObjectTypeMABWindowsContainer, ProtectableObjectTypeMicrosoftClassicComputevirtualMachines, ProtectableObjectTypeMicrosoftComputevirtualMachines, ProtectableObjectTypeProtectionContainer}
+}
+
 // ProtectedItemState enumerates the values for protected item state.
 type ProtectedItemState string
 
@@ -491,6 +601,11 @@ const (
 	// ProtectedItemStateProtectionStopped ...
 	ProtectedItemStateProtectionStopped ProtectedItemState = "ProtectionStopped"
 )
+
+// PossibleProtectedItemStateValues returns an array of possible values for the ProtectedItemState const type.
+func PossibleProtectedItemStateValues() []ProtectedItemState {
+	return []ProtectedItemState{ProtectedItemStateInvalid, ProtectedItemStateIRPending, ProtectedItemStateProtected, ProtectedItemStateProtectionError, ProtectedItemStateProtectionPaused, ProtectedItemStateProtectionStopped}
+}
 
 // ProtectedItemType enumerates the values for protected item type.
 type ProtectedItemType string
@@ -510,6 +625,11 @@ const (
 	ProtectedItemTypeProtectedItem ProtectedItemType = "ProtectedItem"
 )
 
+// PossibleProtectedItemTypeValues returns an array of possible values for the ProtectedItemType const type.
+func PossibleProtectedItemTypeValues() []ProtectedItemType {
+	return []ProtectedItemType{ProtectedItemTypeAzureIaaSVMProtectedItem, ProtectedItemTypeMabFileFolderProtectedItem, ProtectedItemTypeMicrosoftClassicComputevirtualMachines, ProtectedItemTypeMicrosoftComputevirtualMachines, ProtectedItemTypeMicrosoftSqlserversdatabases, ProtectedItemTypeProtectedItem}
+}
+
 // ProtectionState enumerates the values for protection state.
 type ProtectionState string
 
@@ -528,6 +648,11 @@ const (
 	ProtectionStateProtectionStopped ProtectionState = "ProtectionStopped"
 )
 
+// PossibleProtectionStateValues returns an array of possible values for the ProtectionState const type.
+func PossibleProtectionStateValues() []ProtectionState {
+	return []ProtectionState{ProtectionStateInvalid, ProtectionStateIRPending, ProtectionStateProtected, ProtectionStateProtectionError, ProtectionStateProtectionPaused, ProtectionStateProtectionStopped}
+}
+
 // ProtectionStatus enumerates the values for protection status.
 type ProtectionStatus string
 
@@ -542,6 +667,11 @@ const (
 	ProtectionStatusProtecting ProtectionStatus = "Protecting"
 )
 
+// PossibleProtectionStatusValues returns an array of possible values for the ProtectionStatus const type.
+func PossibleProtectionStatusValues() []ProtectionStatus {
+	return []ProtectionStatus{ProtectionStatusInvalid, ProtectionStatusNotProtected, ProtectionStatusProtected, ProtectionStatusProtecting}
+}
+
 // RecoveryType enumerates the values for recovery type.
 type RecoveryType string
 
@@ -555,6 +685,11 @@ const (
 	// RecoveryTypeRestoreDisks ...
 	RecoveryTypeRestoreDisks RecoveryType = "RestoreDisks"
 )
+
+// PossibleRecoveryTypeValues returns an array of possible values for the RecoveryType const type.
+func PossibleRecoveryTypeValues() []RecoveryType {
+	return []RecoveryType{RecoveryTypeAlternateLocation, RecoveryTypeInvalid, RecoveryTypeOriginalLocation, RecoveryTypeRestoreDisks}
+}
 
 // RetentionDurationType enumerates the values for retention duration type.
 type RetentionDurationType string
@@ -572,6 +707,11 @@ const (
 	RetentionDurationTypeYears RetentionDurationType = "Years"
 )
 
+// PossibleRetentionDurationTypeValues returns an array of possible values for the RetentionDurationType const type.
+func PossibleRetentionDurationTypeValues() []RetentionDurationType {
+	return []RetentionDurationType{RetentionDurationTypeDays, RetentionDurationTypeInvalid, RetentionDurationTypeMonths, RetentionDurationTypeWeeks, RetentionDurationTypeYears}
+}
+
 // RetentionPolicyType enumerates the values for retention policy type.
 type RetentionPolicyType string
 
@@ -583,6 +723,11 @@ const (
 	// RetentionPolicyTypeSimpleRetentionPolicy ...
 	RetentionPolicyTypeSimpleRetentionPolicy RetentionPolicyType = "SimpleRetentionPolicy"
 )
+
+// PossibleRetentionPolicyTypeValues returns an array of possible values for the RetentionPolicyType const type.
+func PossibleRetentionPolicyTypeValues() []RetentionPolicyType {
+	return []RetentionPolicyType{RetentionPolicyTypeLongTermRetentionPolicy, RetentionPolicyTypeRetentionPolicy, RetentionPolicyTypeSimpleRetentionPolicy}
+}
 
 // RetentionScheduleFormat enumerates the values for retention schedule format.
 type RetentionScheduleFormat string
@@ -596,6 +741,11 @@ const (
 	RetentionScheduleFormatWeekly RetentionScheduleFormat = "Weekly"
 )
 
+// PossibleRetentionScheduleFormatValues returns an array of possible values for the RetentionScheduleFormat const type.
+func PossibleRetentionScheduleFormatValues() []RetentionScheduleFormat {
+	return []RetentionScheduleFormat{RetentionScheduleFormatDaily, RetentionScheduleFormatInvalid, RetentionScheduleFormatWeekly}
+}
+
 // SchedulePolicyType enumerates the values for schedule policy type.
 type SchedulePolicyType string
 
@@ -608,6 +758,11 @@ const (
 	SchedulePolicyTypeSimpleSchedulePolicy SchedulePolicyType = "SimpleSchedulePolicy"
 )
 
+// PossibleSchedulePolicyTypeValues returns an array of possible values for the SchedulePolicyType const type.
+func PossibleSchedulePolicyTypeValues() []SchedulePolicyType {
+	return []SchedulePolicyType{SchedulePolicyTypeLongTermSchedulePolicy, SchedulePolicyTypeSchedulePolicy, SchedulePolicyTypeSimpleSchedulePolicy}
+}
+
 // ScheduleRunType enumerates the values for schedule run type.
 type ScheduleRunType string
 
@@ -619,6 +774,11 @@ const (
 	// ScheduleRunTypeWeekly ...
 	ScheduleRunTypeWeekly ScheduleRunType = "Weekly"
 )
+
+// PossibleScheduleRunTypeValues returns an array of possible values for the ScheduleRunType const type.
+func PossibleScheduleRunTypeValues() []ScheduleRunType {
+	return []ScheduleRunType{ScheduleRunTypeDaily, ScheduleRunTypeInvalid, ScheduleRunTypeWeekly}
+}
 
 // WeekOfMonth enumerates the values for week of month.
 type WeekOfMonth string
@@ -635,6 +795,11 @@ const (
 	// Third ...
 	Third WeekOfMonth = "Third"
 )
+
+// PossibleWeekOfMonthValues returns an array of possible values for the WeekOfMonth const type.
+func PossibleWeekOfMonthValues() []WeekOfMonth {
+	return []WeekOfMonth{First, Fourth, Last, Second, Third}
+}
 
 // WorkloadType enumerates the values for workload type.
 type WorkloadType string
@@ -657,6 +822,11 @@ const (
 	// WorkloadTypeVM ...
 	WorkloadTypeVM WorkloadType = "VM"
 )
+
+// PossibleWorkloadTypeValues returns an array of possible values for the WorkloadType const type.
+func PossibleWorkloadTypeValues() []WorkloadType {
+	return []WorkloadType{WorkloadTypeAzureSQLDb, WorkloadTypeDPMUnknown, WorkloadTypeExchange, WorkloadTypeFileFolder, WorkloadTypeInvalid, WorkloadTypeSharepoint, WorkloadTypeSQLDB, WorkloadTypeVM}
+}
 
 // AzureBackupServerEngine the backup engine type when Azure Backup Server is used to manage the backups.
 type AzureBackupServerEngine struct {
@@ -683,7 +853,9 @@ func (abse AzureBackupServerEngine) MarshalJSON() ([]byte, error) {
 	if abse.FriendlyName != nil {
 		objectMap["friendlyName"] = abse.FriendlyName
 	}
-	objectMap["backupManagementType"] = abse.BackupManagementType
+	if abse.BackupManagementType != "" {
+		objectMap["backupManagementType"] = abse.BackupManagementType
+	}
 	if abse.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = abse.RegistrationStatus
 	}
@@ -696,7 +868,9 @@ func (abse AzureBackupServerEngine) MarshalJSON() ([]byte, error) {
 	if abse.BackupEngineID != nil {
 		objectMap["backupEngineId"] = abse.BackupEngineID
 	}
-	objectMap["backupEngineType"] = abse.BackupEngineType
+	if abse.BackupEngineType != "" {
+		objectMap["backupEngineType"] = abse.BackupEngineType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -759,7 +933,9 @@ func (aisccvc AzureIaaSClassicComputeVMContainer) MarshalJSON() ([]byte, error) 
 	if aisccvc.FriendlyName != nil {
 		objectMap["friendlyName"] = aisccvc.FriendlyName
 	}
-	objectMap["backupManagementType"] = aisccvc.BackupManagementType
+	if aisccvc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aisccvc.BackupManagementType
+	}
 	if aisccvc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = aisccvc.RegistrationStatus
 	}
@@ -769,7 +945,9 @@ func (aisccvc AzureIaaSClassicComputeVMContainer) MarshalJSON() ([]byte, error) 
 	if aisccvc.ContainerType != nil {
 		objectMap["containerType"] = aisccvc.ContainerType
 	}
-	objectMap["protectableObjectType"] = aisccvc.ProtectableObjectType
+	if aisccvc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = aisccvc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -840,8 +1018,12 @@ func (aisccvpi AzureIaaSClassicComputeVMProtectableItem) MarshalJSON() ([]byte, 
 	if aisccvpi.FriendlyName != nil {
 		objectMap["friendlyName"] = aisccvpi.FriendlyName
 	}
-	objectMap["protectionState"] = aisccvpi.ProtectionState
-	objectMap["protectableItemType"] = aisccvpi.ProtectableItemType
+	if aisccvpi.ProtectionState != "" {
+		objectMap["protectionState"] = aisccvpi.ProtectionState
+	}
+	if aisccvpi.ProtectableItemType != "" {
+		objectMap["protectableItemType"] = aisccvpi.ProtectableItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -918,7 +1100,9 @@ func (aisccvpi AzureIaaSClassicComputeVMProtectedItem) MarshalJSON() ([]byte, er
 	if aisccvpi.ProtectionStatus != nil {
 		objectMap["protectionStatus"] = aisccvpi.ProtectionStatus
 	}
-	objectMap["protectionState"] = aisccvpi.ProtectionState
+	if aisccvpi.ProtectionState != "" {
+		objectMap["protectionState"] = aisccvpi.ProtectionState
+	}
 	if aisccvpi.LastBackupStatus != nil {
 		objectMap["lastBackupStatus"] = aisccvpi.LastBackupStatus
 	}
@@ -928,8 +1112,12 @@ func (aisccvpi AzureIaaSClassicComputeVMProtectedItem) MarshalJSON() ([]byte, er
 	if aisccvpi.ExtendedInfo != nil {
 		objectMap["extendedInfo"] = aisccvpi.ExtendedInfo
 	}
-	objectMap["backupManagementType"] = aisccvpi.BackupManagementType
-	objectMap["workloadType"] = aisccvpi.WorkloadType
+	if aisccvpi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aisccvpi.BackupManagementType
+	}
+	if aisccvpi.WorkloadType != "" {
+		objectMap["workloadType"] = aisccvpi.WorkloadType
+	}
 	if aisccvpi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = aisccvpi.SourceResourceID
 	}
@@ -939,7 +1127,9 @@ func (aisccvpi AzureIaaSClassicComputeVMProtectedItem) MarshalJSON() ([]byte, er
 	if aisccvpi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = aisccvpi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = aisccvpi.ProtectedItemType
+	if aisccvpi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = aisccvpi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1022,7 +1212,9 @@ func (aiscvc AzureIaaSComputeVMContainer) MarshalJSON() ([]byte, error) {
 	if aiscvc.FriendlyName != nil {
 		objectMap["friendlyName"] = aiscvc.FriendlyName
 	}
-	objectMap["backupManagementType"] = aiscvc.BackupManagementType
+	if aiscvc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aiscvc.BackupManagementType
+	}
 	if aiscvc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = aiscvc.RegistrationStatus
 	}
@@ -1032,7 +1224,9 @@ func (aiscvc AzureIaaSComputeVMContainer) MarshalJSON() ([]byte, error) {
 	if aiscvc.ContainerType != nil {
 		objectMap["containerType"] = aiscvc.ContainerType
 	}
-	objectMap["protectableObjectType"] = aiscvc.ProtectableObjectType
+	if aiscvc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = aiscvc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1103,8 +1297,12 @@ func (aiscvpi AzureIaaSComputeVMProtectableItem) MarshalJSON() ([]byte, error) {
 	if aiscvpi.FriendlyName != nil {
 		objectMap["friendlyName"] = aiscvpi.FriendlyName
 	}
-	objectMap["protectionState"] = aiscvpi.ProtectionState
-	objectMap["protectableItemType"] = aiscvpi.ProtectableItemType
+	if aiscvpi.ProtectionState != "" {
+		objectMap["protectionState"] = aiscvpi.ProtectionState
+	}
+	if aiscvpi.ProtectableItemType != "" {
+		objectMap["protectableItemType"] = aiscvpi.ProtectableItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1181,7 +1379,9 @@ func (aiscvpi AzureIaaSComputeVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aiscvpi.ProtectionStatus != nil {
 		objectMap["protectionStatus"] = aiscvpi.ProtectionStatus
 	}
-	objectMap["protectionState"] = aiscvpi.ProtectionState
+	if aiscvpi.ProtectionState != "" {
+		objectMap["protectionState"] = aiscvpi.ProtectionState
+	}
 	if aiscvpi.LastBackupStatus != nil {
 		objectMap["lastBackupStatus"] = aiscvpi.LastBackupStatus
 	}
@@ -1191,8 +1391,12 @@ func (aiscvpi AzureIaaSComputeVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aiscvpi.ExtendedInfo != nil {
 		objectMap["extendedInfo"] = aiscvpi.ExtendedInfo
 	}
-	objectMap["backupManagementType"] = aiscvpi.BackupManagementType
-	objectMap["workloadType"] = aiscvpi.WorkloadType
+	if aiscvpi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aiscvpi.BackupManagementType
+	}
+	if aiscvpi.WorkloadType != "" {
+		objectMap["workloadType"] = aiscvpi.WorkloadType
+	}
 	if aiscvpi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = aiscvpi.SourceResourceID
 	}
@@ -1202,7 +1406,9 @@ func (aiscvpi AzureIaaSComputeVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aiscvpi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = aiscvpi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = aiscvpi.ProtectedItemType
+	if aiscvpi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = aiscvpi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1310,7 +1516,9 @@ func (aisj AzureIaaSVMJob) MarshalJSON() ([]byte, error) {
 	if aisj.EntityFriendlyName != nil {
 		objectMap["entityFriendlyName"] = aisj.EntityFriendlyName
 	}
-	objectMap["backupManagementType"] = aisj.BackupManagementType
+	if aisj.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aisj.BackupManagementType
+	}
 	if aisj.Operation != nil {
 		objectMap["operation"] = aisj.Operation
 	}
@@ -1326,7 +1534,9 @@ func (aisj AzureIaaSVMJob) MarshalJSON() ([]byte, error) {
 	if aisj.ActivityID != nil {
 		objectMap["activityId"] = aisj.ActivityID
 	}
-	objectMap["jobType"] = aisj.JobType
+	if aisj.JobType != "" {
+		objectMap["jobType"] = aisj.JobType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1496,7 +1706,9 @@ func (aispi AzureIaaSVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aispi.ProtectionStatus != nil {
 		objectMap["protectionStatus"] = aispi.ProtectionStatus
 	}
-	objectMap["protectionState"] = aispi.ProtectionState
+	if aispi.ProtectionState != "" {
+		objectMap["protectionState"] = aispi.ProtectionState
+	}
 	if aispi.LastBackupStatus != nil {
 		objectMap["lastBackupStatus"] = aispi.LastBackupStatus
 	}
@@ -1506,8 +1718,12 @@ func (aispi AzureIaaSVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aispi.ExtendedInfo != nil {
 		objectMap["extendedInfo"] = aispi.ExtendedInfo
 	}
-	objectMap["backupManagementType"] = aispi.BackupManagementType
-	objectMap["workloadType"] = aispi.WorkloadType
+	if aispi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aispi.BackupManagementType
+	}
+	if aispi.WorkloadType != "" {
+		objectMap["workloadType"] = aispi.WorkloadType
+	}
 	if aispi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = aispi.SourceResourceID
 	}
@@ -1517,7 +1733,9 @@ func (aispi AzureIaaSVMProtectedItem) MarshalJSON() ([]byte, error) {
 	if aispi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = aispi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = aispi.ProtectedItemType
+	if aispi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = aispi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1593,7 +1811,9 @@ func (aispp AzureIaaSVMProtectionPolicy) MarshalJSON() ([]byte, error) {
 	if aispp.ProtectedItemsCount != nil {
 		objectMap["protectedItemsCount"] = aispp.ProtectedItemsCount
 	}
-	objectMap["backupManagementType"] = aispp.BackupManagementType
+	if aispp.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aispp.BackupManagementType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1694,7 +1914,9 @@ func (asc AzureSQLContainer) MarshalJSON() ([]byte, error) {
 	if asc.FriendlyName != nil {
 		objectMap["friendlyName"] = asc.FriendlyName
 	}
-	objectMap["backupManagementType"] = asc.BackupManagementType
+	if asc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = asc.BackupManagementType
+	}
 	if asc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = asc.RegistrationStatus
 	}
@@ -1704,7 +1926,9 @@ func (asc AzureSQLContainer) MarshalJSON() ([]byte, error) {
 	if asc.ContainerType != nil {
 		objectMap["containerType"] = asc.ContainerType
 	}
-	objectMap["protectableObjectType"] = asc.ProtectableObjectType
+	if asc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = asc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1777,12 +2001,18 @@ func (aspi AzureSQLProtectedItem) MarshalJSON() ([]byte, error) {
 	if aspi.ProtectedItemDataID != nil {
 		objectMap["protectedItemDataId"] = aspi.ProtectedItemDataID
 	}
-	objectMap["protectionState"] = aspi.ProtectionState
+	if aspi.ProtectionState != "" {
+		objectMap["protectionState"] = aspi.ProtectionState
+	}
 	if aspi.ExtendedInfo != nil {
 		objectMap["extendedInfo"] = aspi.ExtendedInfo
 	}
-	objectMap["backupManagementType"] = aspi.BackupManagementType
-	objectMap["workloadType"] = aspi.WorkloadType
+	if aspi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aspi.BackupManagementType
+	}
+	if aspi.WorkloadType != "" {
+		objectMap["workloadType"] = aspi.WorkloadType
+	}
 	if aspi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = aspi.SourceResourceID
 	}
@@ -1792,7 +2022,9 @@ func (aspi AzureSQLProtectedItem) MarshalJSON() ([]byte, error) {
 	if aspi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = aspi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = aspi.ProtectedItemType
+	if aspi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = aspi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -1864,7 +2096,9 @@ func (aspp AzureSQLProtectionPolicy) MarshalJSON() ([]byte, error) {
 	if aspp.ProtectedItemsCount != nil {
 		objectMap["protectedItemsCount"] = aspp.ProtectedItemsCount
 	}
-	objectMap["backupManagementType"] = aspp.BackupManagementType
+	if aspp.BackupManagementType != "" {
+		objectMap["backupManagementType"] = aspp.BackupManagementType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2033,7 +2267,9 @@ func (dbe DpmBackupEngine) MarshalJSON() ([]byte, error) {
 	if dbe.FriendlyName != nil {
 		objectMap["friendlyName"] = dbe.FriendlyName
 	}
-	objectMap["backupManagementType"] = dbe.BackupManagementType
+	if dbe.BackupManagementType != "" {
+		objectMap["backupManagementType"] = dbe.BackupManagementType
+	}
 	if dbe.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = dbe.RegistrationStatus
 	}
@@ -2046,7 +2282,9 @@ func (dbe DpmBackupEngine) MarshalJSON() ([]byte, error) {
 	if dbe.BackupEngineID != nil {
 		objectMap["backupEngineId"] = dbe.BackupEngineID
 	}
-	objectMap["backupEngineType"] = dbe.BackupEngineType
+	if dbe.BackupEngineType != "" {
+		objectMap["backupEngineType"] = dbe.BackupEngineType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2145,7 +2383,9 @@ func (dj DpmJob) MarshalJSON() ([]byte, error) {
 	if dj.EntityFriendlyName != nil {
 		objectMap["entityFriendlyName"] = dj.EntityFriendlyName
 	}
-	objectMap["backupManagementType"] = dj.BackupManagementType
+	if dj.BackupManagementType != "" {
+		objectMap["backupManagementType"] = dj.BackupManagementType
+	}
 	if dj.Operation != nil {
 		objectMap["operation"] = dj.Operation
 	}
@@ -2161,7 +2401,9 @@ func (dj DpmJob) MarshalJSON() ([]byte, error) {
 	if dj.ActivityID != nil {
 		objectMap["activityId"] = dj.ActivityID
 	}
-	objectMap["jobType"] = dj.JobType
+	if dj.JobType != "" {
+		objectMap["jobType"] = dj.JobType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2316,7 +2558,9 @@ func (eb EngineBase) MarshalJSON() ([]byte, error) {
 	if eb.FriendlyName != nil {
 		objectMap["friendlyName"] = eb.FriendlyName
 	}
-	objectMap["backupManagementType"] = eb.BackupManagementType
+	if eb.BackupManagementType != "" {
+		objectMap["backupManagementType"] = eb.BackupManagementType
+	}
 	if eb.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = eb.RegistrationStatus
 	}
@@ -2329,7 +2573,9 @@ func (eb EngineBase) MarshalJSON() ([]byte, error) {
 	if eb.BackupEngineID != nil {
 		objectMap["backupEngineId"] = eb.BackupEngineID
 	}
-	objectMap["backupEngineType"] = eb.BackupEngineType
+	if eb.BackupEngineType != "" {
+		objectMap["backupEngineType"] = eb.BackupEngineType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2594,7 +2840,9 @@ func (ejori ExportJobsOperationResultInfo) MarshalJSON() ([]byte, error) {
 	if ejori.BlobSasKey != nil {
 		objectMap["blobSasKey"] = ejori.BlobSasKey
 	}
-	objectMap["objectType"] = ejori.ObjectType
+	if ejori.ObjectType != "" {
+		objectMap["objectType"] = ejori.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2648,7 +2896,9 @@ func (grp GenericRecoveryPoint) MarshalJSON() ([]byte, error) {
 	if grp.RecoveryPointAdditionalInfo != nil {
 		objectMap["recoveryPointAdditionalInfo"] = grp.RecoveryPointAdditionalInfo
 	}
-	objectMap["objectType"] = grp.ObjectType
+	if grp.ObjectType != "" {
+		objectMap["objectType"] = grp.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2693,7 +2943,9 @@ func (ivbr IaasVMBackupRequest) MarshalJSON() ([]byte, error) {
 	if ivbr.RecoveryPointExpiryTimeInUTC != nil {
 		objectMap["recoveryPointExpiryTimeInUTC"] = ivbr.RecoveryPointExpiryTimeInUTC
 	}
-	objectMap["objectType"] = ivbr.ObjectType
+	if ivbr.ObjectType != "" {
+		objectMap["objectType"] = ivbr.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2798,7 +3050,9 @@ func (isc IaaSVMContainer) MarshalJSON() ([]byte, error) {
 	if isc.FriendlyName != nil {
 		objectMap["friendlyName"] = isc.FriendlyName
 	}
-	objectMap["backupManagementType"] = isc.BackupManagementType
+	if isc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = isc.BackupManagementType
+	}
 	if isc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = isc.RegistrationStatus
 	}
@@ -2808,7 +3062,9 @@ func (isc IaaSVMContainer) MarshalJSON() ([]byte, error) {
 	if isc.ContainerType != nil {
 		objectMap["containerType"] = isc.ContainerType
 	}
-	objectMap["protectableObjectType"] = isc.ProtectableObjectType
+	if isc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = isc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2883,7 +3139,9 @@ func (ivrr IaasVMILRRegistrationRequest) MarshalJSON() ([]byte, error) {
 	if ivrr.RenewExistingRegistration != nil {
 		objectMap["renewExistingRegistration"] = ivrr.RenewExistingRegistration
 	}
-	objectMap["objectType"] = ivrr.ObjectType
+	if ivrr.ObjectType != "" {
+		objectMap["objectType"] = ivrr.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -2979,8 +3237,12 @@ func (ispi IaaSVMProtectableItem) MarshalJSON() ([]byte, error) {
 	if ispi.FriendlyName != nil {
 		objectMap["friendlyName"] = ispi.FriendlyName
 	}
-	objectMap["protectionState"] = ispi.ProtectionState
-	objectMap["protectableItemType"] = ispi.ProtectableItemType
+	if ispi.ProtectionState != "" {
+		objectMap["protectionState"] = ispi.ProtectionState
+	}
+	if ispi.ProtectableItemType != "" {
+		objectMap["protectableItemType"] = ispi.ProtectableItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3059,7 +3321,9 @@ func (ivrp IaasVMRecoveryPoint) MarshalJSON() ([]byte, error) {
 	if ivrp.IsInstantILRSessionActive != nil {
 		objectMap["isInstantILRSessionActive"] = ivrp.IsInstantILRSessionActive
 	}
-	objectMap["objectType"] = ivrp.ObjectType
+	if ivrp.ObjectType != "" {
+		objectMap["objectType"] = ivrp.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3125,7 +3389,9 @@ func (ivrr IaasVMRestoreRequest) MarshalJSON() ([]byte, error) {
 	if ivrr.RecoveryPointID != nil {
 		objectMap["recoveryPointId"] = ivrr.RecoveryPointID
 	}
-	objectMap["recoveryType"] = ivrr.RecoveryType
+	if ivrr.RecoveryType != "" {
+		objectMap["recoveryType"] = ivrr.RecoveryType
+	}
 	if ivrr.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = ivrr.SourceResourceID
 	}
@@ -3159,7 +3425,9 @@ func (ivrr IaasVMRestoreRequest) MarshalJSON() ([]byte, error) {
 	if ivrr.EncryptionDetails != nil {
 		objectMap["encryptionDetails"] = ivrr.EncryptionDetails
 	}
-	objectMap["objectType"] = ivrr.ObjectType
+	if ivrr.ObjectType != "" {
+		objectMap["objectType"] = ivrr.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3231,7 +3499,9 @@ func unmarshalBasicILRRequestArray(body []byte) ([]BasicILRRequest, error) {
 func (ir ILRRequest) MarshalJSON() ([]byte, error) {
 	ir.ObjectType = ObjectTypeILRRequest
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = ir.ObjectType
+	if ir.ObjectType != "" {
+		objectMap["objectType"] = ir.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3455,7 +3725,9 @@ func (j Job) MarshalJSON() ([]byte, error) {
 	if j.EntityFriendlyName != nil {
 		objectMap["entityFriendlyName"] = j.EntityFriendlyName
 	}
-	objectMap["backupManagementType"] = j.BackupManagementType
+	if j.BackupManagementType != "" {
+		objectMap["backupManagementType"] = j.BackupManagementType
+	}
 	if j.Operation != nil {
 		objectMap["operation"] = j.Operation
 	}
@@ -3471,7 +3743,9 @@ func (j Job) MarshalJSON() ([]byte, error) {
 	if j.ActivityID != nil {
 		objectMap["activityId"] = j.ActivityID
 	}
-	objectMap["jobType"] = j.JobType
+	if j.JobType != "" {
+		objectMap["jobType"] = j.JobType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3791,7 +4065,9 @@ func (ltrp LongTermRetentionPolicy) MarshalJSON() ([]byte, error) {
 	if ltrp.YearlySchedule != nil {
 		objectMap["yearlySchedule"] = ltrp.YearlySchedule
 	}
-	objectMap["retentionPolicyType"] = ltrp.RetentionPolicyType
+	if ltrp.RetentionPolicyType != "" {
+		objectMap["retentionPolicyType"] = ltrp.RetentionPolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3825,7 +4101,9 @@ type LongTermSchedulePolicy struct {
 func (ltsp LongTermSchedulePolicy) MarshalJSON() ([]byte, error) {
 	ltsp.SchedulePolicyType = SchedulePolicyTypeLongTermSchedulePolicy
 	objectMap := make(map[string]interface{})
-	objectMap["schedulePolicyType"] = ltsp.SchedulePolicyType
+	if ltsp.SchedulePolicyType != "" {
+		objectMap["schedulePolicyType"] = ltsp.SchedulePolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -3897,7 +4175,9 @@ func (mc MabContainer) MarshalJSON() ([]byte, error) {
 	if mc.FriendlyName != nil {
 		objectMap["friendlyName"] = mc.FriendlyName
 	}
-	objectMap["backupManagementType"] = mc.BackupManagementType
+	if mc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = mc.BackupManagementType
+	}
 	if mc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = mc.RegistrationStatus
 	}
@@ -3907,7 +4187,9 @@ func (mc MabContainer) MarshalJSON() ([]byte, error) {
 	if mc.ContainerType != nil {
 		objectMap["containerType"] = mc.ContainerType
 	}
-	objectMap["protectableObjectType"] = mc.ProtectableObjectType
+	if mc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = mc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4022,8 +4304,12 @@ func (mffpi MabFileFolderProtectedItem) MarshalJSON() ([]byte, error) {
 	if mffpi.ExtendedInfo != nil {
 		objectMap["extendedInfo"] = mffpi.ExtendedInfo
 	}
-	objectMap["backupManagementType"] = mffpi.BackupManagementType
-	objectMap["workloadType"] = mffpi.WorkloadType
+	if mffpi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = mffpi.BackupManagementType
+	}
+	if mffpi.WorkloadType != "" {
+		objectMap["workloadType"] = mffpi.WorkloadType
+	}
 	if mffpi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = mffpi.SourceResourceID
 	}
@@ -4033,7 +4319,9 @@ func (mffpi MabFileFolderProtectedItem) MarshalJSON() ([]byte, error) {
 	if mffpi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = mffpi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = mffpi.ProtectedItemType
+	if mffpi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = mffpi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4134,8 +4422,12 @@ func (mj MabJob) MarshalJSON() ([]byte, error) {
 	if mj.MabServerName != nil {
 		objectMap["mabServerName"] = mj.MabServerName
 	}
-	objectMap["mabServerType"] = mj.MabServerType
-	objectMap["workloadType"] = mj.WorkloadType
+	if mj.MabServerType != "" {
+		objectMap["mabServerType"] = mj.MabServerType
+	}
+	if mj.WorkloadType != "" {
+		objectMap["workloadType"] = mj.WorkloadType
+	}
 	if mj.ErrorDetails != nil {
 		objectMap["errorDetails"] = mj.ErrorDetails
 	}
@@ -4145,7 +4437,9 @@ func (mj MabJob) MarshalJSON() ([]byte, error) {
 	if mj.EntityFriendlyName != nil {
 		objectMap["entityFriendlyName"] = mj.EntityFriendlyName
 	}
-	objectMap["backupManagementType"] = mj.BackupManagementType
+	if mj.BackupManagementType != "" {
+		objectMap["backupManagementType"] = mj.BackupManagementType
+	}
 	if mj.Operation != nil {
 		objectMap["operation"] = mj.Operation
 	}
@@ -4161,7 +4455,9 @@ func (mj MabJob) MarshalJSON() ([]byte, error) {
 	if mj.ActivityID != nil {
 		objectMap["activityId"] = mj.ActivityID
 	}
-	objectMap["jobType"] = mj.JobType
+	if mj.JobType != "" {
+		objectMap["jobType"] = mj.JobType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4250,7 +4546,9 @@ func (mpp MabProtectionPolicy) MarshalJSON() ([]byte, error) {
 	if mpp.ProtectedItemsCount != nil {
 		objectMap["protectedItemsCount"] = mpp.ProtectedItemsCount
 	}
-	objectMap["backupManagementType"] = mpp.BackupManagementType
+	if mpp.BackupManagementType != "" {
+		objectMap["backupManagementType"] = mpp.BackupManagementType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4357,7 +4655,9 @@ func (ori OperationResultInfo) MarshalJSON() ([]byte, error) {
 	if ori.JobList != nil {
 		objectMap["jobList"] = ori.JobList
 	}
-	objectMap["objectType"] = ori.ObjectType
+	if ori.ObjectType != "" {
+		objectMap["objectType"] = ori.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4439,7 +4739,9 @@ func unmarshalBasicOperationResultInfoBaseArray(body []byte) ([]BasicOperationRe
 func (orib OperationResultInfoBase) MarshalJSON() ([]byte, error) {
 	orib.ObjectType = ObjectTypeOperationResultInfoBase
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = orib.ObjectType
+	if orib.ObjectType != "" {
+		objectMap["objectType"] = orib.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4477,7 +4779,9 @@ type OperationResultInfoBaseResource struct {
 func (oribr OperationResultInfoBaseResource) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
 	objectMap["properties"] = oribr.Properties
-	objectMap["statusCode"] = oribr.StatusCode
+	if oribr.StatusCode != "" {
+		objectMap["statusCode"] = oribr.StatusCode
+	}
 	if oribr.Headers != nil {
 		objectMap["Headers"] = oribr.Headers
 	}
@@ -4692,7 +4996,9 @@ func unmarshalBasicOperationStatusExtendedInfoArray(body []byte) ([]BasicOperati
 func (osei OperationStatusExtendedInfo) MarshalJSON() ([]byte, error) {
 	osei.ObjectType = ObjectTypeOperationStatusExtendedInfo
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = osei.ObjectType
+	if osei.ObjectType != "" {
+		objectMap["objectType"] = osei.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4736,7 +5042,9 @@ func (osjei OperationStatusJobExtendedInfo) MarshalJSON() ([]byte, error) {
 	if osjei.JobID != nil {
 		objectMap["jobId"] = osjei.JobID
 	}
-	objectMap["objectType"] = osjei.ObjectType
+	if osjei.ObjectType != "" {
+		objectMap["objectType"] = osjei.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4785,7 +5093,9 @@ func (osjei OperationStatusJobsExtendedInfo) MarshalJSON() ([]byte, error) {
 	if osjei.FailedJobsError != nil {
 		objectMap["failedJobsError"] = osjei.FailedJobsError
 	}
-	objectMap["objectType"] = osjei.ObjectType
+	if osjei.ObjectType != "" {
+		objectMap["objectType"] = osjei.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4830,7 +5140,9 @@ func (ospiei OperationStatusProvisionILRExtendedInfo) MarshalJSON() ([]byte, err
 	if ospiei.RecoveryTarget != nil {
 		objectMap["recoveryTarget"] = ospiei.RecoveryTarget
 	}
-	objectMap["objectType"] = ospiei.ObjectType
+	if ospiei.ObjectType != "" {
+		objectMap["objectType"] = ospiei.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -4870,7 +5182,9 @@ type OperationWorkerResponse struct {
 // MarshalJSON is the custom marshaler for OperationWorkerResponse.
 func (owr OperationWorkerResponse) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["statusCode"] = owr.StatusCode
+	if owr.StatusCode != "" {
+		objectMap["statusCode"] = owr.StatusCode
+	}
 	if owr.Headers != nil {
 		objectMap["Headers"] = owr.Headers
 	}
@@ -4961,8 +5275,12 @@ func unmarshalBasicProtectedItemArray(body []byte) ([]BasicProtectedItem, error)
 func (pi ProtectedItem) MarshalJSON() ([]byte, error) {
 	pi.ProtectedItemType = ProtectedItemTypeProtectedItem
 	objectMap := make(map[string]interface{})
-	objectMap["backupManagementType"] = pi.BackupManagementType
-	objectMap["workloadType"] = pi.WorkloadType
+	if pi.BackupManagementType != "" {
+		objectMap["backupManagementType"] = pi.BackupManagementType
+	}
+	if pi.WorkloadType != "" {
+		objectMap["workloadType"] = pi.WorkloadType
+	}
 	if pi.SourceResourceID != nil {
 		objectMap["sourceResourceId"] = pi.SourceResourceID
 	}
@@ -4972,7 +5290,9 @@ func (pi ProtectedItem) MarshalJSON() ([]byte, error) {
 	if pi.LastRecoveryPoint != nil {
 		objectMap["lastRecoveryPoint"] = pi.LastRecoveryPoint
 	}
-	objectMap["protectedItemType"] = pi.ProtectedItemType
+	if pi.ProtectedItemType != "" {
+		objectMap["protectedItemType"] = pi.ProtectedItemType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5339,7 +5659,9 @@ func (pc ProtectionContainer) MarshalJSON() ([]byte, error) {
 	if pc.FriendlyName != nil {
 		objectMap["friendlyName"] = pc.FriendlyName
 	}
-	objectMap["backupManagementType"] = pc.BackupManagementType
+	if pc.BackupManagementType != "" {
+		objectMap["backupManagementType"] = pc.BackupManagementType
+	}
 	if pc.RegistrationStatus != nil {
 		objectMap["registrationStatus"] = pc.RegistrationStatus
 	}
@@ -5349,7 +5671,9 @@ func (pc ProtectionContainer) MarshalJSON() ([]byte, error) {
 	if pc.ContainerType != nil {
 		objectMap["containerType"] = pc.ContainerType
 	}
-	objectMap["protectableObjectType"] = pc.ProtectableObjectType
+	if pc.ProtectableObjectType != "" {
+		objectMap["protectableObjectType"] = pc.ProtectableObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5593,7 +5917,9 @@ func (pp ProtectionPolicy) MarshalJSON() ([]byte, error) {
 	if pp.ProtectedItemsCount != nil {
 		objectMap["protectedItemsCount"] = pp.ProtectedItemsCount
 	}
-	objectMap["backupManagementType"] = pp.BackupManagementType
+	if pp.BackupManagementType != "" {
+		objectMap["backupManagementType"] = pp.BackupManagementType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -5816,7 +6142,9 @@ func unmarshalBasicRecoveryPointArray(body []byte) ([]BasicRecoveryPoint, error)
 func (rp RecoveryPoint) MarshalJSON() ([]byte, error) {
 	rp.ObjectType = ObjectTypeRecoveryPoint
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = rp.ObjectType
+	if rp.ObjectType != "" {
+		objectMap["objectType"] = rp.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6023,7 +6351,9 @@ func unmarshalBasicRequestArray(body []byte) ([]BasicRequest, error) {
 func (r Request) MarshalJSON() ([]byte, error) {
 	r.ObjectType = ObjectTypeBackupRequest
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = r.ObjectType
+	if r.ObjectType != "" {
+		objectMap["objectType"] = r.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6263,7 +6593,9 @@ func unmarshalBasicRestoreRequestArray(body []byte) ([]BasicRestoreRequest, erro
 func (rr RestoreRequest) MarshalJSON() ([]byte, error) {
 	rr.ObjectType = ObjectTypeRestoreRequest
 	objectMap := make(map[string]interface{})
-	objectMap["objectType"] = rr.ObjectType
+	if rr.ObjectType != "" {
+		objectMap["objectType"] = rr.ObjectType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6469,7 +6801,9 @@ func unmarshalBasicRetentionPolicyArray(body []byte) ([]BasicRetentionPolicy, er
 func (rp RetentionPolicy) MarshalJSON() ([]byte, error) {
 	rp.RetentionPolicyType = RetentionPolicyTypeRetentionPolicy
 	objectMap := make(map[string]interface{})
-	objectMap["retentionPolicyType"] = rp.RetentionPolicyType
+	if rp.RetentionPolicyType != "" {
+		objectMap["retentionPolicyType"] = rp.RetentionPolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6551,7 +6885,9 @@ func unmarshalBasicSchedulePolicyArray(body []byte) ([]BasicSchedulePolicy, erro
 func (sp SchedulePolicy) MarshalJSON() ([]byte, error) {
 	sp.SchedulePolicyType = SchedulePolicyTypeSchedulePolicy
 	objectMap := make(map[string]interface{})
-	objectMap["schedulePolicyType"] = sp.SchedulePolicyType
+	if sp.SchedulePolicyType != "" {
+		objectMap["schedulePolicyType"] = sp.SchedulePolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6590,7 +6926,9 @@ func (srp SimpleRetentionPolicy) MarshalJSON() ([]byte, error) {
 	if srp.RetentionDuration != nil {
 		objectMap["retentionDuration"] = srp.RetentionDuration
 	}
-	objectMap["retentionPolicyType"] = srp.RetentionPolicyType
+	if srp.RetentionPolicyType != "" {
+		objectMap["retentionPolicyType"] = srp.RetentionPolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6632,7 +6970,9 @@ type SimpleSchedulePolicy struct {
 func (ssp SimpleSchedulePolicy) MarshalJSON() ([]byte, error) {
 	ssp.SchedulePolicyType = SchedulePolicyTypeSimpleSchedulePolicy
 	objectMap := make(map[string]interface{})
-	objectMap["scheduleRunFrequency"] = ssp.ScheduleRunFrequency
+	if ssp.ScheduleRunFrequency != "" {
+		objectMap["scheduleRunFrequency"] = ssp.ScheduleRunFrequency
+	}
 	if ssp.ScheduleRunDays != nil {
 		objectMap["scheduleRunDays"] = ssp.ScheduleRunDays
 	}
@@ -6642,7 +6982,9 @@ func (ssp SimpleSchedulePolicy) MarshalJSON() ([]byte, error) {
 	if ssp.ScheduleWeeklyFrequency != nil {
 		objectMap["scheduleWeeklyFrequency"] = ssp.ScheduleWeeklyFrequency
 	}
-	objectMap["schedulePolicyType"] = ssp.SchedulePolicyType
+	if ssp.SchedulePolicyType != "" {
+		objectMap["schedulePolicyType"] = ssp.SchedulePolicyType
+	}
 	return json.Marshal(objectMap)
 }
 
@@ -6762,8 +7104,12 @@ func (wpi WorkloadProtectableItem) MarshalJSON() ([]byte, error) {
 	if wpi.FriendlyName != nil {
 		objectMap["friendlyName"] = wpi.FriendlyName
 	}
-	objectMap["protectionState"] = wpi.ProtectionState
-	objectMap["protectableItemType"] = wpi.ProtectableItemType
+	if wpi.ProtectionState != "" {
+		objectMap["protectionState"] = wpi.ProtectionState
+	}
+	if wpi.ProtectableItemType != "" {
+		objectMap["protectableItemType"] = wpi.ProtectableItemType
+	}
 	return json.Marshal(objectMap)
 }
 

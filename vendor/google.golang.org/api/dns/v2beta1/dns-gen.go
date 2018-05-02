@@ -672,36 +672,6 @@ func (s *ManagedZoneOperationsListResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-type ManagedZonesDeleteResponse struct {
-	Header *ResponseHeader `json:"header,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "Header") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Header") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ManagedZonesDeleteResponse) MarshalJSON() ([]byte, error) {
-	type NoMethod ManagedZonesDeleteResponse
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 type ManagedZonesListResponse struct {
 	Header *ResponseHeader `json:"header,omitempty"`
 
@@ -931,6 +901,10 @@ func (s *Project) MarshalJSON() ([]byte, error) {
 
 // Quota: Limits associated with a Project.
 type Quota struct {
+	// BlackHoleHidesSystemZones: Whether a black hole zone should suppress
+	// system zones for this project.
+	BlackHoleHidesSystemZones bool `json:"blackHoleHidesSystemZones,omitempty"`
+
 	// DnsKeysPerManagedZone: Maximum allowed number of DnsKeys per
 	// ManagedZone.
 	DnsKeysPerManagedZone int64 `json:"dnsKeysPerManagedZone,omitempty"`
@@ -967,21 +941,21 @@ type Quota struct {
 	WhitelistedKeySpecs []*DnsKeySpec `json:"whitelistedKeySpecs,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
-	// "DnsKeysPerManagedZone") to unconditionally include in API requests.
-	// By default, fields with empty values are omitted from API requests.
-	// However, any non-pointer, non-interface field appearing in
+	// "BlackHoleHidesSystemZones") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
 	// ForceSendFields will be sent to the server regardless of whether the
 	// field is empty or not. This may be used to include empty fields in
 	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "DnsKeysPerManagedZone") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g.
+	// "BlackHoleHidesSystemZones") to include in API requests with the JSON
+	// null value. By default, fields with empty values are omitted from API
+	// requests. However, any field with an empty value appearing in
+	// NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -2701,42 +2675,17 @@ func (c *ManagedZonesDeleteCall) doRequest(alt string) (*http.Response, error) {
 }
 
 // Do executes the "dns.managedZones.delete" call.
-// Exactly one of *ManagedZonesDeleteResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *ManagedZonesDeleteResponse.ServerResponse.Header or (if a response
-// was returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ManagedZonesDeleteCall) Do(opts ...googleapi.CallOption) (*ManagedZonesDeleteResponse, error) {
+func (c *ManagedZonesDeleteCall) Do(opts ...googleapi.CallOption) error {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return err
 	}
-	ret := &ManagedZonesDeleteResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
+	return nil
 	// {
 	//   "description": "Delete a previously created ManagedZone.",
 	//   "httpMethod": "DELETE",
@@ -2765,9 +2714,6 @@ func (c *ManagedZonesDeleteCall) Do(opts ...googleapi.CallOption) (*ManagedZones
 	//     }
 	//   },
 	//   "path": "{project}/managedZones/{managedZone}",
-	//   "response": {
-	//     "$ref": "ManagedZonesDeleteResponse"
-	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/ndev.clouddns.readwrite"
@@ -3153,8 +3099,7 @@ type ManagedZonesPatchCall struct {
 	header_     http.Header
 }
 
-// Patch: Update an existing ManagedZone. This method supports patch
-// semantics.
+// Patch: Apply a partial update to an existing ManagedZone.
 func (r *ManagedZonesService) Patch(project string, managedZone string, managedzone *ManagedZone) *ManagedZonesPatchCall {
 	c := &ManagedZonesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -3259,7 +3204,7 @@ func (c *ManagedZonesPatchCall) Do(opts ...googleapi.CallOption) (*Operation, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Update an existing ManagedZone. This method supports patch semantics.",
+	//   "description": "Apply a partial update to an existing ManagedZone.",
 	//   "httpMethod": "PATCH",
 	//   "id": "dns.managedZones.patch",
 	//   "parameterOrder": [

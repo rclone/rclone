@@ -41,9 +41,10 @@ func NewVirtualNetworkGatewaysClientWithBaseURI(baseURI string, subscriptionID s
 }
 
 // CreateOrUpdate creates or updates a virtual network gateway in the specified resource group.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. parameters is parameters supplied to create or update virtual network gateway operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// parameters - parameters supplied to create or update virtual network gateway operation.
 func (client VirtualNetworkGatewaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, parameters VirtualNetworkGateway) (result VirtualNetworkGatewaysCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -80,7 +81,7 @@ func (client VirtualNetworkGatewaysClient) CreateOrUpdatePreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}", pathParameters),
@@ -118,9 +119,9 @@ func (client VirtualNetworkGatewaysClient) CreateOrUpdateResponder(resp *http.Re
 }
 
 // Delete deletes the specified virtual network gateway.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
 func (client VirtualNetworkGatewaysClient) Delete(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGatewaysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
 	if err != nil {
@@ -187,10 +188,10 @@ func (client VirtualNetworkGatewaysClient) DeleteResponder(resp *http.Response) 
 
 // Generatevpnclientpackage generates VPN client package for P2S client of the virtual network gateway in the specified
 // resource group.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. parameters is parameters supplied to the generate virtual network gateway VPN client package
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// parameters - parameters supplied to the generate virtual network gateway VPN client package operation.
 func (client VirtualNetworkGatewaysClient) Generatevpnclientpackage(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, parameters VpnClientParameters) (result VirtualNetworkGatewaysGeneratevpnclientpackageFuture, err error) {
 	req, err := client.GeneratevpnclientpackagePreparer(ctx, resourceGroupName, virtualNetworkGatewayName, parameters)
 	if err != nil {
@@ -221,7 +222,7 @@ func (client VirtualNetworkGatewaysClient) GeneratevpnclientpackagePreparer(ctx 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}/generatevpnclientpackage", pathParameters),
@@ -260,10 +261,10 @@ func (client VirtualNetworkGatewaysClient) GeneratevpnclientpackageResponder(res
 
 // GenerateVpnProfile generates VPN profile for P2S client of the virtual network gateway in the specified resource
 // group. Used for IKEV2 and radius based authentication.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. parameters is parameters supplied to the generate virtual network gateway VPN client package
-// operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// parameters - parameters supplied to the generate virtual network gateway VPN client package operation.
 func (client VirtualNetworkGatewaysClient) GenerateVpnProfile(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, parameters VpnClientParameters) (result VirtualNetworkGatewaysGenerateVpnProfileFuture, err error) {
 	req, err := client.GenerateVpnProfilePreparer(ctx, resourceGroupName, virtualNetworkGatewayName, parameters)
 	if err != nil {
@@ -294,7 +295,7 @@ func (client VirtualNetworkGatewaysClient) GenerateVpnProfilePreparer(ctx contex
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}/generatevpnprofile", pathParameters),
@@ -332,9 +333,9 @@ func (client VirtualNetworkGatewaysClient) GenerateVpnProfileResponder(resp *htt
 }
 
 // Get gets the specified virtual network gateway by resource group.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
 func (client VirtualNetworkGatewaysClient) Get(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGateway, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
 	if err != nil {
@@ -400,9 +401,10 @@ func (client VirtualNetworkGatewaysClient) GetResponder(resp *http.Response) (re
 
 // GetAdvertisedRoutes this operation retrieves a list of routes the virtual network gateway is advertising to the
 // specified peer.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. peer is the IP address of the peer
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// peer - the IP address of the peer
 func (client VirtualNetworkGatewaysClient) GetAdvertisedRoutes(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, peer string) (result VirtualNetworkGatewaysGetAdvertisedRoutesFuture, err error) {
 	req, err := client.GetAdvertisedRoutesPreparer(ctx, resourceGroupName, virtualNetworkGatewayName, peer)
 	if err != nil {
@@ -470,9 +472,10 @@ func (client VirtualNetworkGatewaysClient) GetAdvertisedRoutesResponder(resp *ht
 }
 
 // GetBgpPeerStatus the GetBgpPeerStatus operation retrieves the status of all BGP peers.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. peer is the IP address of the peer to retrieve the status of.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// peer - the IP address of the peer to retrieve the status of.
 func (client VirtualNetworkGatewaysClient) GetBgpPeerStatus(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, peer string) (result VirtualNetworkGatewaysGetBgpPeerStatusFuture, err error) {
 	req, err := client.GetBgpPeerStatusPreparer(ctx, resourceGroupName, virtualNetworkGatewayName, peer)
 	if err != nil {
@@ -543,9 +546,9 @@ func (client VirtualNetworkGatewaysClient) GetBgpPeerStatusResponder(resp *http.
 
 // GetLearnedRoutes this operation retrieves a list of routes the virtual network gateway has learned, including routes
 // learned from BGP peers.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
 func (client VirtualNetworkGatewaysClient) GetLearnedRoutes(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGatewaysGetLearnedRoutesFuture, err error) {
 	req, err := client.GetLearnedRoutesPreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
 	if err != nil {
@@ -612,8 +615,8 @@ func (client VirtualNetworkGatewaysClient) GetLearnedRoutesResponder(resp *http.
 }
 
 // List gets all virtual network gateways by resource group.
-//
-// resourceGroupName is the name of the resource group.
+// Parameters:
+// resourceGroupName - the name of the resource group.
 func (client VirtualNetworkGatewaysClient) List(ctx context.Context, resourceGroupName string) (result VirtualNetworkGatewayListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)
@@ -705,9 +708,9 @@ func (client VirtualNetworkGatewaysClient) ListComplete(ctx context.Context, res
 }
 
 // ListConnections gets all the connections in a virtual network gateway.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
 func (client VirtualNetworkGatewaysClient) ListConnections(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGatewayListConnectionsResultPage, err error) {
 	result.fn = client.listConnectionsNextResults
 	req, err := client.ListConnectionsPreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
@@ -800,10 +803,11 @@ func (client VirtualNetworkGatewaysClient) ListConnectionsComplete(ctx context.C
 }
 
 // Reset resets the primary of the virtual network gateway in the specified resource group.
-//
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
-// network gateway. gatewayVip is virtual network gateway vip address supplied to the begin reset of the
-// active-active feature enabled gateway.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// virtualNetworkGatewayName - the name of the virtual network gateway.
+// gatewayVip - virtual network gateway vip address supplied to the begin reset of the active-active feature
+// enabled gateway.
 func (client VirtualNetworkGatewaysClient) Reset(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, gatewayVip string) (result VirtualNetworkGatewaysResetFuture, err error) {
 	req, err := client.ResetPreparer(ctx, resourceGroupName, virtualNetworkGatewayName, gatewayVip)
 	if err != nil {

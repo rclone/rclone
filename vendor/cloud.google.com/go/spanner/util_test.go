@@ -23,5 +23,6 @@ import (
 
 func testEqual(a, b interface{}) bool {
 	return testutil.Equal(a, b,
-		cmp.AllowUnexported(TimestampBound{}, Error{}, Mutation{}, Row{}))
+		cmp.AllowUnexported(TimestampBound{}, Error{}, Mutation{}, Row{},
+			Partition{}, BatchReadOnlyTransactionID{}))
 }

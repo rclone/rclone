@@ -5,12 +5,14 @@
     "AcceptInvitation" : "Accepts the invitation to be monitored by a master GuardDuty account.",
     "ArchiveFindings" : "Archives Amazon GuardDuty findings specified by the list of finding IDs.",
     "CreateDetector" : "Creates a single Amazon GuardDuty detector. A detector is an object that represents the GuardDuty service. A detector must be created in order for GuardDuty to become operational.",
+    "CreateFilter" : "Creates a filter using the specified finding criteria.",
     "CreateIPSet" : "Creates a new IPSet - a list of trusted IP addresses that have been whitelisted for secure communication with AWS infrastructure and applications.",
     "CreateMembers" : "Creates member accounts of the current AWS account by specifying a list of AWS account IDs. The current AWS account can then invite these members to manage GuardDuty in their accounts.",
     "CreateSampleFindings" : "Generates example findings of types specified by the list of finding types. If 'NULL' is specified for findingTypes, the API generates example findings of all supported finding types.",
     "CreateThreatIntelSet" : "Create a new ThreatIntelSet. ThreatIntelSets consist of known malicious IP addresses. GuardDuty generates findings based on ThreatIntelSets.",
     "DeclineInvitations" : "Declines invitations sent to the current member account by AWS account specified by their account IDs.",
     "DeleteDetector" : "Deletes a Amazon GuardDuty detector specified by the detector ID.",
+    "DeleteFilter" : "Deletes the filter specified by the filter name.",
     "DeleteIPSet" : "Deletes the IPSet specified by the IPSet ID.",
     "DeleteInvitations" : "Deletes invitations sent to the current member account by AWS accounts specified by their account IDs.",
     "DeleteMembers" : "Deletes GuardDuty member accounts (to the current GuardDuty master account) specified by the account IDs.",
@@ -18,6 +20,7 @@
     "DisassociateFromMasterAccount" : "Disassociates the current GuardDuty member account from its master account.",
     "DisassociateMembers" : "Disassociates GuardDuty member accounts (to the current GuardDuty master account) specified by the account IDs.",
     "GetDetector" : "Retrieves an Amazon GuardDuty detector specified by the detectorId.",
+    "GetFilter" : "Returns the details of the filter specified by the filter name.",
     "GetFindings" : "Describes Amazon GuardDuty findings specified by finding IDs.",
     "GetFindingsStatistics" : "Lists Amazon GuardDuty findings' statistics for the specified detector ID.",
     "GetIPSet" : "Retrieves the IPSet specified by the IPSet ID.",
@@ -27,15 +30,17 @@
     "GetThreatIntelSet" : "Retrieves the ThreatIntelSet that is specified by the ThreatIntelSet ID.",
     "InviteMembers" : "Invites other AWS accounts (created as members of the current AWS account by CreateMembers) to enable GuardDuty and allow the current AWS account to view and manage these accounts' GuardDuty findings on their behalf as the master account.",
     "ListDetectors" : "Lists detectorIds of all the existing Amazon GuardDuty detector resources.",
+    "ListFilters" : "Returns a paginated list of the current filters.",
     "ListFindings" : "Lists Amazon GuardDuty findings for the specified detector ID.",
     "ListIPSets" : "Lists the IPSets of the GuardDuty service specified by the detector ID.",
     "ListInvitations" : "Lists all GuardDuty membership invitations that were sent to the current AWS account.",
     "ListMembers" : "Lists details about all member accounts for the current GuardDuty master account.",
     "ListThreatIntelSets" : "Lists the ThreatIntelSets of the GuardDuty service specified by the detector ID.",
     "StartMonitoringMembers" : "Re-enables GuardDuty to monitor findings of the member accounts specified by the account IDs. A master GuardDuty account can run this command after disabling GuardDuty from monitoring these members' findings by running StopMonitoringMembers.",
-    "StopMonitoringMembers" : "Disables GuardDuty from monitoring findings of the member accounts specified by the account IDs. After running this command, a master GuardDuty account can run StartMonitoringMembers to re-enable GuardDuty to monitor these members' findings.",
+    "StopMonitoringMembers" : "Disables GuardDuty from monitoring findings of the member accounts specified by the account IDs. After running this command, a master GuardDuty account can run StartMonitoringMembers to re-enable GuardDuty to monitor these members’ findings.",
     "UnarchiveFindings" : "Unarchives Amazon GuardDuty findings specified by the list of finding IDs.",
     "UpdateDetector" : "Updates an Amazon GuardDuty detector specified by the detectorId.",
+    "UpdateFilter" : "Updates the filter specified by the filter name.",
     "UpdateFindingsFeedback" : "Marks specified Amazon GuardDuty findings as useful or not useful.",
     "UpdateIPSet" : "Updates the IPSet specified by the IPSet ID.",
     "UpdateThreatIntelSet" : "Updates the ThreatIntelSet specified by ThreatIntelSet ID."
@@ -127,13 +132,13 @@
     "Condition" : {
       "base" : "Finding attribute (for example, accountId) for which conditions and values must be specified when querying findings.",
       "refs" : {
-        "MapOfCondition$member" : null
+        "__mapOfCondition$member" : null
       }
     },
     "CountBySeverityFindingStatistic" : {
       "base" : "The count of findings for the given severity.",
       "refs" : {
-        "MapOfCountBySeverityFindingStatistic$member" : null
+        "__mapOfCountBySeverityFindingStatistic$member" : null
       }
     },
     "Country" : {
@@ -148,6 +153,14 @@
     },
     "CreateDetectorResponse" : {
       "base" : "CreateDetector response object.",
+      "refs" : { }
+    },
+    "CreateFilterRequest" : {
+      "base" : "CreateFilter request object.",
+      "refs" : { }
+    },
+    "CreateFilterResponse" : {
+      "base" : "CreateFilter response object.",
       "refs" : { }
     },
     "CreateIPSetRequest" : {
@@ -286,6 +299,46 @@
         "UpdateFindingsFeedbackRequest$Feedback" : "Valid values: USEFUL | NOT_USEFUL"
       }
     },
+    "FilterAction" : {
+      "base" : "The action associated with a filter.",
+      "refs" : {
+        "CreateFilterRequest$Action" : "Specifies the action that is to be applied to the findings that match the filter.",
+        "GetFilterResponse$Action" : "Specifies the action that is to be applied to the findings that match the filter.",
+        "UpdateFilterRequest$Action" : "Specifies the action that is to be applied to the findings that match the filter."
+      }
+    },
+    "FilterDescription" : {
+      "base" : "The filter description",
+      "refs" : {
+        "CreateFilterRequest$Description" : "The description of the filter.",
+        "GetFilterResponse$Description" : "The description of the filter.",
+        "UpdateFilterRequest$Description" : "The description of the filter."
+      }
+    },
+    "FilterName" : {
+      "base" : "The unique identifier for a filter",
+      "refs" : {
+        "CreateFilterRequest$Name" : "The name of the filter.",
+        "CreateFilterResponse$Name" : "The name of the successfully created filter.",
+        "FilterNames$member" : null,
+        "GetFilterResponse$Name" : "The name of the filter.",
+        "UpdateFilterResponse$Name" : "The name of the filter."
+      }
+    },
+    "FilterNames" : {
+      "base" : "A list of filter names",
+      "refs" : {
+        "ListFiltersResponse$FilterNames" : null
+      }
+    },
+    "FilterRank" : {
+      "base" : "Relative position of filter among list of exisiting filters.",
+      "refs" : {
+        "CreateFilterRequest$Rank" : "Specifies the position of the filter in the list of current filters. Also specifies the order in which this filter is applied to the findings.",
+        "GetFilterResponse$Rank" : "Specifies the position of the filter in the list of current filters. Also specifies the order in which this filter is applied to the findings.",
+        "UpdateFilterRequest$Rank" : "Specifies the position of the filter in the list of current filters. Also specifies the order in which this filter is applied to the findings."
+      }
+    },
     "Finding" : {
       "base" : "Representation of a abnormal or suspicious activity.",
       "refs" : {
@@ -295,8 +348,11 @@
     "FindingCriteria" : {
       "base" : "Represents the criteria used for querying findings.",
       "refs" : {
+        "CreateFilterRequest$FindingCriteria" : "Represents the criteria to be used in the filter for querying findings.",
+        "GetFilterResponse$FindingCriteria" : "Represents the criteria to be used in the filter for querying findings.",
         "GetFindingsStatisticsRequest$FindingCriteria" : "Represents the criteria used for querying findings.",
-        "ListFindingsRequest$FindingCriteria" : "Represents the criteria used for querying findings."
+        "ListFindingsRequest$FindingCriteria" : "Represents the criteria used for querying findings.",
+        "UpdateFilterRequest$FindingCriteria" : "Represents the criteria to be used in the filter for querying findings."
       }
     },
     "FindingId" : {
@@ -359,6 +415,10 @@
     },
     "GetDetectorResponse" : {
       "base" : "GetDetector response object.",
+      "refs" : { }
+    },
+    "GetFilterResponse" : {
+      "base" : "GetFilter response object.",
       "refs" : { }
     },
     "GetFindingsRequest" : {
@@ -495,6 +555,10 @@
       "base" : "ListDetectors response object.",
       "refs" : { }
     },
+    "ListFiltersResponse" : {
+      "base" : "ListFilters response object.",
+      "refs" : { }
+    },
     "ListFindingsRequest" : {
       "base" : "List Findings Request",
       "refs" : { }
@@ -514,12 +578,6 @@
     "ListMembersResponse" : {
       "base" : "ListMembers response object.",
       "refs" : { }
-    },
-    "ListOfPortProbeDetail" : {
-      "base" : null,
-      "refs" : {
-        "PortProbeAction$PortProbeDetails" : "A list of port probe details objects."
-      }
     },
     "ListThreatIntelSetsResponse" : {
       "base" : "ListThreatIntelSets response object.",
@@ -541,18 +599,6 @@
         "GetThreatIntelSetResponse$Location" : "The URI of the file that contains the ThreatIntelSet. For example (https://s3.us-west-2.amazonaws.com/my-bucket/my-object-key).",
         "UpdateIPSetRequest$Location" : "The updated URI of the file that contains the IPSet. For example (https://s3.us-west-2.amazonaws.com/my-bucket/my-object-key).",
         "UpdateThreatIntelSetRequest$Location" : "The updated URI of the file that contains the ThreateIntelSet. For example (https://s3.us-west-2.amazonaws.com/my-bucket/my-object-key)"
-      }
-    },
-    "MapOfCondition" : {
-      "base" : null,
-      "refs" : {
-        "FindingCriteria$Criterion" : "Represents a map of finding properties that match specified conditions and values when querying findings."
-      }
-    },
-    "MapOfCountBySeverityFindingStatistic" : {
-      "base" : null,
-      "refs" : {
-        "FindingStatistics$CountBySeverity" : "Represents a map of severity to count statistic for a set of findings"
       }
     },
     "Master" : {
@@ -588,9 +634,9 @@
       }
     },
     "Message" : {
-      "base" : "The invitation message that you want to send to the accounts that you're inviting to GuardDuty as members.",
+      "base" : "The invitation message that you want to send to the accounts that you’re inviting to GuardDuty as members.",
       "refs" : {
-        "InviteMembersRequest$Message" : "The invitation message that you want to send to the accounts that you're inviting to GuardDuty as members."
+        "InviteMembersRequest$Message" : "The invitation message that you want to send to the accounts that you’re inviting to GuardDuty as members."
       }
     },
     "Name" : {
@@ -622,6 +668,12 @@
         "NetworkInterfaces$member" : null
       }
     },
+    "NetworkInterfaceId" : {
+      "base" : "The ID of the network interface.",
+      "refs" : {
+        "NetworkInterface$NetworkInterfaceId" : "The ID of the network interface"
+      }
+    },
     "NetworkInterfaces" : {
       "base" : "The network interface information of the EC2 instance.",
       "refs" : {
@@ -632,6 +684,7 @@
       "base" : "You can use this parameter when paginating results. Set the value of this parameter to null on your first call to the list action. For subsequent calls to the action fill nextToken in the request with the value of NextToken from the previous response to continue listing data.",
       "refs" : {
         "ListDetectorsResponse$NextToken" : null,
+        "ListFiltersResponse$NextToken" : null,
         "ListFindingsRequest$NextToken" : "You can use this parameter when paginating results. Set the value of this parameter to null on your first call to the ListFindings action. For subsequent calls to the action fill nextToken in the request with the value of nextToken from the previous response to continue listing data.",
         "ListFindingsResponse$NextToken" : null,
         "ListIPSetsResponse$NextToken" : null,
@@ -661,7 +714,7 @@
     "PortProbeDetail" : {
       "base" : "Details about the port probe finding.",
       "refs" : {
-        "ListOfPortProbeDetail$member" : null
+        "__listOfPortProbeDetail$member" : null
       }
     },
     "PrivateDnsName" : {
@@ -835,6 +888,14 @@
       "base" : "Update Detector Request",
       "refs" : { }
     },
+    "UpdateFilterRequest" : {
+      "base" : "UpdateFilter request object.",
+      "refs" : { }
+    },
+    "UpdateFilterResponse" : {
+      "base" : "UpdateFilter response object.",
+      "refs" : { }
+    },
     "UpdateFindingsFeedbackRequest" : {
       "base" : "Update findings feedback body",
       "refs" : { }
@@ -858,6 +919,7 @@
     "__boolean" : {
       "base" : null,
       "refs" : {
+        "InviteMembersRequest$DisableEmailNotification" : "A boolean value that specifies whether you want to disable email notification to the accounts that you’re inviting to GuardDuty as members.",
         "NetworkConnectionAction$Blocked" : "Network connection blocked information.",
         "PortProbeAction$Blocked" : "Port probe blocked information.",
         "Service$Archived" : "Indicates whether this finding is archived."
@@ -883,6 +945,24 @@
         "LocalPortDetails$Port" : "Port number of the local connection.",
         "RemotePortDetails$Port" : "Port number of the remote connection.",
         "Service$Count" : "Total count of the occurrences of this finding type."
+      }
+    },
+    "__listOfPortProbeDetail" : {
+      "base" : null,
+      "refs" : {
+        "PortProbeAction$PortProbeDetails" : "A list of port probe details objects."
+      }
+    },
+    "__mapOfCondition" : {
+      "base" : null,
+      "refs" : {
+        "FindingCriteria$Criterion" : "Represents a map of finding properties that match specified conditions and values when querying findings."
+      }
+    },
+    "__mapOfCountBySeverityFindingStatistic" : {
+      "base" : null,
+      "refs" : {
+        "FindingStatistics$CountBySeverity" : "Represents a map of severity to count statistic for a set of findings"
       }
     },
     "__string" : {
@@ -915,6 +995,7 @@
         "IamInstanceProfile$Arn" : "AWS EC2 instance profile ARN.",
         "IamInstanceProfile$Id" : "AWS EC2 instance profile ID.",
         "InstanceDetails$AvailabilityZone" : "The availability zone of the EC2 instance.",
+        "InstanceDetails$ImageDescription" : "The image description of the EC2 instance.",
         "InstanceDetails$ImageId" : "The image ID of the EC2 instance.",
         "InstanceDetails$InstanceId" : "The ID of the EC2 instance.",
         "InstanceDetails$InstanceState" : "The state of the EC2 instance.",
@@ -955,6 +1036,12 @@
         "Tag$Value" : "EC2 instance tag value.",
         "UnprocessedAccount$AccountId" : "AWS Account ID.",
         "UnprocessedAccount$Result" : "A reason why the account hasn't been processed."
+      }
+    },
+    "__stringMin0Max64" : {
+      "base" : null,
+      "refs" : {
+        "CreateFilterRequest$ClientToken" : "The idempotency token for the create request."
       }
     }
   }

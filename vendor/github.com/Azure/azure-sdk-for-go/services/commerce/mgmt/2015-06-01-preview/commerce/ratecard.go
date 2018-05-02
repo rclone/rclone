@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // RateCardClient is the client for the RateCard methods of the Commerce service.
 type RateCardClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // NewRateCardClient creates an instance of the RateCardClient client.
 func NewRateCardClient(subscriptionID string) RateCardClient {
 	return NewRateCardClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // NewRateCardClientWithBaseURI creates an instance of the RateCardClient client.
 func NewRateCardClientWithBaseURI(baseURI string, subscriptionID string) RateCardClient {
 	return RateCardClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // Get enables you to query for the resource/meter metadata and related prices used in a given subscription by Offer
 // ID, Currency, Locale and Region. The metadata associated with the billing meters, including but not limited to
 // service names, types, resources, units of measure, and regions, is subject to change at any time and without notice.
@@ -71,6 +75,7 @@ func (client RateCardClient) Get(ctx context.Context, filter string) (result Res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // GetPreparer prepares the Get request.
 func (client RateCardClient) GetPreparer(ctx context.Context, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -91,6 +96,7 @@ func (client RateCardClient) GetPreparer(ctx context.Context, filter string) (*h
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RateCardClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -98,6 +104,7 @@ func (client RateCardClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/commerce/mgmt/2015-06-01-preview/commerce instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client RateCardClient) GetResponder(resp *http.Response) (result ResourceRateCardInfo, err error) {

@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ArtifactSourceClient is the azure DevTest Labs REST API version 2015-05-21-preview.
 type ArtifactSourceClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewArtifactSourceClient creates an instance of the ArtifactSourceClient client.
 func NewArtifactSourceClient(subscriptionID string) ArtifactSourceClient {
 	return NewArtifactSourceClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // NewArtifactSourceClientWithBaseURI creates an instance of the ArtifactSourceClient client.
 func NewArtifactSourceClientWithBaseURI(baseURI string, subscriptionID string) ArtifactSourceClient {
 	return ArtifactSourceClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResource create or replace an existing artifact source.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -65,6 +69,7 @@ func (client ArtifactSourceClient) CreateOrUpdateResource(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourcePreparer prepares the CreateOrUpdateResource request.
 func (client ArtifactSourceClient) CreateOrUpdateResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, artifactSource ArtifactSource) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -80,7 +85,7 @@ func (client ArtifactSourceClient) CreateOrUpdateResourcePreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/artifactsources/{name}", pathParameters),
@@ -89,6 +94,7 @@ func (client ArtifactSourceClient) CreateOrUpdateResourcePreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceSender sends the CreateOrUpdateResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client ArtifactSourceClient) CreateOrUpdateResourceSender(req *http.Request) (*http.Response, error) {
@@ -96,6 +102,7 @@ func (client ArtifactSourceClient) CreateOrUpdateResourceSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // CreateOrUpdateResourceResponder handles the response to the CreateOrUpdateResource request. The method always
 // closes the http.Response Body.
 func (client ArtifactSourceClient) CreateOrUpdateResourceResponder(resp *http.Response) (result ArtifactSource, err error) {
@@ -109,6 +116,7 @@ func (client ArtifactSourceClient) CreateOrUpdateResourceResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResource delete artifact source.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -135,6 +143,7 @@ func (client ArtifactSourceClient) DeleteResource(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourcePreparer prepares the DeleteResource request.
 func (client ArtifactSourceClient) DeleteResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -157,6 +166,7 @@ func (client ArtifactSourceClient) DeleteResourcePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceSender sends the DeleteResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client ArtifactSourceClient) DeleteResourceSender(req *http.Request) (*http.Response, error) {
@@ -164,6 +174,7 @@ func (client ArtifactSourceClient) DeleteResourceSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // DeleteResourceResponder handles the response to the DeleteResource request. The method always
 // closes the http.Response Body.
 func (client ArtifactSourceClient) DeleteResourceResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -176,6 +187,7 @@ func (client ArtifactSourceClient) DeleteResourceResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResource get artifact source.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -202,6 +214,7 @@ func (client ArtifactSourceClient) GetResource(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourcePreparer prepares the GetResource request.
 func (client ArtifactSourceClient) GetResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -224,6 +237,7 @@ func (client ArtifactSourceClient) GetResourcePreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceSender sends the GetResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client ArtifactSourceClient) GetResourceSender(req *http.Request) (*http.Response, error) {
@@ -231,6 +245,7 @@ func (client ArtifactSourceClient) GetResourceSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // GetResourceResponder handles the response to the GetResource request. The method always
 // closes the http.Response Body.
 func (client ArtifactSourceClient) GetResourceResponder(resp *http.Response) (result ArtifactSource, err error) {
@@ -244,6 +259,7 @@ func (client ArtifactSourceClient) GetResourceResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // List list artifact sources.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
@@ -271,6 +287,7 @@ func (client ArtifactSourceClient) List(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListPreparer prepares the List request.
 func (client ArtifactSourceClient) ListPreparer(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -301,6 +318,7 @@ func (client ArtifactSourceClient) ListPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ArtifactSourceClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -308,6 +326,7 @@ func (client ArtifactSourceClient) ListSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client ArtifactSourceClient) ListResponder(resp *http.Response) (result ResponseWithContinuationArtifactSource, err error) {
@@ -342,12 +361,14 @@ func (client ArtifactSourceClient) listNextResults(lastResults ResponseWithConti
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ArtifactSourceClient) ListComplete(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationArtifactSourceIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, labName, filter, top, orderBy)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResource modify properties of artifact sources.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
@@ -374,6 +395,7 @@ func (client ArtifactSourceClient) PatchResource(ctx context.Context, resourceGr
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourcePreparer prepares the PatchResource request.
 func (client ArtifactSourceClient) PatchResourcePreparer(ctx context.Context, resourceGroupName string, labName string, name string, artifactSource ArtifactSource) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -389,7 +411,7 @@ func (client ArtifactSourceClient) PatchResourcePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/artifactsources/{name}", pathParameters),
@@ -398,6 +420,7 @@ func (client ArtifactSourceClient) PatchResourcePreparer(ctx context.Context, re
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceSender sends the PatchResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client ArtifactSourceClient) PatchResourceSender(req *http.Request) (*http.Response, error) {
@@ -405,6 +428,7 @@ func (client ArtifactSourceClient) PatchResourceSender(req *http.Request) (*http
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/devtestlabs/mgmt/2015-05-21-preview/dtl instead.
 // PatchResourceResponder handles the response to the PatchResource request. The method always
 // closes the http.Response Body.
 func (client ArtifactSourceClient) PatchResourceResponder(resp *http.Response) (result ArtifactSource, err error) {

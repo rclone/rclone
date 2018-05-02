@@ -25,21 +25,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // WebhooksClient is the client for the Webhooks methods of the Containerregistry service.
 type WebhooksClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // NewWebhooksClient creates an instance of the WebhooksClient client.
 func NewWebhooksClient(subscriptionID string) WebhooksClient {
 	return NewWebhooksClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // NewWebhooksClientWithBaseURI creates an instance of the WebhooksClient client.
 func NewWebhooksClientWithBaseURI(baseURI string, subscriptionID string) WebhooksClient {
 	return WebhooksClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Create creates a webhook for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -79,6 +83,7 @@ func (client WebhooksClient) Create(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreatePreparer prepares the Create request.
 func (client WebhooksClient) CreatePreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string, webhookCreateParameters WebhookCreateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -94,7 +99,7 @@ func (client WebhooksClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/webhooks/{webhookName}", pathParameters),
@@ -103,6 +108,7 @@ func (client WebhooksClient) CreatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) CreateSender(req *http.Request) (future WebhooksCreateFuture, err error) {
@@ -118,6 +124,7 @@ func (client WebhooksClient) CreateSender(req *http.Request) (future WebhooksCre
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // CreateResponder handles the response to the Create request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) CreateResponder(resp *http.Response) (result Webhook, err error) {
@@ -131,6 +138,7 @@ func (client WebhooksClient) CreateResponder(resp *http.Response) (result Webhoo
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Delete deletes a webhook from a container registry.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -163,6 +171,7 @@ func (client WebhooksClient) Delete(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeletePreparer prepares the Delete request.
 func (client WebhooksClient) DeletePreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -185,6 +194,7 @@ func (client WebhooksClient) DeletePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) DeleteSender(req *http.Request) (future WebhooksDeleteFuture, err error) {
@@ -200,6 +210,7 @@ func (client WebhooksClient) DeleteSender(req *http.Request) (future WebhooksDel
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -212,6 +223,7 @@ func (client WebhooksClient) DeleteResponder(resp *http.Response) (result autore
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Get gets the properties of the specified webhook.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -250,6 +262,7 @@ func (client WebhooksClient) Get(ctx context.Context, resourceGroupName string, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetPreparer prepares the Get request.
 func (client WebhooksClient) GetPreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -272,6 +285,7 @@ func (client WebhooksClient) GetPreparer(ctx context.Context, resourceGroupName 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -279,6 +293,7 @@ func (client WebhooksClient) GetSender(req *http.Request) (*http.Response, error
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) GetResponder(resp *http.Response) (result Webhook, err error) {
@@ -292,6 +307,7 @@ func (client WebhooksClient) GetResponder(resp *http.Response) (result Webhook, 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetCallbackConfig gets the configuration of service URI and custom headers for the webhook.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -330,6 +346,7 @@ func (client WebhooksClient) GetCallbackConfig(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetCallbackConfigPreparer prepares the GetCallbackConfig request.
 func (client WebhooksClient) GetCallbackConfigPreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -352,6 +369,7 @@ func (client WebhooksClient) GetCallbackConfigPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetCallbackConfigSender sends the GetCallbackConfig request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) GetCallbackConfigSender(req *http.Request) (*http.Response, error) {
@@ -359,6 +377,7 @@ func (client WebhooksClient) GetCallbackConfigSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // GetCallbackConfigResponder handles the response to the GetCallbackConfig request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) GetCallbackConfigResponder(resp *http.Response) (result CallbackConfig, err error) {
@@ -372,6 +391,7 @@ func (client WebhooksClient) GetCallbackConfigResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // List lists all the webhooks for the specified container registry.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -407,6 +427,7 @@ func (client WebhooksClient) List(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListPreparer prepares the List request.
 func (client WebhooksClient) ListPreparer(ctx context.Context, resourceGroupName string, registryName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -428,6 +449,7 @@ func (client WebhooksClient) ListPreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -435,6 +457,7 @@ func (client WebhooksClient) ListSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) ListResponder(resp *http.Response) (result WebhookListResult, err error) {
@@ -469,12 +492,14 @@ func (client WebhooksClient) listNextResults(lastResults WebhookListResult) (res
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client WebhooksClient) ListComplete(ctx context.Context, resourceGroupName string, registryName string) (result WebhookListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, registryName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListEvents lists recent events for the specified webhook.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -514,6 +539,7 @@ func (client WebhooksClient) ListEvents(ctx context.Context, resourceGroupName s
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListEventsPreparer prepares the ListEvents request.
 func (client WebhooksClient) ListEventsPreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -536,6 +562,7 @@ func (client WebhooksClient) ListEventsPreparer(ctx context.Context, resourceGro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListEventsSender sends the ListEvents request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) ListEventsSender(req *http.Request) (*http.Response, error) {
@@ -543,6 +570,7 @@ func (client WebhooksClient) ListEventsSender(req *http.Request) (*http.Response
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListEventsResponder handles the response to the ListEvents request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) ListEventsResponder(resp *http.Response) (result EventListResult, err error) {
@@ -577,12 +605,14 @@ func (client WebhooksClient) listEventsNextResults(lastResults EventListResult) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // ListEventsComplete enumerates all values, automatically crossing page boundaries as required.
 func (client WebhooksClient) ListEventsComplete(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (result EventListResultIterator, err error) {
 	result.page, err = client.ListEvents(ctx, resourceGroupName, registryName, webhookName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Ping triggers a ping event to be sent to the webhook.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -621,6 +651,7 @@ func (client WebhooksClient) Ping(ctx context.Context, resourceGroupName string,
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // PingPreparer prepares the Ping request.
 func (client WebhooksClient) PingPreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -643,6 +674,7 @@ func (client WebhooksClient) PingPreparer(ctx context.Context, resourceGroupName
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // PingSender sends the Ping request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) PingSender(req *http.Request) (*http.Response, error) {
@@ -650,6 +682,7 @@ func (client WebhooksClient) PingSender(req *http.Request) (*http.Response, erro
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // PingResponder handles the response to the Ping request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) PingResponder(resp *http.Response) (result EventInfo, err error) {
@@ -663,6 +696,7 @@ func (client WebhooksClient) PingResponder(resp *http.Response) (result EventInf
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // Update updates a webhook with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
@@ -696,6 +730,7 @@ func (client WebhooksClient) Update(ctx context.Context, resourceGroupName strin
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdatePreparer prepares the Update request.
 func (client WebhooksClient) UpdatePreparer(ctx context.Context, resourceGroupName string, registryName string, webhookName string, webhookUpdateParameters WebhookUpdateParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -711,7 +746,7 @@ func (client WebhooksClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/webhooks/{webhookName}", pathParameters),
@@ -720,6 +755,7 @@ func (client WebhooksClient) UpdatePreparer(ctx context.Context, resourceGroupNa
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhooksClient) UpdateSender(req *http.Request) (future WebhooksUpdateFuture, err error) {
@@ -735,6 +771,7 @@ func (client WebhooksClient) UpdateSender(req *http.Request) (future WebhooksUpd
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2017-06-01-preview/containerregistry instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client WebhooksClient) UpdateResponder(resp *http.Response) (result Webhook, err error) {

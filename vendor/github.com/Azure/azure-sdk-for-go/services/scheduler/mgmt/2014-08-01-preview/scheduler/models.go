@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // DayOfWeek enumerates the values for day of week.
 type DayOfWeek string
 
@@ -45,6 +46,13 @@ const (
 	Wednesday DayOfWeek = "Wednesday"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleDayOfWeekValues returns an array of possible values for the DayOfWeek const type.
+func PossibleDayOfWeekValues() []DayOfWeek {
+	return []DayOfWeek{Friday, Monday, Saturday, Sunday, Thursday, Tuesday, Wednesday}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // HTTPAuthenticationType enumerates the values for http authentication type.
 type HTTPAuthenticationType string
 
@@ -59,6 +67,13 @@ const (
 	NotSpecified HTTPAuthenticationType = "NotSpecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleHTTPAuthenticationTypeValues returns an array of possible values for the HTTPAuthenticationType const type.
+func PossibleHTTPAuthenticationTypeValues() []HTTPAuthenticationType {
+	return []HTTPAuthenticationType{ActiveDirectoryOAuth, Basic, ClientCertificate, NotSpecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobActionType enumerates the values for job action type.
 type JobActionType string
 
@@ -75,6 +90,13 @@ const (
 	StorageQueue JobActionType = "StorageQueue"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobActionTypeValues returns an array of possible values for the JobActionType const type.
+func PossibleJobActionTypeValues() []JobActionType {
+	return []JobActionType{HTTP, HTTPS, ServiceBusQueue, ServiceBusTopic, StorageQueue}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionState enumerates the values for job collection state.
 type JobCollectionState string
 
@@ -89,6 +111,13 @@ const (
 	Suspended JobCollectionState = "Suspended"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobCollectionStateValues returns an array of possible values for the JobCollectionState const type.
+func PossibleJobCollectionStateValues() []JobCollectionState {
+	return []JobCollectionState{Deleted, Disabled, Enabled, Suspended}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobExecutionStatus enumerates the values for job execution status.
 type JobExecutionStatus string
 
@@ -101,6 +130,13 @@ const (
 	Postponed JobExecutionStatus = "Postponed"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobExecutionStatusValues returns an array of possible values for the JobExecutionStatus const type.
+func PossibleJobExecutionStatusValues() []JobExecutionStatus {
+	return []JobExecutionStatus{Completed, Failed, Postponed}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryActionName enumerates the values for job history action name.
 type JobHistoryActionName string
 
@@ -111,6 +147,13 @@ const (
 	MainAction JobHistoryActionName = "MainAction"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobHistoryActionNameValues returns an array of possible values for the JobHistoryActionName const type.
+func PossibleJobHistoryActionNameValues() []JobHistoryActionName {
+	return []JobHistoryActionName{ErrorAction, MainAction}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobScheduleDay enumerates the values for job schedule day.
 type JobScheduleDay string
 
@@ -131,6 +174,13 @@ const (
 	JobScheduleDayWednesday JobScheduleDay = "Wednesday"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobScheduleDayValues returns an array of possible values for the JobScheduleDay const type.
+func PossibleJobScheduleDayValues() []JobScheduleDay {
+	return []JobScheduleDay{JobScheduleDayFriday, JobScheduleDayMonday, JobScheduleDaySaturday, JobScheduleDaySunday, JobScheduleDayThursday, JobScheduleDayTuesday, JobScheduleDayWednesday}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobState enumerates the values for job state.
 type JobState string
 
@@ -145,6 +195,13 @@ const (
 	JobStateFaulted JobState = "Faulted"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleJobStateValues returns an array of possible values for the JobState const type.
+func PossibleJobStateValues() []JobState {
+	return []JobState{JobStateCompleted, JobStateDisabled, JobStateEnabled, JobStateFaulted}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // RecurrenceFrequency enumerates the values for recurrence frequency.
 type RecurrenceFrequency string
 
@@ -161,6 +218,13 @@ const (
 	Week RecurrenceFrequency = "Week"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleRecurrenceFrequencyValues returns an array of possible values for the RecurrenceFrequency const type.
+func PossibleRecurrenceFrequencyValues() []RecurrenceFrequency {
+	return []RecurrenceFrequency{Day, Hour, Minute, Month, Week}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // RetryType enumerates the values for retry type.
 type RetryType string
 
@@ -171,6 +235,13 @@ const (
 	None RetryType = "None"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleRetryTypeValues returns an array of possible values for the RetryType const type.
+func PossibleRetryTypeValues() []RetryType {
+	return []RetryType{Fixed, None}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusAuthenticationType enumerates the values for service bus authentication type.
 type ServiceBusAuthenticationType string
 
@@ -181,6 +252,13 @@ const (
 	ServiceBusAuthenticationTypeSharedAccessKey ServiceBusAuthenticationType = "SharedAccessKey"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleServiceBusAuthenticationTypeValues returns an array of possible values for the ServiceBusAuthenticationType const type.
+func PossibleServiceBusAuthenticationTypeValues() []ServiceBusAuthenticationType {
+	return []ServiceBusAuthenticationType{ServiceBusAuthenticationTypeNotSpecified, ServiceBusAuthenticationTypeSharedAccessKey}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusTransportType enumerates the values for service bus transport type.
 type ServiceBusTransportType string
 
@@ -193,6 +271,13 @@ const (
 	ServiceBusTransportTypeNotSpecified ServiceBusTransportType = "NotSpecified"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleServiceBusTransportTypeValues returns an array of possible values for the ServiceBusTransportType const type.
+func PossibleServiceBusTransportTypeValues() []ServiceBusTransportType {
+	return []ServiceBusTransportType{ServiceBusTransportTypeAMQP, ServiceBusTransportTypeNetMessaging, ServiceBusTransportTypeNotSpecified}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // SkuDefinition enumerates the values for sku definition.
 type SkuDefinition string
 
@@ -205,6 +290,13 @@ const (
 	Standard SkuDefinition = "Standard"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
+// PossibleSkuDefinitionValues returns an array of possible values for the SkuDefinition const type.
+func PossibleSkuDefinitionValues() []SkuDefinition {
+	return []SkuDefinition{Free, Premium, Standard}
+}
+
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // BasicAuthentication ...
 type BasicAuthentication struct {
 	// Username - Gets or sets the username.
@@ -215,6 +307,7 @@ type BasicAuthentication struct {
 	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ClientCertAuthentication ...
 type ClientCertAuthentication struct {
 	// Password - Gets or sets the password.
@@ -231,12 +324,14 @@ type ClientCertAuthentication struct {
 	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // HTTPAuthentication ...
 type HTTPAuthentication struct {
 	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
 	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // HTTPRequest ...
 type HTTPRequest struct {
 	// Authentication - Gets or sets the http authentication.
@@ -251,6 +346,7 @@ type HTTPRequest struct {
 	Headers map[string]*string `json:"headers"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // MarshalJSON is the custom marshaler for HTTPRequest.
 func (hr HTTPRequest) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -272,6 +368,7 @@ func (hr HTTPRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobAction ...
 type JobAction struct {
 	// Type - Gets or sets the job action type. Possible values include: 'HTTP', 'HTTPS', 'StorageQueue', 'ServiceBusQueue', 'ServiceBusTopic'
@@ -290,6 +387,7 @@ type JobAction struct {
 	ErrorAction *JobErrorAction `json:"errorAction,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionDefinition ...
 type JobCollectionDefinition struct {
 	autorest.Response `json:"-"`
@@ -307,6 +405,7 @@ type JobCollectionDefinition struct {
 	Properties *JobCollectionProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // MarshalJSON is the custom marshaler for JobCollectionDefinition.
 func (jcd JobCollectionDefinition) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -331,6 +430,7 @@ func (jcd JobCollectionDefinition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionListResult ...
 type JobCollectionListResult struct {
 	autorest.Response `json:"-"`
@@ -340,12 +440,14 @@ type JobCollectionListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionListResultIterator provides access to a complete listing of JobCollectionDefinition values.
 type JobCollectionListResultIterator struct {
 	i    int
 	page JobCollectionListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *JobCollectionListResultIterator) Next() error {
@@ -362,16 +464,19 @@ func (iter *JobCollectionListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter JobCollectionListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (iter JobCollectionListResultIterator) Response() JobCollectionListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter JobCollectionListResultIterator) Value() JobCollectionDefinition {
@@ -381,6 +486,7 @@ func (iter JobCollectionListResultIterator) Value() JobCollectionDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (jclr JobCollectionListResult) IsEmpty() bool {
 	return jclr.Value == nil || len(*jclr.Value) == 0
@@ -398,12 +504,14 @@ func (jclr JobCollectionListResult) jobCollectionListResultPreparer() (*http.Req
 		autorest.WithBaseURL(to.String(jclr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionListResultPage contains a page of JobCollectionDefinition values.
 type JobCollectionListResultPage struct {
 	fn   func(JobCollectionListResult) (JobCollectionListResult, error)
 	jclr JobCollectionListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *JobCollectionListResultPage) Next() error {
@@ -415,16 +523,19 @@ func (page *JobCollectionListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page JobCollectionListResultPage) NotDone() bool {
 	return !page.jclr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (page JobCollectionListResultPage) Response() JobCollectionListResult {
 	return page.jclr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page JobCollectionListResultPage) Values() []JobCollectionDefinition {
 	if page.jclr.IsEmpty() {
@@ -433,6 +544,7 @@ func (page JobCollectionListResultPage) Values() []JobCollectionDefinition {
 	return *page.jclr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionProperties ...
 type JobCollectionProperties struct {
 	// Sku - Gets or sets the SKU.
@@ -443,6 +555,7 @@ type JobCollectionProperties struct {
 	Quota *JobCollectionQuota `json:"quota,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobCollectionQuota ...
 type JobCollectionQuota struct {
 	// MaxJobCount - Gets or set the maximum job count.
@@ -453,6 +566,7 @@ type JobCollectionQuota struct {
 	MaxRecurrence *JobMaxRecurrence `json:"maxRecurrence,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobDefinition ...
 type JobDefinition struct {
 	autorest.Response `json:"-"`
@@ -466,6 +580,7 @@ type JobDefinition struct {
 	Properties *JobProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobErrorAction ...
 type JobErrorAction struct {
 	// Type - Gets or sets the job error action type. Possible values include: 'HTTP', 'HTTPS', 'StorageQueue', 'ServiceBusQueue', 'ServiceBusTopic'
@@ -482,6 +597,7 @@ type JobErrorAction struct {
 	RetryPolicy *RetryPolicy `json:"retryPolicy,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryDefinition ...
 type JobHistoryDefinition struct {
 	// ID - Gets the job history identifier.
@@ -494,6 +610,7 @@ type JobHistoryDefinition struct {
 	Properties *JobHistoryDefinitionProperties `json:"properties,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryDefinitionProperties ...
 type JobHistoryDefinitionProperties struct {
 	// StartTime - Gets the start time for this job.
@@ -514,12 +631,14 @@ type JobHistoryDefinitionProperties struct {
 	RepeatCount *int32 `json:"repeatCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryFilter ...
 type JobHistoryFilter struct {
 	// Status - Gets or sets the job execution status. Possible values include: 'Completed', 'Failed', 'Postponed'
 	Status JobExecutionStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryListResult ...
 type JobHistoryListResult struct {
 	autorest.Response `json:"-"`
@@ -529,12 +648,14 @@ type JobHistoryListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryListResultIterator provides access to a complete listing of JobHistoryDefinition values.
 type JobHistoryListResultIterator struct {
 	i    int
 	page JobHistoryListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *JobHistoryListResultIterator) Next() error {
@@ -551,16 +672,19 @@ func (iter *JobHistoryListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter JobHistoryListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (iter JobHistoryListResultIterator) Response() JobHistoryListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter JobHistoryListResultIterator) Value() JobHistoryDefinition {
@@ -570,6 +694,7 @@ func (iter JobHistoryListResultIterator) Value() JobHistoryDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (jhlr JobHistoryListResult) IsEmpty() bool {
 	return jhlr.Value == nil || len(*jhlr.Value) == 0
@@ -587,12 +712,14 @@ func (jhlr JobHistoryListResult) jobHistoryListResultPreparer() (*http.Request, 
 		autorest.WithBaseURL(to.String(jhlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobHistoryListResultPage contains a page of JobHistoryDefinition values.
 type JobHistoryListResultPage struct {
 	fn   func(JobHistoryListResult) (JobHistoryListResult, error)
 	jhlr JobHistoryListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *JobHistoryListResultPage) Next() error {
@@ -604,16 +731,19 @@ func (page *JobHistoryListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page JobHistoryListResultPage) NotDone() bool {
 	return !page.jhlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (page JobHistoryListResultPage) Response() JobHistoryListResult {
 	return page.jhlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page JobHistoryListResultPage) Values() []JobHistoryDefinition {
 	if page.jhlr.IsEmpty() {
@@ -622,6 +752,7 @@ func (page JobHistoryListResultPage) Values() []JobHistoryDefinition {
 	return *page.jhlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobListResult ...
 type JobListResult struct {
 	autorest.Response `json:"-"`
@@ -631,12 +762,14 @@ type JobListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobListResultIterator provides access to a complete listing of JobDefinition values.
 type JobListResultIterator struct {
 	i    int
 	page JobListResultPage
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next value.  If there was an error making
 // the request the iterator does not advance and the error is returned.
 func (iter *JobListResultIterator) Next() error {
@@ -653,16 +786,19 @@ func (iter *JobListResultIterator) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the enumeration should be started or is not yet complete.
 func (iter JobListResultIterator) NotDone() bool {
 	return iter.page.NotDone() && iter.i < len(iter.page.Values())
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (iter JobListResultIterator) Response() JobListResult {
 	return iter.page.Response()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Value returns the current value or a zero-initialized value if the
 // iterator has advanced beyond the end of the collection.
 func (iter JobListResultIterator) Value() JobDefinition {
@@ -672,6 +808,7 @@ func (iter JobListResultIterator) Value() JobDefinition {
 	return iter.page.Values()[iter.i]
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // IsEmpty returns true if the ListResult contains no values.
 func (jlr JobListResult) IsEmpty() bool {
 	return jlr.Value == nil || len(*jlr.Value) == 0
@@ -689,12 +826,14 @@ func (jlr JobListResult) jobListResultPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(to.String(jlr.NextLink)))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobListResultPage contains a page of JobDefinition values.
 type JobListResultPage struct {
 	fn  func(JobListResult) (JobListResult, error)
 	jlr JobListResult
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Next advances to the next page of values.  If there was an error making
 // the request the page does not advance and the error is returned.
 func (page *JobListResultPage) Next() error {
@@ -706,16 +845,19 @@ func (page *JobListResultPage) Next() error {
 	return nil
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // NotDone returns true if the page enumeration should be started or is not yet complete.
 func (page JobListResultPage) NotDone() bool {
 	return !page.jlr.IsEmpty()
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Response returns the raw server response from the last page request.
 func (page JobListResultPage) Response() JobListResult {
 	return page.jlr
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Values returns the slice of values for the current page or nil if there are no values.
 func (page JobListResultPage) Values() []JobDefinition {
 	if page.jlr.IsEmpty() {
@@ -724,6 +866,7 @@ func (page JobListResultPage) Values() []JobDefinition {
 	return *page.jlr.Value
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobMaxRecurrence ...
 type JobMaxRecurrence struct {
 	// Frequency - Gets or sets the frequency of recurrence (second, minute, hour, day, week, month). Possible values include: 'Minute', 'Hour', 'Day', 'Week', 'Month'
@@ -732,6 +875,7 @@ type JobMaxRecurrence struct {
 	Interval *int32 `json:"interval,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobProperties ...
 type JobProperties struct {
 	// StartTime - Gets or sets the job start time.
@@ -746,6 +890,7 @@ type JobProperties struct {
 	Status *JobStatus `json:"status,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobRecurrence ...
 type JobRecurrence struct {
 	// Frequency - Gets or sets the frequency of recurrence (second, minute, hour, day, week, month). Possible values include: 'Minute', 'Hour', 'Day', 'Week', 'Month'
@@ -759,6 +904,7 @@ type JobRecurrence struct {
 	Schedule *JobRecurrenceSchedule `json:"schedule,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobRecurrenceSchedule ...
 type JobRecurrenceSchedule struct {
 	// WeekDays - Gets or sets the days of the week that the job should execute on.
@@ -773,6 +919,7 @@ type JobRecurrenceSchedule struct {
 	MonthlyOccurrences *[]JobRecurrenceScheduleMonthlyOccurrence `json:"monthlyOccurrences,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobRecurrenceScheduleMonthlyOccurrence ...
 type JobRecurrenceScheduleMonthlyOccurrence struct {
 	// Day - Gets or sets the day. Must be one of monday, tuesday, wednesday, thursday, friday, saturday, sunday. Possible values include: 'JobScheduleDayMonday', 'JobScheduleDayTuesday', 'JobScheduleDayWednesday', 'JobScheduleDayThursday', 'JobScheduleDayFriday', 'JobScheduleDaySaturday', 'JobScheduleDaySunday'
@@ -781,12 +928,14 @@ type JobRecurrenceScheduleMonthlyOccurrence struct {
 	Occurrence *int32 `json:"Occurrence,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobStateFilter ...
 type JobStateFilter struct {
 	// State - Gets or sets the job state. Possible values include: 'JobStateEnabled', 'JobStateDisabled', 'JobStateFaulted', 'JobStateCompleted'
 	State JobState `json:"state,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // JobStatus ...
 type JobStatus struct {
 	// ExecutionCount - Gets the number of times this job has executed.
@@ -801,6 +950,7 @@ type JobStatus struct {
 	NextExecutionTime *date.Time `json:"nextExecutionTime,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // OAuthAuthentication ...
 type OAuthAuthentication struct {
 	// Secret - Gets or sets the secret.
@@ -815,6 +965,7 @@ type OAuthAuthentication struct {
 	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // RetryPolicy ...
 type RetryPolicy struct {
 	// RetryType - Gets or sets the retry strategy to be used. Possible values include: 'None', 'Fixed'
@@ -825,6 +976,7 @@ type RetryPolicy struct {
 	RetryCount *int32 `json:"retryCount,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusAuthentication ...
 type ServiceBusAuthentication struct {
 	// SasKey - Gets or sets the SAS key.
@@ -835,6 +987,7 @@ type ServiceBusAuthentication struct {
 	Type ServiceBusAuthenticationType `json:"type,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusBrokeredMessageProperties ...
 type ServiceBusBrokeredMessageProperties struct {
 	// ContentType - Gets or sets the content type.
@@ -865,6 +1018,7 @@ type ServiceBusBrokeredMessageProperties struct {
 	ViaPartitionKey *string `json:"viaPartitionKey,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusMessage ...
 type ServiceBusMessage struct {
 	// Authentication - Gets or sets the authentication.
@@ -881,6 +1035,7 @@ type ServiceBusMessage struct {
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // MarshalJSON is the custom marshaler for ServiceBusMessage.
 func (sbm ServiceBusMessage) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -899,10 +1054,13 @@ func (sbm ServiceBusMessage) MarshalJSON() ([]byte, error) {
 	if sbm.Namespace != nil {
 		objectMap["namespace"] = sbm.Namespace
 	}
-	objectMap["transportType"] = sbm.TransportType
+	if sbm.TransportType != "" {
+		objectMap["transportType"] = sbm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusQueueMessage ...
 type ServiceBusQueueMessage struct {
 	// QueueName - Gets or sets the queue name.
@@ -921,6 +1079,7 @@ type ServiceBusQueueMessage struct {
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // MarshalJSON is the custom marshaler for ServiceBusQueueMessage.
 func (sbqm ServiceBusQueueMessage) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -942,10 +1101,13 @@ func (sbqm ServiceBusQueueMessage) MarshalJSON() ([]byte, error) {
 	if sbqm.Namespace != nil {
 		objectMap["namespace"] = sbqm.Namespace
 	}
-	objectMap["transportType"] = sbqm.TransportType
+	if sbqm.TransportType != "" {
+		objectMap["transportType"] = sbqm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // ServiceBusTopicMessage ...
 type ServiceBusTopicMessage struct {
 	// TopicPath - Gets or sets the topic path.
@@ -964,6 +1126,7 @@ type ServiceBusTopicMessage struct {
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // MarshalJSON is the custom marshaler for ServiceBusTopicMessage.
 func (sbtm ServiceBusTopicMessage) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -985,16 +1148,20 @@ func (sbtm ServiceBusTopicMessage) MarshalJSON() ([]byte, error) {
 	if sbtm.Namespace != nil {
 		objectMap["namespace"] = sbtm.Namespace
 	}
-	objectMap["transportType"] = sbtm.TransportType
+	if sbtm.TransportType != "" {
+		objectMap["transportType"] = sbtm.TransportType
+	}
 	return json.Marshal(objectMap)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // Sku ...
 type Sku struct {
 	// Name - Gets or set the SKU. Possible values include: 'Standard', 'Free', 'Premium'
 	Name SkuDefinition `json:"name,omitempty"`
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/scheduler/mgmt/2014-08-01-preview/scheduler instead.
 // StorageQueueMessage ...
 type StorageQueueMessage struct {
 	// StorageAccount - Gets or sets the storage account name.

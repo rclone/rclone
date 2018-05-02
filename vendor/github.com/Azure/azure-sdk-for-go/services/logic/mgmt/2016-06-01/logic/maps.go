@@ -41,9 +41,11 @@ func NewMapsClientWithBaseURI(baseURI string, subscriptionID string) MapsClient 
 }
 
 // CreateOrUpdate creates or updates an integration account map.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
-// the integration account map name. mapParameter is the integration account map.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// mapName - the integration account map name.
+// mapParameter - the integration account map.
 func (client MapsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string, mapParameter IntegrationAccountMap) (result IntegrationAccountMap, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mapParameter,
@@ -87,7 +89,7 @@ func (client MapsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/maps/{mapName}", pathParameters),
@@ -117,9 +119,10 @@ func (client MapsClient) CreateOrUpdateResponder(resp *http.Response) (result In
 }
 
 // Delete deletes an integration account map.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
-// the integration account map name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// mapName - the integration account map name.
 func (client MapsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, mapName)
 	if err != nil {
@@ -184,9 +187,10 @@ func (client MapsClient) DeleteResponder(resp *http.Response) (result autorest.R
 }
 
 // Get gets an integration account map.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
-// the integration account map name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// mapName - the integration account map name.
 func (client MapsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string) (result IntegrationAccountMap, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, mapName)
 	if err != nil {
@@ -252,9 +256,11 @@ func (client MapsClient) GetResponder(resp *http.Response) (result IntegrationAc
 }
 
 // ListByIntegrationAccounts gets a list of integration account maps.
-//
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. top is the
-// number of items to be included in the result. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// top - the number of items to be included in the result.
+// filter - the filter to apply on the operation.
 func (client MapsClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountMapListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

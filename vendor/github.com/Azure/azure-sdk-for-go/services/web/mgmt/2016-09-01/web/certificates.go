@@ -41,9 +41,10 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 }
 
 // CreateOrUpdate create or update a certificate.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the certificate.
-// certificateEnvelope is details of certificate, if it exists already.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the certificate.
+// certificateEnvelope - details of certificate, if it exists already.
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, name string, certificateEnvelope Certificate) (result Certificate, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -91,7 +92,7 @@ func (client CertificatesClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/certificates/{name}", pathParameters),
@@ -121,8 +122,9 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 }
 
 // Delete delete a certificate.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the certificate.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the certificate.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, name string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -194,8 +196,9 @@ func (client CertificatesClient) DeleteResponder(resp *http.Response) (result au
 }
 
 // Get get a certificate.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the certificate.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the certificate.
 func (client CertificatesClient) Get(ctx context.Context, resourceGroupName string, name string) (result Certificate, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -358,8 +361,8 @@ func (client CertificatesClient) ListComplete(ctx context.Context) (result Certi
 }
 
 // ListByResourceGroup get all certificates in a resource group.
-//
-// resourceGroupName is name of the resource group to which the resource belongs.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
 func (client CertificatesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result CertificateCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -459,9 +462,10 @@ func (client CertificatesClient) ListByResourceGroupComplete(ctx context.Context
 }
 
 // Update create or update a certificate.
-//
-// resourceGroupName is name of the resource group to which the resource belongs. name is name of the certificate.
-// certificateEnvelope is details of certificate, if it exists already.
+// Parameters:
+// resourceGroupName - name of the resource group to which the resource belongs.
+// name - name of the certificate.
+// certificateEnvelope - details of certificate, if it exists already.
 func (client CertificatesClient) Update(ctx context.Context, resourceGroupName string, name string, certificateEnvelope CertificatePatchResource) (result Certificate, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -506,7 +510,7 @@ func (client CertificatesClient) UpdatePreparer(ctx context.Context, resourceGro
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/certificates/{name}", pathParameters),

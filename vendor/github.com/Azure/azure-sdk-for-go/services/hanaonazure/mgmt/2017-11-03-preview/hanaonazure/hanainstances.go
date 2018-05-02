@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // HanaInstancesClient is the HANA on Azure Client
 type HanaInstancesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // NewHanaInstancesClient creates an instance of the HanaInstancesClient client.
 func NewHanaInstancesClient(subscriptionID string) HanaInstancesClient {
 	return NewHanaInstancesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // NewHanaInstancesClientWithBaseURI creates an instance of the HanaInstancesClient client.
 func NewHanaInstancesClientWithBaseURI(baseURI string, subscriptionID string) HanaInstancesClient {
 	return HanaInstancesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // Get gets properties of a SAP HANA instance for the specified subscription, resource group, and instance name.
 //
 // resourceGroupName is name of the resource group. hanaInstanceName is name of the SAP HANA on Azure instance.
@@ -64,6 +68,7 @@ func (client HanaInstancesClient) Get(ctx context.Context, resourceGroupName str
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // GetPreparer prepares the Get request.
 func (client HanaInstancesClient) GetPreparer(ctx context.Context, resourceGroupName string, hanaInstanceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -85,6 +90,7 @@ func (client HanaInstancesClient) GetPreparer(ctx context.Context, resourceGroup
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client HanaInstancesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -92,6 +98,7 @@ func (client HanaInstancesClient) GetSender(req *http.Request) (*http.Response, 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client HanaInstancesClient) GetResponder(resp *http.Response) (result HanaInstance, err error) {
@@ -105,6 +112,7 @@ func (client HanaInstancesClient) GetResponder(resp *http.Response) (result Hana
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // List gets a list of SAP HANA instances in the specified subscription. The operations returns various properties of
 // each SAP HANA on Azure instance.
 func (client HanaInstancesClient) List(ctx context.Context) (result HanaInstancesListResultPage, err error) {
@@ -130,6 +138,7 @@ func (client HanaInstancesClient) List(ctx context.Context) (result HanaInstance
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListPreparer prepares the List request.
 func (client HanaInstancesClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -149,6 +158,7 @@ func (client HanaInstancesClient) ListPreparer(ctx context.Context) (*http.Reque
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client HanaInstancesClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -156,6 +166,7 @@ func (client HanaInstancesClient) ListSender(req *http.Request) (*http.Response,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client HanaInstancesClient) ListResponder(resp *http.Response) (result HanaInstancesListResult, err error) {
@@ -190,12 +201,14 @@ func (client HanaInstancesClient) listNextResults(lastResults HanaInstancesListR
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client HanaInstancesClient) ListComplete(ctx context.Context) (result HanaInstancesListResultIterator, err error) {
 	result.page, err = client.List(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListByResourceGroup gets a list of SAP HANA instances in the specified subscription and the resource group. The
 // operations returns various properties of each SAP HANA on Azure instance.
 //
@@ -223,6 +236,7 @@ func (client HanaInstancesClient) ListByResourceGroup(ctx context.Context, resou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client HanaInstancesClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -243,6 +257,7 @@ func (client HanaInstancesClient) ListByResourceGroupPreparer(ctx context.Contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client HanaInstancesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -250,6 +265,7 @@ func (client HanaInstancesClient) ListByResourceGroupSender(req *http.Request) (
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client HanaInstancesClient) ListByResourceGroupResponder(resp *http.Response) (result HanaInstancesListResult, err error) {
@@ -284,6 +300,7 @@ func (client HanaInstancesClient) listByResourceGroupNextResults(lastResults Han
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/hanaonazure/mgmt/2017-11-03-preview/hanaonazure instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client HanaInstancesClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result HanaInstancesListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)

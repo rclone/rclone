@@ -40,12 +40,14 @@ func NewZonesClientWithBaseURI(baseURI string, subscriptionID string) ZonesClien
 }
 
 // CreateOrUpdate creates or updates a DNS zone. Does not modify DNS records within the zone.
-//
-// resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of the DNS zone.
-// Omit this value to always overwrite the current zone. Specify the last-seen etag value to prevent accidentally
-// overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new DNS zone to be created, but to
-// prevent updating an existing zone. Other values will be ignored.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// zoneName - the name of the DNS zone (without a terminating dot).
+// parameters - parameters supplied to the CreateOrUpdate operation.
+// ifMatch - the etag of the DNS zone. Omit this value to always overwrite the current zone. Specify the
+// last-seen etag value to prevent accidentally overwritting any concurrent changes.
+// ifNoneMatch - set to '*' to allow a new DNS zone to be created, but to prevent updating an existing zone.
+// Other values will be ignored.
 func (client ZonesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, parameters Zone, ifMatch string, ifNoneMatch string) (result Zone, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -121,10 +123,11 @@ func (client ZonesClient) CreateOrUpdateResponder(resp *http.Response) (result Z
 
 // Delete deletes a DNS zone. WARNING: All DNS records in the zone will also be deleted. This operation cannot be
 // undone.
-//
-// resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). ifMatch is the etag of the DNS zone. Omit this value to always delete the current zone. Specify the
-// last-seen etag value to prevent accidentally deleting any concurrent changes.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// zoneName - the name of the DNS zone (without a terminating dot).
+// ifMatch - the etag of the DNS zone. Omit this value to always delete the current zone. Specify the last-seen
+// etag value to prevent accidentally deleting any concurrent changes.
 func (client ZonesClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, ifMatch string) (result ZonesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, ifMatch)
 	if err != nil {
@@ -194,9 +197,9 @@ func (client ZonesClient) DeleteResponder(resp *http.Response) (result autorest.
 }
 
 // Get gets a DNS zone. Retrieves the zone properties, but not the record sets within the zone.
-//
-// resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot).
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// zoneName - the name of the DNS zone (without a terminating dot).
 func (client ZonesClient) Get(ctx context.Context, resourceGroupName string, zoneName string) (result Zone, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName)
 	if err != nil {
@@ -261,8 +264,8 @@ func (client ZonesClient) GetResponder(resp *http.Response) (result Zone, err er
 }
 
 // List lists the DNS zones in all resource groups in a subscription.
-//
-// top is the maximum number of DNS zones to return. If not specified, returns up to 100 zones.
+// Parameters:
+// top - the maximum number of DNS zones to return. If not specified, returns up to 100 zones.
 func (client ZonesClient) List(ctx context.Context, top *int32) (result ZoneListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, top)
@@ -356,9 +359,9 @@ func (client ZonesClient) ListComplete(ctx context.Context, top *int32) (result 
 }
 
 // ListByResourceGroup lists the DNS zones within a resource group.
-//
-// resourceGroupName is the name of the resource group. top is the maximum number of record sets to return. If not
-// specified, returns up to 100 record sets.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// top - the maximum number of record sets to return. If not specified, returns up to 100 record sets.
 func (client ZonesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32) (result ZoneListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top)
@@ -453,11 +456,12 @@ func (client ZonesClient) ListByResourceGroupComplete(ctx context.Context, resou
 }
 
 // Update updates a DNS zone. Does not modify DNS records within the zone.
-//
-// resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). parameters is parameters supplied to the Update operation. ifMatch is the etag of the DNS zone. Omit this
-// value to always overwrite the current zone. Specify the last-seen etag value to prevent accidentally
-// overwritting any concurrent changes.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// zoneName - the name of the DNS zone (without a terminating dot).
+// parameters - parameters supplied to the Update operation.
+// ifMatch - the etag of the DNS zone. Omit this value to always overwrite the current zone. Specify the
+// last-seen etag value to prevent accidentally overwritting any concurrent changes.
 func (client ZonesClient) Update(ctx context.Context, resourceGroupName string, zoneName string, parameters ZoneUpdate, ifMatch string) (result Zone, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, zoneName, parameters, ifMatch)
 	if err != nil {

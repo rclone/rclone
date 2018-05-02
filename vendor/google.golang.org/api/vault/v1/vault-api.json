@@ -707,7 +707,7 @@
       }
     }
   },
-  "revision": "20180303",
+  "revision": "20180403",
   "rootUrl": "https://vault.googleapis.com/",
   "schemas": {
     "AddMatterPermissionsRequest": {
@@ -1077,7 +1077,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Vault API",
+  "title": "G Suite Vault API",
   "version": "v1",
   "version_module": true
 }

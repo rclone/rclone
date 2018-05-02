@@ -23,7 +23,7 @@
   "description": "Configures and serves authoritative DNS records.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/cloud-dns",
-  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/SuyHwKhP-B9n7DrZc4jJuDANomI\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/xetBFX-hpdyKZDXSvtKwMPt1h8g\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -68,12 +68,12 @@
       "type": "boolean"
     },
     "quotaUser": {
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
       "location": "query",
       "type": "string"
     },
     "userIp": {
-      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "description": "Deprecated. Please use quotaUser instead.",
       "location": "query",
       "type": "string"
     }
@@ -501,9 +501,6 @@
             }
           },
           "path": "{project}/managedZones/{managedZone}",
-          "response": {
-            "$ref": "ManagedZonesDeleteResponse"
-          },
           "scopes": [
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/ndev.clouddns.readwrite"
@@ -590,7 +587,7 @@
           ]
         },
         "patch": {
-          "description": "Update an existing ManagedZone. This method supports patch semantics.",
+          "description": "Apply a partial update to an existing ManagedZone.",
           "httpMethod": "PATCH",
           "id": "dns.managedZones.patch",
           "parameterOrder": [
@@ -763,7 +760,7 @@
       }
     }
   },
-  "revision": "20180123",
+  "revision": "20180427",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Change": {
@@ -1142,15 +1139,6 @@
       },
       "type": "object"
     },
-    "ManagedZonesDeleteResponse": {
-      "id": "ManagedZonesDeleteResponse",
-      "properties": {
-        "header": {
-          "$ref": "ResponseHeader"
-        }
-      },
-      "type": "object"
-    },
     "ManagedZonesListResponse": {
       "id": "ManagedZonesListResponse",
       "properties": {
@@ -1281,6 +1269,10 @@
       "description": "Limits associated with a Project.",
       "id": "Quota",
       "properties": {
+        "blackHoleHidesSystemZones": {
+          "description": "Whether a black hole zone should suppress system zones for this project.",
+          "type": "boolean"
+        },
         "dnsKeysPerManagedZone": {
           "description": "Maximum allowed number of DnsKeys per ManagedZone.",
           "format": "int32",

@@ -79,6 +79,12 @@ const (
 
 	// DefaultBufferedByteLimit is the default value for the BufferedByteLimit LoggerOption.
 	DefaultBufferedByteLimit = 1 << 30 // 1GiB
+
+	// defaultWriteTimeout is the timeout for the underlying write API calls. As
+	// write API calls are not idempotent, they are not retried on timeout. This
+	// timeout is to allow clients to degrade gracefully if underlying logging
+	// service is temporarily impaired for some reason.
+	defaultWriteTimeout = 10 * time.Minute
 )
 
 // For testing:
@@ -228,6 +234,7 @@ type Logger struct {
 	// Options
 	commonResource *mrpb.MonitoredResource
 	commonLabels   map[string]string
+	writeTimeout   time.Duration
 }
 
 // A LoggerOption is a configuration option for a Logger.
@@ -406,10 +413,8 @@ func (c *Client) Logger(logID string, opts ...LoggerOption) *Logger {
 		logName:        internal.LogPath(c.parent, logID),
 		commonResource: r,
 	}
-	// TODO(jba): determine the right context for the bundle handler.
-	ctx := context.TODO()
 	l.bundler = bundler.NewBundler(&logpb.LogEntry{}, func(entries interface{}) {
-		l.writeLogEntries(ctx, entries.([]*logpb.LogEntry))
+		l.writeLogEntries(entries.([]*logpb.LogEntry))
 	})
 	l.bundler.DelayThreshold = DefaultDelayThreshold
 	l.bundler.BundleCountThreshold = DefaultEntryCountThreshold
@@ -744,13 +749,15 @@ func (l *Logger) Flush() error {
 	return l.client.extractErrorInfo()
 }
 
-func (l *Logger) writeLogEntries(ctx context.Context, entries []*logpb.LogEntry) {
+func (l *Logger) writeLogEntries(entries []*logpb.LogEntry) {
 	req := &logpb.WriteLogEntriesRequest{
 		LogName:  l.logName,
 		Resource: l.commonResource,
 		Labels:   l.commonLabels,
 		Entries:  entries,
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+	defer cancel()
 	_, err := l.client.client.WriteLogEntries(ctx, req)
 	if err != nil {
 		l.client.error(err)

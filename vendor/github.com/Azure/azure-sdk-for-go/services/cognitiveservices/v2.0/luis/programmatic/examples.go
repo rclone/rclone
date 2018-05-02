@@ -37,9 +37,10 @@ func NewExamplesClient(azureRegion AzureRegions) ExamplesClient {
 }
 
 // Add adds a labeled example to the application.
-//
-// appID is the application ID. versionID is the version ID. exampleLabelObject is an example label with the
-// expected intent and entities.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// exampleLabelObject - an example label with the expected intent and entities.
 func (client ExamplesClient) Add(ctx context.Context, appID uuid.UUID, versionID string, exampleLabelObject ExampleLabelObject) (result LabelExampleResponse, err error) {
 	req, err := client.AddPreparer(ctx, appID, versionID, exampleLabelObject)
 	if err != nil {
@@ -74,7 +75,7 @@ func (client ExamplesClient) AddPreparer(ctx context.Context, appID uuid.UUID, v
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/example", pathParameters),
@@ -103,8 +104,10 @@ func (client ExamplesClient) AddResponder(resp *http.Response) (result LabelExam
 }
 
 // Batch adds a batch of labeled examples to the application.
-//
-// appID is the application ID. versionID is the version ID. exampleLabelObjectArray is array of examples.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// exampleLabelObjectArray - array of examples.
 func (client ExamplesClient) Batch(ctx context.Context, appID uuid.UUID, versionID string, exampleLabelObjectArray []ExampleLabelObject) (result ListBatchLabelExample, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: exampleLabelObjectArray,
@@ -145,7 +148,7 @@ func (client ExamplesClient) BatchPreparer(ctx context.Context, appID uuid.UUID,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/luis/api/v2.0", urlParameters),
 		autorest.WithPathParameters("/apps/{appId}/versions/{versionId}/examples", pathParameters),
@@ -174,8 +177,10 @@ func (client ExamplesClient) BatchResponder(resp *http.Response) (result ListBat
 }
 
 // Delete deletes the labeled example with the specified ID.
-//
-// appID is the application ID. versionID is the version ID. exampleID is the example ID.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// exampleID - the example ID.
 func (client ExamplesClient) Delete(ctx context.Context, appID uuid.UUID, versionID string, exampleID int32) (result OperationStatus, err error) {
 	req, err := client.DeletePreparer(ctx, appID, versionID, exampleID)
 	if err != nil {
@@ -238,9 +243,11 @@ func (client ExamplesClient) DeleteResponder(resp *http.Response) (result Operat
 }
 
 // List returns examples to be reviewed.
-//
-// appID is the application ID. versionID is the version ID. skip is the number of entries to skip. Default value
-// is 0. take is the number of entries to return. Maximum page size is 500. Default is 100.
+// Parameters:
+// appID - the application ID.
+// versionID - the version ID.
+// skip - the number of entries to skip. Default value is 0.
+// take - the number of entries to return. Maximum page size is 500. Default is 100.
 func (client ExamplesClient) List(ctx context.Context, appID uuid.UUID, versionID string, skip *int32, take *int32) (result ListLabeledUtterance, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: skip,

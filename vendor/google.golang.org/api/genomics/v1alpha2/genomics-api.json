@@ -399,7 +399,7 @@
       }
     }
   },
-  "revision": "20180225",
+  "revision": "20180501",
   "rootUrl": "https://genomics.googleapis.com/",
   "schemas": {
     "CancelOperationRequest": {
@@ -471,6 +471,10 @@
           "description": "The exit status of the container.",
           "format": "int32",
           "type": "integer"
+        },
+        "stderr": {
+          "description": "The tail end of any content written to standard error by the container.\nTo prevent this from being recorded if the action is known to emit\nlarge amounts of debugging noise or sensitive information, set the\nDISABLE_STANDARD_ERROR_CAPTURE flag.\n\nNote that only a small amount of the end of the stream is captured here.\nThe entire stream is stored in the /google/logs directory mounted into\neach action, and may be copied off the machine as described elsewhere.",
+          "type": "string"
         }
       },
       "type": "object"

@@ -41,10 +41,12 @@ func NewReferenceDataSetsClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate create or update a reference data set in the specified environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. referenceDataSetName is name of the reference data
-// set. parameters is parameters for creating a reference data set.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// referenceDataSetName - name of the reference data set.
+// parameters - parameters for creating a reference data set.
 func (client ReferenceDataSetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string, parameters ReferenceDataSetCreateOrUpdateParameters) (result ReferenceDataSetResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: referenceDataSetName,
@@ -93,7 +95,7 @@ func (client ReferenceDataSetsClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/referenceDataSets/{referenceDataSetName}", pathParameters),
@@ -124,10 +126,12 @@ func (client ReferenceDataSetsClient) CreateOrUpdateResponder(resp *http.Respons
 
 // Delete deletes the reference data set with the specified name in the specified subscription, resource group, and
 // environment
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. referenceDataSetName is the name of the Time Series
-// Insights reference data set associated with the specified environment.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// referenceDataSetName - the name of the Time Series Insights reference data set associated with the specified
+// environment.
 func (client ReferenceDataSetsClient) Delete(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, environmentName, referenceDataSetName)
 	if err != nil {
@@ -192,10 +196,12 @@ func (client ReferenceDataSetsClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get gets the reference data set with the specified name in the specified environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. referenceDataSetName is the name of the Time Series
-// Insights reference data set associated with the specified environment.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// referenceDataSetName - the name of the Time Series Insights reference data set associated with the specified
+// environment.
 func (client ReferenceDataSetsClient) Get(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string) (result ReferenceDataSetResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, environmentName, referenceDataSetName)
 	if err != nil {
@@ -262,9 +268,10 @@ func (client ReferenceDataSetsClient) GetResponder(resp *http.Response) (result 
 
 // ListByEnvironment lists all the available reference data sets associated with the subscription and within the
 // specified resource group and environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
 func (client ReferenceDataSetsClient) ListByEnvironment(ctx context.Context, resourceGroupName string, environmentName string) (result ReferenceDataSetListResponse, err error) {
 	req, err := client.ListByEnvironmentPreparer(ctx, resourceGroupName, environmentName)
 	if err != nil {
@@ -330,11 +337,14 @@ func (client ReferenceDataSetsClient) ListByEnvironmentResponder(resp *http.Resp
 
 // Update updates the reference data set with the specified name in the specified subscription, resource group, and
 // environment.
-//
-// resourceGroupName is name of an Azure Resource group. environmentName is the name of the Time Series Insights
-// environment associated with the specified resource group. referenceDataSetName is the name of the Time Series
-// Insights reference data set associated with the specified environment. referenceDataSetUpdateParameters is
-// request object that contains the updated information for the reference data set.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// environmentName - the name of the Time Series Insights environment associated with the specified resource
+// group.
+// referenceDataSetName - the name of the Time Series Insights reference data set associated with the specified
+// environment.
+// referenceDataSetUpdateParameters - request object that contains the updated information for the reference
+// data set.
 func (client ReferenceDataSetsClient) Update(ctx context.Context, resourceGroupName string, environmentName string, referenceDataSetName string, referenceDataSetUpdateParameters ReferenceDataSetUpdateParameters) (result ReferenceDataSetResource, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, environmentName, referenceDataSetName, referenceDataSetUpdateParameters)
 	if err != nil {
@@ -372,7 +382,7 @@ func (client ReferenceDataSetsClient) UpdatePreparer(ctx context.Context, resour
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.TimeSeriesInsights/environments/{environmentName}/referenceDataSets/{referenceDataSetName}", pathParameters),

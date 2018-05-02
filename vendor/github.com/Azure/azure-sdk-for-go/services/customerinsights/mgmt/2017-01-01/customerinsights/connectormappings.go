@@ -43,10 +43,12 @@ func NewConnectorMappingsClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // CreateOrUpdate creates a connector mapping or updates an existing connector mapping in the connector.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
-// of the connector. mappingName is the name of the connector mapping. parameters is parameters supplied to the
-// CreateOrUpdate Connector Mapping operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// connectorName - the name of the connector.
+// mappingName - the name of the connector mapping.
+// parameters - parameters supplied to the CreateOrUpdate Connector Mapping operation.
 func (client ConnectorMappingsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string, parameters ConnectorMappingResourceFormat) (result ConnectorMappingResourceFormat, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mappingName,
@@ -106,7 +108,7 @@ func (client ConnectorMappingsClient) CreateOrUpdatePreparer(ctx context.Context
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomerInsights/hubs/{hubName}/connectors/{connectorName}/mappings/{mappingName}", pathParameters),
@@ -136,9 +138,11 @@ func (client ConnectorMappingsClient) CreateOrUpdateResponder(resp *http.Respons
 }
 
 // Delete deletes a connector mapping in the connector.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
-// of the connector. mappingName is the name of the connector mapping.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// connectorName - the name of the connector.
+// mappingName - the name of the connector mapping.
 func (client ConnectorMappingsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, connectorName, mappingName)
 	if err != nil {
@@ -204,9 +208,11 @@ func (client ConnectorMappingsClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // Get gets a connector mapping in the connector.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
-// of the connector. mappingName is the name of the connector mapping.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// connectorName - the name of the connector.
+// mappingName - the name of the connector mapping.
 func (client ConnectorMappingsClient) Get(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string) (result ConnectorMappingResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, connectorName, mappingName)
 	if err != nil {
@@ -273,9 +279,10 @@ func (client ConnectorMappingsClient) GetResponder(resp *http.Response) (result 
 }
 
 // ListByConnector gets all the connector mappings in the specified connector.
-//
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
-// of the connector.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// hubName - the name of the hub.
+// connectorName - the name of the connector.
 func (client ConnectorMappingsClient) ListByConnector(ctx context.Context, resourceGroupName string, hubName string, connectorName string) (result ConnectorMappingListResultPage, err error) {
 	result.fn = client.listByConnectorNextResults
 	req, err := client.ListByConnectorPreparer(ctx, resourceGroupName, hubName, connectorName)

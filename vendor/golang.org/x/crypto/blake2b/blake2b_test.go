@@ -6,6 +6,7 @@ package blake2b
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -67,6 +68,54 @@ func TestHashes2X(t *testing.T) {
 	}
 	t.Log("generic version")
 	testHashes2X(t)
+}
+
+func TestMarshal(t *testing.T) {
+	input := make([]byte, 255)
+	for i := range input {
+		input[i] = byte(i)
+	}
+	for _, size := range []int{Size, Size256, Size384, 12, 25, 63} {
+		for i := 0; i < 256; i++ {
+			h, err := New(size, nil)
+			if err != nil {
+				t.Fatalf("size=%d, len(input)=%d: error from New(%v, nil): %v", size, i, size, err)
+			}
+			h2, err := New(size, nil)
+			if err != nil {
+				t.Fatalf("size=%d, len(input)=%d: error from New(%v, nil): %v", size, i, size, err)
+			}
+
+			h.Write(input[:i/2])
+			halfstate, err := h.(encoding.BinaryMarshaler).MarshalBinary()
+			if err != nil {
+				t.Fatalf("size=%d, len(input)=%d: could not marshal: %v", size, i, err)
+			}
+			err = h2.(encoding.BinaryUnmarshaler).UnmarshalBinary(halfstate)
+			if err != nil {
+				t.Fatalf("size=%d, len(input)=%d: could not unmarshal: %v", size, i, err)
+			}
+
+			h.Write(input[i/2 : i])
+			sum := h.Sum(nil)
+			h2.Write(input[i/2 : i])
+			sum2 := h2.Sum(nil)
+
+			if !bytes.Equal(sum, sum2) {
+				t.Fatalf("size=%d, len(input)=%d: results do not match; sum = %v, sum2 = %v", size, i, sum, sum2)
+			}
+
+			h3, err := New(size, nil)
+			if err != nil {
+				t.Fatalf("size=%d, len(input)=%d: error from New(%v, nil): %v", size, i, size, err)
+			}
+			h3.Write(input[:i])
+			sum3 := h3.Sum(nil)
+			if !bytes.Equal(sum, sum3) {
+				t.Fatalf("size=%d, len(input)=%d: sum = %v, want %v", size, i, sum, sum3)
+			}
+		}
+	}
 }
 
 func testHashes(t *testing.T) {

@@ -40,10 +40,11 @@ func NewMarketplaceAgreementsClientWithBaseURI(baseURI string, subscriptionID st
 }
 
 // Create save marketplace terms.
-//
-// publisherID is publisher identifier string of image being deployed. offerID is offer identifier string of image
-// being deployed. planID is plan identifier string of image being deployed. parameters is parameters supplied to
-// the Create Marketplace Terms operation.
+// Parameters:
+// publisherID - publisher identifier string of image being deployed.
+// offerID - offer identifier string of image being deployed.
+// planID - plan identifier string of image being deployed.
+// parameters - parameters supplied to the Create Marketplace Terms operation.
 func (client MarketplaceAgreementsClient) Create(ctx context.Context, publisherID string, offerID string, planID string, parameters AgreementTerms) (result AgreementTerms, err error) {
 	req, err := client.CreatePreparer(ctx, publisherID, offerID, planID, parameters)
 	if err != nil {
@@ -82,7 +83,7 @@ func (client MarketplaceAgreementsClient) CreatePreparer(ctx context.Context, pu
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.MarketplaceOrdering/offerTypes/{offerType}/publishers/{publisherId}/offers/{offerId}/plans/{planId}/agreements/current", pathParameters),
@@ -112,9 +113,10 @@ func (client MarketplaceAgreementsClient) CreateResponder(resp *http.Response) (
 }
 
 // Get get marketplace terms.
-//
-// publisherID is publisher identifier string of image being deployed. offerID is offer identifier string of image
-// being deployed. planID is plan identifier string of image being deployed.
+// Parameters:
+// publisherID - publisher identifier string of image being deployed.
+// offerID - offer identifier string of image being deployed.
+// planID - plan identifier string of image being deployed.
 func (client MarketplaceAgreementsClient) Get(ctx context.Context, publisherID string, offerID string, planID string) (result AgreementTerms, err error) {
 	req, err := client.GetPreparer(ctx, publisherID, offerID, planID)
 	if err != nil {

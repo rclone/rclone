@@ -119,6 +119,10 @@ type CodeBuildAPI interface {
 	UpdateProject(*codebuild.UpdateProjectInput) (*codebuild.UpdateProjectOutput, error)
 	UpdateProjectWithContext(aws.Context, *codebuild.UpdateProjectInput, ...request.Option) (*codebuild.UpdateProjectOutput, error)
 	UpdateProjectRequest(*codebuild.UpdateProjectInput) (*request.Request, *codebuild.UpdateProjectOutput)
+
+	UpdateWebhook(*codebuild.UpdateWebhookInput) (*codebuild.UpdateWebhookOutput, error)
+	UpdateWebhookWithContext(aws.Context, *codebuild.UpdateWebhookInput, ...request.Option) (*codebuild.UpdateWebhookOutput, error)
+	UpdateWebhookRequest(*codebuild.UpdateWebhookInput) (*request.Request, *codebuild.UpdateWebhookOutput)
 }
 
 var _ CodeBuildAPI = (*codebuild.CodeBuild)(nil)

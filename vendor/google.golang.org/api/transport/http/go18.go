@@ -19,15 +19,13 @@ package http
 import (
 	"net/http"
 
+	"go.opencensus.io/exporter/stackdriver/propagation"
 	"go.opencensus.io/plugin/ochttp"
-	ocgoogle "go.opencensus.io/plugin/ochttp/propagation/google"
 )
 
 func addOCTransport(trans http.RoundTripper) http.RoundTripper {
 	return &ochttp.Transport{
-		Base: trans,
-		// TODO(ramonza): enable stats after census-instrumentation/opencensus-go#302
-		NoStats:     true,
-		Propagation: &ocgoogle.HTTPFormat{},
+		Base:        trans,
+		Propagation: &propagation.HTTPFormat{},
 	}
 }

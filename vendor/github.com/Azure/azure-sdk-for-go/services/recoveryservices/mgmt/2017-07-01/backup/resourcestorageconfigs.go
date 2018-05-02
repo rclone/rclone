@@ -40,9 +40,9 @@ func NewResourceStorageConfigsClientWithBaseURI(baseURI string, subscriptionID s
 }
 
 // Get fetches resource storage config.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present.
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
 func (client ResourceStorageConfigsClient) Get(ctx context.Context, vaultName string, resourceGroupName string) (result ResourceConfigResource, err error) {
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName)
 	if err != nil {
@@ -107,9 +107,10 @@ func (client ResourceStorageConfigsClient) GetResponder(resp *http.Response) (re
 }
 
 // Update updates vault storage model type.
-//
-// vaultName is the name of the recovery services vault. resourceGroupName is the name of the resource group where
-// the recovery services vault is present. parameters is vault storage config request
+// Parameters:
+// vaultName - the name of the recovery services vault.
+// resourceGroupName - the name of the resource group where the recovery services vault is present.
+// parameters - vault storage config request
 func (client ResourceStorageConfigsClient) Update(ctx context.Context, vaultName string, resourceGroupName string, parameters ResourceConfigResource) (result autorest.Response, err error) {
 	req, err := client.UpdatePreparer(ctx, vaultName, resourceGroupName, parameters)
 	if err != nil {
@@ -146,7 +147,7 @@ func (client ResourceStorageConfigsClient) UpdatePreparer(ctx context.Context, v
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/backupstorageconfig/vaultstorageconfig", pathParameters),

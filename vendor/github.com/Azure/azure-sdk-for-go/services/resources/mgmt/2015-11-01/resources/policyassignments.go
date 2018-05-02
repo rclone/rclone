@@ -41,8 +41,10 @@ func NewPolicyAssignmentsClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // Create create policy assignment.
-//
-// scope is scope. policyAssignmentName is policy assignment name. parameters is policy assignment.
+// Parameters:
+// scope - scope.
+// policyAssignmentName - policy assignment name.
+// parameters - policy assignment.
 func (client PolicyAssignmentsClient) Create(ctx context.Context, scope string, policyAssignmentName string, parameters PolicyAssignment) (result PolicyAssignment, err error) {
 	req, err := client.CreatePreparer(ctx, scope, policyAssignmentName, parameters)
 	if err != nil {
@@ -78,7 +80,7 @@ func (client PolicyAssignmentsClient) CreatePreparer(ctx context.Context, scope 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{scope}/providers/Microsoft.Authorization/policyAssignments/{policyAssignmentName}", pathParameters),
@@ -108,8 +110,9 @@ func (client PolicyAssignmentsClient) CreateResponder(resp *http.Response) (resu
 }
 
 // CreateByID create policy assignment by Id.
-//
-// policyAssignmentID is policy assignment Id parameters is policy assignment.
+// Parameters:
+// policyAssignmentID - policy assignment Id
+// parameters - policy assignment.
 func (client PolicyAssignmentsClient) CreateByID(ctx context.Context, policyAssignmentID string, parameters PolicyAssignment) (result PolicyAssignment, err error) {
 	req, err := client.CreateByIDPreparer(ctx, policyAssignmentID, parameters)
 	if err != nil {
@@ -144,7 +147,7 @@ func (client PolicyAssignmentsClient) CreateByIDPreparer(ctx context.Context, po
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/{policyAssignmentId}", pathParameters),
@@ -174,8 +177,9 @@ func (client PolicyAssignmentsClient) CreateByIDResponder(resp *http.Response) (
 }
 
 // Delete delete policy assignment.
-//
-// scope is scope. policyAssignmentName is policy assignment name.
+// Parameters:
+// scope - scope.
+// policyAssignmentName - policy assignment name.
 func (client PolicyAssignmentsClient) Delete(ctx context.Context, scope string, policyAssignmentName string) (result PolicyAssignment, err error) {
 	req, err := client.DeletePreparer(ctx, scope, policyAssignmentName)
 	if err != nil {
@@ -233,8 +237,8 @@ func (client PolicyAssignmentsClient) DeleteResponder(resp *http.Response) (resu
 }
 
 // DeleteByID delete policy assignment.
-//
-// policyAssignmentID is policy assignment Id
+// Parameters:
+// policyAssignmentID - policy assignment Id
 func (client PolicyAssignmentsClient) DeleteByID(ctx context.Context, policyAssignmentID string) (result PolicyAssignment, err error) {
 	req, err := client.DeleteByIDPreparer(ctx, policyAssignmentID)
 	if err != nil {
@@ -297,8 +301,9 @@ func (client PolicyAssignmentsClient) DeleteByIDResponder(resp *http.Response) (
 }
 
 // Get get single policy assignment.
-//
-// scope is scope. policyAssignmentName is policy assignment name.
+// Parameters:
+// scope - scope.
+// policyAssignmentName - policy assignment name.
 func (client PolicyAssignmentsClient) Get(ctx context.Context, scope string, policyAssignmentName string) (result PolicyAssignment, err error) {
 	req, err := client.GetPreparer(ctx, scope, policyAssignmentName)
 	if err != nil {
@@ -362,8 +367,8 @@ func (client PolicyAssignmentsClient) GetResponder(resp *http.Response) (result 
 }
 
 // GetByID get single policy assignment.
-//
-// policyAssignmentID is policy assignment Id
+// Parameters:
+// policyAssignmentID - policy assignment Id
 func (client PolicyAssignmentsClient) GetByID(ctx context.Context, policyAssignmentID string) (result PolicyAssignment, err error) {
 	req, err := client.GetByIDPreparer(ctx, policyAssignmentID)
 	if err != nil {
@@ -426,8 +431,8 @@ func (client PolicyAssignmentsClient) GetByIDResponder(resp *http.Response) (res
 }
 
 // List gets policy assignments of the subscription.
-//
-// filter is the filter to apply on the operation.
+// Parameters:
+// filter - the filter to apply on the operation.
 func (client PolicyAssignmentsClient) List(ctx context.Context, filter string) (result PolicyAssignmentListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter)
@@ -521,10 +526,13 @@ func (client PolicyAssignmentsClient) ListComplete(ctx context.Context, filter s
 }
 
 // ListForResource gets policy assignments of the resource.
-//
-// resourceGroupName is the name of the resource group. resourceProviderNamespace is the name of the resource
-// provider. parentResourcePath is the parent resource path. resourceType is the resource type. resourceName is the
-// resource name. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceProviderNamespace - the name of the resource provider.
+// parentResourcePath - the parent resource path.
+// resourceType - the resource type.
+// resourceName - the resource name.
+// filter - the filter to apply on the operation.
 func (client PolicyAssignmentsClient) ListForResource(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result PolicyAssignmentListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -631,8 +639,9 @@ func (client PolicyAssignmentsClient) ListForResourceComplete(ctx context.Contex
 }
 
 // ListForResourceGroup gets policy assignments of the resource group.
-//
-// resourceGroupName is resource group name. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - resource group name.
+// filter - the filter to apply on the operation.
 func (client PolicyAssignmentsClient) ListForResourceGroup(ctx context.Context, resourceGroupName string, filter string) (result PolicyAssignmentListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -735,8 +744,9 @@ func (client PolicyAssignmentsClient) ListForResourceGroupComplete(ctx context.C
 }
 
 // ListForScope gets policy assignments of the scope.
-//
-// scope is scope. filter is the filter to apply on the operation.
+// Parameters:
+// scope - scope.
+// filter - the filter to apply on the operation.
 func (client PolicyAssignmentsClient) ListForScope(ctx context.Context, scope string, filter string) (result PolicyAssignmentListResultPage, err error) {
 	result.fn = client.listForScopeNextResults
 	req, err := client.ListForScopePreparer(ctx, scope, filter)

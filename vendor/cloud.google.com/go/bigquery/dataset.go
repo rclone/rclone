@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/optional"
+	"cloud.google.com/go/internal/trace"
 
 	"golang.org/x/net/context"
 	bq "google.golang.org/api/bigquery/v2"
@@ -85,12 +86,19 @@ func (c *Client) DatasetInProject(projectID, datasetID string) *Dataset {
 
 // Create creates a dataset in the BigQuery service. An error will be returned if the
 // dataset already exists. Pass in a DatasetMetadata value to configure the dataset.
-func (d *Dataset) Create(ctx context.Context, md *DatasetMetadata) error {
+func (d *Dataset) Create(ctx context.Context, md *DatasetMetadata) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Dataset.Create")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	ds, err := md.toBQ()
 	if err != nil {
 		return err
 	}
 	ds.DatasetReference = &bq.DatasetReference{DatasetId: d.DatasetID}
+	// Use Client.Location as a default.
+	if ds.Location == "" {
+		ds.Location = d.c.Location
+	}
 	call := d.c.bqs.Datasets.Insert(d.ProjectID, ds).Context(ctx)
 	setClientHeader(call.Header())
 	_, err = call.Do()
@@ -140,14 +148,20 @@ func accessListToBQ(a []*AccessEntry) ([]*bq.DatasetAccess, error) {
 }
 
 // Delete deletes the dataset.
-func (d *Dataset) Delete(ctx context.Context) error {
+func (d *Dataset) Delete(ctx context.Context) (err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Dataset.Delete")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	call := d.c.bqs.Datasets.Delete(d.ProjectID, d.DatasetID).Context(ctx)
 	setClientHeader(call.Header())
 	return call.Do()
 }
 
 // Metadata fetches the metadata for the dataset.
-func (d *Dataset) Metadata(ctx context.Context) (*DatasetMetadata, error) {
+func (d *Dataset) Metadata(ctx context.Context) (md *DatasetMetadata, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Dataset.Metadata")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	call := d.c.bqs.Datasets.Get(d.ProjectID, d.DatasetID).Context(ctx)
 	setClientHeader(call.Header())
 	var ds *bq.Dataset
@@ -186,7 +200,10 @@ func bqToDatasetMetadata(d *bq.Dataset) (*DatasetMetadata, error) {
 // To perform a read-modify-write that protects against intervening reads,
 // set the etag argument to the DatasetMetadata.ETag field from the read.
 // Pass the empty string for etag for a "blind write" that will always succeed.
-func (d *Dataset) Update(ctx context.Context, dm DatasetMetadataToUpdate, etag string) (*DatasetMetadata, error) {
+func (d *Dataset) Update(ctx context.Context, dm DatasetMetadataToUpdate, etag string) (md *DatasetMetadata, err error) {
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Dataset.Update")
+	defer func() { trace.EndSpan(ctx, err) }()
+
 	ds, err := dm.toBQ()
 	if err != nil {
 		return nil, err

@@ -40,10 +40,11 @@ func NewExportConfigurationsClientWithBaseURI(baseURI string, subscriptionID str
 }
 
 // Create create a Continuous Export configuration of an Application Insights component.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. exportProperties is properties that need to be specified to create a Continuous Export
-// configuration of a Application Insights component.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// exportProperties - properties that need to be specified to create a Continuous Export configuration of a
+// Application Insights component.
 func (client ExportConfigurationsClient) Create(ctx context.Context, resourceGroupName string, resourceName string, exportProperties ApplicationInsightsComponentExportRequest) (result ListApplicationInsightsComponentExportConfiguration, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, resourceName, exportProperties)
 	if err != nil {
@@ -80,10 +81,10 @@ func (client ExportConfigurationsClient) CreatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/exportconfiguration", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/exportconfiguration", pathParameters),
 		autorest.WithJSON(exportProperties),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
@@ -110,10 +111,10 @@ func (client ExportConfigurationsClient) CreateResponder(resp *http.Response) (r
 }
 
 // Delete delete a Continuous Export configuration of an Application Insights component.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. exportID is the Continuous Export configuration ID. This is unique within a Application
-// Insights component.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// exportID - the Continuous Export configuration ID. This is unique within a Application Insights component.
 func (client ExportConfigurationsClient) Delete(ctx context.Context, resourceGroupName string, resourceName string, exportID string) (result ApplicationInsightsComponentExportConfiguration, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName, exportID)
 	if err != nil {
@@ -153,7 +154,7 @@ func (client ExportConfigurationsClient) DeletePreparer(ctx context.Context, res
 	preparer := autorest.CreatePreparer(
 		autorest.AsDelete(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -179,10 +180,10 @@ func (client ExportConfigurationsClient) DeleteResponder(resp *http.Response) (r
 }
 
 // Get get the Continuous Export configuration for this export id.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. exportID is the Continuous Export configuration ID. This is unique within a Application
-// Insights component.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// exportID - the Continuous Export configuration ID. This is unique within a Application Insights component.
 func (client ExportConfigurationsClient) Get(ctx context.Context, resourceGroupName string, resourceName string, exportID string) (result ApplicationInsightsComponentExportConfiguration, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName, exportID)
 	if err != nil {
@@ -222,7 +223,7 @@ func (client ExportConfigurationsClient) GetPreparer(ctx context.Context, resour
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -248,9 +249,9 @@ func (client ExportConfigurationsClient) GetResponder(resp *http.Response) (resu
 }
 
 // List gets a list of Continuous Export configuration of an Application Insights component.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
 func (client ExportConfigurationsClient) List(ctx context.Context, resourceGroupName string, resourceName string) (result ListApplicationInsightsComponentExportConfiguration, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -289,7 +290,7 @@ func (client ExportConfigurationsClient) ListPreparer(ctx context.Context, resou
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/exportconfiguration", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/exportconfiguration", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -315,11 +316,11 @@ func (client ExportConfigurationsClient) ListResponder(resp *http.Response) (res
 }
 
 // Update update the Continuous Export configuration for this export id.
-//
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
-// component resource. exportID is the Continuous Export configuration ID. This is unique within a Application
-// Insights component. exportProperties is properties that need to be specified to update the Continuous Export
-// configuration.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the Application Insights component resource.
+// exportID - the Continuous Export configuration ID. This is unique within a Application Insights component.
+// exportProperties - properties that need to be specified to update the Continuous Export configuration.
 func (client ExportConfigurationsClient) Update(ctx context.Context, resourceGroupName string, resourceName string, exportID string, exportProperties ApplicationInsightsComponentExportRequest) (result ApplicationInsightsComponentExportConfiguration, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, resourceName, exportID, exportProperties)
 	if err != nil {
@@ -357,10 +358,10 @@ func (client ExportConfigurationsClient) UpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{resourceName}/exportconfiguration/{exportId}", pathParameters),
 		autorest.WithJSON(exportProperties),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))

@@ -40,8 +40,8 @@ func NewReplicationFabricsClientWithBaseURI(baseURI string, subscriptionID strin
 }
 
 // CheckConsistency the operation to perform a consistency check on the fabric.
-//
-// fabricName is fabric name.
+// Parameters:
+// fabricName - fabric name.
 func (client ReplicationFabricsClient) CheckConsistency(ctx context.Context, fabricName string) (result ReplicationFabricsCheckConsistencyFuture, err error) {
 	req, err := client.CheckConsistencyPreparer(ctx, fabricName)
 	if err != nil {
@@ -109,8 +109,9 @@ func (client ReplicationFabricsClient) CheckConsistencyResponder(resp *http.Resp
 }
 
 // Create the operation to create an Azure Site Recovery fabric (for e.g. Hyper-V site)
-//
-// fabricName is name of the ASR fabric. input is fabric creation input.
+// Parameters:
+// fabricName - name of the ASR fabric.
+// input - fabric creation input.
 func (client ReplicationFabricsClient) Create(ctx context.Context, fabricName string, input FabricCreationInput) (result ReplicationFabricsCreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, fabricName, input)
 	if err != nil {
@@ -142,7 +143,7 @@ func (client ReplicationFabricsClient) CreatePreparer(ctx context.Context, fabri
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}", pathParameters),
@@ -180,8 +181,8 @@ func (client ReplicationFabricsClient) CreateResponder(resp *http.Response) (res
 }
 
 // Delete the operation to delete or remove an Azure Site Recovery fabric.
-//
-// fabricName is ASR fabric to delete
+// Parameters:
+// fabricName - ASR fabric to delete
 func (client ReplicationFabricsClient) Delete(ctx context.Context, fabricName string) (result ReplicationFabricsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, fabricName)
 	if err != nil {
@@ -248,8 +249,8 @@ func (client ReplicationFabricsClient) DeleteResponder(resp *http.Response) (res
 }
 
 // Get gets the details of an Azure Site Recovery fabric.
-//
-// fabricName is fabric name.
+// Parameters:
+// fabricName - fabric name.
 func (client ReplicationFabricsClient) Get(ctx context.Context, fabricName string) (result Fabric, err error) {
 	req, err := client.GetPreparer(ctx, fabricName)
 	if err != nil {
@@ -407,8 +408,8 @@ func (client ReplicationFabricsClient) ListComplete(ctx context.Context) (result
 }
 
 // MigrateToAad the operation to migrate an Azure Site Recovery fabric to AAD.
-//
-// fabricName is ASR fabric to migrate.
+// Parameters:
+// fabricName - ASR fabric to migrate.
 func (client ReplicationFabricsClient) MigrateToAad(ctx context.Context, fabricName string) (result ReplicationFabricsMigrateToAadFuture, err error) {
 	req, err := client.MigrateToAadPreparer(ctx, fabricName)
 	if err != nil {
@@ -475,8 +476,8 @@ func (client ReplicationFabricsClient) MigrateToAadResponder(resp *http.Response
 }
 
 // Purge the operation to purge(force delete) an Azure Site Recovery fabric.
-//
-// fabricName is ASR fabric to purge.
+// Parameters:
+// fabricName - ASR fabric to purge.
 func (client ReplicationFabricsClient) Purge(ctx context.Context, fabricName string) (result ReplicationFabricsPurgeFuture, err error) {
 	req, err := client.PurgePreparer(ctx, fabricName)
 	if err != nil {
@@ -543,9 +544,9 @@ func (client ReplicationFabricsClient) PurgeResponder(resp *http.Response) (resu
 }
 
 // ReassociateGateway the operation to move replications from a process server to another process server.
-//
-// fabricName is the name of the fabric containing the process server. failoverProcessServerRequest is the input to
-// the failover process server operation.
+// Parameters:
+// fabricName - the name of the fabric containing the process server.
+// failoverProcessServerRequest - the input to the failover process server operation.
 func (client ReplicationFabricsClient) ReassociateGateway(ctx context.Context, fabricName string, failoverProcessServerRequest FailoverProcessServerRequest) (result ReplicationFabricsReassociateGatewayFuture, err error) {
 	req, err := client.ReassociateGatewayPreparer(ctx, fabricName, failoverProcessServerRequest)
 	if err != nil {
@@ -577,7 +578,7 @@ func (client ReplicationFabricsClient) ReassociateGatewayPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}/reassociateGateway", pathParameters),
@@ -615,8 +616,9 @@ func (client ReplicationFabricsClient) ReassociateGatewayResponder(resp *http.Re
 }
 
 // RenewCertificate renews the connection certificate for the ASR replication fabric.
-//
-// fabricName is fabric name to renew certs for. renewCertificate is renew certificate input.
+// Parameters:
+// fabricName - fabric name to renew certs for.
+// renewCertificate - renew certificate input.
 func (client ReplicationFabricsClient) RenewCertificate(ctx context.Context, fabricName string, renewCertificate RenewCertificateInput) (result ReplicationFabricsRenewCertificateFuture, err error) {
 	req, err := client.RenewCertificatePreparer(ctx, fabricName, renewCertificate)
 	if err != nil {
@@ -648,7 +650,7 @@ func (client ReplicationFabricsClient) RenewCertificatePreparer(ctx context.Cont
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{resourceName}/replicationFabrics/{fabricName}/renewCertificate", pathParameters),

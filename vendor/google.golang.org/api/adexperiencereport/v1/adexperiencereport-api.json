@@ -163,7 +163,7 @@
       }
     }
   },
-  "revision": "20180129",
+  "revision": "20180420",
   "rootUrl": "https://adexperiencereport.googleapis.com/",
   "schemas": {
     "PlatformSummary": {
@@ -243,7 +243,7 @@
       "type": "object"
     },
     "SiteSummaryResponse": {
-      "description": "Response message for GetSiteSummary.",
+      "description": "Response message for GetSiteSummary.\nDo not confuse with same message in google.chrome.abusiveexperiencereport.v1",
       "id": "SiteSummaryResponse",
       "properties": {
         "desktopSummary": {
@@ -277,7 +277,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Ad Experience Report API",
+  "title": "Ad Experience Report API",
   "version": "v1",
   "version_module": true
 }

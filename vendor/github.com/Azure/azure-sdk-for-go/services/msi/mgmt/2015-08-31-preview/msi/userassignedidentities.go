@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // UserAssignedIdentitiesClient is the the Managed Service Identity Client.
 type UserAssignedIdentitiesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // NewUserAssignedIdentitiesClient creates an instance of the UserAssignedIdentitiesClient client.
 func NewUserAssignedIdentitiesClient(subscriptionID string) UserAssignedIdentitiesClient {
 	return NewUserAssignedIdentitiesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // NewUserAssignedIdentitiesClientWithBaseURI creates an instance of the UserAssignedIdentitiesClient client.
 func NewUserAssignedIdentitiesClientWithBaseURI(baseURI string, subscriptionID string) UserAssignedIdentitiesClient {
 	return UserAssignedIdentitiesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // CreateOrUpdate create or update an identity in the specified subscription and resource group.
 //
 // resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
@@ -65,6 +69,7 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdate(ctx context.Context, r
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
 func (client UserAssignedIdentitiesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, resourceName string, parameters Identity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -79,7 +84,7 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdatePreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}", pathParameters),
@@ -88,6 +93,7 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdatePreparer(ctx context.Co
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
@@ -95,6 +101,7 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdateSender(req *http.Reques
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) CreateOrUpdateResponder(resp *http.Response) (result Identity, err error) {
@@ -108,6 +115,7 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdateResponder(resp *http.Re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // Delete deletes the identity.
 //
 // resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
@@ -134,6 +142,7 @@ func (client UserAssignedIdentitiesClient) Delete(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // DeletePreparer prepares the Delete request.
 func (client UserAssignedIdentitiesClient) DeletePreparer(ctx context.Context, resourceGroupName string, resourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -155,6 +164,7 @@ func (client UserAssignedIdentitiesClient) DeletePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -162,6 +172,7 @@ func (client UserAssignedIdentitiesClient) DeleteSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -174,6 +185,7 @@ func (client UserAssignedIdentitiesClient) DeleteResponder(resp *http.Response) 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // Get gets the identity.
 //
 // resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
@@ -200,6 +212,7 @@ func (client UserAssignedIdentitiesClient) Get(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // GetPreparer prepares the Get request.
 func (client UserAssignedIdentitiesClient) GetPreparer(ctx context.Context, resourceGroupName string, resourceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -221,6 +234,7 @@ func (client UserAssignedIdentitiesClient) GetPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -228,6 +242,7 @@ func (client UserAssignedIdentitiesClient) GetSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) GetResponder(resp *http.Response) (result Identity, err error) {
@@ -241,6 +256,7 @@ func (client UserAssignedIdentitiesClient) GetResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListByResourceGroup lists all the userAssignedIdentities available under the specified ResourceGroup.
 //
 // resourceGroupName is the name of the Resource Group to which the identity belongs.
@@ -267,6 +283,7 @@ func (client UserAssignedIdentitiesClient) ListByResourceGroup(ctx context.Conte
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListByResourceGroupPreparer prepares the ListByResourceGroup request.
 func (client UserAssignedIdentitiesClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -287,6 +304,7 @@ func (client UserAssignedIdentitiesClient) ListByResourceGroupPreparer(ctx conte
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
@@ -294,6 +312,7 @@ func (client UserAssignedIdentitiesClient) ListByResourceGroupSender(req *http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) ListByResourceGroupResponder(resp *http.Response) (result UserAssignedIdentitiesListResult, err error) {
@@ -328,12 +347,14 @@ func (client UserAssignedIdentitiesClient) listByResourceGroupNextResults(lastRe
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UserAssignedIdentitiesClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string) (result UserAssignedIdentitiesListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListBySubscription lists all the userAssignedIdentities available under the specified subscription.
 func (client UserAssignedIdentitiesClient) ListBySubscription(ctx context.Context) (result UserAssignedIdentitiesListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
@@ -358,6 +379,7 @@ func (client UserAssignedIdentitiesClient) ListBySubscription(ctx context.Contex
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListBySubscriptionPreparer prepares the ListBySubscription request.
 func (client UserAssignedIdentitiesClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -377,6 +399,7 @@ func (client UserAssignedIdentitiesClient) ListBySubscriptionPreparer(ctx contex
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
@@ -384,6 +407,7 @@ func (client UserAssignedIdentitiesClient) ListBySubscriptionSender(req *http.Re
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) ListBySubscriptionResponder(resp *http.Response) (result UserAssignedIdentitiesListResult, err error) {
@@ -418,12 +442,14 @@ func (client UserAssignedIdentitiesClient) listBySubscriptionNextResults(lastRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UserAssignedIdentitiesClient) ListBySubscriptionComplete(ctx context.Context) (result UserAssignedIdentitiesListResultIterator, err error) {
 	result.page, err = client.ListBySubscription(ctx)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // Update update an identity in the specified subscription and resource group.
 //
 // resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
@@ -450,6 +476,7 @@ func (client UserAssignedIdentitiesClient) Update(ctx context.Context, resourceG
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // UpdatePreparer prepares the Update request.
 func (client UserAssignedIdentitiesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, resourceName string, parameters Identity) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -464,7 +491,7 @@ func (client UserAssignedIdentitiesClient) UpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}", pathParameters),
@@ -473,6 +500,7 @@ func (client UserAssignedIdentitiesClient) UpdatePreparer(ctx context.Context, r
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client UserAssignedIdentitiesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -480,6 +508,7 @@ func (client UserAssignedIdentitiesClient) UpdateSender(req *http.Request) (*htt
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/msi/mgmt/2015-08-31-preview/msi instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client UserAssignedIdentitiesClient) UpdateResponder(resp *http.Response) (result Identity, err error) {

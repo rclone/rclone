@@ -72,13 +72,29 @@
         {"shape":"ConcurrentUpdateException"},
         {"shape":"InternalServiceException"}
       ]
+    },
+    "UpdateScalingPlan":{
+      "name":"UpdateScalingPlan",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateScalingPlanRequest"},
+      "output":{"shape":"UpdateScalingPlanResponse"},
+      "errors":[
+        {"shape":"ValidationException"},
+        {"shape":"ConcurrentUpdateException"},
+        {"shape":"InternalServiceException"},
+        {"shape":"ObjectNotFoundException"}
+      ]
     }
   },
   "shapes":{
     "ApplicationSource":{
       "type":"structure",
       "members":{
-        "CloudFormationStackARN":{"shape":"XmlString"}
+        "CloudFormationStackARN":{"shape":"XmlString"},
+        "TagFilters":{"shape":"TagFilters"}
       }
     },
     "ApplicationSources":{
@@ -344,6 +360,7 @@
         "ScalingInstructions":{"shape":"ScalingInstructions"},
         "StatusCode":{"shape":"ScalingPlanStatusCode"},
         "StatusMessage":{"shape":"XmlString"},
+        "StatusStartTime":{"shape":"TimestampType"},
         "CreationTime":{"shape":"TimestampType"}
       }
     },
@@ -351,7 +368,7 @@
       "type":"string",
       "max":128,
       "min":1,
-      "pattern":"[\\p{Print}&&[^|]]+"
+      "pattern":"[\\p{Print}&&[^|:/]]+"
     },
     "ScalingPlanNames":{
       "type":"list",
@@ -390,7 +407,9 @@
         "CreationInProgress",
         "CreationFailed",
         "DeletionInProgress",
-        "DeletionFailed"
+        "DeletionFailed",
+        "UpdateInProgress",
+        "UpdateFailed"
       ]
     },
     "ScalingPlanVersion":{"type":"long"},
@@ -432,6 +451,21 @@
         "dynamodb"
       ]
     },
+    "TagFilter":{
+      "type":"structure",
+      "members":{
+        "Key":{"shape":"XmlStringMaxLen128"},
+        "Values":{"shape":"TagValues"}
+      }
+    },
+    "TagFilters":{
+      "type":"list",
+      "member":{"shape":"TagFilter"}
+    },
+    "TagValues":{
+      "type":"list",
+      "member":{"shape":"XmlStringMaxLen256"}
+    },
     "TargetTrackingConfiguration":{
       "type":"structure",
       "required":["TargetValue"],
@@ -450,6 +484,24 @@
       "member":{"shape":"TargetTrackingConfiguration"}
     },
     "TimestampType":{"type":"timestamp"},
+    "UpdateScalingPlanRequest":{
+      "type":"structure",
+      "required":[
+        "ScalingPlanName",
+        "ScalingPlanVersion"
+      ],
+      "members":{
+        "ApplicationSource":{"shape":"ApplicationSource"},
+        "ScalingPlanName":{"shape":"ScalingPlanName"},
+        "ScalingInstructions":{"shape":"ScalingInstructions"},
+        "ScalingPlanVersion":{"shape":"ScalingPlanVersion"}
+      }
+    },
+    "UpdateScalingPlanResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "ValidationException":{
       "type":"structure",
       "members":{
@@ -459,6 +511,18 @@
     },
     "XmlString":{
       "type":"string",
+      "pattern":"[\\u0020-\\uD7FF\\uE000-\\uFFFD\\uD800\\uDC00-\\uDBFF\\uDFFF\\r\\n\\t]*"
+    },
+    "XmlStringMaxLen128":{
+      "type":"string",
+      "max":128,
+      "min":1,
+      "pattern":"[\\u0020-\\uD7FF\\uE000-\\uFFFD\\uD800\\uDC00-\\uDBFF\\uDFFF\\r\\n\\t]*"
+    },
+    "XmlStringMaxLen256":{
+      "type":"string",
+      "max":256,
+      "min":1,
       "pattern":"[\\u0020-\\uD7FF\\uE000-\\uFFFD\\uD800\\uDC00-\\uDBFF\\uDFFF\\r\\n\\t]*"
     }
   }

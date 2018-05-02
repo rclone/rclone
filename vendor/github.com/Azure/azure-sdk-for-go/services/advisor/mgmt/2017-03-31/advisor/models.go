@@ -40,6 +40,11 @@ const (
 	Security Category = "Security"
 )
 
+// PossibleCategoryValues returns an array of possible values for the Category const type.
+func PossibleCategoryValues() []Category {
+	return []Category{Cost, HighAvailability, Performance, Security}
+}
+
 // Impact enumerates the values for impact.
 type Impact string
 
@@ -52,6 +57,11 @@ const (
 	Medium Impact = "Medium"
 )
 
+// PossibleImpactValues returns an array of possible values for the Impact const type.
+func PossibleImpactValues() []Impact {
+	return []Impact{High, Low, Medium}
+}
+
 // Risk enumerates the values for risk.
 type Risk string
 
@@ -63,6 +73,11 @@ const (
 	// Warning ...
 	Warning Risk = "Warning"
 )
+
+// PossibleRiskValues returns an array of possible values for the Risk const type.
+func PossibleRiskValues() []Risk {
+	return []Risk{Error, None, Warning}
+}
 
 // ListSuppressionContract ...
 type ListSuppressionContract struct {
@@ -219,8 +234,12 @@ type RecommendationProperties struct {
 // MarshalJSON is the custom marshaler for RecommendationProperties.
 func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["category"] = rp.Category
-	objectMap["impact"] = rp.Impact
+	if rp.Category != "" {
+		objectMap["category"] = rp.Category
+	}
+	if rp.Impact != "" {
+		objectMap["impact"] = rp.Impact
+	}
 	if rp.ImpactedField != nil {
 		objectMap["impactedField"] = rp.ImpactedField
 	}
@@ -236,7 +255,9 @@ func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
 	if rp.RecommendationTypeID != nil {
 		objectMap["recommendationTypeId"] = rp.RecommendationTypeID
 	}
-	objectMap["risk"] = rp.Risk
+	if rp.Risk != "" {
+		objectMap["risk"] = rp.Risk
+	}
 	if rp.ShortDescription != nil {
 		objectMap["shortDescription"] = rp.ShortDescription
 	}
@@ -267,6 +288,24 @@ type ResourceRecommendationBase struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceRecommendationBase.
+func (rrb ResourceRecommendationBase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rrb.RecommendationProperties != nil {
+		objectMap["properties"] = rrb.RecommendationProperties
+	}
+	if rrb.ID != nil {
+		objectMap["id"] = rrb.ID
+	}
+	if rrb.Name != nil {
+		objectMap["name"] = rrb.Name
+	}
+	if rrb.Type != nil {
+		objectMap["type"] = rrb.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ResourceRecommendationBase struct.
@@ -443,6 +482,24 @@ type SuppressionContract struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SuppressionContract.
+func (sc SuppressionContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sc.SuppressionProperties != nil {
+		objectMap["properties"] = sc.SuppressionProperties
+	}
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Name != nil {
+		objectMap["name"] = sc.Name
+	}
+	if sc.Type != nil {
+		objectMap["type"] = sc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SuppressionContract struct.

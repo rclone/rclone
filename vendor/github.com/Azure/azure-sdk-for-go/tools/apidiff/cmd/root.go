@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var copyRepoFlag bool
 var onlyAdditionsFlag bool
 var onlyBreakingChangesFlag bool
 var quietFlag bool
@@ -34,6 +35,7 @@ individual packages or a set of packages under a specified directory.`,
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&copyRepoFlag, "copyrepo", "c", false, "copy the repo instead of cloning it")
 	rootCmd.PersistentFlags().BoolVarP(&onlyAdditionsFlag, "additions", "a", false, "only include additive changes in the report")
 	rootCmd.PersistentFlags().BoolVarP(&onlyBreakingChangesFlag, "breakingchanges", "b", false, "only include breaking changes in the report")
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "suppress console output")
@@ -45,4 +47,22 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)
 	}
+}
+
+// CommandFlags is used to specify flags when invoking commands programatically.
+type CommandFlags struct {
+	CopyRepo            bool
+	OnlyAdditions       bool
+	OnlyBreakingChanges bool
+	Quiet               bool
+	Verbose             bool
+}
+
+// applies the specified flags to their global equivalents
+func (cf CommandFlags) apply() {
+	copyRepoFlag = cf.CopyRepo
+	onlyAdditionsFlag = cf.OnlyAdditions
+	onlyBreakingChangesFlag = cf.OnlyBreakingChanges
+	quietFlag = cf.Quiet
+	verboseFlag = cf.Verbose
 }

@@ -23,26 +23,11 @@ import original "github.com/Azure/azure-sdk-for-go/services/search/mgmt/2015-08-
 
 type AdminKeysClient = original.AdminKeysClient
 
-func NewAdminKeysClient(subscriptionID string) AdminKeysClient {
-	return original.NewAdminKeysClient(subscriptionID)
-}
-func NewAdminKeysClientWithBaseURI(baseURI string, subscriptionID string) AdminKeysClient {
-	return original.NewAdminKeysClientWithBaseURI(baseURI, subscriptionID)
-}
-
 const (
 	DefaultBaseURI = original.DefaultBaseURI
 )
 
 type BaseClient = original.BaseClient
-
-func New(subscriptionID string) BaseClient {
-	return original.New(subscriptionID)
-}
-func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
-	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-
 type AdminKeyKind = original.AdminKeyKind
 
 const (
@@ -110,25 +95,51 @@ type ServiceProperties = original.ServiceProperties
 type ServicesCreateOrUpdateFuture = original.ServicesCreateOrUpdateFuture
 type Sku = original.Sku
 type OperationsClient = original.OperationsClient
+type QueryKeysClient = original.QueryKeysClient
+type ServicesClient = original.ServicesClient
 
+func NewAdminKeysClient(subscriptionID string) AdminKeysClient {
+	return original.NewAdminKeysClient(subscriptionID)
+}
+func NewAdminKeysClientWithBaseURI(baseURI string, subscriptionID string) AdminKeysClient {
+	return original.NewAdminKeysClientWithBaseURI(baseURI, subscriptionID)
+}
+func New(subscriptionID string) BaseClient {
+	return original.New(subscriptionID)
+}
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return original.NewWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAdminKeyKindValues() []AdminKeyKind {
+	return original.PossibleAdminKeyKindValues()
+}
+func PossibleHostingModeValues() []HostingMode {
+	return original.PossibleHostingModeValues()
+}
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return original.PossibleProvisioningStateValues()
+}
+func PossibleServiceStatusValues() []ServiceStatus {
+	return original.PossibleServiceStatusValues()
+}
+func PossibleSkuNameValues() []SkuName {
+	return original.PossibleSkuNameValues()
+}
+func PossibleUnavailableNameReasonValues() []UnavailableNameReason {
+	return original.PossibleUnavailableNameReasonValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type QueryKeysClient = original.QueryKeysClient
-
 func NewQueryKeysClient(subscriptionID string) QueryKeysClient {
 	return original.NewQueryKeysClient(subscriptionID)
 }
 func NewQueryKeysClientWithBaseURI(baseURI string, subscriptionID string) QueryKeysClient {
 	return original.NewQueryKeysClientWithBaseURI(baseURI, subscriptionID)
 }
-
-type ServicesClient = original.ServicesClient
-
 func NewServicesClient(subscriptionID string) ServicesClient {
 	return original.NewServicesClient(subscriptionID)
 }

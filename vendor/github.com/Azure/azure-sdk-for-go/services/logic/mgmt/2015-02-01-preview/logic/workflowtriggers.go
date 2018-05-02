@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // WorkflowTriggersClient is the REST API for Azure Logic Apps.
 type WorkflowTriggersClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // NewWorkflowTriggersClient creates an instance of the WorkflowTriggersClient client.
 func NewWorkflowTriggersClient(subscriptionID string) WorkflowTriggersClient {
 	return NewWorkflowTriggersClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // NewWorkflowTriggersClientWithBaseURI creates an instance of the WorkflowTriggersClient client.
 func NewWorkflowTriggersClientWithBaseURI(baseURI string, subscriptionID string) WorkflowTriggersClient {
 	return WorkflowTriggersClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // Get gets a workflow trigger.
 //
 // resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
@@ -65,6 +69,7 @@ func (client WorkflowTriggersClient) Get(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // GetPreparer prepares the Get request.
 func (client WorkflowTriggersClient) GetPreparer(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -87,6 +92,7 @@ func (client WorkflowTriggersClient) GetPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -94,6 +100,7 @@ func (client WorkflowTriggersClient) GetSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client WorkflowTriggersClient) GetResponder(resp *http.Response) (result WorkflowTrigger, err error) {
@@ -107,6 +114,7 @@ func (client WorkflowTriggersClient) GetResponder(resp *http.Response) (result W
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // List gets a list of workflow triggers.
 //
 // resourceGroupName is the resource group name. workflowName is the workflow name. top is the number of items to
@@ -134,6 +142,7 @@ func (client WorkflowTriggersClient) List(ctx context.Context, resourceGroupName
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // ListPreparer prepares the List request.
 func (client WorkflowTriggersClient) ListPreparer(ctx context.Context, resourceGroupName string, workflowName string, top *int32, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -161,6 +170,7 @@ func (client WorkflowTriggersClient) ListPreparer(ctx context.Context, resourceG
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -168,6 +178,7 @@ func (client WorkflowTriggersClient) ListSender(req *http.Request) (*http.Respon
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client WorkflowTriggersClient) ListResponder(resp *http.Response) (result WorkflowTriggerListResult, err error) {
@@ -202,12 +213,14 @@ func (client WorkflowTriggersClient) listNextResults(lastResults WorkflowTrigger
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client WorkflowTriggersClient) ListComplete(ctx context.Context, resourceGroupName string, workflowName string, top *int32, filter string) (result WorkflowTriggerListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, workflowName, top, filter)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // Run runs a workflow trigger.
 //
 // resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
@@ -234,6 +247,7 @@ func (client WorkflowTriggersClient) Run(ctx context.Context, resourceGroupName 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // RunPreparer prepares the Run request.
 func (client WorkflowTriggersClient) RunPreparer(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -256,6 +270,7 @@ func (client WorkflowTriggersClient) RunPreparer(ctx context.Context, resourceGr
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // RunSender sends the Run request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) RunSender(req *http.Request) (*http.Response, error) {
@@ -263,6 +278,7 @@ func (client WorkflowTriggersClient) RunSender(req *http.Request) (*http.Respons
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/logic/mgmt/2015-02-01-preview/logic instead.
 // RunResponder handles the response to the Run request. The method always
 // closes the http.Response Body.
 func (client WorkflowTriggersClient) RunResponder(resp *http.Response) (result autorest.Response, err error) {

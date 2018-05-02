@@ -40,8 +40,10 @@ func NewDeployedReplicaDetailsClientWithBaseURI(baseURI string, timeout *int32) 
 }
 
 // Get get deployed replica details
-//
-// nodeName is the name of the node partitionName is the name of the partition replicaID is the id of the replica
+// Parameters:
+// nodeName - the name of the node
+// partitionName - the name of the partition
+// replicaID - the id of the replica
 func (client DeployedReplicaDetailsClient) Get(ctx context.Context, nodeName string, partitionName string, replicaID string) (result DeployedReplicaDetail, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, partitionName, replicaID)
 	if err != nil {

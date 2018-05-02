@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GeographicHierarchiesClient is the client for the GeographicHierarchies methods of the Trafficmanager service.
 type GeographicHierarchiesClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewGeographicHierarchiesClient creates an instance of the GeographicHierarchiesClient client.
 func NewGeographicHierarchiesClient(subscriptionID string) GeographicHierarchiesClient {
 	return NewGeographicHierarchiesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // NewGeographicHierarchiesClientWithBaseURI creates an instance of the GeographicHierarchiesClient client.
 func NewGeographicHierarchiesClientWithBaseURI(baseURI string, subscriptionID string) GeographicHierarchiesClient {
 	return GeographicHierarchiesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetDefault gets the default Geographic Hierarchy used by the Geographic traffic routing method.
 func (client GeographicHierarchiesClient) GetDefault(ctx context.Context) (result GeographicHierarchy, err error) {
 	req, err := client.GetDefaultPreparer(ctx)
@@ -62,6 +66,7 @@ func (client GeographicHierarchiesClient) GetDefault(ctx context.Context) (resul
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetDefaultPreparer prepares the GetDefault request.
 func (client GeographicHierarchiesClient) GetDefaultPreparer(ctx context.Context) (*http.Request, error) {
 	const APIVersion = "2017-05-01"
@@ -77,6 +82,7 @@ func (client GeographicHierarchiesClient) GetDefaultPreparer(ctx context.Context
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetDefaultSender sends the GetDefault request. The method will close the
 // http.Response Body if it receives an error.
 func (client GeographicHierarchiesClient) GetDefaultSender(req *http.Request) (*http.Response, error) {
@@ -84,6 +90,7 @@ func (client GeographicHierarchiesClient) GetDefaultSender(req *http.Request) (*
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/trafficmanager/mgmt/2017-09-01-preview/trafficmanager instead.
 // GetDefaultResponder handles the response to the GetDefault request. The method always
 // closes the http.Response Body.
 func (client GeographicHierarchiesClient) GetDefaultResponder(resp *http.Response) (result GeographicHierarchy, err error) {

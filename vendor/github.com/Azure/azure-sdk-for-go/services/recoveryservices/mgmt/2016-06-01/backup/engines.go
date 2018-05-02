@@ -40,11 +40,12 @@ func NewEnginesClientWithBaseURI(baseURI string, subscriptionID string) EnginesC
 }
 
 // Get the backup management servers registered to a Recovery Services vault. This returns a pageable list of servers.
-//
-// vaultName is the name of the Recovery Services vault. resourceGroupName is the name of the resource group
-// associated with the Recovery Services vault. filter is use this filter to choose the specific backup management
-// server. backupManagementType { AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }. skipToken is the Skip Token
-// filter.
+// Parameters:
+// vaultName - the name of the Recovery Services vault.
+// resourceGroupName - the name of the resource group associated with the Recovery Services vault.
+// filter - use this filter to choose the specific backup management server. backupManagementType {
+// AzureIaasVM, MAB, DPM, AzureBackupServer, AzureSql }.
+// skipToken - the Skip Token filter.
 func (client EnginesClient) Get(ctx context.Context, vaultName string, resourceGroupName string, filter string, skipToken string) (result EngineBaseResourceListPage, err error) {
 	result.fn = client.getNextResults
 	req, err := client.GetPreparer(ctx, vaultName, resourceGroupName, filter, skipToken)

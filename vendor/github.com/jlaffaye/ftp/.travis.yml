@@ -2,8 +2,8 @@ language: go
 dist: trusty
 sudo: required
 go:
-  - 1.7.5
-  - 1.8.1
+  - 1.9.x
+  - 1.10.x
 env:
   - FTP_SERVER=vsftpd
   - FTP_SERVER=proftpd

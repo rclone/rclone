@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This package is OBSOLETE. See https://godoc.org/go.opencensus.io/trace.
+// This package is OBSOLETE. See https://godoc.org/go.opencensus.io/trace; and use
+// OpenCensus Stackdriver exporter, https://godoc.org/go.opencensus.io/exporter/stackdriver.
 //
 // Package trace is a Google Stackdriver Trace library.
 //
@@ -176,11 +177,11 @@ const (
 	spanKindServer      = `RPC_SERVER`
 	spanKindUnspecified = `SPAN_KIND_UNSPECIFIED`
 	maxStackFrames      = 20
+	labelAgent          = `trace.cloud.google.com/agent`
 )
 
 // Stackdriver Trace API predefined labels.
 const (
-	LabelAgent              = `trace.cloud.google.com/agent`
 	LabelComponent          = `trace.cloud.google.com/component`
 	LabelErrorMessage       = `trace.cloud.google.com/error/message`
 	LabelErrorName          = `trace.cloud.google.com/error/name`
@@ -574,6 +575,7 @@ func (t *trace) constructTrace(spans []*Span) *api.Trace {
 		if sp.statusCode != 0 {
 			sp.SetLabel(LabelHTTPStatusCode, strconv.Itoa(sp.statusCode))
 		}
+		sp.SetLabel(labelAgent, userAgent)
 		apiSpans[i] = &sp.span
 	}
 

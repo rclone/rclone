@@ -41,9 +41,11 @@ func NewArtifactSourcesClientWithBaseURI(baseURI string, subscriptionID string) 
 }
 
 // CreateOrUpdate create or replace an existing artifact source.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// artifact source. artifactSource is properties of an artifact source.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the artifact source.
+// artifactSource - properties of an artifact source.
 func (client ArtifactSourcesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, artifactSource ArtifactSource) (result ArtifactSource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: artifactSource,
@@ -87,7 +89,7 @@ func (client ArtifactSourcesClient) CreateOrUpdatePreparer(ctx context.Context, 
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/artifactsources/{name}", pathParameters),
@@ -117,9 +119,10 @@ func (client ArtifactSourcesClient) CreateOrUpdateResponder(resp *http.Response)
 }
 
 // Delete delete artifact source.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// artifact source.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the artifact source.
 func (client ArtifactSourcesClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -184,9 +187,11 @@ func (client ArtifactSourcesClient) DeleteResponder(resp *http.Response) (result
 }
 
 // Get get artifact source.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// artifact source. expand is specify the $expand query. Example: 'properties($select=displayName)'
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the artifact source.
+// expand - specify the $expand query. Example: 'properties($select=displayName)'
 func (client ArtifactSourcesClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result ArtifactSource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {
@@ -255,11 +260,13 @@ func (client ArtifactSourcesClient) GetResponder(resp *http.Response) (result Ar
 }
 
 // List list artifact sources in a given lab.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
-// $expand query. Example: 'properties($select=displayName)' filter is the filter to apply to the operation. top is
-// the maximum number of resources to return from the operation. orderby is the ordering expression for the
-// results, using OData notation.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// expand - specify the $expand query. Example: 'properties($select=displayName)'
+// filter - the filter to apply to the operation.
+// top - the maximum number of resources to return from the operation.
+// orderby - the ordering expression for the results, using OData notation.
 func (client ArtifactSourcesClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationArtifactSourcePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)
@@ -364,9 +371,11 @@ func (client ArtifactSourcesClient) ListComplete(ctx context.Context, resourceGr
 }
 
 // Update modify properties of artifact sources.
-//
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
-// artifact source. artifactSource is properties of an artifact source.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// labName - the name of the lab.
+// name - the name of the artifact source.
+// artifactSource - properties of an artifact source.
 func (client ArtifactSourcesClient) Update(ctx context.Context, resourceGroupName string, labName string, name string, artifactSource ArtifactSourceFragment) (result ArtifactSource, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, labName, name, artifactSource)
 	if err != nil {
@@ -404,7 +413,7 @@ func (client ArtifactSourcesClient) UpdatePreparer(ctx context.Context, resource
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DevTestLab/labs/{labName}/artifactsources/{name}", pathParameters),

@@ -17,7 +17,7 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq install libacl1-dev; fi
 - mkdir -p /tmp/t/{m,p}
 - git clone -q https://github.com/billziss-gh/secfs.test.git /tmp/t/secfs.test
-- git -C /tmp/t/secfs.test checkout -q a00c9165646f78ad53d3ec052860384a029683e5
+- git -C /tmp/t/secfs.test checkout -q e7edfb503c95998c1b0eb6b3f83ef203b1ed95dc
 - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sed -e 's/^fs=.*$/fs="cgofuse"/' -i "" /tmp/t/secfs.test/fstest/fstest/tests/conf; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sed -e 's/^fs=.*$/fs="cgofuse"/' -i""  /tmp/t/secfs.test/fstest/fstest/tests/conf; fi
 # the following test started failing on Travis Linux; disabling!
@@ -31,7 +31,7 @@ install:
 - go install -v ./...
 
 script:
-- go test ./fuse
+- go test -v ./fuse
 # cgofuse/memfs
 - sudo $GOPATH/bin/memfs -o allow_other,default_permissions,use_ino,attr_timeout=0 /tmp/t/m &
 - (cd /tmp/t/m && sudo prove -fr /tmp/t/secfs.test/fstest/fstest/tests)

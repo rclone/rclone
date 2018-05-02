@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // UsageDetailsClient is the consumption management client provides access to consumption resources for Azure
 // Web-Direct subscriptions. Other subscription types which were not purchased directly through the Azure web portal
 // are not supported through this preview API.
@@ -32,16 +33,19 @@ type UsageDetailsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NewUsageDetailsClient creates an instance of the UsageDetailsClient client.
 func NewUsageDetailsClient(subscriptionID string) UsageDetailsClient {
 	return NewUsageDetailsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // NewUsageDetailsClientWithBaseURI creates an instance of the UsageDetailsClient client.
 func NewUsageDetailsClientWithBaseURI(baseURI string, subscriptionID string) UsageDetailsClient {
 	return UsageDetailsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // List lists the usage details for a scope in reverse chronological order by billing period. Usage details are
 // available via this API only for January 1, 2017 or later.
 //
@@ -87,6 +91,7 @@ func (client UsageDetailsClient) List(ctx context.Context, scope string, expand 
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ListPreparer prepares the List request.
 func (client UsageDetailsClient) ListPreparer(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -118,6 +123,7 @@ func (client UsageDetailsClient) ListPreparer(ctx context.Context, scope string,
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageDetailsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -125,6 +131,7 @@ func (client UsageDetailsClient) ListSender(req *http.Request) (*http.Response, 
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client UsageDetailsClient) ListResponder(resp *http.Response) (result UsageDetailsListResult, err error) {
@@ -159,6 +166,7 @@ func (client UsageDetailsClient) listNextResults(lastResults UsageDetailsListRes
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/consumption/mgmt/2017-04-24-preview/consumption instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client UsageDetailsClient) ListComplete(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32) (result UsageDetailsListResultIterator, err error) {
 	result.page, err = client.List(ctx, scope, expand, filter, skiptoken, top)

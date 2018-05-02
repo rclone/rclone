@@ -31,7 +31,7 @@ import (
 
 func openCensusOptions() []option.ClientOption {
 	return []option.ClientOption{
-		option.WithGRPCDialOption(grpc.WithStatsHandler(ocgrpc.NewClientStatsHandler())),
+		option.WithGRPCDialOption(grpc.WithStatsHandler(&ocgrpc.ClientHandler{})),
 	}
 }
 
@@ -44,38 +44,40 @@ func init() {
 	}
 }
 
+const statsPrefix = "cloud.google.com/go/pubsub/"
+
 var (
 	// PullCount is a measure of the number of messages pulled.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	PullCount *stats.Int64Measure
+	PullCount = stats.Int64(statsPrefix+"pull_count", "Number of PubSub messages pulled", stats.UnitNone)
 
 	// AckCount is a measure of the number of messages acked.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	AckCount *stats.Int64Measure
+	AckCount = stats.Int64(statsPrefix+"ack_count", "Number of PubSub messages acked", stats.UnitNone)
 
 	// NackCount is a measure of the number of messages nacked.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	NackCount *stats.Int64Measure
+	NackCount = stats.Int64(statsPrefix+"nack_count", "Number of PubSub messages nacked", stats.UnitNone)
 
 	// ModAckCount is a measure of the number of messages whose ack-deadline was modified.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	ModAckCount *stats.Int64Measure
+	ModAckCount = stats.Int64(statsPrefix+"mod_ack_count", "Number of ack-deadlines modified", stats.UnitNone)
 
 	// StreamOpenCount is a measure of the number of times a streaming-pull stream was opened.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	StreamOpenCount *stats.Int64Measure
+	StreamOpenCount = stats.Int64(statsPrefix+"stream_open_count", "Number of calls opening a new streaming pull", stats.UnitNone)
 
 	// StreamRetryCount is a measure of the number of times a streaming-pull operation was retried.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	StreamRetryCount *stats.Int64Measure
+	StreamRetryCount = stats.Int64(statsPrefix+"stream_retry_count", "Number of retries of a stream send or receive", stats.UnitNone)
 
 	// StreamRequestCount is a measure of the number of requests sent on a streaming-pull stream.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	StreamRequestCount *stats.Int64Measure
+	StreamRequestCount = stats.Int64(statsPrefix+"stream_request_count", "Number gRPC StreamingPull request messages sent", stats.UnitNone)
 
-	// StreamRequestCount is a measure of the number of responses received on a streaming-pull stream.
+	// StreamResponseCount is a measure of the number of responses received on a streaming-pull stream.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
-	StreamResponseCount *stats.Int64Measure
+	StreamResponseCount = stats.Int64(statsPrefix+"stream_response_count", "Number of gRPC StreamingPull response messages received", stats.UnitNone)
 
 	// PullCountView is a cumulative sum of PullCount.
 	// It is EXPERIMENTAL and subject to change or removal without notice.
@@ -110,45 +112,25 @@ var (
 	StreamResponseCountView *view.View
 )
 
-const statsPrefix = "cloud.google.com/go/pubsub/"
-
 func init() {
-	PullCount = mustNewMeasure("pull_count", "Number of PubSub messages pulled")
-	AckCount = mustNewMeasure("ack_count", "Number of PubSub messages acked")
-	NackCount = mustNewMeasure("nack_count", "Number of PubSub messages nacked")
-	ModAckCount = mustNewMeasure("mod_ack_count", "Number of ack-deadlines modified")
-	StreamOpenCount = mustNewMeasure("stream_open_count", "Number of calls opening a new streaming pull")
-	StreamRetryCount = mustNewMeasure("stream_retry_count", "Number of retries of a stream send or receive")
-	StreamRequestCount = mustNewMeasure("stream_request_count", "Number gRPC StreamingPull request messages sent")
-	StreamResponseCount = mustNewMeasure("stream_response_count", "Number of gRPC StreamingPull response messages received")
-
-	PullCountView = mustNewView(PullCount)
-	AckCountView = mustNewView(AckCount)
-	NackCountView = mustNewView(NackCount)
-	ModAckCountView = mustNewView(ModAckCount)
-	StreamOpenCountView = mustNewView(StreamOpenCount)
-	StreamRetryCountView = mustNewView(StreamRetryCount)
-	StreamRequestCountView = mustNewView(StreamRequestCount)
-	StreamResponseCountView = mustNewView(StreamResponseCount)
+	PullCountView = countView(PullCount)
+	AckCountView = countView(AckCount)
+	NackCountView = countView(NackCount)
+	ModAckCountView = countView(ModAckCount)
+	StreamOpenCountView = countView(StreamOpenCount)
+	StreamRetryCountView = countView(StreamRetryCount)
+	StreamRequestCountView = countView(StreamRequestCount)
+	StreamResponseCountView = countView(StreamResponseCount)
 }
 
-func mustNewMeasure(name, desc string) *stats.Int64Measure {
-	const unitCount = "1"
-	name = statsPrefix + name
-	m, err := stats.Int64(name, desc, unitCount)
-	if err != nil {
-		log.Fatalf("creating %q: %v", name, err)
+func countView(m *stats.Int64Measure) *view.View {
+	return &view.View{
+		Name:        m.Name(),
+		Description: m.Description(),
+		TagKeys:     []tag.Key{subscriptionKey},
+		Measure:     m,
+		Aggregation: view.Sum(),
 	}
-	return m
-}
-
-func mustNewView(m *stats.Int64Measure) *view.View {
-	v, err := view.New(m.Name(), "cumulative "+m.Description(),
-		[]tag.Key{subscriptionKey}, m, view.SumAggregation{})
-	if err != nil {
-		log.Fatalf("creating view for %q: %v", m.Name(), err)
-	}
-	return v
 }
 
 var logOnce sync.Once

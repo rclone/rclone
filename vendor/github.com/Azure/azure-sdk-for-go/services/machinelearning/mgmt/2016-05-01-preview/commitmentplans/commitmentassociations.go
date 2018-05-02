@@ -24,6 +24,7 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // CommitmentAssociationsClient is the these APIs allow end users to operate on Azure Machine Learning Commitment Plans
 // resources and their child Commitment Association resources. They support CRUD operations for commitment plans, get
 // and list operations for commitment associations, moving commitment associations between commitment plans, and
@@ -32,16 +33,19 @@ type CommitmentAssociationsClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NewCommitmentAssociationsClient creates an instance of the CommitmentAssociationsClient client.
 func NewCommitmentAssociationsClient(subscriptionID string) CommitmentAssociationsClient {
 	return NewCommitmentAssociationsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // NewCommitmentAssociationsClientWithBaseURI creates an instance of the CommitmentAssociationsClient client.
 func NewCommitmentAssociationsClientWithBaseURI(baseURI string, subscriptionID string) CommitmentAssociationsClient {
 	return CommitmentAssociationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Get get a commitment association.
 //
 // resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name.
@@ -68,6 +72,7 @@ func (client CommitmentAssociationsClient) Get(ctx context.Context, resourceGrou
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // GetPreparer prepares the Get request.
 func (client CommitmentAssociationsClient) GetPreparer(ctx context.Context, resourceGroupName string, commitmentPlanName string, commitmentAssociationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -90,6 +95,7 @@ func (client CommitmentAssociationsClient) GetPreparer(ctx context.Context, reso
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) GetSender(req *http.Request) (*http.Response, error) {
@@ -97,6 +103,7 @@ func (client CommitmentAssociationsClient) GetSender(req *http.Request) (*http.R
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client CommitmentAssociationsClient) GetResponder(resp *http.Response) (result CommitmentAssociation, err error) {
@@ -110,6 +117,7 @@ func (client CommitmentAssociationsClient) GetResponder(resp *http.Response) (re
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // List get all commitment associations for a parent commitment plan.
 //
 // resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken
@@ -137,6 +145,7 @@ func (client CommitmentAssociationsClient) List(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListPreparer prepares the List request.
 func (client CommitmentAssociationsClient) ListPreparer(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -161,6 +170,7 @@ func (client CommitmentAssociationsClient) ListPreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -168,6 +178,7 @@ func (client CommitmentAssociationsClient) ListSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client CommitmentAssociationsClient) ListResponder(resp *http.Response) (result CommitmentAssociationListResult, err error) {
@@ -202,12 +213,14 @@ func (client CommitmentAssociationsClient) listNextResults(lastResults Commitmen
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
 func (client CommitmentAssociationsClient) ListComplete(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (result CommitmentAssociationListResultIterator, err error) {
 	result.page, err = client.List(ctx, resourceGroupName, commitmentPlanName, skipToken)
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // Move re-parent a commitment association from one commitment plan to another.
 //
 // resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name.
@@ -234,6 +247,7 @@ func (client CommitmentAssociationsClient) Move(ctx context.Context, resourceGro
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MovePreparer prepares the Move request.
 func (client CommitmentAssociationsClient) MovePreparer(ctx context.Context, resourceGroupName string, commitmentPlanName string, commitmentAssociationName string, movePayload MoveCommitmentAssociationRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -249,7 +263,7 @@ func (client CommitmentAssociationsClient) MovePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.MachineLearning/commitmentPlans/{commitmentPlanName}/commitmentAssociations/{commitmentAssociationName}/move", pathParameters),
@@ -258,6 +272,7 @@ func (client CommitmentAssociationsClient) MovePreparer(ctx context.Context, res
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MoveSender sends the Move request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) MoveSender(req *http.Request) (*http.Response, error) {
@@ -265,6 +280,7 @@ func (client CommitmentAssociationsClient) MoveSender(req *http.Request) (*http.
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/machinelearning/mgmt/2016-05-01-preview/commitmentplans instead.
 // MoveResponder handles the response to the Move request. The method always
 // closes the http.Response Body.
 func (client CommitmentAssociationsClient) MoveResponder(resp *http.Response) (result CommitmentAssociation, err error) {

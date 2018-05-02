@@ -7,10 +7,13 @@
 package svc_test
 
 import (
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -86,8 +89,10 @@ func TestExample(t *testing.T) {
 	}
 	defer s.Close()
 
+	args := []string{"is", "manual-started", fmt.Sprintf("%d", rand.Int())}
+
 	testState(t, s, svc.Stopped)
-	err = s.Start("is", "manual-started")
+	err = s.Start(args...)
 	if err != nil {
 		t.Fatalf("Start(%s) failed: %s", s.Name, err)
 	}
@@ -114,5 +119,17 @@ func TestExample(t *testing.T) {
 	err = s.Delete()
 	if err != nil {
 		t.Fatalf("Delete failed: %s", err)
+	}
+
+	cmd := `Get-Eventlog -LogName Application -Newest 100` +
+		` | Where Source -eq "myservice"` +
+		` | Select -first 10` +
+		` | Format-table -HideTableHeaders -property ReplacementStrings`
+	out, err := exec.Command("powershell", "-Command", cmd).CombinedOutput()
+	if err != nil {
+		t.Fatalf("powershell failed: %v\n%v", err, string(out))
+	}
+	if want := strings.Join(append([]string{name}, args...), "-"); !strings.Contains(string(out), want) {
+		t.Errorf("%q string does not contain %q", string(out), want)
 	}
 }

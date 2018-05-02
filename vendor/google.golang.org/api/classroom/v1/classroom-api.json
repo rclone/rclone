@@ -1505,82 +1505,6 @@
               ]
             }
           }
-        },
-        "topics": {
-          "methods": {
-            "get": {
-              "description": "Returns a topic.\n\nThis method returns the following error codes:\n\n* `PERMISSION_DENIED` if the requesting user is not permitted to access the\nrequested course or topic, or for access errors.\n* `INVALID_ARGUMENT` if the request is malformed.\n* `NOT_FOUND` if the requested course or topic does not exist.",
-              "flatPath": "v1/courses/{courseId}/topics/{id}",
-              "httpMethod": "GET",
-              "id": "classroom.courses.topics.get",
-              "parameterOrder": [
-                "courseId",
-                "id"
-              ],
-              "parameters": {
-                "courseId": {
-                  "description": "Identifier of the course.",
-                  "location": "path",
-                  "required": true,
-                  "type": "string"
-                },
-                "id": {
-                  "description": "Identifier of the topic.",
-                  "location": "path",
-                  "required": true,
-                  "type": "string"
-                }
-              },
-              "path": "v1/courses/{courseId}/topics/{id}",
-              "response": {
-                "$ref": "Topic"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/classroom.coursework.me",
-                "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
-                "https://www.googleapis.com/auth/classroom.coursework.students",
-                "https://www.googleapis.com/auth/classroom.coursework.students.readonly"
-              ]
-            },
-            "list": {
-              "description": "Returns the list of topics that the requester is permitted to view.\n\nThis method returns the following error codes:\n\n* `PERMISSION_DENIED` if the requesting user is not permitted to access\nthe requested course or for access errors.\n* `INVALID_ARGUMENT` if the request is malformed.\n* `NOT_FOUND` if the requested course does not exist.",
-              "flatPath": "v1/courses/{courseId}/topics",
-              "httpMethod": "GET",
-              "id": "classroom.courses.topics.list",
-              "parameterOrder": [
-                "courseId"
-              ],
-              "parameters": {
-                "courseId": {
-                  "description": "Identifier of the course.\nThis identifier can be either the Classroom-assigned identifier or an\nalias.",
-                  "location": "path",
-                  "required": true,
-                  "type": "string"
-                },
-                "pageSize": {
-                  "description": "Maximum number of items to return. Zero or unspecified indicates that the\nserver may assign a maximum.\n\nThe server may return fewer than the specified number of results.",
-                  "format": "int32",
-                  "location": "query",
-                  "type": "integer"
-                },
-                "pageToken": {
-                  "description": "nextPageToken\nvalue returned from a previous\nlist call,\nindicating that the subsequent page of results should be returned.\n\nThe list request\nmust be otherwise identical to the one that resulted in this token.",
-                  "location": "query",
-                  "type": "string"
-                }
-              },
-              "path": "v1/courses/{courseId}/topics",
-              "response": {
-                "$ref": "ListTopicResponse"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/classroom.coursework.me",
-                "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
-                "https://www.googleapis.com/auth/classroom.coursework.students",
-                "https://www.googleapis.com/auth/classroom.coursework.students.readonly"
-              ]
-            }
-          }
         }
       }
     },
@@ -2066,7 +1990,7 @@
       }
     }
   },
-  "revision": "20180203",
+  "revision": "20180423",
   "rootUrl": "https://classroom.googleapis.com/",
   "schemas": {
     "Announcement": {
@@ -2526,7 +2450,7 @@
           "type": "integer"
         },
         "month": {
-          "description": "Month of year. Must be from 1 to 12.",
+          "description": "Month of year. Must be from 1 to 12, or 0 if specifying a date without a\nmonth.",
           "format": "int32",
           "type": "integer"
         },
@@ -3004,24 +2928,6 @@
       },
       "type": "object"
     },
-    "ListTopicResponse": {
-      "description": "Response when listing topics.",
-      "id": "ListTopicResponse",
-      "properties": {
-        "nextPageToken": {
-          "description": "Token identifying the next page of results to return. If empty, no further\nresults are available.",
-          "type": "string"
-        },
-        "topic": {
-          "description": "Topic items that match the request.",
-          "items": {
-            "$ref": "Topic"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
     "Material": {
       "description": "Material attached to course work.\n\nWhen creating attachments, setting the `form` field is not supported.",
       "id": "Material",
@@ -3474,30 +3380,6 @@
           "description": "Seconds of minutes of the time. Must normally be from 0 to 59. An API may\nallow the value 60 if it allows leap-seconds.",
           "format": "int32",
           "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "Topic": {
-      "description": "Topic created by a teacher for the course",
-      "id": "Topic",
-      "properties": {
-        "courseId": {
-          "description": "Identifier of the course.\n\nRead-only.",
-          "type": "string"
-        },
-        "name": {
-          "description": "The name of the topic, generated by the user.\nLeading and trailing whitespaces, if any, will be trimmed. Also, multiple\nconsecutive whitespaces will be collapsed into one inside the name.\nTopic names are case sensitive, and must be no longer than 100 characters.",
-          "type": "string"
-        },
-        "topicId": {
-          "description": "Unique identifier for the topic.\n\nRead-only.",
-          "type": "string"
-        },
-        "updateTime": {
-          "description": "The time the topic was last updated by the system.\n\nRead-only.",
-          "format": "google-datetime",
-          "type": "string"
         }
       },
       "type": "object"

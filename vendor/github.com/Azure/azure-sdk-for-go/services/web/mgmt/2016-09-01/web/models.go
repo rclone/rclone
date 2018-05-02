@@ -38,6 +38,11 @@ const (
 	Permit AccessControlEntryAction = "Permit"
 )
 
+// PossibleAccessControlEntryActionValues returns an array of possible values for the AccessControlEntryAction const type.
+func PossibleAccessControlEntryActionValues() []AccessControlEntryAction {
+	return []AccessControlEntryAction{Deny, Permit}
+}
+
 // AppServicePlanRestrictions enumerates the values for app service plan restrictions.
 type AppServicePlanRestrictions string
 
@@ -56,6 +61,11 @@ const (
 	Standard AppServicePlanRestrictions = "Standard"
 )
 
+// PossibleAppServicePlanRestrictionsValues returns an array of possible values for the AppServicePlanRestrictions const type.
+func PossibleAppServicePlanRestrictionsValues() []AppServicePlanRestrictions {
+	return []AppServicePlanRestrictions{Basic, Free, None, Premium, Shared, Standard}
+}
+
 // AutoHealActionType enumerates the values for auto heal action type.
 type AutoHealActionType string
 
@@ -68,6 +78,11 @@ const (
 	Recycle AutoHealActionType = "Recycle"
 )
 
+// PossibleAutoHealActionTypeValues returns an array of possible values for the AutoHealActionType const type.
+func PossibleAutoHealActionTypeValues() []AutoHealActionType {
+	return []AutoHealActionType{CustomAction, LogEvent, Recycle}
+}
+
 // AzureResourceType enumerates the values for azure resource type.
 type AzureResourceType string
 
@@ -77,6 +92,11 @@ const (
 	// Website ...
 	Website AzureResourceType = "Website"
 )
+
+// PossibleAzureResourceTypeValues returns an array of possible values for the AzureResourceType const type.
+func PossibleAzureResourceTypeValues() []AzureResourceType {
+	return []AzureResourceType{TrafficManager, Website}
+}
 
 // BackupItemStatus enumerates the values for backup item status.
 type BackupItemStatus string
@@ -104,6 +124,11 @@ const (
 	TimedOut BackupItemStatus = "TimedOut"
 )
 
+// PossibleBackupItemStatusValues returns an array of possible values for the BackupItemStatus const type.
+func PossibleBackupItemStatusValues() []BackupItemStatus {
+	return []BackupItemStatus{Created, Deleted, DeleteFailed, DeleteInProgress, Failed, InProgress, PartiallySucceeded, Skipped, Succeeded, TimedOut}
+}
+
 // BackupRestoreOperationType enumerates the values for backup restore operation type.
 type BackupRestoreOperationType string
 
@@ -117,6 +142,11 @@ const (
 	// BackupRestoreOperationTypeSnapshot ...
 	BackupRestoreOperationTypeSnapshot BackupRestoreOperationType = "Snapshot"
 )
+
+// PossibleBackupRestoreOperationTypeValues returns an array of possible values for the BackupRestoreOperationType const type.
+func PossibleBackupRestoreOperationTypeValues() []BackupRestoreOperationType {
+	return []BackupRestoreOperationType{BackupRestoreOperationTypeClone, BackupRestoreOperationTypeDefault, BackupRestoreOperationTypeRelocation, BackupRestoreOperationTypeSnapshot}
+}
 
 // BuiltInAuthenticationProvider enumerates the values for built in authentication provider.
 type BuiltInAuthenticationProvider string
@@ -133,6 +163,11 @@ const (
 	// Twitter ...
 	Twitter BuiltInAuthenticationProvider = "Twitter"
 )
+
+// PossibleBuiltInAuthenticationProviderValues returns an array of possible values for the BuiltInAuthenticationProvider const type.
+func PossibleBuiltInAuthenticationProviderValues() []BuiltInAuthenticationProvider {
+	return []BuiltInAuthenticationProvider{AzureActiveDirectory, Facebook, Google, MicrosoftAccount, Twitter}
+}
 
 // CertificateOrderActionType enumerates the values for certificate order action type.
 type CertificateOrderActionType string
@@ -168,6 +203,11 @@ const (
 	Unknown CertificateOrderActionType = "Unknown"
 )
 
+// PossibleCertificateOrderActionTypeValues returns an array of possible values for the CertificateOrderActionType const type.
+func PossibleCertificateOrderActionTypeValues() []CertificateOrderActionType {
+	return []CertificateOrderActionType{CertificateExpirationWarning, CertificateExpired, CertificateIssued, CertificateOrderCanceled, CertificateOrderCreated, CertificateRevoked, DomainValidationComplete, FraudCleared, FraudDetected, FraudDocumentationRequired, OrgNameChange, OrgValidationComplete, SanDrop, Unknown}
+}
+
 // CertificateOrderStatus enumerates the values for certificate order status.
 type CertificateOrderStatus string
 
@@ -194,6 +234,11 @@ const (
 	Unused CertificateOrderStatus = "Unused"
 )
 
+// PossibleCertificateOrderStatusValues returns an array of possible values for the CertificateOrderStatus const type.
+func PossibleCertificateOrderStatusValues() []CertificateOrderStatus {
+	return []CertificateOrderStatus{Canceled, Denied, Expired, Issued, NotSubmitted, Pendingissuance, PendingRekey, Pendingrevocation, Revoked, Unused}
+}
+
 // CertificateProductType enumerates the values for certificate product type.
 type CertificateProductType string
 
@@ -203,6 +248,11 @@ const (
 	// StandardDomainValidatedWildCardSsl ...
 	StandardDomainValidatedWildCardSsl CertificateProductType = "StandardDomainValidatedWildCardSsl"
 )
+
+// PossibleCertificateProductTypeValues returns an array of possible values for the CertificateProductType const type.
+func PossibleCertificateProductTypeValues() []CertificateProductType {
+	return []CertificateProductType{StandardDomainValidatedSsl, StandardDomainValidatedWildCardSsl}
+}
 
 // Channels enumerates the values for channels.
 type Channels string
@@ -219,6 +269,11 @@ const (
 	// Webhook ...
 	Webhook Channels = "Webhook"
 )
+
+// PossibleChannelsValues returns an array of possible values for the Channels const type.
+func PossibleChannelsValues() []Channels {
+	return []Channels{All, API, Email, Notification, Webhook}
+}
 
 // CheckNameResourceTypes enumerates the values for check name resource types.
 type CheckNameResourceTypes string
@@ -242,6 +297,11 @@ const (
 	CheckNameResourceTypesSlot CheckNameResourceTypes = "Slot"
 )
 
+// PossibleCheckNameResourceTypesValues returns an array of possible values for the CheckNameResourceTypes const type.
+func PossibleCheckNameResourceTypesValues() []CheckNameResourceTypes {
+	return []CheckNameResourceTypes{CheckNameResourceTypesHostingEnvironment, CheckNameResourceTypesMicrosoftWebhostingEnvironments, CheckNameResourceTypesMicrosoftWebpublishingUsers, CheckNameResourceTypesMicrosoftWebsites, CheckNameResourceTypesMicrosoftWebsitesslots, CheckNameResourceTypesPublishingUser, CheckNameResourceTypesSite, CheckNameResourceTypesSlot}
+}
+
 // CloneAbilityResult enumerates the values for clone ability result.
 type CloneAbilityResult string
 
@@ -254,6 +314,11 @@ const (
 	PartiallyCloneable CloneAbilityResult = "PartiallyCloneable"
 )
 
+// PossibleCloneAbilityResultValues returns an array of possible values for the CloneAbilityResult const type.
+func PossibleCloneAbilityResultValues() []CloneAbilityResult {
+	return []CloneAbilityResult{Cloneable, NotCloneable, PartiallyCloneable}
+}
+
 // ComputeModeOptions enumerates the values for compute mode options.
 type ComputeModeOptions string
 
@@ -265,6 +330,11 @@ const (
 	// ComputeModeOptionsShared ...
 	ComputeModeOptionsShared ComputeModeOptions = "Shared"
 )
+
+// PossibleComputeModeOptionsValues returns an array of possible values for the ComputeModeOptions const type.
+func PossibleComputeModeOptionsValues() []ComputeModeOptions {
+	return []ComputeModeOptions{ComputeModeOptionsDedicated, ComputeModeOptionsDynamic, ComputeModeOptionsShared}
+}
 
 // ConnectionStringType enumerates the values for connection string type.
 type ConnectionStringType string
@@ -294,6 +364,11 @@ const (
 	SQLServer ConnectionStringType = "SQLServer"
 )
 
+// PossibleConnectionStringTypeValues returns an array of possible values for the ConnectionStringType const type.
+func PossibleConnectionStringTypeValues() []ConnectionStringType {
+	return []ConnectionStringType{APIHub, Custom, DocDb, EventHub, MySQL, NotificationHub, PostgreSQL, RedisCache, ServiceBus, SQLAzure, SQLServer}
+}
+
 // ContinuousWebJobStatus enumerates the values for continuous web job status.
 type ContinuousWebJobStatus string
 
@@ -310,6 +385,11 @@ const (
 	Stopped ContinuousWebJobStatus = "Stopped"
 )
 
+// PossibleContinuousWebJobStatusValues returns an array of possible values for the ContinuousWebJobStatus const type.
+func PossibleContinuousWebJobStatusValues() []ContinuousWebJobStatus {
+	return []ContinuousWebJobStatus{Initializing, PendingRestart, Running, Starting, Stopped}
+}
+
 // CustomHostNameDNSRecordType enumerates the values for custom host name dns record type.
 type CustomHostNameDNSRecordType string
 
@@ -319,6 +399,11 @@ const (
 	// CName ...
 	CName CustomHostNameDNSRecordType = "CName"
 )
+
+// PossibleCustomHostNameDNSRecordTypeValues returns an array of possible values for the CustomHostNameDNSRecordType const type.
+func PossibleCustomHostNameDNSRecordTypeValues() []CustomHostNameDNSRecordType {
+	return []CustomHostNameDNSRecordType{A, CName}
+}
 
 // DatabaseType enumerates the values for database type.
 type DatabaseType string
@@ -334,6 +419,11 @@ const (
 	DatabaseTypeSQLAzure DatabaseType = "SqlAzure"
 )
 
+// PossibleDatabaseTypeValues returns an array of possible values for the DatabaseType const type.
+func PossibleDatabaseTypeValues() []DatabaseType {
+	return []DatabaseType{DatabaseTypeLocalMySQL, DatabaseTypeMySQL, DatabaseTypePostgreSQL, DatabaseTypeSQLAzure}
+}
+
 // DNSType enumerates the values for dns type.
 type DNSType string
 
@@ -343,6 +433,11 @@ const (
 	// DefaultDomainRegistrarDNS ...
 	DefaultDomainRegistrarDNS DNSType = "DefaultDomainRegistrarDns"
 )
+
+// PossibleDNSTypeValues returns an array of possible values for the DNSType const type.
+func PossibleDNSTypeValues() []DNSType {
+	return []DNSType{AzureDNS, DefaultDomainRegistrarDNS}
+}
 
 // DNSVerificationTestResult enumerates the values for dns verification test result.
 type DNSVerificationTestResult string
@@ -355,6 +450,11 @@ const (
 	// DNSVerificationTestResultSkipped ...
 	DNSVerificationTestResultSkipped DNSVerificationTestResult = "Skipped"
 )
+
+// PossibleDNSVerificationTestResultValues returns an array of possible values for the DNSVerificationTestResult const type.
+func PossibleDNSVerificationTestResultValues() []DNSVerificationTestResult {
+	return []DNSVerificationTestResult{DNSVerificationTestResultFailed, DNSVerificationTestResultPassed, DNSVerificationTestResultSkipped}
+}
 
 // DomainStatus enumerates the values for domain status.
 type DomainStatus string
@@ -404,6 +504,11 @@ const (
 	DomainStatusUpdated DomainStatus = "Updated"
 )
 
+// PossibleDomainStatusValues returns an array of possible values for the DomainStatus const type.
+func PossibleDomainStatusValues() []DomainStatus {
+	return []DomainStatus{DomainStatusActive, DomainStatusAwaiting, DomainStatusCancelled, DomainStatusConfiscated, DomainStatusDisabled, DomainStatusExcluded, DomainStatusExpired, DomainStatusFailed, DomainStatusHeld, DomainStatusJSONConverterFailed, DomainStatusLocked, DomainStatusParked, DomainStatusPending, DomainStatusReserved, DomainStatusReverted, DomainStatusSuspended, DomainStatusTransferred, DomainStatusUnknown, DomainStatusUnlocked, DomainStatusUnparked, DomainStatusUpdated}
+}
+
 // DomainType enumerates the values for domain type.
 type DomainType string
 
@@ -414,6 +519,11 @@ const (
 	SoftDeleted DomainType = "SoftDeleted"
 )
 
+// PossibleDomainTypeValues returns an array of possible values for the DomainType const type.
+func PossibleDomainTypeValues() []DomainType {
+	return []DomainType{Regular, SoftDeleted}
+}
+
 // FrequencyUnit enumerates the values for frequency unit.
 type FrequencyUnit string
 
@@ -423,6 +533,11 @@ const (
 	// Hour ...
 	Hour FrequencyUnit = "Hour"
 )
+
+// PossibleFrequencyUnitValues returns an array of possible values for the FrequencyUnit const type.
+func PossibleFrequencyUnitValues() []FrequencyUnit {
+	return []FrequencyUnit{Day, Hour}
+}
 
 // HostingEnvironmentStatus enumerates the values for hosting environment status.
 type HostingEnvironmentStatus string
@@ -438,6 +553,11 @@ const (
 	Scaling HostingEnvironmentStatus = "Scaling"
 )
 
+// PossibleHostingEnvironmentStatusValues returns an array of possible values for the HostingEnvironmentStatus const type.
+func PossibleHostingEnvironmentStatusValues() []HostingEnvironmentStatus {
+	return []HostingEnvironmentStatus{Deleting, Preparing, Ready, Scaling}
+}
+
 // HostNameType enumerates the values for host name type.
 type HostNameType string
 
@@ -447,6 +567,11 @@ const (
 	// Verified ...
 	Verified HostNameType = "Verified"
 )
+
+// PossibleHostNameTypeValues returns an array of possible values for the HostNameType const type.
+func PossibleHostNameTypeValues() []HostNameType {
+	return []HostNameType{Managed, Verified}
+}
 
 // HostType enumerates the values for host type.
 type HostType string
@@ -458,6 +583,11 @@ const (
 	HostTypeStandard HostType = "Standard"
 )
 
+// PossibleHostTypeValues returns an array of possible values for the HostType const type.
+func PossibleHostTypeValues() []HostType {
+	return []HostType{HostTypeRepository, HostTypeStandard}
+}
+
 // InAvailabilityReasonType enumerates the values for in availability reason type.
 type InAvailabilityReasonType string
 
@@ -467,6 +597,11 @@ const (
 	// Invalid ...
 	Invalid InAvailabilityReasonType = "Invalid"
 )
+
+// PossibleInAvailabilityReasonTypeValues returns an array of possible values for the InAvailabilityReasonType const type.
+func PossibleInAvailabilityReasonTypeValues() []InAvailabilityReasonType {
+	return []InAvailabilityReasonType{AlreadyExists, Invalid}
+}
 
 // InternalLoadBalancingMode enumerates the values for internal load balancing mode.
 type InternalLoadBalancingMode string
@@ -479,6 +614,11 @@ const (
 	// InternalLoadBalancingModeWeb ...
 	InternalLoadBalancingModeWeb InternalLoadBalancingMode = "Web"
 )
+
+// PossibleInternalLoadBalancingModeValues returns an array of possible values for the InternalLoadBalancingMode const type.
+func PossibleInternalLoadBalancingModeValues() []InternalLoadBalancingMode {
+	return []InternalLoadBalancingMode{InternalLoadBalancingModeNone, InternalLoadBalancingModePublishing, InternalLoadBalancingModeWeb}
+}
 
 // IssueType enumerates the values for issue type.
 type IssueType string
@@ -502,6 +642,11 @@ const (
 	UserIssue IssueType = "UserIssue"
 )
 
+// PossibleIssueTypeValues returns an array of possible values for the IssueType const type.
+func PossibleIssueTypeValues() []IssueType {
+	return []IssueType{AppCrash, AppDeployment, AseDeployment, Other, PlatformIssue, RuntimeIssueDetected, ServiceIncident, UserIssue}
+}
+
 // JobType enumerates the values for job type.
 type JobType string
 
@@ -511,6 +656,11 @@ const (
 	// Triggered ...
 	Triggered JobType = "Triggered"
 )
+
+// PossibleJobTypeValues returns an array of possible values for the JobType const type.
+func PossibleJobTypeValues() []JobType {
+	return []JobType{Continuous, Triggered}
+}
 
 // KeyVaultSecretStatus enumerates the values for key vault secret status.
 type KeyVaultSecretStatus string
@@ -540,6 +690,11 @@ const (
 	KeyVaultSecretStatusWaitingOnCertificateOrder KeyVaultSecretStatus = "WaitingOnCertificateOrder"
 )
 
+// PossibleKeyVaultSecretStatusValues returns an array of possible values for the KeyVaultSecretStatus const type.
+func PossibleKeyVaultSecretStatusValues() []KeyVaultSecretStatus {
+	return []KeyVaultSecretStatus{KeyVaultSecretStatusAzureServiceUnauthorizedToAccessKeyVault, KeyVaultSecretStatusCertificateOrderFailed, KeyVaultSecretStatusExternalPrivateKey, KeyVaultSecretStatusInitialized, KeyVaultSecretStatusKeyVaultDoesNotExist, KeyVaultSecretStatusKeyVaultSecretDoesNotExist, KeyVaultSecretStatusOperationNotPermittedOnKeyVault, KeyVaultSecretStatusSucceeded, KeyVaultSecretStatusUnknown, KeyVaultSecretStatusUnknownError, KeyVaultSecretStatusWaitingOnCertificateOrder}
+}
+
 // LogLevel enumerates the values for log level.
 type LogLevel string
 
@@ -556,6 +711,11 @@ const (
 	Warning LogLevel = "Warning"
 )
 
+// PossibleLogLevelValues returns an array of possible values for the LogLevel const type.
+func PossibleLogLevelValues() []LogLevel {
+	return []LogLevel{Error, Information, Off, Verbose, Warning}
+}
+
 // ManagedPipelineMode enumerates the values for managed pipeline mode.
 type ManagedPipelineMode string
 
@@ -565,6 +725,24 @@ const (
 	// Integrated ...
 	Integrated ManagedPipelineMode = "Integrated"
 )
+
+// PossibleManagedPipelineModeValues returns an array of possible values for the ManagedPipelineMode const type.
+func PossibleManagedPipelineModeValues() []ManagedPipelineMode {
+	return []ManagedPipelineMode{Classic, Integrated}
+}
+
+// ManagedServiceIdentityType enumerates the values for managed service identity type.
+type ManagedServiceIdentityType string
+
+const (
+	// SystemAssigned ...
+	SystemAssigned ManagedServiceIdentityType = "SystemAssigned"
+)
+
+// PossibleManagedServiceIdentityTypeValues returns an array of possible values for the ManagedServiceIdentityType const type.
+func PossibleManagedServiceIdentityTypeValues() []ManagedServiceIdentityType {
+	return []ManagedServiceIdentityType{SystemAssigned}
+}
 
 // MSDeployLogEntryType enumerates the values for ms deploy log entry type.
 type MSDeployLogEntryType string
@@ -577,6 +755,11 @@ const (
 	// MSDeployLogEntryTypeWarning ...
 	MSDeployLogEntryTypeWarning MSDeployLogEntryType = "Warning"
 )
+
+// PossibleMSDeployLogEntryTypeValues returns an array of possible values for the MSDeployLogEntryType const type.
+func PossibleMSDeployLogEntryTypeValues() []MSDeployLogEntryType {
+	return []MSDeployLogEntryType{MSDeployLogEntryTypeError, MSDeployLogEntryTypeMessage, MSDeployLogEntryTypeWarning}
+}
 
 // MSDeployProvisioningState enumerates the values for ms deploy provisioning state.
 type MSDeployProvisioningState string
@@ -594,6 +777,11 @@ const (
 	MSDeployProvisioningStateSucceeded MSDeployProvisioningState = "succeeded"
 )
 
+// PossibleMSDeployProvisioningStateValues returns an array of possible values for the MSDeployProvisioningState const type.
+func PossibleMSDeployProvisioningStateValues() []MSDeployProvisioningState {
+	return []MSDeployProvisioningState{MSDeployProvisioningStateAccepted, MSDeployProvisioningStateCanceled, MSDeployProvisioningStateFailed, MSDeployProvisioningStateRunning, MSDeployProvisioningStateSucceeded}
+}
+
 // MySQLMigrationType enumerates the values for my sql migration type.
 type MySQLMigrationType string
 
@@ -603,6 +791,11 @@ const (
 	// RemoteToLocal ...
 	RemoteToLocal MySQLMigrationType = "RemoteToLocal"
 )
+
+// PossibleMySQLMigrationTypeValues returns an array of possible values for the MySQLMigrationType const type.
+func PossibleMySQLMigrationTypeValues() []MySQLMigrationType {
+	return []MySQLMigrationType{LocalToRemote, RemoteToLocal}
+}
 
 // NotificationLevel enumerates the values for notification level.
 type NotificationLevel string
@@ -617,6 +810,11 @@ const (
 	// NotificationLevelWarning ...
 	NotificationLevelWarning NotificationLevel = "Warning"
 )
+
+// PossibleNotificationLevelValues returns an array of possible values for the NotificationLevel const type.
+func PossibleNotificationLevelValues() []NotificationLevel {
+	return []NotificationLevel{NotificationLevelCritical, NotificationLevelInformation, NotificationLevelNonUrgentSuggestion, NotificationLevelWarning}
+}
 
 // OperationStatus enumerates the values for operation status.
 type OperationStatus string
@@ -634,6 +832,11 @@ const (
 	OperationStatusTimedOut OperationStatus = "TimedOut"
 )
 
+// PossibleOperationStatusValues returns an array of possible values for the OperationStatus const type.
+func PossibleOperationStatusValues() []OperationStatus {
+	return []OperationStatus{OperationStatusCreated, OperationStatusFailed, OperationStatusInProgress, OperationStatusSucceeded, OperationStatusTimedOut}
+}
+
 // ProvisioningState enumerates the values for provisioning state.
 type ProvisioningState string
 
@@ -650,6 +853,11 @@ const (
 	ProvisioningStateSucceeded ProvisioningState = "Succeeded"
 )
 
+// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
+func PossibleProvisioningStateValues() []ProvisioningState {
+	return []ProvisioningState{ProvisioningStateCanceled, ProvisioningStateDeleting, ProvisioningStateFailed, ProvisioningStateInProgress, ProvisioningStateSucceeded}
+}
+
 // PublicCertificateLocation enumerates the values for public certificate location.
 type PublicCertificateLocation string
 
@@ -661,6 +869,11 @@ const (
 	// PublicCertificateLocationUnknown ...
 	PublicCertificateLocationUnknown PublicCertificateLocation = "Unknown"
 )
+
+// PossiblePublicCertificateLocationValues returns an array of possible values for the PublicCertificateLocation const type.
+func PossiblePublicCertificateLocationValues() []PublicCertificateLocation {
+	return []PublicCertificateLocation{PublicCertificateLocationCurrentUserMy, PublicCertificateLocationLocalMachineMy, PublicCertificateLocationUnknown}
+}
 
 // PublishingProfileFormat enumerates the values for publishing profile format.
 type PublishingProfileFormat string
@@ -674,6 +887,30 @@ const (
 	WebDeploy PublishingProfileFormat = "WebDeploy"
 )
 
+// PossiblePublishingProfileFormatValues returns an array of possible values for the PublishingProfileFormat const type.
+func PossiblePublishingProfileFormatValues() []PublishingProfileFormat {
+	return []PublishingProfileFormat{FileZilla3, Ftp, WebDeploy}
+}
+
+// RenderingType enumerates the values for rendering type.
+type RenderingType string
+
+const (
+	// NoGraph ...
+	NoGraph RenderingType = "NoGraph"
+	// Table ...
+	Table RenderingType = "Table"
+	// TimeSeries ...
+	TimeSeries RenderingType = "TimeSeries"
+	// TimeSeriesPerInstance ...
+	TimeSeriesPerInstance RenderingType = "TimeSeriesPerInstance"
+)
+
+// PossibleRenderingTypeValues returns an array of possible values for the RenderingType const type.
+func PossibleRenderingTypeValues() []RenderingType {
+	return []RenderingType{NoGraph, Table, TimeSeries, TimeSeriesPerInstance}
+}
+
 // ResourceScopeType enumerates the values for resource scope type.
 type ResourceScopeType string
 
@@ -686,6 +923,11 @@ const (
 	WebSite ResourceScopeType = "WebSite"
 )
 
+// PossibleResourceScopeTypeValues returns an array of possible values for the ResourceScopeType const type.
+func PossibleResourceScopeTypeValues() []ResourceScopeType {
+	return []ResourceScopeType{ServerFarm, Subscription, WebSite}
+}
+
 // RouteType enumerates the values for route type.
 type RouteType string
 
@@ -697,6 +939,11 @@ const (
 	// STATIC ...
 	STATIC RouteType = "STATIC"
 )
+
+// PossibleRouteTypeValues returns an array of possible values for the RouteType const type.
+func PossibleRouteTypeValues() []RouteType {
+	return []RouteType{DEFAULT, INHERITED, STATIC}
+}
 
 // ScmType enumerates the values for scm type.
 type ScmType string
@@ -730,6 +977,11 @@ const (
 	ScmTypeVSO ScmType = "VSO"
 )
 
+// PossibleScmTypeValues returns an array of possible values for the ScmType const type.
+func PossibleScmTypeValues() []ScmType {
+	return []ScmType{ScmTypeBitbucketGit, ScmTypeBitbucketHg, ScmTypeCodePlexGit, ScmTypeCodePlexHg, ScmTypeDropbox, ScmTypeExternalGit, ScmTypeExternalHg, ScmTypeGitHub, ScmTypeLocalGit, ScmTypeNone, ScmTypeOneDrive, ScmTypeTfs, ScmTypeVSO}
+}
+
 // SiteAvailabilityState enumerates the values for site availability state.
 type SiteAvailabilityState string
 
@@ -742,6 +994,11 @@ const (
 	Normal SiteAvailabilityState = "Normal"
 )
 
+// PossibleSiteAvailabilityStateValues returns an array of possible values for the SiteAvailabilityState const type.
+func PossibleSiteAvailabilityStateValues() []SiteAvailabilityState {
+	return []SiteAvailabilityState{DisasterRecoveryMode, Limited, Normal}
+}
+
 // SiteExtensionType enumerates the values for site extension type.
 type SiteExtensionType string
 
@@ -751,6 +1008,11 @@ const (
 	// WebRoot ...
 	WebRoot SiteExtensionType = "WebRoot"
 )
+
+// PossibleSiteExtensionTypeValues returns an array of possible values for the SiteExtensionType const type.
+func PossibleSiteExtensionTypeValues() []SiteExtensionType {
+	return []SiteExtensionType{Gallery, WebRoot}
+}
 
 // SiteLoadBalancing enumerates the values for site load balancing.
 type SiteLoadBalancing string
@@ -767,6 +1029,11 @@ const (
 	// WeightedTotalTraffic ...
 	WeightedTotalTraffic SiteLoadBalancing = "WeightedTotalTraffic"
 )
+
+// PossibleSiteLoadBalancingValues returns an array of possible values for the SiteLoadBalancing const type.
+func PossibleSiteLoadBalancingValues() []SiteLoadBalancing {
+	return []SiteLoadBalancing{LeastRequests, LeastResponseTime, RequestHash, WeightedRoundRobin, WeightedTotalTraffic}
+}
 
 // SkuName enumerates the values for sku name.
 type SkuName string
@@ -790,6 +1057,11 @@ const (
 	SkuNameStandard SkuName = "Standard"
 )
 
+// PossibleSkuNameValues returns an array of possible values for the SkuName const type.
+func PossibleSkuNameValues() []SkuName {
+	return []SkuName{SkuNameBasic, SkuNameDynamic, SkuNameFree, SkuNameIsolated, SkuNamePremium, SkuNamePremiumV2, SkuNameShared, SkuNameStandard}
+}
+
 // SolutionType enumerates the values for solution type.
 type SolutionType string
 
@@ -801,6 +1073,11 @@ const (
 	// QuickSolution ...
 	QuickSolution SolutionType = "QuickSolution"
 )
+
+// PossibleSolutionTypeValues returns an array of possible values for the SolutionType const type.
+func PossibleSolutionTypeValues() []SolutionType {
+	return []SolutionType{BestPractices, DeepInvestigation, QuickSolution}
+}
 
 // SslState enumerates the values for ssl state.
 type SslState string
@@ -814,6 +1091,11 @@ const (
 	SniEnabled SslState = "SniEnabled"
 )
 
+// PossibleSslStateValues returns an array of possible values for the SslState const type.
+func PossibleSslStateValues() []SslState {
+	return []SslState{Disabled, IPBasedEnabled, SniEnabled}
+}
+
 // StatusOptions enumerates the values for status options.
 type StatusOptions string
 
@@ -825,6 +1107,11 @@ const (
 	// StatusOptionsReady ...
 	StatusOptionsReady StatusOptions = "Ready"
 )
+
+// PossibleStatusOptionsValues returns an array of possible values for the StatusOptions const type.
+func PossibleStatusOptionsValues() []StatusOptions {
+	return []StatusOptions{StatusOptionsCreating, StatusOptionsPending, StatusOptionsReady}
+}
 
 // SupportedTLSVersions enumerates the values for supported tls versions.
 type SupportedTLSVersions string
@@ -838,6 +1125,11 @@ const (
 	OneFullStopZero SupportedTLSVersions = "1.0"
 )
 
+// PossibleSupportedTLSVersionsValues returns an array of possible values for the SupportedTLSVersions const type.
+func PossibleSupportedTLSVersionsValues() []SupportedTLSVersions {
+	return []SupportedTLSVersions{OneFullStopOne, OneFullStopTwo, OneFullStopZero}
+}
+
 // TriggeredWebJobStatus enumerates the values for triggered web job status.
 type TriggeredWebJobStatus string
 
@@ -850,6 +1142,11 @@ const (
 	TriggeredWebJobStatusSuccess TriggeredWebJobStatus = "Success"
 )
 
+// PossibleTriggeredWebJobStatusValues returns an array of possible values for the TriggeredWebJobStatus const type.
+func PossibleTriggeredWebJobStatusValues() []TriggeredWebJobStatus {
+	return []TriggeredWebJobStatus{TriggeredWebJobStatusError, TriggeredWebJobStatusFailed, TriggeredWebJobStatusSuccess}
+}
+
 // UnauthenticatedClientAction enumerates the values for unauthenticated client action.
 type UnauthenticatedClientAction string
 
@@ -859,6 +1156,11 @@ const (
 	// RedirectToLoginPage ...
 	RedirectToLoginPage UnauthenticatedClientAction = "RedirectToLoginPage"
 )
+
+// PossibleUnauthenticatedClientActionValues returns an array of possible values for the UnauthenticatedClientAction const type.
+func PossibleUnauthenticatedClientActionValues() []UnauthenticatedClientAction {
+	return []UnauthenticatedClientAction{AllowAnonymous, RedirectToLoginPage}
+}
 
 // UsageState enumerates the values for usage state.
 type UsageState string
@@ -870,6 +1172,11 @@ const (
 	UsageStateNormal UsageState = "Normal"
 )
 
+// PossibleUsageStateValues returns an array of possible values for the UsageState const type.
+func PossibleUsageStateValues() []UsageState {
+	return []UsageState{UsageStateExceeded, UsageStateNormal}
+}
+
 // ValidateResourceTypes enumerates the values for validate resource types.
 type ValidateResourceTypes string
 
@@ -879,6 +1186,11 @@ const (
 	// ValidateResourceTypesSite ...
 	ValidateResourceTypesSite ValidateResourceTypes = "Site"
 )
+
+// PossibleValidateResourceTypesValues returns an array of possible values for the ValidateResourceTypes const type.
+func PossibleValidateResourceTypesValues() []ValidateResourceTypes {
+	return []ValidateResourceTypes{ValidateResourceTypesServerFarm, ValidateResourceTypesSite}
+}
 
 // WorkerSizeOptions enumerates the values for worker size options.
 type WorkerSizeOptions string
@@ -899,6 +1211,11 @@ const (
 	// Small ...
 	Small WorkerSizeOptions = "Small"
 )
+
+// PossibleWorkerSizeOptionsValues returns an array of possible values for the WorkerSizeOptions const type.
+func PossibleWorkerSizeOptionsValues() []WorkerSizeOptions {
+	return []WorkerSizeOptions{D1, D2, D3, Default, Large, Medium, Small}
+}
 
 // AbnormalTimePeriod class representing Abnormal Time Period identified in diagnosis
 type AbnormalTimePeriod struct {
@@ -967,6 +1284,27 @@ type AnalysisDefinition struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AnalysisDefinition.
+func (ad AnalysisDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ad.AnalysisDefinitionProperties != nil {
+		objectMap["properties"] = ad.AnalysisDefinitionProperties
+	}
+	if ad.ID != nil {
+		objectMap["id"] = ad.ID
+	}
+	if ad.Name != nil {
+		objectMap["name"] = ad.Name
+	}
+	if ad.Kind != nil {
+		objectMap["kind"] = ad.Kind
+	}
+	if ad.Type != nil {
+		objectMap["type"] = ad.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AnalysisDefinition struct.
@@ -1253,6 +1591,122 @@ type ApplicationLogsConfig struct {
 	AzureTableStorage *AzureTableStorageApplicationLogsConfig `json:"azureTableStorage,omitempty"`
 	// AzureBlobStorage - Application logs to blob storage configuration.
 	AzureBlobStorage *AzureBlobStorageApplicationLogsConfig `json:"azureBlobStorage,omitempty"`
+}
+
+// ApplicationStack application stack.
+type ApplicationStack struct {
+	// Name - Application stack name.
+	Name *string `json:"name,omitempty"`
+	// Display - Application stack display name.
+	Display *string `json:"display,omitempty"`
+	// Dependency - Application stack dependency.
+	Dependency *string `json:"dependency,omitempty"`
+	// MajorVersions - List of major versions available.
+	MajorVersions *[]StackMajorVersion `json:"majorVersions,omitempty"`
+	// Frameworks - List of frameworks associated with application stack.
+	Frameworks *[]ApplicationStack `json:"frameworks,omitempty"`
+}
+
+// ApplicationStackCollection collection of Application Stacks
+type ApplicationStackCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Collection of resources.
+	Value *[]ApplicationStack `json:"value,omitempty"`
+	// NextLink - Link to next page of resources.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// ApplicationStackCollectionIterator provides access to a complete listing of ApplicationStack values.
+type ApplicationStackCollectionIterator struct {
+	i    int
+	page ApplicationStackCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *ApplicationStackCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter ApplicationStackCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter ApplicationStackCollectionIterator) Response() ApplicationStackCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter ApplicationStackCollectionIterator) Value() ApplicationStack {
+	if !iter.page.NotDone() {
+		return ApplicationStack{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (asc ApplicationStackCollection) IsEmpty() bool {
+	return asc.Value == nil || len(*asc.Value) == 0
+}
+
+// applicationStackCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (asc ApplicationStackCollection) applicationStackCollectionPreparer() (*http.Request, error) {
+	if asc.NextLink == nil || len(to.String(asc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(asc.NextLink)))
+}
+
+// ApplicationStackCollectionPage contains a page of ApplicationStack values.
+type ApplicationStackCollectionPage struct {
+	fn  func(ApplicationStackCollection) (ApplicationStackCollection, error)
+	asc ApplicationStackCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *ApplicationStackCollectionPage) Next() error {
+	next, err := page.fn(page.asc)
+	if err != nil {
+		return err
+	}
+	page.asc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page ApplicationStackCollectionPage) NotDone() bool {
+	return !page.asc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page ApplicationStackCollectionPage) Response() ApplicationStackCollection {
+	return page.asc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page ApplicationStackCollectionPage) Values() []ApplicationStack {
+	if page.asc.IsEmpty() {
+		return nil
+	}
+	return *page.asc.Value
 }
 
 // AppsCreateFunctionFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -2097,6 +2551,27 @@ type AppServiceCertificateOrderPatchResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for AppServiceCertificateOrderPatchResource.
+func (ascopr AppServiceCertificateOrderPatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ascopr.AppServiceCertificateOrderPatchResourceProperties != nil {
+		objectMap["properties"] = ascopr.AppServiceCertificateOrderPatchResourceProperties
+	}
+	if ascopr.ID != nil {
+		objectMap["id"] = ascopr.ID
+	}
+	if ascopr.Name != nil {
+		objectMap["name"] = ascopr.Name
+	}
+	if ascopr.Kind != nil {
+		objectMap["kind"] = ascopr.Kind
+	}
+	if ascopr.Type != nil {
+		objectMap["type"] = ascopr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for AppServiceCertificateOrderPatchResource struct.
 func (ascopr *AppServiceCertificateOrderPatchResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -2218,12 +2693,18 @@ func (ascopr AppServiceCertificateOrderPatchResourceProperties) MarshalJSON() ([
 	if ascopr.KeySize != nil {
 		objectMap["keySize"] = ascopr.KeySize
 	}
-	objectMap["productType"] = ascopr.ProductType
+	if ascopr.ProductType != "" {
+		objectMap["productType"] = ascopr.ProductType
+	}
 	if ascopr.AutoRenew != nil {
 		objectMap["autoRenew"] = ascopr.AutoRenew
 	}
-	objectMap["provisioningState"] = ascopr.ProvisioningState
-	objectMap["status"] = ascopr.Status
+	if ascopr.ProvisioningState != "" {
+		objectMap["provisioningState"] = ascopr.ProvisioningState
+	}
+	if ascopr.Status != "" {
+		objectMap["status"] = ascopr.Status
+	}
 	if ascopr.SignedCertificate != nil {
 		objectMap["signedCertificate"] = ascopr.SignedCertificate
 	}
@@ -2317,12 +2798,18 @@ func (asco AppServiceCertificateOrderProperties) MarshalJSON() ([]byte, error) {
 	if asco.KeySize != nil {
 		objectMap["keySize"] = asco.KeySize
 	}
-	objectMap["productType"] = asco.ProductType
+	if asco.ProductType != "" {
+		objectMap["productType"] = asco.ProductType
+	}
 	if asco.AutoRenew != nil {
 		objectMap["autoRenew"] = asco.AutoRenew
 	}
-	objectMap["provisioningState"] = asco.ProvisioningState
-	objectMap["status"] = asco.Status
+	if asco.ProvisioningState != "" {
+		objectMap["provisioningState"] = asco.ProvisioningState
+	}
+	if asco.Status != "" {
+		objectMap["status"] = asco.Status
+	}
 	if asco.SignedCertificate != nil {
 		objectMap["signedCertificate"] = asco.SignedCertificate
 	}
@@ -2467,6 +2954,27 @@ type AppServiceCertificatePatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AppServiceCertificatePatchResource.
+func (ascpr AppServiceCertificatePatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ascpr.AppServiceCertificate != nil {
+		objectMap["properties"] = ascpr.AppServiceCertificate
+	}
+	if ascpr.ID != nil {
+		objectMap["id"] = ascpr.ID
+	}
+	if ascpr.Name != nil {
+		objectMap["name"] = ascpr.Name
+	}
+	if ascpr.Kind != nil {
+		objectMap["kind"] = ascpr.Kind
+	}
+	if ascpr.Type != nil {
+		objectMap["type"] = ascpr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AppServiceCertificatePatchResource struct.
@@ -2847,6 +3355,27 @@ type AppServiceEnvironmentPatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AppServiceEnvironmentPatchResource.
+func (asepr AppServiceEnvironmentPatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if asepr.AppServiceEnvironment != nil {
+		objectMap["properties"] = asepr.AppServiceEnvironment
+	}
+	if asepr.ID != nil {
+		objectMap["id"] = asepr.ID
+	}
+	if asepr.Name != nil {
+		objectMap["name"] = asepr.Name
+	}
+	if asepr.Kind != nil {
+		objectMap["kind"] = asepr.Kind
+	}
+	if asepr.Type != nil {
+		objectMap["type"] = asepr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AppServiceEnvironmentPatchResource struct.
@@ -3676,6 +4205,27 @@ type AppServicePlanPatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AppServicePlanPatchResource.
+func (asppr AppServicePlanPatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if asppr.AppServicePlanPatchResourceProperties != nil {
+		objectMap["properties"] = asppr.AppServicePlanPatchResourceProperties
+	}
+	if asppr.ID != nil {
+		objectMap["id"] = asppr.ID
+	}
+	if asppr.Name != nil {
+		objectMap["name"] = asppr.Name
+	}
+	if asppr.Kind != nil {
+		objectMap["kind"] = asppr.Kind
+	}
+	if asppr.Type != nil {
+		objectMap["type"] = asppr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AppServicePlanPatchResource struct.
@@ -4533,6 +5083,27 @@ type BackupItem struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for BackupItem.
+func (bi BackupItem) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bi.BackupItemProperties != nil {
+		objectMap["properties"] = bi.BackupItemProperties
+	}
+	if bi.ID != nil {
+		objectMap["id"] = bi.ID
+	}
+	if bi.Name != nil {
+		objectMap["name"] = bi.Name
+	}
+	if bi.Kind != nil {
+		objectMap["kind"] = bi.Kind
+	}
+	if bi.Type != nil {
+		objectMap["type"] = bi.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for BackupItem struct.
 func (bi *BackupItem) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4742,6 +5313,27 @@ type BackupRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for BackupRequest.
+func (br BackupRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if br.BackupRequestProperties != nil {
+		objectMap["properties"] = br.BackupRequestProperties
+	}
+	if br.ID != nil {
+		objectMap["id"] = br.ID
+	}
+	if br.Name != nil {
+		objectMap["name"] = br.Name
+	}
+	if br.Kind != nil {
+		objectMap["kind"] = br.Kind
+	}
+	if br.Type != nil {
+		objectMap["type"] = br.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for BackupRequest struct.
 func (br *BackupRequest) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -4833,6 +5425,218 @@ type BackupSchedule struct {
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// LastExecutionTime - Last time when this schedule was triggered.
 	LastExecutionTime *date.Time `json:"lastExecutionTime,omitempty"`
+}
+
+// BillingMeter app Service billing entity that contains information about meter which the Azure billing system
+// utilizes to charge users for services.
+type BillingMeter struct {
+	// BillingMeterProperties - BillingMeter resource specific properties
+	*BillingMeterProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource Name.
+	Name *string `json:"name,omitempty"`
+	// Kind - Kind of resource.
+	Kind *string `json:"kind,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for BillingMeter.
+func (bm BillingMeter) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bm.BillingMeterProperties != nil {
+		objectMap["properties"] = bm.BillingMeterProperties
+	}
+	if bm.ID != nil {
+		objectMap["id"] = bm.ID
+	}
+	if bm.Name != nil {
+		objectMap["name"] = bm.Name
+	}
+	if bm.Kind != nil {
+		objectMap["kind"] = bm.Kind
+	}
+	if bm.Type != nil {
+		objectMap["type"] = bm.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for BillingMeter struct.
+func (bm *BillingMeter) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var billingMeterProperties BillingMeterProperties
+				err = json.Unmarshal(*v, &billingMeterProperties)
+				if err != nil {
+					return err
+				}
+				bm.BillingMeterProperties = &billingMeterProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				bm.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				bm.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind string
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				bm.Kind = &kind
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				bm.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// BillingMeterCollection collection of Billing Meters
+type BillingMeterCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Collection of Billing Meters.
+	Value *[]BillingMeter `json:"value,omitempty"`
+	// NextLink - Link to next page of resources.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// BillingMeterCollectionIterator provides access to a complete listing of BillingMeter values.
+type BillingMeterCollectionIterator struct {
+	i    int
+	page BillingMeterCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *BillingMeterCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter BillingMeterCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter BillingMeterCollectionIterator) Response() BillingMeterCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter BillingMeterCollectionIterator) Value() BillingMeter {
+	if !iter.page.NotDone() {
+		return BillingMeter{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (bmc BillingMeterCollection) IsEmpty() bool {
+	return bmc.Value == nil || len(*bmc.Value) == 0
+}
+
+// billingMeterCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (bmc BillingMeterCollection) billingMeterCollectionPreparer() (*http.Request, error) {
+	if bmc.NextLink == nil || len(to.String(bmc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(bmc.NextLink)))
+}
+
+// BillingMeterCollectionPage contains a page of BillingMeter values.
+type BillingMeterCollectionPage struct {
+	fn  func(BillingMeterCollection) (BillingMeterCollection, error)
+	bmc BillingMeterCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *BillingMeterCollectionPage) Next() error {
+	next, err := page.fn(page.bmc)
+	if err != nil {
+		return err
+	}
+	page.bmc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page BillingMeterCollectionPage) NotDone() bool {
+	return !page.bmc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page BillingMeterCollectionPage) Response() BillingMeterCollection {
+	return page.bmc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page BillingMeterCollectionPage) Values() []BillingMeter {
+	if page.bmc.IsEmpty() {
+		return nil
+	}
+	return *page.bmc.Value
+}
+
+// BillingMeterProperties billingMeter resource specific properties
+type BillingMeterProperties struct {
+	// MeterID - Meter GUID onboarded in Commerce
+	MeterID *string `json:"meterId,omitempty"`
+	// BillingLocation - Azure Location of billable resource
+	BillingLocation *string `json:"billingLocation,omitempty"`
+	// ShortName - Short Name from App Service Azure pricing Page
+	ShortName *string `json:"shortName,omitempty"`
+	// FriendlyName - Friendly name of the meter
+	FriendlyName *string `json:"friendlyName,omitempty"`
+	// ResourceType - App Service resource type meter used for
+	ResourceType *string `json:"resourceType,omitempty"`
 }
 
 // Capability describes the capabilities/features allowed for a specific SKU.
@@ -5107,6 +5911,27 @@ type CertificateEmail struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CertificateEmail.
+func (ce CertificateEmail) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ce.CertificateEmailProperties != nil {
+		objectMap["properties"] = ce.CertificateEmailProperties
+	}
+	if ce.ID != nil {
+		objectMap["id"] = ce.ID
+	}
+	if ce.Name != nil {
+		objectMap["name"] = ce.Name
+	}
+	if ce.Kind != nil {
+		objectMap["kind"] = ce.Kind
+	}
+	if ce.Type != nil {
+		objectMap["type"] = ce.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CertificateEmail struct.
 func (ce *CertificateEmail) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5189,6 +6014,27 @@ type CertificateOrderAction struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CertificateOrderAction.
+func (coa CertificateOrderAction) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coa.CertificateOrderActionProperties != nil {
+		objectMap["properties"] = coa.CertificateOrderActionProperties
+	}
+	if coa.ID != nil {
+		objectMap["id"] = coa.ID
+	}
+	if coa.Name != nil {
+		objectMap["name"] = coa.Name
+	}
+	if coa.Kind != nil {
+		objectMap["kind"] = coa.Kind
+	}
+	if coa.Type != nil {
+		objectMap["type"] = coa.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CertificateOrderAction struct.
 func (coa *CertificateOrderAction) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5269,6 +6115,27 @@ type CertificatePatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CertificatePatchResource.
+func (cpr CertificatePatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cpr.CertificatePatchResourceProperties != nil {
+		objectMap["properties"] = cpr.CertificatePatchResourceProperties
+	}
+	if cpr.ID != nil {
+		objectMap["id"] = cpr.ID
+	}
+	if cpr.Name != nil {
+		objectMap["name"] = cpr.Name
+	}
+	if cpr.Kind != nil {
+		objectMap["kind"] = cpr.Kind
+	}
+	if cpr.Type != nil {
+		objectMap["type"] = cpr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CertificatePatchResource struct.
@@ -5582,6 +6449,27 @@ type ContinuousWebJob struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ContinuousWebJob.
+func (cwj ContinuousWebJob) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cwj.ContinuousWebJobProperties != nil {
+		objectMap["properties"] = cwj.ContinuousWebJobProperties
+	}
+	if cwj.ID != nil {
+		objectMap["id"] = cwj.ID
+	}
+	if cwj.Name != nil {
+		objectMap["name"] = cwj.Name
+	}
+	if cwj.Kind != nil {
+		objectMap["kind"] = cwj.Kind
+	}
+	if cwj.Type != nil {
+		objectMap["type"] = cwj.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ContinuousWebJob struct.
 func (cwj *ContinuousWebJob) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -5773,7 +6661,9 @@ type ContinuousWebJobProperties struct {
 // MarshalJSON is the custom marshaler for ContinuousWebJobProperties.
 func (cwj ContinuousWebJobProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	objectMap["status"] = cwj.Status
+	if cwj.Status != "" {
+		objectMap["status"] = cwj.Status
+	}
 	if cwj.DetailedStatus != nil {
 		objectMap["detailedStatus"] = cwj.DetailedStatus
 	}
@@ -5792,7 +6682,9 @@ func (cwj ContinuousWebJobProperties) MarshalJSON() ([]byte, error) {
 	if cwj.ExtraInfoURL != nil {
 		objectMap["extraInfoUrl"] = cwj.ExtraInfoURL
 	}
-	objectMap["jobType"] = cwj.JobType
+	if cwj.JobType != "" {
+		objectMap["jobType"] = cwj.JobType
+	}
 	if cwj.Error != nil {
 		objectMap["error"] = cwj.Error
 	}
@@ -6090,6 +6982,27 @@ type CustomHostnameAnalysisResult struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for CustomHostnameAnalysisResult.
+func (char CustomHostnameAnalysisResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if char.CustomHostnameAnalysisResultProperties != nil {
+		objectMap["properties"] = char.CustomHostnameAnalysisResultProperties
+	}
+	if char.ID != nil {
+		objectMap["id"] = char.ID
+	}
+	if char.Name != nil {
+		objectMap["name"] = char.Name
+	}
+	if char.Kind != nil {
+		objectMap["kind"] = char.Kind
+	}
+	if char.Type != nil {
+		objectMap["type"] = char.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for CustomHostnameAnalysisResult struct.
 func (char *CustomHostnameAnalysisResult) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6194,6 +7107,55 @@ type DataSource struct {
 	Instructions *[]string `json:"instructions,omitempty"`
 	// DataSourceURI - Datasource Uri Links
 	DataSourceURI *[]NameValuePair `json:"dataSourceUri,omitempty"`
+}
+
+// DataTableResponseColumn column definition
+type DataTableResponseColumn struct {
+	// ColumnName - Name of the column
+	ColumnName *string `json:"columnName,omitempty"`
+	// DataType - Data type which looks like 'String' or 'Int32'.
+	DataType *string `json:"dataType,omitempty"`
+	// ColumnType - Column Type
+	ColumnType *string `json:"columnType,omitempty"`
+}
+
+// DataTableResponseObject data Table which defines columns and raw row values
+type DataTableResponseObject struct {
+	// TableName - Name of the table
+	TableName *string `json:"tableName,omitempty"`
+	// Columns - List of columns with data types
+	Columns *[]DataTableResponseColumn `json:"columns,omitempty"`
+	// Rows - Raw row values
+	Rows *[][]string `json:"rows,omitempty"`
+}
+
+// DefaultErrorResponse app Service error response.
+type DefaultErrorResponse struct {
+	// Error - Error model.
+	Error *DefaultErrorResponseError `json:"error,omitempty"`
+}
+
+// DefaultErrorResponseError error model.
+type DefaultErrorResponseError struct {
+	// Code - Standardized string to programmatically identify the error.
+	Code *string `json:"code,omitempty"`
+	// Message - Detailed error description and debugging information.
+	Message *string `json:"message,omitempty"`
+	// Target - Detailed error description and debugging information.
+	Target  *string                                 `json:"target,omitempty"`
+	Details *[]DefaultErrorResponseErrorDetailsItem `json:"details,omitempty"`
+	// Innererror - More information to debug error.
+	Innererror *string `json:"innererror,omitempty"`
+}
+
+// DefaultErrorResponseErrorDetailsItem detailed errors.
+type DefaultErrorResponseErrorDetailsItem struct {
+	// Code - Standardized string to programmatically identify the error.
+	Code *string `json:"code,omitempty"`
+	// Message - Detailed error description and debugging information.
+	Message *string `json:"message,omitempty"`
+	// Target - Detailed error description and debugging information.
+	Target *string `json:"target,omitempty"`
 }
 
 // DeletedSite a deleted app.
@@ -6327,6 +7289,27 @@ type Deployment struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Deployment.
+func (d Deployment) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if d.DeploymentProperties != nil {
+		objectMap["properties"] = d.DeploymentProperties
+	}
+	if d.ID != nil {
+		objectMap["id"] = d.ID
+	}
+	if d.Name != nil {
+		objectMap["name"] = d.Name
+	}
+	if d.Kind != nil {
+		objectMap["kind"] = d.Kind
+	}
+	if d.Type != nil {
+		objectMap["type"] = d.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Deployment struct.
@@ -6561,6 +7544,27 @@ type DetectorDefinition struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DetectorDefinition.
+func (dd DetectorDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dd.DetectorDefinitionProperties != nil {
+		objectMap["properties"] = dd.DetectorDefinitionProperties
+	}
+	if dd.ID != nil {
+		objectMap["id"] = dd.ID
+	}
+	if dd.Name != nil {
+		objectMap["name"] = dd.Name
+	}
+	if dd.Kind != nil {
+		objectMap["kind"] = dd.Kind
+	}
+	if dd.Type != nil {
+		objectMap["type"] = dd.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DetectorDefinition struct.
 func (dd *DetectorDefinition) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -6633,6 +7637,224 @@ type DetectorDefinitionProperties struct {
 	IsEnabled *bool `json:"isEnabled,omitempty"`
 }
 
+// DetectorInfo definition of Detector
+type DetectorInfo struct {
+	// Description - Short description of the detector and its purpose
+	Description *string `json:"description,omitempty"`
+	// Category - Support Category
+	Category *string `json:"category,omitempty"`
+	// SubCategory - Support Sub Category
+	SubCategory *string `json:"subCategory,omitempty"`
+	// SupportTopicID - Support Topic Id
+	SupportTopicID *string `json:"supportTopicId,omitempty"`
+}
+
+// DetectorResponse class representing Response from Detector
+type DetectorResponse struct {
+	autorest.Response `json:"-"`
+	// DetectorResponseProperties - DetectorResponse resource specific properties
+	*DetectorResponseProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource Name.
+	Name *string `json:"name,omitempty"`
+	// Kind - Kind of resource.
+	Kind *string `json:"kind,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DetectorResponse.
+func (dr DetectorResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dr.DetectorResponseProperties != nil {
+		objectMap["properties"] = dr.DetectorResponseProperties
+	}
+	if dr.ID != nil {
+		objectMap["id"] = dr.ID
+	}
+	if dr.Name != nil {
+		objectMap["name"] = dr.Name
+	}
+	if dr.Kind != nil {
+		objectMap["kind"] = dr.Kind
+	}
+	if dr.Type != nil {
+		objectMap["type"] = dr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for DetectorResponse struct.
+func (dr *DetectorResponse) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var detectorResponseProperties DetectorResponseProperties
+				err = json.Unmarshal(*v, &detectorResponseProperties)
+				if err != nil {
+					return err
+				}
+				dr.DetectorResponseProperties = &detectorResponseProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				dr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				dr.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind string
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				dr.Kind = &kind
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				dr.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// DetectorResponseCollection collection of detector responses
+type DetectorResponseCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Collection of resources.
+	Value *[]DetectorResponse `json:"value,omitempty"`
+	// NextLink - Link to next page of resources.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// DetectorResponseCollectionIterator provides access to a complete listing of DetectorResponse values.
+type DetectorResponseCollectionIterator struct {
+	i    int
+	page DetectorResponseCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *DetectorResponseCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter DetectorResponseCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter DetectorResponseCollectionIterator) Response() DetectorResponseCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter DetectorResponseCollectionIterator) Value() DetectorResponse {
+	if !iter.page.NotDone() {
+		return DetectorResponse{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (drc DetectorResponseCollection) IsEmpty() bool {
+	return drc.Value == nil || len(*drc.Value) == 0
+}
+
+// detectorResponseCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (drc DetectorResponseCollection) detectorResponseCollectionPreparer() (*http.Request, error) {
+	if drc.NextLink == nil || len(to.String(drc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(drc.NextLink)))
+}
+
+// DetectorResponseCollectionPage contains a page of DetectorResponse values.
+type DetectorResponseCollectionPage struct {
+	fn  func(DetectorResponseCollection) (DetectorResponseCollection, error)
+	drc DetectorResponseCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *DetectorResponseCollectionPage) Next() error {
+	next, err := page.fn(page.drc)
+	if err != nil {
+		return err
+	}
+	page.drc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page DetectorResponseCollectionPage) NotDone() bool {
+	return !page.drc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page DetectorResponseCollectionPage) Response() DetectorResponseCollection {
+	return page.drc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page DetectorResponseCollectionPage) Values() []DetectorResponse {
+	if page.drc.IsEmpty() {
+		return nil
+	}
+	return *page.drc.Value
+}
+
+// DetectorResponseProperties detectorResponse resource specific properties
+type DetectorResponseProperties struct {
+	// Metadata - metadata for the detector
+	Metadata *DetectorInfo `json:"metadata,omitempty"`
+	// Dataset - Data Set
+	Dataset *[]DiagnosticData `json:"dataset,omitempty"`
+}
+
 // DiagnosticAnalysis class representing a diagnostic analysis done on an application
 type DiagnosticAnalysis struct {
 	autorest.Response `json:"-"`
@@ -6646,6 +7868,27 @@ type DiagnosticAnalysis struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DiagnosticAnalysis.
+func (da DiagnosticAnalysis) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if da.DiagnosticAnalysisProperties != nil {
+		objectMap["properties"] = da.DiagnosticAnalysisProperties
+	}
+	if da.ID != nil {
+		objectMap["id"] = da.ID
+	}
+	if da.Name != nil {
+		objectMap["name"] = da.Name
+	}
+	if da.Kind != nil {
+		objectMap["kind"] = da.Kind
+	}
+	if da.Type != nil {
+		objectMap["type"] = da.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DiagnosticAnalysis struct.
@@ -6839,6 +8082,27 @@ type DiagnosticCategory struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DiagnosticCategory.
+func (dc DiagnosticCategory) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dc.DiagnosticCategoryProperties != nil {
+		objectMap["properties"] = dc.DiagnosticCategoryProperties
+	}
+	if dc.ID != nil {
+		objectMap["id"] = dc.ID
+	}
+	if dc.Name != nil {
+		objectMap["name"] = dc.Name
+	}
+	if dc.Kind != nil {
+		objectMap["kind"] = dc.Kind
+	}
+	if dc.Type != nil {
+		objectMap["type"] = dc.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DiagnosticCategory struct.
 func (dc *DiagnosticCategory) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7007,6 +8271,14 @@ type DiagnosticCategoryProperties struct {
 	Description *string `json:"description,omitempty"`
 }
 
+// DiagnosticData set of data with rendering instructions
+type DiagnosticData struct {
+	// Table - Data in table form
+	Table *DataTableResponseObject `json:"table,omitempty"`
+	// RenderingProperties - Properties that describe how the table should be rendered
+	RenderingProperties *Rendering `json:"renderingProperties,omitempty"`
+}
+
 // DiagnosticDetectorCollection collection of Diagnostic Detectors
 type DiagnosticDetectorCollection struct {
 	autorest.Response `json:"-"`
@@ -7122,6 +8394,27 @@ type DiagnosticDetectorResponse struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DiagnosticDetectorResponse.
+func (ddr DiagnosticDetectorResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ddr.DiagnosticDetectorResponseProperties != nil {
+		objectMap["properties"] = ddr.DiagnosticDetectorResponseProperties
+	}
+	if ddr.ID != nil {
+		objectMap["id"] = ddr.ID
+	}
+	if ddr.Name != nil {
+		objectMap["name"] = ddr.Name
+	}
+	if ddr.Kind != nil {
+		objectMap["kind"] = ddr.Kind
+	}
+	if ddr.Type != nil {
+		objectMap["type"] = ddr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DiagnosticDetectorResponse struct.
@@ -7511,6 +8804,27 @@ type DomainOwnershipIdentifier struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for DomainOwnershipIdentifier.
+func (doi DomainOwnershipIdentifier) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if doi.DomainOwnershipIdentifierProperties != nil {
+		objectMap["properties"] = doi.DomainOwnershipIdentifierProperties
+	}
+	if doi.ID != nil {
+		objectMap["id"] = doi.ID
+	}
+	if doi.Name != nil {
+		objectMap["name"] = doi.Name
+	}
+	if doi.Kind != nil {
+		objectMap["kind"] = doi.Kind
+	}
+	if doi.Type != nil {
+		objectMap["type"] = doi.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for DomainOwnershipIdentifier struct.
 func (doi *DomainOwnershipIdentifier) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -7692,6 +9006,27 @@ type DomainPatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DomainPatchResource.
+func (dpr DomainPatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dpr.DomainPatchResourceProperties != nil {
+		objectMap["properties"] = dpr.DomainPatchResourceProperties
+	}
+	if dpr.ID != nil {
+		objectMap["id"] = dpr.ID
+	}
+	if dpr.Name != nil {
+		objectMap["name"] = dpr.Name
+	}
+	if dpr.Kind != nil {
+		objectMap["kind"] = dpr.Kind
+	}
+	if dpr.Type != nil {
+		objectMap["type"] = dpr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DomainPatchResource struct.
@@ -7980,6 +9315,27 @@ type FunctionEnvelope struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FunctionEnvelope.
+func (fe FunctionEnvelope) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fe.FunctionEnvelopeProperties != nil {
+		objectMap["properties"] = fe.FunctionEnvelopeProperties
+	}
+	if fe.ID != nil {
+		objectMap["id"] = fe.ID
+	}
+	if fe.Name != nil {
+		objectMap["name"] = fe.Name
+	}
+	if fe.Kind != nil {
+		objectMap["kind"] = fe.Kind
+	}
+	if fe.Type != nil {
+		objectMap["type"] = fe.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FunctionEnvelope struct.
 func (fe *FunctionEnvelope) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8215,6 +9571,27 @@ type FunctionSecrets struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for FunctionSecrets.
+func (fs FunctionSecrets) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if fs.FunctionSecretsProperties != nil {
+		objectMap["properties"] = fs.FunctionSecretsProperties
+	}
+	if fs.ID != nil {
+		objectMap["id"] = fs.ID
+	}
+	if fs.Name != nil {
+		objectMap["name"] = fs.Name
+	}
+	if fs.Kind != nil {
+		objectMap["kind"] = fs.Kind
+	}
+	if fs.Type != nil {
+		objectMap["type"] = fs.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for FunctionSecrets struct.
 func (fs *FunctionSecrets) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8295,6 +9672,27 @@ type GeoRegion struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for GeoRegion.
+func (gr GeoRegion) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gr.GeoRegionProperties != nil {
+		objectMap["properties"] = gr.GeoRegionProperties
+	}
+	if gr.ID != nil {
+		objectMap["id"] = gr.ID
+	}
+	if gr.Name != nil {
+		objectMap["name"] = gr.Name
+	}
+	if gr.Kind != nil {
+		objectMap["kind"] = gr.Kind
+	}
+	if gr.Type != nil {
+		objectMap["type"] = gr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for GeoRegion struct.
@@ -8557,6 +9955,27 @@ type HostNameBinding struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for HostNameBinding.
+func (hnb HostNameBinding) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hnb.HostNameBindingProperties != nil {
+		objectMap["properties"] = hnb.HostNameBindingProperties
+	}
+	if hnb.ID != nil {
+		objectMap["id"] = hnb.ID
+	}
+	if hnb.Name != nil {
+		objectMap["name"] = hnb.Name
+	}
+	if hnb.Kind != nil {
+		objectMap["kind"] = hnb.Kind
+	}
+	if hnb.Type != nil {
+		objectMap["type"] = hnb.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for HostNameBinding struct.
 func (hnb *HostNameBinding) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8780,6 +10199,27 @@ type HybridConnection struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for HybridConnection.
+func (hc HybridConnection) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hc.HybridConnectionProperties != nil {
+		objectMap["properties"] = hc.HybridConnectionProperties
+	}
+	if hc.ID != nil {
+		objectMap["id"] = hc.ID
+	}
+	if hc.Name != nil {
+		objectMap["name"] = hc.Name
+	}
+	if hc.Kind != nil {
+		objectMap["kind"] = hc.Kind
+	}
+	if hc.Type != nil {
+		objectMap["type"] = hc.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for HybridConnection struct.
 func (hc *HybridConnection) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -8958,6 +10398,27 @@ type HybridConnectionKey struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for HybridConnectionKey.
+func (hck HybridConnectionKey) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hck.HybridConnectionKeyProperties != nil {
+		objectMap["properties"] = hck.HybridConnectionKeyProperties
+	}
+	if hck.ID != nil {
+		objectMap["id"] = hck.ID
+	}
+	if hck.Name != nil {
+		objectMap["name"] = hck.Name
+	}
+	if hck.Kind != nil {
+		objectMap["kind"] = hck.Kind
+	}
+	if hck.Type != nil {
+		objectMap["type"] = hck.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for HybridConnectionKey struct.
 func (hck *HybridConnectionKey) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -9040,6 +10501,27 @@ type HybridConnectionLimits struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for HybridConnectionLimits.
+func (hcl HybridConnectionLimits) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hcl.HybridConnectionLimitsProperties != nil {
+		objectMap["properties"] = hcl.HybridConnectionLimitsProperties
+	}
+	if hcl.ID != nil {
+		objectMap["id"] = hcl.ID
+	}
+	if hcl.Name != nil {
+		objectMap["name"] = hcl.Name
+	}
+	if hcl.Kind != nil {
+		objectMap["kind"] = hcl.Kind
+	}
+	if hcl.Type != nil {
+		objectMap["type"] = hcl.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for HybridConnectionLimits struct.
@@ -9144,6 +10626,27 @@ type Identifier struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Identifier.
+func (i Identifier) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if i.IdentifierProperties != nil {
+		objectMap["properties"] = i.IdentifierProperties
+	}
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Name != nil {
+		objectMap["name"] = i.Name
+	}
+	if i.Kind != nil {
+		objectMap["kind"] = i.Kind
+	}
+	if i.Type != nil {
+		objectMap["type"] = i.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Identifier struct.
@@ -9335,6 +10838,27 @@ type Job struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Job.
+func (j Job) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if j.JobProperties != nil {
+		objectMap["properties"] = j.JobProperties
+	}
+	if j.ID != nil {
+		objectMap["id"] = j.ID
+	}
+	if j.Name != nil {
+		objectMap["name"] = j.Name
+	}
+	if j.Kind != nil {
+		objectMap["kind"] = j.Kind
+	}
+	if j.Type != nil {
+		objectMap["type"] = j.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Job struct.
@@ -9534,7 +11058,9 @@ func (j JobProperties) MarshalJSON() ([]byte, error) {
 	if j.ExtraInfoURL != nil {
 		objectMap["extraInfoUrl"] = j.ExtraInfoURL
 	}
-	objectMap["jobType"] = j.JobType
+	if j.JobType != "" {
+		objectMap["jobType"] = j.JobType
+	}
 	if j.Error != nil {
 		objectMap["error"] = j.Error
 	}
@@ -9577,12 +11103,6 @@ type ListOperation struct {
 	Value             *[]Operation `json:"value,omitempty"`
 }
 
-// ListRecommendation ...
-type ListRecommendation struct {
-	autorest.Response `json:"-"`
-	Value             *[]Recommendation `json:"value,omitempty"`
-}
-
 // ListVnetInfo ...
 type ListVnetInfo struct {
 	autorest.Response `json:"-"`
@@ -9605,8 +11125,8 @@ type LocalizableString struct {
 
 // ManagedServiceIdentity managed service identity.
 type ManagedServiceIdentity struct {
-	// Type - Type of managed service identity.
-	Type interface{} `json:"type,omitempty"`
+	// Type - Type of managed service identity. Possible values include: 'SystemAssigned'
+	Type ManagedServiceIdentityType `json:"type,omitempty"`
 	// TenantID - Tenant of managed service identity.
 	TenantID *string `json:"tenantId,omitempty"`
 	// PrincipalID - Principal Id of managed service identity.
@@ -9640,6 +11160,27 @@ type MetricDefinition struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MetricDefinition.
+func (md MetricDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if md.MetricDefinitionProperties != nil {
+		objectMap["properties"] = md.MetricDefinitionProperties
+	}
+	if md.ID != nil {
+		objectMap["id"] = md.ID
+	}
+	if md.Name != nil {
+		objectMap["name"] = md.Name
+	}
+	if md.Kind != nil {
+		objectMap["kind"] = md.Kind
+	}
+	if md.Type != nil {
+		objectMap["type"] = md.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for MetricDefinition struct.
@@ -9749,6 +11290,27 @@ type MigrateMySQLRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for MigrateMySQLRequest.
+func (mmsr MigrateMySQLRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mmsr.MigrateMySQLRequestProperties != nil {
+		objectMap["properties"] = mmsr.MigrateMySQLRequestProperties
+	}
+	if mmsr.ID != nil {
+		objectMap["id"] = mmsr.ID
+	}
+	if mmsr.Name != nil {
+		objectMap["name"] = mmsr.Name
+	}
+	if mmsr.Kind != nil {
+		objectMap["kind"] = mmsr.Kind
+	}
+	if mmsr.Type != nil {
+		objectMap["type"] = mmsr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for MigrateMySQLRequest struct.
 func (mmsr *MigrateMySQLRequest) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -9830,6 +11392,27 @@ type MigrateMySQLStatus struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MigrateMySQLStatus.
+func (mmss MigrateMySQLStatus) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mmss.MigrateMySQLStatusProperties != nil {
+		objectMap["properties"] = mmss.MigrateMySQLStatusProperties
+	}
+	if mmss.ID != nil {
+		objectMap["id"] = mmss.ID
+	}
+	if mmss.Name != nil {
+		objectMap["name"] = mmss.Name
+	}
+	if mmss.Kind != nil {
+		objectMap["kind"] = mmss.Kind
+	}
+	if mmss.Type != nil {
+		objectMap["type"] = mmss.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for MigrateMySQLStatus struct.
@@ -9914,6 +11497,27 @@ type MSDeploy struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MSDeploy.
+func (md MSDeploy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if md.MSDeployCore != nil {
+		objectMap["properties"] = md.MSDeployCore
+	}
+	if md.ID != nil {
+		objectMap["id"] = md.ID
+	}
+	if md.Name != nil {
+		objectMap["name"] = md.Name
+	}
+	if md.Kind != nil {
+		objectMap["kind"] = md.Kind
+	}
+	if md.Type != nil {
+		objectMap["type"] = md.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for MSDeploy struct.
@@ -10040,6 +11644,27 @@ type MSDeployLog struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for MSDeployLog.
+func (mdl MSDeployLog) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mdl.MSDeployLogProperties != nil {
+		objectMap["properties"] = mdl.MSDeployLogProperties
+	}
+	if mdl.ID != nil {
+		objectMap["id"] = mdl.ID
+	}
+	if mdl.Name != nil {
+		objectMap["name"] = mdl.Name
+	}
+	if mdl.Kind != nil {
+		objectMap["kind"] = mdl.Kind
+	}
+	if mdl.Type != nil {
+		objectMap["type"] = mdl.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for MSDeployLog struct.
 func (mdl *MSDeployLog) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -10129,6 +11754,27 @@ type MSDeployStatus struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MSDeployStatus.
+func (mds MSDeployStatus) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mds.MSDeployStatusProperties != nil {
+		objectMap["properties"] = mds.MSDeployStatusProperties
+	}
+	if mds.ID != nil {
+		objectMap["id"] = mds.ID
+	}
+	if mds.Name != nil {
+		objectMap["name"] = mds.Name
+	}
+	if mds.Kind != nil {
+		objectMap["kind"] = mds.Kind
+	}
+	if mds.Type != nil {
+		objectMap["type"] = mds.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for MSDeployStatus struct.
@@ -10346,6 +11992,27 @@ type NetworkFeatures struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for NetworkFeatures.
+func (nf NetworkFeatures) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if nf.NetworkFeaturesProperties != nil {
+		objectMap["properties"] = nf.NetworkFeaturesProperties
+	}
+	if nf.ID != nil {
+		objectMap["id"] = nf.ID
+	}
+	if nf.Name != nil {
+		objectMap["name"] = nf.Name
+	}
+	if nf.Kind != nil {
+		objectMap["kind"] = nf.Kind
+	}
+	if nf.Type != nil {
+		objectMap["type"] = nf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for NetworkFeatures struct.
@@ -10717,6 +12384,27 @@ type PremierAddOnOffer struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for PremierAddOnOffer.
+func (paoo PremierAddOnOffer) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if paoo.PremierAddOnOfferProperties != nil {
+		objectMap["properties"] = paoo.PremierAddOnOfferProperties
+	}
+	if paoo.ID != nil {
+		objectMap["id"] = paoo.ID
+	}
+	if paoo.Name != nil {
+		objectMap["name"] = paoo.Name
+	}
+	if paoo.Kind != nil {
+		objectMap["kind"] = paoo.Kind
+	}
+	if paoo.Type != nil {
+		objectMap["type"] = paoo.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for PremierAddOnOffer struct.
 func (paoo *PremierAddOnOffer) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -10968,6 +12656,27 @@ type ProcessInfo struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ProcessInfo.
+func (pi ProcessInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pi.ProcessInfoProperties != nil {
+		objectMap["properties"] = pi.ProcessInfoProperties
+	}
+	if pi.ID != nil {
+		objectMap["id"] = pi.ID
+	}
+	if pi.Name != nil {
+		objectMap["name"] = pi.Name
+	}
+	if pi.Kind != nil {
+		objectMap["kind"] = pi.Kind
+	}
+	if pi.Type != nil {
+		objectMap["type"] = pi.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ProcessInfo struct.
@@ -11337,6 +13046,27 @@ type ProcessModuleInfo struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for ProcessModuleInfo.
+func (pmi ProcessModuleInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pmi.ProcessModuleInfoProperties != nil {
+		objectMap["properties"] = pmi.ProcessModuleInfoProperties
+	}
+	if pmi.ID != nil {
+		objectMap["id"] = pmi.ID
+	}
+	if pmi.Name != nil {
+		objectMap["name"] = pmi.Name
+	}
+	if pmi.Kind != nil {
+		objectMap["kind"] = pmi.Kind
+	}
+	if pmi.Type != nil {
+		objectMap["type"] = pmi.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for ProcessModuleInfo struct.
 func (pmi *ProcessModuleInfo) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -11538,6 +13268,27 @@ type ProcessThreadInfo struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ProcessThreadInfo.
+func (pti ProcessThreadInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pti.ProcessThreadInfoProperties != nil {
+		objectMap["properties"] = pti.ProcessThreadInfoProperties
+	}
+	if pti.ID != nil {
+		objectMap["id"] = pti.ID
+	}
+	if pti.Name != nil {
+		objectMap["name"] = pti.Name
+	}
+	if pti.Kind != nil {
+		objectMap["kind"] = pti.Kind
+	}
+	if pti.Type != nil {
+		objectMap["type"] = pti.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ProcessThreadInfo struct.
@@ -11759,6 +13510,27 @@ type PublicCertificate struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for PublicCertificate.
+func (pc PublicCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pc.PublicCertificateProperties != nil {
+		objectMap["properties"] = pc.PublicCertificateProperties
+	}
+	if pc.ID != nil {
+		objectMap["id"] = pc.ID
+	}
+	if pc.Name != nil {
+		objectMap["name"] = pc.Name
+	}
+	if pc.Kind != nil {
+		objectMap["kind"] = pc.Kind
+	}
+	if pc.Type != nil {
+		objectMap["type"] = pc.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for PublicCertificate struct.
 func (pc *PublicCertificate) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -11946,6 +13718,27 @@ type PushSettings struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for PushSettings.
+func (ps PushSettings) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ps.PushSettingsProperties != nil {
+		objectMap["properties"] = ps.PushSettingsProperties
+	}
+	if ps.ID != nil {
+		objectMap["id"] = ps.ID
+	}
+	if ps.Name != nil {
+		objectMap["name"] = ps.Name
+	}
+	if ps.Kind != nil {
+		objectMap["kind"] = ps.Kind
+	}
+	if ps.Type != nil {
+		objectMap["type"] = ps.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for PushSettings struct.
 func (ps *PushSettings) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -12053,6 +13846,203 @@ type ReadCloser struct {
 
 // Recommendation represents a recommendation result generated by the recommendation engine.
 type Recommendation struct {
+	// RecommendationProperties - Recommendation resource specific properties
+	*RecommendationProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource Name.
+	Name *string `json:"name,omitempty"`
+	// Kind - Kind of resource.
+	Kind *string `json:"kind,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Recommendation.
+func (r Recommendation) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.RecommendationProperties != nil {
+		objectMap["properties"] = r.RecommendationProperties
+	}
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Kind != nil {
+		objectMap["kind"] = r.Kind
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for Recommendation struct.
+func (r *Recommendation) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var recommendationProperties RecommendationProperties
+				err = json.Unmarshal(*v, &recommendationProperties)
+				if err != nil {
+					return err
+				}
+				r.RecommendationProperties = &recommendationProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				r.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				r.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind string
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				r.Kind = &kind
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				r.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// RecommendationCollection collection of recommendations.
+type RecommendationCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Collection of resources.
+	Value *[]Recommendation `json:"value,omitempty"`
+	// NextLink - Link to next page of resources.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// RecommendationCollectionIterator provides access to a complete listing of Recommendation values.
+type RecommendationCollectionIterator struct {
+	i    int
+	page RecommendationCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *RecommendationCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter RecommendationCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter RecommendationCollectionIterator) Response() RecommendationCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter RecommendationCollectionIterator) Value() Recommendation {
+	if !iter.page.NotDone() {
+		return Recommendation{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (rc RecommendationCollection) IsEmpty() bool {
+	return rc.Value == nil || len(*rc.Value) == 0
+}
+
+// recommendationCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (rc RecommendationCollection) recommendationCollectionPreparer() (*http.Request, error) {
+	if rc.NextLink == nil || len(to.String(rc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(rc.NextLink)))
+}
+
+// RecommendationCollectionPage contains a page of Recommendation values.
+type RecommendationCollectionPage struct {
+	fn func(RecommendationCollection) (RecommendationCollection, error)
+	rc RecommendationCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *RecommendationCollectionPage) Next() error {
+	next, err := page.fn(page.rc)
+	if err != nil {
+		return err
+	}
+	page.rc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page RecommendationCollectionPage) NotDone() bool {
+	return !page.rc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page RecommendationCollectionPage) Response() RecommendationCollection {
+	return page.rc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page RecommendationCollectionPage) Values() []Recommendation {
+	if page.rc.IsEmpty() {
+		return nil
+	}
+	return *page.rc.Value
+}
+
+// RecommendationProperties recommendation resource specific properties
+type RecommendationProperties struct {
 	// CreationTime - Timestamp when this instance was created.
 	CreationTime *date.Time `json:"creationTime,omitempty"`
 	// RecommendationID - A GUID value that each recommendation object is associated with.
@@ -12100,6 +14090,101 @@ type Recommendation struct {
 // RecommendationRule represents a recommendation rule that the recommendation engine can perform.
 type RecommendationRule struct {
 	autorest.Response `json:"-"`
+	// RecommendationRuleProperties - RecommendationRule resource specific properties
+	*RecommendationRuleProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource Name.
+	Name *string `json:"name,omitempty"`
+	// Kind - Kind of resource.
+	Kind *string `json:"kind,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RecommendationRule.
+func (rr RecommendationRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rr.RecommendationRuleProperties != nil {
+		objectMap["properties"] = rr.RecommendationRuleProperties
+	}
+	if rr.ID != nil {
+		objectMap["id"] = rr.ID
+	}
+	if rr.Name != nil {
+		objectMap["name"] = rr.Name
+	}
+	if rr.Kind != nil {
+		objectMap["kind"] = rr.Kind
+	}
+	if rr.Type != nil {
+		objectMap["type"] = rr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for RecommendationRule struct.
+func (rr *RecommendationRule) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var recommendationRuleProperties RecommendationRuleProperties
+				err = json.Unmarshal(*v, &recommendationRuleProperties)
+				if err != nil {
+					return err
+				}
+				rr.RecommendationRuleProperties = &recommendationRuleProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rr.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind string
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				rr.Kind = &kind
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rr.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// RecommendationRuleProperties recommendationRule resource specific properties
+type RecommendationRuleProperties struct {
 	// Name - Unique name of the rule.
 	Name *string `json:"name,omitempty"`
 	// DisplayName - UI friendly name of the rule.
@@ -12141,6 +14226,27 @@ type ReissueCertificateOrderRequest struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ReissueCertificateOrderRequest.
+func (rcor ReissueCertificateOrderRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rcor.ReissueCertificateOrderRequestProperties != nil {
+		objectMap["properties"] = rcor.ReissueCertificateOrderRequestProperties
+	}
+	if rcor.ID != nil {
+		objectMap["id"] = rcor.ID
+	}
+	if rcor.Name != nil {
+		objectMap["name"] = rcor.Name
+	}
+	if rcor.Kind != nil {
+		objectMap["kind"] = rcor.Kind
+	}
+	if rcor.Type != nil {
+		objectMap["type"] = rcor.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ReissueCertificateOrderRequest struct.
@@ -12230,6 +14336,27 @@ type RelayServiceConnectionEntity struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for RelayServiceConnectionEntity.
+func (rsce RelayServiceConnectionEntity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rsce.RelayServiceConnectionEntityProperties != nil {
+		objectMap["properties"] = rsce.RelayServiceConnectionEntityProperties
+	}
+	if rsce.ID != nil {
+		objectMap["id"] = rsce.ID
+	}
+	if rsce.Name != nil {
+		objectMap["name"] = rsce.Name
+	}
+	if rsce.Kind != nil {
+		objectMap["kind"] = rsce.Kind
+	}
+	if rsce.Type != nil {
+		objectMap["type"] = rsce.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for RelayServiceConnectionEntity struct.
 func (rsce *RelayServiceConnectionEntity) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -12301,6 +14428,16 @@ type RelayServiceConnectionEntityProperties struct {
 	BiztalkURI               *string `json:"biztalkUri,omitempty"`
 }
 
+// Rendering instructions for rendering the data
+type Rendering struct {
+	// RenderingType - Rendering Type. Possible values include: 'NoGraph', 'Table', 'TimeSeries', 'TimeSeriesPerInstance'
+	RenderingType RenderingType `json:"renderingType,omitempty"`
+	// Title - Title of data
+	Title *string `json:"title,omitempty"`
+	// Description - Description of the data that will help it be interpreted
+	Description *string `json:"description,omitempty"`
+}
+
 // RenewCertificateOrderRequest class representing certificate renew request.
 type RenewCertificateOrderRequest struct {
 	// RenewCertificateOrderRequestProperties - RenewCertificateOrderRequest resource specific properties
@@ -12313,6 +14450,27 @@ type RenewCertificateOrderRequest struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RenewCertificateOrderRequest.
+func (rcor RenewCertificateOrderRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rcor.RenewCertificateOrderRequestProperties != nil {
+		objectMap["properties"] = rcor.RenewCertificateOrderRequestProperties
+	}
+	if rcor.ID != nil {
+		objectMap["id"] = rcor.ID
+	}
+	if rcor.Name != nil {
+		objectMap["name"] = rcor.Name
+	}
+	if rcor.Kind != nil {
+		objectMap["kind"] = rcor.Kind
+	}
+	if rcor.Type != nil {
+		objectMap["type"] = rcor.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RenewCertificateOrderRequest struct.
@@ -12535,6 +14693,212 @@ func (page ResourceCollectionPage) Values() []string {
 	return *page.rc.Value
 }
 
+// ResourceHealthMetadata used for getting ResourceHealthCheck settings.
+type ResourceHealthMetadata struct {
+	autorest.Response `json:"-"`
+	// ResourceHealthMetadataProperties - ResourceHealthMetadata resource specific properties
+	*ResourceHealthMetadataProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource Name.
+	Name *string `json:"name,omitempty"`
+	// Kind - Kind of resource.
+	Kind *string `json:"kind,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceHealthMetadata.
+func (rhm ResourceHealthMetadata) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rhm.ResourceHealthMetadataProperties != nil {
+		objectMap["properties"] = rhm.ResourceHealthMetadataProperties
+	}
+	if rhm.ID != nil {
+		objectMap["id"] = rhm.ID
+	}
+	if rhm.Name != nil {
+		objectMap["name"] = rhm.Name
+	}
+	if rhm.Kind != nil {
+		objectMap["kind"] = rhm.Kind
+	}
+	if rhm.Type != nil {
+		objectMap["type"] = rhm.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for ResourceHealthMetadata struct.
+func (rhm *ResourceHealthMetadata) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var resourceHealthMetadataProperties ResourceHealthMetadataProperties
+				err = json.Unmarshal(*v, &resourceHealthMetadataProperties)
+				if err != nil {
+					return err
+				}
+				rhm.ResourceHealthMetadataProperties = &resourceHealthMetadataProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rhm.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rhm.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind string
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				rhm.Kind = &kind
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rhm.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// ResourceHealthMetadataCollection collection of resource health metadata.
+type ResourceHealthMetadataCollection struct {
+	autorest.Response `json:"-"`
+	// Value - Collection of resources.
+	Value *[]ResourceHealthMetadata `json:"value,omitempty"`
+	// NextLink - Link to next page of resources.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// ResourceHealthMetadataCollectionIterator provides access to a complete listing of ResourceHealthMetadata values.
+type ResourceHealthMetadataCollectionIterator struct {
+	i    int
+	page ResourceHealthMetadataCollectionPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *ResourceHealthMetadataCollectionIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter ResourceHealthMetadataCollectionIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter ResourceHealthMetadataCollectionIterator) Response() ResourceHealthMetadataCollection {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter ResourceHealthMetadataCollectionIterator) Value() ResourceHealthMetadata {
+	if !iter.page.NotDone() {
+		return ResourceHealthMetadata{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (rhmc ResourceHealthMetadataCollection) IsEmpty() bool {
+	return rhmc.Value == nil || len(*rhmc.Value) == 0
+}
+
+// resourceHealthMetadataCollectionPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (rhmc ResourceHealthMetadataCollection) resourceHealthMetadataCollectionPreparer() (*http.Request, error) {
+	if rhmc.NextLink == nil || len(to.String(rhmc.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(rhmc.NextLink)))
+}
+
+// ResourceHealthMetadataCollectionPage contains a page of ResourceHealthMetadata values.
+type ResourceHealthMetadataCollectionPage struct {
+	fn   func(ResourceHealthMetadataCollection) (ResourceHealthMetadataCollection, error)
+	rhmc ResourceHealthMetadataCollection
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *ResourceHealthMetadataCollectionPage) Next() error {
+	next, err := page.fn(page.rhmc)
+	if err != nil {
+		return err
+	}
+	page.rhmc = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page ResourceHealthMetadataCollectionPage) NotDone() bool {
+	return !page.rhmc.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page ResourceHealthMetadataCollectionPage) Response() ResourceHealthMetadataCollection {
+	return page.rhmc
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page ResourceHealthMetadataCollectionPage) Values() []ResourceHealthMetadata {
+	if page.rhmc.IsEmpty() {
+		return nil
+	}
+	return *page.rhmc.Value
+}
+
+// ResourceHealthMetadataProperties resourceHealthMetadata resource specific properties
+type ResourceHealthMetadataProperties struct {
+	// Category - The category that the resource matches in the RHC Policy File
+	Category *string `json:"category,omitempty"`
+	// SignalAvailability - Is there a health signal for the resource
+	SignalAvailability *bool `json:"signalAvailability,omitempty"`
+}
+
 // ResourceMetric object representing a metric for any resource .
 type ResourceMetric struct {
 	// Name - Name of metric.
@@ -12679,6 +15043,27 @@ type ResourceMetricDefinition struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceMetricDefinition.
+func (rmd ResourceMetricDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rmd.ResourceMetricDefinitionProperties != nil {
+		objectMap["properties"] = rmd.ResourceMetricDefinitionProperties
+	}
+	if rmd.ID != nil {
+		objectMap["id"] = rmd.ID
+	}
+	if rmd.Name != nil {
+		objectMap["name"] = rmd.Name
+	}
+	if rmd.Kind != nil {
+		objectMap["kind"] = rmd.Kind
+	}
+	if rmd.Type != nil {
+		objectMap["type"] = rmd.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ResourceMetricDefinition struct.
@@ -12965,6 +15350,27 @@ type RestoreRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for RestoreRequest.
+func (rr RestoreRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rr.RestoreRequestProperties != nil {
+		objectMap["properties"] = rr.RestoreRequestProperties
+	}
+	if rr.ID != nil {
+		objectMap["id"] = rr.ID
+	}
+	if rr.Name != nil {
+		objectMap["name"] = rr.Name
+	}
+	if rr.Kind != nil {
+		objectMap["kind"] = rr.Kind
+	}
+	if rr.Type != nil {
+		objectMap["type"] = rr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for RestoreRequest struct.
 func (rr *RestoreRequest) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -13065,6 +15471,27 @@ type RestoreResponse struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RestoreResponse.
+func (rr RestoreResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rr.RestoreResponseProperties != nil {
+		objectMap["properties"] = rr.RestoreResponseProperties
+	}
+	if rr.ID != nil {
+		objectMap["id"] = rr.ID
+	}
+	if rr.Name != nil {
+		objectMap["name"] = rr.Name
+	}
+	if rr.Kind != nil {
+		objectMap["kind"] = rr.Kind
+	}
+	if rr.Type != nil {
+		objectMap["type"] = rr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for RestoreResponse struct.
@@ -13294,6 +15721,27 @@ type SiteAuthSettings struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SiteAuthSettings.
+func (sas SiteAuthSettings) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sas.SiteAuthSettingsProperties != nil {
+		objectMap["properties"] = sas.SiteAuthSettingsProperties
+	}
+	if sas.ID != nil {
+		objectMap["id"] = sas.ID
+	}
+	if sas.Name != nil {
+		objectMap["name"] = sas.Name
+	}
+	if sas.Kind != nil {
+		objectMap["kind"] = sas.Kind
+	}
+	if sas.Type != nil {
+		objectMap["type"] = sas.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SiteAuthSettings struct.
@@ -13578,6 +16026,27 @@ type SiteConfigResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SiteConfigResource.
+func (scr SiteConfigResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scr.SiteConfig != nil {
+		objectMap["properties"] = scr.SiteConfig
+	}
+	if scr.ID != nil {
+		objectMap["id"] = scr.ID
+	}
+	if scr.Name != nil {
+		objectMap["name"] = scr.Name
+	}
+	if scr.Kind != nil {
+		objectMap["kind"] = scr.Kind
+	}
+	if scr.Type != nil {
+		objectMap["type"] = scr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SiteConfigResource struct.
 func (scr *SiteConfigResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -13752,6 +16221,27 @@ type SiteConfigurationSnapshotInfo struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SiteConfigurationSnapshotInfo.
+func (scsi SiteConfigurationSnapshotInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scsi.SiteConfigurationSnapshotInfoProperties != nil {
+		objectMap["properties"] = scsi.SiteConfigurationSnapshotInfoProperties
+	}
+	if scsi.ID != nil {
+		objectMap["id"] = scsi.ID
+	}
+	if scsi.Name != nil {
+		objectMap["name"] = scsi.Name
+	}
+	if scsi.Kind != nil {
+		objectMap["kind"] = scsi.Kind
+	}
+	if scsi.Type != nil {
+		objectMap["type"] = scsi.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SiteConfigurationSnapshotInfo struct.
@@ -13939,6 +16429,27 @@ type SiteExtensionInfo struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SiteExtensionInfo.
+func (sei SiteExtensionInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sei.SiteExtensionInfoProperties != nil {
+		objectMap["properties"] = sei.SiteExtensionInfoProperties
+	}
+	if sei.ID != nil {
+		objectMap["id"] = sei.ID
+	}
+	if sei.Name != nil {
+		objectMap["name"] = sei.Name
+	}
+	if sei.Kind != nil {
+		objectMap["kind"] = sei.Kind
+	}
+	if sei.Type != nil {
+		objectMap["type"] = sei.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SiteExtensionInfo struct.
@@ -14161,6 +16672,27 @@ type SiteInstance struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SiteInstance.
+func (si SiteInstance) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if si.SiteInstanceProperties != nil {
+		objectMap["properties"] = si.SiteInstanceProperties
+	}
+	if si.ID != nil {
+		objectMap["id"] = si.ID
+	}
+	if si.Name != nil {
+		objectMap["name"] = si.Name
+	}
+	if si.Kind != nil {
+		objectMap["kind"] = si.Kind
+	}
+	if si.Type != nil {
+		objectMap["type"] = si.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SiteInstance struct.
 func (si *SiteInstance) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -14250,6 +16782,27 @@ type SiteLogsConfig struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SiteLogsConfig.
+func (slc SiteLogsConfig) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if slc.SiteLogsConfigProperties != nil {
+		objectMap["properties"] = slc.SiteLogsConfigProperties
+	}
+	if slc.ID != nil {
+		objectMap["id"] = slc.ID
+	}
+	if slc.Name != nil {
+		objectMap["name"] = slc.Name
+	}
+	if slc.Kind != nil {
+		objectMap["kind"] = slc.Kind
+	}
+	if slc.Type != nil {
+		objectMap["type"] = slc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SiteLogsConfig struct.
@@ -14348,6 +16901,27 @@ type SitePatchResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SitePatchResource.
+func (spr SitePatchResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if spr.SitePatchResourceProperties != nil {
+		objectMap["properties"] = spr.SitePatchResourceProperties
+	}
+	if spr.ID != nil {
+		objectMap["id"] = spr.ID
+	}
+	if spr.Name != nil {
+		objectMap["name"] = spr.Name
+	}
+	if spr.Kind != nil {
+		objectMap["kind"] = spr.Kind
+	}
+	if spr.Type != nil {
+		objectMap["type"] = spr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SitePatchResource struct.
@@ -14495,6 +17069,27 @@ type SitePhpErrorLogFlag struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SitePhpErrorLogFlag.
+func (spelf SitePhpErrorLogFlag) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if spelf.SitePhpErrorLogFlagProperties != nil {
+		objectMap["properties"] = spelf.SitePhpErrorLogFlagProperties
+	}
+	if spelf.ID != nil {
+		objectMap["id"] = spelf.ID
+	}
+	if spelf.Name != nil {
+		objectMap["name"] = spelf.Name
+	}
+	if spelf.Kind != nil {
+		objectMap["kind"] = spelf.Kind
+	}
+	if spelf.Type != nil {
+		objectMap["type"] = spelf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SitePhpErrorLogFlag struct.
@@ -14669,6 +17264,27 @@ type SiteSourceControl struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SiteSourceControl.
+func (ssc SiteSourceControl) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ssc.SiteSourceControlProperties != nil {
+		objectMap["properties"] = ssc.SiteSourceControlProperties
+	}
+	if ssc.ID != nil {
+		objectMap["id"] = ssc.ID
+	}
+	if ssc.Name != nil {
+		objectMap["name"] = ssc.Name
+	}
+	if ssc.Kind != nil {
+		objectMap["kind"] = ssc.Kind
+	}
+	if ssc.Type != nil {
+		objectMap["type"] = ssc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SiteSourceControl struct.
@@ -14923,6 +17539,27 @@ type SlotConfigNamesResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SlotConfigNamesResource.
+func (scnr SlotConfigNamesResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scnr.SlotConfigNames != nil {
+		objectMap["properties"] = scnr.SlotConfigNames
+	}
+	if scnr.ID != nil {
+		objectMap["id"] = scnr.ID
+	}
+	if scnr.Name != nil {
+		objectMap["name"] = scnr.Name
+	}
+	if scnr.Kind != nil {
+		objectMap["kind"] = scnr.Kind
+	}
+	if scnr.Type != nil {
+		objectMap["type"] = scnr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SlotConfigNamesResource struct.
 func (scnr *SlotConfigNamesResource) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -14995,6 +17632,27 @@ type SlotDifference struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SlotDifference.
+func (sd SlotDifference) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sd.SlotDifferenceProperties != nil {
+		objectMap["properties"] = sd.SlotDifferenceProperties
+	}
+	if sd.ID != nil {
+		objectMap["id"] = sd.ID
+	}
+	if sd.Name != nil {
+		objectMap["name"] = sd.Name
+	}
+	if sd.Kind != nil {
+		objectMap["kind"] = sd.Kind
+	}
+	if sd.Type != nil {
+		objectMap["type"] = sd.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SlotDifference struct.
@@ -15211,6 +17869,27 @@ type Snapshot struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Snapshot.
+func (s Snapshot) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.SnapshotProperties != nil {
+		objectMap["properties"] = s.SnapshotProperties
+	}
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Kind != nil {
+		objectMap["kind"] = s.Kind
+	}
+	if s.Type != nil {
+		objectMap["type"] = s.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for Snapshot struct.
 func (s *Snapshot) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -15393,6 +18072,27 @@ type SnapshotRecoveryRequest struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for SnapshotRecoveryRequest.
+func (srr SnapshotRecoveryRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if srr.SnapshotRecoveryRequestProperties != nil {
+		objectMap["properties"] = srr.SnapshotRecoveryRequestProperties
+	}
+	if srr.ID != nil {
+		objectMap["id"] = srr.ID
+	}
+	if srr.Name != nil {
+		objectMap["name"] = srr.Name
+	}
+	if srr.Kind != nil {
+		objectMap["kind"] = srr.Kind
+	}
+	if srr.Type != nil {
+		objectMap["type"] = srr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for SnapshotRecoveryRequest struct.
 func (srr *SnapshotRecoveryRequest) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -15509,6 +18209,27 @@ type SourceControl struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SourceControl.
+func (sc SourceControl) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sc.SourceControlProperties != nil {
+		objectMap["properties"] = sc.SourceControlProperties
+	}
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Name != nil {
+		objectMap["name"] = sc.Name
+	}
+	if sc.Kind != nil {
+		objectMap["kind"] = sc.Kind
+	}
+	if sc.Type != nil {
+		objectMap["type"] = sc.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for SourceControl struct.
@@ -15687,6 +18408,28 @@ type SourceControlProperties struct {
 	ExpirationTime *date.Time `json:"expirationTime,omitempty"`
 }
 
+// StackMajorVersion application stack major version.
+type StackMajorVersion struct {
+	// DisplayVersion - Application stack major version (display only).
+	DisplayVersion *string `json:"displayVersion,omitempty"`
+	// RuntimeVersion - Application stack major version (runtime only).
+	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
+	// IsDefault - <code>true</code> if this is the default major version; otherwise, <code>false</code>.
+	IsDefault *bool `json:"isDefault,omitempty"`
+	// MinorVersions - Minor versions associated with the major version.
+	MinorVersions *[]StackMinorVersion `json:"minorVersions,omitempty"`
+}
+
+// StackMinorVersion application stack minor version.
+type StackMinorVersion struct {
+	// DisplayVersion - Application stack minor version (display only).
+	DisplayVersion *string `json:"displayVersion,omitempty"`
+	// RuntimeVersion - Application stack minor version (runtime only).
+	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
+	// IsDefault - <code>true</code> if this is the default minor version; otherwise, <code>false</code>.
+	IsDefault *bool `json:"isDefault,omitempty"`
+}
+
 // StampCapacity stamp capacity information.
 type StampCapacity struct {
 	// Name - Name of the stamp.
@@ -15845,6 +18588,27 @@ type StorageMigrationOptions struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for StorageMigrationOptions.
+func (smo StorageMigrationOptions) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if smo.StorageMigrationOptionsProperties != nil {
+		objectMap["properties"] = smo.StorageMigrationOptionsProperties
+	}
+	if smo.ID != nil {
+		objectMap["id"] = smo.ID
+	}
+	if smo.Name != nil {
+		objectMap["name"] = smo.Name
+	}
+	if smo.Kind != nil {
+		objectMap["kind"] = smo.Kind
+	}
+	if smo.Type != nil {
+		objectMap["type"] = smo.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for StorageMigrationOptions struct.
 func (smo *StorageMigrationOptions) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -15930,6 +18694,27 @@ type StorageMigrationResponse struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for StorageMigrationResponse.
+func (smr StorageMigrationResponse) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if smr.StorageMigrationResponseProperties != nil {
+		objectMap["properties"] = smr.StorageMigrationResponseProperties
+	}
+	if smr.ID != nil {
+		objectMap["id"] = smr.ID
+	}
+	if smr.Name != nil {
+		objectMap["name"] = smr.Name
+	}
+	if smr.Kind != nil {
+		objectMap["kind"] = smr.Kind
+	}
+	if smr.Type != nil {
+		objectMap["type"] = smr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for StorageMigrationResponse struct.
@@ -16169,6 +18954,27 @@ type TopLevelDomain struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for TopLevelDomain.
+func (tld TopLevelDomain) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tld.TopLevelDomainProperties != nil {
+		objectMap["properties"] = tld.TopLevelDomainProperties
+	}
+	if tld.ID != nil {
+		objectMap["id"] = tld.ID
+	}
+	if tld.Name != nil {
+		objectMap["name"] = tld.Name
+	}
+	if tld.Kind != nil {
+		objectMap["kind"] = tld.Kind
+	}
+	if tld.Type != nil {
+		objectMap["type"] = tld.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for TopLevelDomain struct.
 func (tld *TopLevelDomain) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -16362,6 +19168,27 @@ type TriggeredJobHistory struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for TriggeredJobHistory.
+func (tjh TriggeredJobHistory) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tjh.TriggeredJobHistoryProperties != nil {
+		objectMap["properties"] = tjh.TriggeredJobHistoryProperties
+	}
+	if tjh.ID != nil {
+		objectMap["id"] = tjh.ID
+	}
+	if tjh.Name != nil {
+		objectMap["name"] = tjh.Name
+	}
+	if tjh.Kind != nil {
+		objectMap["kind"] = tjh.Kind
+	}
+	if tjh.Type != nil {
+		objectMap["type"] = tjh.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for TriggeredJobHistory struct.
 func (tjh *TriggeredJobHistory) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -16544,6 +19371,27 @@ type TriggeredJobRun struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for TriggeredJobRun.
+func (tjr TriggeredJobRun) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tjr.TriggeredJobRunProperties != nil {
+		objectMap["properties"] = tjr.TriggeredJobRunProperties
+	}
+	if tjr.ID != nil {
+		objectMap["id"] = tjr.ID
+	}
+	if tjr.Name != nil {
+		objectMap["name"] = tjr.Name
+	}
+	if tjr.Kind != nil {
+		objectMap["kind"] = tjr.Kind
+	}
+	if tjr.Type != nil {
+		objectMap["type"] = tjr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for TriggeredJobRun struct.
 func (tjr *TriggeredJobRun) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -16643,6 +19491,27 @@ type TriggeredWebJob struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for TriggeredWebJob.
+func (twj TriggeredWebJob) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if twj.TriggeredWebJobProperties != nil {
+		objectMap["properties"] = twj.TriggeredWebJobProperties
+	}
+	if twj.ID != nil {
+		objectMap["id"] = twj.ID
+	}
+	if twj.Name != nil {
+		objectMap["name"] = twj.Name
+	}
+	if twj.Kind != nil {
+		objectMap["kind"] = twj.Kind
+	}
+	if twj.Type != nil {
+		objectMap["type"] = twj.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for TriggeredWebJob struct.
@@ -16857,7 +19726,9 @@ func (twj TriggeredWebJobProperties) MarshalJSON() ([]byte, error) {
 	if twj.ExtraInfoURL != nil {
 		objectMap["extraInfoUrl"] = twj.ExtraInfoURL
 	}
-	objectMap["jobType"] = twj.JobType
+	if twj.JobType != "" {
+		objectMap["jobType"] = twj.JobType
+	}
 	if twj.Error != nil {
 		objectMap["error"] = twj.Error
 	}
@@ -16882,6 +19753,27 @@ type Usage struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Usage.
+func (u Usage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if u.UsageProperties != nil {
+		objectMap["properties"] = u.UsageProperties
+	}
+	if u.ID != nil {
+		objectMap["id"] = u.ID
+	}
+	if u.Name != nil {
+		objectMap["name"] = u.Name
+	}
+	if u.Kind != nil {
+		objectMap["kind"] = u.Kind
+	}
+	if u.Type != nil {
+		objectMap["type"] = u.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Usage struct.
@@ -17083,6 +19975,27 @@ type User struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for User.
+func (u User) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if u.UserProperties != nil {
+		objectMap["properties"] = u.UserProperties
+	}
+	if u.ID != nil {
+		objectMap["id"] = u.ID
+	}
+	if u.Name != nil {
+		objectMap["name"] = u.Name
+	}
+	if u.Kind != nil {
+		objectMap["kind"] = u.Kind
+	}
+	if u.Type != nil {
+		objectMap["type"] = u.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for User struct.
 func (u *User) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -17183,6 +20096,24 @@ type ValidateRequest struct {
 	Location *string `json:"location,omitempty"`
 	// ValidateProperties - Properties of the resource to validate.
 	*ValidateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ValidateRequest.
+func (vr ValidateRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vr.Name != nil {
+		objectMap["name"] = vr.Name
+	}
+	if vr.Type != "" {
+		objectMap["type"] = vr.Type
+	}
+	if vr.Location != nil {
+		objectMap["location"] = vr.Location
+	}
+	if vr.ValidateProperties != nil {
+		objectMap["properties"] = vr.ValidateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ValidateRequest struct.
@@ -17313,6 +20244,27 @@ type VnetGateway struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VnetGateway.
+func (vg VnetGateway) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vg.VnetGatewayProperties != nil {
+		objectMap["properties"] = vg.VnetGatewayProperties
+	}
+	if vg.ID != nil {
+		objectMap["id"] = vg.ID
+	}
+	if vg.Name != nil {
+		objectMap["name"] = vg.Name
+	}
+	if vg.Kind != nil {
+		objectMap["kind"] = vg.Kind
+	}
+	if vg.Type != nil {
+		objectMap["type"] = vg.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VnetGateway struct.
 func (vg *VnetGateway) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -17394,6 +20346,27 @@ type VnetInfo struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VnetInfo.
+func (vi VnetInfo) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vi.VnetInfoProperties != nil {
+		objectMap["properties"] = vi.VnetInfoProperties
+	}
+	if vi.ID != nil {
+		objectMap["id"] = vi.ID
+	}
+	if vi.Name != nil {
+		objectMap["name"] = vi.Name
+	}
+	if vi.Kind != nil {
+		objectMap["kind"] = vi.Kind
+	}
+	if vi.Type != nil {
+		objectMap["type"] = vi.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VnetInfo struct.
@@ -17487,6 +20460,27 @@ type VnetParameters struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VnetParameters.
+func (vp VnetParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vp.VnetParametersProperties != nil {
+		objectMap["properties"] = vp.VnetParametersProperties
+	}
+	if vp.ID != nil {
+		objectMap["id"] = vp.ID
+	}
+	if vp.Name != nil {
+		objectMap["name"] = vp.Name
+	}
+	if vp.Kind != nil {
+		objectMap["kind"] = vp.Kind
+	}
+	if vp.Type != nil {
+		objectMap["type"] = vp.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VnetParameters struct.
 func (vp *VnetParameters) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -17570,6 +20564,27 @@ type VnetRoute struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VnetRoute.
+func (vr VnetRoute) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vr.VnetRouteProperties != nil {
+		objectMap["properties"] = vr.VnetRouteProperties
+	}
+	if vr.ID != nil {
+		objectMap["id"] = vr.ID
+	}
+	if vr.Name != nil {
+		objectMap["name"] = vr.Name
+	}
+	if vr.Kind != nil {
+		objectMap["kind"] = vr.Kind
+	}
+	if vr.Type != nil {
+		objectMap["type"] = vr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VnetRoute struct.
@@ -17663,6 +20678,27 @@ type VnetValidationFailureDetails struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for VnetValidationFailureDetails.
+func (vvfd VnetValidationFailureDetails) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vvfd.VnetValidationFailureDetailsProperties != nil {
+		objectMap["properties"] = vvfd.VnetValidationFailureDetailsProperties
+	}
+	if vvfd.ID != nil {
+		objectMap["id"] = vvfd.ID
+	}
+	if vvfd.Name != nil {
+		objectMap["name"] = vvfd.Name
+	}
+	if vvfd.Kind != nil {
+		objectMap["kind"] = vvfd.Kind
+	}
+	if vvfd.Type != nil {
+		objectMap["type"] = vvfd.Type
+	}
+	return json.Marshal(objectMap)
+}
+
 // UnmarshalJSON is the custom unmarshaler for VnetValidationFailureDetails struct.
 func (vvfd *VnetValidationFailureDetails) UnmarshalJSON(body []byte) error {
 	var m map[string]*json.RawMessage
@@ -17743,6 +20779,27 @@ type VnetValidationTestFailure struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VnetValidationTestFailure.
+func (vvtf VnetValidationTestFailure) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vvtf.VnetValidationTestFailureProperties != nil {
+		objectMap["properties"] = vvtf.VnetValidationTestFailureProperties
+	}
+	if vvtf.ID != nil {
+		objectMap["id"] = vvtf.ID
+	}
+	if vvtf.Name != nil {
+		objectMap["name"] = vvtf.Name
+	}
+	if vvtf.Kind != nil {
+		objectMap["kind"] = vvtf.Kind
+	}
+	if vvtf.Type != nil {
+		objectMap["type"] = vvtf.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for VnetValidationTestFailure struct.
@@ -17943,6 +21000,30 @@ type WorkerPoolResource struct {
 	Kind *string `json:"kind,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WorkerPoolResource.
+func (wpr WorkerPoolResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wpr.WorkerPool != nil {
+		objectMap["properties"] = wpr.WorkerPool
+	}
+	if wpr.Sku != nil {
+		objectMap["sku"] = wpr.Sku
+	}
+	if wpr.ID != nil {
+		objectMap["id"] = wpr.ID
+	}
+	if wpr.Name != nil {
+		objectMap["name"] = wpr.Name
+	}
+	if wpr.Kind != nil {
+		objectMap["kind"] = wpr.Kind
+	}
+	if wpr.Type != nil {
+		objectMap["type"] = wpr.Type
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkerPoolResource struct.

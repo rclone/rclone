@@ -24,21 +24,25 @@ import (
 	"net/http"
 )
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // UsageClient is the the Storage Management Client.
 type UsageClient struct {
 	BaseClient
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NewUsageClient creates an instance of the UsageClient client.
 func NewUsageClient(subscriptionID string) UsageClient {
 	return NewUsageClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // NewUsageClientWithBaseURI creates an instance of the UsageClient client.
 func NewUsageClientWithBaseURI(baseURI string, subscriptionID string) UsageClient {
 	return UsageClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // List gets the current usage count and the limit for the resources under the subscription.
 func (client UsageClient) List(ctx context.Context) (result UsageListResult, err error) {
 	req, err := client.ListPreparer(ctx)
@@ -62,6 +66,7 @@ func (client UsageClient) List(ctx context.Context) (result UsageListResult, err
 	return
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListPreparer prepares the List request.
 func (client UsageClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -81,6 +86,7 @@ func (client UsageClient) ListPreparer(ctx context.Context) (*http.Request, erro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageClient) ListSender(req *http.Request) (*http.Response, error) {
@@ -88,6 +94,7 @@ func (client UsageClient) ListSender(req *http.Request) (*http.Response, error) 
 		azure.DoRetryWithRegistration(client.Client))
 }
 
+// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/storage/mgmt/2015-05-01-preview/storage instead.
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
 func (client UsageClient) ListResponder(resp *http.Response) (result UsageListResult, err error) {

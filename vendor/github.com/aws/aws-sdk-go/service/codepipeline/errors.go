@@ -83,6 +83,18 @@ const (
 	// The specified structure was specified in an invalid format.
 	ErrCodeInvalidStructureException = "InvalidStructureException"
 
+	// ErrCodeInvalidWebhookAuthenticationParametersException for service response error code
+	// "InvalidWebhookAuthenticationParametersException".
+	//
+	// The specified authentication type is in an invalid format.
+	ErrCodeInvalidWebhookAuthenticationParametersException = "InvalidWebhookAuthenticationParametersException"
+
+	// ErrCodeInvalidWebhookFilterPatternException for service response error code
+	// "InvalidWebhookFilterPatternException".
+	//
+	// The specified event filter rule is in an invalid format.
+	ErrCodeInvalidWebhookFilterPatternException = "InvalidWebhookFilterPatternException"
+
 	// ErrCodeJobNotFoundException for service response error code
 	// "JobNotFoundException".
 	//
@@ -149,4 +161,10 @@ const (
 	//
 	// The validation was specified in an invalid format.
 	ErrCodeValidationException = "ValidationException"
+
+	// ErrCodeWebhookNotFoundException for service response error code
+	// "WebhookNotFoundException".
+	//
+	// The specified webhook was entered in an invalid format or cannot be found.
+	ErrCodeWebhookNotFoundException = "WebhookNotFoundException"
 )

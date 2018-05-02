@@ -42,9 +42,9 @@ func NewIotDpsResourceClientWithBaseURI(baseURI string, subscriptionID string) I
 
 // CheckProvisioningServiceNameAvailability check if a provisioning service name is available. This will validate if
 // the name is syntactically valid and if the name is usable
-//
-// arguments is set the name parameter in the OperationInputs structure to the name of the provisioning service to
-// check.
+// Parameters:
+// arguments - set the name parameter in the OperationInputs structure to the name of the provisioning service
+// to check.
 func (client IotDpsResourceClient) CheckProvisioningServiceNameAvailability(ctx context.Context, arguments OperationInputs) (result NameAvailabilityInfo, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: arguments,
@@ -85,7 +85,7 @@ func (client IotDpsResourceClient) CheckProvisioningServiceNameAvailabilityPrepa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Devices/checkProvisioningServiceNameAvailability", pathParameters),
@@ -117,9 +117,10 @@ func (client IotDpsResourceClient) CheckProvisioningServiceNameAvailabilityRespo
 // CreateOrUpdate create or update the metadata of the provisioning service. The usual pattern to modify a property is
 // to retrieve the provisioning service metadata and security metadata, and then combine them with the modified values
 // in a new body to update the provisioning service.
-//
-// resourceGroupName is resource group identifier. provisioningServiceName is name of provisioning service to
-// create or update. iotDpsDescription is description of the provisioning service to create or update.
+// Parameters:
+// resourceGroupName - resource group identifier.
+// provisioningServiceName - name of provisioning service to create or update.
+// iotDpsDescription - description of the provisioning service to create or update.
 func (client IotDpsResourceClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, provisioningServiceName string, iotDpsDescription ProvisioningServiceDescription) (result IotDpsResourceCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: iotDpsDescription,
@@ -157,7 +158,7 @@ func (client IotDpsResourceClient) CreateOrUpdatePreparer(ctx context.Context, r
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}", pathParameters),
@@ -195,9 +196,9 @@ func (client IotDpsResourceClient) CreateOrUpdateResponder(resp *http.Response) 
 }
 
 // Delete deletes the Provisioning Service.
-//
-// provisioningServiceName is name of provisioning service to delete. resourceGroupName is resource group
-// identifier.
+// Parameters:
+// provisioningServiceName - name of provisioning service to delete.
+// resourceGroupName - resource group identifier.
 func (client IotDpsResourceClient) Delete(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result IotDpsResourceDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, provisioningServiceName, resourceGroupName)
 	if err != nil {
@@ -263,9 +264,9 @@ func (client IotDpsResourceClient) DeleteResponder(resp *http.Response) (result 
 }
 
 // Get get the metadata of the provisioning service without SAS keys.
-//
-// provisioningServiceName is name of the provisioning service to retrieve. resourceGroupName is resource group
-// name.
+// Parameters:
+// provisioningServiceName - name of the provisioning service to retrieve.
+// resourceGroupName - resource group name.
 func (client IotDpsResourceClient) Get(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result ProvisioningServiceDescription, err error) {
 	req, err := client.GetPreparer(ctx, provisioningServiceName, resourceGroupName)
 	if err != nil {
@@ -331,11 +332,12 @@ func (client IotDpsResourceClient) GetResponder(resp *http.Response) (result Pro
 
 // GetOperationResult gets the status of a long running operation, such as create, update or delete a provisioning
 // service.
-//
-// operationID is operation id corresponding to long running operation. Use this to poll for the status.
-// resourceGroupName is resource group identifier. provisioningServiceName is name of provisioning service that the
-// operation is running on. asyncinfo is async header used to poll on the status of the operation, obtained while
-// creating the long running operation.
+// Parameters:
+// operationID - operation id corresponding to long running operation. Use this to poll for the status.
+// resourceGroupName - resource group identifier.
+// provisioningServiceName - name of provisioning service that the operation is running on.
+// asyncinfo - async header used to poll on the status of the operation, obtained while creating the long
+// running operation.
 func (client IotDpsResourceClient) GetOperationResult(ctx context.Context, operationID string, resourceGroupName string, provisioningServiceName string, asyncinfo string) (result AsyncOperationResult, err error) {
 	req, err := client.GetOperationResultPreparer(ctx, operationID, resourceGroupName, provisioningServiceName, asyncinfo)
 	if err != nil {
@@ -402,8 +404,8 @@ func (client IotDpsResourceClient) GetOperationResultResponder(resp *http.Respon
 }
 
 // ListByResourceGroup get a list of all provisioning services in the given resource group.
-//
-// resourceGroupName is resource group identifier.
+// Parameters:
+// resourceGroupName - resource group identifier.
 func (client IotDpsResourceClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ProvisioningServiceDescriptionListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -585,9 +587,9 @@ func (client IotDpsResourceClient) ListBySubscriptionComplete(ctx context.Contex
 }
 
 // ListKeys list the primary and secondary keys for a provisioning service.
-//
-// provisioningServiceName is the provisioning service name to get the shared access keys for. resourceGroupName is
-// resource group name
+// Parameters:
+// provisioningServiceName - the provisioning service name to get the shared access keys for.
+// resourceGroupName - resource group name
 func (client IotDpsResourceClient) ListKeys(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result SharedAccessSignatureAuthorizationRuleListResultPage, err error) {
 	result.fn = client.listKeysNextResults
 	req, err := client.ListKeysPreparer(ctx, provisioningServiceName, resourceGroupName)
@@ -680,9 +682,10 @@ func (client IotDpsResourceClient) ListKeysComplete(ctx context.Context, provisi
 }
 
 // ListKeysForKeyName list primary and secondary keys for a specific key name
-//
-// provisioningServiceName is name of the provisioning service. keyName is logical key name to get key-values for.
-// resourceGroupName is the name of the resource group that contains the provisioning service.
+// Parameters:
+// provisioningServiceName - name of the provisioning service.
+// keyName - logical key name to get key-values for.
+// resourceGroupName - the name of the resource group that contains the provisioning service.
 func (client IotDpsResourceClient) ListKeysForKeyName(ctx context.Context, provisioningServiceName string, keyName string, resourceGroupName string) (result SharedAccessSignatureAuthorizationRuleAccessRightsDescription, err error) {
 	req, err := client.ListKeysForKeyNamePreparer(ctx, provisioningServiceName, keyName, resourceGroupName)
 	if err != nil {
@@ -748,8 +751,9 @@ func (client IotDpsResourceClient) ListKeysForKeyNameResponder(resp *http.Respon
 }
 
 // ListValidSkus gets the list of valid SKUs and tiers for a provisioning service.
-//
-// provisioningServiceName is name of provisioning service. resourceGroupName is name of resource group.
+// Parameters:
+// provisioningServiceName - name of provisioning service.
+// resourceGroupName - name of resource group.
 func (client IotDpsResourceClient) ListValidSkus(ctx context.Context, provisioningServiceName string, resourceGroupName string) (result IotDpsSkuDefinitionListResultPage, err error) {
 	result.fn = client.listValidSkusNextResults
 	req, err := client.ListValidSkusPreparer(ctx, provisioningServiceName, resourceGroupName)
@@ -842,10 +846,10 @@ func (client IotDpsResourceClient) ListValidSkusComplete(ctx context.Context, pr
 }
 
 // Update update an existing provisioning service's tags. to update other fields use the CreateOrUpdate method
-//
-// resourceGroupName is resource group identifier. provisioningServiceName is name of provisioning service to
-// create or update. provisioningServiceTags is updated tag information to set into the provisioning service
-// instance.
+// Parameters:
+// resourceGroupName - resource group identifier.
+// provisioningServiceName - name of provisioning service to create or update.
+// provisioningServiceTags - updated tag information to set into the provisioning service instance.
 func (client IotDpsResourceClient) Update(ctx context.Context, resourceGroupName string, provisioningServiceName string, provisioningServiceTags TagsResource) (result IotDpsResourceUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, provisioningServiceName, provisioningServiceTags)
 	if err != nil {
@@ -876,7 +880,7 @@ func (client IotDpsResourceClient) UpdatePreparer(ctx context.Context, resourceG
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/provisioningServices/{provisioningServiceName}", pathParameters),

@@ -40,8 +40,8 @@ func NewReplicationEventsClientWithBaseURI(baseURI string, subscriptionID string
 }
 
 // Get the operation to get the details of an Azure Site recovery event.
-//
-// eventName is the name of the Azure Site Recovery event.
+// Parameters:
+// eventName - the name of the Azure Site Recovery event.
 func (client ReplicationEventsClient) Get(ctx context.Context, eventName string) (result Event, err error) {
 	req, err := client.GetPreparer(ctx, eventName)
 	if err != nil {
@@ -107,8 +107,8 @@ func (client ReplicationEventsClient) GetResponder(resp *http.Response) (result 
 }
 
 // List gets the list of Azure Site Recovery events for the vault.
-//
-// filter is oData filter options.
+// Parameters:
+// filter - oData filter options.
 func (client ReplicationEventsClient) List(ctx context.Context, filter string) (result EventCollectionPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter)

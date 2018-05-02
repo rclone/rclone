@@ -42,8 +42,8 @@ func NewNamespacesClientWithBaseURI(baseURI string, subscriptionID string) Names
 
 // CheckAvailability checks the availability of the given service namespace across all Windows Azure subscriptions.
 // This is useful because the domain name is created based on the service namespace name.
-//
-// parameters is the namespace name.
+// Parameters:
+// parameters - the namespace name.
 func (client NamespacesClient) CheckAvailability(ctx context.Context, parameters CheckAvailabilityParameters) (result CheckAvailabilityResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -84,7 +84,7 @@ func (client NamespacesClient) CheckAvailabilityPreparer(ctx context.Context, pa
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.NotificationHubs/checkNamespaceAvailability", pathParameters),
@@ -115,9 +115,10 @@ func (client NamespacesClient) CheckAvailabilityResponder(resp *http.Response) (
 
 // CreateOrUpdate creates/Updates a service namespace. Once created, this namespace's resource manifest is immutable.
 // This operation is idempotent.
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name. parameters is
-// parameters supplied to create a Namespace Resource.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// parameters - parameters supplied to create a Namespace Resource.
 func (client NamespacesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, parameters NamespaceCreateOrUpdateParameters) (result NamespaceResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -161,7 +162,7 @@ func (client NamespacesClient) CreateOrUpdatePreparer(ctx context.Context, resou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}", pathParameters),
@@ -191,9 +192,11 @@ func (client NamespacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 }
 
 // CreateOrUpdateAuthorizationRule creates an authorization rule for a namespace
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name. authorizationRuleName
-// is aauthorization Rule Name. parameters is the shared access authorization rule.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// authorizationRuleName - aauthorization Rule Name.
+// parameters - the shared access authorization rule.
 func (client NamespacesClient) CreateOrUpdateAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string, parameters SharedAccessAuthorizationRuleCreateOrUpdateParameters) (result SharedAccessAuthorizationRuleResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -237,7 +240,7 @@ func (client NamespacesClient) CreateOrUpdateAuthorizationRulePreparer(ctx conte
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}/AuthorizationRules/{authorizationRuleName}", pathParameters),
@@ -268,8 +271,9 @@ func (client NamespacesClient) CreateOrUpdateAuthorizationRuleResponder(resp *ht
 
 // Delete deletes an existing namespace. This operation also removes all associated notificationHubs under the
 // namespace.
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
 func (client NamespacesClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string) (result NamespacesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, namespaceName)
 	if err != nil {
@@ -335,9 +339,10 @@ func (client NamespacesClient) DeleteResponder(resp *http.Response) (result auto
 }
 
 // DeleteAuthorizationRule deletes a namespace authorization rule
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name. authorizationRuleName
-// is authorization Rule Name.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// authorizationRuleName - authorization Rule Name.
 func (client NamespacesClient) DeleteAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result autorest.Response, err error) {
 	req, err := client.DeleteAuthorizationRulePreparer(ctx, resourceGroupName, namespaceName, authorizationRuleName)
 	if err != nil {
@@ -402,8 +407,9 @@ func (client NamespacesClient) DeleteAuthorizationRuleResponder(resp *http.Respo
 }
 
 // Get returns the description for the specified namespace.
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
 func (client NamespacesClient) Get(ctx context.Context, resourceGroupName string, namespaceName string) (result NamespaceResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, namespaceName)
 	if err != nil {
@@ -468,9 +474,10 @@ func (client NamespacesClient) GetResponder(resp *http.Response) (result Namespa
 }
 
 // GetAuthorizationRule gets an authorization rule for a namespace by name.
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name authorizationRuleName
-// is authorization rule name.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name
+// authorizationRuleName - authorization rule name.
 func (client NamespacesClient) GetAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result SharedAccessAuthorizationRuleResource, err error) {
 	req, err := client.GetAuthorizationRulePreparer(ctx, resourceGroupName, namespaceName, authorizationRuleName)
 	if err != nil {
@@ -538,8 +545,8 @@ func (client NamespacesClient) GetAuthorizationRuleResponder(resp *http.Response
 // GetLongRunningOperationStatus the Get Operation Status operation returns the status of the specified operation.
 // After calling an asynchronous operation, you can call Get Operation Status to determine whether the operation has
 // succeeded, failed, or is still in progress.
-//
-// operationStatusLink is location value returned by the Begin operation.
+// Parameters:
+// operationStatusLink - location value returned by the Begin operation.
 func (client NamespacesClient) GetLongRunningOperationStatus(ctx context.Context, operationStatusLink string) (result autorest.Response, err error) {
 	req, err := client.GetLongRunningOperationStatusPreparer(ctx, operationStatusLink)
 	if err != nil {
@@ -595,9 +602,9 @@ func (client NamespacesClient) GetLongRunningOperationStatusResponder(resp *http
 }
 
 // List lists the available namespaces within a resourceGroup.
-//
-// resourceGroupName is the name of the resource group. If resourceGroupName value is null the method lists all the
-// namespaces within subscription
+// Parameters:
+// resourceGroupName - the name of the resource group. If resourceGroupName value is null the method lists all
+// the namespaces within subscription
 func (client NamespacesClient) List(ctx context.Context, resourceGroupName string) (result NamespaceListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName)
@@ -779,8 +786,9 @@ func (client NamespacesClient) ListAllComplete(ctx context.Context) (result Name
 }
 
 // ListAuthorizationRules gets the authorization rules for a namespace.
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name
 func (client NamespacesClient) ListAuthorizationRules(ctx context.Context, resourceGroupName string, namespaceName string) (result SharedAccessAuthorizationRuleListResultPage, err error) {
 	result.fn = client.listAuthorizationRulesNextResults
 	req, err := client.ListAuthorizationRulesPreparer(ctx, resourceGroupName, namespaceName)
@@ -873,9 +881,10 @@ func (client NamespacesClient) ListAuthorizationRulesComplete(ctx context.Contex
 }
 
 // ListKeys gets the Primary and Secondary ConnectionStrings to the namespace
-//
-// resourceGroupName is the name of the resource group. namespaceName is the namespace name. authorizationRuleName
-// is the connection string of the namespace for the specified authorizationRule.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// authorizationRuleName - the connection string of the namespace for the specified authorizationRule.
 func (client NamespacesClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result ResourceListKeys, err error) {
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, namespaceName, authorizationRuleName)
 	if err != nil {

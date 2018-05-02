@@ -2,20 +2,29 @@
   "version": "2.0",
   "service": "<fullname>Amazon WorkSpaces Service</fullname> <p>Amazon WorkSpaces enables you to provision virtual, cloud-based Microsoft Windows desktops for your users.</p>",
   "operations": {
-    "CreateTags": "<p>Creates tags for the specified WorkSpace.</p>",
+    "AssociateIpGroups": "<p>Associates the specified IP access control group with the specified directory.</p>",
+    "AuthorizeIpRules": "<p>Adds one or more rules to the specified IP access control group.</p> <p>This action gives users permission to access their WorkSpaces from the CIDR address ranges specified in the rules.</p>",
+    "CreateIpGroup": "<p>Creates an IP access control group.</p> <p>An IP access control group provides you with the ability to control the IP addresses from which users are allowed to access their WorkSpaces. To specify the CIDR address ranges, add rules to your IP access control group and then associate the group with your directory. You can add rules when you create the group or at any time using <a>AuthorizeIpRules</a>.</p> <p>There is a default IP access control group associated with your directory. If you don't associate an IP access control group with your directory, the default group is used. The default group includes a default rule that allows users to access their WorkSpaces from anywhere. You cannot modify the default IP access control group for your directory.</p>",
+    "CreateTags": "<p>Creates the specified tags for the specified WorkSpace.</p>",
     "CreateWorkspaces": "<p>Creates one or more WorkSpaces.</p> <p>This operation is asynchronous and returns before the WorkSpaces are created.</p>",
-    "DeleteTags": "<p>Deletes the specified tags from a WorkSpace.</p>",
-    "DescribeTags": "<p>Describes the tags for the specified WorkSpace.</p>",
+    "DeleteIpGroup": "<p>Deletes the specified IP access control group.</p> <p>You cannot delete an IP access control group that is associated with a directory.</p>",
+    "DeleteTags": "<p>Deletes the specified tags from the specified WorkSpace.</p>",
+    "DescribeIpGroups": "<p>Describes one or more of your IP access control groups.</p>",
+    "DescribeTags": "<p>Describes the specified tags for the specified WorkSpace.</p>",
     "DescribeWorkspaceBundles": "<p>Describes the available WorkSpace bundles.</p> <p>You can filter the results using either bundle ID or owner, but not both.</p>",
     "DescribeWorkspaceDirectories": "<p>Describes the available AWS Directory Service directories that are registered with Amazon WorkSpaces.</p>",
     "DescribeWorkspaces": "<p>Describes the specified WorkSpaces.</p> <p>You can filter the results using bundle ID, directory ID, or owner, but you can specify only one filter at a time.</p>",
     "DescribeWorkspacesConnectionStatus": "<p>Describes the connection status of the specified WorkSpaces.</p>",
+    "DisassociateIpGroups": "<p>Disassociates the specified IP access control group from the specified directory.</p>",
     "ModifyWorkspaceProperties": "<p>Modifies the specified WorkSpace properties.</p>",
-    "RebootWorkspaces": "<p>Reboots the specified WorkSpaces.</p> <p>You cannot reboot a WorkSpace unless its state is <code>AVAILABLE</code>, <code>IMPAIRED</code>, or <code>INOPERABLE</code>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have rebooted.</p>",
-    "RebuildWorkspaces": "<p>Rebuilds the specified WorkSpaces.</p> <p>You cannot rebuild a WorkSpace unless its state is <code>AVAILABLE</code> or <code>ERROR</code>.</p> <p>Rebuilding a WorkSpace is a potentially destructive action that can result in the loss of data. For more information, see <a href=\"http://docs.aws.amazon.com/workspaces/latest/adminguide/reset-workspace.html\">Rebuild a WorkSpace</a>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have been completely rebuilt.</p>",
+    "ModifyWorkspaceState": "<p>Sets the state of the specified WorkSpace.</p> <p>To maintain a WorkSpace without being interrupted, set the WorkSpace state to <code>ADMIN_MAINTENANCE</code>. WorkSpaces in this state do not respond to requests to reboot, stop, start, or rebuild. An AutoStop WorkSpace in this state is not stopped. Users can log into a WorkSpace in the <code>ADMIN_MAINTENANCE</code> state.</p>",
+    "RebootWorkspaces": "<p>Reboots the specified WorkSpaces.</p> <p>You cannot reboot a WorkSpace unless its state is <code>AVAILABLE</code> or <code>UNHEALTHY</code>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have rebooted.</p>",
+    "RebuildWorkspaces": "<p>Rebuilds the specified WorkSpace.</p> <p>You cannot rebuild a WorkSpace unless its state is <code>AVAILABLE</code>, <code>ERROR</code>, or <code>UNHEALTHY</code>.</p> <p>Rebuilding a WorkSpace is a potentially destructive action that can result in the loss of data. For more information, see <a href=\"http://docs.aws.amazon.com/workspaces/latest/adminguide/reset-workspace.html\">Rebuild a WorkSpace</a>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have been completely rebuilt.</p>",
+    "RevokeIpRules": "<p>Removes one or more rules from the specified IP access control group.</p>",
     "StartWorkspaces": "<p>Starts the specified WorkSpaces.</p> <p>You cannot start a WorkSpace unless it has a running mode of <code>AutoStop</code> and a state of <code>STOPPED</code>.</p>",
     "StopWorkspaces": "<p> Stops the specified WorkSpaces.</p> <p>You cannot stop a WorkSpace unless it has a running mode of <code>AutoStop</code> and a state of <code>AVAILABLE</code>, <code>IMPAIRED</code>, <code>UNHEALTHY</code>, or <code>ERROR</code>.</p>",
-    "TerminateWorkspaces": "<p>Terminates the specified WorkSpaces.</p> <p>Terminating a WorkSpace is a permanent action and cannot be undone. The user's data is destroyed. If you need to archive any user data, contact Amazon Web Services before terminating the WorkSpace.</p> <p>You can terminate a WorkSpace that is in any state except <code>SUSPENDED</code>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have been completely terminated.</p>"
+    "TerminateWorkspaces": "<p>Terminates the specified WorkSpaces.</p> <p>Terminating a WorkSpace is a permanent action and cannot be undone. The user's data is destroyed. If you need to archive any user data, contact Amazon Web Services before terminating the WorkSpace.</p> <p>You can terminate a WorkSpace that is in any state except <code>SUSPENDED</code>.</p> <p>This operation is asynchronous and returns before the WorkSpaces have been completely terminated.</p>",
+    "UpdateRulesOfIpGroup": "<p>Replaces the current rules of the specified IP access control group with the specified rules.</p>"
   },
   "shapes": {
     "ARN": {
@@ -33,6 +42,26 @@
       "base": null,
       "refs": {
         "WorkspaceDirectory$Alias": "<p>The directory alias.</p>"
+      }
+    },
+    "AssociateIpGroupsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateIpGroupsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AuthorizeIpRulesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AuthorizeIpRulesResult": {
+      "base": null,
+      "refs": {
       }
     },
     "BooleanObject": {
@@ -101,6 +130,16 @@
         "WorkspaceConnectionStatus$ConnectionState": "<p>The connection state of the WorkSpace. The connection state is unknown if the WorkSpace is stopped.</p>"
       }
     },
+    "CreateIpGroupRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateIpGroupResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "CreateTagsRequest": {
       "base": null,
       "refs": {
@@ -133,12 +172,32 @@
         "WorkspaceDirectory$WorkspaceCreationProperties": "<p>The default creation properties for all WorkSpaces in the directory.</p>"
       }
     },
+    "DeleteIpGroupRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteIpGroupResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeleteTagsRequest": {
       "base": null,
       "refs": {
       }
     },
     "DeleteTagsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeIpGroupsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeIpGroupsResult": {
       "base": null,
       "refs": {
       }
@@ -205,8 +264,10 @@
     "DirectoryId": {
       "base": null,
       "refs": {
+        "AssociateIpGroupsRequest$DirectoryId": "<p>The ID of the directory.</p>",
         "DescribeWorkspacesRequest$DirectoryId": "<p>The ID of the directory. In addition, you can optionally specify a specific directory user (see <code>UserName</code>). This parameter cannot be combined with any other filter.</p>",
         "DirectoryIdList$member": null,
+        "DisassociateIpGroupsRequest$DirectoryId": "<p>The ID of the directory.</p>",
         "Workspace$DirectoryId": "<p>The identifier of the AWS Directory Service directory for the WorkSpace.</p>",
         "WorkspaceDirectory$DirectoryId": "<p>The directory identifier.</p>",
         "WorkspaceRequest$DirectoryId": "<p>The identifier of the AWS Directory Service directory for the WorkSpace. You can use <a>DescribeWorkspaceDirectories</a> to list the available directories.</p>"
@@ -230,6 +291,16 @@
         "WorkspaceDirectory$DirectoryName": "<p>The name of the directory.</p>"
       }
     },
+    "DisassociateIpGroupsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisassociateIpGroupsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DnsIpAddresses": {
       "base": null,
       "refs": {
@@ -250,6 +321,10 @@
         "InvalidParameterValuesException$message": "<p>The exception error message.</p>",
         "InvalidResourceStateException$message": null,
         "OperationInProgressException$message": null,
+        "OperationNotSupportedException$message": null,
+        "ResourceAlreadyExistsException$message": null,
+        "ResourceAssociatedException$message": null,
+        "ResourceCreationFailedException$message": null,
         "ResourceLimitExceededException$message": "<p>The exception error message.</p>",
         "ResourceNotFoundException$message": "<p>The resource could not be found.</p>",
         "ResourceUnavailableException$message": "<p>The exception error message.</p>",
@@ -277,7 +352,7 @@
     "FailedRebuildWorkspaceRequests": {
       "base": null,
       "refs": {
-        "RebuildWorkspacesResult$FailedRequests": "<p>Information about the WorkSpaces that could not be rebuilt.</p>"
+        "RebuildWorkspacesResult$FailedRequests": "<p>Information about the WorkSpace if it could not be rebuilt.</p>"
       }
     },
     "FailedStartWorkspaceRequests": {
@@ -314,7 +389,7 @@
       }
     },
     "InvalidResourceStateException": {
-      "base": "<p>The state of the WorkSpace is not valid for this operation.</p>",
+      "base": "<p>The state of the resource is not valid for this operation.</p>",
       "refs": {
       }
     },
@@ -325,9 +400,79 @@
         "Workspace$IpAddress": "<p>The IP address of the WorkSpace.</p>"
       }
     },
+    "IpGroupDesc": {
+      "base": null,
+      "refs": {
+        "CreateIpGroupRequest$GroupDesc": "<p>The description of the group.</p>",
+        "WorkspacesIpGroup$groupDesc": "<p>The description of the group.</p>"
+      }
+    },
+    "IpGroupId": {
+      "base": null,
+      "refs": {
+        "AuthorizeIpRulesRequest$GroupId": "<p>The ID of the group.</p>",
+        "CreateIpGroupResult$GroupId": "<p>The ID of the group.</p>",
+        "DeleteIpGroupRequest$GroupId": "<p>The ID of the IP access control group.</p>",
+        "IpGroupIdList$member": null,
+        "RevokeIpRulesRequest$GroupId": "<p>The ID of the group.</p>",
+        "UpdateRulesOfIpGroupRequest$GroupId": "<p>The ID of the group.</p>",
+        "WorkspacesIpGroup$groupId": "<p>The ID of the group.</p>"
+      }
+    },
+    "IpGroupIdList": {
+      "base": null,
+      "refs": {
+        "AssociateIpGroupsRequest$GroupIds": "<p>The IDs of one or more IP access control groups.</p>",
+        "DescribeIpGroupsRequest$GroupIds": "<p>The IDs of one or more IP access control groups.</p>",
+        "DisassociateIpGroupsRequest$GroupIds": "<p>The IDs of one or more IP access control groups.</p>",
+        "WorkspaceDirectory$ipGroupIds": "<p>The identifiers of the IP access control groups associated with the directory.</p>"
+      }
+    },
+    "IpGroupName": {
+      "base": null,
+      "refs": {
+        "CreateIpGroupRequest$GroupName": "<p>The name of the group.</p>",
+        "WorkspacesIpGroup$groupName": "<p>The name of the group.</p>"
+      }
+    },
+    "IpRevokedRuleList": {
+      "base": null,
+      "refs": {
+        "RevokeIpRulesRequest$UserRules": "<p>The rules to remove from the group.</p>"
+      }
+    },
+    "IpRule": {
+      "base": null,
+      "refs": {
+        "IpRevokedRuleList$member": null,
+        "IpRuleItem$ipRule": "<p>The IP address range, in CIDR notation.</p>"
+      }
+    },
+    "IpRuleDesc": {
+      "base": null,
+      "refs": {
+        "IpRuleItem$ruleDesc": "<p>The description.</p>"
+      }
+    },
+    "IpRuleItem": {
+      "base": "<p>Information about a rule for an IP access control group.</p>",
+      "refs": {
+        "IpRuleList$member": null
+      }
+    },
+    "IpRuleList": {
+      "base": null,
+      "refs": {
+        "AuthorizeIpRulesRequest$UserRules": "<p>The rules to add to the group.</p>",
+        "CreateIpGroupRequest$UserRules": "<p>The rules to add to the group.</p>",
+        "UpdateRulesOfIpGroupRequest$UserRules": "<p>One or more rules.</p>",
+        "WorkspacesIpGroup$userRules": "<p>The rules.</p>"
+      }
+    },
     "Limit": {
       "base": null,
       "refs": {
+        "DescribeIpGroupsRequest$MaxResults": "<p>The maximum number of items to return.</p>",
         "DescribeWorkspacesRequest$Limit": "<p>The maximum number of items to return.</p>"
       }
     },
@@ -365,12 +510,22 @@
       "refs": {
       }
     },
+    "ModifyWorkspaceStateRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ModifyWorkspaceStateResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "NonEmptyString": {
       "base": null,
       "refs": {
-        "CreateTagsRequest$ResourceId": "<p>The ID of the resource.</p>",
-        "DeleteTagsRequest$ResourceId": "<p>The ID of the resource.</p>",
-        "DescribeTagsRequest$ResourceId": "<p>The ID of the resource.</p>",
+        "CreateTagsRequest$ResourceId": "<p>The ID of the WorkSpace. To find this ID, use <a>DescribeWorkspaces</a>.</p>",
+        "DeleteTagsRequest$ResourceId": "<p>The ID of the WorkSpace. To find this ID, use <a>DescribeWorkspaces</a>.</p>",
+        "DescribeTagsRequest$ResourceId": "<p>The ID of the WorkSpace. To find this ID, use <a>DescribeWorkspaces</a>.</p>",
         "ResourceNotFoundException$ResourceId": "<p>The ID of the resource that could not be found.</p>",
         "ResourceUnavailableException$ResourceId": "<p>The identifier of the resource that is not available.</p>",
         "RootStorage$Capacity": "<p>The size of the root volume.</p>",
@@ -384,9 +539,16 @@
       "refs": {
       }
     },
+    "OperationNotSupportedException": {
+      "base": "<p>This operation is not supported.</p>",
+      "refs": {
+      }
+    },
     "PaginationToken": {
       "base": null,
       "refs": {
+        "DescribeIpGroupsRequest$NextToken": "<p>The token for the next set of results. (You received this token from a previous call.)</p>",
+        "DescribeIpGroupsResult$NextToken": "<p>The token to use to retrieve the next set of results, or null if there are no more results available. This token is valid for one day and must be used within that time frame.</p>",
         "DescribeWorkspaceBundlesRequest$NextToken": "<p>The token for the next set of results. (You received this token from a previous call.)</p>",
         "DescribeWorkspaceBundlesResult$NextToken": "<p>The token to use to retrieve the next set of results, or null if there are no more results available. This token is valid for one day and must be used within that time frame.</p>",
         "DescribeWorkspaceDirectoriesRequest$NextToken": "<p>The token for the next set of results. (You received this token from a previous call.)</p>",
@@ -406,7 +568,7 @@
     "RebootWorkspaceRequests": {
       "base": null,
       "refs": {
-        "RebootWorkspacesRequest$RebootWorkspaceRequests": "<p>The WorkSpaces to reboot.</p>"
+        "RebootWorkspacesRequest$RebootWorkspaceRequests": "<p>The WorkSpaces to reboot. You can specify up to 25 WorkSpaces.</p>"
       }
     },
     "RebootWorkspacesRequest": {
@@ -428,7 +590,7 @@
     "RebuildWorkspaceRequests": {
       "base": null,
       "refs": {
-        "RebuildWorkspacesRequest$RebuildWorkspaceRequests": "<p>The WorkSpaces to rebuild.</p>"
+        "RebuildWorkspacesRequest$RebuildWorkspaceRequests": "<p>The WorkSpace to rebuild. You can specify a single WorkSpace.</p>"
       }
     },
     "RebuildWorkspacesRequest": {
@@ -447,6 +609,21 @@
         "WorkspaceDirectory$RegistrationCode": "<p>The registration code for the directory. This is the code that users enter in their Amazon WorkSpaces client application to connect to the directory.</p>"
       }
     },
+    "ResourceAlreadyExistsException": {
+      "base": "<p>The specified resource already exists.</p>",
+      "refs": {
+      }
+    },
+    "ResourceAssociatedException": {
+      "base": "<p>The resource is associated with a directory.</p>",
+      "refs": {
+      }
+    },
+    "ResourceCreationFailedException": {
+      "base": "<p>The resource could not be created.</p>",
+      "refs": {
+      }
+    },
     "ResourceLimitExceededException": {
       "base": "<p>Your resource limits have been exceeded.</p>",
       "refs": {
@@ -459,6 +636,16 @@
     },
     "ResourceUnavailableException": {
       "base": "<p>The specified resource is not available.</p>",
+      "refs": {
+      }
+    },
+    "RevokeIpRulesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RevokeIpRulesResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -502,7 +689,7 @@
     "StartWorkspaceRequests": {
       "base": null,
       "refs": {
-        "StartWorkspacesRequest$StartWorkspaceRequests": "<p>The WorkSpaces to start.</p>"
+        "StartWorkspacesRequest$StartWorkspaceRequests": "<p>The WorkSpaces to start. You can specify up to 25 WorkSpaces.</p>"
       }
     },
     "StartWorkspacesRequest": {
@@ -524,7 +711,7 @@
     "StopWorkspaceRequests": {
       "base": null,
       "refs": {
-        "StopWorkspacesRequest$StopWorkspaceRequests": "<p>The WorkSpaces to stop.</p>"
+        "StopWorkspacesRequest$StopWorkspaceRequests": "<p>The WorkSpaces to stop. You can specify up to 25 WorkSpaces.</p>"
       }
     },
     "StopWorkspacesRequest": {
@@ -571,7 +758,7 @@
     "TagList": {
       "base": null,
       "refs": {
-        "CreateTagsRequest$Tags": "<p>The tags. Each resource can have a maximum of 50 tags.</p>",
+        "CreateTagsRequest$Tags": "<p>The tags. Each WorkSpace can have a maximum of 50 tags.</p>",
         "DescribeTagsResult$TagList": "<p>The tags.</p>",
         "WorkspaceRequest$Tags": "<p>The tags for the WorkSpace.</p>"
       }
@@ -580,6 +767,12 @@
       "base": null,
       "refs": {
         "Tag$Value": "<p>The value of the tag.</p>"
+      }
+    },
+    "TargetWorkspaceState": {
+      "base": null,
+      "refs": {
+        "ModifyWorkspaceStateRequest$WorkspaceState": "<p>The WorkSpace state.</p>"
       }
     },
     "TerminateRequest": {
@@ -591,7 +784,7 @@
     "TerminateWorkspaceRequests": {
       "base": null,
       "refs": {
-        "TerminateWorkspacesRequest$TerminateWorkspaceRequests": "<p>The WorkSpaces to terminate.</p>"
+        "TerminateWorkspacesRequest$TerminateWorkspaceRequests": "<p>The WorkSpaces to terminate. You can specify up to 25 WorkSpaces.</p>"
       }
     },
     "TerminateWorkspacesRequest": {
@@ -613,6 +806,16 @@
     },
     "UnsupportedWorkspaceConfigurationException": {
       "base": "<p>The configuration of this WorkSpace is not supported for this operation. For more information, see the <a href=\"http://docs.aws.amazon.com/workspaces/latest/adminguide/\">Amazon WorkSpaces Administration Guide</a>. </p>",
+      "refs": {
+      }
+    },
+    "UpdateRulesOfIpGroupRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateRulesOfIpGroupResult": {
+      "base": null,
       "refs": {
       }
     },
@@ -669,7 +872,7 @@
       }
     },
     "WorkspaceDirectory": {
-      "base": "<p>Contains information about an AWS Directory Service directory for use with Amazon WorkSpaces.</p>",
+      "base": "<p>Information about an AWS Directory Service directory for use with Amazon WorkSpaces.</p>",
       "refs": {
         "DirectoryList$member": null
       }
@@ -697,11 +900,12 @@
       "refs": {
         "FailedWorkspaceChangeRequest$WorkspaceId": "<p>The identifier of the WorkSpace.</p>",
         "ModifyWorkspacePropertiesRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
-        "RebootRequest$WorkspaceId": "<p>The identifier of the WorkSpace.</p>",
-        "RebuildRequest$WorkspaceId": "<p>The identifier of the WorkSpace.</p>",
+        "ModifyWorkspaceStateRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
+        "RebootRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
+        "RebuildRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
         "StartRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
         "StopRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
-        "TerminateRequest$WorkspaceId": "<p>The identifier of the WorkSpace.</p>",
+        "TerminateRequest$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
         "Workspace$WorkspaceId": "<p>The identifier of the WorkSpace.</p>",
         "WorkspaceConnectionStatus$WorkspaceId": "<p>The ID of the WorkSpace.</p>",
         "WorkspaceIdList$member": null
@@ -710,7 +914,7 @@
     "WorkspaceIdList": {
       "base": null,
       "refs": {
-        "DescribeWorkspacesConnectionStatusRequest$WorkspaceIds": "<p>The identifiers of the WorkSpaces.</p>",
+        "DescribeWorkspacesConnectionStatusRequest$WorkspaceIds": "<p>The identifiers of the WorkSpaces. You can specify up to 25 WorkSpaces.</p>",
         "DescribeWorkspacesRequest$WorkspaceIds": "<p>The IDs of the WorkSpaces. This parameter cannot be combined with any other filter.</p> <p>Because the <a>CreateWorkspaces</a> operation is asynchronous, the identifier it returns is not immediately available. If you immediately call <a>DescribeWorkspaces</a> with this identifier, no information is returned.</p>"
       }
     },
@@ -739,13 +943,25 @@
     "WorkspaceRequestList": {
       "base": null,
       "refs": {
-        "CreateWorkspacesRequest$Workspaces": "<p>Information about the WorkSpaces to create.</p>"
+        "CreateWorkspacesRequest$Workspaces": "<p>The WorkSpaces to create. You can specify up to 25 WorkSpaces.</p>"
       }
     },
     "WorkspaceState": {
       "base": null,
       "refs": {
         "Workspace$State": "<p>The operational state of the WorkSpace.</p>"
+      }
+    },
+    "WorkspacesIpGroup": {
+      "base": "<p>Information about an IP access control group.</p>",
+      "refs": {
+        "WorkspacesIpGroupsList$member": null
+      }
+    },
+    "WorkspacesIpGroupsList": {
+      "base": null,
+      "refs": {
+        "DescribeIpGroupsResult$Result": "<p>Information about the IP access control groups.</p>"
       }
     }
   }

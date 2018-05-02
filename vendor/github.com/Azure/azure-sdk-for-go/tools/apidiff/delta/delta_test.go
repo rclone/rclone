@@ -94,8 +94,8 @@ func Test_GetAddedExports(t *testing.T) {
 
 	// interface
 
-	if l := len(aContent.Interfaces); l != 1 {
-		t.Logf("wrong number of interfaces added, have %v, want %v", l, 1)
+	if l := len(aContent.Interfaces); l != 2 {
+		t.Logf("wrong number of interfaces added, have %v, want %v", l, 2)
 		t.Fail()
 	}
 
@@ -103,6 +103,9 @@ func Test_GetAddedExports(t *testing.T) {
 		"NewInterface": exports.Interface{Methods: map[string]exports.Func{
 			"One": exports.Func{Params: strPtr("int")},
 			"Two": exports.Func{Returns: strPtr("error")},
+		}},
+		"SomeInterface": exports.Interface{Methods: map[string]exports.Func{
+			"NewMethod": exports.Func{Params: strPtr("string"), Returns: strPtr("bool,error")},
 		}},
 	}
 
@@ -120,8 +123,8 @@ func Test_GetAddedExports(t *testing.T) {
 
 	// struct
 
-	if l := len(aContent.Structs); l != 2 {
-		t.Logf("wrong number of structs added, have %v, want %v", l, 2)
+	if l := len(aContent.Structs); l != 4 {
+		t.Logf("wrong number of structs added, have %v, want %v", l, 4)
 		t.Fail()
 	}
 
@@ -135,6 +138,16 @@ func Test_GetAddedExports(t *testing.T) {
 				"Format":    "*string",
 				"Prefix":    "*string",
 				"Container": "*string",
+			},
+		},
+		"CreateProperties": exports.Struct{
+			Fields: map[string]string{
+				"NewField": "*float64",
+			},
+		},
+		"DeleteFuture": exports.Struct{
+			Fields: map[string]string{
+				"NewField": "string",
 			},
 		},
 	}
