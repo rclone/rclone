@@ -31,6 +31,8 @@ var (
 	ExtraFlags         []string
 	AttrTimeout        = 1 * time.Second // how long the kernel caches attribute for
 	VolumeName         string
+	NoAppleDouble      = true  // use noappledouble by default
+	NoAppleXattr       = false // do not use noapplexattr by default
 )
 
 // Check is folder is empty
@@ -272,6 +274,11 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	flags.StringArrayVarP(flagSet, &ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
 	flags.BoolVarP(flagSet, &Daemon, "daemon", "", Daemon, "Run mount as a daemon (background mode).")
 	flags.StringVarP(flagSet, &VolumeName, "volname", "", VolumeName, "Set the volume name (not supported by all OSes).")
+
+	if runtime.GOOS == "darwin" {
+		flags.BoolVarP(flagSet, &NoAppleDouble, "noappledouble", "", NoAppleDouble, "Sets the OSXFUSE option noappledouble.")
+		flags.BoolVarP(flagSet, &NoAppleXattr, "noapplexattr", "", NoAppleXattr, "Sets the OSXFUSE option noapplexattr.")
+	}
 
 	// Add in the generic flags
 	vfsflags.AddFlags(flagSet)
