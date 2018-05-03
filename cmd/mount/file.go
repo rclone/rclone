@@ -92,3 +92,37 @@ func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
 	defer log.Trace(f, "")("err=%v", &err)
 	return nil
 }
+
+// Getxattr gets an extended attribute by the given name from the
+// node.
+//
+// If there is no xattr by that name, returns fuse.ErrNoXattr.
+func (f *File) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fuse.GetxattrResponse) error {
+	return fuse.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeGetxattrer = (*File)(nil)
+
+// Listxattr lists the extended attributes recorded for the node.
+func (f *File) Listxattr(ctx context.Context, req *fuse.ListxattrRequest, resp *fuse.ListxattrResponse) error {
+	return fuse.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeListxattrer = (*File)(nil)
+
+// Setxattr sets an extended attribute with the given name and
+// value for the node.
+func (f *File) Setxattr(ctx context.Context, req *fuse.SetxattrRequest) error {
+	return fuse.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeSetxattrer = (*File)(nil)
+
+// Removexattr removes an extended attribute for the name.
+//
+// If there is no xattr by that name, returns fuse.ErrNoXattr.
+func (f *File) Removexattr(ctx context.Context, req *fuse.RemovexattrRequest) error {
+	return fuse.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeRemovexattrer = (*File)(nil)
