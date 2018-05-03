@@ -28,7 +28,7 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	options = []fuse.MountOption{
 		fuse.MaxReadahead(uint32(mountlib.MaxReadAhead)),
 		fuse.Subtype("rclone"),
-		fuse.FSName(device), fuse.VolumeName(device),
+		fuse.FSName(device), fuse.VolumeName(mountlib.VolumeName),
 		fuse.NoAppleDouble(),
 		fuse.NoAppleXattr(),
 
