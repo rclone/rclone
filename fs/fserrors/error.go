@@ -69,7 +69,7 @@ func IsRetryError(err error) bool {
 	if err == nil {
 		return false
 	}
-	err = errors.Cause(err)
+	_, err = Cause(err)
 	if r, ok := err.(Retrier); ok {
 		return r.Retry()
 	}
@@ -114,7 +114,7 @@ func IsFatalError(err error) bool {
 	if err == nil {
 		return false
 	}
-	err = errors.Cause(err)
+	_, err = Cause(err)
 	if r, ok := err.(Fataler); ok {
 		return r.Fatal()
 	}
@@ -159,7 +159,7 @@ func IsNoRetryError(err error) bool {
 	if err == nil {
 		return false
 	}
-	err = errors.Cause(err)
+	_, err = Cause(err)
 	if r, ok := err.(NoRetrier); ok {
 		return r.NoRetry()
 	}
