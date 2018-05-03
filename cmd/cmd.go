@@ -62,6 +62,7 @@ const (
 	exitCodeRetryError
 	exitCodeNoRetryError
 	exitCodeFatalError
+	exitCodeTransferExceeded
 )
 
 // Root is the main rclone command
@@ -461,15 +462,17 @@ func resolveExitCode(err error) {
 		os.Exit(exitCodeSuccess)
 	}
 
-	err = errors.Cause(err)
+	_, unwrapped := fserrors.Cause(err)
 
 	switch {
-	case err == fs.ErrorDirNotFound:
+	case unwrapped == fs.ErrorDirNotFound:
 		os.Exit(exitCodeDirNotFound)
-	case err == fs.ErrorObjectNotFound:
+	case unwrapped == fs.ErrorObjectNotFound:
 		os.Exit(exitCodeFileNotFound)
-	case err == errorUncategorized:
+	case unwrapped == errorUncategorized:
 		os.Exit(exitCodeUncategorizedError)
+	case unwrapped == accounting.ErrorMaxTransferLimitReached:
+		os.Exit(exitCodeTransferExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitCodeRetryError)
 	case fserrors.IsNoRetryError(err):
