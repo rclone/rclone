@@ -1057,6 +1057,10 @@ func (f *Fs) CleanUp() error {
 
 // About gets quota information
 func (f *Fs) About() (*fs.Usage, error) {
+	if f.isTeamDrive {
+		// Teamdrives don't appear to have a usage API so just return empty
+		return &fs.Usage{}, nil
+	}
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
