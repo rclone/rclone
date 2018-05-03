@@ -164,6 +164,7 @@ func (s *syncCopyMove) processError(err error) {
 	switch {
 	case fserrors.IsFatalError(err):
 		if !s.aborting() {
+			fs.Errorf(nil, "Cancelling sync due to fatal error: %v", err)
 			s.cancel()
 		}
 		s.fatalErr = err
