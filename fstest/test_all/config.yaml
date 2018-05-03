@@ -99,6 +99,9 @@ backends:
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
+ - backend:  "memory"
+   remote:   ":memory:"
+   fastlist: true
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false

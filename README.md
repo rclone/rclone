@@ -46,6 +46,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
   * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
   * Mega [:page_facing_up:](https://rclone.org/mega/)
+  * Memory [:page_facing_up:](https://rclone.org/memory/)
   * Microsoft Azure Blob Storage [:page_facing_up:](https://rclone.org/azureblob/)
   * Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
   * Minio [:page_facing_up:](https://rclone.org/s3/#minio)

@@ -41,6 +41,7 @@ See the following for detailed instructions for
   * [Koofr](/koofr/)
   * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
+  * [Memory](/memory/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
   * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)

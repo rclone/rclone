@@ -45,6 +45,7 @@ docs = [
     "koofr.md",
     "mailru.md",
     "mega.md",
+    "memory.md",
     "azureblob.md",
     "onedrive.md",
     "opendrive.md",
