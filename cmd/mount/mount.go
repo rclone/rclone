@@ -28,9 +28,8 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	options = []fuse.MountOption{
 		fuse.MaxReadahead(uint32(mountlib.MaxReadAhead)),
 		fuse.Subtype("rclone"),
-		fuse.FSName(device), fuse.VolumeName(mountlib.VolumeName),
-		fuse.NoAppleDouble(),
-		fuse.NoAppleXattr(),
+		fuse.FSName(device),
+		fuse.VolumeName(mountlib.VolumeName),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
@@ -38,6 +37,12 @@ func mountOptions(device string) (options []fuse.MountOption) {
 		// ReadFileHandle.Read error: read /home/files/ISOs/xubuntu-15.10-desktop-amd64.iso: bad file descriptor
 		// which is probably related to errors people are having
 		//fuse.WritebackCache(),
+	}
+	if mountlib.NoAppleDouble {
+		options = append(options, fuse.NoAppleDouble())
+	}
+	if mountlib.NoAppleXattr {
+		options = append(options, fuse.NoAppleXattr())
 	}
 	if mountlib.AllowNonEmpty {
 		options = append(options, fuse.AllowNonEmptyMount())
