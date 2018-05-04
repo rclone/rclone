@@ -52,6 +52,9 @@ Print cache stats for a remote in JSON format
 				}
 			}
 			m, err := fsCache.Stats()
+			if err != nil {
+				return err
+			}
 
 			raw, err := json.MarshalIndent(m, "", "  ")
 			if err != nil {

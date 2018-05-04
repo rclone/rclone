@@ -187,10 +187,10 @@ func TestVFSStatParent(t *testing.T) {
 	assert.Equal(t, "/", node.Name())
 	assert.Equal(t, "not found", leaf)
 
-	node, leaf, err = vfs.StatParent("not found dir/not found")
+	_, _, err = vfs.StatParent("not found dir/not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, leaf, err = vfs.StatParent("file1/under a file")
+	_, _, err = vfs.StatParent("file1/under a file")
 	assert.Equal(t, os.ErrExist, err)
 }
 

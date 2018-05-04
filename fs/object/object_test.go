@@ -76,7 +76,7 @@ func TestMemoryFs(t *testing.T) {
 	assert.Error(t, err)
 
 	err = f.Rmdir("dir")
-	assert.Error(t, fs.ErrorDirNotFound)
+	assert.Equal(t, fs.ErrorDirNotFound, err)
 }
 
 func TestMemoryObject(t *testing.T) {

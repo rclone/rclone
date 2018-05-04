@@ -988,8 +988,9 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 		require.Error(t, err)
 		_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "second/one")))
 		require.NoError(t, err)
-		started, err := boltDb.SearchPendingUpload(runInstance.encryptRemoteIfNeeded(t, path.Join(id, "test/one")))
+		_, err = boltDb.SearchPendingUpload(runInstance.encryptRemoteIfNeeded(t, path.Join(id, "test/one")))
 		require.Error(t, err)
+		var started bool
 		started, err = boltDb.SearchPendingUpload(runInstance.encryptRemoteIfNeeded(t, path.Join(id, "second/one")))
 		require.NoError(t, err)
 		require.False(t, started)

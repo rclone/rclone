@@ -85,6 +85,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 
 	// check vfs
 	root, err := vfs.Root()
+	require.NoError(t, err)
 	checkListing(t, root, []string{"file1,5,false"})
 
 	// check the underlying r.Fremote but not the modtime
@@ -101,6 +102,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	// Check trying to open the file and writing it now it exists
 	// returns an error
 	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
 	_, err = h.Write([]byte("hello1"))
 	require.Equal(t, EPERM, err)
 	assert.NoError(t, h.Close())
@@ -115,6 +117,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 
 	// Check opening the file with O_TRUNC and writing does work
 	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	require.NoError(t, err)
 	_, err = h.WriteString("hello12")
 	require.NoError(t, err)
 	assert.NoError(t, h.Close())
@@ -159,6 +162,7 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 
 	// check vfs
 	root, err := vfs.Root()
+	require.NoError(t, err)
 	checkListing(t, root, []string{"file1,11,false"})
 
 	// check the underlying r.Fremote but not the modtime

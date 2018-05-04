@@ -357,7 +357,8 @@ outer:
 		buf := up.f.getUploadBlock()
 
 		// Read the chunk
-		n, err := io.ReadFull(up.in, buf)
+		var n int
+		n, err = io.ReadFull(up.in, buf)
 		if err == io.ErrUnexpectedEOF {
 			fs.Debugf(up.o, "Read less than a full chunk, making this the last one.")
 			buf = buf[:n]
@@ -366,7 +367,6 @@ outer:
 		} else if err == io.EOF {
 			fs.Debugf(up.o, "Could not read any more bytes, previous chunk was the last.")
 			up.f.putUploadBlock(buf)
-			hasMoreParts = false
 			err = nil
 			break outer
 		} else if err != nil {

@@ -647,7 +647,6 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 
 	// search for entry in source or temp fs
 	var obj fs.Object
-	err = nil
 	if f.tempWritePath != "" {
 		obj, err = f.tempFs.NewObject(remote)
 		// not found in temp fs

@@ -155,7 +155,7 @@ func TestRWFileHandleSeek(t *testing.T) {
 	assert.Equal(t, "d", rwReadString(t, fh, 1))
 
 	// Seek off the end
-	n, err = fh.Seek(100, io.SeekStart)
+	_, err = fh.Seek(100, io.SeekStart)
 	assert.NoError(t, err)
 
 	// Get the error on read
@@ -215,7 +215,7 @@ func TestRWFileHandleReadAt(t *testing.T) {
 	assert.NoError(t, fh.Close())
 
 	// check reading on closed file
-	n, err = fh.ReadAt(buf, 100)
+	_, err = fh.ReadAt(buf, 100)
 	assert.Equal(t, ECLOSED, err)
 }
 
@@ -351,6 +351,7 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 
 	// check vfs
 	root, err := vfs.Root()
+	require.NoError(t, err)
 	checkListing(t, root, []string{"file1,11,false"})
 
 	// check the underlying r.Fremote but not the modtime
@@ -399,6 +400,7 @@ func TestRWFileHandleWriteAt(t *testing.T) {
 
 	// check vfs
 	root, err := vfs.Root()
+	require.NoError(t, err)
 	checkListing(t, root, []string{"file1,11,false"})
 
 	// check the underlying r.Fremote but not the modtime
@@ -427,6 +429,7 @@ func TestRWFileHandleWriteNoWrite(t *testing.T) {
 
 	// check vfs
 	root, err := vfs.Root()
+	require.NoError(t, err)
 	checkListing(t, root, []string{"file1,0,false", "file2,0,false"})
 
 	// check the underlying r.Fremote but not the modtime

@@ -288,9 +288,9 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 			case DeduplicateRename:
 				dedupeRename(remote, objs)
 			case DeduplicateLargest:
-				size, largest, largestIndex := int64(0), int64(-1), -1
+				largest, largestIndex := int64(-1), -1
 				for i, obj := range objs {
-					size = obj.Size()
+					size := obj.Size()
 					if size > largest {
 						largest, largestIndex = size, i
 					}

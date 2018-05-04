@@ -446,7 +446,6 @@ func (w *worker) run() {
 					continue
 				}
 			}
-			err = nil
 		} else {
 			if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
 				continue
@@ -493,7 +492,7 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	}
 
 	data = make([]byte, chunkEnd-chunkStart)
-	sourceRead := 0
+	var sourceRead int
 	sourceRead, err = io.ReadFull(w.rc, data)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		fs.Errorf(w, "failed to read chunk %v: %v", chunkStart, err)

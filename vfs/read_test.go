@@ -105,7 +105,7 @@ func TestReadFileHandleSeek(t *testing.T) {
 	assert.Equal(t, "d", readString(t, fh, 1))
 
 	// Seek off the end
-	n, err = fh.Seek(100, io.SeekStart)
+	_, err = fh.Seek(100, io.SeekStart)
 	assert.NoError(t, err)
 
 	// Get the error on read
@@ -168,7 +168,7 @@ func TestReadFileHandleReadAt(t *testing.T) {
 
 	// check noSeek gives an error
 	fh.noSeek = true
-	n, err = fh.ReadAt(buf, 100)
+	_, err = fh.ReadAt(buf, 100)
 	assert.Equal(t, ESPIPE, err)
 
 	// Properly close the file
@@ -176,7 +176,7 @@ func TestReadFileHandleReadAt(t *testing.T) {
 
 	// check reading on closed file
 	fh.noSeek = true
-	n, err = fh.ReadAt(buf, 100)
+	_, err = fh.ReadAt(buf, 100)
 	assert.Equal(t, ECLOSED, err)
 }
 
