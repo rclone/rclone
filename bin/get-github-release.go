@@ -149,6 +149,9 @@ func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 	log.Printf("Fetching asset info for %q from %q", project, url)
 	user, pass := os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN")
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalf("Failed to make http request %q: %v", url, err)
+	}
 	if user != "" && pass != "" {
 		log.Printf("Fetching using GITHUB_USER and GITHUB_TOKEN")
 		req.SetBasicAuth(user, pass)

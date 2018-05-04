@@ -350,7 +350,6 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	}
 	n, err := handle.ReadAt(buff, ofst)
 	if err == io.EOF {
-		err = nil
 	} else if err != nil {
 		return translateError(err)
 	}

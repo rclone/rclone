@@ -151,6 +151,7 @@ func TestOpen(t *testing.T) {
 	fd, err := o.Open()
 	require.NoError(t, err)
 	data, err := ioutil.ReadAll(fd)
+	require.NoError(t, err)
 	require.NoError(t, fd.Close())
 	assert.Equal(t, "beetroot\n", string(data))
 
@@ -158,6 +159,7 @@ func TestOpen(t *testing.T) {
 	fd, err = o.Open(&fs.RangeOption{Start: 1, End: 5})
 	require.NoError(t, err)
 	data, err = ioutil.ReadAll(fd)
+	require.NoError(t, err)
 	require.NoError(t, fd.Close())
 	assert.Equal(t, "eetro", string(data))
 }

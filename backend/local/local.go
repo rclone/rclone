@@ -593,7 +593,6 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 	o.fs.objectHashesMu.Unlock()
 
 	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
-		hashes = make(map[hash.Type]string)
 		in, err := os.Open(o.path)
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")

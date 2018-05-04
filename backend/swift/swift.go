@@ -391,7 +391,8 @@ func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
 			err = fn(d)
 		} else {
 			// newObjectWithInfo does a full metadata read on 0 size objects which might be dynamic large objects
-			o, err := f.newObjectWithInfo(remote, object)
+			var o fs.Object
+			o, err = f.newObjectWithInfo(remote, object)
 			if err != nil {
 				return err
 			}
@@ -847,7 +848,7 @@ func urlEncode(str string) string {
 // container.  It returns a string which prefixes current segments.
 func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
 	// Create the segmentsContainer if it doesn't exist
-	var err error = swift.ContainerNotFound
+	var err error
 	_, _, err = o.fs.c.Container(o.fs.segmentsContainer)
 	if err == swift.ContainerNotFound {
 		err = o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)

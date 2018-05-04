@@ -90,7 +90,7 @@ func test(fileName string, flags int, mode string) {
 		_, readExistingErr = f.Read(buf)
 
 		// write some bytes
-		n, writeExistingErr = f.Write([]byte("HEL"))
+		_, writeExistingErr = f.Write([]byte("HEL"))
 
 		// close
 		err = f.Close()

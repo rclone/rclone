@@ -116,7 +116,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		if o != nil && fh.file.rwOpens() == 0 {
 			cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
 			if err == nil && cacheObj != nil {
-				cacheObj, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.remote, o)
+				_, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.remote, o)
 				if err != nil {
 					return errors.Wrap(err, "open RW handle failed to update cached file")
 				}
