@@ -56,6 +56,16 @@ else
 	@echo Skipping source quality tests as version of go too old
 endif
 
+gometalinter_install:
+	go get -u github.com/alecthomas/gometalinter
+	gometalinter --install --update
+
+# We aren't using gometalinter as the default linter yet because
+# 1. it doesn't support build tags: https://github.com/alecthomas/gometalinter/issues/275
+# 2. can't get -printfuncs working with the vet linter
+gometalinter:
+	gometalinter ./...
+
 # Get the build dependencies
 build_dep:
 ifdef FULL_TESTS
