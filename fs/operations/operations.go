@@ -500,22 +500,6 @@ func DeleteFiles(toBeDeleted fs.ObjectsChan) error {
 	return DeleteFilesWithBackupDir(toBeDeleted, nil)
 }
 
-// Read a Objects into add() for the given Fs.
-// dir is the start directory, "" for root
-// If includeAll is specified all files will be added,
-// otherwise only files passing the filter will be added.
-//
-// Each object is passed ito the function provided.  If that returns
-// an error then the listing will be aborted and that error returned.
-func readFilesFn(f fs.Fs, includeAll bool, dir string, add func(fs.Object) error) (err error) {
-	return walk.Walk(f, "", includeAll, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			return err
-		}
-		return entries.ForObjectError(add)
-	})
-}
-
 // SameConfig returns true if fdst and fsrc are using the same config
 // file entry
 func SameConfig(fdst, fsrc fs.Info) bool {

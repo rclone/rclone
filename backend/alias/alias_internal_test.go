@@ -15,8 +15,6 @@ import (
 
 var (
 	remoteName = "TestAlias"
-	testPath   = "test"
-	filesPath  = filepath.Join(testPath, "files")
 )
 
 func prepare(t *testing.T, root string) {

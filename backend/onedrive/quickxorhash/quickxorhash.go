@@ -44,7 +44,6 @@ const (
 	Size           = 20
 	bitsInLastCell = 32
 	shift          = 11
-	threshold      = 600
 	widthInBits    = 8 * Size
 	dataSize       = (widthInBits-1)/64 + 1
 )

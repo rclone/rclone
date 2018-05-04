@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	gohash "hash"
 	"io"
 	"net/http"
 	"path"
@@ -32,16 +31,16 @@ import (
 )
 
 const (
-	apiVersion         = "2017-04-17"
-	minSleep           = 10 * time.Millisecond
-	maxSleep           = 10 * time.Second
-	decayConstant      = 1    // bigger for slower decay, exponential
-	listChunkSize      = 5000 // number of items to read at once
-	modTimeKey         = "mtime"
-	timeFormatIn       = time.RFC3339
-	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
-	maxTotalParts      = 50000   // in multipart upload
-	maxUncommittedSize = 9 << 30 // can't upload bigger than this
+	apiVersion    = "2017-04-17"
+	minSleep      = 10 * time.Millisecond
+	maxSleep      = 10 * time.Second
+	decayConstant = 1    // bigger for slower decay, exponential
+	listChunkSize = 5000 // number of items to read at once
+	modTimeKey    = "mtime"
+	timeFormatIn  = time.RFC3339
+	timeFormatOut = "2006-01-02T15:04:05.000000000Z07:00"
+	maxTotalParts = 50000 // in multipart upload
+	// maxUncommittedSize = 9 << 30 // can't upload bigger than this
 )
 
 // Globals
@@ -847,16 +846,6 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// openFile represents an Object open for reading
-type openFile struct {
-	o     *Object        // Object we are reading for
-	resp  *http.Response // response of the GET
-	body  io.Reader      // reading from here
-	hash  gohash.Hash    // currently accumulating MD5
-	bytes int64          // number of bytes read on this connection
-	eof   bool           // whether we have read end of file
-}
-
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	getBlobOptions := storage.GetBlobOptions{}
@@ -922,20 +911,6 @@ func init() {
 	for _, c := range dontEncode {
 		noNeedToEncode[c] = true
 	}
-}
-
-// urlEncode encodes in with % encoding
-func urlEncode(in string) string {
-	var out bytes.Buffer
-	for i := 0; i < len(in); i++ {
-		c := in[i]
-		if noNeedToEncode[c] {
-			_ = out.WriteByte(c)
-		} else {
-			_, _ = out.WriteString(fmt.Sprintf("%%%2X", c))
-		}
-	}
-	return out.String()
 }
 
 // uploadMultipart uploads a file using multipart upload

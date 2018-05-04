@@ -419,21 +419,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	return entries, nil
 }
 
-// A read closer which doesn't close the input
-type readCloser struct {
-	in io.Reader
-}
-
-// Read bytes from the object - see io.Reader
-func (rc *readCloser) Read(p []byte) (n int, err error) {
-	return rc.in.Read(p)
-}
-
-// Dummy close function
-func (rc *readCloser) Close() error {
-	return nil
-}
-
 // Put the object
 //
 // Copy the reader in to the new object which is returned

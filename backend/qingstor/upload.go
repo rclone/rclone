@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	maxSinglePartSize = 1024 * 1024 * 1024 * 5 // The maximum allowed size when uploading a single object to QingStor
-	maxMultiPartSize  = 1024 * 1024 * 1024 * 1 // The maximum allowed part size when uploading a part to QingStor
-	minMultiPartSize  = 1024 * 1024 * 4        // The minimum allowed part size when uploading a part to QingStor
-	maxMultiParts     = 10000                  // The maximum allowed number of parts in an multi-part upload
+	// maxSinglePartSize = 1024 * 1024 * 1024 * 5 // The maximum allowed size when uploading a single object to QingStor
+	// maxMultiPartSize = 1024 * 1024 * 1024 * 1 // The maximum allowed part size when uploading a part to QingStor
+	minMultiPartSize = 1024 * 1024 * 4 // The minimum allowed part size when uploading a part to QingStor
+	maxMultiParts    = 10000           // The maximum allowed number of parts in an multi-part upload
 )
 
 const (
