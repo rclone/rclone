@@ -50,7 +50,6 @@ var (
 	errorUncategorized      = errors.New("uncategorized error")
 	errorNotEnoughArguments = errors.New("not enough arguments")
 	errorTooManyArguents    = errors.New("too many arguments")
-	errorUsageError         = errors.New("usage error")
 )
 
 const (

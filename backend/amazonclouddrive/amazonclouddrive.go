@@ -18,7 +18,6 @@ import (
 	"log"
 	"net/http"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -40,7 +39,6 @@ import (
 const (
 	folderKind      = "FOLDER"
 	fileKind        = "FILE"
-	assetKind       = "ASSET"
 	statusAvailable = "AVAILABLE"
 	timeFormat      = time.RFC3339 // 2014-03-07T22:31:12.173Z
 	minSleep        = 20 * time.Millisecond
@@ -137,9 +135,6 @@ func (f *Fs) String() string {
 func (f *Fs) Features() *fs.Features {
 	return f.features
 }
-
-// Pattern to match a acd path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 
 // parsePath parses an acd 'url'
 func parsePath(path string) (root string) {

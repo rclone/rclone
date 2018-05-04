@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -141,15 +140,6 @@ func (f *Fs) String() string {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
-}
-
-// Pattern to match a webdav path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
-
-// parsePath parses an webdav 'url'
-func parsePath(path string) (root string) {
-	root = strings.Trim(path, "/")
-	return
 }
 
 // retryErrorCodes is a slice of error codes that we will retry

@@ -12,10 +12,6 @@ func createGetRequest(client *Client, path string, params map[string]interface{}
 	return createRequest(client, "GET", path, params)
 }
 
-func createPostRequest(client *Client, path string, params map[string]interface{}) *HTTPRequest {
-	return createRequest(client, "POST", path, params)
-}
-
 func createRequest(client *Client, method string, path string, parameters map[string]interface{}) *HTTPRequest {
 	var headers = make(map[string][]string)
 	headers["Authorization"] = []string{"OAuth " + client.token}
