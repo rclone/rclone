@@ -1,4 +1,4 @@
-// +build !plan9,go1.8
+// +build !plan9,go1.9
 
 package sftp
 
