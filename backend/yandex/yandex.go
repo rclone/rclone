@@ -69,12 +69,11 @@ func init() {
 
 // Fs represents a remote yandex
 type Fs struct {
-	name       string
-	root       string         //root path
-	features   *fs.Features   // optional features
-	yd         *yandex.Client // client for rest api
-	diskRoot   string         //root path with "disk:/" container name
-	mkdircache map[string]int
+	name     string
+	root     string         //root path
+	features *fs.Features   // optional features
+	yd       *yandex.Client // client for rest api
+	diskRoot string         //root path with "disk:/" container name
 }
 
 // Object describes a swift object

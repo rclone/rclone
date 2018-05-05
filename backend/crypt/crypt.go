@@ -168,7 +168,6 @@ type Fs struct {
 	root     string
 	features *fs.Features // optional features
 	cipher   Cipher
-	mode     NameEncryptionMode
 }
 
 // Name of the remote (as passed into NewFs)

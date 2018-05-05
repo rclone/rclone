@@ -95,7 +95,6 @@ type Fs struct {
 type Object struct {
 	fs       *Fs               // what this object is part of
 	remote   string            // The remote path
-	id       string            // azure id of the file
 	modTime  time.Time         // The modified time of the object if known
 	md5      string            // MD5 hash if known
 	size     int64             // Size of the object

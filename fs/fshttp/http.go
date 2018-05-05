@@ -42,10 +42,7 @@ func StartHTTPTokenBucket() {
 // A net.Conn that sets a deadline for every Read or Write operation
 type timeoutConn struct {
 	net.Conn
-	readTimer  *time.Timer
-	writeTimer *time.Timer
-	timeout    time.Duration
-	off        time.Time
+	timeout time.Duration
 }
 
 // create a timeoutConn using the timeout
