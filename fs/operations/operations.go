@@ -1368,7 +1368,6 @@ type ListFormat struct {
 	dirSlash  bool
 	output    []func() string
 	entry     fs.DirEntry
-	hash      bool
 }
 
 // SetSeparator changes separator in struct

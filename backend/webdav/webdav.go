@@ -116,7 +116,6 @@ type Object struct {
 	hasMetaData bool      // whether info below has been set
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
-	id          string    // ID of the object
 	sha1        string    // SHA-1 of the object content
 }
 

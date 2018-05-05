@@ -12,16 +12,13 @@ import (
 
 // Dir represents a directory found in the remote
 type Dir struct {
-	parent   *Dir
-	path     string
-	mu       sync.Mutex
-	count    int64
-	size     int64
-	complete bool
-	entries  fs.DirEntries
-	dirs     map[string]*Dir
-	offset   int // current listing offset
-	entry    int // current listing entry
+	parent  *Dir
+	path    string
+	mu      sync.Mutex
+	count   int64
+	size    int64
+	entries fs.DirEntries
+	dirs    map[string]*Dir
 }
 
 // Parent returns the directory above this one
