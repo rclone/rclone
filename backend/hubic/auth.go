@@ -36,7 +36,7 @@ func (a *auth) Response(resp *http.Response) error {
 
 // The public storage URL - set Internal to true to read
 // internal/service net URL
-func (a *auth) StorageUrl(Internal bool) string {
+func (a *auth) StorageUrl(Internal bool) string { // nolint
 	return a.f.credentials.Endpoint
 }
 
@@ -46,7 +46,7 @@ func (a *auth) Token() string {
 }
 
 // The CDN url if available
-func (a *auth) CdnUrl() string {
+func (a *auth) CdnUrl() string { // nolint
 	return ""
 }
 

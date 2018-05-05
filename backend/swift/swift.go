@@ -221,7 +221,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 			return nil, errors.Wrap(err, "failed to read environment variables")
 		}
 	}
-	StorageUrl, AuthToken := c.StorageUrl, c.AuthToken
+	StorageUrl, AuthToken := c.StorageUrl, c.AuthToken // nolint
 	if !c.Authenticated() {
 		if c.UserName == "" && c.UserId == "" {
 			return nil, errors.New("user name or user id not found for authentication (and no storage_url+auth_token is provided)")
