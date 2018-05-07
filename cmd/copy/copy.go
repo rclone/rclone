@@ -2,6 +2,7 @@ package copy
 
 import (
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
@@ -52,9 +53,12 @@ source or destination.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
-		fsrc, fdst := cmd.NewFsSrcDst(args)
+		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
-			return sync.CopyDir(fdst, fsrc)
+			if srcFileName == "" {
+				return sync.CopyDir(fdst, fsrc)
+			}
+			return operations.CopyFile(fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

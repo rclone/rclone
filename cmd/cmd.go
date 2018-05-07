@@ -228,6 +228,16 @@ func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 	return fsrc, fdst
 }
 
+// NewFsSrcFileDst creates a new src and dst fs from the arguments
+//
+// The source may be a file, in which case the source Fs and file name is returned
+func NewFsSrcFileDst(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs) {
+	fsrc, srcFileName = NewFsFile(args[0])
+	fdst = newFsDir(args[1])
+	fs.CalculateModifyWindow(fdst, fsrc)
+	return fsrc, srcFileName, fdst
+}
+
 // NewFsSrcDstFiles creates a new src and dst fs from the arguments
 // If src is a file then srcFileName and dstFileName will be non-empty
 func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs, dstFileName string) {
