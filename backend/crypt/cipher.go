@@ -144,6 +144,7 @@ type cipher struct {
 	buffers        sync.Pool // encrypt/decrypt buffers
 	cryptoRand     io.Reader // read crypto random numbers from here
 	dirNameEncrypt bool
+	passCorrupted  bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
@@ -161,6 +162,11 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 		return nil, err
 	}
 	return c, nil
+}
+
+// Set to pass corrupted blocks
+func (c *cipher) setPassCorrupted(passCorrupted bool) {
+	c.passCorrupted = passCorrupted
 }
 
 // Key creates all the internal keys from the password passed in using
@@ -822,7 +828,10 @@ func (fh *decrypter) fillBuffer() (err error) {
 		if err != nil {
 			return err // return pending error as it is likely more accurate
 		}
-		return ErrorEncryptedBadBlock
+		if !fh.c.passCorrupted {
+			return ErrorEncryptedBadBlock
+		}
+		fs.Errorf(nil, "passing corrupted block")
 	}
 	fh.bufIndex = 0
 	fh.bufSize = n - blockHeaderSize

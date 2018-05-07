@@ -17,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Globals
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -80,6 +79,15 @@ names, or for debugging purposes.`,
 			Default:  false,
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
+		}, {
+			Name: "pass_corrupted_blocks",
+			Help: `Pass through corrupted blocks to the output.
+
+This is for debugging corruption problems in crypt - it shouldn't be needed normally.
+`,
+			Default:  false,
+			Hide:     fs.OptionHideConfigurator,
+			Advanced: true,
 		}},
 	})
 }
@@ -108,6 +116,7 @@ func newCipherForConfig(opt *Options) (Cipher, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
+	cipher.setPassCorrupted(opt.PassCorruptedBlocks)
 	return cipher, nil
 }
 
@@ -197,6 +206,7 @@ type Options struct {
 	Password                string `config:"password"`
 	Password2               string `config:"password2"`
 	ShowMapping             bool   `config:"show_mapping"`
+	PassCorruptedBlocks     bool   `config:"pass_corrupted_blocks"`
 }
 
 // Fs represents a wrapped fs.Fs
