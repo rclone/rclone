@@ -48,7 +48,7 @@ a bit of go code for each one.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1E6, command, args)
 		for i := range args {
-			f := cmd.NewFsDst(args[i : i+1])
+			f := cmd.NewFsDir(args[i : i+1])
 			cmd.Run(false, false, command, func() error {
 				return readInfo(f)
 			})

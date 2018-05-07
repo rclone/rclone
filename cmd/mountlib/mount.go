@@ -215,7 +215,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 ` + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
-			fdst := cmd.NewFsDst(args)
+			fdst := cmd.NewFsDir(args)
 
 			// Show stats if the user has specifically requested them
 			if cmd.ShowStats() {
