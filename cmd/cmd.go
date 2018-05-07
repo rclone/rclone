@@ -144,9 +144,10 @@ func ShowVersion() {
 	fmt.Printf("- go version: %s\n", runtime.Version())
 }
 
-// NewFsFile creates a dst Fs from a name but may point to a file.
+// NewFsFile creates a Fs from a name but may point to a file.
 //
 // It returns a string with the file name if points to a file
+// otherwise "".
 func NewFsFile(remote string) (fs.Fs, string) {
 	fsInfo, configName, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
@@ -166,12 +167,11 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	return nil, ""
 }
 
-// newFsSrc creates a src Fs from a name
+// newFsFileAddFilter creates a src Fs from a name
 //
-// It returns a string with the file name if limiting to one file
-//
-// This can point to a file
-func newFsSrc(remote string) (fs.Fs, string) {
+// This works the same as NewFsFile however it adds filters to the Fs
+// to limit it to a single file if the remote pointed to a file.
+func newFsFileAddFilter(remote string) (fs.Fs, string) {
 	f, fileName := NewFsFile(remote)
 	if fileName != "" {
 		if !filter.Active.InActive() {
@@ -189,10 +189,20 @@ func newFsSrc(remote string) (fs.Fs, string) {
 	return f, fileName
 }
 
-// newFsDst creates a dst Fs from a name
+// NewFsSrc creates a new src fs from the arguments.
+//
+// The source can be a file or a directory - if a file then it will
+// limit the Fs to a single file.
+func NewFsSrc(args []string) fs.Fs {
+	fsrc, _ := newFsFileAddFilter(args[0])
+	fs.CalculateModifyWindow(fsrc)
+	return fsrc
+}
+
+// newFsDir creates an Fs from a name
 //
 // This must point to a directory
-func newFsDst(remote string) fs.Fs {
+func newFsDir(remote string) fs.Fs {
 	f, err := fs.NewFs(remote)
 	if err != nil {
 		fs.CountError(err)
@@ -201,10 +211,19 @@ func newFsDst(remote string) fs.Fs {
 	return f
 }
 
+// NewFsDir creates a new Fs from the arguments
+//
+// The argument must point a directory
+func NewFsDir(args []string) fs.Fs {
+	fdst := newFsDir(args[0])
+	fs.CalculateModifyWindow(fdst)
+	return fdst
+}
+
 // NewFsSrcDst creates a new src and dst fs from the arguments
 func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
-	fsrc, _ := newFsSrc(args[0])
-	fdst := newFsDst(args[1])
+	fsrc, _ := newFsFileAddFilter(args[0])
+	fdst := newFsDir(args[1])
 	fs.CalculateModifyWindow(fdst, fsrc)
 	return fsrc, fdst
 }
@@ -212,7 +231,7 @@ func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 // NewFsSrcDstFiles creates a new src and dst fs from the arguments
 // If src is a file then srcFileName and dstFileName will be non-empty
 func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs, dstFileName string) {
-	fsrc, srcFileName = newFsSrc(args[0])
+	fsrc, srcFileName = newFsFileAddFilter(args[0])
 	// If copying a file...
 	dstRemote := args[1]
 	// If file exists then srcFileName != "", however if the file
@@ -240,22 +259,6 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	return
 }
 
-// NewFsSrc creates a new src fs from the arguments
-func NewFsSrc(args []string) fs.Fs {
-	fsrc, _ := newFsSrc(args[0])
-	fs.CalculateModifyWindow(fsrc)
-	return fsrc
-}
-
-// NewFsDst creates a new dst fs from the arguments
-//
-// Dst fs-es can't point to single files
-func NewFsDst(args []string) fs.Fs {
-	fdst := newFsDst(args[0])
-	fs.CalculateModifyWindow(fdst)
-	return fdst
-}
-
 // NewFsDstFile creates a new dst fs with a destination file name from the arguments
 func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
 	dstRemote, dstFileName := fspath.RemoteSplit(args[0])
@@ -265,7 +268,7 @@ func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
 	if dstFileName == "" {
 		log.Fatalf("%q is a directory", args[0])
 	}
-	fdst = newFsDst(dstRemote)
+	fdst = newFsDir(dstRemote)
 	fs.CalculateModifyWindow(fdst)
 	return
 }
