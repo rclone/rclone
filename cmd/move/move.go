@@ -2,6 +2,7 @@ package move
 
 import (
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
@@ -41,10 +42,12 @@ If you want to delete empty source directories after move, use the --delete-empt
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
-		fsrc, fdst := cmd.NewFsSrcDst(args)
+		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
-
-			return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs)
+			if srcFileName == "" {
+				return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs)
+			}
+			return operations.MoveFile(fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }
