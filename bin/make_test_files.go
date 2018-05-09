@@ -93,7 +93,7 @@ func (d *dir) createDirectories() {
 
 // list the directory heirachy
 func (d *dir) list(path string, output []string) []string {
-	dirPath := path + "/" + d.name
+	dirPath := filepath.Join(path, d.name)
 	output = append(output, dirPath)
 	for _, subDir := range d.children {
 		output = subDir.list(dirPath, output)
