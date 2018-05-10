@@ -179,6 +179,9 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.filePath(path),
+		ExtraHeaders: map[string]string{
+			"Depth": "1",
+		},
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -563,7 +566,7 @@ func (f *Fs) mkdir(dirPath string) error {
 	})
 	if apiErr, ok := err.(*api.Error); ok {
 		// already exists
-		if apiErr.StatusCode == http.StatusMethodNotAllowed {
+		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable {
 			return nil
 		}
 		// parent does not exists
