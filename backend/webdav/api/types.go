@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -109,16 +110,20 @@ type Error struct {
 
 // Error returns a string for the error and statistifes the error interface
 func (e *Error) Error() string {
+	var out []string
 	if e.Message != "" {
-		return e.Message
+		out = append(out, e.Message)
 	}
 	if e.Exception != "" {
-		return e.Exception
+		out = append(out, e.Exception)
 	}
 	if e.Status != "" {
-		return e.Status
+		out = append(out, e.Status)
 	}
-	return "Webdav Error"
+	if len(out) == 0 {
+		return "Webdav Error"
+	}
+	return strings.Join(out, ": ")
 }
 
 // Time represents represents date and time information for the
