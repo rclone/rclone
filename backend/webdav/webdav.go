@@ -19,6 +19,7 @@ package webdav
 // For example the ownCloud WebDAV server does it that way.
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -209,11 +210,16 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
+	body, err := rest.ReadBody(resp)
+	if err != nil {
+		return errors.Wrap(err, "error when trying to read error from body")
+	}
 	// Decode error response
 	errResponse := new(api.Error)
-	err := rest.DecodeXML(resp, &errResponse)
+	err = xml.Unmarshal(body, &errResponse)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		// set the Message to be the body if can't parse the XML
+		errResponse.Message = strings.TrimSpace(string(body))
 	}
 	errResponse.Status = resp.Status
 	errResponse.StatusCode = resp.StatusCode
