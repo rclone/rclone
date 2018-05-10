@@ -976,6 +976,7 @@ func Run(t *testing.T, opt *Opt) {
 		file2Copy.Path = "z.txt"
 		file2Copy.WinPath = ""
 		fileRemote, err := fs.NewFs(remoteName)
+		require.NotNil(t, fileRemote)
 		assert.Equal(t, fs.ErrorIsFile, err)
 		fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
 	})
