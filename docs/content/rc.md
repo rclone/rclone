@@ -97,6 +97,12 @@ Eg
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
 
+### core/gc: Runs a garbage collection.
+
+This tells the go runtime to do a garbage collection run.  It isn't
+necessary to call this normally, but it can be useful for debugging
+memory problems.
+
 ### core/memstats: Returns the memory statistics
 
 This returns the memory statistics of the running program.  What the values mean
