@@ -271,3 +271,49 @@ curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' '
 	"sausage": 1
 }
 ```
+
+## Debugging rclone with pprof ##
+
+If you use the `--rc` flag this will also enable the use of the go
+profiling tools on the same port.
+
+To use these, first [install go](https://golang.org/doc/install).
+
+Then (for example) to profile rclone's memory use you can run:
+
+    go tool pprof -web http://localhost:5572/debug/pprof/heap
+
+This should open a page in your browser showing what is using what
+memory.
+
+You can also use the `-text` flag to produce a textual summary
+
+```
+$ go tool pprof -text http://localhost:5572/debug/pprof/heap
+Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
+      flat  flat%   sum%        cum   cum%
+ 1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
+     513kB 33.38%   100%      513kB 33.38%  net/http.newBufioWriterSize
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/all.init
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve.init
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve/restic.init
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2.init
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init
+         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init.0
+         0     0%   100%  1024.03kB 66.62%  main.init
+         0     0%   100%      513kB 33.38%  net/http.(*conn).readRequest
+         0     0%   100%      513kB 33.38%  net/http.(*conn).serve
+         0     0%   100%  1024.03kB 66.62%  runtime.main
+```
+
+Possible profiles to look at:
+
+  * Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
+  * 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
+  * 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
+
+See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)
+for more info on how to use the profiling and for a general overview
+see [the Go team's blog post on profiling go programs](https://blog.golang.org/profiling-go-programs).
+
+The profiling hook is [zero overhead unless it is used](https://stackoverflow.com/q/26545159/164234).
