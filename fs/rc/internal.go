@@ -59,6 +59,16 @@ The most interesting values for most people are:
   * It is virtual memory so may include unused memory
 `,
 	})
+	Add(Call{
+		Path:  "core/gc",
+		Fn:    rcGc,
+		Title: "Runs a garbage collection.",
+		Help: `
+This tells the go runtime to do a garbage collection run.  It isn't
+necessary to call this normally, but it can be useful for debugging
+memory problems.
+`,
+	})
 }
 
 // Echo the input to the ouput parameters
@@ -110,5 +120,12 @@ func rcMemStats(in Params) (out Params, err error) {
 	out["BuckHashSys"] = m.BuckHashSys
 	out["GCSys"] = m.GCSys
 	out["OtherSys"] = m.OtherSys
+	return out, nil
+}
+
+// Do a garbage collection run
+func rcGc(in Params) (out Params, err error) {
+	out = make(Params)
+	runtime.GC()
 	return out, nil
 }
