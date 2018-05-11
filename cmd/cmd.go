@@ -470,6 +470,7 @@ func initConfig() {
 }
 
 func resolveExitCode(err error) {
+	atexit.Run()
 	if err == nil {
 		os.Exit(exitCodeSuccess)
 	}
