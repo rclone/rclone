@@ -29,7 +29,7 @@ func Register(fn func()) {
 		signal.Notify(exitChan, os.Interrupt) // syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
 		go func() {
 			sig, closed := <-exitChan
-			if closed {
+			if closed || sig == nil {
 				return
 			}
 			fs.Infof(nil, "Signal received: %s", sig)
