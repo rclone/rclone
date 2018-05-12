@@ -14,6 +14,7 @@ import (
 
 var (
 	fns          []func()
+	exitChan     chan os.Signal
 	exitOnce     sync.Once
 	registerOnce sync.Once
 )
@@ -24,16 +25,29 @@ func Register(fn func()) {
 	// Run AtExit handlers on SIGINT or SIGTERM so everything gets
 	// tidied up properly
 	registerOnce.Do(func() {
+		exitChan = make(chan os.Signal, 1)
+		signal.Notify(exitChan, os.Interrupt) // syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
 		go func() {
-			ch := make(chan os.Signal, 1)
-			signal.Notify(ch, os.Interrupt) // syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
-			sig := <-ch
+			sig, closed := <-exitChan
+			if closed {
+				return
+			}
 			fs.Infof(nil, "Signal received: %s", sig)
 			Run()
 			fs.Infof(nil, "Exiting...")
 			os.Exit(0)
 		}()
 	})
+}
+
+// IgnoreSignals disables the signal handler and prevents Run from beeing executed automatically
+func IgnoreSignals() {
+	registerOnce.Do(func() {})
+	if exitChan != nil {
+		signal.Stop(exitChan)
+		close(exitChan)
+		exitChan = nil
+	}
 }
 
 // Run all the at exit functions if they haven't been run already

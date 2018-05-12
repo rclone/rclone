@@ -13,6 +13,7 @@ import (
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/lib/atexit"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/okzk/sdnotify"
@@ -133,6 +134,7 @@ func Mount(f fs.Fs, mountpoint string) error {
 	signal.Notify(sigInt, syscall.SIGINT, syscall.SIGTERM)
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
+	atexit.IgnoreSignals()
 
 	if err := sdnotify.SdNotifyReady(); err != nil && err != sdnotify.SdNotifyNoSocket {
 		return errors.Wrap(err, "failed to notify systemd")
