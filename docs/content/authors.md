@@ -164,3 +164,4 @@ Contributors
   * Piotr Oleszczyk <piotr.oleszczyk@gmail.com>
   * Rodrigo <rodarima@gmail.com>
   * NoLooseEnds <NoLooseEnds@users.noreply.github.com>
+  * Jakub Karlicek <jakub@karlicek.me>
