@@ -290,14 +290,48 @@ type putFn func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.O
 
 // put implements Put or PutStream
 func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
+	// Encrypt the data into wrappedIn
 	wrappedIn, err := f.cipher.EncryptData(in)
 	if err != nil {
 		return nil, err
 	}
+
+	// Find a hash the destination supports to compute a hash of
+	// the encrypted data
+	ht := f.Fs.Hashes().GetOne()
+	var hasher *hash.MultiHasher
+	if ht != hash.None {
+		hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+		if err != nil {
+			return nil, err
+		}
+		wrappedIn = io.TeeReader(wrappedIn, hasher)
+	}
+
+	// Transfer the data
 	o, err := put(wrappedIn, f.newObjectInfo(src), options...)
 	if err != nil {
 		return nil, err
 	}
+
+	// Check the hashes of the encrypted data if we were comparing them
+	if ht != hash.None && hasher != nil {
+		srcHash := hasher.Sums()[ht]
+		var dstHash string
+		dstHash, err = o.Hash(ht)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read destination hash")
+		}
+		if srcHash != "" && dstHash != "" && srcHash != dstHash {
+			// remove object
+			err = o.Remove()
+			if err != nil {
+				fs.Errorf(o, "Failed to remove corrupted object: %v", err)
+			}
+			return nil, errors.Errorf("corrupted on transfer: %v crypted hash differ %q vs %q", ht, srcHash, dstHash)
+		}
+	}
+
 	return f.newObject(o), nil
 }
 
@@ -635,11 +669,11 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 
 // Update in to the object with the modTime given of the given size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	wrappedIn, err := o.f.cipher.EncryptData(in)
-	if err != nil {
-		return err
+	update := func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+		return o.Object, o.Object.Update(in, src, options...)
 	}
-	return o.Object.Update(wrappedIn, o.f.newObjectInfo(src))
+	_, err := o.f.put(in, src, options, update)
+	return err
 }
 
 // newDir returns a dir with the Name decrypted
