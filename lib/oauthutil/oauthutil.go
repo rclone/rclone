@@ -275,10 +275,6 @@ func doConfig(id, name string, oauthConfig *oauth2.Config, offline bool, opts []
 	oauthConfig, changed := overrideCredentials(name, oauthConfig)
 	automatic := config.FileGet(name, config.ConfigAutomatic) != ""
 
-	if changed {
-		fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", RedirectURL)
-	}
-
 	// See if already have a token
 	tokenString := config.FileGet(name, "token")
 	if tokenString != "" {
@@ -292,6 +288,9 @@ func doConfig(id, name string, oauthConfig *oauth2.Config, offline bool, opts []
 	useWebServer := false
 	switch oauthConfig.RedirectURL {
 	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
+		if changed {
+			fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
+		}
 		useWebServer = true
 		if automatic {
 			break
