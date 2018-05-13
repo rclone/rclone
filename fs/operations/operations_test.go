@@ -747,4 +747,15 @@ func TestListFormat(t *testing.T) {
 			assert.Equal(t, test.want, got)
 		}
 	}
+
+	list.SetOutput(nil)
+	list.SetSeparator("|")
+	list.SetCSV(true)
+	list.AddSize()
+	list.AddPath()
+	list.AddModTime()
+	list.SetDirSlash(true)
+	assert.Equal(t, "1|a|"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
+	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"|subdir/|"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[1]))
+
 }
