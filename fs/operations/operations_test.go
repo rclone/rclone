@@ -717,6 +717,11 @@ func TestListFormat(t *testing.T) {
 	_ = operations.ListFormatted(&items[0], &list) // Can't really check anything - at least it didn't panic!
 
 	list.SetOutput(nil)
+	list.AddMimeType()
+	assert.Contains(t, operations.ListFormatted(&items[0], &list), "/")
+	assert.Equal(t, "inode/directory", operations.ListFormatted(&items[1], &list))
+
+	list.SetOutput(nil)
 	list.AddSize()
 	assert.Equal(t, "1", operations.ListFormatted(&items[0], &list))
 
