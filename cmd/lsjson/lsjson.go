@@ -42,6 +42,7 @@ type lsJSON struct {
 	ModTime   Timestamp //`json:",omitempty"`
 	IsDir     bool
 	Hashes    map[string]string `json:",omitempty"`
+	ID        string            `json:",omitempty"`
 }
 
 // Timestamp a time in RFC3339 format with Nanosecond precision secongs
@@ -69,6 +70,7 @@ The output is an array of Items, where each Item looks like this
          "MD5" : "b1946ac92492d2347c6235b4d2611184",
          "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
       },
+      "ID": "y2djkhiujf83u33",
       "IsDir" : false,
       "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
       "Name" : "file.txt",
@@ -137,6 +139,9 @@ can be processed line by line as each item is written one to a line.
 						default:
 							fs.Errorf(nil, "Unknown type %T in listing", entry)
 						}
+					}
+					if do, ok := entry.(fs.IDer); ok {
+						item.ID = do.ID()
 					}
 					switch x := entry.(type) {
 					case fs.Directory:
