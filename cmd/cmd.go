@@ -303,6 +303,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if showStats {
 		stopStats = StartStats()
 	}
+	SigInfoHandler()
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		if !Retry || (err == nil && !accounting.Stats.Errored()) {
