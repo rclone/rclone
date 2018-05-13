@@ -166,7 +166,7 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 					continue
 				}
 			}
-			fmt.Fprintln(out, operations.ListFormatted(&entry, &list))
+			fmt.Fprintln(out, list.Format(entry))
 		}
 		return nil
 	})

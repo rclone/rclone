@@ -694,43 +694,43 @@ func TestListFormat(t *testing.T) {
 	var list operations.ListFormat
 	list.AddPath()
 	list.SetDirSlash(false)
-	assert.Equal(t, "subdir", operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "subdir", list.Format(items[1]))
 
 	list.SetDirSlash(true)
-	assert.Equal(t, "subdir/", operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "subdir/", list.Format(items[1]))
 
 	list.SetOutput(nil)
-	assert.Equal(t, "", operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "", list.Format(items[1]))
 
 	list.AppendOutput(func() string { return "a" })
 	list.AppendOutput(func() string { return "b" })
-	assert.Equal(t, "ab", operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "ab", list.Format(items[1]))
 	list.SetSeparator(":::")
-	assert.Equal(t, "a:::b", operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "a:::b", list.Format(items[1]))
 
 	list.SetOutput(nil)
 	list.AddModTime()
-	assert.Equal(t, items[0].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
+	assert.Equal(t, items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
 
 	list.SetOutput(nil)
 	list.AddID()
-	_ = operations.ListFormatted(&items[0], &list) // Can't really check anything - at least it didn't panic!
+	_ = list.Format(items[0]) // Can't really check anything - at least it didn't panic!
 
 	list.SetOutput(nil)
 	list.AddMimeType()
-	assert.Contains(t, operations.ListFormatted(&items[0], &list), "/")
-	assert.Equal(t, "inode/directory", operations.ListFormatted(&items[1], &list))
+	assert.Contains(t, list.Format(items[0]), "/")
+	assert.Equal(t, "inode/directory", list.Format(items[1]))
 
 	list.SetOutput(nil)
 	list.AddSize()
-	assert.Equal(t, "1", operations.ListFormatted(&items[0], &list))
+	assert.Equal(t, "1", list.Format(items[0]))
 
 	list.AddPath()
 	list.AddModTime()
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
-	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
-	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
+	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[1]))
 
 	for _, test := range []struct {
 		ht   hash.Type
@@ -742,7 +742,7 @@ func TestListFormat(t *testing.T) {
 	} {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)
-		got := operations.ListFormatted(&items[0], &list)
+		got := list.Format(items[0])
 		if got != "UNSUPPORTED" && got != "" {
 			assert.Equal(t, test.want, got)
 		}
