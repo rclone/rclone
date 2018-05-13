@@ -39,6 +39,7 @@ type lsJSON struct {
 	Name      string
 	Encrypted string `json:",omitempty"`
 	Size      int64
+	MimeType  string    `json:",omitempty"`
 	ModTime   Timestamp //`json:",omitempty"`
 	IsDir     bool
 	Hashes    map[string]string `json:",omitempty"`
@@ -72,6 +73,7 @@ The output is an array of Items, where each Item looks like this
       },
       "ID": "y2djkhiujf83u33",
       "IsDir" : false,
+      "MimeType" : "application/octet-stream",
       "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
       "Name" : "file.txt",
       "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
@@ -123,9 +125,10 @@ can be processed line by line as each item is written one to a line.
 				}
 				for _, entry := range entries {
 					item := lsJSON{
-						Path: entry.Remote(),
-						Name: path.Base(entry.Remote()),
-						Size: entry.Size(),
+						Path:     entry.Remote(),
+						Name:     path.Base(entry.Remote()),
+						Size:     entry.Size(),
+						MimeType: fs.MimeTypeDirEntry(entry),
 					}
 					if !noModTime {
 						item.ModTime = Timestamp(entry.ModTime())
