@@ -28,3 +28,17 @@ func MimeType(o ObjectInfo) (mimeType string) {
 	}
 	return MimeTypeFromName(o.Remote())
 }
+
+// MimeTypeDirEntry returns the MimeType of a DirEntry
+//
+// It returns "inode/directory" for directories, or uses
+// MimeType(Object)
+func MimeTypeDirEntry(item DirEntry) string {
+	switch x := item.(type) {
+	case Object:
+		return MimeType(x)
+	case Directory:
+		return "inode/directory"
+	}
+	return ""
+}
