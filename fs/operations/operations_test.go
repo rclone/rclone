@@ -713,6 +713,10 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, items[0].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
 
 	list.SetOutput(nil)
+	list.AddID()
+	_ = operations.ListFormatted(&items[0], &list) // Can't really check anything - at least it didn't panic!
+
+	list.SetOutput(nil)
 	list.AddSize()
 	assert.Equal(t, "1", operations.ListFormatted(&items[0], &list))
 

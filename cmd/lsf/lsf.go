@@ -63,6 +63,7 @@ output:
     s - size
     t - modification time
     h - hash
+    i - ID of object if known
 
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.
@@ -138,6 +139,8 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 			list.AddSize()
 		case 'h':
 			list.AddHash(hashType)
+		case 'i':
+			list.AddID()
 		default:
 			return errors.Errorf("Unknown format character %q", char)
 		}
