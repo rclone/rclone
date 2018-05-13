@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/rc"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -37,12 +39,130 @@ type StatsInfo struct {
 
 // NewStats cretates an initialised StatsInfo
 func NewStats() *StatsInfo {
-	return &StatsInfo{
+	s := &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers),
 		transferring: newStringSet(fs.Config.Transfers),
 		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
+
+	rc.Add(rc.Call{
+		Path:  "stats/transfers",
+		Fn:    s.bwStats,
+		Title: "Get transfer stats",
+		Help: `
+Show statistics for all transfers.
+`,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "stats/reset",
+		Fn:    s.bwResetStats,
+		Title: "Reset transfer stats",
+		Help: `
+Resets the global transfer statistic counters.
+`,
+	})
+
+	return s
+}
+
+// reset statistics as requested by rc stats/reset
+func (s *StatsInfo) bwResetStats(in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
+
+	s.mu.Lock()
+	s.bytes = 0
+	s.errors = 0
+	s.checks = 0
+	s.transfers = 0
+	s.deletes = 0
+	s.start = time.Now()
+	s.mu.Unlock()
+
+	out["status"] = "ok"
+	out["message"] = "Global transfer statistic counters were reset to Zero"
+	return out, nil
+}
+
+// create map with statistics for rc stats/transfers
+func (s *StatsInfo) bwStats(in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
+	g, t, c, err := s.Map()
+	if err != nil {
+		return out, errors.Errorf("error while getting bw stats")
+	}
+	out["status"] = "ok"
+	out["global"] = g
+	out["transferring"] = t
+	out["checking"] = c
+	return out, nil
+}
+
+// Map convert the StatsInfo to a map for rc stats
+func (s *StatsInfo) Map() (map[string]interface{}, map[string]map[string]interface{}, map[string]map[string]interface{}, error) {
+	dataRateMultiplier := 1.0
+	if fs.Config.DataRateUnit == "bits" {
+		dataRateMultiplier = 8.0
+	}
+	s.mu.RLock()
+	dt := time.Now().Sub(s.start)
+	dtSeconds := dt.Seconds()
+	speed := 0.0
+	if dt > 0 {
+		speed = float64(s.bytes) / dtSeconds
+	}
+
+	g := make(map[string]interface{})
+	g["bytes"] = s.bytes
+	g["seconds"] = dtSeconds
+	g["speed"] = speed * dataRateMultiplier
+	g["transfers"] = s.transfers
+	g["checks"] = s.checks
+	g["errors"] = s.errors
+	g["deletes"] = s.deletes
+	s.mu.RUnlock()
+
+	r := make(map[string]map[string]interface{})
+	s.transferring.mu.RLock()
+	for name := range s.transferring.items {
+		acc := s.inProgress.get(name)
+		r[name] = make(map[string]interface{})
+		r[name]["inProgress"] = (acc != nil)
+		if acc != nil {
+			bytes, size := acc.progress()
+			speedBps, speedMavg := acc.speed()
+			eta, etaOk := acc.eta()
+
+			r[name]["bytes"] = bytes
+			r[name]["size"] = size
+			r[name]["speed_moving_avg"] = speedMavg * dataRateMultiplier
+			r[name]["speed"] = speedBps * dataRateMultiplier
+			if etaOk {
+				r[name]["eta"] = eta
+			}
+			percentageDone := 0.0
+			if bytes > 0 {
+				percentageDone = 100 * float64(bytes) / float64(size)
+			}
+			r[name]["percentageDone"] = percentageDone
+
+			acc.statmu.Lock()
+			r[name]["name"] = acc.name
+			r[name]["start"] = acc.start
+			acc.statmu.Unlock()
+		}
+	}
+	s.transferring.mu.RUnlock()
+
+	c := make(map[string]map[string]interface{})
+	s.checking.mu.RLock()
+	for name := range s.checking.items {
+		c[name] = make(map[string]interface{})
+		c[name]["name"] = name
+	}
+	s.checking.mu.RUnlock()
+	return g, r, c, nil
 }
 
 // String convert the StatsInfo to a string for printing
