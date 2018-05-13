@@ -23,6 +23,7 @@ var (
 	hashType  = hash.MD5
 	filesOnly bool
 	dirsOnly  bool
+	csv       bool
 )
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	flags.VarP(&hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
 	flags.BoolVarP(&filesOnly, "files-only", "", false, "Only list files.")
 	flags.BoolVarP(&dirsOnly, "dirs-only", "", false, "Only list directories.")
+	flags.BoolVarP(&csv, "csv", "", false, "Output in CSV format.")
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
@@ -113,11 +115,28 @@ Eg
     2018-04-26 08:52:53,0,,ferejej3gux/
     2016-06-25 18:55:40,37600,8fd37c3810dd660778137ac3a66cc06d,fubuwic
 
+You can output in CSV standard format.  This will escape things in "
+if they contain ,
+
+Eg
+
+    $ rclone lsf --csv --files-only --format ps remote:path
+    test.log,22355
+    test.sh,449
+    "this file contains a comma, in the file name.txt",6
+
 ` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
+			// Work out if the separatorFlag was supplied or not
+			separatorFlag := command.Flags().Lookup("separator")
+			separatorFlagSupplied := separatorFlag != nil && separatorFlag.Changed
+			// Default the separator to , if using CSV
+			if csv && !separatorFlagSupplied {
+				separator = ","
+			}
 			return Lsf(fsrc, os.Stdout)
 		})
 	},
@@ -128,6 +147,7 @@ Eg
 func Lsf(fsrc fs.Fs, out io.Writer) error {
 	var list operations.ListFormat
 	list.SetSeparator(separator)
+	list.SetCSV(csv)
 	list.SetDirSlash(dirSlash)
 
 	for _, char := range format {
