@@ -1445,11 +1445,11 @@ func (l *ListFormat) AppendOutput(functionToAppend func() string) {
 	l.output = append(l.output, functionToAppend)
 }
 
-// ListFormatted prints information about specific file in specific format
-func ListFormatted(entry *fs.DirEntry, list *ListFormat) string {
-	list.entry = *entry
+// Format prints information about the DirEntry in the format defined
+func (l *ListFormat) Format(entry fs.DirEntry) string {
+	l.entry = entry
 	var out string
-	for _, fun := range list.output {
+	for _, fun := range l.output {
 		out += fun()
 	}
 	return out
