@@ -246,6 +246,12 @@ type MimeTyper interface {
 	MimeType() string
 }
 
+// IDer is an optional interface for Object
+type IDer interface {
+	// ID returns the ID of the Object if known, or "" if not
+	ID() string
+}
+
 // ObjectUnWrapper is an optional interface for Object
 type ObjectUnWrapper interface {
 	// UnWrap returns the Object that this Object is wrapping or

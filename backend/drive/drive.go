@@ -1678,6 +1678,11 @@ func (o *Object) MimeType() string {
 	return o.mimeType
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	return o.id
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1695,4 +1700,5 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
 )

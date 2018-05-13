@@ -1118,6 +1118,11 @@ func (o *Object) Remove() error {
 	})
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	return o.id
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1129,4 +1134,5 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
 )

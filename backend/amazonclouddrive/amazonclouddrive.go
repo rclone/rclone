@@ -1315,6 +1315,14 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoin
 	return checkpoint
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	if o.info.Id == nil {
+		return ""
+	}
+	return *o.info.Id
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
@@ -1326,4 +1334,5 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
+	_ fs.IDer            = &Object{}
 )

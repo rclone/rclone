@@ -1086,6 +1086,11 @@ func (o *Object) readMetaData() (err error) {
 	return nil
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	return o.id
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1095,4 +1100,5 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
 )
