@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -92,4 +93,12 @@ func TestSizeSuffixSet(t *testing.T) {
 		}
 		assert.Equal(t, test.want, int64(ss))
 	}
+}
+
+func TestSizeSuffixScan(t *testing.T) {
+	var v SizeSuffix
+	n, err := fmt.Sscan(" 17M ", &v)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, SizeSuffix(17<<20), v)
 }

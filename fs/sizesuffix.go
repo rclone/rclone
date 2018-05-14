@@ -110,3 +110,12 @@ func (x *SizeSuffix) Set(s string) error {
 func (x *SizeSuffix) Type() string {
 	return "int64"
 }
+
+// Scan implements the fmt.Scanner interface
+func (x *SizeSuffix) Scan(s fmt.ScanState, ch rune) error {
+	token, err := s.Token(true, nil)
+	if err != nil {
+		return err
+	}
+	return x.Set(string(token))
+}
