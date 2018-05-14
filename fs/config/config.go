@@ -81,8 +81,9 @@ var (
 )
 
 func init() {
-	// Set the function pointer up in fs
+	// Set the function pointers up in fs
 	fs.ConfigFileGet = FileGetFlag
+	fs.ConfigFileSet = FileSet
 }
 
 func getConfigData() *goconfig.ConfigFile {
@@ -705,7 +706,8 @@ func RemoteConfig(name string) {
 	fmt.Printf("Remote config\n")
 	f := MustFindByName(name)
 	if f.Config != nil {
-		f.Config(name)
+		m := fs.ConfigMap(f, name)
+		f.Config(name, m)
 	}
 }
 
@@ -745,7 +747,7 @@ func ChooseOption(o *fs.Option, name string) string {
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
-		if o.Optional {
+		if !o.Required {
 			actions = append(actions, "nNo leave this optional password blank")
 		}
 		var password string
@@ -1089,8 +1091,8 @@ func Authorize(args []string) {
 		log.Fatalf("Invalid number of arguments: %d", len(args))
 	}
 	newType := args[0]
-	fs := fs.MustFind(newType)
-	if fs.Config == nil {
+	f := fs.MustFind(newType)
+	if f.Config == nil {
 		log.Fatalf("Can't authorize fs %q", newType)
 	}
 	// Name used for temporary fs
@@ -1105,20 +1107,15 @@ func Authorize(args []string) {
 		getConfigData().SetValue(name, ConfigClientID, args[1])
 		getConfigData().SetValue(name, ConfigClientSecret, args[2])
 	}
-	fs.Config(name)
+	m := fs.ConfigMap(f, name)
+	f.Config(name, m)
 }
 
 // FileGetFlag gets the config key under section returning the
 // the value and true if found and or ("", false) otherwise
-//
-// It looks up defaults in the environment if they are present
 func FileGetFlag(section, key string) (string, bool) {
 	newValue, err := getConfigData().GetValue(section, key)
-	if err == nil {
-		return newValue, true
-	}
-	envKey := fs.ConfigToEnv(section, key)
-	return os.LookupEnv(envKey)
+	return newValue, err == nil
 }
 
 // FileGet gets the config key under section returning the
@@ -1134,46 +1131,14 @@ func FileGet(section, key string, defaultVal ...string) string {
 	return getConfigData().MustValue(section, key, defaultVal...)
 }
 
-// FileGetBool gets the config key under section returning the
-// default or false if not set.
-//
-// It looks up defaults in the environment if they are present
-func FileGetBool(section, key string, defaultVal ...bool) bool {
-	envKey := fs.ConfigToEnv(section, key)
-	newValue, found := os.LookupEnv(envKey)
-	if found {
-		newBool, err := strconv.ParseBool(newValue)
-		if err != nil {
-			fs.Errorf(nil, "Couldn't parse %q into bool - ignoring: %v", envKey, err)
-		} else {
-			defaultVal = []bool{newBool}
-		}
-	}
-	return getConfigData().MustBool(section, key, defaultVal...)
-}
-
-// FileGetInt gets the config key under section returning the
-// default or 0 if not set.
-//
-// It looks up defaults in the environment if they are present
-func FileGetInt(section, key string, defaultVal ...int) int {
-	envKey := fs.ConfigToEnv(section, key)
-	newValue, found := os.LookupEnv(envKey)
-	if found {
-		newInt, err := strconv.Atoi(newValue)
-		if err != nil {
-			fs.Errorf(nil, "Couldn't parse %q into int - ignoring: %v", envKey, err)
-		} else {
-			defaultVal = []int{newInt}
-		}
-	}
-	return getConfigData().MustInt(section, key, defaultVal...)
-}
-
 // FileSet sets the key in section to value.  It doesn't save
 // the config file.
 func FileSet(section, key, value string) {
-	getConfigData().SetValue(section, key, value)
+	if value != "" {
+		getConfigData().SetValue(section, key, value)
+	} else {
+		FileDeleteKey(section, key)
+	}
 }
 
 // FileDeleteKey deletes the config key in the config file.

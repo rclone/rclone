@@ -58,7 +58,7 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string,
 	if f.isTeamDrive {
 		params.Set("supportsTeamDrives", "true")
 	}
-	if *driveKeepRevisionForever {
+	if f.opt.KeepRevisionForever {
 		params.Set("keepRevisionForever", "true")
 	}
 	urls := "https://www.googleapis.com/upload/drive/v3/files"
@@ -197,11 +197,11 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 	start := int64(0)
 	var StatusCode int
 	var err error
-	buf := make([]byte, int(chunkSize))
+	buf := make([]byte, int(rx.f.opt.ChunkSize))
 	for start < rx.ContentLength {
 		reqSize := rx.ContentLength - start
-		if reqSize >= int64(chunkSize) {
-			reqSize = int64(chunkSize)
+		if reqSize >= int64(rx.f.opt.ChunkSize) {
+			reqSize = int64(rx.f.opt.ChunkSize)
 		}
 		chunk := readers.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
 

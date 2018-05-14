@@ -34,7 +34,8 @@ const (
 
 // Features flags for this storage type
 type Features struct {
-	PurgeDb bool // purge the db before starting
+	PurgeDb    bool          // purge the db before starting
+	DbWaitTime time.Duration // time to wait for DB to be available
 }
 
 var boltMap = make(map[string]*Persistent)
@@ -122,7 +123,7 @@ func (b *Persistent) connect() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to create a data directory %q", b.dataPath)
 	}
-	b.db, err = bolt.Open(b.dbPath, 0644, &bolt.Options{Timeout: *cacheDbWaitTime})
+	b.db, err = bolt.Open(b.dbPath, 0644, &bolt.Options{Timeout: b.features.DbWaitTime})
 	if err != nil {
 		return errors.Wrapf(err, "failed to open a cache connection to %q", b.dbPath)
 	}
@@ -342,7 +343,7 @@ func (b *Persistent) RemoveDir(fp string) error {
 // ExpireDir will flush a CachedDirectory and all its objects from the objects
 // chunks will remain as they are
 func (b *Persistent) ExpireDir(cd *Directory) error {
-	t := time.Now().Add(cd.CacheFs.fileAge * -1)
+	t := time.Now().Add(time.Duration(-cd.CacheFs.opt.InfoAge))
 	cd.CacheTs = &t
 
 	// expire all parents
@@ -429,7 +430,7 @@ func (b *Persistent) RemoveObject(fp string) error {
 
 // ExpireObject will flush an Object and all its data if desired
 func (b *Persistent) ExpireObject(co *Object, withData bool) error {
-	co.CacheTs = time.Now().Add(co.CacheFs.fileAge * -1)
+	co.CacheTs = time.Now().Add(time.Duration(-co.CacheFs.opt.InfoAge))
 	err := b.AddObject(co)
 	if withData {
 		_ = os.RemoveAll(path.Join(b.dataPath, co.abs()))

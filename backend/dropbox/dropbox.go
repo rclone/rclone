@@ -37,7 +37,8 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
@@ -55,24 +56,6 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
-)
-
-var (
-	// Description of how to auth for this app
-	dropboxConfig = &oauth2.Config{
-		Scopes: []string{},
-		// Endpoint: oauth2.Endpoint{
-		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
-		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
-		// },
-		Endpoint:     dropbox.OAuthEndpoint(""),
-		ClientID:     rcloneClientID,
-		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.RedirectLocalhostURL,
-	}
-	// A regexp matching path names for files Dropbox ignores
-	// See https://www.dropbox.com/en/help/145 - Ignored files
-	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
 	// Upload chunk size - setting too small makes uploads slow.
 	// Chunks are buffered into memory for retries.
 	//
@@ -96,8 +79,26 @@ var (
 	// Choose 48MB which is 91% of Maximum speed.  rclone by
 	// default does 4 transfers so this should use 4*48MB = 192MB
 	// by default.
-	uploadChunkSize    = fs.SizeSuffix(48 * 1024 * 1024)
-	maxUploadChunkSize = fs.SizeSuffix(150 * 1024 * 1024)
+	defaultChunkSize = 48 * 1024 * 1024
+	maxChunkSize     = 150 * 1024 * 1024
+)
+
+var (
+	// Description of how to auth for this app
+	dropboxConfig = &oauth2.Config{
+		Scopes: []string{},
+		// Endpoint: oauth2.Endpoint{
+		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
+		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
+		// },
+		Endpoint:     dropbox.OAuthEndpoint(""),
+		ClientID:     rcloneClientID,
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
+	}
+	// A regexp matching path names for files Dropbox ignores
+	// See https://www.dropbox.com/en/help/145 - Ignored files
+	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
 )
 
 // Register with Fs
@@ -106,27 +107,37 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			err := oauthutil.ConfigNoOffline("dropbox", name, dropboxConfig)
+		Config: func(name string, m configmap.Mapper) {
+			err := oauthutil.ConfigNoOffline("dropbox", name, m, dropboxConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Dropbox App Client Id - leave blank normally.",
+			Help: "Dropbox App Client Id\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Dropbox App Client Secret - leave blank normally.",
+			Help: "Dropbox App Client Secret\nLeave blank normally.",
+		}, {
+			Name:     "chunk_size",
+			Help:     fmt.Sprintf("Upload chunk size. Max %v.", fs.SizeSuffix(maxChunkSize)),
+			Default:  fs.SizeSuffix(defaultChunkSize),
+			Advanced: true,
 		}},
 	})
-	flags.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	ChunkSize fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a remote dropbox server
 type Fs struct {
 	name           string         // name of this remote
 	root           string         // the path we are working on
+	opt            Options        // parsed options
 	features       *fs.Features   // optional features
 	srv            files.Client   // the connection to the dropbox server
 	sharing        sharing.Client // as above, but for generating sharing links
@@ -185,15 +196,22 @@ func shouldRetry(err error) (bool, error) {
 }
 
 // NewFs contstructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	if uploadChunkSize > maxUploadChunkSize {
-		return nil, errors.Errorf("chunk size too big, must be < %v", maxUploadChunkSize)
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	if opt.ChunkSize > maxChunkSize {
+		return nil, errors.Errorf("chunk size too big, must be < %v", maxChunkSize)
 	}
 
 	// Convert the old token if it exists.  The old token was just
 	// just a string, the new one is a JSON blob
-	oldToken := strings.TrimSpace(config.FileGet(name, config.ConfigToken))
-	if oldToken != "" && oldToken[0] != '{' {
+	oldToken, ok := m.Get(config.ConfigToken)
+	oldToken = strings.TrimSpace(oldToken)
+	if ok && oldToken != "" && oldToken[0] != '{' {
 		fs.Infof(name, "Converting token to new format")
 		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
 		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
@@ -202,13 +220,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		}
 	}
 
-	oAuthClient, _, err := oauthutil.NewClient(name, dropboxConfig)
+	oAuthClient, _, err := oauthutil.NewClient(name, m, dropboxConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure dropbox")
 	}
 
 	f := &Fs{
 		name:  name,
+		opt:   *opt,
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	config := dropbox.Config{
@@ -911,7 +930,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // unknown (i.e. -1) or smaller than uploadChunkSize, the method incurs an
 // avoidable request to the Dropbox API that does not carry payload.
 func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
-	chunkSize := int64(uploadChunkSize)
+	chunkSize := int64(o.fs.opt.ChunkSize)
 	chunks := 0
 	if size != -1 {
 		chunks = int(size/chunkSize) + 1
@@ -1026,7 +1045,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	var err error
 	var entry *files.FileMetadata
-	if size > int64(uploadChunkSize) || size == -1 {
+	if size > int64(o.fs.opt.ChunkSize) || size == -1 {
 		entry, err = o.uploadChunked(in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {

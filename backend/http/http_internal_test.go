@@ -16,6 +16,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ var (
 )
 
 // prepareServer the test server and return a function to tidy it up afterwards
-func prepareServer(t *testing.T) func() {
+func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
@@ -41,19 +42,24 @@ func prepareServer(t *testing.T) func() {
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
-	config.FileSet(remoteName, "type", "http")
-	config.FileSet(remoteName, "url", ts.URL)
+	// config.FileSet(remoteName, "type", "http")
+	// config.FileSet(remoteName, "url", ts.URL)
+
+	m := configmap.Simple{
+		"type": "http",
+		"url":  ts.URL,
+	}
 
 	// return a function to tidy up
-	return ts.Close
+	return m, ts.Close
 }
 
 // prepare the test server and return a function to tidy it up afterwards
 func prepare(t *testing.T) (fs.Fs, func()) {
-	tidy := prepareServer(t)
+	m, tidy := prepareServer(t)
 
 	// Instantiate it
-	f, err := NewFs(remoteName, "")
+	f, err := NewFs(remoteName, "", m)
 	require.NoError(t, err)
 
 	return f, tidy
@@ -177,20 +183,20 @@ func TestMimeType(t *testing.T) {
 }
 
 func TestIsAFileRoot(t *testing.T) {
-	tidy := prepareServer(t)
+	m, tidy := prepareServer(t)
 	defer tidy()
 
-	f, err := NewFs(remoteName, "one%.txt")
+	f, err := NewFs(remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
 	testListRoot(t, f)
 }
 
 func TestIsAFileSubDir(t *testing.T) {
-	tidy := prepareServer(t)
+	m, tidy := prepareServer(t)
 	defer tidy()
 
-	f, err := NewFs(remoteName, "three/underthree.txt")
+	f, err := NewFs(remoteName, "three/underthree.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
 	entries, err := f.List("")

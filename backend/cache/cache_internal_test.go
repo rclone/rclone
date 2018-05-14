@@ -33,13 +33,13 @@ import (
 	"github.com/ncw/rclone/backend/local"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/rc/rcflags"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
-	flag "github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,7 +140,7 @@ func TestInternalVfsCache(t *testing.T) {
 
 	vfsflags.Opt.CacheMode = vfs.CacheModeWrites
 	id := "tiuufo"
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, map[string]string{"cache-writes": "true", "cache-info-age": "1h"})
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, map[string]string{"writes": "true", "info_age": "1h"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	err := rootFs.Mkdir("test")
@@ -699,7 +699,7 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	rc.Start(&rcflags.Opt)
 
 	id := fmt.Sprintf("ticsarc%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, map[string]string{"rc": "true"})
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	if !runInstance.useMount {
@@ -774,7 +774,7 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 
 func TestInternalCacheWrites(t *testing.T) {
 	id := "ticw"
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, map[string]string{"cache-writes": "true"})
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, map[string]string{"writes": "true"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -793,7 +793,7 @@ func TestInternalCacheWrites(t *testing.T) {
 
 func TestInternalMaxChunkSizeRespected(t *testing.T) {
 	id := fmt.Sprintf("timcsr%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, map[string]string{"cache-workers": "1"})
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, map[string]string{"workers": "1"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -868,7 +868,7 @@ func TestInternalBug2117(t *testing.T) {
 
 	id := fmt.Sprintf("tib2117%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil,
-		map[string]string{"cache-info-age": "72h", "cache-chunk-clean-interval": "15m"})
+		map[string]string{"info_age": "72h", "chunk_clean_interval": "15m"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	if runInstance.rootIsCrypt {
@@ -918,10 +918,7 @@ func TestInternalBug2117(t *testing.T) {
 // run holds the remotes for a test run
 type run struct {
 	okDiff            time.Duration
-	allCfgMap         map[string]string
-	allFlagMap        map[string]string
-	runDefaultCfgMap  map[string]string
-	runDefaultFlagMap map[string]string
+	runDefaultCfgMap  configmap.Simple
 	mntDir            string
 	tmpUploadDir      string
 	useMount          bool
@@ -945,38 +942,16 @@ func newRun() *run {
 		isMounted: false,
 	}
 
-	r.allCfgMap = map[string]string{
-		"plex_url":         "",
-		"plex_username":    "",
-		"plex_password":    "",
-		"chunk_size":       cache.DefCacheChunkSize,
-		"info_age":         cache.DefCacheInfoAge,
-		"chunk_total_size": cache.DefCacheTotalChunkSize,
+	// Read in all the defaults for all the options
+	fsInfo, err := fs.Find("cache")
+	if err != nil {
+		panic(fmt.Sprintf("Couldn't find cache remote: %v", err))
 	}
-	r.allFlagMap = map[string]string{
-		"cache-db-path":              filepath.Join(config.CacheDir, "cache-backend"),
-		"cache-chunk-path":           filepath.Join(config.CacheDir, "cache-backend"),
-		"cache-db-purge":             "true",
-		"cache-chunk-size":           cache.DefCacheChunkSize,
-		"cache-total-chunk-size":     cache.DefCacheTotalChunkSize,
-		"cache-chunk-clean-interval": cache.DefCacheChunkCleanInterval,
-		"cache-info-age":             cache.DefCacheInfoAge,
-		"cache-read-retries":         strconv.Itoa(cache.DefCacheReadRetries),
-		"cache-workers":              strconv.Itoa(cache.DefCacheTotalWorkers),
-		"cache-chunk-no-memory":      "false",
-		"cache-rps":                  strconv.Itoa(cache.DefCacheRps),
-		"cache-writes":               "false",
-		"cache-tmp-upload-path":      "",
-		"cache-tmp-wait-time":        cache.DefCacheTmpWaitTime,
+	r.runDefaultCfgMap = configmap.Simple{}
+	for _, option := range fsInfo.Options {
+		r.runDefaultCfgMap.Set(option.Name, fmt.Sprint(option.Default))
 	}
-	r.runDefaultCfgMap = make(map[string]string)
-	for key, value := range r.allCfgMap {
-		r.runDefaultCfgMap[key] = value
-	}
-	r.runDefaultFlagMap = make(map[string]string)
-	for key, value := range r.allFlagMap {
-		r.runDefaultFlagMap[key] = value
-	}
+
 	if mountDir == "" {
 		if runtime.GOOS != "windows" {
 			r.mntDir, err = ioutil.TempDir("", "rclonecache-mount")
@@ -1086,28 +1061,22 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	boltDb, err := cache.GetPersistent(runInstance.dbPath, runInstance.chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
-	for k, v := range r.runDefaultCfgMap {
-		if c, ok := cfg[k]; ok {
-			config.FileSet(cacheRemote, k, c)
-		} else {
-			config.FileSet(cacheRemote, k, v)
-		}
-	}
-	for k, v := range r.runDefaultFlagMap {
-		if c, ok := flags[k]; ok {
-			_ = flag.Set(k, c)
-		} else {
-			_ = flag.Set(k, v)
-		}
-	}
 	fs.Config.LowLevelRetries = 1
+
+	m := configmap.Simple{}
+	for k, v := range r.runDefaultCfgMap {
+		m.Set(k, v)
+	}
+	for k, v := range flags {
+		m.Set(k, v)
+	}
 
 	// Instantiate root
 	if purge {
 		boltDb.PurgeTempUploads()
 		_ = os.RemoveAll(path.Join(runInstance.tmpUploadDir, id))
 	}
-	f, err := fs.NewFs(remote + ":" + id)
+	f, err := cache.NewFs(remote, id, m)
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
 	require.NoError(t, err)
@@ -1157,9 +1126,6 @@ func (r *run) cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
 	}
 	r.tempFiles = nil
 	debug.FreeOSMemory()
-	for k, v := range r.runDefaultFlagMap {
-		_ = flag.Set(k, v)
-	}
 }
 
 func (r *run) randomReader(t *testing.T, size int64) io.ReadCloser {

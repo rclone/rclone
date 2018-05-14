@@ -23,7 +23,8 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
@@ -49,27 +50,13 @@ const (
 	defaultExtensions           = "docx,xlsx,pptx,svg"
 	scopePrefix                 = "https://www.googleapis.com/auth/"
 	defaultScope                = "drive"
+	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
+	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
+	defaultChunkSize = fs.SizeSuffix(8 * 1024 * 1024)
 )
 
 // Globals
 var (
-	// Flags
-	driveAuthOwnerOnly       = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash            = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
-	driveSkipGdocs           = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
-	driveSharedWithMe        = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
-	driveTrashedOnly         = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
-	driveExtensions          = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
-	driveUseCreatedDate      = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
-	driveListChunk           = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
-	driveImpersonate         = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
-	driveAlternateExport     = flags.BoolP("drive-alternate-export", "", false, "Use alternate export URLs for google documents export.")
-	driveAcknowledgeAbuse    = flags.BoolP("drive-acknowledge-abuse", "", false, "Set to allow files which return cannotDownloadAbusiveFile to be downloaded.")
-	driveKeepRevisionForever = flags.BoolP("drive-keep-revision-forever", "", false, "Keep new head revision forever.")
-	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
-	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
-	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
-	driveUploadCutoff = chunkSize
 	// Description of how to auth for this app
 	driveConfig = &oauth2.Config{
 		Scopes:       []string{scopePrefix + "drive"},
@@ -112,38 +99,43 @@ func init() {
 		Name:        "drive",
 		Description: "Google Drive",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			var err error
+		Config: func(name string, m configmap.Mapper) {
+			// Parse config into Options struct
+			opt := new(Options)
+			err := configstruct.Set(m, opt)
+			if err != nil {
+				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
+				return
+			}
 			// Fill in the scopes
-			scope := config.FileGet(name, "scope")
-			if scope == "" {
-				scope = defaultScope
+			if opt.Scope == "" {
+				opt.Scope = defaultScope
 			}
 			driveConfig.Scopes = nil
-			for _, scope := range strings.Split(scope, ",") {
+			for _, scope := range strings.Split(opt.Scope, ",") {
 				driveConfig.Scopes = append(driveConfig.Scopes, scopePrefix+strings.TrimSpace(scope))
 				// Set the root_folder_id if using drive.appfolder
 				if scope == "drive.appfolder" {
-					config.FileSet(name, "root_folder_id", "appDataFolder")
+					m.Set("root_folder_id", "appDataFolder")
 				}
 			}
-			if config.FileGet(name, "service_account_file") == "" {
-				err = oauthutil.Config("drive", name, driveConfig)
+			if opt.ServiceAccountFile == "" {
+				err = oauthutil.Config("drive", name, m, driveConfig)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			}
-			err = configTeamDrive(name)
+			err = configTeamDrive(opt, m, name)
 			if err != nil {
 				log.Fatalf("Failed to configure team drive: %v", err)
 			}
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Google Application Client Id - leave blank normally.",
+			Help: "Google Application Client Id\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Google Application Client Secret - leave blank normally.",
+			Help: "Google Application Client Secret\nLeave blank normally.",
 		}, {
 			Name: "scope",
 			Help: "Scope that rclone should use when requesting access from drive.",
@@ -165,14 +157,92 @@ func init() {
 			}},
 		}, {
 			Name: "root_folder_id",
-			Help: "ID of the root folder - leave blank normally.  Fill in to access \"Computers\" folders. (see docs).",
+			Help: "ID of the root folder\nLeave blank normally.\nFill in to access \"Computers\" folders. (see docs).",
 		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path  - leave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Help: "Service Account Credentials JSON file path \nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+		}, {
+			Name:     "service_account_credentials",
+			Help:     "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Hide:     fs.OptionHideBoth,
+			Advanced: true,
+		}, {
+			Name:     "team_drive",
+			Help:     "ID of the Team Drive",
+			Hide:     fs.OptionHideBoth,
+			Advanced: true,
+		}, {
+			Name:     "auth_owner_only",
+			Default:  false,
+			Help:     "Only consider files owned by the authenticated user.",
+			Advanced: true,
+		}, {
+			Name:     "use_trash",
+			Default:  true,
+			Help:     "Send files to the trash instead of deleting permanently.",
+			Advanced: true,
+		}, {
+			Name:     "skip_gdocs",
+			Default:  false,
+			Help:     "Skip google documents in all listings.",
+			Advanced: true,
+		}, {
+			Name:     "shared_with_me",
+			Default:  false,
+			Help:     "Only show files that are shared with me",
+			Advanced: true,
+		}, {
+			Name:     "trashed_only",
+			Default:  false,
+			Help:     "Only show files that are in the trash",
+			Advanced: true,
+		}, {
+			Name:     "formats",
+			Default:  defaultExtensions,
+			Help:     "Comma separated list of preferred formats for downloading Google docs.",
+			Advanced: true,
+		}, {
+			Name:     "use_created_date",
+			Default:  false,
+			Help:     "Use created date instead of modified date.",
+			Advanced: true,
+		}, {
+			Name:     "list_chunk",
+			Default:  1000,
+			Help:     "Size of listing chunk 100-1000. 0 to disable.",
+			Advanced: true,
+		}, {
+			Name:     "impersonate",
+			Default:  "",
+			Help:     "Impersonate this user when using a service account.",
+			Advanced: true,
+		}, {
+			Name:     "alternate_export",
+			Default:  false,
+			Help:     "Use alternate export URLs for google documents export.",
+			Advanced: true,
+		}, {
+			Name:     "upload_cutoff",
+			Default:  defaultChunkSize,
+			Help:     "Cutoff for switching to chunked upload",
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Default:  defaultChunkSize,
+			Help:     "Upload chunk size. Must a power of 2 >= 256k.",
+			Advanced: true,
+		}, {
+			Name:     "acknowledge_abuse",
+			Default:  false,
+			Help:     "Set to allow files which return cannotDownloadAbusiveFile to be downloaded.",
+			Advanced: true,
+		}, {
+			Name:     "keep_revision_forever",
+			Default:  false,
+			Help:     "Keep new head revision forever.",
+			Advanced: true,
 		}},
 	})
-	flags.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	flags.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
 
 	// Invert mimeTypeToExtension
 	extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
@@ -181,10 +251,34 @@ func init() {
 	}
 }
 
+// Options defines the configuration for this backend
+type Options struct {
+	Scope                     string        `config:"scope"`
+	RootFolderID              string        `config:"root_folder_id"`
+	ServiceAccountFile        string        `config:"service_account_file"`
+	ServiceAccountCredentials string        `config:"service_account_credentials"`
+	TeamDriveID               string        `config:"team_drive"`
+	AuthOwnerOnly             bool          `config:"auth_owner_only"`
+	UseTrash                  bool          `config:"use_trash"`
+	SkipGdocs                 bool          `config:"skip_gdocs"`
+	SharedWithMe              bool          `config:"shared_with_me"`
+	TrashedOnly               bool          `config:"trashed_only"`
+	Extensions                string        `config:"formats"`
+	UseCreatedDate            bool          `config:"use_created_date"`
+	ListChunk                 int64         `config:"list_chunk"`
+	Impersonate               string        `config:"impersonate"`
+	AlternateExport           bool          `config:"alternate_export"`
+	UploadCutoff              fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
+	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
+	KeepRevisionForever       bool          `config:"keep_revision_forever"`
+}
+
 // Fs represents a remote drive server
 type Fs struct {
 	name         string             // name of this remote
 	root         string             // the path we are working on
+	opt          Options            // parsed options
 	features     *fs.Features       // optional features
 	svc          *drive.Service     // the connection to the drive server
 	client       *http.Client       // authorized client
@@ -192,7 +286,6 @@ type Fs struct {
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *pacer.Pacer       // To pace the API calls
 	extensions   []string           // preferred extensions to download docs
-	teamDriveID  string             // team drive ID, may be ""
 	isTeamDrive  bool               // true if this is a team drive
 }
 
@@ -274,8 +367,8 @@ type listFn func(*drive.File) bool
 func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bool, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
-		q := "trashed=" + strconv.FormatBool(*driveTrashedOnly)
-		if *driveTrashedOnly {
+		q := "trashed=" + strconv.FormatBool(f.opt.TrashedOnly)
+		if f.opt.TrashedOnly {
 			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
 		}
 		query = append(query, q)
@@ -283,10 +376,10 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
 	// If we need to list file inside those shared folders, we must search it without sharedWithMe
-	if *driveSharedWithMe && dirID == f.rootFolderID {
+	if f.opt.SharedWithMe && dirID == f.rootFolderID {
 		query = append(query, "sharedWithMe=true")
 	}
-	if dirID != "" && !(*driveSharedWithMe && dirID == f.rootFolderID) {
+	if dirID != "" && !(f.opt.SharedWithMe && dirID == f.rootFolderID) {
 		query = append(query, fmt.Sprintf("'%s' in parents", dirID))
 	}
 	if title != "" {
@@ -308,11 +401,11 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 		list.Q(strings.Join(query, " and "))
 		// fmt.Printf("list Query = %q\n", query)
 	}
-	if *driveListChunk > 0 {
-		list.PageSize(*driveListChunk)
+	if f.opt.ListChunk > 0 {
+		list.PageSize(f.opt.ListChunk)
 	}
 	if f.isTeamDrive {
-		list.TeamDriveId(f.teamDriveID)
+		list.TeamDriveId(f.opt.TeamDriveID)
 		list.SupportsTeamDrives(true)
 		list.IncludeTeamDriveItems(true)
 		list.Corpora("teamDrive")
@@ -324,7 +417,7 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 
 	var fields = partialFields
 
-	if *driveAuthOwnerOnly {
+	if f.opt.AuthOwnerOnly {
 		fields += ",owners"
 	}
 
@@ -395,17 +488,16 @@ func (f *Fs) parseExtensions(extensions string) error {
 }
 
 // Figure out if the user wants to use a team drive
-func configTeamDrive(name string) error {
-	teamDrive := config.FileGet(name, "team_drive")
-	if teamDrive == "" {
+func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
+	if opt.TeamDriveID == "" {
 		fmt.Printf("Configure this as a team drive?\n")
 	} else {
-		fmt.Printf("Change current team drive ID %q?\n", teamDrive)
+		fmt.Printf("Change current team drive ID %q?\n", opt.TeamDriveID)
 	}
 	if !config.ConfirmWithDefault(false) {
 		return nil
 	}
-	client, err := createOAuthClient(name)
+	client, err := createOAuthClient(opt, name, m)
 	if err != nil {
 		return errors.Wrap(err, "config team drive failed to create oauth client")
 	}
@@ -440,7 +532,8 @@ func configTeamDrive(name string) error {
 	} else {
 		driveID = config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
 	}
-	config.FileSet(name, "team_drive", driveID)
+	m.Set("team_drive", driveID)
+	opt.TeamDriveID = driveID
 	return nil
 }
 
@@ -449,39 +542,37 @@ func newPacer() *pacer.Pacer {
 	return pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer)
 }
 
-func getServiceAccountClient(credentialsData []byte) (*http.Client, error) {
+func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
 	conf, err := google.JWTConfigFromJSON(credentialsData, driveConfig.Scopes...)
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	if *driveImpersonate != "" {
-		conf.Subject = *driveImpersonate
+	if opt.Impersonate != "" {
+		conf.Subject = opt.Impersonate
 	}
 	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
-func createOAuthClient(name string) (*http.Client, error) {
+func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Client, error) {
 	var oAuthClient *http.Client
 	var err error
 
 	// try loading service account credentials from env variable, then from a file
-	serviceAccountCreds := []byte(config.FileGet(name, "service_account_credentials"))
-	serviceAccountPath := config.FileGet(name, "service_account_file")
-	if len(serviceAccountCreds) == 0 && serviceAccountPath != "" {
-		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(serviceAccountPath))
+	if len(opt.ServiceAccountCredentials) == 0 && opt.ServiceAccountFile != "" {
+		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(opt.ServiceAccountFile))
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening service account credentials file")
 		}
-		serviceAccountCreds = loadedCreds
+		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
-	if len(serviceAccountCreds) > 0 {
-		oAuthClient, err = getServiceAccountClient(serviceAccountCreds)
+	if opt.ServiceAccountCredentials != "" {
+		oAuthClient, err = getServiceAccountClient(opt, []byte(opt.ServiceAccountCredentials))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
-		oAuthClient, _, err = oauthutil.NewClient(name, driveConfig)
+		oAuthClient, _, err = oauthutil.NewClient(name, m, driveConfig)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
@@ -491,15 +582,21 @@ func createOAuthClient(name string) (*http.Client, error) {
 }
 
 // NewFs contstructs an Fs from the path, container:path
-func NewFs(name, path string) (fs.Fs, error) {
-	if !isPowerOfTwo(int64(chunkSize)) {
-		return nil, errors.Errorf("drive: chunk size %v isn't a power of two", chunkSize)
+func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
 	}
-	if chunkSize < 256*1024 {
-		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
+	if !isPowerOfTwo(int64(opt.ChunkSize)) {
+		return nil, errors.Errorf("drive: chunk size %v isn't a power of two", opt.ChunkSize)
+	}
+	if opt.ChunkSize < 256*1024 {
+		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", opt.ChunkSize)
 	}
 
-	oAuthClient, err := createOAuthClient(name)
+	oAuthClient, err := createOAuthClient(opt, name, m)
 	if err != nil {
 		return nil, errors.Wrap(err, "drive: failed when making oauth client")
 	}
@@ -512,10 +609,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		root:  root,
+		opt:   *opt,
 		pacer: newPacer(),
 	}
-	f.teamDriveID = config.FileGet(name, "team_drive")
-	f.isTeamDrive = f.teamDriveID != ""
+	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		ReadMimeType:            true,
@@ -532,20 +629,20 @@ func NewFs(name, path string) (fs.Fs, error) {
 
 	// set root folder for a team drive or query the user root folder
 	if f.isTeamDrive {
-		f.rootFolderID = f.teamDriveID
+		f.rootFolderID = f.opt.TeamDriveID
 	} else {
 		f.rootFolderID = "root"
 	}
 
 	// override root folder if set in the config
-	if rootID := config.FileGet(name, "root_folder_id"); rootID != "" {
-		f.rootFolderID = rootID
+	if opt.RootFolderID != "" {
+		f.rootFolderID = opt.RootFolderID
 	}
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
 
 	// Parse extensions
-	err = f.parseExtensions(*driveExtensions)
+	err = f.parseExtensions(opt.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -729,7 +826,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			when, _ := time.Parse(timeFormatIn, item.ModifiedTime)
 			d := fs.NewDir(remote, when).SetID(item.Id)
 			entries = append(entries, d)
-		case *driveAuthOwnerOnly && !isAuthOwned(item):
+		case f.opt.AuthOwnerOnly && !isAuthOwned(item):
 			// ignore object
 		case item.Md5Checksum != "" || item.Size > 0:
 			// If item has MD5 sum or a length it is a file stored on drive
@@ -739,7 +836,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				return true
 			}
 			entries = append(entries, o)
-		case *driveSkipGdocs:
+		case f.opt.SkipGdocs:
 			fs.Debugf(remote, "Skipping google document type %q", item.MimeType)
 		default:
 			exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
@@ -760,7 +857,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			}
 			obj := o.(*Object)
 			obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
-			if *driveAlternateExport {
+			if f.opt.AlternateExport {
 				switch item.MimeType {
 				case "application/vnd.google-apps.drawing":
 					obj.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", item.Id, extension)
@@ -854,11 +951,11 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 	}
 
 	var info *drive.File
-	if size == 0 || size < int64(driveUploadCutoff) {
+	if size == 0 || size < int64(f.opt.UploadCutoff) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Create(createInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).KeepRevisionForever(*driveKeepRevisionForever).Do()
+			info, err = f.svc.Files.Create(createInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).KeepRevisionForever(f.opt.KeepRevisionForever).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -972,7 +1069,7 @@ func (f *Fs) Rmdir(dir string) error {
 		// trash the directory if it had trashed files
 		// in or the user wants to trash, otherwise
 		// delete it.
-		err = f.rmdir(directoryID, trashedFiles || *driveUseTrash)
+		err = f.rmdir(directoryID, trashedFiles || f.opt.UseTrash)
 		if err != nil {
 			return err
 		}
@@ -1015,7 +1112,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).KeepRevisionForever(*driveKeepRevisionForever).Do()
+		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).KeepRevisionForever(f.opt.KeepRevisionForever).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1040,7 +1137,7 @@ func (f *Fs) Purge() error {
 		return err
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		if *driveUseTrash {
+		if f.opt.UseTrash {
 			info := drive.File{
 				Trashed: true,
 			}
@@ -1316,11 +1413,11 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 
 		err = f.pacer.Call(func() (bool, error) {
 			changesCall := f.svc.Changes.List(pageToken).Fields("nextPageToken,newStartPageToken,changes(fileId,file(name,parents,mimeType))")
-			if *driveListChunk > 0 {
-				changesCall.PageSize(*driveListChunk)
+			if f.opt.ListChunk > 0 {
+				changesCall.PageSize(f.opt.ListChunk)
 			}
 			if f.isTeamDrive {
-				changesCall.TeamDriveId(f.teamDriveID)
+				changesCall.TeamDriveId(f.opt.TeamDriveID)
 				changesCall.SupportsTeamDrives(true)
 				changesCall.IncludeTeamDriveItems(true)
 			}
@@ -1444,7 +1541,7 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.url = fmt.Sprintf("%sfiles/%s?alt=media", o.fs.svc.BasePath, info.Id)
 	o.md5sum = strings.ToLower(info.Md5Checksum)
 	o.bytes = info.Size
-	if *driveUseCreatedDate {
+	if o.fs.opt.UseCreatedDate {
 		o.modifiedDate = info.CreatedTime
 	} else {
 		o.modifiedDate = info.ModifiedTime
@@ -1617,7 +1714,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	_, res, err := o.httpResponse("GET", options)
 	if err != nil {
 		if isGoogleError(err, "cannotDownloadAbusiveFile") {
-			if *driveAcknowledgeAbuse {
+			if o.fs.opt.AcknowledgeAbuse {
 				// Retry acknowledging abuse
 				if strings.ContainsRune(o.url, '?') {
 					o.url += "&"
@@ -1663,10 +1760,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	// Make the API request to upload metadata and file data.
 	var err error
 	var info *drive.File
-	if size == 0 || size < int64(driveUploadCutoff) {
+	if size == 0 || size < int64(o.fs.opt.UploadCutoff) {
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			info, err = o.fs.svc.Files.Update(o.id, updateInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).KeepRevisionForever(*driveKeepRevisionForever).Do()
+			info, err = o.fs.svc.Files.Update(o.id, updateInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).KeepRevisionForever(o.fs.opt.KeepRevisionForever).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1690,7 +1787,7 @@ func (o *Object) Remove() error {
 	}
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
-		if *driveUseTrash {
+		if o.fs.opt.UseTrash {
 			info := drive.File{
 				Trashed: true,
 			}

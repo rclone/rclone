@@ -8,8 +8,6 @@ import (
 
 	"github.com/ncw/rclone/backend/cache"
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -26,17 +24,6 @@ Print cache stats for a remote in JSON format
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-
-		_, configName, _, err := fs.ParseRemote(args[0])
-		if err != nil {
-			fs.Errorf("cachestats", "%s", err.Error())
-			return
-		}
-
-		if !config.FileGetBool(configName, "read_only", false) {
-			config.FileSet(configName, "read_only", "true")
-			defer config.FileDeleteKey(configName, "read_only")
-		}
 
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {

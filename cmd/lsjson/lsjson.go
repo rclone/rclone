@@ -102,14 +102,14 @@ can be processed line by line as each item is written one to a line.
 		fsrc := cmd.NewFsSrc(args)
 		var cipher crypt.Cipher
 		if showEncrypted {
-			fsInfo, configName, _, err := fs.ParseRemote(args[0])
+			fsInfo, _, _, config, err := fs.ConfigFs(args[0])
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 			if fsInfo.Name != "crypt" {
 				log.Fatalf("The remote needs to be of type \"crypt\"")
 			}
-			cipher, err = crypt.NewCipher(configName)
+			cipher, err = crypt.NewCipher(config)
 			if err != nil {
 				log.Fatalf(err.Error())
 			}

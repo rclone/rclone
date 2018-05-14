@@ -2,6 +2,7 @@
 package fs
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
@@ -68,24 +71,87 @@ type RegInfo struct {
 	Name string
 	// Description of this fs - defaults to Name
 	Description string
+	// Prefix for command line flags for this fs - defaults to Name if not set
+	Prefix string
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return a Fs which which points to
 	// the parent of that object and ErrorIsFile.
-	NewFs func(name string, root string) (Fs, error) `json:"-"`
+	NewFs func(name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config
-	Config func(string) `json:"-"`
+	Config func(name string, config configmap.Mapper) `json:"-"`
 	// Options for the Fs configuration
-	Options []Option
+	Options Options
 }
 
+// Options is a slice of configuration Option for a backend
+type Options []Option
+
+// Set the default values for the options
+func (os Options) setValues() {
+	for i := range os {
+		o := &os[i]
+		if o.Default == nil {
+			o.Default = ""
+		}
+	}
+}
+
+// OptionVisibility controls whether the options are visible in the
+// configurator or the command line.
+type OptionVisibility byte
+
+// Constants Option.Hide
+const (
+	OptionHideCommandLine OptionVisibility = 1 << iota
+	OptionHideConfigurator
+	OptionHideBoth = OptionHideCommandLine | OptionHideConfigurator
+)
+
 // Option is describes an option for the config wizard
+//
+// This also describes command line options and environment variables
 type Option struct {
-	Name       string
-	Help       string
-	Provider   string
-	Optional   bool
-	IsPassword bool
-	Examples   OptionExamples `json:",omitempty"`
+	Name       string           // name of the option in snake_case
+	Help       string           // Help, the first line only is used for the command line help
+	Provider   string           // Set to filter on provider
+	Default    interface{}      // default value, nil => ""
+	Value      interface{}      // value to be set by flags
+	Examples   OptionExamples   `json:",omitempty"` // config examples
+	ShortOpt   string           // the short option for this if required
+	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
+	Required   bool             // this option is required
+	IsPassword bool             // set if the option is a password
+	NoPrefix   bool             // set if the option for this should not use the backend prefix
+	Advanced   bool             // set if this is an advanced config option
+}
+
+// Gets the current current value which is the default if not set
+func (o *Option) value() interface{} {
+	val := o.Value
+	if val == nil {
+		val = o.Default
+	}
+	return val
+}
+
+// String turns Option into a string
+func (o *Option) String() string {
+	return fmt.Sprint(o.value())
+}
+
+// Set a Option from a string
+func (o *Option) Set(s string) (err error) {
+	newValue, err := configstruct.StringToInterface(o.value(), s)
+	if err != nil {
+		return err
+	}
+	o.Value = newValue
+	return nil
+}
+
+// Type of the value
+func (o *Option) Type() string {
+	return reflect.TypeOf(o.value()).Name()
 }
 
 // OptionExamples is a slice of examples
@@ -114,6 +180,10 @@ type OptionExample struct {
 //
 // Fs modules  should use this in an init() function
 func Register(info *RegInfo) {
+	info.Options.setValues()
+	if info.Prefix == "" {
+		info.Prefix = info.Name
+	}
 	Registry = append(Registry, info)
 }
 
@@ -792,7 +862,8 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 	var fsName string
 	var ok bool
 	if configName != "" {
-		fsName, ok = ConfigFileGet(configName, "type")
+		m := ConfigMap(nil, configName)
+		fsName, ok = m.Get("type")
 		if !ok {
 			return nil, "", "", ErrorNotFoundInConfigFile
 		}
@@ -802,6 +873,119 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 	}
 	fsInfo, err = Find(fsName)
 	return fsInfo, configName, fsPath, err
+}
+
+// A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
+type configEnvVars string
+
+// Get a config item from the environment variables if possible
+func (configName configEnvVars) Get(key string) (value string, ok bool) {
+	return os.LookupEnv(ConfigToEnv(string(configName), key))
+}
+
+// A configmap.Getter to read from the environment RCLONE_option_name
+type optionEnvVars string
+
+// Get a config item from the option environment variables if possible
+func (prefix optionEnvVars) Get(key string) (value string, ok bool) {
+	return os.LookupEnv(OptionToEnv(string(prefix) + "-" + key))
+}
+
+// A configmap.Getter to read either the default value or the set
+// value from the RegInfo.Options
+type regInfoValues struct {
+	fsInfo     *RegInfo
+	useDefault bool
+}
+
+// override the values in configMap with the either the flag values or
+// the default values
+func (r *regInfoValues) Get(key string) (value string, ok bool) {
+	for i := range r.fsInfo.Options {
+		o := &r.fsInfo.Options[i]
+		if o.Name == key {
+			if r.useDefault || o.Value != nil {
+				return o.String(), true
+			}
+			break
+		}
+	}
+	return "", false
+}
+
+// A configmap.Setter to read from the config file
+type setConfigFile string
+
+// Set a config item into the config file
+func (section setConfigFile) Set(key, value string) {
+	Debugf(nil, "Saving config %q = %q in section %q of the config file", key, value, section)
+	ConfigFileSet(string(section), key, value)
+}
+
+// A configmap.Getter to read from the config file
+type getConfigFile string
+
+// Get a config item from the config file
+func (section getConfigFile) Get(key string) (value string, ok bool) {
+	value, ok = ConfigFileGet(string(section), key)
+	// Ignore empty lines in the config file
+	if value == "" {
+		ok = false
+	}
+	return value, ok
+}
+
+// ConfigMap creates a configmap.Map from the *RegInfo and the
+// configName passed in.
+//
+// If fsInfo is nil then the returned configmap.Map should only be
+// used for reading non backend specific parameters, such as "type".
+func ConfigMap(fsInfo *RegInfo, configName string) (config *configmap.Map) {
+	// Create the config
+	config = configmap.New()
+
+	// Read the config, more specific to least specific
+
+	// flag values
+	if fsInfo != nil {
+		config.AddGetter(&regInfoValues{fsInfo, false})
+	}
+
+	// remote specific environment vars
+	config.AddGetter(configEnvVars(configName))
+
+	// backend specific environment vars
+	if fsInfo != nil {
+		config.AddGetter(optionEnvVars(fsInfo.Prefix))
+	}
+
+	// config file
+	config.AddGetter(getConfigFile(configName))
+
+	// default values
+	if fsInfo != nil {
+		config.AddGetter(&regInfoValues{fsInfo, true})
+	}
+
+	// Set Config
+	config.AddSetter(setConfigFile(configName))
+	return config
+}
+
+// ConfigFs makes the config for calling NewFs with.
+//
+// It parses the path which is of the form remote:path
+//
+// Remotes are looked up in the config file.  If the remote isn't
+// found then NotFoundInConfigFile will be returned.
+func ConfigFs(path string) (fsInfo *RegInfo, configName, fsPath string, config *configmap.Map, err error) {
+	// Parse the remote path
+	fsInfo, configName, fsPath, err = ParseRemote(path)
+	if err != nil {
+		return
+	}
+	config = ConfigMap(fsInfo, configName)
+	return
 }
 
 // NewFs makes a new Fs object from the path
@@ -814,11 +998,11 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
 func NewFs(path string) (Fs, error) {
-	fsInfo, configName, fsPath, err := ParseRemote(path)
+	fsInfo, configName, fsPath, config, err := ConfigFs(path)
 	if err != nil {
 		return nil, err
 	}
-	return fsInfo.NewFs(configName, fsPath)
+	return fsInfo.NewFs(configName, fsPath, config)
 }
 
 // TemporaryLocalFs creates a local FS in the OS's temporary directory.

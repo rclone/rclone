@@ -16,6 +16,8 @@ import (
 	"github.com/ncw/rclone/backend/swift"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/lib/oauthutil"
@@ -52,18 +54,18 @@ func init() {
 		Name:        "hubic",
 		Description: "Hubic",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			err := oauthutil.Config("hubic", name, oauthConfig)
+		Config: func(name string, m configmap.Mapper) {
+			err := oauthutil.Config("hubic", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Hubic Client Id - leave blank normally.",
+			Help: "Hubic Client Id\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Hubic Client Secret - leave blank normally.",
+			Help: "Hubic Client Secret\nLeave blank normally.",
 		}},
 	})
 }
@@ -145,8 +147,8 @@ func (f *Fs) getCredentials() (err error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	client, _, err := oauthutil.NewClient(name, oauthConfig)
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	client, _, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Hubic")
 	}
@@ -167,8 +169,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, errors.Wrap(err, "error authenticating swift connection")
 	}
 
+	// Parse config into swift.Options struct
+	opt := new(swift.Options)
+	err = configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+
 	// Make inner swift Fs from the connection
-	swiftFs, err := swift.NewFsWithConnection(name, root, c, true)
+	swiftFs, err := swift.NewFsWithConnection(opt, name, root, c, true)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
