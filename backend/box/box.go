@@ -23,7 +23,8 @@ import (
 	"github.com/ncw/rclone/backend/box/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
@@ -46,6 +47,7 @@ const (
 	uploadURL                   = "https://upload.box.com/api/2.0"
 	listChunks                  = 1000     // chunk size to read directory listings
 	minUploadCutoff             = 50000000 // upload cutoff can be no lower than this
+	defaultUploadCutoff         = 50 * 1024 * 1024
 )
 
 // Globals
@@ -61,7 +63,6 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
-	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)
 )
 
 // Register with Fs
@@ -70,27 +71,37 @@ func init() {
 		Name:        "box",
 		Description: "Box",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			err := oauthutil.Config("box", name, oauthConfig)
+		Config: func(name string, m configmap.Mapper) {
+			err := oauthutil.Config("box", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Box App Client Id - leave blank normally.",
+			Help: "Box App Client Id.\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Box App Client Secret - leave blank normally.",
+			Help: "Box App Client Secret\nLeave blank normally.",
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to multipart upload.",
+			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Advanced: true,
 		}},
 	})
-	flags.VarP(&uploadCutoff, "box-upload-cutoff", "", "Cutoff for switching to multipart upload")
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
 }
 
 // Fs represents a remote box
 type Fs struct {
 	name         string                // name of this remote
 	root         string                // the path we are working on
+	opt          Options               // parsed options
 	features     *fs.Features          // optional features
 	srv          *rest.Client          // the connection to the one drive server
 	dirCache     *dircache.DirCache    // Map of directory path to directory id
@@ -219,13 +230,20 @@ func errorHandler(resp *http.Response) error {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	if uploadCutoff < minUploadCutoff {
-		return nil, errors.Errorf("box: upload cutoff (%v) must be greater than equal to %v", uploadCutoff, fs.SizeSuffix(minUploadCutoff))
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	if opt.UploadCutoff < minUploadCutoff {
+		return nil, errors.Errorf("box: upload cutoff (%v) must be greater than equal to %v", opt.UploadCutoff, fs.SizeSuffix(minUploadCutoff))
 	}
 
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(name, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
 		log.Fatalf("Failed to configure Box: %v", err)
 	}
@@ -233,6 +251,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f := &Fs{
 		name:        name,
 		root:        root,
+		opt:         *opt,
 		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
@@ -1035,7 +1054,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// Upload with simple or multipart
-	if size <= int64(uploadCutoff) {
+	if size <= int64(o.fs.opt.UploadCutoff) {
 		err = o.upload(in, leaf, directoryID, modTime)
 	} else {
 		err = o.uploadMultipart(in, leaf, directoryID, size, modTime)

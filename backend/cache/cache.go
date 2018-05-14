@@ -18,7 +18,8 @@ import (
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/rc"
@@ -30,13 +31,13 @@ import (
 
 const (
 	// DefCacheChunkSize is the default value for chunk size
-	DefCacheChunkSize = "5M"
+	DefCacheChunkSize = fs.SizeSuffix(5 * 1024 * 1024)
 	// DefCacheTotalChunkSize is the default value for the maximum size of stored chunks
-	DefCacheTotalChunkSize = "10G"
+	DefCacheTotalChunkSize = fs.SizeSuffix(10 * 1024 * 1024 * 1024)
 	// DefCacheChunkCleanInterval is the interval at which chunks are cleaned
-	DefCacheChunkCleanInterval = "1m"
+	DefCacheChunkCleanInterval = fs.Duration(time.Minute)
 	// DefCacheInfoAge is the default value for object info age
-	DefCacheInfoAge = "6h"
+	DefCacheInfoAge = fs.Duration(6 * time.Hour)
 	// DefCacheReadRetries is the default value for read retries
 	DefCacheReadRetries = 10
 	// DefCacheTotalWorkers is how many workers run in parallel to download chunks
@@ -48,29 +49,9 @@ const (
 	// DefCacheWrites will cache file data on writes through the cache
 	DefCacheWrites = false
 	// DefCacheTmpWaitTime says how long should files be stored in local cache before being uploaded
-	DefCacheTmpWaitTime = "15m"
+	DefCacheTmpWaitTime = fs.Duration(15 * time.Second)
 	// DefCacheDbWaitTime defines how long the cache backend should wait for the DB to be available
-	DefCacheDbWaitTime = 1 * time.Second
-)
-
-// Globals
-var (
-	// Flags
-	cacheDbPath             = flags.StringP("cache-db-path", "", filepath.Join(config.CacheDir, "cache-backend"), "Directory to cache DB")
-	cacheChunkPath          = flags.StringP("cache-chunk-path", "", filepath.Join(config.CacheDir, "cache-backend"), "Directory to cached chunk files")
-	cacheDbPurge            = flags.BoolP("cache-db-purge", "", false, "Purge the cache DB before")
-	cacheChunkSize          = flags.StringP("cache-chunk-size", "", DefCacheChunkSize, "The size of a chunk")
-	cacheTotalChunkSize     = flags.StringP("cache-total-chunk-size", "", DefCacheTotalChunkSize, "The total size which the chunks can take up from the disk")
-	cacheChunkCleanInterval = flags.StringP("cache-chunk-clean-interval", "", DefCacheChunkCleanInterval, "Interval at which chunk cleanup runs")
-	cacheInfoAge            = flags.StringP("cache-info-age", "", DefCacheInfoAge, "How much time should object info be stored in cache")
-	cacheReadRetries        = flags.IntP("cache-read-retries", "", DefCacheReadRetries, "How many times to retry a read from a cache storage")
-	cacheTotalWorkers       = flags.IntP("cache-workers", "", DefCacheTotalWorkers, "How many workers should run in parallel to download chunks")
-	cacheChunkNoMemory      = flags.BoolP("cache-chunk-no-memory", "", DefCacheChunkNoMemory, "Disable the in-memory cache for storing chunks during streaming")
-	cacheRps                = flags.IntP("cache-rps", "", int(DefCacheRps), "Limits the number of requests per second to the source FS. -1 disables the rate limiter")
-	cacheStoreWrites        = flags.BoolP("cache-writes", "", DefCacheWrites, "Will cache file data on writes through the FS")
-	cacheTempWritePath      = flags.StringP("cache-tmp-upload-path", "", "", "Directory to keep temporary files until they are uploaded to the cloud storage")
-	cacheTempWaitTime       = flags.StringP("cache-tmp-wait-time", "", DefCacheTmpWaitTime, "How long should files be stored in local cache before being uploaded")
-	cacheDbWaitTime         = flags.DurationP("cache-db-wait-time", "", DefCacheDbWaitTime, "How long to wait for the DB to be available - 0 is unlimited")
+	DefCacheDbWaitTime = fs.Duration(1 * time.Second)
 )
 
 // Register with Fs
@@ -80,71 +61,153 @@ func init() {
 		Description: "Cache a remote",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name: "remote",
-			Help: "Remote to cache.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Name:     "remote",
+			Help:     "Remote to cache.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Required: true,
 		}, {
-			Name:     "plex_url",
-			Help:     "Optional: The URL of the Plex server",
-			Optional: true,
+			Name: "plex_url",
+			Help: "The URL of the Plex server",
 		}, {
-			Name:     "plex_username",
-			Help:     "Optional: The username of the Plex user",
-			Optional: true,
+			Name: "plex_username",
+			Help: "The username of the Plex user",
 		}, {
 			Name:       "plex_password",
-			Help:       "Optional: The password of the Plex user",
+			Help:       "The password of the Plex user",
 			IsPassword: true,
-			Optional:   true,
 		}, {
-			Name: "chunk_size",
-			Help: "The size of a chunk. Lower value good for slow connections but can affect seamless reading. \nDefault: " + DefCacheChunkSize,
-			Examples: []fs.OptionExample{
-				{
-					Value: "1m",
-					Help:  "1MB",
-				}, {
-					Value: "5M",
-					Help:  "5 MB",
-				}, {
-					Value: "10M",
-					Help:  "10 MB",
-				},
-			},
-			Optional: true,
+			Name:     "plex_token",
+			Help:     "The plex token for authentication - auto set normally",
+			Hide:     fs.OptionHideBoth,
+			Advanced: true,
 		}, {
-			Name: "info_age",
-			Help: "How much time should object info (file size, file hashes etc) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache. \nAccepted units are: \"s\", \"m\", \"h\".\nDefault: " + DefCacheInfoAge,
-			Examples: []fs.OptionExample{
-				{
-					Value: "1h",
-					Help:  "1 hour",
-				}, {
-					Value: "24h",
-					Help:  "24 hours",
-				}, {
-					Value: "48h",
-					Help:  "48 hours",
-				},
-			},
-			Optional: true,
+			Name:    "chunk_size",
+			Help:    "The size of a chunk. Lower value good for slow connections but can affect seamless reading.",
+			Default: DefCacheChunkSize,
+			Examples: []fs.OptionExample{{
+				Value: "1m",
+				Help:  "1MB",
+			}, {
+				Value: "5M",
+				Help:  "5 MB",
+			}, {
+				Value: "10M",
+				Help:  "10 MB",
+			}},
 		}, {
-			Name: "chunk_total_size",
-			Help: "The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted. \nDefault: " + DefCacheTotalChunkSize,
-			Examples: []fs.OptionExample{
-				{
-					Value: "500M",
-					Help:  "500 MB",
-				}, {
-					Value: "1G",
-					Help:  "1 GB",
-				}, {
-					Value: "10G",
-					Help:  "10 GB",
-				},
-			},
-			Optional: true,
+			Name:    "info_age",
+			Help:    "How much time should object info (file size, file hashes etc) be stored in cache.\nUse a very high value if you don't plan on changing the source FS from outside the cache.\nAccepted units are: \"s\", \"m\", \"h\".",
+			Default: DefCacheInfoAge,
+			Examples: []fs.OptionExample{{
+				Value: "1h",
+				Help:  "1 hour",
+			}, {
+				Value: "24h",
+				Help:  "24 hours",
+			}, {
+				Value: "48h",
+				Help:  "48 hours",
+			}},
+		}, {
+			Name:    "chunk_total_size",
+			Help:    "The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.",
+			Default: DefCacheTotalChunkSize,
+			Examples: []fs.OptionExample{{
+				Value: "500M",
+				Help:  "500 MB",
+			}, {
+				Value: "1G",
+				Help:  "1 GB",
+			}, {
+				Value: "10G",
+				Help:  "10 GB",
+			}},
+		}, {
+			Name:     "db_path",
+			Default:  filepath.Join(config.CacheDir, "cache-backend"),
+			Help:     "Directory to cache DB",
+			Advanced: true,
+		}, {
+			Name:     "chunk_path",
+			Default:  filepath.Join(config.CacheDir, "cache-backend"),
+			Help:     "Directory to cache chunk files",
+			Advanced: true,
+		}, {
+			Name:     "db_purge",
+			Default:  false,
+			Help:     "Purge the cache DB before",
+			Hide:     fs.OptionHideConfigurator,
+			Advanced: true,
+		}, {
+			Name:     "chunk_clean_interval",
+			Default:  DefCacheChunkCleanInterval,
+			Help:     "Interval at which chunk cleanup runs",
+			Advanced: true,
+		}, {
+			Name:     "read_retries",
+			Default:  DefCacheReadRetries,
+			Help:     "How many times to retry a read from a cache storage",
+			Advanced: true,
+		}, {
+			Name:     "workers",
+			Default:  DefCacheTotalWorkers,
+			Help:     "How many workers should run in parallel to download chunks",
+			Advanced: true,
+		}, {
+			Name:     "chunk_no_memory",
+			Default:  DefCacheChunkNoMemory,
+			Help:     "Disable the in-memory cache for storing chunks during streaming",
+			Advanced: true,
+		}, {
+			Name:     "rps",
+			Default:  int(DefCacheRps),
+			Help:     "Limits the number of requests per second to the source FS. -1 disables the rate limiter",
+			Advanced: true,
+		}, {
+			Name:     "writes",
+			Default:  DefCacheWrites,
+			Help:     "Will cache file data on writes through the FS",
+			Advanced: true,
+		}, {
+			Name:     "tmp_upload_path",
+			Default:  "",
+			Help:     "Directory to keep temporary files until they are uploaded to the cloud storage",
+			Advanced: true,
+		}, {
+			Name:     "tmp_wait_time",
+			Default:  DefCacheTmpWaitTime,
+			Help:     "How long should files be stored in local cache before being uploaded",
+			Advanced: true,
+		}, {
+			Name:     "db_wait_time",
+			Default:  DefCacheDbWaitTime,
+			Help:     "How long to wait for the DB to be available - 0 is unlimited",
+			Advanced: true,
 		}},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Remote             string        `config:"remote"`
+	PlexURL            string        `config:"plex_url"`
+	PlexUsername       string        `config:"plex_username"`
+	PlexPassword       string        `config:"plex_password"`
+	PlexToken          string        `config:"plex_token"`
+	ChunkSize          fs.SizeSuffix `config:"chunk_size"`
+	InfoAge            fs.Duration   `config:"info_age"`
+	ChunkTotalSize     fs.SizeSuffix `config:"chunk_total_size"`
+	DbPath             string        `config:"db_path"`
+	ChunkPath          string        `config:"chunk_path"`
+	DbPurge            bool          `config:"db_purge"`
+	ChunkCleanInterval fs.Duration   `config:"chunk_clean_interval"`
+	ReadRetries        int           `config:"read_retries"`
+	TotalWorkers       int           `config:"workers"`
+	ChunkNoMemory      bool          `config:"chunk_no_memory"`
+	Rps                int           `config:"rps"`
+	StoreWrites        bool          `config:"writes"`
+	TempWritePath      string        `config:"tmp_upload_path"`
+	TempWaitTime       fs.Duration   `config:"tmp_wait_time"`
+	DbWaitTime         fs.Duration   `config:"db_wait_time"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -154,21 +217,10 @@ type Fs struct {
 
 	name     string
 	root     string
+	opt      Options      // parsed options
 	features *fs.Features // optional features
 	cache    *Persistent
-
-	fileAge            time.Duration
-	chunkSize          int64
-	chunkTotalSize     int64
-	chunkCleanInterval time.Duration
-	readRetries        int
-	totalWorkers       int
-	totalMaxWorkers    int
-	chunkMemory        bool
-	cacheWrites        bool
-	tempWritePath      string
-	tempWriteWait      time.Duration
-	tempFs             fs.Fs
+	tempFs   fs.Fs
 
 	lastChunkCleanup time.Time
 	cleanupMu        sync.Mutex
@@ -188,9 +240,19 @@ func parseRootPath(path string) (string, error) {
 }
 
 // NewFs constructs a Fs from the path, container:path
-func NewFs(name, rootPath string) (fs.Fs, error) {
-	remote := config.FileGet(name, "remote")
-	if strings.HasPrefix(remote, name+":") {
+func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	if opt.ChunkTotalSize < opt.ChunkSize*fs.SizeSuffix(opt.TotalWorkers) {
+		return nil, errors.Errorf("don't set cache-total-chunk-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
+			opt.ChunkTotalSize, opt.ChunkSize, opt.TotalWorkers)
+	}
+
+	if strings.HasPrefix(opt.Remote, name+":") {
 		return nil, errors.New("can't point cache remote at itself - check the value of the remote setting")
 	}
 
@@ -199,7 +261,7 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to clean root path %q", rootPath)
 	}
 
-	remotePath := path.Join(remote, rpath)
+	remotePath := path.Join(opt.Remote, rpath)
 	wrappedFs, wrapErr := fs.NewFs(remotePath)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
 		return nil, errors.Wrapf(wrapErr, "failed to make remote %q to wrap", remotePath)
@@ -210,97 +272,46 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 		fsErr = fs.ErrorIsFile
 		rpath = cleanPath(path.Dir(rpath))
 	}
-	plexURL := config.FileGet(name, "plex_url")
-	plexToken := config.FileGet(name, "plex_token")
-	var chunkSize fs.SizeSuffix
-	chunkSizeString := config.FileGet(name, "chunk_size", DefCacheChunkSize)
-	if *cacheChunkSize != DefCacheChunkSize {
-		chunkSizeString = *cacheChunkSize
-	}
-	err = chunkSize.Set(chunkSizeString)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to understand chunk size %v", chunkSizeString)
-	}
-	var chunkTotalSize fs.SizeSuffix
-	chunkTotalSizeString := config.FileGet(name, "chunk_total_size", DefCacheTotalChunkSize)
-	if *cacheTotalChunkSize != DefCacheTotalChunkSize {
-		chunkTotalSizeString = *cacheTotalChunkSize
-	}
-	err = chunkTotalSize.Set(chunkTotalSizeString)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to understand chunk total size %v", chunkTotalSizeString)
-	}
-	chunkCleanIntervalStr := *cacheChunkCleanInterval
-	chunkCleanInterval, err := time.ParseDuration(chunkCleanIntervalStr)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to understand duration %v", chunkCleanIntervalStr)
-	}
-	infoAge := config.FileGet(name, "info_age", DefCacheInfoAge)
-	if *cacheInfoAge != DefCacheInfoAge {
-		infoAge = *cacheInfoAge
-	}
-	infoDuration, err := time.ParseDuration(infoAge)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to understand duration %v", infoAge)
-	}
-	waitTime, err := time.ParseDuration(*cacheTempWaitTime)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to understand duration %v", *cacheTempWaitTime)
-	}
 	// configure cache backend
-	if *cacheDbPurge {
+	if opt.DbPurge {
 		fs.Debugf(name, "Purging the DB")
 	}
 	f := &Fs{
-		Fs:                 wrappedFs,
-		name:               name,
-		root:               rpath,
-		fileAge:            infoDuration,
-		chunkSize:          int64(chunkSize),
-		chunkTotalSize:     int64(chunkTotalSize),
-		chunkCleanInterval: chunkCleanInterval,
-		readRetries:        *cacheReadRetries,
-		totalWorkers:       *cacheTotalWorkers,
-		totalMaxWorkers:    *cacheTotalWorkers,
-		chunkMemory:        !*cacheChunkNoMemory,
-		cacheWrites:        *cacheStoreWrites,
-		lastChunkCleanup:   time.Now().Truncate(time.Hour * 24 * 30),
-		tempWritePath:      *cacheTempWritePath,
-		tempWriteWait:      waitTime,
-		cleanupChan:        make(chan bool, 1),
-		notifiedRemotes:    make(map[string]bool),
+		Fs:               wrappedFs,
+		name:             name,
+		root:             rpath,
+		opt:              *opt,
+		lastChunkCleanup: time.Now().Truncate(time.Hour * 24 * 30),
+		cleanupChan:      make(chan bool, 1),
+		notifiedRemotes:  make(map[string]bool),
 	}
-	if f.chunkTotalSize < (f.chunkSize * int64(f.totalWorkers)) {
-		return nil, errors.Errorf("don't set cache-total-chunk-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
-			f.chunkTotalSize, f.chunkSize, f.totalWorkers)
-	}
-	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(*cacheRps)), f.totalWorkers)
+	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(opt.Rps)), opt.TotalWorkers)
 
 	f.plexConnector = &plexConnector{}
-	if plexURL != "" {
-		if plexToken != "" {
-			f.plexConnector, err = newPlexConnectorWithToken(f, plexURL, plexToken)
+	if opt.PlexURL != "" {
+		if opt.PlexToken != "" {
+			f.plexConnector, err = newPlexConnectorWithToken(f, opt.PlexURL, opt.PlexToken)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", plexURL)
+				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
 			}
 		} else {
-			plexUsername := config.FileGet(name, "plex_username")
-			plexPassword := config.FileGet(name, "plex_password")
-			if plexPassword != "" && plexUsername != "" {
-				decPass, err := obscure.Reveal(plexPassword)
+			if opt.PlexPassword != "" && opt.PlexUsername != "" {
+				decPass, err := obscure.Reveal(opt.PlexPassword)
 				if err != nil {
-					decPass = plexPassword
+					decPass = opt.PlexPassword
 				}
-				f.plexConnector, err = newPlexConnector(f, plexURL, plexUsername, decPass)
+				f.plexConnector, err = newPlexConnector(f, opt.PlexURL, opt.PlexUsername, decPass, func(token string) {
+					m.Set("plex_token", token)
+				})
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", plexURL)
+					return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
 				}
 			}
 		}
 	}
 
-	dbPath := *cacheDbPath
-	chunkPath := *cacheChunkPath
+	dbPath := f.opt.DbPath
+	chunkPath := f.opt.ChunkPath
 	// if the dbPath is non default but the chunk path is default, we overwrite the last to follow the same one as dbPath
 	if dbPath != filepath.Join(config.CacheDir, "cache-backend") &&
 		chunkPath == filepath.Join(config.CacheDir, "cache-backend") {
@@ -326,7 +337,8 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	fs.Infof(name, "Cache DB path: %v", dbPath)
 	fs.Infof(name, "Cache chunk path: %v", chunkPath)
 	f.cache, err = GetPersistent(dbPath, chunkPath, &Features{
-		PurgeDb: *cacheDbPurge,
+		PurgeDb:    opt.DbPurge,
+		DbWaitTime: time.Duration(opt.DbWaitTime),
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to start cache db")
@@ -335,7 +347,7 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP)
 	atexit.Register(func() {
-		if plexURL != "" {
+		if opt.PlexURL != "" {
 			f.plexConnector.closeWebsocket()
 		}
 		f.StopBackgroundRunners()
@@ -350,35 +362,35 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 		}
 	}()
 
-	fs.Infof(name, "Chunk Memory: %v", f.chunkMemory)
-	fs.Infof(name, "Chunk Size: %v", fs.SizeSuffix(f.chunkSize))
-	fs.Infof(name, "Chunk Total Size: %v", fs.SizeSuffix(f.chunkTotalSize))
-	fs.Infof(name, "Chunk Clean Interval: %v", f.chunkCleanInterval.String())
-	fs.Infof(name, "Workers: %v", f.totalWorkers)
-	fs.Infof(name, "File Age: %v", f.fileAge.String())
-	if f.cacheWrites {
+	fs.Infof(name, "Chunk Memory: %v", !f.opt.ChunkNoMemory)
+	fs.Infof(name, "Chunk Size: %v", f.opt.ChunkSize)
+	fs.Infof(name, "Chunk Total Size: %v", f.opt.ChunkTotalSize)
+	fs.Infof(name, "Chunk Clean Interval: %v", f.opt.ChunkCleanInterval)
+	fs.Infof(name, "Workers: %v", f.opt.TotalWorkers)
+	fs.Infof(name, "File Age: %v", f.opt.InfoAge)
+	if !f.opt.StoreWrites {
 		fs.Infof(name, "Cache Writes: enabled")
 	}
 
-	if f.tempWritePath != "" {
-		err = os.MkdirAll(f.tempWritePath, os.ModePerm)
+	if f.opt.TempWritePath != "" {
+		err = os.MkdirAll(f.opt.TempWritePath, os.ModePerm)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create cache directory %v", f.tempWritePath)
+			return nil, errors.Wrapf(err, "failed to create cache directory %v", f.opt.TempWritePath)
 		}
-		f.tempWritePath = filepath.ToSlash(f.tempWritePath)
-		f.tempFs, err = fs.NewFs(f.tempWritePath)
+		f.opt.TempWritePath = filepath.ToSlash(f.opt.TempWritePath)
+		f.tempFs, err = fs.NewFs(f.opt.TempWritePath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to create temp fs: %v", err)
 		}
-		fs.Infof(name, "Upload Temp Rest Time: %v", f.tempWriteWait.String())
-		fs.Infof(name, "Upload Temp FS: %v", f.tempWritePath)
+		fs.Infof(name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
+		fs.Infof(name, "Upload Temp FS: %v", f.opt.TempWritePath)
 		f.backgroundRunner, _ = initBackgroundUploader(f)
 		go f.backgroundRunner.run()
 	}
 
 	go func() {
 		for {
-			time.Sleep(f.chunkCleanInterval)
+			time.Sleep(time.Duration(f.opt.ChunkCleanInterval))
 			select {
 			case <-f.cleanupChan:
 				fs.Infof(f, "stopping cleanup")
@@ -391,7 +403,7 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	}()
 
 	if doChangeNotify := wrappedFs.Features().ChangeNotify; doChangeNotify != nil {
-		doChangeNotify(f.receiveChangeNotify, f.chunkCleanInterval)
+		doChangeNotify(f.receiveChangeNotify, time.Duration(f.opt.ChunkCleanInterval))
 	}
 
 	f.features = (&fs.Features{
@@ -400,7 +412,7 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 	// override only those features that use a temp fs and it doesn't support them
 	//f.features.ChangeNotify = f.ChangeNotify
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		if f.tempFs.Features().Copy == nil {
 			f.features.Copy = nil
 		}
@@ -563,7 +575,7 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 // notifyChangeUpstreamIfNeeded will check if the wrapped remote doesn't notify on changes
 // or if we use a temp fs
 func (f *Fs) notifyChangeUpstreamIfNeeded(remote string, entryType fs.EntryType) {
-	if f.Fs.Features().ChangeNotify == nil || f.tempWritePath != "" {
+	if f.Fs.Features().ChangeNotify == nil || f.opt.TempWritePath != "" {
 		f.notifyChangeUpstream(remote, entryType)
 	}
 }
@@ -613,17 +625,17 @@ func (f *Fs) String() string {
 
 // ChunkSize returns the configured chunk size
 func (f *Fs) ChunkSize() int64 {
-	return f.chunkSize
+	return int64(f.opt.ChunkSize)
 }
 
 // InfoAge returns the configured file age
 func (f *Fs) InfoAge() time.Duration {
-	return f.fileAge
+	return time.Duration(f.opt.InfoAge)
 }
 
 // TempUploadWaitTime returns the configured temp file upload wait time
 func (f *Fs) TempUploadWaitTime() time.Duration {
-	return f.tempWriteWait
+	return time.Duration(f.opt.TempWaitTime)
 }
 
 // NewObject finds the Object at remote.
@@ -636,16 +648,16 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	err = f.cache.GetObject(co)
 	if err != nil {
 		fs.Debugf(remote, "find: error: %v", err)
-	} else if time.Now().After(co.CacheTs.Add(f.fileAge)) {
+	} else if time.Now().After(co.CacheTs.Add(time.Duration(f.opt.InfoAge))) {
 		fs.Debugf(co, "find: cold object: %+v", co)
 	} else {
-		fs.Debugf(co, "find: warm object: %v, expiring on: %v", co, co.CacheTs.Add(f.fileAge))
+		fs.Debugf(co, "find: warm object: %v, expiring on: %v", co, co.CacheTs.Add(time.Duration(f.opt.InfoAge)))
 		return co, nil
 	}
 
 	// search for entry in source or temp fs
 	var obj fs.Object
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		obj, err = f.tempFs.NewObject(remote)
 		// not found in temp fs
 		if err != nil {
@@ -679,13 +691,13 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	entries, err = f.cache.GetDirEntries(cd)
 	if err != nil {
 		fs.Debugf(dir, "list: error: %v", err)
-	} else if time.Now().After(cd.CacheTs.Add(f.fileAge)) {
+	} else if time.Now().After(cd.CacheTs.Add(time.Duration(f.opt.InfoAge))) {
 		fs.Debugf(dir, "list: cold listing: %v", cd.CacheTs)
 	} else if len(entries) == 0 {
 		// TODO: read empty dirs from source?
 		fs.Debugf(dir, "list: empty listing")
 	} else {
-		fs.Debugf(dir, "list: warm %v from cache for: %v, expiring on: %v", len(entries), cd.abs(), cd.CacheTs.Add(f.fileAge))
+		fs.Debugf(dir, "list: warm %v from cache for: %v, expiring on: %v", len(entries), cd.abs(), cd.CacheTs.Add(time.Duration(f.opt.InfoAge)))
 		fs.Debugf(dir, "list: cached entries: %v", entries)
 		return entries, nil
 	}
@@ -693,7 +705,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 
 	// we first search any temporary files stored locally
 	var cachedEntries fs.DirEntries
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		queuedEntries, err := f.cache.searchPendingUploadFromDir(cd.abs())
 		if err != nil {
 			fs.Errorf(dir, "list: error getting pending uploads: %v", err)
@@ -744,7 +756,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		case fs.Directory:
 			cdd := DirectoryFromOriginal(f, o)
 			// check if the dir isn't expired and add it in cache if it isn't
-			if cdd2, err := f.cache.GetDir(cdd.abs()); err != nil || time.Now().Before(cdd2.CacheTs.Add(f.fileAge)) {
+			if cdd2, err := f.cache.GetDir(cdd.abs()); err != nil || time.Now().Before(cdd2.CacheTs.Add(time.Duration(f.opt.InfoAge))) {
 				batchDirectories = append(batchDirectories, cdd)
 			}
 			cachedEntries = append(cachedEntries, cdd)
@@ -867,7 +879,7 @@ func (f *Fs) Mkdir(dir string) error {
 func (f *Fs) Rmdir(dir string) error {
 	fs.Debugf(f, "rmdir '%s'", dir)
 
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		// pause background uploads
 		f.backgroundRunner.pause()
 		defer f.backgroundRunner.play()
@@ -952,7 +964,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return fs.ErrorCantDirMove
 	}
 
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		// pause background uploads
 		f.backgroundRunner.pause()
 		defer f.backgroundRunner.play()
@@ -1079,7 +1091,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 	go func() {
 		var offset int64
 		for {
-			chunk := make([]byte, f.chunkSize)
+			chunk := make([]byte, f.opt.ChunkSize)
 			readSize, err := io.ReadFull(pr, chunk)
 			// we ignore 3 failures which are ok:
 			// 1. EOF - original reading finished and we got a full buffer too
@@ -1127,7 +1139,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	var obj fs.Object
 
 	// queue for upload and store in temp fs if configured
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		// we need to clear the caches before a put through temp fs
 		parentCd := NewDirectory(f, cleanPath(path.Dir(src.Remote())))
 		_ = f.cache.ExpireDir(parentCd)
@@ -1146,7 +1158,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 		}
 		fs.Infof(obj, "put: queued for upload")
 		// if cache writes is enabled write it first through cache
-	} else if f.cacheWrites {
+	} else if f.opt.StoreWrites {
 		f.cacheReader(in, src, func(inn io.Reader) {
 			obj, err = put(inn, src, options...)
 		})
@@ -1243,7 +1255,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 	if srcObj.isTempFile() {
 		// we check if the feature is stil active
-		if f.tempWritePath == "" {
+		if f.opt.TempWritePath == "" {
 			fs.Errorf(srcObj, "can't copy - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantCopy
 		}
@@ -1319,7 +1331,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// if this is a temp object then we perform the changes locally
 	if srcObj.isTempFile() {
 		// we check if the feature is stil active
-		if f.tempWritePath == "" {
+		if f.opt.TempWritePath == "" {
 			fs.Errorf(srcObj, "can't move - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantMove
 		}
@@ -1460,8 +1472,8 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 	f.cleanupMu.Lock()
 	defer f.cleanupMu.Unlock()
 
-	if ignoreLastTs || time.Now().After(f.lastChunkCleanup.Add(f.chunkCleanInterval)) {
-		f.cache.CleanChunksBySize(f.chunkTotalSize)
+	if ignoreLastTs || time.Now().After(f.lastChunkCleanup.Add(time.Duration(f.opt.ChunkCleanInterval))) {
+		f.cache.CleanChunksBySize(int64(f.opt.ChunkTotalSize))
 		f.lastChunkCleanup = time.Now()
 	}
 }
@@ -1470,7 +1482,7 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 // can be triggered from a terminate signal or from testing between runs
 func (f *Fs) StopBackgroundRunners() {
 	f.cleanupChan <- false
-	if f.tempWritePath != "" && f.backgroundRunner != nil && f.backgroundRunner.isRunning() {
+	if f.opt.TempWritePath != "" && f.backgroundRunner != nil && f.backgroundRunner.isRunning() {
 		f.backgroundRunner.close()
 	}
 	f.cache.Close()
@@ -1528,7 +1540,7 @@ func (f *Fs) DirCacheFlush() {
 // GetBackgroundUploadChannel returns a channel that can be listened to for remote activities that happen
 // in the background
 func (f *Fs) GetBackgroundUploadChannel() chan BackgroundUploadState {
-	if f.tempWritePath != "" {
+	if f.opt.TempWritePath != "" {
 		return f.backgroundRunner.notifyCh
 	}
 	return nil

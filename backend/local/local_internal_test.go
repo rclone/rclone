@@ -45,7 +45,7 @@ func TestUpdatingCheck(t *testing.T) {
 
 	fi, err := fd.Stat()
 	require.NoError(t, err)
-	o := &Object{size: fi.Size(), modTime: fi.ModTime()}
+	o := &Object{size: fi.Size(), modTime: fi.ModTime(), fs: &Fs{}}
 	wrappedFd := readers.NewLimitedReadCloser(fd, -1)
 	hash, err := hash.NewMultiHasherTypes(hash.Supported)
 	require.NoError(t, err)
@@ -65,11 +65,7 @@ func TestUpdatingCheck(t *testing.T) {
 	require.Errorf(t, err, "can't copy - source file is being updated")
 
 	// turn the checking off and try again
-
-	*noCheckUpdated = true
-	defer func() {
-		*noCheckUpdated = false
-	}()
+	in.o.fs.opt.NoCheckUpdated = true
 
 	r.WriteFile(filePath, "content updated", time.Now())
 	_, err = in.Read(buf)

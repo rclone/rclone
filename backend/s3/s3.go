@@ -37,8 +37,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
@@ -82,8 +82,9 @@ func init() {
 				Help:  "Any other S3 compatible provider",
 			}},
 		}, {
-			Name: "env_auth",
-			Help: "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.",
+			Name:    "env_auth",
+			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\nOnly applies if access_key_id and secret_access_key is blank.",
+			Default: false,
 			Examples: []fs.OptionExample{{
 				Value: "false",
 				Help:  "Enter AWS credentials in the next step",
@@ -93,10 +94,10 @@ func init() {
 			}},
 		}, {
 			Name: "access_key_id",
-			Help: "AWS Access Key ID - leave blank for anonymous access or runtime credentials.",
+			Help: "AWS Access Key ID.\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.",
+			Help: "AWS Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.",
@@ -146,7 +147,7 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
-			Help:     "Region to connect to.  Leave blank if you are using an S3 clone and you don't have a region.",
+			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
 			Provider: "!AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -293,7 +294,7 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region. Used when creating buckets only.",
+			Help:     "Location constraint - must be set to match the Region.\nUsed when creating buckets only.",
 			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -340,7 +341,7 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must match endpoint when using IBM Cloud Public. For on-prem COS, do not make a selection from this list, hit enter",
+			Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\nFor on-prem COS, do not make a selection from this list, hit enter",
 			Provider: "IBMCOS",
 			Examples: []fs.OptionExample{{
 				Value: "us-standard",
@@ -441,7 +442,7 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region. Leave blank if not sure. Used when creating buckets only.",
+			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
 			Provider: "!AWS,IBMCOS",
 		}, {
 			Name: "acl",
@@ -518,10 +519,28 @@ func init() {
 				Value: "ONEZONE_IA",
 				Help:  "One Zone Infrequent Access storage class",
 			}},
-		},
-		},
+		}, {
+			Name:     "chunk_size",
+			Help:     "Chunk size to use for uploading",
+			Default:  fs.SizeSuffix(s3manager.MinUploadPartSize),
+			Advanced: true,
+		}, {
+			Name:     "disable_checksum",
+			Help:     "Don't store MD5 checksum with object metadata",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "session_token",
+			Help:     "An AWS session token",
+			Hide:     fs.OptionHideBoth,
+			Advanced: true,
+		}, {
+			Name:     "upload_concurrency",
+			Help:     "Concurrency for multipart uploads.",
+			Default:  2,
+			Advanced: true,
+		}},
 	})
-	flags.VarP(&s3ChunkSize, "s3-chunk-size", "", "Chunk size to use for uploading")
 }
 
 // Constants
@@ -534,31 +553,36 @@ const (
 	maxFileSize    = 5 * 1024 * 1024 * 1024 * 1024 // largest possible upload file size
 )
 
-// Globals
-var (
-	// Flags
-	s3ACL               = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
-	s3StorageClass      = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
-	s3ChunkSize         = fs.SizeSuffix(s3manager.MinUploadPartSize)
-	s3DisableChecksum   = flags.BoolP("s3-disable-checksum", "", false, "Don't store MD5 checksum with object metadata")
-	s3UploadConcurrency = flags.IntP("s3-upload-concurrency", "", 2, "Concurrency for multipart uploads")
-)
+// Options defines the configuration for this backend
+type Options struct {
+	Provider             string        `config:"provider"`
+	EnvAuth              bool          `config:"env_auth"`
+	AccessKeyID          string        `config:"access_key_id"`
+	SecretAccessKey      string        `config:"secret_access_key"`
+	Region               string        `config:"region"`
+	Endpoint             string        `config:"endpoint"`
+	LocationConstraint   string        `config:"location_constraint"`
+	ACL                  string        `config:"acl"`
+	ServerSideEncryption string        `config:"server_side_encryption"`
+	StorageClass         string        `config:"storage_class"`
+	ChunkSize            fs.SizeSuffix `config:"chunk_size"`
+	DisableChecksum      bool          `config:"disable_checksum"`
+	SessionToken         string        `config:"session_token"`
+	UploadConcurrency    int           `config:"upload_concurrency"`
+}
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name               string           // the name of the remote
-	root               string           // root of the bucket - ignore all objects above this
-	features           *fs.Features     // optional features
-	c                  *s3.S3           // the connection to the s3 server
-	ses                *session.Session // the s3 session
-	bucket             string           // the bucket we are working on
-	bucketOKMu         sync.Mutex       // mutex to protect bucket OK
-	bucketOK           bool             // true if we have created the bucket
-	bucketDeleted      bool             // true if we have deleted the bucket
-	acl                string           // ACL for new buckets / objects
-	locationConstraint string           // location constraint of new buckets
-	sse                string           // the type of server-side encryption
-	storageClass       string           // storage class
+	name          string           // the name of the remote
+	root          string           // root of the bucket - ignore all objects above this
+	opt           Options          // parsed options
+	features      *fs.Features     // optional features
+	c             *s3.S3           // the connection to the s3 server
+	ses           *session.Session // the s3 session
+	bucket        string           // the bucket we are working on
+	bucketOKMu    sync.Mutex       // mutex to protect bucket OK
+	bucketOK      bool             // true if we have created the bucket
+	bucketDeleted bool             // true if we have deleted the bucket
 }
 
 // Object describes a s3 object
@@ -620,12 +644,12 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 }
 
 // s3Connection makes a connection to s3
-func s3Connection(name string) (*s3.S3, *session.Session, error) {
+func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	// Make the auth
 	v := credentials.Value{
-		AccessKeyID:     config.FileGet(name, "access_key_id"),
-		SecretAccessKey: config.FileGet(name, "secret_access_key"),
-		SessionToken:    config.FileGet(name, "session_token"),
+		AccessKeyID:     opt.AccessKeyID,
+		SecretAccessKey: opt.SecretAccessKey,
+		SessionToken:    opt.SessionToken,
 	}
 
 	lowTimeoutClient := &http.Client{Timeout: 1 * time.Second} // low timeout to ec2 metadata service
@@ -660,7 +684,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	cred := credentials.NewChainCredentials(providers)
 
 	switch {
-	case config.FileGetBool(name, "env_auth", false):
+	case opt.EnvAuth:
 		// No need for empty checks if "env_auth" is true
 	case v.AccessKeyID == "" && v.SecretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
@@ -671,26 +695,24 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		return nil, nil, errors.New("secret_access_key not found")
 	}
 
-	endpoint := config.FileGet(name, "endpoint")
-	region := config.FileGet(name, "region")
-	if region == "" && endpoint == "" {
-		endpoint = "https://s3.amazonaws.com/"
+	if opt.Region == "" && opt.Endpoint == "" {
+		opt.Endpoint = "https://s3.amazonaws.com/"
 	}
-	if region == "" {
-		region = "us-east-1"
+	if opt.Region == "" {
+		opt.Region = "us-east-1"
 	}
 	awsConfig := aws.NewConfig().
-		WithRegion(region).
+		WithRegion(opt.Region).
 		WithMaxRetries(maxRetries).
 		WithCredentials(cred).
-		WithEndpoint(endpoint).
+		WithEndpoint(opt.Endpoint).
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(true)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	ses := session.New()
 	c := s3.New(ses, awsConfig)
-	if region == "other-v2-signature" {
-		fs.Debugf(name, "Using v2 auth")
+	if opt.Region == "other-v2-signature" {
+		fs.Debugf(nil, "Using v2 auth")
 		signer := func(req *request.Request) {
 			// Ignore AnonymousCredentials object
 			if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -706,40 +728,37 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 }
 
 // NewFs constructs an Fs from the path, bucket:path
-func NewFs(name, root string) (fs.Fs, error) {
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	if opt.ChunkSize < fs.SizeSuffix(s3manager.MinUploadPartSize) {
+		return nil, errors.Errorf("s3 chunk size (%v) must be >= %v", opt.ChunkSize, fs.SizeSuffix(s3manager.MinUploadPartSize))
+	}
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
 		return nil, err
 	}
-	c, ses, err := s3Connection(name)
+	c, ses, err := s3Connection(opt)
 	if err != nil {
 		return nil, err
 	}
 	f := &Fs{
-		name:               name,
-		c:                  c,
-		bucket:             bucket,
-		ses:                ses,
-		acl:                config.FileGet(name, "acl"),
-		root:               directory,
-		locationConstraint: config.FileGet(name, "location_constraint"),
-		sse:                config.FileGet(name, "server_side_encryption"),
-		storageClass:       config.FileGet(name, "storage_class"),
+		name:   name,
+		root:   directory,
+		opt:    *opt,
+		c:      c,
+		bucket: bucket,
+		ses:    ses,
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
 		WriteMimeType: true,
 		BucketBased:   true,
 	}).Fill(f)
-	if *s3ACL != "" {
-		f.acl = *s3ACL
-	}
-	if *s3StorageClass != "" {
-		f.storageClass = *s3StorageClass
-	}
-	if s3ChunkSize < fs.SizeSuffix(s3manager.MinUploadPartSize) {
-		return nil, errors.Errorf("s3 chunk size must be >= %v", fs.SizeSuffix(s3manager.MinUploadPartSize))
-	}
 	if f.root != "" {
 		f.root += "/"
 		// Check to see if the object exists
@@ -1064,11 +1083,11 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 	req := s3.CreateBucketInput{
 		Bucket: &f.bucket,
-		ACL:    &f.acl,
+		ACL:    &f.opt.ACL,
 	}
-	if f.locationConstraint != "" {
+	if f.opt.LocationConstraint != "" {
 		req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
-			LocationConstraint: &f.locationConstraint,
+			LocationConstraint: &f.opt.LocationConstraint,
 		}
 	}
 	_, err := f.c.CreateBucket(&req)
@@ -1297,7 +1316,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	directive := s3.MetadataDirectiveReplace // replace metadata with that passed in
 	req := s3.CopyObjectInput{
 		Bucket:            &o.fs.bucket,
-		ACL:               &o.fs.acl,
+		ACL:               &o.fs.opt.ACL,
 		Key:               &key,
 		ContentType:       &mimeType,
 		CopySource:        aws.String(pathEscape(sourceKey)),
@@ -1353,10 +1372,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 
 	uploader := s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
-		u.Concurrency = *s3UploadConcurrency
+		u.Concurrency = o.fs.opt.UploadConcurrency
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
-		u.PartSize = int64(s3ChunkSize)
+		u.PartSize = int64(o.fs.opt.ChunkSize)
 
 		if size == -1 {
 			// Make parts as small as possible while still being able to upload to the
@@ -1376,7 +1395,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		metaMtime: aws.String(swift.TimeToFloatString(modTime)),
 	}
 
-	if !*s3DisableChecksum && size > uploader.PartSize {
+	if !o.fs.opt.DisableChecksum && size > uploader.PartSize {
 		hash, err := src.Hash(hash.MD5)
 
 		if err == nil && matchMd5.MatchString(hash) {
@@ -1394,18 +1413,18 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	key := o.fs.root + o.remote
 	req := s3manager.UploadInput{
 		Bucket:      &o.fs.bucket,
-		ACL:         &o.fs.acl,
+		ACL:         &o.fs.opt.ACL,
 		Key:         &key,
 		Body:        in,
 		ContentType: &mimeType,
 		Metadata:    metadata,
 		//ContentLength: &size,
 	}
-	if o.fs.sse != "" {
-		req.ServerSideEncryption = &o.fs.sse
+	if o.fs.opt.ServerSideEncryption != "" {
+		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
 	}
-	if o.fs.storageClass != "" {
-		req.StorageClass = &o.fs.storageClass
+	if o.fs.opt.StorageClass != "" {
+		req.StorageClass = &o.fs.opt.StorageClass
 	}
 	_, err = uploader.Upload(&req)
 	if err != nil {

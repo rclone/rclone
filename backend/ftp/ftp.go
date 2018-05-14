@@ -4,16 +4,15 @@ package ftp
 import (
 	"io"
 	"net/textproto"
-	"net/url"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/jlaffaye/ftp"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
@@ -30,33 +29,40 @@ func init() {
 			{
 				Name:     "host",
 				Help:     "FTP host to connect to",
-				Optional: false,
+				Required: true,
 				Examples: []fs.OptionExample{{
 					Value: "ftp.example.com",
 					Help:  "Connect to ftp.example.com",
 				}},
 			}, {
-				Name:     "user",
-				Help:     "FTP username, leave blank for current username, " + os.Getenv("USER"),
-				Optional: true,
+				Name: "user",
+				Help: "FTP username, leave blank for current username, " + os.Getenv("USER"),
 			}, {
-				Name:     "port",
-				Help:     "FTP port, leave blank to use default (21) ",
-				Optional: true,
+				Name: "port",
+				Help: "FTP port, leave blank to use default (21)",
 			}, {
 				Name:       "pass",
 				Help:       "FTP password",
 				IsPassword: true,
-				Optional:   false,
+				Required:   true,
 			},
 		},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Host string `config:"host"`
+	User string `config:"user"`
+	Pass string `config:"pass"`
+	Port string `config:"port"`
 }
 
 // Fs represents a remote FTP server
 type Fs struct {
 	name     string       // name of this remote
 	root     string       // the path we are working on if any
+	opt      Options      // parsed options
 	features *fs.Features // optional features
 	url      string
 	user     string
@@ -161,51 +167,33 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 }
 
 // NewFs contstructs an Fs from the path, container:path
-func NewFs(name, root string) (ff fs.Fs, err error) {
+func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
-	// FIXME Convert the old scheme used for the first beta - remove after release
-	if ftpURL := config.FileGet(name, "url"); ftpURL != "" {
-		fs.Infof(name, "Converting old configuration")
-		u, err := url.Parse(ftpURL)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse old url %q", ftpURL)
-		}
-		parts := strings.Split(u.Host, ":")
-		config.FileSet(name, "host", parts[0])
-		if len(parts) > 1 {
-			config.FileSet(name, "port", parts[1])
-		}
-		config.FileSet(name, "host", u.Host)
-		config.FileSet(name, "user", config.FileGet(name, "username"))
-		config.FileSet(name, "pass", config.FileGet(name, "password"))
-		config.FileDeleteKey(name, "username")
-		config.FileDeleteKey(name, "password")
-		config.FileDeleteKey(name, "url")
-		config.SaveConfig()
-		if u.Path != "" && u.Path != "/" {
-			fs.Errorf(name, "Path %q in FTP URL no longer supported - put it on the end of the remote %s:%s", u.Path, name, u.Path)
-		}
+	// Parse config into Options struct
+	opt := new(Options)
+	err = configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
 	}
-	host := config.FileGet(name, "host")
-	user := config.FileGet(name, "user")
-	pass := config.FileGet(name, "pass")
-	port := config.FileGet(name, "port")
-	pass, err = obscure.Reveal(pass)
+	pass, err := obscure.Reveal(opt.Pass)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFS decrypt password")
 	}
+	user := opt.User
 	if user == "" {
 		user = os.Getenv("USER")
 	}
+	port := opt.Port
 	if port == "" {
 		port = "21"
 	}
 
-	dialAddr := host + ":" + port
+	dialAddr := opt.Host + ":" + port
 	u := "ftp://" + path.Join(dialAddr+"/", root)
 	f := &Fs{
 		name:     name,
 		root:     root,
+		opt:      *opt,
 		url:      u,
 		user:     user,
 		pass:     pass,

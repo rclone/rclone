@@ -17,7 +17,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
@@ -34,49 +35,43 @@ func init() {
 		Description: "QingCloud Object Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name: "env_auth",
-			Help: "Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.",
-			Examples: []fs.OptionExample{
-				{
-					Value: "false",
-					Help:  "Enter QingStor credentials in the next step",
-				}, {
-					Value: "true",
-					Help:  "Get QingStor credentials from the environment (env vars or IAM)",
-				},
-			},
+			Name:    "env_auth",
+			Help:    "Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.",
+			Default: false,
+			Examples: []fs.OptionExample{{
+				Value: "false",
+				Help:  "Enter QingStor credentials in the next step",
+			}, {
+				Value: "true",
+				Help:  "Get QingStor credentials from the environment (env vars or IAM)",
+			}},
 		}, {
 			Name: "access_key_id",
-			Help: "QingStor Access Key ID - leave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Access Key ID\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "QingStor Secret Access Key (password) - leave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "endpoint",
 			Help: "Enter a endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
 		}, {
 			Name: "zone",
-			Help: "Choose or Enter a zone to connect. Default is \"pek3a\".",
-			Examples: []fs.OptionExample{
-				{
-					Value: "pek3a",
-
-					Help: "The Beijing (China) Three Zone\nNeeds location constraint pek3a.",
-				},
-				{
-					Value: "sh1a",
-
-					Help: "The Shanghai (China) First Zone\nNeeds location constraint sh1a.",
-				},
-				{
-					Value: "gd2a",
-
-					Help: "The Guangdong (China) Second Zone\nNeeds location constraint gd2a.",
-				},
-			},
+			Help: "Zone to connect to.\nDefault is \"pek3a\".",
+			Examples: []fs.OptionExample{{
+				Value: "pek3a",
+				Help:  "The Beijing (China) Three Zone\nNeeds location constraint pek3a.",
+			}, {
+				Value: "sh1a",
+				Help:  "The Shanghai (China) First Zone\nNeeds location constraint sh1a.",
+			}, {
+				Value: "gd2a",
+				Help:  "The Guangdong (China) Second Zone\nNeeds location constraint gd2a.",
+			}},
 		}, {
-			Name: "connection_retries",
-			Help: "Number of connnection retry.\nLeave blank will use the default value \"3\".",
+			Name:     "connection_retries",
+			Help:     "Number of connnection retries.",
+			Default:  3,
+			Advanced: true,
 		}},
 	})
 }
@@ -95,17 +90,28 @@ func timestampToTime(tp int64) time.Time {
 	return tm.UTC()
 }
 
+// Options defines the configuration for this backend
+type Options struct {
+	EnvAuth           bool   `config:"env_auth"`
+	AccessKeyID       string `config:"access_key_id"`
+	SecretAccessKey   string `config:"secret_access_key"`
+	Endpoint          string `config:"endpoint"`
+	Zone              string `config:"zone"`
+	ConnectionRetries int    `config:"connection_retries"`
+}
+
 // Fs represents a remote qingstor server
 type Fs struct {
 	name          string       // The name of the remote
+	root          string       // The root is a subdir, is a special object
+	opt           Options      // parsed options
+	features      *fs.Features // optional features
+	svc           *qs.Service  // The connection to the qingstor server
 	zone          string       // The zone we are working on
 	bucket        string       // The bucket we are working on
 	bucketOKMu    sync.Mutex   // mutex to protect bucketOK and bucketDeleted
 	bucketOK      bool         // true if we have created the bucket
 	bucketDeleted bool         // true if we have deleted the bucket
-	root          string       // The root is a subdir, is a special object
-	features      *fs.Features // optional features
-	svc           *qs.Service  // The connection to the qingstor server
 }
 
 // Object describes a qingstor object
@@ -165,12 +171,12 @@ func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 }
 
 // qsConnection makes a connection to qingstor
-func qsServiceConnection(name string) (*qs.Service, error) {
-	accessKeyID := config.FileGet(name, "access_key_id")
-	secretAccessKey := config.FileGet(name, "secret_access_key")
+func qsServiceConnection(opt *Options) (*qs.Service, error) {
+	accessKeyID := opt.AccessKeyID
+	secretAccessKey := opt.SecretAccessKey
 
 	switch {
-	case config.FileGetBool(name, "env_auth", false):
+	case opt.EnvAuth:
 		// No need for empty checks if "env_auth" is true
 	case accessKeyID == "" && secretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
@@ -184,7 +190,7 @@ func qsServiceConnection(name string) (*qs.Service, error) {
 	host := "qingstor.com"
 	port := 443
 
-	endpoint := config.FileGet(name, "endpoint", "")
+	endpoint := opt.Endpoint
 	if endpoint != "" {
 		_protocol, _host, _port, err := qsParseEndpoint(endpoint)
 
@@ -204,48 +210,49 @@ func qsServiceConnection(name string) (*qs.Service, error) {
 
 	}
 
-	connectionRetries := 3
-	retries := config.FileGet(name, "connection_retries", "")
-	if retries != "" {
-		connectionRetries, _ = strconv.Atoi(retries)
-	}
-
 	cf, err := qsConfig.NewDefault()
+	if err != nil {
+		return nil, err
+	}
 	cf.AccessKeyID = accessKeyID
 	cf.SecretAccessKey = secretAccessKey
 	cf.Protocol = protocol
 	cf.Host = host
 	cf.Port = port
-	cf.ConnectionRetries = connectionRetries
+	cf.ConnectionRetries = opt.ConnectionRetries
 	cf.Connection = fshttp.NewClient(fs.Config)
 
-	svc, _ := qs.Init(cf)
-
-	return svc, err
+	return qs.Init(cf)
 }
 
 // NewFs constructs an Fs from the path, bucket:path
-func NewFs(name, root string) (fs.Fs, error) {
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
 	bucket, key, err := qsParsePath(root)
 	if err != nil {
 		return nil, err
 	}
-	svc, err := qsServiceConnection(name)
+	svc, err := qsServiceConnection(opt)
 	if err != nil {
 		return nil, err
 	}
 
-	zone := config.FileGet(name, "zone")
-	if zone == "" {
-		zone = "pek3a"
+	if opt.Zone == "" {
+		opt.Zone = "pek3a"
 	}
 
 	f := &Fs{
 		name:   name,
-		zone:   zone,
 		root:   key,
-		bucket: bucket,
+		opt:    *opt,
 		svc:    svc,
+		zone:   opt.Zone,
+		bucket: bucket,
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
@@ -258,7 +265,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 			f.root += "/"
 		}
 		//Check to see if the object exists
-		bucketInit, err := svc.Bucket(bucket, zone)
+		bucketInit, err := svc.Bucket(bucket, opt.Zone)
 		if err != nil {
 			return nil, err
 		}

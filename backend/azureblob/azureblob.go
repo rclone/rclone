@@ -24,8 +24,8 @@ import (
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
@@ -44,14 +44,10 @@ const (
 	maxTotalParts         = 50000 // in multipart upload
 	storageDefaultBaseURL = "blob.core.windows.net"
 	// maxUncommittedSize = 9 << 30 // can't upload bigger than this
-)
-
-// Globals
-var (
-	maxChunkSize    = fs.SizeSuffix(100 * 1024 * 1024)
-	chunkSize       = fs.SizeSuffix(4 * 1024 * 1024)
-	uploadCutoff    = fs.SizeSuffix(256 * 1024 * 1024)
-	maxUploadCutoff = fs.SizeSuffix(256 * 1024 * 1024)
+	defaultChunkSize    = 4 * 1024 * 1024
+	maxChunkSize        = 100 * 1024 * 1024
+	defaultUploadCutoff = 256 * 1024 * 1024
+	maxUploadCutoff     = 256 * 1024 * 1024
 )
 
 // Register with Fs
@@ -70,22 +66,39 @@ func init() {
 			Name: "sas_url",
 			Help: "SAS URL for container level access only\n(leave blank if using account/key or connection string)",
 		}, {
-			Name: "endpoint",
-			Help: "Endpoint for the service - leave blank normally.",
-		},
-		},
+			Name:     "endpoint",
+			Help:     "Endpoint for the service\nLeave blank normally.",
+			Advanced: true,
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to chunked upload.",
+			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Help:     "Upload chunk size. Must fit in memory.",
+			Default:  fs.SizeSuffix(defaultChunkSize),
+			Advanced: true,
+		}},
 	})
-	flags.VarP(&uploadCutoff, "azureblob-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	flags.VarP(&chunkSize, "azureblob-chunk-size", "", "Upload chunk size. Must fit in memory.")
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Account      string        `config:"account"`
+	Key          string        `config:"key"`
+	Endpoint     string        `config:"endpoint"`
+	SASURL       string        `config:"sas_url"`
+	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a remote azure server
 type Fs struct {
 	name             string                // name of this remote
 	root             string                // the path we are working on if any
+	opt              Options               // parsed config options
 	features         *fs.Features          // optional features
-	account          string                // account name
-	endpoint         string                // name of the starting api endpoint
 	svcURL           *azblob.ServiceURL    // reference to serviceURL
 	cntURL           *azblob.ContainerURL  // reference to containerURL
 	container        string                // the container we are working on
@@ -177,21 +190,27 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 }
 
 // NewFs contstructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	if uploadCutoff > maxUploadCutoff {
-		return nil, errors.Errorf("azure: upload cutoff (%v) must be less than or equal to %v", uploadCutoff, maxUploadCutoff)
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
 	}
-	if chunkSize > maxChunkSize {
-		return nil, errors.Errorf("azure: chunk size can't be greater than %v - was %v", maxChunkSize, chunkSize)
+
+	if opt.UploadCutoff > maxUploadCutoff {
+		return nil, errors.Errorf("azure: upload cutoff (%v) must be less than or equal to %v", opt.UploadCutoff, maxUploadCutoff)
+	}
+	if opt.ChunkSize > maxChunkSize {
+		return nil, errors.Errorf("azure: chunk size can't be greater than %v - was %v", maxChunkSize, opt.ChunkSize)
 	}
 	container, directory, err := parsePath(root)
 	if err != nil {
 		return nil, err
 	}
-	account := config.FileGet(name, "account")
-	key := config.FileGet(name, "key")
-	sasURL := config.FileGet(name, "sas_url")
-	endpoint := config.FileGet(name, "endpoint", storageDefaultBaseURL)
+	if opt.Endpoint == "" {
+		opt.Endpoint = storageDefaultBaseURL
+	}
 
 	var (
 		u            *url.URL
@@ -199,17 +218,17 @@ func NewFs(name, root string) (fs.Fs, error) {
 		containerURL azblob.ContainerURL
 	)
 	switch {
-	case account != "" && key != "":
-		credential := azblob.NewSharedKeyCredential(account, key)
-		u, err = url.Parse(fmt.Sprintf("https://%s.%s", account, endpoint))
+	case opt.Account != "" && opt.Key != "":
+		credential := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
+		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
 		}
 		pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 		containerURL = serviceURL.NewContainerURL(container)
-	case sasURL != "":
-		u, err = url.Parse(sasURL)
+	case opt.SASURL != "":
+		u, err = url.Parse(opt.SASURL)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse SAS URL")
 		}
@@ -234,10 +253,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	f := &Fs{
 		name:        name,
+		opt:         *opt,
 		container:   container,
 		root:        directory,
-		account:     account,
-		endpoint:    endpoint,
 		svcURL:      &serviceURL,
 		cntURL:      &containerURL,
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
@@ -990,7 +1008,7 @@ type readSeeker struct {
 // Write a larger blob, using CreateBlockBlob, PutBlock, and PutBlockList.
 func (o *Object) uploadMultipart(in io.Reader, size int64, blob *azblob.BlobURL, httpHeaders *azblob.BlobHTTPHeaders) (err error) {
 	// Calculate correct chunkSize
-	chunkSize := int64(chunkSize)
+	chunkSize := int64(o.fs.opt.ChunkSize)
 	var totalParts int64
 	for {
 		// Calculate number of parts
@@ -1147,7 +1165,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	httpHeaders.ContentType = fs.MimeType(o)
 	// Multipart upload doesn't support MD5 checksums at put block calls, hence calculate
 	// MD5 only for PutBlob requests
-	if size < int64(uploadCutoff) {
+	if size < int64(o.fs.opt.UploadCutoff) {
 		if sourceMD5, _ := src.Hash(hash.MD5); sourceMD5 != "" {
 			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
 			if err == nil {
@@ -1159,7 +1177,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(chunkSize),
+		BufferSize:      int(o.fs.opt.ChunkSize),
 		MaxBuffers:      4,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
@@ -1168,7 +1186,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	ctx := context.Background()
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		if size >= int64(uploadCutoff) {
+		if size >= int64(o.fs.opt.UploadCutoff) {
 			// If a large file upload in chunks
 			err = o.uploadMultipart(in, size, &blob, &httpHeaders)
 		} else {

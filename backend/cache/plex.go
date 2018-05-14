@@ -16,7 +16,6 @@ import (
 	"io/ioutil"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/net/websocket"
 )
@@ -60,10 +59,11 @@ type plexConnector struct {
 	running    bool
 	runningMu  sync.Mutex
 	stateCache *cache.Cache
+	saveToken  func(string)
 }
 
 // newPlexConnector connects to a Plex server and generates a token
-func newPlexConnector(f *Fs, plexURL, username, password string) (*plexConnector, error) {
+func newPlexConnector(f *Fs, plexURL, username, password string, saveToken func(string)) (*plexConnector, error) {
 	u, err := url.ParseRequestURI(strings.TrimRight(plexURL, "/"))
 	if err != nil {
 		return nil, err
@@ -76,6 +76,7 @@ func newPlexConnector(f *Fs, plexURL, username, password string) (*plexConnector
 		password:   password,
 		token:      "",
 		stateCache: cache.New(time.Hour, time.Minute),
+		saveToken:  saveToken,
 	}
 
 	return pc, nil
@@ -209,8 +210,7 @@ func (p *plexConnector) authenticate() error {
 	}
 	p.token = token
 	if p.token != "" {
-		config.FileSet(p.f.Name(), "plex_token", p.token)
-		config.SaveConfig()
+		p.saveToken(p.token)
 		fs.Infof(p.f.Name(), "Connected to Plex server: %v", p.url.String())
 	}
 	p.listenWebsocket()

@@ -16,19 +16,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"google.golang.org/appengine/log"
-)
-
-var (
-	followSymlinks = flags.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
-	skipSymlinks   = flags.BoolP("skip-links", "", false, "Don't warn about skipped symlinks.")
-	noUTFNorm      = flags.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
-	noCheckUpdated = flags.BoolP("local-no-check-updated", "", false, "Don't check to see if the files change during upload")
 )
 
 // Constants
@@ -41,29 +34,68 @@ func init() {
 		Description: "Local Disk",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "nounc",
-			Help:     "Disable UNC (long path names) conversion on Windows",
-			Optional: true,
+			Name: "nounc",
+			Help: "Disable UNC (long path names) conversion on Windows",
 			Examples: []fs.OptionExample{{
 				Value: "true",
 				Help:  "Disables long file names",
 			}},
+		}, {
+			Name:     "copy_links",
+			Help:     "Follow symlinks and copy the pointed to item.",
+			Default:  false,
+			NoPrefix: true,
+			ShortOpt: "L",
+			Advanced: true,
+		}, {
+			Name:     "skip_links",
+			Help:     "Don't warn about skipped symlinks.",
+			Default:  false,
+			NoPrefix: true,
+			Advanced: true,
+		}, {
+			Name:     "no_unicode_normalization",
+			Help:     "Don't apply unicode normalization to paths and filenames",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "no_check_updated",
+			Help:     "Don't check to see if the files change during upload",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "one_file_system",
+			Help:     "Don't cross filesystem boundaries (unix/macOS only).",
+			Default:  false,
+			NoPrefix: true,
+			ShortOpt: "x",
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	FollowSymlinks bool `config:"copy_links"`
+	SkipSymlinks   bool `config:"skip_links"`
+	NoUTFNorm      bool `config:"no_unicode_normalization"`
+	NoCheckUpdated bool `config:"no_check_updated"`
+	NoUNC          bool `config:"nounc"`
+	OneFileSystem  bool `config:"one_file_system"`
 }
 
 // Fs represents a local filesystem rooted at root
 type Fs struct {
 	name        string              // the name of the remote
 	root        string              // The root directory (OS path)
+	opt         Options             // parsed config options
 	features    *fs.Features        // optional features
 	dev         uint64              // device number of root node
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
 	wmu         sync.Mutex          // used for locking access to 'warned'.
 	warned      map[string]struct{} // whether we have warned about this string
-	nounc       bool                // Skip UNC conversion on Windows
 	// do os.Lstat or os.Stat
 	lstat          func(name string) (os.FileInfo, error)
 	dirNames       *mapper    // directory name mapping
@@ -84,18 +116,22 @@ type Object struct {
 // ------------------------------------------------------------
 
 // NewFs constructs an Fs from the path
-func NewFs(name, root string) (fs.Fs, error) {
-	var err error
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
 
-	if *noUTFNorm {
+	if opt.NoUTFNorm {
 		log.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
 	}
 
-	nounc := config.FileGet(name, "nounc")
 	f := &Fs{
 		name:     name,
+		opt:      *opt,
 		warned:   make(map[string]struct{}),
-		nounc:    nounc == "true",
 		dev:      devUnset,
 		lstat:    os.Lstat,
 		dirNames: newMapper(),
@@ -105,14 +141,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		CaseInsensitive:         f.caseInsensitive(),
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
-	if *followSymlinks {
+	if opt.FollowSymlinks {
 		f.lstat = os.Stat
 	}
 
 	// Check to see if this points to a file
 	fi, err := f.lstat(f.root)
 	if err == nil {
-		f.dev = readDevice(fi)
+		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
@@ -243,7 +279,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			newRemote := path.Join(remote, name)
 			newPath := filepath.Join(fsDirPath, name)
 			// Follow symlinks if required
-			if *followSymlinks && (mode&os.ModeSymlink) != 0 {
+			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				fi, err = os.Stat(newPath)
 				if err != nil {
 					return nil, err
@@ -253,7 +289,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi) {
+				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
 					d := fs.NewDir(f.dirNames.Save(newRemote, f.cleanRemote(newRemote)), fi.ModTime())
 					entries = append(entries, d)
 				}
@@ -357,7 +393,7 @@ func (f *Fs) Mkdir(dir string) error {
 		if err != nil {
 			return err
 		}
-		f.dev = readDevice(fi)
+		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	return nil
 }
@@ -643,7 +679,7 @@ func (o *Object) Storable() bool {
 	}
 	mode := o.mode
 	if mode&os.ModeSymlink != 0 {
-		if !*skipSymlinks {
+		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}
 		return false
@@ -668,7 +704,7 @@ type localOpenFile struct {
 
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
-	if !*noCheckUpdated {
+	if !file.o.fs.opt.NoCheckUpdated {
 		// Check if file has the same size and modTime
 		fi, err := file.fd.Stat()
 		if err != nil {
@@ -878,7 +914,7 @@ func (f *Fs) cleanPath(s string) string {
 				s = s2
 			}
 		}
-		if !f.nounc {
+		if !f.opt.NoUNC {
 			// Convert to UNC
 			s = uncPath(s)
 		}

@@ -8,6 +8,6 @@ import "os"
 
 // readDevice turns a valid os.FileInfo into a device number,
 // returning devUnset if it fails.
-func readDevice(fi os.FileInfo) uint64 {
+func readDevice(fi os.FileInfo, oneFileSystem bool) uint64 {
 	return devUnset
 }

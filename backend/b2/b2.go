@@ -22,8 +22,8 @@ import (
 	"github.com/ncw/rclone/backend/b2/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -34,30 +34,27 @@ import (
 )
 
 const (
-	defaultEndpoint  = "https://api.backblazeb2.com"
-	headerPrefix     = "x-bz-info-" // lower case as that is what the server returns
-	timeKey          = "src_last_modified_millis"
-	timeHeader       = headerPrefix + timeKey
-	sha1Key          = "large_file_sha1"
-	sha1Header       = "X-Bz-Content-Sha1"
-	sha1InfoHeader   = headerPrefix + sha1Key
-	testModeHeader   = "X-Bz-Test-Mode"
-	retryAfterHeader = "Retry-After"
-	minSleep         = 10 * time.Millisecond
-	maxSleep         = 5 * time.Minute
-	decayConstant    = 1 // bigger for slower decay, exponential
-	maxParts         = 10000
-	maxVersions      = 100 // maximum number of versions we search in --b2-versions mode
+	defaultEndpoint     = "https://api.backblazeb2.com"
+	headerPrefix        = "x-bz-info-" // lower case as that is what the server returns
+	timeKey             = "src_last_modified_millis"
+	timeHeader          = headerPrefix + timeKey
+	sha1Key             = "large_file_sha1"
+	sha1Header          = "X-Bz-Content-Sha1"
+	sha1InfoHeader      = headerPrefix + sha1Key
+	testModeHeader      = "X-Bz-Test-Mode"
+	retryAfterHeader    = "Retry-After"
+	minSleep            = 10 * time.Millisecond
+	maxSleep            = 5 * time.Minute
+	decayConstant       = 1 // bigger for slower decay, exponential
+	maxParts            = 10000
+	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
+	minChunkSize        = 5E6
+	defaultChunkSize    = 96 * 1024 * 1024
+	defaultUploadCutoff = 200E6
 )
 
 // Globals
 var (
-	minChunkSize       = fs.SizeSuffix(5E6)
-	chunkSize          = fs.SizeSuffix(96 * 1024 * 1024)
-	uploadCutoff       = fs.SizeSuffix(200E6)
-	b2TestMode         = flags.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
-	b2Versions         = flags.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
-	b2HardDelete       = flags.BoolP("b2-hard-delete", "", false, "Permanently delete files on remote removal, otherwise hide files.")
 	errNotWithVersions = errors.New("can't modify or delete files in --b2-versions mode")
 )
 
@@ -68,29 +65,64 @@ func init() {
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name: "account",
-			Help: "Account ID",
+			Name:     "account",
+			Help:     "Account ID",
+			Required: true,
 		}, {
-			Name: "key",
-			Help: "Application Key",
+			Name:     "key",
+			Help:     "Application Key",
+			Required: true,
 		}, {
-			Name: "endpoint",
-			Help: "Endpoint for the service - leave blank normally.",
-		},
-		},
+			Name:     "endpoint",
+			Help:     "Endpoint for the service.\nLeave blank normally.",
+			Advanced: true,
+		}, {
+			Name:     "test_mode",
+			Help:     "A flag string for X-Bz-Test-Mode header for debugging.",
+			Default:  "",
+			Hide:     fs.OptionHideConfigurator,
+			Advanced: true,
+		}, {
+			Name:     "versions",
+			Help:     "Include old versions in directory listings.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:    "hard_delete",
+			Help:    "Permanently delete files on remote removal, otherwise hide files.",
+			Default: false,
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to chunked upload.",
+			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Help:     "Upload chunk size. Must fit in memory.",
+			Default:  fs.SizeSuffix(defaultChunkSize),
+			Advanced: true,
+		}},
 	})
-	flags.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	flags.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Account      string        `config:"account"`
+	Key          string        `config:"key"`
+	Endpoint     string        `config:"endpoint"`
+	TestMode     string        `config:"test_mode"`
+	Versions     bool          `config:"versions"`
+	HardDelete   bool          `config:"hard_delete"`
+	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a remote b2 server
 type Fs struct {
 	name          string                       // name of this remote
 	root          string                       // the path we are working on if any
+	opt           Options                      // parsed config options
 	features      *fs.Features                 // optional features
-	account       string                       // account name
-	key           string                       // auth key
-	endpoint      string                       // name of the starting api endpoint
 	srv           *rest.Client                 // the connection to the b2 server
 	bucket        string                       // the bucket we are working on
 	bucketOKMu    sync.Mutex                   // mutex to protect bucket OK
@@ -232,33 +264,37 @@ func errorHandler(resp *http.Response) error {
 }
 
 // NewFs contstructs an Fs from the path, bucket:path
-func NewFs(name, root string) (fs.Fs, error) {
-	if uploadCutoff < chunkSize {
-		return nil, errors.Errorf("b2: upload cutoff (%v) must be greater than or equal to chunk size (%v)", uploadCutoff, chunkSize)
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
 	}
-	if chunkSize < minChunkSize {
-		return nil, errors.Errorf("b2: chunk size can't be less than %v - was %v", minChunkSize, chunkSize)
+	if opt.UploadCutoff < opt.ChunkSize {
+		return nil, errors.Errorf("b2: upload cutoff (%v) must be greater than or equal to chunk size (%v)", opt.UploadCutoff, opt.ChunkSize)
+	}
+	if opt.ChunkSize < minChunkSize {
+		return nil, errors.Errorf("b2: chunk size can't be less than %v - was %v", minChunkSize, opt.ChunkSize)
 	}
 	bucket, directory, err := parsePath(root)
 	if err != nil {
 		return nil, err
 	}
-	account := config.FileGet(name, "account")
-	if account == "" {
+	if opt.Account == "" {
 		return nil, errors.New("account not found")
 	}
-	key := config.FileGet(name, "key")
-	if key == "" {
+	if opt.Key == "" {
 		return nil, errors.New("key not found")
 	}
-	endpoint := config.FileGet(name, "endpoint", defaultEndpoint)
+	if opt.Endpoint == "" {
+		opt.Endpoint = defaultEndpoint
+	}
 	f := &Fs{
 		name:         name,
+		opt:          *opt,
 		bucket:       bucket,
 		root:         directory,
-		account:      account,
-		key:          key,
-		endpoint:     endpoint,
 		srv:          rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
 		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		bufferTokens: make(chan []byte, fs.Config.Transfers),
@@ -269,8 +305,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 		BucketBased:   true,
 	}).Fill(f)
 	// Set the test flag if required
-	if *b2TestMode != "" {
-		testMode := strings.TrimSpace(*b2TestMode)
+	if opt.TestMode != "" {
+		testMode := strings.TrimSpace(opt.TestMode)
 		f.srv.SetHeader(testModeHeader, testMode)
 		fs.Debugf(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
@@ -316,9 +352,9 @@ func (f *Fs) authorizeAccount() error {
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/b2api/v1/b2_authorize_account",
-		RootURL:      f.endpoint,
-		UserName:     f.account,
-		Password:     f.key,
+		RootURL:      f.opt.Endpoint,
+		UserName:     f.opt.Account,
+		Password:     f.opt.Key,
 		ExtraHeaders: map[string]string{"Authorization": ""}, // unset the Authorization for this request
 	}
 	err := f.pacer.Call(func() (bool, error) {
@@ -384,7 +420,7 @@ func (f *Fs) clearUploadURL() {
 func (f *Fs) getUploadBlock() []byte {
 	buf := <-f.bufferTokens
 	if buf == nil {
-		buf = make([]byte, chunkSize)
+		buf = make([]byte, f.opt.ChunkSize)
 	}
 	// fs.Debugf(f, "Getting upload block %p", buf)
 	return buf
@@ -393,7 +429,7 @@ func (f *Fs) getUploadBlock() []byte {
 // putUploadBlock returns a block to the pool of size chunkSize
 func (f *Fs) putUploadBlock(buf []byte) {
 	buf = buf[:cap(buf)]
-	if len(buf) != int(chunkSize) {
+	if len(buf) != int(f.opt.ChunkSize) {
 		panic("bad blocksize returned to pool")
 	}
 	// fs.Debugf(f, "Returning upload block %p", buf)
@@ -563,7 +599,7 @@ func (f *Fs) markBucketOK() {
 // listDir lists a single directory
 func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	last := ""
-	err = f.list(dir, false, "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+	err = f.list(dir, false, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
 		if err != nil {
 			return err
@@ -635,7 +671,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	}
 	list := walk.NewListRHelper(callback)
 	last := ""
-	err = f.list(dir, true, "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+	err = f.list(dir, true, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
 		if err != nil {
 			return err
@@ -1035,12 +1071,12 @@ func (o *Object) readMetaData() (err error) {
 	maxSearched := 1
 	var timestamp api.Timestamp
 	baseRemote := o.remote
-	if *b2Versions {
+	if o.fs.opt.Versions {
 		timestamp, baseRemote = api.RemoveVersion(baseRemote)
 		maxSearched = maxVersions
 	}
 	var info *api.File
-	err = o.fs.list("", true, baseRemote, maxSearched, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+	err = o.fs.list("", true, baseRemote, maxSearched, o.fs.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -1254,7 +1290,7 @@ func urlEncode(in string) string {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	if *b2Versions {
+	if o.fs.opt.Versions {
 		return errNotWithVersions
 	}
 	err = o.fs.Mkdir("")
@@ -1289,7 +1325,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		} else {
 			return err
 		}
-	} else if size > int64(uploadCutoff) {
+	} else if size > int64(o.fs.opt.UploadCutoff) {
 		up, err := o.fs.newLargeUpload(o, in, src)
 		if err != nil {
 			return err
@@ -1408,10 +1444,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 // Remove an object
 func (o *Object) Remove() error {
-	if *b2Versions {
+	if o.fs.opt.Versions {
 		return errNotWithVersions
 	}
-	if *b2HardDelete {
+	if o.fs.opt.HardDelete {
 		return o.fs.deleteByID(o.id, o.fs.root+o.remote)
 	}
 	return o.fs.hide(o.fs.root + o.remote)

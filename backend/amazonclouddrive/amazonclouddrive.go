@@ -24,7 +24,8 @@ import (
 	"github.com/ncw/go-acd"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -37,19 +38,17 @@ import (
 )
 
 const (
-	folderKind      = "FOLDER"
-	fileKind        = "FILE"
-	statusAvailable = "AVAILABLE"
-	timeFormat      = time.RFC3339 // 2014-03-07T22:31:12.173Z
-	minSleep        = 20 * time.Millisecond
-	warnFileSize    = 50000 << 20 // Display warning for files larger than this size
+	folderKind               = "FOLDER"
+	fileKind                 = "FILE"
+	statusAvailable          = "AVAILABLE"
+	timeFormat               = time.RFC3339 // 2014-03-07T22:31:12.173Z
+	minSleep                 = 20 * time.Millisecond
+	warnFileSize             = 50000 << 20            // Display warning for files larger than this size
+	defaultTempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
 )
 
 // Globals
 var (
-	// Flags
-	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
-	uploadWaitPerGB   = flags.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -67,35 +66,62 @@ var (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "amazon cloud drive",
+		Prefix:      "acd",
 		Description: "Amazon Drive",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			err := oauthutil.Config("amazon cloud drive", name, acdConfig)
+		Config: func(name string, m configmap.Mapper) {
+			err := oauthutil.Config("amazon cloud drive", name, m, acdConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Amazon Application Client Id - required.",
+			Name:     config.ConfigClientID,
+			Help:     "Amazon Application Client ID.",
+			Required: true,
 		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Amazon Application Client Secret - required.",
+			Name:     config.ConfigClientSecret,
+			Help:     "Amazon Application Client Secret.",
+			Required: true,
 		}, {
-			Name: config.ConfigAuthURL,
-			Help: "Auth server URL - leave blank to use Amazon's.",
+			Name:     config.ConfigAuthURL,
+			Help:     "Auth server URL.\nLeave blank to use Amazon's.",
+			Advanced: true,
 		}, {
-			Name: config.ConfigTokenURL,
-			Help: "Token server url - leave blank to use Amazon's.",
+			Name:     config.ConfigTokenURL,
+			Help:     "Token server url.\nleave blank to use Amazon's.",
+			Advanced: true,
+		}, {
+			Name:     "checkpoint",
+			Help:     "Checkpoint for internal polling (debug).",
+			Hide:     fs.OptionHideBoth,
+			Advanced: true,
+		}, {
+			Name:     "upload_wait_per_gb",
+			Help:     "Additional time per GB to wait after a failed complete upload to see if it appears.",
+			Default:  fs.Duration(180 * time.Second),
+			Advanced: true,
+		}, {
+			Name:     "templink_threshold",
+			Help:     "Files >= this size will be downloaded via their tempLink.",
+			Default:  defaultTempLinkThreshold,
+			Advanced: true,
 		}},
 	})
-	flags.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Checkpoint        string        `config:"checkpoint"`
+	UploadWaitPerGB   fs.Duration   `config:"upload_wait_per_gb"`
+	TempLinkThreshold fs.SizeSuffix `config:"templink_threshold"`
 }
 
 // Fs represents a remote acd server
 type Fs struct {
 	name         string             // name of this remote
 	features     *fs.Features       // optional features
+	opt          Options            // options for this Fs
 	c            *acd.Client        // the connection to the acd server
 	noAuthClient *http.Client       // unauthenticated http client
 	root         string             // the path we are working on
@@ -191,7 +217,13 @@ func filterRequest(req *http.Request) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
 	root = parsePath(root)
 	baseClient := fshttp.NewClient(fs.Config)
 	if do, ok := baseClient.Transport.(interface {
@@ -201,7 +233,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	} else {
 		fs.Debugf(name+":", "Couldn't add request filter - large file downloads will fail")
 	}
-	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, acdConfig, baseClient)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, acdConfig, baseClient)
 	if err != nil {
 		log.Fatalf("Failed to configure Amazon Drive: %v", err)
 	}
@@ -210,6 +242,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f := &Fs{
 		name:         name,
 		root:         root,
+		opt:          *opt,
 		c:            c,
 		pacer:        pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
 		noAuthClient: fshttp.NewClient(fs.Config),
@@ -527,13 +560,13 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 	}
 
 	// Don't wait for uploads - assume they will appear later
-	if *uploadWaitPerGB <= 0 {
+	if f.opt.UploadWaitPerGB <= 0 {
 		fs.Debugf(src, "Upload error detected but waiting disabled: %v (%q)", inErr, httpStatus)
 		return false, inInfo, inErr
 	}
 
 	// Time we should wait for the upload
-	uploadWaitPerByte := float64(*uploadWaitPerGB) / 1024 / 1024 / 1024
+	uploadWaitPerByte := float64(f.opt.UploadWaitPerGB) / 1024 / 1024 / 1024
 	timeToWait := time.Duration(uploadWaitPerByte * float64(src.Size()))
 
 	const sleepTime = 5 * time.Second                        // sleep between tries
@@ -1015,7 +1048,7 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	bigObject := o.Size() >= int64(tempLinkThreshold)
+	bigObject := o.Size() >= int64(o.fs.opt.TempLinkThreshold)
 	if bigObject {
 		fs.Debugf(o, "Downloading large object via tempLink")
 	}
@@ -1208,7 +1241,7 @@ func (o *Object) MimeType() string {
 //
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
-	checkpoint := config.FileGet(f.name, "checkpoint")
+	checkpoint := f.opt.Checkpoint
 
 	quit := make(chan bool)
 	go func() {

@@ -16,6 +16,8 @@ import (
 	yandex "github.com/ncw/rclone/backend/yandex/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -51,29 +53,35 @@ func init() {
 		Name:        "yandex",
 		Description: "Yandex Disk",
 		NewFs:       NewFs,
-		Config: func(name string) {
-			err := oauthutil.Config("yandex", name, oauthConfig)
+		Config: func(name string, m configmap.Mapper) {
+			err := oauthutil.Config("yandex", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Yandex Client Id - leave blank normally.",
+			Help: "Yandex Client Id\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Yandex Client Secret - leave blank normally.",
+			Help: "Yandex Client Secret\nLeave blank normally.",
 		}},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Token string `config:"token"`
 }
 
 // Fs represents a remote yandex
 type Fs struct {
 	name     string
-	root     string         //root path
+	root     string         // root path
+	opt      Options        // parsed options
 	features *fs.Features   // optional features
 	yd       *yandex.Client // client for rest api
-	diskRoot string         //root path with "disk:/" container name
+	diskRoot string         // root path with "disk:/" container name
 }
 
 // Object describes a swift object
@@ -109,11 +117,9 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // read access token from ConfigFile string
-func getAccessToken(name string) (*oauth2.Token, error) {
-	// Read the token from the config file
-	tokenConfig := config.FileGet(name, "token")
+func getAccessToken(opt *Options) (*oauth2.Token, error) {
 	//Get access token from config string
-	decoder := json.NewDecoder(strings.NewReader(tokenConfig))
+	decoder := json.NewDecoder(strings.NewReader(opt.Token))
 	var result *oauth2.Token
 	err := decoder.Decode(&result)
 	if err != nil {
@@ -123,9 +129,16 @@ func getAccessToken(name string) (*oauth2.Token, error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+
 	//read access token from config
-	token, err := getAccessToken(name)
+	token, err := getAccessToken(opt)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +148,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	f := &Fs{
 		name: name,
+		opt:  *opt,
 		yd:   yandexDisk,
 	}
 	f.features = (&fs.Features{

@@ -15,6 +15,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
@@ -85,9 +86,9 @@ type oldToken struct {
 
 // GetToken returns the token saved in the config file under
 // section name.
-func GetToken(name string) (*oauth2.Token, error) {
-	tokenString := config.FileGet(name, config.ConfigToken)
-	if tokenString == "" {
+func GetToken(name string, m configmap.Mapper) (*oauth2.Token, error) {
+	tokenString, ok := m.Get(config.ConfigToken)
+	if !ok || tokenString == "" {
 		return nil, errors.New("empty token found - please run rclone config again")
 	}
 	token := new(oauth2.Token)
@@ -110,7 +111,7 @@ func GetToken(name string) (*oauth2.Token, error) {
 	token.RefreshToken = oldtoken.RefreshToken
 	token.Expiry = oldtoken.Expiry
 	// Save new format in config file
-	err = PutToken(name, token, false)
+	err = PutToken(name, m, token, false)
 	if err != nil {
 		return nil, err
 	}
@@ -120,14 +121,14 @@ func GetToken(name string) (*oauth2.Token, error) {
 // PutToken stores the token in the config file
 //
 // This saves the config file if it changes
-func PutToken(name string, token *oauth2.Token, newSection bool) error {
+func PutToken(name string, m configmap.Mapper, token *oauth2.Token, newSection bool) error {
 	tokenBytes, err := json.Marshal(token)
 	if err != nil {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := config.FileGet(name, config.ConfigToken)
-	if tokenString != old {
+	old, ok := m.Get(config.ConfigToken)
+	if !ok || tokenString != old {
 		err = config.SetValueAndSave(name, config.ConfigToken, tokenString)
 		if newSection && err != nil {
 			fs.Debugf(name, "Added new token to config, still needs to be saved")
@@ -144,6 +145,7 @@ func PutToken(name string, token *oauth2.Token, newSection bool) error {
 type TokenSource struct {
 	mu          sync.Mutex
 	name        string
+	m           configmap.Mapper
 	tokenSource oauth2.TokenSource
 	token       *oauth2.Token
 	config      *oauth2.Config
@@ -176,7 +178,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		if ts.expiryTimer != nil {
 			ts.expiryTimer.Reset(ts.timeToExpiry())
 		}
-		err = PutToken(ts.name, token, false)
+		err = PutToken(ts.name, ts.m, token, false)
 		if err != nil {
 			return nil, err
 		}
@@ -229,27 +231,27 @@ func Context(client *http.Client) context.Context {
 // config file if they are not blank.
 // If any value is overridden, true is returned.
 // the origConfig is copied
-func overrideCredentials(name string, origConfig *oauth2.Config) (newConfig *oauth2.Config, changed bool) {
+func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Config) (newConfig *oauth2.Config, changed bool) {
 	newConfig = new(oauth2.Config)
 	*newConfig = *origConfig
 	changed = false
-	ClientID := config.FileGet(name, config.ConfigClientID)
-	if ClientID != "" {
+	ClientID, ok := m.Get(config.ConfigClientID)
+	if ok && ClientID != "" {
 		newConfig.ClientID = ClientID
 		changed = true
 	}
-	ClientSecret := config.FileGet(name, config.ConfigClientSecret)
-	if ClientSecret != "" {
+	ClientSecret, ok := m.Get(config.ConfigClientSecret)
+	if ok && ClientSecret != "" {
 		newConfig.ClientSecret = ClientSecret
 		changed = true
 	}
-	AuthURL := config.FileGet(name, config.ConfigAuthURL)
-	if AuthURL != "" {
+	AuthURL, ok := m.Get(config.ConfigAuthURL)
+	if ok && AuthURL != "" {
 		newConfig.Endpoint.AuthURL = AuthURL
 		changed = true
 	}
-	TokenURL := config.FileGet(name, config.ConfigTokenURL)
-	if TokenURL != "" {
+	TokenURL, ok := m.Get(config.ConfigTokenURL)
+	if ok && TokenURL != "" {
 		newConfig.Endpoint.TokenURL = TokenURL
 		changed = true
 	}
@@ -260,9 +262,9 @@ func overrideCredentials(name string, origConfig *oauth2.Config) (newConfig *oau
 // configures a Client with it.  It returns the client and a
 // TokenSource which Invalidate may need to be called on.  It uses the
 // httpClient passed in as the base client.
-func NewClientWithBaseClient(name string, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
-	config, _ = overrideCredentials(name, config)
-	token, err := GetToken(name)
+func NewClientWithBaseClient(name string, m configmap.Mapper, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
+	config, _ = overrideCredentials(name, m, config)
+	token, err := GetToken(name, m)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -274,6 +276,7 @@ func NewClientWithBaseClient(name string, config *oauth2.Config, baseClient *htt
 	// tokens in the config file
 	ts := &TokenSource{
 		name:   name,
+		m:      m,
 		token:  token,
 		config: config,
 		ctx:    ctx,
@@ -284,36 +287,37 @@ func NewClientWithBaseClient(name string, config *oauth2.Config, baseClient *htt
 
 // NewClient gets a token from the config file and configures a Client
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
-func NewClient(name string, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
-	return NewClientWithBaseClient(name, oauthConfig, fshttp.NewClient(fs.Config))
+func NewClient(name string, m configmap.Mapper, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
+	return NewClientWithBaseClient(name, m, oauthConfig, fshttp.NewClient(fs.Config))
 }
 
 // Config does the initial creation of the token
 //
 // It may run an internal webserver to receive the results
-func Config(id, name string, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, nil, config, true, opts)
+func Config(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, m, nil, config, true, opts)
 }
 
 // ConfigNoOffline does the same as Config but does not pass the
 // "access_type=offline" parameter.
-func ConfigNoOffline(id, name string, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, nil, config, false, opts)
+func ConfigNoOffline(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, m, nil, config, false, opts)
 }
 
 // ConfigErrorCheck does the same as Config, but allows the backend to pass a error handling function
 // This function gets called with the request made to rclone as a parameter if no code was found
-func ConfigErrorCheck(id, name string, errorHandler func(*http.Request) AuthError, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, errorHandler, config, true, opts)
+func ConfigErrorCheck(id, name string, m configmap.Mapper, errorHandler func(*http.Request) AuthError, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, m, errorHandler, config, true, opts)
 }
 
-func doConfig(id, name string, errorHandler func(*http.Request) AuthError, oauthConfig *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
-	oauthConfig, changed := overrideCredentials(name, oauthConfig)
-	automatic := config.FileGet(name, config.ConfigAutomatic) != ""
+func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Request) AuthError, oauthConfig *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
+	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
+	auto, ok := m.Get(config.ConfigAutomatic)
+	automatic := ok && auto != ""
 
 	// See if already have a token
-	tokenString := config.FileGet(name, "token")
-	if tokenString != "" {
+	tokenString, ok := m.Get("token")
+	if ok && tokenString != "" {
 		fmt.Printf("Already have a token - refresh?\n")
 		if !config.Confirm() {
 			return nil
@@ -354,7 +358,7 @@ func doConfig(id, name string, errorHandler func(*http.Request) AuthError, oauth
 			if err != nil {
 				return err
 			}
-			return PutToken(name, token, false)
+			return PutToken(name, m, token, false)
 		}
 	case TitleBarRedirectURL:
 		useWebServer = automatic
@@ -436,7 +440,7 @@ func doConfig(id, name string, errorHandler func(*http.Request) AuthError, oauth
 		}
 		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
 	}
-	return PutToken(name, token, true)
+	return PutToken(name, m, token, true)
 }
 
 // Local web server for collecting auth

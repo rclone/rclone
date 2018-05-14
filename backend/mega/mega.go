@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -44,7 +44,6 @@ const (
 )
 
 var (
-	megaDebug   = flags.BoolP("mega-debug", "", false, "If set then output more debug from mega.")
 	megaCacheMu sync.Mutex                // mutex for the below
 	megaCache   = map[string]*mega.Mega{} // cache logged in Mega's by user
 )
@@ -58,20 +57,33 @@ func init() {
 		Options: []fs.Option{{
 			Name:     "user",
 			Help:     "User name",
-			Optional: true,
+			Required: true,
 		}, {
 			Name:       "pass",
 			Help:       "Password.",
-			Optional:   true,
+			Required:   true,
 			IsPassword: true,
+		}, {
+			Name:     "debug",
+			Help:     "If set then output more debug from mega.",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	User  string `config:"user"`
+	Pass  string `config:"pass"`
+	Debug bool   `config:"debug"`
 }
 
 // Fs represents a remote mega
 type Fs struct {
 	name       string       // name of this remote
 	root       string       // the path we are working on
+	opt        Options      // parsed config options
 	features   *fs.Features // optional features
 	srv        *mega.Mega   // the connection to the server
 	pacer      *pacer.Pacer // pacer for API calls
@@ -145,12 +157,16 @@ func (f *Fs) readMetaDataForPath(remote string) (info *mega.Node, err error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	user := config.FileGet(name, "user")
-	pass := config.FileGet(name, "pass")
-	if pass != "" {
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	if opt.Pass != "" {
 		var err error
-		pass, err = obscure.Reveal(pass)
+		opt.Pass, err = obscure.Reveal(opt.Pass)
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't decrypt password")
 		}
@@ -163,30 +179,31 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// them up between different remotes.
 	megaCacheMu.Lock()
 	defer megaCacheMu.Unlock()
-	srv := megaCache[user]
+	srv := megaCache[opt.User]
 	if srv == nil {
 		srv = mega.New().SetClient(fshttp.NewClient(fs.Config))
 		srv.SetRetries(fs.Config.LowLevelRetries) // let mega do the low level retries
 		srv.SetLogger(func(format string, v ...interface{}) {
 			fs.Infof("*go-mega*", format, v...)
 		})
-		if *megaDebug {
+		if opt.Debug {
 			srv.SetDebugger(func(format string, v ...interface{}) {
 				fs.Debugf("*go-mega*", format, v...)
 			})
 		}
 
-		err := srv.Login(user, pass)
+		err := srv.Login(opt.User, opt.Pass)
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't login")
 		}
-		megaCache[user] = srv
+		megaCache[opt.User] = srv
 	}
 
 	root = parsePath(root)
 	f := &Fs{
 		name:  name,
 		root:  root,
+		opt:   *opt,
 		srv:   srv,
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
@@ -196,7 +213,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}).Fill(f)
 
 	// Find the root node and check if it is a file or not
-	_, err := f.findRoot(false)
+	_, err = f.findRoot(false)
 	switch err {
 	case nil:
 		// root node found and is a directory
