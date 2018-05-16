@@ -32,7 +32,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
 * {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 * {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
-* {{< provider name="Nextloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
+* {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
 * {{< provider name="OVH" home="https://www.ovh.co.uk/public-cloud/storage/object-storage/" config="/swift/" >}}
 * {{< provider name="OpenDrive" home="https://www.opendrive.com/" config="/opendrive/" >}}
 * {{< provider name="Openstack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
