@@ -539,12 +539,21 @@ func Command(commands []string) byte {
 	}
 }
 
-// Confirm asks the user for Yes or No and returns true or false
-func Confirm() bool {
+// ConfirmWithDefault asks the user for Yes or No and returns true or false.
+//
+// If AutoConfirm is set, it will return the Default value passed in
+func ConfirmWithDefault(Default bool) bool {
 	if fs.Config.AutoConfirm {
-		return true
+		return Default
 	}
 	return Command([]string{"yYes", "nNo"}) == 'y'
+}
+
+// Confirm asks the user for Yes or No and returns true or false
+//
+// If AutoConfirm is set, it will return true
+func Confirm() bool {
+	return ConfirmWithDefault(true)
 }
 
 // Choose one of the defaults or type a new string if newOk is set
