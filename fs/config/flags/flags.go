@@ -5,23 +5,16 @@ package flags
 import (
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/spf13/pflag"
 )
 
-// optionToEnv converts an option name, eg "ignore-size" into an
-// environment name "RCLONE_IGNORE_SIZE"
-func optionToEnv(name string) string {
-	return "RCLONE_" + strings.ToUpper(strings.Replace(name, "-", "_", -1))
-}
-
 // setDefaultFromEnv constructs a name from the flag passed in and
 // sets the default from the environment if possible.
 func setDefaultFromEnv(name string) {
-	key := optionToEnv(name)
+	key := fs.OptionToEnv(name)
 	newValue, found := os.LookupEnv(key)
 	if found {
 		flag := pflag.Lookup(name)
