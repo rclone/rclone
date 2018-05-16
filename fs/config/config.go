@@ -1108,19 +1108,12 @@ func Authorize(args []string) {
 	fs.Config(name)
 }
 
-// configToEnv converts an config section and name, eg ("myremote",
-// "ignore-size") into an environment name
-// "RCLONE_CONFIG_MYREMOTE_IGNORE_SIZE"
-func configToEnv(section, name string) string {
-	return "RCLONE_CONFIG_" + strings.ToUpper(strings.Replace(section+"_"+name, "-", "_", -1))
-}
-
 // FileGet gets the config key under section returning the
 // default or empty string if not set.
 //
 // It looks up defaults in the environment if they are present
 func FileGet(section, key string, defaultVal ...string) string {
-	envKey := configToEnv(section, key)
+	envKey := fs.ConfigToEnv(section, key)
 	newValue, found := os.LookupEnv(envKey)
 	if found {
 		defaultVal = []string{newValue}
@@ -1133,7 +1126,7 @@ func FileGet(section, key string, defaultVal ...string) string {
 //
 // It looks up defaults in the environment if they are present
 func FileGetBool(section, key string, defaultVal ...bool) bool {
-	envKey := configToEnv(section, key)
+	envKey := fs.ConfigToEnv(section, key)
 	newValue, found := os.LookupEnv(envKey)
 	if found {
 		newBool, err := strconv.ParseBool(newValue)
@@ -1151,7 +1144,7 @@ func FileGetBool(section, key string, defaultVal ...bool) bool {
 //
 // It looks up defaults in the environment if they are present
 func FileGetInt(section, key string, defaultVal ...int) int {
-	envKey := configToEnv(section, key)
+	envKey := fs.ConfigToEnv(section, key)
 	newValue, found := os.LookupEnv(envKey)
 	if found {
 		newInt, err := strconv.Atoi(newValue)
