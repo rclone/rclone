@@ -400,7 +400,7 @@ func configTeamDrive(name string) error {
 	} else {
 		fmt.Printf("Change current team drive ID %q?\n", teamDrive)
 	}
-	if !config.Confirm() {
+	if !config.ConfirmWithDefault(false) {
 		return nil
 	}
 	client, err := createOAuthClient(name)
