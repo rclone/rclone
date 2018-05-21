@@ -790,9 +790,10 @@ func MustFind(name string) *RegInfo {
 func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
 	configName, fsPath = fspath.Parse(path)
 	var fsName string
+	var ok bool
 	if configName != "" {
-		fsName = ConfigFileGet(configName, "type")
-		if fsName == "" {
+		fsName, ok = ConfigFileGet(configName, "type")
+		if !ok {
 			return nil, "", "", ErrorNotFoundInConfigFile
 		}
 	} else {

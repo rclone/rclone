@@ -15,7 +15,7 @@ var (
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	ConfigFileGet = func(section, key string, defaultVal ...string) string { return "" }
+	ConfigFileGet = func(section, key string) (string, bool) { return "", false }
 
 	// CountError counts an error.  If any errors have been
 	// counted then it will exit with a non zero error code.

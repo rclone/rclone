@@ -82,7 +82,7 @@ var (
 
 func init() {
 	// Set the function pointer up in fs
-	fs.ConfigFileGet = FileGet
+	fs.ConfigFileGet = FileGetFlag
 }
 
 func getConfigData() *goconfig.ConfigFile {
@@ -1106,6 +1106,19 @@ func Authorize(args []string) {
 		getConfigData().SetValue(name, ConfigClientSecret, args[2])
 	}
 	fs.Config(name)
+}
+
+// FileGetFlag gets the config key under section returning the
+// the value and true if found and or ("", false) otherwise
+//
+// It looks up defaults in the environment if they are present
+func FileGetFlag(section, key string) (string, bool) {
+	newValue, err := getConfigData().GetValue(section, key)
+	if err == nil {
+		return newValue, true
+	}
+	envKey := fs.ConfigToEnv(section, key)
+	return os.LookupEnv(envKey)
 }
 
 // FileGet gets the config key under section returning the
