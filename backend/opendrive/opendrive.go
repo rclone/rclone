@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
@@ -111,11 +112,11 @@ func (f *Fs) DirCacheFlush() {
 // NewFs contstructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	username := fs.ConfigFileGet(name, "username")
+	username := config.FileGet(name, "username")
 	if username == "" {
 		return nil, errors.New("username not found")
 	}
-	password, err := obscure.Reveal(fs.ConfigFileGet(name, "password"))
+	password, err := obscure.Reveal(config.FileGet(name, "password"))
 	if err != nil {
 		return nil, errors.New("password coudl not revealed")
 	}

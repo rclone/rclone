@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +39,7 @@ When uses with the -l flag it lists the types too.
 		}
 		for _, remote := range remotes {
 			if listLong {
-				remoteType := fs.ConfigFileGet(remote, "type", "UNKNOWN")
+				remoteType := config.FileGet(remote, "type", "UNKNOWN")
 				fmt.Printf("%-*s %s\n", maxlen+1, remote+":", remoteType)
 			} else {
 				fmt.Printf("%s:\n", remote)

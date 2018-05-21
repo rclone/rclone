@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
@@ -144,8 +145,8 @@ func (f *Fs) readMetaDataForPath(remote string) (info *mega.Node, err error) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
-	user := fs.ConfigFileGet(name, "user")
-	pass := fs.ConfigFileGet(name, "pass")
+	user := config.FileGet(name, "user")
+	pass := config.FileGet(name, "pass")
 	if pass != "" {
 		var err error
 		pass, err = obscure.Reveal(pass)
