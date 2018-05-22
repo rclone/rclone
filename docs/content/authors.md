@@ -165,3 +165,4 @@ Contributors
   * Rodrigo <rodarima@gmail.com>
   * NoLooseEnds <NoLooseEnds@users.noreply.github.com>
   * Jakub Karlicek <jakub@karlicek.me>
+  * John Clayton <john@codemonkeylabs.com>
