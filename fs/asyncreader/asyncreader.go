@@ -5,20 +5,22 @@ package asyncreader
 import (
 	"io"
 	"sync"
+	"sync/atomic"
+	"time"
 
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/lib/mmap"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
 
 const (
 	// BufferSize is the default size of the async buffer
-	BufferSize       = 1024 * 1024
-	softStartInitial = 4 * 1024
+	BufferSize           = 1024 * 1024
+	softStartInitial     = 4 * 1024
+	bufferCacheSize      = 64              // max number of buffers to keep in cache
+	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
 )
-
-var asyncBufferPool = sync.Pool{
-	New: func() interface{} { return newBuffer() },
-}
 
 var errorStreamAbandoned = errors.New("stream abandoned")
 
@@ -82,6 +84,11 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 			select {
 			case <-a.token:
 				b := a.getBuffer()
+				if b == nil {
+					// no buffer allocated
+					// drop the token and continue
+					continue
+				}
 				if a.size < BufferSize {
 					b.buf = b.buf[:a.size]
 					a.size <<= 1
@@ -100,14 +107,12 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 
 // return the buffer to the pool (clearing it)
 func (a *AsyncReader) putBuffer(b *buffer) {
-	b.clear()
-	asyncBufferPool.Put(b)
+	pool.put(b)
 }
 
 // get a buffer from the pool
 func (a *AsyncReader) getBuffer() *buffer {
-	b := asyncBufferPool.Get().(*buffer)
-	return b
+	return pool.get()
 }
 
 // Read will return the next available data.
@@ -290,16 +295,96 @@ func (a *AsyncReader) Close() (err error) {
 // If an error is present, it must be returned
 // once all buffer content has been served.
 type buffer struct {
+	mem    []byte
 	buf    []byte
 	err    error
 	offset int
 }
 
-func newBuffer() *buffer {
+// Pool of internal buffers
+type bufferPool struct {
+	cache     chan *buffer
+	timer     *time.Timer
+	inUse     int32
+	flushTime time.Duration
+}
+
+// pool is a global pool of buffers
+var pool = newBufferPool(bufferCacheFlushTime, bufferCacheSize)
+
+// newBufferPool makes a buffer pool
+func newBufferPool(flushTime time.Duration, size int) *bufferPool {
+	bp := &bufferPool{
+		cache:     make(chan *buffer, size),
+		flushTime: flushTime,
+	}
+	bp.timer = time.AfterFunc(bufferCacheFlushTime, bp.flush)
+	return bp
+}
+
+// flush the entire buffer cache
+func (bp *bufferPool) flush() {
+	for {
+		select {
+		case b := <-bp.cache:
+			bp.free(b)
+		default:
+			return
+		}
+	}
+}
+
+func (bp *bufferPool) buffersInUse() int {
+	return int(atomic.LoadInt32(&bp.inUse))
+}
+
+// starts or resets the buffer flusher timer
+func (bp *bufferPool) kickFlusher() {
+	bp.timer.Reset(bp.flushTime)
+}
+
+// gets a buffer from the pool or allocates one
+func (bp *bufferPool) get() *buffer {
+	select {
+	case b := <-bp.cache:
+		return b
+	default:
+	}
+	mem, err := mmap.Alloc(BufferSize)
+	if err != nil {
+		fs.Errorf(nil, "Failed to get memory for buffer, waiting for a freed one: %v", err)
+		return <-bp.cache
+	}
+	atomic.AddInt32(&bp.inUse, 1)
 	return &buffer{
-		buf: make([]byte, BufferSize),
+		mem: mem,
+		buf: mem,
 		err: nil,
 	}
+}
+
+// free returns the buffer to the OS
+func (bp *bufferPool) free(b *buffer) {
+	err := mmap.Free(b.mem)
+	if err != nil {
+		fs.Errorf(nil, "Failed to free memory: %v", err)
+	} else {
+		atomic.AddInt32(&bp.inUse, -1)
+	}
+	b.mem = nil
+	b.buf = nil
+}
+
+// putBuffer returns the buffer to the buffer cache or frees it
+func (bp *bufferPool) put(b *buffer) {
+	b.clear()
+	select {
+	case bp.cache <- b:
+		bp.kickFlusher()
+		return
+	default:
+	}
+	bp.free(b)
 }
 
 // clear returns the buffer to its full size and clears the members
