@@ -135,7 +135,7 @@ func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
 		if !opts.DirsOnly {
 			footer += fmt.Sprintf(", %d files", nf)
 		}
-		fmt.Fprintln(outFile, footer)
+		_, _ = fmt.Fprintln(outFile, footer)
 	}
 	return nil
 }

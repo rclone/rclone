@@ -340,7 +340,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	// Ask for password if none was defined and we're allowed to
 	if pass == "" && *sftpAskPassword {
-		fmt.Fprint(os.Stderr, "Enter SFTP password: ")
+		_, _ = fmt.Fprint(os.Stderr, "Enter SFTP password: ")
 		clearpass := config.ReadPassword()
 		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
 	}

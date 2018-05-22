@@ -275,7 +275,7 @@ func checkPassword(password string) (string, error) {
 	trimmedPassword := strings.TrimSpace(password)
 	// Warn user if password has leading+trailing whitespace
 	if len(password) != len(trimmedPassword) {
-		fmt.Fprintln(os.Stderr, "Your password contains leading/trailing whitespace - in previous versions of rclone this was stripped")
+		_, _ = fmt.Fprintln(os.Stderr, "Your password contains leading/trailing whitespace - in previous versions of rclone this was stripped")
 	}
 	// Normalize to reduce weird variations.
 	password = norm.NFKC.String(password)
@@ -287,15 +287,15 @@ func checkPassword(password string) (string, error) {
 
 // GetPassword asks the user for a password with the prompt given.
 func GetPassword(prompt string) string {
-	fmt.Fprintln(os.Stderr, prompt)
+	_, _ = fmt.Fprintln(os.Stderr, prompt)
 	for {
-		fmt.Fprint(os.Stderr, "password:")
+		_, _ = fmt.Fprint(os.Stderr, "password:")
 		password := ReadPassword()
 		password, err := checkPassword(password)
 		if err == nil {
 			return password
 		}
-		fmt.Fprintf(os.Stderr, "Bad password: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Bad password: %v\n", err)
 	}
 }
 
@@ -324,7 +324,7 @@ func getConfigPassword(q string) {
 		if err == nil {
 			return
 		}
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		_, _ = fmt.Fprintln(os.Stderr, "Error:", err)
 	}
 }
 
@@ -382,9 +382,9 @@ func saveConfig() error {
 			return errors.Errorf("Failed to write temp config file: %v", err)
 		}
 	} else {
-		fmt.Fprintln(f, "# Encrypted rclone configuration File")
-		fmt.Fprintln(f, "")
-		fmt.Fprintln(f, "RCLONE_ENCRYPT_V0:")
+		_, _ = fmt.Fprintln(f, "# Encrypted rclone configuration File")
+		_, _ = fmt.Fprintln(f, "")
+		_, _ = fmt.Fprintln(f, "RCLONE_ENCRYPT_V0:")
 
 		// Generate new nonce and write it to the start of the ciphertext
 		var nonce [24]byte

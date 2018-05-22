@@ -62,7 +62,7 @@ func (s *StatsInfo) String() string {
 		speed = speed * 8
 	}
 
-	fmt.Fprintf(buf, `
+	_, _ = fmt.Fprintf(buf, `
 Transferred:   %10s (%s)
 Errors:        %10d
 Checks:        %10d
@@ -80,10 +80,10 @@ Elapsed time:  %10v
 	s.mu.RUnlock()
 
 	if !s.checking.empty() {
-		fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
+		_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
 	}
 	if !s.transferring.empty() {
-		fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+		_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
 	}
 	return buf.String()
 }

@@ -122,7 +122,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 		resolveExitCode(nil)
 	} else {
 		_ = Root.Usage()
-		fmt.Fprintf(os.Stderr, "Command not found.\n")
+		_, _ = fmt.Fprintf(os.Stderr, "Command not found.\n")
 		resolveExitCode(errorCommandNotFound)
 	}
 }
@@ -368,12 +368,12 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 func CheckArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
 	if len(args) < MinArgs {
 		_ = cmd.Usage()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments minimum\n", cmd.Name(), MinArgs)
+		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments minimum\n", cmd.Name(), MinArgs)
 		// os.Exit(1)
 		resolveExitCode(errorNotEnoughArguments)
 	} else if len(args) > MaxArgs {
 		_ = cmd.Usage()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.Name(), MaxArgs)
+		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.Name(), MaxArgs)
 		// os.Exit(1)
 		resolveExitCode(errorTooManyArguents)
 	}
