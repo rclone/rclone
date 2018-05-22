@@ -432,19 +432,19 @@ func (s *authServer) Start() {
 			state := req.FormValue("state")
 			if state != s.state {
 				fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
-				fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
+				_, _ = fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
 			} else {
 				fs.Debugf(nil, "Successfully got code")
 				if s.code != nil {
-					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
+					_, _ = fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
 				} else {
-					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
+					_, _ = fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
 				}
 			}
 		} else {
 			fs.Debugf(nil, "No code found on request")
 			w.WriteHeader(500)
-			fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
+			_, _ = fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
 		}
 		if s.code != nil {
 			s.code <- code

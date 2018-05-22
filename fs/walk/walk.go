@@ -337,13 +337,13 @@ func (dt DirTree) Prune(dirNames map[string]bool) error {
 func (dt DirTree) String() string {
 	out := new(bytes.Buffer)
 	for _, dir := range dt.Dirs() {
-		fmt.Fprintf(out, "%s/\n", dir)
+		_, _ = fmt.Fprintf(out, "%s/\n", dir)
 		for _, entry := range dt[dir] {
 			flag := ""
 			if _, ok := entry.(fs.Directory); ok {
 				flag = "/"
 			}
-			fmt.Fprintf(out, "  %s%s\n", path.Base(entry.Remote()), flag)
+			_, _ = fmt.Fprintf(out, "  %s%s\n", path.Base(entry.Remote()), flag)
 		}
 	}
 	return out.String()
