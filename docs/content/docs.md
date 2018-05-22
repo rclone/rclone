@@ -399,6 +399,9 @@ See the [mount](/commands/rclone_mount/#file-buffering) documentation for more d
 
 Set to 0 to disable the buffering for the minimum memory usage.
 
+Note that the memory allocation of the buffers is influenced by the
+[--use-mmap](#use-mmap) flag.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
@@ -946,6 +949,21 @@ source file.
 This can be useful when transferring to a remote which doesn't support
 mod times directly as it is more accurate than a `--size-only` check
 and faster than using `--checksum`.
+
+### --use-mmap ###
+
+If this flag is set then rclone will use anonymous memory allocated by
+mmap on Unix based platforms and VirtualAlloc on Windows for its
+transfer buffers (size controlled by `--buffer-size`).  Memory
+allocated like this does not go on the Go heap and can be returned to
+the OS immediately when it is finished with.
+
+If this flag is not set then rclone will allocate and free the buffers
+using the Go memory allocator which may use more memory as memory
+pages are returned less aggressively to the OS.
+
+It is possible this does not work well on all platforms so it is
+disabled by default; in the future it may be enabled by default.
 
 ### --use-server-modtime ###
 
