@@ -5,20 +5,21 @@ package asyncreader
 import (
 	"io"
 	"sync"
+	"time"
 
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/lib/pool"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
 
 const (
 	// BufferSize is the default size of the async buffer
-	BufferSize       = 1024 * 1024
-	softStartInitial = 4 * 1024
+	BufferSize           = 1024 * 1024
+	softStartInitial     = 4 * 1024
+	bufferCacheSize      = 64              // max number of buffers to keep in cache
+	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
 )
-
-var asyncBufferPool = sync.Pool{
-	New: func() interface{} { return newBuffer() },
-}
 
 var errorStreamAbandoned = errors.New("stream abandoned")
 
@@ -98,16 +99,25 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 	}()
 }
 
+// bufferPool is a global pool of buffers
+var bufferPool *pool.Pool
+var bufferPoolOnce sync.Once
+
 // return the buffer to the pool (clearing it)
 func (a *AsyncReader) putBuffer(b *buffer) {
-	b.clear()
-	asyncBufferPool.Put(b)
+	bufferPool.Put(b.buf)
+	b.buf = nil
 }
 
 // get a buffer from the pool
 func (a *AsyncReader) getBuffer() *buffer {
-	b := asyncBufferPool.Get().(*buffer)
-	return b
+	bufferPoolOnce.Do(func() {
+		// Initialise the buffer pool when used
+		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, fs.Config.UseMmap)
+	})
+	return &buffer{
+		buf: bufferPool.Get(),
+	}
 }
 
 // Read will return the next available data.
@@ -293,20 +303,6 @@ type buffer struct {
 	buf    []byte
 	err    error
 	offset int
-}
-
-func newBuffer() *buffer {
-	return &buffer{
-		buf: make([]byte, BufferSize),
-		err: nil,
-	}
-}
-
-// clear returns the buffer to its full size and clears the members
-func (b *buffer) clear() {
-	b.buf = b.buf[:cap(b.buf)]
-	b.err = nil
-	b.offset = 0
 }
 
 // isEmpty returns true is offset is at end of

@@ -86,6 +86,7 @@ type ConfigInfo struct {
 	StatsOneLine          bool
 	Progress              bool
 	Cookie                bool
+	UseMmap               bool
 }
 
 // NewConfig creates a new config with everything set to the default

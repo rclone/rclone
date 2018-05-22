@@ -88,6 +88,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &fs.Config.StatsOneLine, "stats-one-line", "", fs.Config.StatsOneLine, "Make the stats fit on one line.")
 	flags.BoolVarP(flagSet, &fs.Config.Progress, "progress", "P", fs.Config.Progress, "Show progress during transfer.")
 	flags.BoolVarP(flagSet, &fs.Config.Cookie, "use-cookies", "", fs.Config.Cookie, "Enable session cookiejar.")
+	flags.BoolVarP(flagSet, &fs.Config.UseMmap, "use-mmap", "", fs.Config.UseMmap, "Use mmap allocator (see docs).")
 }
 
 // SetFlags converts any flags into config which weren't straight foward
