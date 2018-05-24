@@ -2,6 +2,7 @@ package mounttest
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,10 @@ func TestTouchAndDelete(t *testing.T) {
 // renamed after all writers close. See https://github.com/ncw/rclone/issues/2130
 func TestRenameOpenHandle(t *testing.T) {
 	run.skipIfNoFUSE(t)
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows")
+	}
+
 	run.checkDir(t, "")
 
 	// create file
