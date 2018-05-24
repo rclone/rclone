@@ -442,29 +442,25 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	}
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
-		fs.Errorf(oldPath, "Dir.Rename cant rename open file")
-		return EPERM
-	case fs.Object:
-		oldObject := x
-		// FIXME: could Copy then Delete if Move not available
-		// - though care needed if case insensitive...
-		doMove := d.f.Features().Move
-		if doMove == nil {
-			err := errors.Errorf("Fs %q can't rename files (no Move)", d.f)
-			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
-			return err
-		}
-		newObject, err := doMove(oldObject, newPath)
-		if err != nil {
-			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
-			return err
-		}
-		// Update the node with the new details
-		if oldNode != nil {
-			if oldFile, ok := oldNode.(*File); ok {
-				fs.Debugf(x, "Updating file with %v %p", newObject, oldFile)
-				oldFile.rename(destDir, newObject)
+		if oldFile, ok := oldNode.(*File); ok {
+			if err = oldFile.rename(destDir, newName); err != nil {
+				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
+				return err
 			}
+		} else {
+			fs.Errorf(oldPath, "Dir.Rename can't rename open file that is not a vfs.File")
+			return EPERM
+		}
+	case fs.Object:
+		if oldFile, ok := oldNode.(*File); ok {
+			if err = oldFile.rename(destDir, newName); err != nil {
+				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
+				return err
+			}
+		} else {
+			err := errors.Errorf("Fs %q can't rename file that is not a vfs.File", d.f)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
+			return err
 		}
 	case fs.Directory:
 		doDirMove := d.f.Features().DirMove
