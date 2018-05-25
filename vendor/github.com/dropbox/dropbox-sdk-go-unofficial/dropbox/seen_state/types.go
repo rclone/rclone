@@ -18,32 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package sharing
+// Package seen_state : has no documentation (yet)
+package seen_state
 
-import "encoding/json"
+import "github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 
-type listSharedLinksResult struct {
-	Links   []sharedLinkMetadataUnion `json:"links"`
-	HasMore bool                      `json:"has_more"`
-	Cursor  string                    `json:"cursor,omitempty"`
+// PlatformType : Possible platforms on which a user may view content.
+type PlatformType struct {
+	dropbox.Tagged
 }
 
-// UnmarshalJSON deserializes into a ListSharedLinksResult instance
-func (r *ListSharedLinksResult) UnmarshalJSON(b []byte) error {
-	var l listSharedLinksResult
-	if err := json.Unmarshal(b, &l); err != nil {
-		return err
-	}
-	r.Cursor = l.Cursor
-	r.HasMore = l.HasMore
-	r.Links = make([]IsSharedLinkMetadata, len(l.Links))
-	for i, e := range l.Links {
-		switch e.Tag {
-		case "file":
-			r.Links[i] = e.File
-		case "folder":
-			r.Links[i] = e.Folder
-		}
-	}
-	return nil
-}
+// Valid tag values for PlatformType
+const (
+	PlatformTypeWeb     = "web"
+	PlatformTypeMobile  = "mobile"
+	PlatformTypeDesktop = "desktop"
+	PlatformTypeUnknown = "unknown"
+	PlatformTypeOther   = "other"
+)

@@ -76,6 +76,19 @@ const (
 	GroupTypeOther       = "other"
 )
 
+// MemberSpaceLimitType : The type of the space limit imposed on a team member.
+type MemberSpaceLimitType struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for MemberSpaceLimitType
+const (
+	MemberSpaceLimitTypeOff       = "off"
+	MemberSpaceLimitTypeAlertOnly = "alert_only"
+	MemberSpaceLimitTypeStopSync  = "stop_sync"
+	MemberSpaceLimitTypeOther     = "other"
+)
+
 // TimeRange : Time range.
 type TimeRange struct {
 	// StartTime : Optional starting time (inclusive).

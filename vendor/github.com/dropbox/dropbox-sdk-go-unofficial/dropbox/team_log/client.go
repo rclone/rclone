@@ -31,7 +31,14 @@ import (
 
 // Client interface describes all routes in this namespace
 type Client interface {
-	// GetEvents : Retrieves team events. Permission : Team Auditing.
+	// GetEvents : Retrieves team events. Events have a lifespan of two years.
+	// Events older than two years will not be returned. Many attributes note
+	// 'may be missing due to historical data gap'. Note that the
+	// file_operations category and & analogous paper events are not available
+	// on all Dropbox Business `plans` </business/plans-comparison>. Use
+	// `features/get_values`
+	// </developers/documentation/http/teams#team-features-get_values> to check
+	// for this feature. Permission : Team Auditing.
 	GetEvents(arg *GetTeamEventsArg) (res *GetTeamEventsResult, err error)
 	// GetEventsContinue : Once a cursor has been retrieved from `getEvents`,
 	// use this to paginate through all events. Permission : Team Auditing.
@@ -96,7 +103,7 @@ func (dbx *apiImpl) GetEvents(arg *GetTeamEventsArg) (res *GetTeamEventsResult, 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -165,7 +172,7 @@ func (dbx *apiImpl) GetEventsContinue(arg *GetTeamEventsContinueArg) (res *GetTe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

@@ -1,16 +1,22 @@
 language: go
 
 go:
-  - 1.6.x
-  - 1.7.x
   - 1.8.x
   - 1.9.x
+  - 1.10.x
 
-install:
-  - go get -u golang.org/x/oauth2
-
-before_script:
-  - go get -u github.com/mitchellh/gox
+install: go get -u golang.org/x/oauth2
 
 script:
-  - gox -osarch="darwin/amd64 linux/amd64 windows/amd64" ./dropbox/...
+  - set -e
+  - GOOS=linux   GOARCH=amd64 go install ./dropbox/...
+  - GOOS=darwin  GOARCH=amd64 go install ./dropbox/...
+  - GOOS=windows GOARCH=amd64 go install ./dropbox/...
+  - set +e
+
+jobs:
+  include:
+    - stage: run tests
+      go: 1.9.x
+      install: go get -u golang.org/x/oauth2
+      script: go test ./dropbox/...

@@ -18,32 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package sharing
+package dropbox_test
 
-import "encoding/json"
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 
-type listSharedLinksResult struct {
-	Links   []sharedLinkMetadataUnion `json:"links"`
-	HasMore bool                      `json:"has_more"`
-	Cursor  string                    `json:"cursor,omitempty"`
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
+)
+
+func generateURL(base string, namespace string, route string) string {
+	return fmt.Sprintf("%s/%s/%s", base, namespace, route)
 }
 
-// UnmarshalJSON deserializes into a ListSharedLinksResult instance
-func (r *ListSharedLinksResult) UnmarshalJSON(b []byte) error {
-	var l listSharedLinksResult
-	if err := json.Unmarshal(b, &l); err != nil {
-		return err
+func TestInternalError(t *testing.T) {
+	eString := "internal server error"
+	ts := httptest.NewServer(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, eString, http.StatusInternalServerError)
+		}))
+	defer ts.Close()
+
+	config := dropbox.Config{Client: ts.Client(), LogLevel: dropbox.LogDebug,
+		URLGenerator: func(hostType string, style string, namespace string, route string) string {
+			return generateURL(ts.URL, namespace, route)
+		}}
+	client := users.New(config)
+	v, e := client.GetCurrentAccount()
+	if v != nil || strings.Trim(e.Error(), "\n") != eString {
+		t.Errorf("v: %v e: '%s'\n", v, e.Error())
 	}
-	r.Cursor = l.Cursor
-	r.HasMore = l.HasMore
-	r.Links = make([]IsSharedLinkMetadata, len(l.Links))
-	for i, e := range l.Links {
-		switch e.Tag {
-		case "file":
-			r.Links[i] = e.File
-		case "folder":
-			r.Links[i] = e.Folder
-		}
-	}
-	return nil
 }
