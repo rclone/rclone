@@ -18,10 +18,12 @@ import (
 	"time"
 
 	_ "github.com/ncw/rclone/backend/all" // import all the backends
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,6 +49,7 @@ func RunTests(t *testing.T, fn MountFn) {
 		vfs.CacheModeWrites,
 		vfs.CacheModeFull,
 	}
+	t.Run("TestModifyWindow", TestModifyWindow)
 	run = newRun()
 	for _, cacheMode := range cacheModes {
 		run.cacheMode(cacheMode)
@@ -124,30 +127,34 @@ func newRun() *Run {
 		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
 	}
 
-	if runtime.GOOS != "windows" {
-		r.mountPath, err = ioutil.TempDir("", "rclonefs-mount")
-		if err != nil {
-			log.Fatalf("Failed to create mount dir: %v", err)
-		}
-	} else {
-		// Find a free drive letter
-		drive := ""
-		for letter := 'E'; letter <= 'Z'; letter++ {
-			drive = string(letter) + ":"
-			_, err := os.Stat(drive + "\\")
-			if os.IsNotExist(err) {
-				goto found
-			}
-		}
-		log.Fatalf("Couldn't find free drive letter for test")
-	found:
-		r.mountPath = drive
-	}
-
+	r.mountPath = findMountPath()
 	// Mount it up
 	r.mount()
 
 	return r
+}
+
+func findMountPath() string {
+	if runtime.GOOS != "windows" {
+		mountPath, err := ioutil.TempDir("", "rclonefs-mount")
+		if err != nil {
+			log.Fatalf("Failed to create mount dir: %v", err)
+		}
+		return mountPath
+	}
+
+	// Find a free drive letter
+	drive := ""
+	for letter := 'E'; letter <= 'Z'; letter++ {
+		drive = string(letter) + ":"
+		_, err := os.Stat(drive + "\\")
+		if os.IsNotExist(err) {
+			goto found
+		}
+	}
+	log.Fatalf("Couldn't find free drive letter for test")
+found:
+	return drive
 }
 
 func (r *Run) mount() {
@@ -402,4 +409,31 @@ func TestRoot(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
 	assert.Equal(t, run.vfs.Opt.DirPerms&os.ModePerm, fi.Mode().Perm())
+}
+
+// TestModifyWindow ensures that the modify window is calculated upon running
+// the mount cobra command
+func TestModifyWindow(t *testing.T) {
+	// create local remote
+	remoteName, _, err := fstest.RandomRemoteName(*fstest.RemoteName)
+	require.NoError(t, err)
+
+	// find valid path to mount to
+	mountPath := findMountPath()
+	defer func() {
+		err := os.RemoveAll(mountPath)
+		require.NoError(t, err)
+	}()
+
+	// no-op mount command, since we only care about FS creation
+	fakeMount := func(f fs.Fs, mountpoint string) error {
+		return nil
+	}
+	cmd := mountlib.NewMountCommand("modify-window-test", fakeMount)
+
+	// running the command should recalculate the modify window. The modify window
+	// is greater than 0 for all local FS, which is why the test works.
+	fs.Config.ModifyWindow = 0 * time.Second
+	cmd.Run(&cobra.Command{}, []string{remoteName, mountPath})
+	assert.NotEqual(t, 0*time.Second, fs.Config.ModifyWindow)
 }
