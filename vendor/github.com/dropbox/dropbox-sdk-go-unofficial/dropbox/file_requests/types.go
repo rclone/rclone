@@ -145,7 +145,7 @@ type FileRequestDeadline struct {
 	// Deadline : The deadline for this file request.
 	Deadline time.Time `json:"deadline"`
 	// AllowLateUploads : If set, allow uploads after the deadline has passed.
-	// These uploads will be marked overdue.
+	// These     uploads will be marked overdue.
 	AllowLateUploads *GracePeriod `json:"allow_late_uploads,omitempty"`
 }
 

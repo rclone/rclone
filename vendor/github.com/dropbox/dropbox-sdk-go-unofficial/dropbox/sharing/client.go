@@ -187,6 +187,12 @@ type Client interface {
 	// that enable access to a specific file, you can use the `listSharedLinks`
 	// with the file as the `ListSharedLinksArg.path` argument.
 	RevokeSharedLink(arg *RevokeSharedLinkArg) (err error)
+	// SetAccessInheritance : Change the inheritance policy of an existing
+	// Shared Folder. Only permitted for shared folders in a shared team root.
+	// If a `ShareFolderLaunch.async_job_id` is returned, you'll need to call
+	// `checkShareJobStatus` until the action completes to get the metadata for
+	// the folder.
+	SetAccessInheritance(arg *SetAccessInheritanceArg) (res *ShareFolderLaunch, err error)
 	// ShareFolder : Share a folder with collaborators. Most sharing will be
 	// completed synchronously. Large folders will be completed asynchronously.
 	// To make testing the async case repeatable, set
@@ -285,7 +291,7 @@ func (dbx *apiImpl) AddFileMember(arg *AddFileMemberArgs) (res []*FileMemberActi
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -352,7 +358,7 @@ func (dbx *apiImpl) AddFolderMember(arg *AddFolderMemberArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -427,7 +433,7 @@ func (dbx *apiImpl) ChangeFileMemberAccess(arg *ChangeFileMemberAccessArgs) (res
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -499,7 +505,7 @@ func (dbx *apiImpl) CheckJobStatus(arg *async.PollArg) (res *JobStatus, err erro
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -571,7 +577,7 @@ func (dbx *apiImpl) CheckRemoveMemberJobStatus(arg *async.PollArg) (res *RemoveM
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -643,7 +649,7 @@ func (dbx *apiImpl) CheckShareJobStatus(arg *async.PollArg) (res *ShareFolderJob
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -718,7 +724,7 @@ func (dbx *apiImpl) CreateSharedLink(arg *CreateSharedLinkArg) (res *PathLinkMet
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -798,7 +804,7 @@ func (dbx *apiImpl) CreateSharedLinkWithSettings(arg *CreateSharedLinkWithSettin
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -870,7 +876,7 @@ func (dbx *apiImpl) GetFileMetadata(arg *GetFileMetadataArg) (res *SharedFileMet
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -942,7 +948,7 @@ func (dbx *apiImpl) GetFileMetadataBatch(arg *GetFileMetadataBatchArg) (res []*G
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1014,7 +1020,7 @@ func (dbx *apiImpl) GetFolderMetadata(arg *GetMetadataArgs) (res *SharedFolderMe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1095,7 +1101,7 @@ func (dbx *apiImpl) GetSharedLinkFile(arg *GetSharedLinkMetadataArg) (res IsShar
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1175,7 +1181,7 @@ func (dbx *apiImpl) GetSharedLinkMetadata(arg *GetSharedLinkMetadataArg) (res Is
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1250,7 +1256,7 @@ func (dbx *apiImpl) GetSharedLinks(arg *GetSharedLinksArg) (res *GetSharedLinksR
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1322,7 +1328,7 @@ func (dbx *apiImpl) ListFileMembers(arg *ListFileMembersArg) (res *SharedFileMem
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1394,7 +1400,7 @@ func (dbx *apiImpl) ListFileMembersBatch(arg *ListFileMembersBatchArg) (res []*L
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1466,7 +1472,7 @@ func (dbx *apiImpl) ListFileMembersContinue(arg *ListFileMembersContinueArg) (re
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1538,7 +1544,7 @@ func (dbx *apiImpl) ListFolderMembers(arg *ListFolderMembersArgs) (res *SharedFo
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1610,7 +1616,7 @@ func (dbx *apiImpl) ListFolderMembersContinue(arg *ListFolderMembersContinueArg)
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1682,7 +1688,7 @@ func (dbx *apiImpl) ListFolders(arg *ListFoldersArgs) (res *ListFoldersResult, e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1754,7 +1760,7 @@ func (dbx *apiImpl) ListFoldersContinue(arg *ListFoldersContinueArg) (res *ListF
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1826,7 +1832,7 @@ func (dbx *apiImpl) ListMountableFolders(arg *ListFoldersArgs) (res *ListFolders
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1898,7 +1904,7 @@ func (dbx *apiImpl) ListMountableFoldersContinue(arg *ListFoldersContinueArg) (r
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1970,7 +1976,7 @@ func (dbx *apiImpl) ListReceivedFiles(arg *ListFilesArg) (res *ListFilesResult, 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2042,7 +2048,7 @@ func (dbx *apiImpl) ListReceivedFilesContinue(arg *ListFilesContinueArg) (res *L
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2114,7 +2120,7 @@ func (dbx *apiImpl) ListSharedLinks(arg *ListSharedLinksArg) (res *ListSharedLin
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2194,7 +2200,7 @@ func (dbx *apiImpl) ModifySharedLinkSettings(arg *ModifySharedLinkSettingsArgs) 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2266,7 +2272,7 @@ func (dbx *apiImpl) MountFolder(arg *MountFolderArg) (res *SharedFolderMetadata,
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2333,7 +2339,7 @@ func (dbx *apiImpl) RelinquishFileMembership(arg *RelinquishFileMembershipArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2405,7 +2411,7 @@ func (dbx *apiImpl) RelinquishFolderMembership(arg *RelinquishFolderMembershipAr
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2480,7 +2486,7 @@ func (dbx *apiImpl) RemoveFileMember(arg *RemoveFileMemberArg) (res *FileMemberA
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2552,7 +2558,7 @@ func (dbx *apiImpl) RemoveFileMember2(arg *RemoveFileMemberArg) (res *FileMember
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2624,7 +2630,7 @@ func (dbx *apiImpl) RemoveFolderMember(arg *RemoveFolderMemberArg) (res *async.L
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2691,7 +2697,79 @@ func (dbx *apiImpl) RevokeSharedLink(arg *RevokeSharedLinkArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//SetAccessInheritanceAPIError is an error-wrapper for the set_access_inheritance route
+type SetAccessInheritanceAPIError struct {
+	dropbox.APIError
+	EndpointError *SetAccessInheritanceError `json:"error"`
+}
+
+func (dbx *apiImpl) SetAccessInheritance(arg *SetAccessInheritanceArg) (res *ShareFolderLaunch, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "sharing", "set_access_inheritance", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogDebug("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError SetAccessInheritanceAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2763,7 +2841,7 @@ func (dbx *apiImpl) ShareFolder(arg *ShareFolderArg) (res *ShareFolderLaunch, er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2830,7 +2908,7 @@ func (dbx *apiImpl) TransferFolder(arg *TransferFolderArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2897,7 +2975,7 @@ func (dbx *apiImpl) UnmountFolder(arg *UnmountFolderArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2964,7 +3042,7 @@ func (dbx *apiImpl) UnshareFile(arg *UnshareFileArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3036,7 +3114,7 @@ func (dbx *apiImpl) UnshareFolder(arg *UnshareFolderArg) (res *async.LaunchEmpty
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3108,7 +3186,7 @@ func (dbx *apiImpl) UpdateFileMember(arg *UpdateFileMemberArgs) (res *MemberAcce
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3180,7 +3258,7 @@ func (dbx *apiImpl) UpdateFolderMember(arg *UpdateFolderMemberArg) (res *MemberA
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3252,7 +3330,7 @@ func (dbx *apiImpl) UpdateFolderPolicy(arg *UpdateFolderPolicyArg) (res *SharedF
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

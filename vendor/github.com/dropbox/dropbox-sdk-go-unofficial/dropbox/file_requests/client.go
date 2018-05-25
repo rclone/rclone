@@ -104,7 +104,7 @@ func (dbx *apiImpl) Create(arg *CreateFileRequestArgs) (res *FileRequest, err er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -176,7 +176,7 @@ func (dbx *apiImpl) Get(arg *GetFileRequestArgs) (res *FileRequest, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -240,7 +240,7 @@ func (dbx *apiImpl) List() (res *ListFileRequestsResult, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -312,7 +312,7 @@ func (dbx *apiImpl) Update(arg *UpdateFileRequestArgs) (res *FileRequest, err er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

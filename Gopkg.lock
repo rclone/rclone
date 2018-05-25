@@ -141,14 +141,15 @@
     "dropbox/common",
     "dropbox/file_properties",
     "dropbox/files",
+    "dropbox/seen_state",
     "dropbox/sharing",
     "dropbox/team_common",
     "dropbox/team_policies",
     "dropbox/users",
     "dropbox/users_common"
   ]
-  revision = "81ac5b288ffc03b166174f520cdc0b227461450e"
-  version = "v4.0.0"
+  revision = "7afa861bfde5a348d765522b303b6fbd9d250155"
+  version = "v4.1.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"

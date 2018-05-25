@@ -76,6 +76,18 @@ type Client interface {
 	// CreateFolder : Create a folder at a given path.
 	// Deprecated: Use `CreateFolderV2` instead
 	CreateFolder(arg *CreateFolderArg) (res *FolderMetadata, err error)
+	// CreateFolderBatch : Create multiple folders at once. This route is
+	// asynchronous for large batches, which returns a job ID immediately and
+	// runs the create folder batch asynchronously. Otherwise, creates the
+	// folders and returns the result synchronously for smaller inputs. You can
+	// force asynchronous behaviour by using the
+	// `CreateFolderBatchArg.force_async` flag.  Use `createFolderBatchCheck` to
+	// check the job status.
+	CreateFolderBatch(arg *CreateFolderBatchArg) (res *CreateFolderBatchLaunch, err error)
+	// CreateFolderBatchCheck : Returns the status of an asynchronous job for
+	// `createFolderBatch`. If success, it returns list of result for each
+	// entry.
+	CreateFolderBatchCheck(arg *async.PollArg) (res *CreateFolderBatchJobStatus, err error)
 	// CreateFolderV2 : Create a folder at a given path.
 	CreateFolderV2(arg *CreateFolderArg) (res *CreateFolderResult, err error)
 	// Delete : Delete the file or folder at a given path. If the path is a
@@ -100,6 +112,10 @@ type Client interface {
 	DeleteV2(arg *DeleteArg) (res *DeleteResult, err error)
 	// Download : Download a file from a user's Dropbox.
 	Download(arg *DownloadArg) (res *FileMetadata, content io.ReadCloser, err error)
+	// DownloadZip : Download a folder from the user's Dropbox, as a zip file.
+	// The folder must be less than 1 GB in size and have fewer than 10,000
+	// total files. The input cannot be a single file.
+	DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, content io.ReadCloser, err error)
 	// GetMetadata : Returns the metadata for a file or folder. Note: Metadata
 	// for the root folder is unsupported.
 	GetMetadata(arg *GetMetadataArg) (res IsMetadata, err error)
@@ -231,16 +247,19 @@ type Client interface {
 	// upload session with `uploadSessionStart`.
 	Upload(arg *CommitInfo, content io.Reader) (res *FileMetadata, err error)
 	// UploadSessionAppend : Append more data to an upload session. A single
-	// request should not upload more than 150 MB.
+	// request should not upload more than 150 MB. The maximum size of a file
+	// one can upload to an upload session is 350 GB.
 	// Deprecated: Use `UploadSessionAppendV2` instead
 	UploadSessionAppend(arg *UploadSessionCursor, content io.Reader) (err error)
 	// UploadSessionAppendV2 : Append more data to an upload session. When the
 	// parameter close is set, this call will close the session. A single
-	// request should not upload more than 150 MB.
+	// request should not upload more than 150 MB. The maximum size of a file
+	// one can upload to an upload session is 350 GB.
 	UploadSessionAppendV2(arg *UploadSessionAppendArg, content io.Reader) (err error)
 	// UploadSessionFinish : Finish an upload session and save the uploaded data
 	// to the given file path. A single request should not upload more than 150
-	// MB.
+	// MB. The maximum size of a file one can upload to an upload session is 350
+	// GB.
 	UploadSessionFinish(arg *UploadSessionFinishArg, content io.Reader) (res *FileMetadata, err error)
 	// UploadSessionFinishBatch : This route helps you commit many files at once
 	// into a user's Dropbox. Use `uploadSessionStart` and
@@ -250,11 +269,12 @@ type Client interface {
 	// route to finish all your upload sessions in a single request.
 	// `UploadSessionStartArg.close` or `UploadSessionAppendArg.close` needs to
 	// be true for the last `uploadSessionStart` or `uploadSessionAppendV2`
-	// call. This route will return a job_id immediately and do the async commit
-	// job in background. Use `uploadSessionFinishBatchCheck` to check the job
-	// status. For the same account, this route should be executed serially.
-	// That means you should not start the next job before current job finishes.
-	// We allow up to 1000 entries in a single request.
+	// call. The maximum size of a file one can upload to an upload session is
+	// 350 GB. This route will return a job_id immediately and do the async
+	// commit job in background. Use `uploadSessionFinishBatchCheck` to check
+	// the job status. For the same account, this route should be executed
+	// serially. That means you should not start the next job before current job
+	// finishes. We allow up to 1000 entries in a single request.
 	UploadSessionFinishBatch(arg *UploadSessionFinishBatchArg) (res *UploadSessionFinishBatchLaunch, err error)
 	// UploadSessionFinishBatchCheck : Returns the status of an asynchronous job
 	// for `uploadSessionFinishBatch`. If success, it returns list of result for
@@ -265,8 +285,9 @@ type Client interface {
 	// than 150 MB.  This call starts a new upload session with the given data.
 	// You can then use `uploadSessionAppendV2` to add more data and
 	// `uploadSessionFinish` to save all the data to a file in Dropbox. A single
-	// request should not upload more than 150 MB. An upload session can be used
-	// for a maximum of 48 hours. Attempting to use an
+	// request should not upload more than 150 MB. The maximum size of a file
+	// one can upload to an upload session is 350 GB. An upload session can be
+	// used for a maximum of 48 hours. Attempting to use an
 	// `UploadSessionStartResult.session_id` with `uploadSessionAppendV2` or
 	// `uploadSessionFinish` more than 48 hours after its creation will return a
 	// `UploadSessionLookupError.not_found`.
@@ -348,7 +369,7 @@ func (dbx *apiImpl) AlphaGetMetadata(arg *AlphaGetMetadataArg) (res IsMetadata, 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -424,7 +445,7 @@ func (dbx *apiImpl) AlphaUpload(arg *CommitInfoWithProperties, content io.Reader
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -510,7 +531,7 @@ func (dbx *apiImpl) Copy(arg *RelocationArg) (res IsMetadata, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -582,7 +603,7 @@ func (dbx *apiImpl) CopyBatch(arg *RelocationBatchArg) (res *RelocationBatchLaun
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -654,7 +675,7 @@ func (dbx *apiImpl) CopyBatchCheck(arg *async.PollArg) (res *RelocationBatchJobS
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -726,7 +747,7 @@ func (dbx *apiImpl) CopyReferenceGet(arg *GetCopyReferenceArg) (res *GetCopyRefe
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -798,7 +819,7 @@ func (dbx *apiImpl) CopyReferenceSave(arg *SaveCopyReferenceArg) (res *SaveCopyR
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -870,7 +891,7 @@ func (dbx *apiImpl) CopyV2(arg *RelocationArg) (res *RelocationResult, err error
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -945,7 +966,151 @@ func (dbx *apiImpl) CreateFolder(arg *CreateFolderArg) (res *FolderMetadata, err
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//CreateFolderBatchAPIError is an error-wrapper for the create_folder_batch route
+type CreateFolderBatchAPIError struct {
+	dropbox.APIError
+	EndpointError struct{} `json:"error"`
+}
+
+func (dbx *apiImpl) CreateFolderBatch(arg *CreateFolderBatchArg) (res *CreateFolderBatchLaunch, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "create_folder_batch", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogDebug("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError CreateFolderBatchAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//CreateFolderBatchCheckAPIError is an error-wrapper for the create_folder_batch/check route
+type CreateFolderBatchCheckAPIError struct {
+	dropbox.APIError
+	EndpointError *async.PollError `json:"error"`
+}
+
+func (dbx *apiImpl) CreateFolderBatchCheck(arg *async.PollArg) (res *CreateFolderBatchJobStatus, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "create_folder_batch/check", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogDebug("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError CreateFolderBatchCheckAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1017,7 +1182,7 @@ func (dbx *apiImpl) CreateFolderV2(arg *CreateFolderArg) (res *CreateFolderResul
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1103,7 +1268,7 @@ func (dbx *apiImpl) Delete(arg *DeleteArg) (res IsMetadata, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1175,7 +1340,7 @@ func (dbx *apiImpl) DeleteBatch(arg *DeleteBatchArg) (res *DeleteBatchLaunch, er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1247,7 +1412,7 @@ func (dbx *apiImpl) DeleteBatchCheck(arg *async.PollArg) (res *DeleteBatchJobSta
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1319,7 +1484,7 @@ func (dbx *apiImpl) DeleteV2(arg *DeleteArg) (res *DeleteResult, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1395,7 +1560,80 @@ func (dbx *apiImpl) Download(arg *DownloadArg) (res *FileMetadata, content io.Re
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//DownloadZipAPIError is an error-wrapper for the download_zip route
+type DownloadZipAPIError struct {
+	dropbox.APIError
+	EndpointError *DownloadZipError `json:"error"`
+}
+
+func (dbx *apiImpl) DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, content io.ReadCloser, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Dropbox-API-Arg": string(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("content", "download", true, "files", "download_zip", headers, nil)
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	body := []byte(resp.Header.Get("Dropbox-API-Result"))
+	content = resp.Body
+	dbx.Config.LogDebug("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		var apiError DownloadZipAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1478,7 +1716,7 @@ func (dbx *apiImpl) GetMetadata(arg *GetMetadataArg) (res IsMetadata, err error)
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1551,7 +1789,7 @@ func (dbx *apiImpl) GetPreview(arg *PreviewArg) (res *FileMetadata, content io.R
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1623,7 +1861,7 @@ func (dbx *apiImpl) GetTemporaryLink(arg *GetTemporaryLinkArg) (res *GetTemporar
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1696,7 +1934,7 @@ func (dbx *apiImpl) GetThumbnail(arg *ThumbnailArg) (res *FileMetadata, content 
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1768,7 +2006,7 @@ func (dbx *apiImpl) GetThumbnailBatch(arg *GetThumbnailBatchArg) (res *GetThumbn
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1840,7 +2078,7 @@ func (dbx *apiImpl) ListFolder(arg *ListFolderArg) (res *ListFolderResult, err e
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1912,7 +2150,7 @@ func (dbx *apiImpl) ListFolderContinue(arg *ListFolderContinueArg) (res *ListFol
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -1984,7 +2222,7 @@ func (dbx *apiImpl) ListFolderGetLatestCursor(arg *ListFolderArg) (res *ListFold
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2053,7 +2291,7 @@ func (dbx *apiImpl) ListFolderLongpoll(arg *ListFolderLongpollArg) (res *ListFol
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2125,7 +2363,7 @@ func (dbx *apiImpl) ListRevisions(arg *ListRevisionsArg) (res *ListRevisionsResu
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2211,7 +2449,7 @@ func (dbx *apiImpl) Move(arg *RelocationArg) (res IsMetadata, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2283,7 +2521,7 @@ func (dbx *apiImpl) MoveBatch(arg *RelocationBatchArg) (res *RelocationBatchLaun
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2355,7 +2593,7 @@ func (dbx *apiImpl) MoveBatchCheck(arg *async.PollArg) (res *RelocationBatchJobS
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2427,7 +2665,7 @@ func (dbx *apiImpl) MoveV2(arg *RelocationArg) (res *RelocationResult, err error
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2494,7 +2732,7 @@ func (dbx *apiImpl) PermanentlyDelete(arg *DeleteArg) (err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2563,7 +2801,7 @@ func (dbx *apiImpl) PropertiesAdd(arg *file_properties.AddPropertiesArg) (err er
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2632,7 +2870,7 @@ func (dbx *apiImpl) PropertiesOverwrite(arg *file_properties.OverwritePropertyGr
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2701,7 +2939,7 @@ func (dbx *apiImpl) PropertiesRemove(arg *file_properties.RemovePropertiesArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2775,7 +3013,7 @@ func (dbx *apiImpl) PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2841,7 +3079,7 @@ func (dbx *apiImpl) PropertiesTemplateList() (res *file_properties.ListTemplateR
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2910,7 +3148,7 @@ func (dbx *apiImpl) PropertiesUpdate(arg *file_properties.UpdatePropertiesArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -2982,7 +3220,7 @@ func (dbx *apiImpl) Restore(arg *RestoreArg) (res *FileMetadata, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3054,7 +3292,7 @@ func (dbx *apiImpl) SaveUrl(arg *SaveUrlArg) (res *SaveUrlResult, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3126,7 +3364,7 @@ func (dbx *apiImpl) SaveUrlCheckJobStatus(arg *async.PollArg) (res *SaveUrlJobSt
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3198,7 +3436,7 @@ func (dbx *apiImpl) Search(arg *SearchArg) (res *SearchResult, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3271,7 +3509,7 @@ func (dbx *apiImpl) Upload(arg *CommitInfo, content io.Reader) (res *FileMetadat
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3342,7 +3580,7 @@ func (dbx *apiImpl) UploadSessionAppend(arg *UploadSessionCursor, content io.Rea
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3410,7 +3648,7 @@ func (dbx *apiImpl) UploadSessionAppendV2(arg *UploadSessionAppendArg, content i
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3483,7 +3721,7 @@ func (dbx *apiImpl) UploadSessionFinish(arg *UploadSessionFinishArg, content io.
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3555,7 +3793,7 @@ func (dbx *apiImpl) UploadSessionFinishBatch(arg *UploadSessionFinishBatchArg) (
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3627,7 +3865,7 @@ func (dbx *apiImpl) UploadSessionFinishBatchCheck(arg *async.PollArg) (res *Uplo
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -3700,7 +3938,7 @@ func (dbx *apiImpl) UploadSessionStart(arg *UploadSessionStartArg, content io.Re
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return

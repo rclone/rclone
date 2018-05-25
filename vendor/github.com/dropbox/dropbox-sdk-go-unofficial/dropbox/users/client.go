@@ -104,7 +104,7 @@ func (dbx *apiImpl) GetAccount(arg *GetAccountArg) (res *BasicAccount, err error
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -176,7 +176,7 @@ func (dbx *apiImpl) GetAccountBatch(arg *GetAccountBatchArg) (res []*BasicAccoun
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -240,7 +240,7 @@ func (dbx *apiImpl) GetCurrentAccount() (res *FullAccount, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
@@ -304,7 +304,7 @@ func (dbx *apiImpl) GetSpaceUsage() (res *SpaceUsage, err error) {
 		return
 	}
 	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest {
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
 		apiError.ErrorSummary = string(body)
 		err = apiError
 		return
