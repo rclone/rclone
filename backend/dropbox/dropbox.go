@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
@@ -128,11 +129,12 @@ type Fs struct {
 	root           string         // the path we are working on
 	features       *fs.Features   // optional features
 	srv            files.Client   // the connection to the dropbox server
-	sharingClient  sharing.Client // as above, but for generating sharing links
+	sharing        sharing.Client // as above, but for generating sharing links
 	users          users.Client   // as above, but for accessing user information
 	slashRoot      string         // root with "/" prefix, lowercase
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
 	pacer          *pacer.Pacer   // To pace the API calls
+	ns             string         // The namespace we are using or "" for none
 }
 
 // Object describes a dropbox object
@@ -202,30 +204,48 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	oAuthClient, _, err := oauthutil.NewClient(name, dropboxConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure dropbox: %v", err)
+		return nil, errors.Wrap(err, "failed to configure dropbox")
 	}
-
-	config := dropbox.Config{
-		LogLevel: dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
-		Client:   oAuthClient,    // maybe???
-	}
-	srv := files.New(config)
-	sharingClient := sharing.New(config)
-	users := users.New(config)
 
 	f := &Fs{
-		name:          name,
-		srv:           srv,
-		sharingClient: sharingClient,
-		users:         users,
-		pacer:         pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:  name,
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
+	config := dropbox.Config{
+		LogLevel:        dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
+		Client:          oAuthClient,    // maybe???
+		HeaderGenerator: f.headerGenerator,
+	}
+	f.srv = files.New(config)
+	f.sharing = sharing.New(config)
+	f.users = users.New(config)
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
 	f.setRoot(root)
+
+	// If root starts with / then use the actual root
+	if strings.HasPrefix(root, "/") {
+		var acc *users.FullAccount
+		err = f.pacer.Call(func() (bool, error) {
+			acc, err = f.users.GetCurrentAccount()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "get current account failed")
+		}
+		switch x := acc.RootInfo.(type) {
+		case *common.TeamRootInfo:
+			f.ns = x.RootNamespaceId
+		case *common.UserRootInfo:
+			f.ns = x.RootNamespaceId
+		default:
+			return nil, errors.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
+		}
+		fs.Debugf(f, "Using root namespace %q", f.ns)
+	}
 
 	// See if the root is actually an object
 	_, err = f.getFileMetadata(f.slashRoot)
@@ -239,6 +259,16 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// headerGenerator for dropbox sdk
+func (f *Fs) headerGenerator(hostType string, style string, namespace string, route string) map[string]string {
+	if f.ns == "" {
+		return map[string]string{}
+	}
+	return map[string]string{
+		"Dropbox-API-Path-Root": `{".tag": "namespace_id", "namespace_id": "` + f.ns + `"}`,
+	}
 }
 
 // Sets root in f
@@ -636,7 +666,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	}
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {
-		linkRes, err = f.sharingClient.CreateSharedLinkWithSettings(&createArg)
+		linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)
 		return shouldRetry(err)
 	})
 
@@ -648,7 +678,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 		}
 		var listRes *sharing.ListSharedLinksResult
 		err = f.pacer.Call(func() (bool, error) {
-			listRes, err = f.sharingClient.ListSharedLinks(&listArg)
+			listRes, err = f.sharing.ListSharedLinks(&listArg)
 			return shouldRetry(err)
 		})
 		if err != nil {

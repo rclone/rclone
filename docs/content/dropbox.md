@@ -91,6 +91,23 @@ To copy a local directory to a dropbox directory called backup
 
     rclone copy /home/source remote:backup
 
+### Dropbox for business ###
+
+Rclone supports Dropbox for business and Team Folders.
+
+When using Dropbox for business `remote:` and `remote:path/to/file`
+will refer to your personal folder.
+
+If you wish to see Team Folders you must use a leading `/` in the
+path, so `rclone lsd remote:/` will refer to the root and show you all
+Team Folders and your User Folder.
+
+You can then use team folders like this `remote:/TeamFolder` and
+`remote:/TeamFolder/path/to/file`.
+
+A leading `/` for a Dropbox personal account will do nothing, but it
+will take an extra HTTP transaction so it should be avoided.
+
 ### Modified time and Hashes ###
 
 Dropbox supports modified times, but the only way to set a
