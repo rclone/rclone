@@ -561,6 +561,7 @@ type checkFn func(a, b fs.Object) (differ bool, noHash bool)
 type checkMarch struct {
 	fdst, fsrc      fs.Fs
 	check           checkFn
+	oneway          bool
 	differences     int32
 	noHashes        int32
 	srcFilesMissing int32
@@ -571,6 +572,9 @@ type checkMarch struct {
 func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 	switch dst.(type) {
 	case fs.Object:
+		if c.oneway {
+			return false
+		}
 		err := errors.Errorf("File not in %v", c.fsrc)
 		fs.Errorf(dst, "%v", err)
 		fs.CountError(err)
@@ -666,11 +670,12 @@ func (c *checkMarch) Match(dst, src fs.DirEntry) (recurse bool) {
 //
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
-func CheckFn(fdst, fsrc fs.Fs, check checkFn) error {
+func CheckFn(fdst, fsrc fs.Fs, check checkFn, oneway bool) error {
 	c := &checkMarch{
-		fdst:  fdst,
-		fsrc:  fsrc,
-		check: check,
+		fdst:   fdst,
+		fsrc:   fsrc,
+		check:  check,
+		oneway: oneway,
 	}
 
 	// set up a march over fdst and fsrc
@@ -696,8 +701,8 @@ func CheckFn(fdst, fsrc fs.Fs, check checkFn) error {
 }
 
 // Check the files in fsrc and fdst according to Size and hash
-func Check(fdst, fsrc fs.Fs) error {
-	return CheckFn(fdst, fsrc, checkIdentical)
+func Check(fdst, fsrc fs.Fs, oneway bool) error {
+	return CheckFn(fdst, fsrc, checkIdentical, oneway)
 }
 
 // CheckEqualReaders checks to see if in1 and in2 have the same
@@ -754,7 +759,7 @@ func CheckIdentical(dst, src fs.Object) (differ bool, err error) {
 
 // CheckDownload checks the files in fsrc and fdst according to Size
 // and the actual contents of the files.
-func CheckDownload(fdst, fsrc fs.Fs) error {
+func CheckDownload(fdst, fsrc fs.Fs, oneway bool) error {
 	check := func(a, b fs.Object) (differ bool, noHash bool) {
 		differ, err := CheckIdentical(a, b)
 		if err != nil {
@@ -764,7 +769,7 @@ func CheckDownload(fdst, fsrc fs.Fs) error {
 		}
 		return differ, false
 	}
-	return CheckFn(fdst, fsrc, check)
+	return CheckFn(fdst, fsrc, check, oneway)
 }
 
 // ListFn lists the Fs to the supplied function

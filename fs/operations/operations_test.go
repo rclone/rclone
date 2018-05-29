@@ -238,14 +238,14 @@ func TestDelete(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file3)
 }
 
-func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
+func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs, oneway bool) error) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	check := func(i int, wantErrors int64) {
+	check := func(i int, wantErrors int64, oneway bool) {
 		fs.Debugf(r.Fremote, "%d: Starting check test", i)
 		oldErrors := accounting.Stats.GetErrors()
-		err := checkFunction(r.Flocal, r.Fremote)
+		err := checkFunction(r.Fremote, r.Flocal, oneway)
 		gotErrors := accounting.Stats.GetErrors() - oldErrors
 		if wantErrors == 0 && err != nil {
 			t.Errorf("%d: Got error when not expecting one: %v", i, err)
@@ -262,15 +262,15 @@ func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
 	file1 := r.WriteBoth("rutabaga", "is tasty", t3)
 	fstest.CheckItems(t, r.Fremote, file1)
 	fstest.CheckItems(t, r.Flocal, file1)
-	check(1, 0)
+	check(1, 0, false)
 
 	file2 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
-	check(2, 1)
+	check(2, 1, false)
 
 	file3 := r.WriteObject("empty space", "", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
-	check(3, 2)
+	check(3, 2, false)
 
 	file2r := file2
 	if fs.Config.SizeOnly {
@@ -279,11 +279,16 @@ func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
 		r.WriteObject("potato2", "------------------------------------------------------------", t1)
 	}
 	fstest.CheckItems(t, r.Fremote, file1, file2r, file3)
-	check(4, 1)
+	check(4, 1, false)
 
 	r.WriteFile("empty space", "", t2)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
-	check(5, 0)
+	check(5, 0, false)
+
+	file4 := r.WriteObject("remotepotato", "------------------------------------------------------------", t1)
+	fstest.CheckItems(t, r.Fremote, file1, file2r, file3, file4)
+	check(6, 1, false)
+	check(7, 0, true)
 }
 
 func TestCheck(t *testing.T) {
