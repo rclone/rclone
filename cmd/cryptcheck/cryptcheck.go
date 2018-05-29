@@ -10,8 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Globals
+var (
+	oneway = false
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
 }
 
 var commandDefintion = &cobra.Command{
@@ -40,6 +46,10 @@ the files in remote:path.
     rclone cryptcheck remote:path encryptedremote:path
 
 After it has run it will log the status of the encryptedremote:.
+
+If you supply the --one-way flag, it will only check that files in source
+match the files in destination, not the other way around. Meaning extra files in
+destination that are not in the source will not trigger an error.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
@@ -100,5 +110,5 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 		return false, false
 	}
 
-	return operations.CheckFn(fcrypt, fsrc, checkIdentical)
+	return operations.CheckFn(fcrypt, fsrc, checkIdentical, oneway)
 }
