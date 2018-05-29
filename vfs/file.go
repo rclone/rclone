@@ -99,8 +99,9 @@ func (f *File) applyPendingRename() {
 		return
 	}
 	fs.Debugf(f.o, "Running delayed rename now")
-	err := fun()
-	fs.Errorf(f.Path(), "File.Rename error: %v", err)
+	if err := fun(); err != nil {
+		fs.Errorf(f.Path(), "delayed File.Rename error: %v", err)
+	}
 }
 
 // rename attempts to immediately rename a file if there are no open writers.
