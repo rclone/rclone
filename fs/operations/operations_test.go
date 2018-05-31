@@ -411,7 +411,7 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 			"A3/B3",
 			"A3/B3/C4",
 		},
-		fs.Config.ModifyWindow,
+		fs.GetModifyWindow(r.Fremote),
 	)
 
 	require.NoError(t, operations.Rmdirs(r.Fremote, "", false))
@@ -427,7 +427,7 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 			"A1/B1",
 			"A1/B1/C1",
 		},
-		fs.Config.ModifyWindow,
+		fs.GetModifyWindow(r.Fremote),
 	)
 
 }
@@ -452,7 +452,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 			"A1/B1",
 			"A1/B1/C1",
 		},
-		fs.Config.ModifyWindow,
+		fs.GetModifyWindow(r.Fremote),
 	)
 
 	require.NoError(t, operations.Rmdirs(r.Fremote, "A1", true))
@@ -464,7 +464,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 		[]string{
 			"A1",
 		},
-		fs.Config.ModifyWindow,
+		fs.GetModifyWindow(r.Fremote),
 	)
 }
 
