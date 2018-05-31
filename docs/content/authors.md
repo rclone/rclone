@@ -166,3 +166,4 @@ Contributors
   * NoLooseEnds <NoLooseEnds@users.noreply.github.com>
   * Jakub Karlicek <jakub@karlicek.me>
   * John Clayton <john@codemonkeylabs.com>
+  * Kasper Byrdal Nielsen <byrdal76@gmail.com>
