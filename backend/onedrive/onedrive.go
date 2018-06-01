@@ -97,7 +97,15 @@ func init() {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			} else {
-				err := oauthutil.Config("onedrive", name, oauthBusinessConfig, oauthBusinessResource)
+				err := oauthutil.ConfigErrorCheck("onedrive", name, func(req *http.Request) oauthutil.AuthError {
+					var resp oauthutil.AuthError
+
+					resp.Name = req.URL.Query().Get("error")
+					resp.Code = strings.Split(req.URL.Query().Get("error_description"), ":")[0] // error_description begins with XXXXXXXXXXXX:
+					resp.Description = strings.Join(strings.Split(req.URL.Query().Get("error_description"), ":")[1:], ":")
+					resp.HelpURL = "https://rclone.org/onedrive/#troubleshooting"
+					return resp
+				}, oauthBusinessConfig, oauthBusinessResource)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
 					return
