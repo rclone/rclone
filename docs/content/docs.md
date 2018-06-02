@@ -620,6 +620,9 @@ show at default log level `NOTICE`.  Use `--stats-log-level NOTICE` or
 `-v` to make them show.  See the [Logging section](#logging) for more
 info on log levels.
 
+Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
+the terminal) to make the stats print immediately.
+
 ### --stats-file-name-length integer ###
 By default, the `--stats` output will truncate file names and paths longer 
 than 40 characters.  This is equivalent to providing 
