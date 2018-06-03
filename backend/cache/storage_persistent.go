@@ -192,19 +192,35 @@ func (b *Persistent) GetDir(remote string) (*Directory, error) {
 
 // AddDir will update a CachedDirectory metadata and all its entries
 func (b *Persistent) AddDir(cachedDir *Directory) error {
+	return b.AddBatchDir([]*Directory{cachedDir})
+}
+
+// AddBatchDir will update a list of CachedDirectory metadata and all their entries
+func (b *Persistent) AddBatchDir(cachedDirs []*Directory) error {
+	if len(cachedDirs) == 0 {
+		return nil
+	}
+
 	return b.db.Update(func(tx *bolt.Tx) error {
-		bucket := b.getBucket(cachedDir.abs(), true, tx)
+		bucket := b.getBucket(cachedDirs[0].Dir, true, tx)
 		if bucket == nil {
-			return errors.Errorf("couldn't open bucket (%v)", cachedDir)
+			return errors.Errorf("couldn't open bucket (%v)", cachedDirs[0].Dir)
 		}
 
-		encoded, err := json.Marshal(cachedDir)
-		if err != nil {
-			return errors.Errorf("couldn't marshal object (%v): %v", cachedDir, err)
-		}
-		err = bucket.Put([]byte("."), encoded)
-		if err != nil {
-			return err
+		for _, cachedDir := range cachedDirs {
+			b, err := bucket.CreateBucketIfNotExists([]byte(cachedDir.Name))
+			if err != nil {
+				return err
+			}
+
+			encoded, err := json.Marshal(cachedDir)
+			if err != nil {
+				return errors.Errorf("couldn't marshal object (%v): %v", cachedDir, err)
+			}
+			err = b.Put([]byte("."), encoded)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
