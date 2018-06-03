@@ -196,7 +196,6 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 // limit the Fs to a single file.
 func NewFsSrc(args []string) fs.Fs {
 	fsrc, _ := newFsFileAddFilter(args[0])
-	fs.CalculateModifyWindow(fsrc)
 	return fsrc
 }
 
@@ -217,7 +216,6 @@ func newFsDir(remote string) fs.Fs {
 // The argument must point a directory
 func NewFsDir(args []string) fs.Fs {
 	fdst := newFsDir(args[0])
-	fs.CalculateModifyWindow(fdst)
 	return fdst
 }
 
@@ -225,7 +223,6 @@ func NewFsDir(args []string) fs.Fs {
 func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 	fsrc, _ := newFsFileAddFilter(args[0])
 	fdst := newFsDir(args[1])
-	fs.CalculateModifyWindow(fdst, fsrc)
 	return fsrc, fdst
 }
 
@@ -235,7 +232,6 @@ func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 func NewFsSrcFileDst(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs) {
 	fsrc, srcFileName = NewFsFile(args[0])
 	fdst = newFsDir(args[1])
-	fs.CalculateModifyWindow(fdst, fsrc)
 	return fsrc, srcFileName, fdst
 }
 
@@ -266,7 +262,6 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 		fs.CountError(err)
 		log.Fatalf("Failed to create file system for destination %q: %v", dstRemote, err)
 	}
-	fs.CalculateModifyWindow(fdst, fsrc)
 	return
 }
 
@@ -280,7 +275,6 @@ func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
 		log.Fatalf("%q is a directory", args[0])
 	}
 	fdst = newFsDir(dstRemote)
-	fs.CalculateModifyWindow(fdst)
 	return
 }
 

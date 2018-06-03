@@ -862,23 +862,20 @@ func FileExists(fs Fs, remote string) (bool, error) {
 	return true, nil
 }
 
-// CalculateModifyWindow works out modify window for Fses passed in -
-// sets Config.ModifyWindow
-//
-// This is the largest modify window of all the fses in use, and the
-// user configured value
-func CalculateModifyWindow(fss ...Fs) {
+// GetModifyWindow calculates the maximum modify window between the given Fses
+// and the Config.ModifyWindow parameter.
+func GetModifyWindow(fss ...Info) time.Duration {
+	window := Config.ModifyWindow
 	for _, f := range fss {
 		if f != nil {
 			precision := f.Precision()
-			if precision > Config.ModifyWindow {
-				Config.ModifyWindow = precision
-			}
 			if precision == ModTimeNotSupported {
-				Infof(f, "Modify window not supported")
-				return
+				return ModTimeNotSupported
+			}
+			if precision > window {
+				window = precision
 			}
 		}
 	}
-	Infof(fss[0], "Modify window is %s", Config.ModifyWindow)
+	return window
 }

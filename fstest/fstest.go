@@ -343,7 +343,7 @@ func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 // CheckItems checks the fs to see if it has only the items passed in
 // using a precision of fs.Config.ModifyWindow
 func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
-	CheckListingWithPrecision(t, f, items, nil, fs.Config.ModifyWindow)
+	CheckListingWithPrecision(t, f, items, nil, fs.GetModifyWindow(f))
 }
 
 // Time parses a time string or logs a fatal error

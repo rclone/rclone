@@ -302,15 +302,15 @@ func Run(t *testing.T, opt *Opt) {
 		dir := "dir/subdir"
 		err := operations.Mkdir(remote, dir)
 		require.NoError(t, err)
-		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.Config.ModifyWindow)
+		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.GetModifyWindow(remote))
 
 		err = operations.Rmdir(remote, dir)
 		require.NoError(t, err)
-		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.Config.ModifyWindow)
+		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.GetModifyWindow(remote))
 
 		err = operations.Rmdir(remote, "dir")
 		require.NoError(t, err)
-		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.Config.ModifyWindow)
+		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
 	})
 
 	// TestFsListEmpty tests listing an empty directory
