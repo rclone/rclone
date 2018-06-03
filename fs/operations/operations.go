@@ -1372,6 +1372,7 @@ func CopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (e
 type ListFormat struct {
 	separator string
 	dirSlash  bool
+	absolute  bool
 	output    []func() string
 	entry     fs.DirEntry
 	csv       *csv.Writer
@@ -1386,6 +1387,11 @@ func (l *ListFormat) SetSeparator(separator string) {
 // SetDirSlash defines if slash should be printed
 func (l *ListFormat) SetDirSlash(dirSlash bool) {
 	l.dirSlash = dirSlash
+}
+
+// SetAbsolute prints a leading slash in front of path names
+func (l *ListFormat) SetAbsolute(absolute bool) {
+	l.absolute = absolute
 }
 
 // SetCSV defines if the output should be csv
@@ -1423,12 +1429,15 @@ func (l *ListFormat) AddSize() {
 // AddPath adds path to file to output
 func (l *ListFormat) AddPath() {
 	l.AppendOutput(func() string {
-		_, isDir := l.entry.(fs.Directory)
-
-		if isDir && l.dirSlash {
-			return l.entry.Remote() + "/"
+		remote := l.entry.Remote()
+		if l.absolute && !strings.HasPrefix(remote, "/") {
+			remote = "/" + remote
 		}
-		return l.entry.Remote()
+		_, isDir := l.entry.(fs.Directory)
+		if isDir && l.dirSlash {
+			remote += "/"
+		}
+		return remote
 	})
 }
 

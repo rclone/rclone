@@ -727,6 +727,13 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "inode/directory", list.Format(items[1]))
 
 	list.SetOutput(nil)
+	list.AddPath()
+	list.SetAbsolute(true)
+	assert.Equal(t, "/a", list.Format(items[0]))
+	list.SetAbsolute(false)
+	assert.Equal(t, "a", list.Format(items[0]))
+
+	list.SetOutput(nil)
 	list.AddSize()
 	assert.Equal(t, "1", list.Format(items[0]))
 
