@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -40,6 +41,35 @@ const (
 
 	// RedirectLocalhostURL is redirect to local webserver when active with localhost
 	RedirectLocalhostURL = "http://localhost:" + bindPort + "/"
+
+	// AuthResponse is a template to handle the redirect URL for oauth requests
+	AuthResponse = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ if .OK }}Success!{{ else }}Failure!{{ end }}</title>
+</head>
+<body>
+<h1>{{ if .OK }}Success!{{ else }}Failure!{{ end }}</h1>
+<hr>
+<pre style="width: 750px; white-space: pre-wrap;">
+{{ if eq .OK false }}
+Error: {{ .AuthError.Name }}<br>
+{{ if .AuthError.Description }}Description: {{ .AuthError.Description }}<br>{{ end }}
+{{ if .AuthError.Code }}Code: {{ .AuthError.Code }}<br>{{ end }}
+{{ if .AuthError.HelpURL }}Look here for help: <a href="{{ .AuthError.HelpURL }}">{{ .AuthError.HelpURL }}</a><br>{{ end }}
+{{ else }}
+	{{ if .Code }}
+Please copy this code into rclone:
+{{ .Code }}
+	{{ else }}
+All done. Please go back to rclone.
+	{{ end }}
+{{ end }}
+</pre>
+</body>
+</html>
+`
 )
 
 // oldToken contains an end-user's tokens.
@@ -429,6 +459,13 @@ type AuthError struct {
 	HelpURL     string
 }
 
+// AuthResponseData can fill the AuthResponse template
+type AuthResponseData struct {
+	OK   bool   // Failure or Success?
+	Code string // code to paste into rclone config
+	AuthError
+}
+
 // startWebServer runs an internal web server to receive config details
 func (s *authServer) Start() {
 	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
@@ -451,31 +488,42 @@ func (s *authServer) Start() {
 		fs.Debugf(nil, "Received request on auth server")
 		code := req.FormValue("code")
 		var err error
+		var t = template.Must(template.New("authResponse").Parse(AuthResponse))
+		resp := AuthResponseData{AuthError: AuthError{}}
 		if code != "" {
 			state := req.FormValue("state")
 			if state != s.state {
 				fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
-				_, _ = fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
+				resp.OK = false
+				resp.AuthError = AuthError{
+					Name: "Auth State doesn't match",
+				}
 			} else {
 				fs.Debugf(nil, "Successfully got code")
-				if s.code != nil {
-					_, _ = fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
-				} else {
-					_, _ = fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
+				resp.OK = true
+				if s.code == nil {
+					resp.Code = code
 				}
 			}
 		} else {
 			fs.Debugf(nil, "No code found on request")
-			httpResponse := "<h1>Failed!</h1>\nNo code found returned by remote server."
-			if s.errorHandler != nil {
-				authError := s.errorHandler(req)
-				errorDesc := fmt.Sprintf("Error: %s\nCode: %s\nDescription: %s\nHelp: %s",
-					authError.Name, authError.Code, authError.Description, authError.HelpURL)
-				httpResponse += "\n<p>" + strings.Replace(errorDesc, "\n", "<br>", -1) + "</p>"
-				err = errors.New(errorDesc)
+			var authError AuthError
+			if s.errorHandler == nil {
+				authError = AuthError{
+					Name:        "Auth Error",
+					Description: "No code found returned by remote server.",
+				}
+			} else {
+				authError = s.errorHandler(req)
 			}
+			err = fmt.Errorf("Error: %s\nCode: %s\nDescription: %s\nHelp: %s",
+				authError.Name, authError.Code, authError.Description, authError.HelpURL)
+			resp.OK = false
+			resp.AuthError = authError
 			w.WriteHeader(500)
-			_, _ = fmt.Fprintf(w, httpResponse)
+		}
+		if err := t.Execute(w, resp); err != nil {
+			fs.Debugf(nil, "Could not execute template for web response.")
 		}
 		if s.code != nil {
 			s.code <- code
