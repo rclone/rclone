@@ -725,6 +725,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	fs.Debugf(dir, "list: source entries: %v", entries)
 
 	// and then iterate over the ones from source (temp Objects will override source ones)
+	var batchDirectories []*Directory
 	for _, entry := range entries {
 		switch o := entry.(type) {
 		case fs.Object:
@@ -746,17 +747,18 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			cdd := DirectoryFromOriginal(f, o)
 			// check if the dir isn't expired and add it in cache if it isn't
 			if cdd2, err := f.cache.GetDir(cdd.abs()); err != nil || time.Now().Before(cdd2.CacheTs.Add(f.fileAge)) {
-				err := f.cache.AddDir(cdd)
-				if err != nil {
-					fs.Errorf(dir, "list: error caching dir from listing %v", o)
-				} else {
-					fs.Debugf(dir, "list: cached dir: %v", cdd)
-				}
+				batchDirectories = append(batchDirectories, cdd)
 			}
 			cachedEntries = append(cachedEntries, cdd)
 		default:
 			fs.Debugf(entry, "list: Unknown object type %T", entry)
 		}
+	}
+	err = f.cache.AddBatchDir(batchDirectories)
+	if err != nil {
+		fs.Errorf(dir, "list: error caching directories from listing %v", dir)
+	} else {
+		fs.Debugf(dir, "list: cached directories: %v", len(batchDirectories))
 	}
 
 	// cache dir meta
