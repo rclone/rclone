@@ -103,7 +103,6 @@ func newRun() *Run {
 	if err != nil {
 		r.Fatalf("Failed to make %q: %v", r.LocalName, err)
 	}
-	fs.CalculateModifyWindow(r.Fremote, r.Flocal)
 	return r
 }
 
@@ -173,7 +172,7 @@ func NewRun(t *testing.T) *Run {
 	}
 	r.Logf = t.Logf
 	r.Fatalf = t.Fatalf
-	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.Config.ModifyWindow)
+	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.GetModifyWindow(r.Fremote))
 	return r
 }
 
