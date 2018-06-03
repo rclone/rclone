@@ -870,7 +870,6 @@ func GetModifyWindow(fss ...Info) time.Duration {
 		if f != nil {
 			precision := f.Precision()
 			if precision == ModTimeNotSupported {
-				Debugf(f, "Modify window not supported")
 				return ModTimeNotSupported
 			}
 			if precision > window {
