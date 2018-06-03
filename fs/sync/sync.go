@@ -4,8 +4,8 @@ package sync
 import (
 	"context"
 	"fmt"
+	"path"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -489,10 +489,44 @@ func deleteEmptyDirectories(f fs.Fs, entriesMap map[string]fs.DirEntry) error {
 	return nil
 }
 
+// This copies the empty directories in the slice passed in and logs
+// any errors copying the directories
+func copyEmptyDirectories(f fs.Fs, entries map[string]fs.DirEntry) error {
+	if len(entries) == 0 {
+		return nil
+	}
+
+	var okCount int
+	for _, entry := range entries {
+		dir, ok := entry.(fs.Directory)
+		if ok {
+			err := f.Mkdir(dir.Remote())
+			if err != nil {
+				fs.Errorf(fs.LogDirName(f, dir.Remote()), "Failed to Mkdir: %v", err)
+				accounting.Stats.Error(err)
+			} else {
+				okCount++
+			}
+		} else {
+			fs.Errorf(f, "Not a directory: %v", entry)
+		}
+	}
+
+	if accounting.Stats.Errored() {
+		fs.Debugf(f, "failed to copy %d directories", accounting.Stats.GetErrors())
+	}
+
+	if okCount > 0 {
+		fs.Debugf(f, "copied %d directories", okCount)
+	}
+	return nil
+}
+
 func parentDirCheck(entries map[string]fs.DirEntry, entry fs.DirEntry) {
-	path := strings.Split(entry.Remote(), "/")
-	path = path[:len(path)-1]
-	parentDir := strings.Join(path, "/")
+	parentDir := path.Dir(entry.Remote())
+	if parentDir == "." {
+		parentDir = ""
+	}
 	if _, ok := entries[parentDir]; ok {
 		delete(entries, parentDir)
 	}
@@ -659,6 +693,8 @@ func (s *syncCopyMove) run() error {
 	s.stopRenamers()
 	s.stopTransfers()
 	s.stopDeleters()
+
+	s.processError(copyEmptyDirectories(s.fdst, s.srcEmptyDirs))
 
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
