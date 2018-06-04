@@ -101,7 +101,7 @@ func TestCopyEmptyDirectories(t *testing.T) {
 			"sub dir",
 			"sub dir2",
 		},
-		fs.Config.ModifyWindow,
+		fs.GetModifyWindow(r.Fremote),
 	)
 }
 
