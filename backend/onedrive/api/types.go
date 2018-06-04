@@ -88,9 +88,10 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 // ItemReference groups data needed to reference a OneDrive item
 // across the service into a single structure.
 type ItemReference struct {
-	DriveID string `json:"driveId"` // Unique identifier for the Drive that contains the item.	Read-only.
-	ID      string `json:"id"`      // Unique identifier for the item.	Read/Write.
-	Path    string `json:"path"`    // Path that used to navigate to the item.	Read/Write.
+	DriveID   string `json:"driveId"`   // Unique identifier for the Drive that contains the item.	Read-only.
+	ID        string `json:"id"`        // Unique identifier for the item.	Read/Write.
+	Path      string `json:"path"`      // Path that used to navigate to the item.	Read/Write.
+	DriveType string `json:"driveType"` // Type of the drive,	Read-Only
 }
 
 // FolderFacet groups folder-related data on OneDrive into a single structure
