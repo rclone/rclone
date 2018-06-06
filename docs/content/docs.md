@@ -591,6 +591,12 @@ files which didn't get transferred because of errors.
 
 Disable retries with `--retries 1`.
 
+### --retries-sleep=TIME ###
+
+This sets the interval between each retry specified by `--retries` 
+
+The default is 0. Use 0 to disable.
+
 ### --size-only ###
 
 Normally rclone will look at modification time and size of files to
