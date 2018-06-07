@@ -1315,9 +1315,14 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 		err = f.pacer.Call(func() (bool, error) {
 			changesCall := f.svc.Changes.List(pageToken).Fields("nextPageToken,newStartPageToken,changes(fileId,file(name,parents,mimeType))")
 			if *driveListChunk > 0 {
-				changesCall = changesCall.PageSize(*driveListChunk)
+				changesCall.PageSize(*driveListChunk)
 			}
-			changeList, err = changesCall.SupportsTeamDrives(f.isTeamDrive).Do()
+			if f.isTeamDrive {
+				changesCall.TeamDriveId(f.teamDriveID)
+				changesCall.SupportsTeamDrives(true)
+				changesCall.IncludeTeamDriveItems(true)
+			}
+			changeList, err = changesCall.Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
