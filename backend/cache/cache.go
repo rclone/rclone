@@ -1169,8 +1169,14 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	}
 
 	// cache the new file
-	cachedObj := ObjectFromOriginal(f, obj).persist()
+	cachedObj := ObjectFromOriginal(f, obj)
+
+	// deleting cached chunks and info to be replaced with new ones
+	_ = f.cache.RemoveObject(cachedObj.abs())
+
+	cachedObj.persist()
 	fs.Debugf(cachedObj, "put: added to cache")
+
 	// expire parent
 	parentCd := NewDirectory(f, cleanPath(path.Dir(cachedObj.Remote())))
 	err = f.cache.ExpireDir(parentCd)
