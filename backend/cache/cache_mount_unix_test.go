@@ -23,7 +23,7 @@ func (r *run) mountFs(t *testing.T, f fs.Fs) {
 		fuse.FSName(device), fuse.VolumeName(device),
 		fuse.NoAppleDouble(),
 		fuse.NoAppleXattr(),
-		fuse.AllowOther(),
+		//fuse.AllowOther(),
 	}
 	err := os.MkdirAll(r.mntDir, os.ModePerm)
 	require.NoError(t, err)
