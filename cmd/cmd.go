@@ -39,12 +39,13 @@ import (
 // Globals
 var (
 	// Flags
-	cpuProfile    = flags.StringP("cpuprofile", "", "", "Write cpu profile to file")
-	memProfile    = flags.StringP("memprofile", "", "", "Write memory profile to file")
-	statsInterval = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
-	dataRateUnit  = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes'/s")
-	version       bool
-	retries       = flags.IntP("retries", "", 3, "Retry operations this many times if they fail")
+	cpuProfile      = flags.StringP("cpuprofile", "", "", "Write cpu profile to file")
+	memProfile      = flags.StringP("memprofile", "", "", "Write memory profile to file")
+	statsInterval   = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
+	dataRateUnit    = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes'/s")
+	version         bool
+	retries         = flags.IntP("retries", "", 3, "Retry operations this many times if they fail")
+	retriesInterval = flags.DurationP("retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)")
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
 	errorUncategorized      = errors.New("uncategorized error")
@@ -321,6 +322,9 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 		if try < *retries {
 			accounting.Stats.ResetErrors()
+		}
+		if *retriesInterval > 0 {
+			time.Sleep(*retriesInterval)
 		}
 	}
 	if showStats {
