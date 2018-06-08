@@ -354,6 +354,14 @@ arguments.
 Here are the command line options specific to this cloud storage
 system.
 
+#### --drive-acknowledge-abuse ####
+
+If downloading a file returns the error `This file has been identified
+as malware or spam and cannot be downloaded` with the error code
+`cannotDownloadAbusiveFile` then supply this flag to rclone to
+indicate you acknowledge the risks of downloading the file and rclone
+will download it anyway.
+
 #### --drive-auth-owner-only ####
 
 Only consider files owned by the authenticated user.
