@@ -54,16 +54,17 @@ const (
 // Globals
 var (
 	// Flags
-	driveAuthOwnerOnly   = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash        = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
-	driveSkipGdocs       = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
-	driveSharedWithMe    = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
-	driveTrashedOnly     = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
-	driveExtensions      = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
-	driveUseCreatedDate  = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
-	driveListChunk       = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
-	driveImpersonate     = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
-	driveAlternateExport = flags.BoolP("drive-alternate-export", "", false, "Use alternate export URLs for google documents export.")
+	driveAuthOwnerOnly    = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
+	driveUseTrash         = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
+	driveSkipGdocs        = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe     = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
+	driveTrashedOnly      = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
+	driveExtensions       = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveUseCreatedDate   = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
+	driveListChunk        = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
+	driveImpersonate      = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
+	driveAlternateExport  = flags.BoolP("drive-alternate-export", "", false, "Use alternate export URLs for google documents export.")
+	driveAcknowledgeAbuse = flags.BoolP("drive-acknowledge-abuse", "", false, "Set to allow files which return cannotDownloadAbusiveFile to be downloaded.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -1598,11 +1599,39 @@ func (file *openFile) Close() (err error) {
 // Check it satisfies the interfaces
 var _ io.ReadCloser = &openFile{}
 
+// Checks to see if err is a googleapi.Error with of type what
+func isGoogleError(err error, what string) bool {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		for _, error := range gerr.Errors {
+			if error.Reason == what {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	_, res, err := o.httpResponse("GET", options)
 	if err != nil {
-		return nil, errors.Wrap(err, "open file failed")
+		if isGoogleError(err, "cannotDownloadAbusiveFile") {
+			if *driveAcknowledgeAbuse {
+				// Retry acknowledging abuse
+				if strings.ContainsRune(o.url, '?') {
+					o.url += "&"
+				} else {
+					o.url += "?"
+				}
+				o.url += "acknowledgeAbuse=true"
+				_, res, err = o.httpResponse("GET", options)
+			} else {
+				err = errors.Wrap(err, "Use the --drive-acknowledge-abuse flag to download this file")
+			}
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "open file failed")
+		}
 	}
 	// If it is a document, update the size with what we are
 	// reading as it can change from the HEAD in the listing to
