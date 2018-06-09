@@ -74,6 +74,9 @@ var (
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
 	configKey []byte
+
+	// output of prompt for password
+	PasswordPromptOutput = os.Stderr
 )
 
 func init() {
@@ -287,9 +290,9 @@ func checkPassword(password string) (string, error) {
 
 // GetPassword asks the user for a password with the prompt given.
 func GetPassword(prompt string) string {
-	_, _ = fmt.Fprintln(os.Stderr, prompt)
+	_, _ = fmt.Fprintln(PasswordPromptOutput, prompt)
 	for {
-		_, _ = fmt.Fprint(os.Stderr, "password:")
+		_, _ = fmt.Fprint(PasswordPromptOutput, "password:")
 		password := ReadPassword()
 		password, err := checkPassword(password)
 		if err == nil {
