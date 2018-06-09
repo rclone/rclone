@@ -19,6 +19,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/dbhashsum"
 	_ "github.com/ncw/rclone/cmd/dedupe"
 	_ "github.com/ncw/rclone/cmd/delete"
+	_ "github.com/ncw/rclone/cmd/deletefile"
 	_ "github.com/ncw/rclone/cmd/genautocomplete"
 	_ "github.com/ncw/rclone/cmd/gendocs"
 	_ "github.com/ncw/rclone/cmd/hashsum"
