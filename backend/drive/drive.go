@@ -294,8 +294,7 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
 		// Convert ／ to / for search
 		searchTitle = strings.Replace(searchTitle, "／", "/", -1)
-		// use contains to work around #1675
-		query = append(query, fmt.Sprintf("name contains '%s'", searchTitle))
+		query = append(query, fmt.Sprintf("name='%s'", searchTitle))
 	}
 	if directoriesOnly {
 		query = append(query, fmt.Sprintf("mimeType='%s'", driveFolderType))
@@ -343,7 +342,8 @@ OUTER:
 		for _, item := range files.Files {
 			// Convert / to ／ for listing purposes
 			item.Name = strings.Replace(item.Name, "/", "／", -1)
-			// skip items introduced by workaround (#1675)
+			// Check the case of items is correct since
+			// the `=` operator is case insensitive.
 			if title != "" && title != item.Name {
 				continue
 			}
