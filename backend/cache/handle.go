@@ -629,6 +629,23 @@ func (b *backgroundWriter) run() {
 			fs.Errorf(remote, "background upload: %v", err)
 			continue
 		}
+		// clean empty dirs up to root
+		thisDir := cleanPath(path.Dir(remote))
+		for thisDir != "" {
+			thisList, err := b.fs.tempFs.List(thisDir)
+			if err != nil {
+				break
+			}
+			if len(thisList) > 0 {
+				break
+			}
+			err = b.fs.tempFs.Rmdir(thisDir)
+			fs.Debugf(thisDir, "cleaned from temp path")
+			if err != nil {
+				break
+			}
+			thisDir = cleanPath(path.Dir(thisDir))
+		}
 		fs.Infof(remote, "background upload: uploaded entry")
 		err = b.fs.cache.removePendingUpload(absPath)
 		if err != nil && !strings.Contains(err.Error(), "pending upload not found") {

@@ -3,7 +3,6 @@
 package cache_test
 
 import (
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path"
@@ -105,14 +104,57 @@ func TestInternalUploadMoveExistingFile(t *testing.T) {
 	require.Len(t, de1, 1)
 
 	time.Sleep(time.Second * 5)
-	_ = os.Remove(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "one/test")))
-	require.NoError(t, err)
+	//_ = os.Remove(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "one/test")))
+	//require.NoError(t, err)
 
 	err = runInstance.dirMove(t, rootFs, "one/test", "second/test")
 	require.NoError(t, err)
 
 	// check if it can be read
 	de1, err = runInstance.list(t, rootFs, "second/test")
+	require.NoError(t, err)
+	require.Len(t, de1, 1)
+}
+
+func TestInternalUploadTempPathCleaned(t *testing.T) {
+	id := fmt.Sprintf("tiutpc%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
+		nil,
+		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "5s"})
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+
+	err := rootFs.Mkdir("one")
+	require.NoError(t, err)
+	err = rootFs.Mkdir("one/test")
+	require.NoError(t, err)
+	err = rootFs.Mkdir("second")
+	require.NoError(t, err)
+
+	// create some rand test data
+	testSize := int64(1048576)
+	testReader := runInstance.randomReader(t, testSize)
+	testReader2 := runInstance.randomReader(t, testSize)
+	runInstance.writeObjectReader(t, rootFs, "one/test/data.bin", testReader)
+	runInstance.writeObjectReader(t, rootFs, "second/data.bin", testReader2)
+
+	runInstance.completeAllBackgroundUploads(t, rootFs, "one/test/data.bin")
+	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "one/test")))
+	require.True(t, os.IsNotExist(err))
+	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "one")))
+	require.True(t, os.IsNotExist(err))
+	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "second")))
+	require.False(t, os.IsNotExist(err))
+
+	runInstance.completeAllBackgroundUploads(t, rootFs, "second/data.bin")
+	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "second/data.bin")))
+	require.True(t, os.IsNotExist(err))
+
+	de1, err := runInstance.list(t, rootFs, "one/test")
+	require.NoError(t, err)
+	require.Len(t, de1, 1)
+
+	// check if it can be read
+	de1, err = runInstance.list(t, rootFs, "second")
 	require.NoError(t, err)
 	require.Len(t, de1, 1)
 }
@@ -158,9 +200,8 @@ func TestInternalUploadQueueMoreFiles(t *testing.T) {
 	runInstance.completeAllBackgroundUploads(t, rootFs, lastFile)
 
 	// retry until we have no more temp files and fail if they don't go down to 0
-	tf, err := ioutil.ReadDir(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test")))
-	require.NoError(t, err)
-	require.Len(t, tf, 0)
+	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test")))
+	require.True(t, os.IsNotExist(err))
 
 	// check if cache lists all files
 	de1, err = runInstance.list(t, rootFs, "test")
