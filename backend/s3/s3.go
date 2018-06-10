@@ -1356,7 +1356,6 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
 		u.PartSize = int64(s3ChunkSize)
-		u.PartSize = s3manager.MinUploadPartSize
 
 		if size == -1 {
 			// Make parts as small as possible while still being able to upload to the
