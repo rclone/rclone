@@ -152,7 +152,8 @@ func TestCopyRedownload(t *testing.T) {
 	err := CopyDir(r.Flocal, r.Fremote)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Flocal, file1)
+	// Test with combined precision of local and remote as we copied it there and back
+	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1}, nil, fs.GetModifyWindow(r.Flocal, r.Fremote))
 }
 
 // Create a file and sync it. Change the last modified date and resync.
