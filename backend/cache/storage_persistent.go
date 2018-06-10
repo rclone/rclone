@@ -202,13 +202,24 @@ func (b *Persistent) AddBatchDir(cachedDirs []*Directory) error {
 	}
 
 	return b.db.Update(func(tx *bolt.Tx) error {
-		bucket := b.getBucket(cachedDirs[0].Dir, true, tx)
+		var bucket *bolt.Bucket
+		if cachedDirs[0].Dir == "" {
+			bucket = tx.Bucket([]byte(RootBucket))
+		} else {
+			bucket = b.getBucket(cachedDirs[0].Dir, true, tx)
+		}
 		if bucket == nil {
 			return errors.Errorf("couldn't open bucket (%v)", cachedDirs[0].Dir)
 		}
 
 		for _, cachedDir := range cachedDirs {
-			b, err := bucket.CreateBucketIfNotExists([]byte(cachedDir.Name))
+			var b *bolt.Bucket
+			var err error
+			if cachedDir.Name == "" {
+				b = bucket
+			} else {
+				b, err = bucket.CreateBucketIfNotExists([]byte(cachedDir.Name))
+			}
 			if err != nil {
 				return err
 			}
