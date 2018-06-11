@@ -57,14 +57,6 @@
   revision = "ef1e4c783f8f0478bd8bff0edb3dd0bade552599"
 
 [[projects]]
-  digest = "1:ac226c42eb54c121e0704c6f7f64c96c7817ad6d6286e5536e8cea72807e1079"
-  name = "github.com/VividCortex/ewma"
-  packages = ["."]
-  pruneopts = ""
-  revision = "b24eb346a94c3ba12c1da1e564dbac1b498a77ce"
-  version = "v1.1.1"
-
-[[projects]]
   branch = "master"
   digest = "1:391632fa3a324c4f461f28baaf45cea8b21e13630b00f27059613f855bb544bb"
   name = "github.com/a8m/tree"
@@ -580,7 +572,6 @@
     "github.com/Azure/go-ansiterm",
     "github.com/Azure/go-ansiterm/winterm",
     "github.com/Unknwon/goconfig",
-    "github.com/VividCortex/ewma",
     "github.com/a8m/tree",
     "github.com/abbot/go-http-auth",
     "github.com/aws/aws-sdk-go/aws",
