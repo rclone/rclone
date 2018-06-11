@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/VividCortex/ewma"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
 	"github.com/ncw/rclone/fs/fserrors"
@@ -31,17 +30,19 @@ type Account struct {
 	close   io.Closer
 	size    int64
 	name    string
-	statmu  sync.Mutex         // Separate mutex for stat values.
-	bytes   int64              // Total number of bytes read
-	max     int64              // if >=0 the max number of bytes to transfer
-	start   time.Time          // Start time of first read
-	lpTime  time.Time          // Time of last average measurement
-	lpBytes int                // Number of bytes read since last measurement
-	avg     ewma.MovingAverage // Moving average of last few measurements
-	closed  bool               // set if the file is closed
-	exit    chan struct{}      // channel that will be closed when transfer is finished
-	withBuf bool               // is using a buffered in
+	statmu  sync.Mutex    // Separate mutex for stat values.
+	bytes   int64         // Total number of bytes read
+	max     int64         // if >=0 the max number of bytes to transfer
+	start   time.Time     // Start time of first read
+	lpTime  time.Time     // Time of last average measurement
+	lpBytes int           // Number of bytes read since last measurement
+	avg     float64       // Moving average of last few measurements in bytes/s
+	closed  bool          // set if the file is closed
+	exit    chan struct{} // channel that will be closed when transfer is finished
+	withBuf bool          // is using a buffered in
 }
+
+const averagePeriod = 16 // period to do exponentially weighted averages over
 
 // NewAccountSizeName makes a Account reader for an io.ReadCloser of
 // the given size and name
@@ -53,7 +54,7 @@ func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 		size:   size,
 		name:   name,
 		exit:   make(chan struct{}),
-		avg:    ewma.NewMovingAverage(),
+		avg:    0,
 		lpTime: time.Now(),
 		max:    int64(fs.Config.MaxTransfer),
 	}
@@ -136,7 +137,7 @@ func (acc *Account) averageLoop() {
 			// Add average of last second.
 			elapsed := now.Sub(acc.lpTime).Seconds()
 			avg := float64(acc.lpBytes) / elapsed
-			acc.avg.Add(avg)
+			acc.avg = (avg + (averagePeriod-1)*acc.avg) / averagePeriod
 			acc.lpBytes = 0
 			acc.lpTime = now
 			// Unlock stats
@@ -221,7 +222,7 @@ func (acc *Account) speed() (bps, current float64) {
 	// Calculate speed from first read.
 	total := float64(time.Now().Sub(acc.start)) / float64(time.Second)
 	bps = float64(acc.bytes) / total
-	current = acc.avg.Value()
+	current = acc.avg
 	return
 }
 
@@ -241,13 +242,13 @@ func (acc *Account) eta() (eta time.Duration, ok bool) {
 	if left <= 0 {
 		return 0, true
 	}
-	avg := acc.avg.Value()
+	avg := acc.avg
 	if avg <= 0 {
 		return 0, false
 	}
-	seconds := float64(left) / acc.avg.Value()
+	seconds := float64(left) / avg
 
-	return time.Duration(time.Second * time.Duration(int(seconds))), true
+	return time.Second * time.Duration(seconds), true
 }
 
 // String produces stats for this file
