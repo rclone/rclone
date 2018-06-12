@@ -107,6 +107,9 @@ func (p *plexConnector) closeWebsocket() {
 }
 
 func (p *plexConnector) listenWebsocket() {
+	p.runningMu.Lock()
+	defer p.runningMu.Unlock()
+
 	u := strings.Replace(p.url.String(), "http://", "ws://", 1)
 	u = strings.Replace(u, "https://", "wss://", 1)
 	conn, err := websocket.Dial(fmt.Sprintf(defPlexNotificationURL, strings.TrimRight(u, "/"), p.token),
@@ -127,8 +130,8 @@ func (p *plexConnector) listenWebsocket() {
 			err := websocket.JSON.Receive(conn, notif)
 			if err != nil {
 				fs.Debugf("plex", "%v", err)
-				time.Sleep(time.Second)
-				continue
+				p.closeWebsocket()
+				break
 			}
 			// we're only interested in play events
 			if notif.Container.Type == "playing" {
@@ -229,6 +232,9 @@ func (p *plexConnector) isConfigured() bool {
 
 func (p *plexConnector) isPlaying(co *Object) bool {
 	var err error
+	if !p.isConnected() {
+		p.listenWebsocket()
+	}
 
 	remote := co.Remote()
 	if cr, yes := p.f.isWrappedByCrypt(); yes {
