@@ -618,6 +618,9 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	if !runInstance.useMount {
 		t.Skipf("needs mount")
 	}
+	if !runInstance.wrappedIsExternal {
+		t.Skipf("needs drive")
+	}
 
 	cfs, err := runInstance.getCacheFs(rootFs)
 	require.NoError(t, err)
@@ -655,6 +658,31 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	co, err = rootFs.NewObject("data.bin")
 	require.NoError(t, err)
 	require.Equal(t, wrappedTime.Unix(), co.ModTime().Unix())
+	li1, err := runInstance.list(t, rootFs, "")
+
+	// create some rand test data
+	testData2 := randStringBytes(int(chunkSize))
+	runInstance.writeObjectBytes(t, cfs.UnWrap(), runInstance.encryptRemoteIfNeeded(t, "test2"), testData2)
+
+	// list should have 1 item only
+	li1, err = runInstance.list(t, rootFs, "")
+	require.Len(t, li1, 1)
+
+	m = make(map[string]string)
+	res2, err := http.Post("http://localhost:5572/cache/expire?remote=/", "application/json; charset=utf-8", strings.NewReader(""))
+	require.NoError(t, err)
+	defer func() {
+		_ = res2.Body.Close()
+	}()
+	_ = json.NewDecoder(res2.Body).Decode(&m)
+	require.Contains(t, m, "status")
+	require.Contains(t, m, "message")
+	require.Equal(t, "ok", m["status"])
+	require.Contains(t, m["message"], "cached directory cleared")
+
+	// list should have 2 items now
+	li2, err := runInstance.list(t, rootFs, "")
+	require.Len(t, li2, 2)
 }
 
 func TestInternalCacheWrites(t *testing.T) {
