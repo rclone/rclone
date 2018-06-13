@@ -535,16 +535,12 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	if entryType == fs.EntryObject {
 		co := NewObject(f, forgetPath)
 		err := f.cache.GetObject(co)
-		if err == nil {
-			// expire the entry
-			err = f.cache.ExpireObject(co, true)
-			if err != nil {
-				fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
-			} else {
-				fs.Debugf(forgetPath, "notify: expired %v", co)
-			}
-		} else {
-			fs.Debugf(f, "ignoring change notification for non cached entry %v", co)
+		if err != nil {
+			fs.Debugf(f, "got change notification for non cached entry %v", co)
+		}
+		err = f.cache.ExpireObject(co, true)
+		if err != nil {
+			fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
 		}
 		cd = NewDirectory(f, cleanPath(path.Dir(co.Remote())))
 	} else {

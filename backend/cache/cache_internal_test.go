@@ -574,6 +574,93 @@ func TestInternalMoveWithNotify(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestInternalNotifyCreatesEmptyParts(t *testing.T) {
+	id := fmt.Sprintf("tincep%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+	if !runInstance.wrappedIsExternal {
+		t.Skipf("Not external")
+	}
+	cfs, err := runInstance.getCacheFs(rootFs)
+	require.NoError(t, err)
+
+	srcName := runInstance.encryptRemoteIfNeeded(t, "test") + "/" + runInstance.encryptRemoteIfNeeded(t, "one") + "/" + runInstance.encryptRemoteIfNeeded(t, "test")
+	dstName := runInstance.encryptRemoteIfNeeded(t, "test") + "/" + runInstance.encryptRemoteIfNeeded(t, "one") + "/" + runInstance.encryptRemoteIfNeeded(t, "test2")
+	// create some rand test data
+	var testData []byte
+	if runInstance.rootIsCrypt {
+		testData, err = base64.StdEncoding.DecodeString(cryptedTextBase64)
+		require.NoError(t, err)
+	} else {
+		testData = []byte("test content")
+	}
+	err = rootFs.Mkdir("test")
+	require.NoError(t, err)
+	err = rootFs.Mkdir("test/one")
+	require.NoError(t, err)
+	srcObj := runInstance.writeObjectBytes(t, cfs.UnWrap(), srcName, testData)
+
+	// list in mount
+	_, err = runInstance.list(t, rootFs, "test")
+	require.NoError(t, err)
+	_, err = runInstance.list(t, rootFs, "test/one")
+	require.NoError(t, err)
+
+	found := boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
+	require.True(t, found)
+	boltDb.Purge()
+	found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
+	require.False(t, found)
+
+	// move file
+	_, err = cfs.UnWrap().Features().Move(srcObj, dstName)
+	require.NoError(t, err)
+
+	err = runInstance.retryBlock(func() error {
+		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
+		if !found {
+			log.Printf("not found /test")
+			return errors.Errorf("not found /test")
+		}
+		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one")))
+		if !found {
+			log.Printf("not found /test/one")
+			return errors.Errorf("not found /test/one")
+		}
+		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one"), runInstance.encryptRemoteIfNeeded(t, "test2")))
+		if !found {
+			log.Printf("not found /test/one/test2")
+			return errors.Errorf("not found /test/one/test2")
+		}
+		li, err := runInstance.list(t, rootFs, "test/one")
+		if err != nil {
+			log.Printf("err: %v", err)
+			return err
+		}
+		if len(li) != 1 {
+			log.Printf("not expected listing /test/one: %v", li)
+			return errors.Errorf("not expected listing /test/one: %v", li)
+		}
+		if fi, ok := li[0].(os.FileInfo); ok {
+			if fi.Name() != "test2" {
+				log.Printf("not expected name: %v", fi.Name())
+				return errors.Errorf("not expected name: %v", fi.Name())
+			}
+		} else if di, ok := li[0].(fs.DirEntry); ok {
+			if di.Remote() != "test/one/test2" {
+				log.Printf("not expected remote: %v", di.Remote())
+				return errors.Errorf("not expected remote: %v", di.Remote())
+			}
+		} else {
+			log.Printf("unexpected listing: %v", li)
+			return errors.Errorf("unexpected listing: %v", li)
+		}
+		log.Printf("complete listing /test/one/test2")
+		return nil
+	}, 12, time.Second*10)
+	require.NoError(t, err)
+}
+
 func TestInternalChangeSeenAfterDirCacheFlush(t *testing.T) {
 	id := fmt.Sprintf("ticsadcf%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
