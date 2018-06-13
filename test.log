@@ -6122,4 +6122,3 @@ ok  	github.com/ncw/rclone/lib/rest	0.003s
 	run.go:173: Remote "Local file system at /tmp/rclone894602152", Local "Local file system at /tmp/rclone024602343", Modify Window "1ns"
 PASS
 ok  	github.com/ncw/rclone/vfs	0.160s
-?   	github.com/ncw/rclone/vfs/vfsflags	[no test files]
