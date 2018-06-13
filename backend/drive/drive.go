@@ -1016,7 +1016,6 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
 		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).KeepRevisionForever(*driveKeepRevisionForever).Do()
-		
 		return shouldRetry(err)
 	})
 	if err != nil {
