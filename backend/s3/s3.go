@@ -537,10 +537,11 @@ const (
 // Globals
 var (
 	// Flags
-	s3ACL             = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
-	s3StorageClass    = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
-	s3ChunkSize       = fs.SizeSuffix(s3manager.MinUploadPartSize)
-	s3DisableChecksum = flags.BoolP("s3-disable-checksum", "", false, "Don't store MD5 checksum with object metadata")
+	s3ACL               = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3StorageClass      = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
+	s3ChunkSize         = fs.SizeSuffix(s3manager.MinUploadPartSize)
+	s3DisableChecksum   = flags.BoolP("s3-disable-checksum", "", false, "Don't store MD5 checksum with object metadata")
+	s3UploadConcurrency = flags.IntP("s3-upload-concurrency", "", 2, "Concurrency for multipart uploads")
 )
 
 // Fs represents a remote s3 server
@@ -1352,7 +1353,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 
 	uploader := s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
-		u.Concurrency = 2
+		u.Concurrency = *s3UploadConcurrency
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
 		u.PartSize = int64(s3ChunkSize)
