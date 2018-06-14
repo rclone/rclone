@@ -542,6 +542,11 @@ func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption
 // mkParentDir makes the parent of the native path dirPath if
 // necessary and any directories above that
 func (f *Fs) mkParentDir(dirPath string) error {
+	// defer log.Trace(dirPath, "")("")
+	// chop off trailing / if it exists
+	if strings.HasSuffix(dirPath, "/") {
+		dirPath = dirPath[:len(dirPath)-1]
+	}
 	parent := path.Dir(dirPath)
 	if parent == "." {
 		parent = ""
@@ -551,9 +556,14 @@ func (f *Fs) mkParentDir(dirPath string) error {
 
 // mkdir makes the directory and parents using native paths
 func (f *Fs) mkdir(dirPath string) error {
+	// defer log.Trace(dirPath, "")("")
 	// We assume the root is already ceated
 	if dirPath == "" {
 		return nil
+	}
+	// Collections must end with /
+	if !strings.HasSuffix(dirPath, "/") {
+		dirPath += "/"
 	}
 	opts := rest.Opts{
 		Method:     "MKCOL",
