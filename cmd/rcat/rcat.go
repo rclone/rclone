@@ -22,7 +22,7 @@ rclone rcat reads from standard input (stdin) and copies it to a
 single remote file.
 
     echo "hello world" | rclone rcat remote:path/to/file
-    ffmpeg - | rclone rcat --checksum remote:path/to/file
+    ffmpeg - | rclone rcat remote:path/to/file
 
 If the remote file already exists, it will be overwritten.
 
