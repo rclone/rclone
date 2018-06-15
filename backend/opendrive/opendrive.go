@@ -1027,7 +1027,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	o.id = closeResponse.FileID
 	o.size = closeResponse.Size
 
-	// Set the mod time now and read metadata
+	// Set the mod time now
 	err = o.SetModTime(modTime)
 	if err != nil {
 		return err
@@ -1049,7 +1049,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	return nil
+	return o.readMetaData()
 }
 
 func (o *Object) readMetaData() (err error) {
