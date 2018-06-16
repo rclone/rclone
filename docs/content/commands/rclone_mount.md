@@ -1,5 +1,5 @@
 ---
-date: 2018-04-28T11:44:58+01:00
+date: 2018-06-16T18:20:28+01:00
 title: "rclone mount"
 slug: rclone_mount
 url: /commands/rclone_mount/
@@ -138,6 +138,25 @@ to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone mount service specified as a requirement
 will see all files and folders immediately in this mode.
+
+### chunked reading ###
+
+--vfs-read-chunk-size will enable reading the source objects in parts.
+This can reduce the used download quota for some remotes by requesting only chunks
+from the remote that are actually read at the cost of an increased number of requests.
+
+When --vfs-read-chunk-size-limit is also specified and greater than --vfs-read-chunk-size,
+the chunk size for each open file will get doubled for each chunk read, until the
+specified value is reached. A value of -1 will disable the limit and the chunk size will
+grow indefinitely.
+
+With --vfs-read-chunk-size 100M and --vfs-read-chunk-size-limit 0 the following
+parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
+When --vfs-read-chunk-size-limit 500M is specified, the result would be
+0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+
+Chunked reading will only work with --vfs-cache-mode < full, as the file will always
+be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 ### Directory Cache
 
@@ -283,6 +302,9 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
       --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+      --vfs-read-chunk-size int            Read the source objects in chunks.
+      --vfs-read-chunk-size-limit int      If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. -1 is unlimited.
+      --volname string                     Set the volume name (not supported by all OSes).
       --write-back-cache                   Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.
 ```
 
@@ -333,6 +355,8 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --delete-during                       When synchronizing, delete files during transfer (default)
       --delete-excluded                     Delete files on dest excluded from sync
       --disable string                      Disable a comma separated list of features.  Use help to see a list.
+      --drive-acknowledge-abuse             Set to allow files which return cannotDownloadAbusiveFile to be downloaded.
+      --drive-alternate-export              Use alternate export URLs for google documents export.
       --drive-auth-owner-only               Only consider files owned by the authenticated user.
       --drive-chunk-size int                Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string                Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
@@ -375,6 +399,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --max-delete int                      When synchronizing, limit the number of deletes (default -1)
       --max-depth int                       If set limits the recursion depth to this. (default -1)
       --max-size int                        Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --max-transfer int                    Maximum size of data to transfer. (default off)
       --mega-debug                          If set then output more debug from mega.
       --memprofile string                   Write memory profile to file
       --min-age duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
@@ -400,13 +425,16 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --rc-server-write-timeout duration    Timeout for server writing data (default 1h0m0s)
       --rc-user string                      User name for authentication.
       --retries int                         Retry operations this many times if they fail (default 3)
+      --retries-sleep duration              Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --s3-acl string                       Canned ACL used when creating buckets and/or storing objects in S3
       --s3-chunk-size int                   Chunk size to use for uploading (default 5M)
       --s3-disable-checksum                 Don't store MD5 checksum with object metadata
       --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)
+      --s3-upload-concurrency int           Concurrency for multipart uploads (default 2)
       --sftp-ask-password                   Allow asking for SFTP password when needed.
       --size-only                           Skip based on size only, not mod-time or checksum
       --skip-links                          Don't warn about skipped symlinks.
+      --ssh-path-override string            Override path used by SSH connection.
       --stats duration                      Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
       --stats-file-name-length int          Max file name length in stats. 0 for no limit (default 40)
       --stats-log-level string              Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default "INFO")
@@ -423,12 +451,12 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --transfers int                       Number of file transfers to run in parallel. (default 4)
   -u, --update                              Skip files that are newer on the destination.
       --use-server-modtime                  Use server modified time instead of object metadata
-      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.41")
+      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.42")
   -v, --verbose count                       Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
 
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.41
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.42
 
-###### Auto generated by spf13/cobra on 28-Apr-2018
+###### Auto generated by spf13/cobra on 16-Jun-2018
