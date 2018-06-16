@@ -1,28 +1,29 @@
 ---
 date: 2018-06-16T18:20:28+01:00
-title: "rclone cleanup"
-slug: rclone_cleanup
-url: /commands/rclone_cleanup/
+title: "rclone deletefile"
+slug: rclone_deletefile
+url: /commands/rclone_deletefile/
 ---
-## rclone cleanup
+## rclone deletefile
 
-Clean up the remote if possible
+Remove a single file path from remote.
 
 ### Synopsis
 
 
-Clean up the remote if possible.  Empty the trash or delete old file
-versions. Not supported by all remotes.
+Remove a single file path from remote.  Unlike `delete` it cannot be used to
+remove a directory and it doesn't obey include/exclude filters - if the specified file exists,
+it will always be removed.
 
 
 ```
-rclone cleanup remote:path [flags]
+rclone deletefile remote:path [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for cleanup
+  -h, --help   help for deletefile
 ```
 
 ### Options inherited from parent commands

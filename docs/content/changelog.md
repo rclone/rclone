@@ -7,6 +7,85 @@ date: "2018-04-28"
 Changelog
 ---------
 
+  * v1.42 - 2018-06-16
+    * New backends
+      * OpenDrive (Oliver Heyme, Jakub Karlicek, ncw)
+    * New commands
+      * deletefile command (Filip Bartodziej)
+    * New Features
+      * copy, move: Copy single files directly, don't use `--files-from` work-around
+         * this makes them much more efficient
+      * Implement `--max-transfer` flag to quit transferring at a limit
+         * make exit code 8 for `--max-transfer` exceeded
+      * copy: copy empty source directories to destination (Ishuah Kariuki)
+      * check: Add `--one-way` flag (Kasper Byrdal Nielsen)
+      * Add siginfo handler for macOS for ctrl-T stats (kubatasiemski)
+      * rc
+         * add core/gc to run a garbage collection on demand
+         * enable go profiling by default on the `--rc` port
+         * return error from remote on failure
+      * lsf
+         * Add `--absolute` flag to add a leading / onto path names
+         * Add `--csv` flag for compliant CSV output
+         * Add 'm' format specifier to show the MimeType
+         * Implement 'i' format for showing object ID
+      * lsjson
+         * Add MimeType to the output
+         * Add ID field to output to show Object ID
+      * Add `--retries-sleep` flag (Benjamin Joseph Dag)
+      * Oauth tidy up web page and error handling (Henning Surmeier)
+    * Bug Fixes
+      * Password prompt output with `--log-file` fixed for unix (Filip Bartodziej)
+      * Calculate ModifyWindow each time on the fly to fix various problems (Stefan Breunig)
+    * Mount
+      * Only print "File.rename error" if there actually is an error (Stefan Breunig)
+      * Delay rename if file has open writers instead of failing outright (Stefan Breunig)
+      * Ensure atexit gets run on interrupt
+      * macOS enhancements
+         * Make `--noappledouble` `--noapplexattr`
+         * Add `--volname` flag and remove special chars from it
+         * Make Get/List/Set/Remove xattr return ENOSYS for efficiency
+         * Make `--daemon` work for macOS without CGO
+    * VFS
+        * Add `--vfs-read-chunk-size` and `--vfs-read-chunk-size-limit` (Fabian Möller)
+        * Fix ChangeNotify for new or changed folders (Fabian Möller)
+    * Local
+      * Fix symlink/junction point directory handling under Windows
+         * **NB** you will need to add `-L` to your command line to copy files with reparse points
+    * Cache
+      * Add non cached dirs on notifications (Remus Bunduc)
+      * Allow root to be expired from rc (Remus Bunduc)
+      * Clean remaining empty folders from temp upload path (Remus Bunduc)
+      * Cache lists using batch writes (Remus Bunduc)
+      * Use secure websockets for HTTPS Plex addresses (John Clayton)
+      * Reconnect plex websocket on failures (Remus Bunduc)
+      * Fix panic when running without plex configs (Remus Bunduc)
+      * Fix root folder caching (Remus Bunduc)
+    * Crypt
+      * Check the crypted hash of files when uploading for extra data security
+    * Dropbox
+      * Make Dropbox for business folders accessible using an initial `/` in the path
+    * Google Cloud Storage
+      * Low level retry all operations if necessary
+    * Google Drive
+      * Add `--drive-acknowledge-abuse` to download flagged files
+      * Add `--drive-alternate-export` to fix large doc export
+      * Don't attempt to choose Team Drives when using rclone config create
+      * Fix change list polling with team drives
+      * Fix ChangeNotify for folders (Fabian Möller)
+      * Fix about (and df on a mount) for team drives
+    * Onedrive
+      * Errorhandler for onedrive for business requests (Henning Surmeier)
+    * S3
+      * Adjust upload concurrency with `--s3-upload-concurrency` (themylogin)
+      * Fix `--s3-chunk-size` which was always using the minimum
+    * SFTP
+      * Add `--ssh-path-override` flag (Piotr Oleszczyk)
+      * Fix slow downloads for long latency connections
+    * Webdav
+      * Add workarounds for biz.mail.ru
+      * Ignore Reason-Phrase in status line to fix 4shared (Rodrigo)
+      * Better error message generation
   * v1.41 - 2018-04-28
     * New backends
       * Mega support added
